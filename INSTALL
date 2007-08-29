@@ -1,0 +1,13 @@
+$Id: INSTALL,v 1.1.1.1 2004/05/18 01:50:44 kgibbs Exp $
+
+Platform Specific Notes
+
+FreeBSD
+
+  If you use a cc or c++ other than the system one, threads may not be
+  detected properly.  To work around this set the following environment 
+  variables:
+
+    setenv CC /usr/bin/cc
+    setenv CXX /usr/bin/c++
+

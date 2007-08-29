@@ -75,6 +75,7 @@
 #include "headers.h"
 
 #include "PerfSocket.hpp"
+#include "SocketAddr.h"
 #include "util.h"
 
 /* -------------------------------------------------------------------
@@ -88,6 +89,27 @@ void SetSocketOptions( thread_Settings *inSettings ) {
     // must occur before call to accept() for large window sizes
     setsock_tcp_windowsize( inSettings->mSock, inSettings->mTCPWin,
                             (inSettings->mThreadMode == kMode_Client ? 1 : 0) );
+
+    // check if we're sending multicast, and set TTL
+    if ( isMulticast( inSettings ) && ( inSettings->mTTL > 0 ) ) {
+	int val = inSettings->mTTL;
+#ifdef HAVE_MULTICAST
+	if ( !SockAddr_isIPv6( &inSettings->local ) ) {
+	    int rc = setsockopt( inSettings->mSock, IPPROTO_IP, IP_MULTICAST_TTL,
+		    (const void*) &val, (Socklen_t) sizeof(val));
+
+	    WARN_errno( rc == SOCKET_ERROR, "multicast ttl" );
+	}
+#ifdef HAVE_IPV6_MULTICAST
+	else {
+	    int rc = setsockopt( inSettings->mSock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
+		    (const void*) &val, (Socklen_t) sizeof(val));
+	    WARN_errno( rc == SOCKET_ERROR, "multicast ttl" );
+	}
+#endif
+#endif
+    }
+
 
 #ifdef IP_TOS
 

@@ -162,7 +162,7 @@ typedef struct thread_Settings {
     unsigned short mPort;           // -p
     // chars
     char   mFormat;                 // -f
-    u_char mTTL;                    // -T
+    int mTTL;                    // -T
     char pad1[2];
     // structs or miscellaneous
     iperf_sockaddr peer;

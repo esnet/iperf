@@ -228,7 +228,7 @@ void Settings_Initialize( thread_Settings *main ) {
     //main->mTOS          = 0;           // -S,  ie. don't set type of service
     main->mTTL          = 1;             // -T,  link-local TTL
     //main->mDomain     = kMode_IPv4;    // -V,
-    //mian->mSuggestWin = false;         // -W,  Suggest the window size.
+    //main->mSuggestWin = false;         // -W,  Suggest the window size.
 
 } // end Settings
 

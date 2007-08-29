@@ -1,9 +1,9 @@
 #! /bin/sh
 # Attempt to guess a canonical system name.
 #   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-#   2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+#   2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
 
-timestamp='2004-03-03'
+timestamp='2005-02-10'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -53,7 +53,7 @@ version="\
 GNU config.guess ($timestamp)
 
 Originally written by Per Bothner.
-Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
 Free Software Foundation, Inc.
 
 This is free software; see the source for copying conditions.  There is NO
@@ -203,14 +203,14 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
     amiga:OpenBSD:*:*)
 	echo m68k-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
-    arc:OpenBSD:*:*)
-	echo mipsel-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
     cats:OpenBSD:*:*)
 	echo arm-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
     hp300:OpenBSD:*:*)
 	echo m68k-unknown-openbsd${UNAME_RELEASE}
+	exit 0 ;;
+    luna88k:OpenBSD:*:*)
+    	echo m88k-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
     mac68k:OpenBSD:*:*)
 	echo m68k-unknown-openbsd${UNAME_RELEASE}
@@ -227,20 +227,11 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
     mvmeppc:OpenBSD:*:*)
 	echo powerpc-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
-    pegasos:OpenBSD:*:*)
-	echo powerpc-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    pmax:OpenBSD:*:*)
-	echo mipsel-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
     sgi:OpenBSD:*:*)
-	echo mipseb-unknown-openbsd${UNAME_RELEASE}
+	echo mips64-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
     sun3:OpenBSD:*:*)
 	echo m68k-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    wgrisc:OpenBSD:*:*)
-	echo mipsel-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
     *:OpenBSD:*:*)
 	echo ${UNAME_MACHINE}-unknown-openbsd${UNAME_RELEASE}
@@ -307,9 +298,6 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
 	# 1.2 uses "1.2" for uname -r.
 	echo ${UNAME_MACHINE}-dec-osf`echo ${UNAME_RELEASE} | sed -e 's/^[PVTX]//' | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
 	exit 0 ;;
-    Alpha*:OpenVMS:*:*)
-	echo alpha-hp-vms
-	exit 0 ;;
     Alpha\ *:Windows_NT*:*)
 	# How do we know it's Interix rather than the generic POSIX subsystem?
 	# Should we change UNAME_MACHINE based on the output of uname instead
@@ -330,6 +318,9 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
 	exit 0 ;;
     *:OS/390:*:*)
 	echo i370-ibm-openedition
+	exit 0 ;;
+    *:z/VM:*:*)
+	echo s390-ibm-zvmoe
 	exit 0 ;;
     *:OS400:*:*)
         echo powerpc-ibm-os400
@@ -354,7 +345,7 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
     DRS?6000:unix:4.0:6*)
 	echo sparc-icl-nx6
 	exit 0 ;;
-    DRS?6000:UNIX_SV:4.2*:7*)
+    DRS?6000:UNIX_SV:4.2*:7* | DRS?6000:isis:4.2*:7*)
 	case `/usr/bin/uname -p` in
 	    sparc) echo sparc-icl-nx7 && exit 0 ;;
 	esac ;;
@@ -764,7 +755,7 @@ EOF
 	echo sv1-cray-unicos${UNAME_RELEASE} | sed -e 's/\.[^.]*$/.X/'
 	exit 0 ;;
     *:UNICOS/mp:*:*)
-	echo nv1-cray-unicosmp${UNAME_RELEASE} | sed -e 's/\.[^.]*$/.X/'
+	echo craynv-cray-unicosmp${UNAME_RELEASE} | sed -e 's/\.[^.]*$/.X/'
 	exit 0 ;;
     F30[01]:UNIX_System_V:*:* | F700:UNIX_System_V:*:*)
 	FUJITSU_PROC=`uname -m | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
@@ -787,21 +778,7 @@ EOF
 	echo ${UNAME_MACHINE}-unknown-bsdi${UNAME_RELEASE}
 	exit 0 ;;
     *:FreeBSD:*:*)
-	# Determine whether the default compiler uses glibc.
-	eval $set_cc_for_build
-	sed 's/^	//' << EOF >$dummy.c
-	#include <features.h>
-	#if __GLIBC__ >= 2
-	LIBC=gnu
-	#else
-	LIBC=
-	#endif
-EOF
-	eval `$CC_FOR_BUILD -E $dummy.c 2>/dev/null | grep ^LIBC=`
-	# GNU/KFreeBSD systems have a "k" prefix to indicate we are using
-	# FreeBSD's kernel, but not the complete OS.
-	case ${LIBC} in gnu) kernel_only='k' ;; esac
-	echo ${UNAME_MACHINE}-unknown-${kernel_only}freebsd`echo ${UNAME_RELEASE}|sed -e 's/[-(].*//'`${LIBC:+-$LIBC}
+	echo ${UNAME_MACHINE}-unknown-freebsd`echo ${UNAME_RELEASE}|sed -e 's/[-(].*//'`
 	exit 0 ;;
     i*:CYGWIN*:*)
 	echo ${UNAME_MACHINE}-pc-cygwin
@@ -827,6 +804,9 @@ EOF
     i*:UWIN*:*)
 	echo ${UNAME_MACHINE}-pc-uwin
 	exit 0 ;;
+    amd64:CYGWIN*:*:*)
+	echo x86_64-unknown-cygwin
+	exit 0 ;;
     p*:CYGWIN*:*)
 	echo powerpcle-unknown-cygwin
 	exit 0 ;;
@@ -850,7 +830,16 @@ EOF
     cris:Linux:*:*)
 	echo cris-axis-linux-gnu
 	exit 0 ;;
+    crisv32:Linux:*:*)
+	echo crisv32-axis-linux-gnu
+	exit 0 ;;
+    frv:Linux:*:*)
+    	echo frv-unknown-linux-gnu
+	exit 0 ;;
     ia64:Linux:*:*)
+	echo ${UNAME_MACHINE}-unknown-linux-gnu
+	exit 0 ;;
+    m32r*:Linux:*:*)
 	echo ${UNAME_MACHINE}-unknown-linux-gnu
 	exit 0 ;;
     m68*:Linux:*:*)
@@ -1093,9 +1082,9 @@ EOF
     M680?0:D-NIX:5.3:*)
 	echo m68k-diab-dnix
 	exit 0 ;;
-    M68*:*:R3V[567]*:*)
+    M68*:*:R3V[5678]*:*)
 	test -r /sysV68 && echo 'm68k-motorola-sysv' && exit 0 ;;
-    3[345]??:*:4.0:3.0 | 3[34]??A:*:4.0:3.0 | 3[34]??,*:*:4.0:3.0 | 3[34]??/*:*:4.0:3.0 | 4400:*:4.0:3.0 | 4850:*:4.0:3.0 | SKA40:*:4.0:3.0 | SDS2:*:4.0:3.0 | SHG2:*:4.0:3.0)
+    3[345]??:*:4.0:3.0 | 3[34]??A:*:4.0:3.0 | 3[34]??,*:*:4.0:3.0 | 3[34]??/*:*:4.0:3.0 | 4400:*:4.0:3.0 | 4850:*:4.0:3.0 | SKA40:*:4.0:3.0 | SDS2:*:4.0:3.0 | SHG2:*:4.0:3.0 | S7501*:*:4.0:3.0)
 	OS_REL=''
 	test -r /etc/.relid \
 	&& OS_REL=.`sed -n 's/[^ ]* [^ ]* \([0-9][0-9]\).*/\1/p' < /etc/.relid`
@@ -1193,9 +1182,10 @@ EOF
 	echo ${UNAME_MACHINE}-apple-rhapsody${UNAME_RELEASE}
 	exit 0 ;;
     *:Darwin:*:*)
-	case `uname -p` in
+	UNAME_PROCESSOR=`uname -p` || UNAME_PROCESSOR=unknown
+	case $UNAME_PROCESSOR in
 	    *86) UNAME_PROCESSOR=i686 ;;
-	    powerpc) UNAME_PROCESSOR=powerpc ;;
+	    unknown) UNAME_PROCESSOR=powerpc ;;
 	esac
 	echo ${UNAME_PROCESSOR}-apple-darwin${UNAME_RELEASE}
 	exit 0 ;;
@@ -1209,6 +1199,9 @@ EOF
 	exit 0 ;;
     *:QNX:*:4*)
 	echo i386-pc-qnx
+	exit 0 ;;
+    NSE-?:NONSTOP_KERNEL:*:*)
+	echo nse-tandem-nsk${UNAME_RELEASE}
 	exit 0 ;;
     NSR-?:NONSTOP_KERNEL:*:*)
 	echo nsr-tandem-nsk${UNAME_RELEASE}
@@ -1256,6 +1249,16 @@ EOF
 	exit 0 ;;
     *:DragonFly:*:*)
 	echo ${UNAME_MACHINE}-unknown-dragonfly`echo ${UNAME_RELEASE}|sed -e 's/[-(].*//'`
+	exit 0 ;;
+    *:*VMS:*:*)
+    	UNAME_MACHINE=`(uname -p) 2>/dev/null`
+	case "${UNAME_MACHINE}" in
+	    A*) echo alpha-dec-vms && exit 0 ;;
+	    I*) echo ia64-dec-vms && exit 0 ;;
+	    V*) echo vax-dec-vms && exit 0 ;;
+	esac ;;
+    *:XENIX:*:SysV)
+	echo i386-pc-xenix
 	exit 0 ;;
 esac
 

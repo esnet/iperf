@@ -176,6 +176,12 @@ typedef struct sockaddr_in iperf_sockaddr;
     #endif
 //#endif
 
+// Rationalize stdint definitions and sizeof, thanks to ac_create_stdint_h.m4
+// from the gnu archive
+
+#include <iperf-int.h>
+typedef uintmax_t max_size_t;
+
 /* in case the OS doesn't have these, we provide our own implementations */
 #include "gettimeofday.h"
 #include "inet_aton.h"
@@ -186,12 +192,6 @@ typedef struct sockaddr_in iperf_sockaddr;
     #define SHUT_WR   1
     #define SHUT_RDWR 2
 #endif // SHUT_RD
-
-#ifdef HAVE_INT64_T
-typedef int64_t max_size_t;
-#else
-typedef unsigned long max_size_t;
-#endif // HAVE_INT64_T
 
 #endif /* HEADERS_H */
 

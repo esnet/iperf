@@ -4,9 +4,10 @@ dnl Process this file with autogen.sh to produce configure files
 dnl ===================================================================
 
 
-AC_INIT(Iperf,2.0.1)
-AC_CONFIG_HEADERS([config.h])
-AM_INIT_AUTOMAKE
+AC_PREREQ(2.59)
+AC_INIT(Iperf,2.0.2)
+AC_CONFIG_HEADER([config.h])
+AM_INIT_AUTOMAKE()
 
 
 AC_ARG_ENABLE(ipv6, AC_HELP_STRING([--disable-ipv6],
@@ -37,12 +38,12 @@ AC_PROG_CXX
 CXXFLAGS=`echo " $CXXFLAGS " | sed -e "s/ -g / /"` # do not want it implicitly
 AC_PROG_CC
 CFLAGS=`echo " $CFLAGS " | sed -e "s/ -g / /"` # do not want it implicitly
-dnl AC_ISC_POSIX
-dnl AC_PROG_INSTALL
-dnl AC_PROG_MAKE_SET
+AC_ISC_POSIX
+AC_PROG_INSTALL
+AC_PROG_MAKE_SET
 AC_PROG_RANLIB
 AC_LANG(C)
-dnl AC_CANONICAL_HOST
+AC_CANONICAL_HOST
 
 dnl ===================================================================
 dnl Checks for libraries.
@@ -77,31 +78,7 @@ AC_HEADER_TIME
 AC_STRUCT_TM
 
 dnl these intXX_t and u_intXX_t need to be defined to be the right size.
-
-AC_CHECK_SIZEOF(short)
-AC_CHECK_SIZEOF(int)
-AC_CHECK_SIZEOF(long)
-AC_CHECK_SIZEOF(long long)
-
-AC_CHECK_SIZEOF(unsigned short)
-AC_CHECK_SIZEOF(unsigned int)
-AC_CHECK_SIZEOF(unsigned long)
-AC_CHECK_SIZEOF(unsigned long long)
-
-AH_TEMPLATE(int16_t)
-AH_TEMPLATE(int32_t)
-AH_TEMPLATE(int64_t)
-AH_TEMPLATE(u_int16_t)
-AH_TEMPLATE(u_int32_t)
-AH_TEMPLATE(u_int64_t)
-
-DAST_REPLACE_TYPE(int16_t, 2)
-DAST_REPLACE_TYPE(int32_t, 4)
-DAST_REPLACE_TYPE(int64_t, 8)
-
-DAST_REPLACE_TYPE_UNSIGNED(u_int16_t, 2)
-DAST_REPLACE_TYPE_UNSIGNED(u_int32_t, 4)
-DAST_REPLACE_TYPE_UNSIGNED(u_int64_t, 8)
+AX_CREATE_STDINT_H(include/iperf-int.h)
 
 AC_CACHE_CHECK(3rd argument of accept, ac_cv_accept_arg, [
   dnl Try socklen_t (POSIX)
@@ -195,8 +172,8 @@ dnl Check for system services
 
 dnl check for multicast
 if test "$ac_cv_multicast" != no; then
-  AC_CHECK_TYPES(struct ip_mreq,,,[#include "include/headers_slim.h"])
-  AC_CHECK_DECLS(IP_ADD_MEMBERSHIP,,,[#include "include/headers_slim.h"])
+  AC_CHECK_TYPES(struct ip_mreq,,,[#include "compat/headers_slim.h"])
+  AC_CHECK_DECLS(IP_ADD_MEMBERSHIP,,,[#include "compat/headers_slim.h"])
   AC_MSG_CHECKING(for multicast support)
   ac_cv_multicast=no
   if test "$ac_cv_have_decl_IP_ADD_MEMBERSHIP" = yes; then
@@ -212,9 +189,9 @@ fi
 
 dnl check for IPv6
 if test "$ac_cv_have_ipv6" != no; then
-  AC_CHECK_TYPES(struct sockaddr_storage,,,[#include "include/headers_slim.h"])
-  AC_CHECK_TYPES(struct sockaddr_in6,,,[#include "include/headers_slim.h"])
-  AC_CHECK_DECLS(AF_INET6,,,[#include "include/headers_slim.h"])
+  AC_CHECK_TYPES(struct sockaddr_storage,,,[#include "compat/headers_slim.h"])
+  AC_CHECK_TYPES(struct sockaddr_in6,,,[#include "compat/headers_slim.h"])
+  AC_CHECK_DECLS(AF_INET6,,,[#include "compat/headers_slim.h"])
   AC_MSG_CHECKING(for IPv6 headers and structures)
   ac_cv_have_ipv6=no
   if test "$ac_cv_type_struct_sockaddr_storage" = yes; then
@@ -230,9 +207,9 @@ fi
 
 if test "$ac_cv_have_ipv6" = yes; then
   if test "$ac_cv_multicast" = yes; then
-    AC_CHECK_TYPES(struct ipv6_mreq,,,[#include "include/headers_slim.h"])
-    AC_CHECK_DECLS(IPV6_ADD_MEMBERSHIP,,,[#include "include/headers_slim.h"])
-    AC_CHECK_DECLS(IPV6_MULTICAST_HOPS,,,[#include "include/headers_slim.h"])
+    AC_CHECK_TYPES(struct ipv6_mreq,,,[#include "compat/headers_slim.h"])
+    AC_CHECK_DECLS(IPV6_ADD_MEMBERSHIP,,,[#include "compat/headers_slim.h"])
+    AC_CHECK_DECLS(IPV6_MULTICAST_HOPS,,,[#include "compat/headers_slim.h"])
     AC_MSG_CHECKING(for IPv6 multicast support)
     ac_cv_have_ipv6_multicast=no
     if test "$ac_cv_type_struct_ipv6_mreq" = yes; then

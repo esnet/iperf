@@ -216,29 +216,20 @@
 /* The size of a `bool', as computed by sizeof. */
 #undef SIZEOF_BOOL
 
+/* The size of a `char', as computed by sizeof. */
+#undef SIZEOF_CHAR
+
 /* The size of a `int', as computed by sizeof. */
 #undef SIZEOF_INT
 
 /* The size of a `long', as computed by sizeof. */
 #undef SIZEOF_LONG
 
-/* The size of a `long long', as computed by sizeof. */
-#undef SIZEOF_LONG_LONG
-
 /* The size of a `short', as computed by sizeof. */
 #undef SIZEOF_SHORT
 
-/* The size of a `unsigned int', as computed by sizeof. */
-#undef SIZEOF_UNSIGNED_INT
-
-/* The size of a `unsigned long', as computed by sizeof. */
-#undef SIZEOF_UNSIGNED_LONG
-
-/* The size of a `unsigned long long', as computed by sizeof. */
-#undef SIZEOF_UNSIGNED_LONG_LONG
-
-/* The size of a `unsigned short', as computed by sizeof. */
-#undef SIZEOF_UNSIGNED_SHORT
+/* The size of a `void*', as computed by sizeof. */
+#undef SIZEOF_VOIDP
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
@@ -271,15 +262,6 @@
 /* */
 #undef false
 
-/* */
-#undef int16_t
-
-/* */
-#undef int32_t
-
-/* */
-#undef int64_t
-
 /* Define to rpl_malloc if the replacement function should be used. */
 #undef malloc
 
@@ -294,15 +276,6 @@
 
 /* */
 #undef true
-
-/* */
-#undef u_int16_t
-
-/* */
-#undef u_int32_t
-
-/* */
-#undef u_int64_t
 
 /* Define as `fork' if `vfork' does not work. */
 #undef vfork

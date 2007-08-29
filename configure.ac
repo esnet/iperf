@@ -4,7 +4,7 @@ dnl Process this file with autogen.sh to produce configure files
 dnl ===================================================================
 
 
-AC_INIT(Iperf,2.0)
+AC_INIT(Iperf,2.0.1)
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE
 
@@ -37,11 +37,12 @@ AC_PROG_CXX
 CXXFLAGS=`echo " $CXXFLAGS " | sed -e "s/ -g / /"` # do not want it implicitly
 AC_PROG_CC
 CFLAGS=`echo " $CFLAGS " | sed -e "s/ -g / /"` # do not want it implicitly
-AC_ISC_POSIX
-AC_PROG_INSTALL
-AC_PROG_MAKE_SET
+dnl AC_ISC_POSIX
+dnl AC_PROG_INSTALL
+dnl AC_PROG_MAKE_SET
 AC_PROG_RANLIB
-AC_CANONICAL_HOST
+AC_LANG(C)
+dnl AC_CANONICAL_HOST
 
 dnl ===================================================================
 dnl Checks for libraries.

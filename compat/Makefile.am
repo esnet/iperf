@@ -1,8 +1,8 @@
 noinst_LIBRARIES = libcompat.a
 
 AM_CPPFLAGS = @STRIP_BEGIN@ \
-	-I$(top_srcdir)/include \
-	@STRIP_END@
+	      -I$(top_srcdir)/include \
+	      @STRIP_END@
 
 libcompat_a_SOURCES = \
 		      Thread.c \

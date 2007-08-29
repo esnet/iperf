@@ -1,12 +1,14 @@
 bin_PROGRAMS = iperf
 
 LIBCOMPAT_LDADDS = @STRIP_BEGIN@ \
-	$(top_builddir)/compat/libcompat.a \
-	@STRIP_END@
+		   $(top_builddir)/compat/libcompat.a \
+		   @STRIP_END@
 
 AM_CPPFLAGS = @STRIP_BEGIN@ \
-	-I$(top_srcdir)/include \
-	@STRIP_END@
+	      -I$(top_srcdir)/include \
+	      @STRIP_END@
+
+iperf_LDFLAGS = @CFLAGS@ @PTHREAD_CFLAGS@ @WEB100_CFLAGS@ @DEFS@
 
 iperf_SOURCES = \
 		Client.cpp \

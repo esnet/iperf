@@ -2,3 +2,8 @@
 2007-10-01 JSE <jestabro@ncsa.uiuc.edu>
 
 * ChangeLog file added
+
+2007-10-05 JSE <jestabro@ncsa.uiuc.edu>
+
+* Thread.c (thread_stop): "pthread_cancel (oldTID )" should be
+"pthread_cancel (thread->mTID)"

@@ -1,5 +1,9 @@
 2008-03-12 Jon Dugan <jdugan@x1024.net>
 
+* Rework Client::RunTCP so to update the stats for every packet if -i is set.
+If -i is not set then the stats are only updated at the end of the run. This
+was fallout of Andrew's patch.
+
 * Added -Wall to CXXFLAGS and CFLAGS.  This generated a lot of noise in the
 autotools generated files.
 

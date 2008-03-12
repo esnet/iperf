@@ -163,6 +163,12 @@ void Client::RunTCP( void ) {
         }
 	totLen += currLen;
 
+	if(mSettings->mInterval > 0) {
+    	    gettimeofday( &(reportstruct->packetTime), NULL );
+            reportstruct->packetLen = currLen;
+            ReportPacket( mSettings->reporthdr, reportstruct );
+        }	
+
         if ( !mMode_Time ) {
             mSettings->mAmount -= currLen;
         }
@@ -172,8 +178,12 @@ void Client::RunTCP( void ) {
 
     // stop timing
     gettimeofday( &(reportstruct->packetTime), NULL );
-    reportstruct->packetLen = totLen;
-    ReportPacket( mSettings->reporthdr, reportstruct );
+
+    // if we're not doing interval reporting, report the entire transfer as one big packet
+    if(0.0 == mSettings->mInterval) {
+        reportstruct->packetLen = totLen;
+        ReportPacket( mSettings->reporthdr, reportstruct );
+    }
     CloseReport( mSettings->reporthdr, reportstruct );
 
     DELETE_PTR( reportstruct );

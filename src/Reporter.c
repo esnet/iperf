@@ -110,6 +110,8 @@ report_statistics multiple_reports[kReport_MAXIMUM] = {
 
 char buffer[64]; // Buffer for printing
 ReportHeader *ReportRoot = NULL;
+int threadWait = 0;
+int threadSleeping = 0;
 extern Condition ReportCond;
 int reporter_process_report ( ReportHeader *report );
 void process_report ( ReportHeader *report );
@@ -349,7 +351,9 @@ void ReportPacket( ReportHeader* agent, ReportStruct *packet ) {
             thread_rest();
             index = agent->reporterindex;
         }
-        
+	if (threadSleeping)
+           Condition_Signal( &ReportCond );
+
         // Put the information there
         memcpy( agent->data + agent->agentindex, packet, sizeof(ReportStruct) );
         
@@ -378,6 +382,9 @@ void CloseReport( ReportHeader *agent, ReportStruct *packet ) {
         packet->packetLen = 0;
         ReportPacket( agent, packet );
         packet->packetID = agent->report.cntDatagrams;
+	if (threadSleeping)
+           Condition_Signal( &ReportCond );
+
     }
 }
 
@@ -389,6 +396,9 @@ void CloseReport( ReportHeader *agent, ReportStruct *packet ) {
 void EndReport( ReportHeader *agent ) {
     if ( agent != NULL ) {
         int index = agent->reporterindex;
+	if (threadSleeping)
+           Condition_Signal( &ReportCond );
+
         while ( index != -1 ) {
             thread_rest();
             index = agent->reporterindex;
@@ -457,6 +467,10 @@ void ReportSettings( thread_Settings *agent ) {
              * Update the ReportRoot to include this report.
              */
             Condition_Lock( ReportCond );
+	    if ( isUDP(agent) )
+	      threadWait = 0;
+	    else
+	      threadWait = 1;
             reporthdr->next = ReportRoot;
             ReportRoot = reporthdr;
             Condition_Signal( &ReportCond );
@@ -577,7 +591,17 @@ void reporter_spawn( thread_Settings *thread ) {
                 Condition_Unlock ( ReportCond );
             }
             // yield control of CPU is another thread is waiting
-            thread_rest();
+	    // sleep on a condition variable, as it is much cheaper
+	    // on most platforms than issuing schedyield or usleep
+	    // syscalls
+	    Condition_Lock ( ReportCond );
+	    if ( threadWait && ReportRoot != NULL) {
+	      threadSleeping = 1;
+	      Condition_TimedWait (& ReportCond, 1 );
+	      threadSleeping = 0;
+	    }
+	    Condition_Unlock ( ReportCond );
+	    
         } else {
             //Condition_Unlock ( ReportCond );
         }

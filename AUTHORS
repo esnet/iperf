@@ -1,0 +1,28 @@
+Mark Gates
+Alex Warshavsky 
+
+  * original authors
+
+Ajay Tirumala
+
+  * general improvements 
+
+Jim Ferguson <ferguson@ncsa.uiuc.edu>
+
+  * Project management
+
+Jon Dugan <jdugan@x1024.net>
+
+  * Project maintainer and release coordinator
+  * various patches and autoconf fixes, general maintenance
+
+Feng Qin
+Kevin Gibbs
+
+  * windows porting work
+
+John Estabrook <jestabro@ncsa.uiuc.edu>
+
+Andrew Gallatin <gallatin@gmail.com>
+  * threading fix and non Linux performance improvements
+

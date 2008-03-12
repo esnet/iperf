@@ -98,6 +98,7 @@ void Server::Sig_Int( int inSigno ) {
  * ------------------------------------------------------------------- */ 
 void Server::Run( void ) {
     long currLen; 
+    max_size_t totLen = 0;
     struct UDP_datagram* mBuf_UDP  = (struct UDP_datagram*) mBuf; 
 
     ReportStruct *reportstruct = NULL;
@@ -115,10 +116,11 @@ void Server::Run( void ) {
                 reportstruct->packetID = ntohl( mBuf_UDP->id ); 
                 reportstruct->sentTime.tv_sec = ntohl( mBuf_UDP->tv_sec  );
                 reportstruct->sentTime.tv_usec = ntohl( mBuf_UDP->tv_usec ); 
-            }
-        
-            reportstruct->packetLen = currLen;
-            gettimeofday( &(reportstruct->packetTime), NULL );
+		reportstruct->packetLen = currLen;
+		gettimeofday( &(reportstruct->packetTime), NULL );
+            } else {
+		totLen += currLen;
+	    }
         
             // terminate when datagram begins with negative index 
             // the datagram ID should be correct, just negated 
@@ -126,11 +128,16 @@ void Server::Run( void ) {
                 reportstruct->packetID = -reportstruct->packetID;
                 currLen = -1; 
             }
-            ReportPacket( mSettings->reporthdr, reportstruct );
+	    if ( isUDP (mSettings))
+		ReportPacket( mSettings->reporthdr, reportstruct );
         } while ( currLen > 0 ); 
         
         // stop timing 
         gettimeofday( &(reportstruct->packetTime), NULL );
+	if ( !isUDP (mSettings)) {
+		reportstruct->packetLen = totLen;
+		ReportPacket( mSettings->reporthdr, reportstruct );
+	}
         CloseReport( mSettings->reporthdr, reportstruct );
         
         // send a acknowledgement back only if we're NOT receiving multicast 

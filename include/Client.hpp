@@ -69,6 +69,9 @@ public:
     // connects and sends data
     void Run( void );
 
+    // TCP specific version of above
+    void RunTCP( void );
+
     void InitiateServer();
 
     // UDP / TCP

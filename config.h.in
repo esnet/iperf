@@ -213,22 +213,22 @@
 /* Define to the type of arg 5 for `select'. */
 #undef SELECT_TYPE_ARG5
 
-/* The size of a `bool', as computed by sizeof. */
+/* The size of `bool', as computed by sizeof. */
 #undef SIZEOF_BOOL
 
-/* The size of a `char', as computed by sizeof. */
+/* The size of `char', as computed by sizeof. */
 #undef SIZEOF_CHAR
 
-/* The size of a `int', as computed by sizeof. */
+/* The size of `int', as computed by sizeof. */
 #undef SIZEOF_INT
 
-/* The size of a `long', as computed by sizeof. */
+/* The size of `long', as computed by sizeof. */
 #undef SIZEOF_LONG
 
-/* The size of a `short', as computed by sizeof. */
+/* The size of `short', as computed by sizeof. */
 #undef SIZEOF_SHORT
 
-/* The size of a `void*', as computed by sizeof. */
+/* The size of `void*', as computed by sizeof. */
 #undef SIZEOF_VOIDP
 
 /* Define to 1 if you have the ANSI C header files. */
@@ -268,7 +268,7 @@
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t
 
-/* Define to `unsigned' if <sys/types.h> does not define. */
+/* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
 
 /* Define to "int" if <sys/types.h> does not define. */

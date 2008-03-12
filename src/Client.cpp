@@ -115,6 +115,71 @@ Client::~Client() {
 const double kSecs_to_usecs = 1e6; 
 const int    kBytes_to_Bits = 8; 
 
+void Client::RunTCP( void ) {
+    long currLen = 0; 
+    struct itimerval it;
+    max_size_t totLen = 0;
+
+    int err;
+
+    char* readAt = mBuf;
+
+    // Indicates if the stream is readable 
+    bool canRead = true, mMode_Time = isModeTime( mSettings ); 
+
+    ReportStruct *reportstruct = NULL;
+
+    // InitReport handles Barrier for multiple Streams
+    mSettings->reporthdr = InitReport( mSettings );
+    reportstruct = new ReportStruct;
+    reportstruct->packetID = 0;
+
+    lastPacketTime.setnow();
+    if ( mMode_Time ) {
+	memset (&it, 0, sizeof (it));
+	it.it_value.tv_sec = (int) (mSettings->mAmount / 100.0);
+	it.it_value.tv_usec = (int) 10000 * (mSettings->mAmount -
+	    it.it_value.tv_sec * 100.0);
+	err = setitimer( ITIMER_REAL, &it, NULL );
+	if ( err != 0 ) {
+	    perror("setitimer");
+	    exit(1);
+	}
+    }
+    do {
+        // Read the next data block from 
+        // the file if it's file input 
+        if ( isFileInput( mSettings ) ) {
+            Extractor_getNextDataBlock( readAt, mSettings ); 
+            canRead = Extractor_canRead( mSettings ) != 0; 
+        } else
+            canRead = true; 
+
+        // perform write 
+        currLen = write( mSettings->mSock, mBuf, mSettings->mBufLen ); 
+        if ( currLen < 0 ) {
+            WARN_errno( currLen < 0, "write2" ); 
+            break; 
+        }
+	totLen += currLen;
+
+        if ( !mMode_Time ) {
+            mSettings->mAmount -= currLen;
+        }
+
+    } while ( ! (sInterupted  || 
+                   (!mMode_Time  &&  0 >= mSettings->mAmount)) && canRead ); 
+
+    // stop timing
+    gettimeofday( &(reportstruct->packetTime), NULL );
+    reportstruct->packetLen = totLen;
+    ReportPacket( mSettings->reporthdr, reportstruct );
+    CloseReport( mSettings->reporthdr, reportstruct );
+
+    DELETE_PTR( reportstruct );
+    EndReport( mSettings->reporthdr );
+}
+
 /* ------------------------------------------------------------------- 
  * Send data using the connected UDP/TCP socket, 
  * until a termination flag is reached. 
@@ -130,6 +195,13 @@ void Client::Run( void ) {
     int adjust = 0; 
 
     char* readAt = mBuf;
+
+#if HAVE_THREAD
+    if ( !isUDP( mSettings ) ) {
+	RunTCP();
+	return;
+    }
+#endif
     
     // Indicates if the stream is readable 
     bool canRead = true, mMode_Time = isModeTime( mSettings ); 
@@ -215,7 +287,7 @@ void Client::Run( void ) {
 
         // perform write 
         currLen = write( mSettings->mSock, mBuf, mSettings->mBufLen ); 
-        if ( currLen < 0 ) {
+        if ( currLen < 0 && errno != ENOBUFS ) {
             WARN_errno( currLen < 0, "write2" ); 
             break; 
         }

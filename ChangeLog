@@ -1,3 +1,20 @@
+2008-03-12 Jon Dugan <jdugan@x1024.net>
+
+* Added -Wall to CXXFLAGS and CFLAGS.  This generated a lot of noise in the
+autotools generated files.
+
+* Added initial AUTHORS file.  This is incomplete, but it's a start.
+
+2008-03-12 Andrew Gallatin <gallatin@gmail.com>
+
+* Rework threading.  This is done by having a condition variable for the reporting
+thread rather than using sched_yield and/or usleep.  
+
+* Address performance issues on non Linux systems by avoiding system calls
+which are expensive on platforms other than Linux.
+
+* Fixes from FreeBSD ports: max_size_t is now 64 bits and not Iperf does not
+exit on ENOBUFS.
 
 2007-10-01 JSE <jestabro@ncsa.uiuc.edu>
 

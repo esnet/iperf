@@ -74,7 +74,7 @@ extern "C" {
  */
 typedef struct ReportStruct {
     int packetID;
-    int packetLen;
+    max_size_t packetLen;
     struct timeval packetTime;
     struct timeval sentTime;
 } ReportStruct;

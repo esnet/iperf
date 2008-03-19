@@ -1,5 +1,11 @@
 2008-03-19 Stephen Hemminger <shemminger@linux-foundation.org>
 
+* Add new option to allow selecting the sender congestion control
+algorithm. This is a Linux specific extension useful for testing
+other congestion control algorithms.
+
+2008-03-19 Stephen Hemminger <shemminger@linux-foundation.org>
+
 * Use sched_yield rather than usleep(0) as it behaves better on Linux
 
 2008-03-12 Jon Dugan <jdugan@x1024.net>

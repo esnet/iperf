@@ -1,3 +1,7 @@
+2008-03-19 Stephen Hemminger <shemminger@linux-foundation.org>
+
+* Use sched_yield rather than usleep(0) as it behaves better on Linux
+
 2008-03-12 Jon Dugan <jdugan@x1024.net>
 
 * Rework Client::RunTCP so to update the stats for every packet if -i is set.

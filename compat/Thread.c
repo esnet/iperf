@@ -405,9 +405,12 @@ int thread_numuserthreads( void ) {
 void thread_rest ( void ) {
 #if defined( HAVE_THREAD )
 #if defined( HAVE_POSIX_THREAD )
-    // TODO add checks for sched_yield or pthread_yield and call that
-    // if available
+#if defined( _POSIX_PRIORITY_SCHEDULING )
+    sched_yield();
+#else
     usleep( 0 );
+#endif
+
 #else // Win32
     SwitchToThread( );
 #endif

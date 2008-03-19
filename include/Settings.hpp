@@ -170,6 +170,7 @@ typedef struct thread_Settings {
     iperf_sockaddr local;
     Socklen_t size_local;
     nthread_t mTID;
+    char* mCongestion;
 #if defined( HAVE_WIN32_THREAD )
     HANDLE mHandle;
 #endif
@@ -208,6 +209,7 @@ typedef struct thread_Settings {
 #define FLAG_NOMULTREPORT   0x00080000
 #define FLAG_SINGLECLIENT   0x00100000
 #define FLAG_SINGLEUDP      0x00200000
+#define FLAG_CONGESTION     0x00400000
 
 #define isBuflenSet(settings)      ((settings->flags & FLAG_BUFLENSET) != 0)
 #define isCompat(settings)         ((settings->flags & FLAG_COMPAT) != 0)
@@ -233,6 +235,7 @@ typedef struct thread_Settings {
 // end Active Low
 #define isSingleClient(settings)   ((settings->flags & FLAG_SINGLECLIENT) != 0)
 #define isSingleUDP(settings)      ((settings->flags & FLAG_SINGLEUDP) != 0)
+#define isCongestionControl(settings) ((settings->flags & FLAG_CONGESTION) != 0)
 
 #define setBuflenSet(settings)     settings->flags |= FLAG_BUFLENSET
 #define setCompat(settings)        settings->flags |= FLAG_COMPAT
@@ -256,6 +259,7 @@ typedef struct thread_Settings {
 #define setNoMultReport(settings)  settings->flags |= FLAG_NOMULTREPORT
 #define setSingleClient(settings)  settings->flags |= FLAG_SINGLECLIENT
 #define setSingleUDP(settings)     settings->flags |= FLAG_SINGLEUDP
+#define setCongestionControl(settings) settings->flags |= FLAG_CONGESTION
 
 #define unsetBuflenSet(settings)   settings->flags &= ~FLAG_BUFLENSET
 #define unsetCompat(settings)      settings->flags &= ~FLAG_COMPAT
@@ -279,6 +283,7 @@ typedef struct thread_Settings {
 #define unsetNoMultReport(settings)   settings->flags &= ~FLAG_NOMULTREPORT
 #define unsetSingleClient(settings)   settings->flags &= ~FLAG_SINGLECLIENT
 #define unsetSingleUDP(settings)      settings->flags &= ~FLAG_SINGLEUDP
+#define unsetCongestionControl(settings) settings->flags &= ~FLAG_CONGESTION
 
 
 #define HEADER_VERSION1 0x80000000

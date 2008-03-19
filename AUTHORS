@@ -27,4 +27,4 @@ Andrew Gallatin <gallatin@gmail.com>
   * threading fix and non Linux performance improvements
 
 Stephen Hemminger <shemminger@linux-foundation.org>
-  * Linux scheduler selection and theading improvements
+  * Linux congestion control selection and theading improvements

@@ -120,6 +120,7 @@ const struct option long_options[] =
 {"single_udp",       no_argument, NULL, 'U'},
 {"ipv6_domian",      no_argument, NULL, 'V'},
 {"suggest_win_size", no_argument, NULL, 'W'},
+{"congestion", required_argument, NULL, 'Z'},
 {0, 0, 0, 0}
 };
 
@@ -162,12 +163,13 @@ const struct option env_options[] =
 {"IPERF_SINGLE_UDP",       no_argument, NULL, 'U'},
 {"IPERF_IPV6_DOMAIN",      no_argument, NULL, 'V'},
 {"IPERF_SUGGEST_WIN_SIZE", required_argument, NULL, 'W'},
+{"IPERF_CONGESTION_CONTROL",  required_argument, NULL, 'Z'},
 {0, 0, 0, 0}
 };
 
 #define SHORT_OPTIONS()
 
-const char short_options[] = "1b:c:df:hi:l:mn:o:p:rst:uvw:x:y:B:CDF:IL:M:NP:RS:T:UVW";
+const char short_options[] = "1b:c:df:hi:l:mn:o:p:rst:uvw:x:y:B:CDF:IL:M:NP:RS:T:UVWZ:";
 
 /* -------------------------------------------------------------------
  * defaults
@@ -663,6 +665,17 @@ void Settings_Interpret( char option, const char *optarg, thread_Settings *mExtS
             setSuggestWin( mExtSettings );
             fprintf( stderr, "The -W option is not available in this release\n");
             break;
+
+        case 'Z':
+#ifdef TCP_CONGESTION
+	    setCongestionControl( mExtSettings );
+	    mExtSettings->mCongestion = new char[strlen(optarg)+1];
+	    strcpy( mExtSettings->mCongestion, optarg);
+#else
+#error fix includes
+            fprintf( stderr, "The -Z option is not available on this operating system\n");
+#endif
+	    break;
 
         default: // ignore unknown
             break;

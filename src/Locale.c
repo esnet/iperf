@@ -162,6 +162,7 @@ Client specific:\n\
   -L, --listenport #       port to recieve bidirectional tests back on\n\
   -P, --parallel  #        number of parallel client threads to run\n\
   -T, --ttl       #        time-to-live, for multicast (default 1)\n\
+   --linux-congestion <algo>  set TCP congestion control algorithm (Linux only)\n\
 \n\
 Miscellaneous:\n\
   -h, --help               print this message and quit\n\

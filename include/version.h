@@ -1,2 +1,2 @@
-#define IPERF_VERSION "2.0.2"
-#define IPERF_VERSION_DATE "03 May 2005"
+#define IPERF_VERSION "2.0.3"
+#define IPERF_VERSION_DATE "18 Mar 2008"

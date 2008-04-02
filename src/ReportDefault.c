@@ -76,11 +76,13 @@ void reporter_printstats( Transfer_Info *stats ) {
 
     if ( stats->mUDP != (char)kMode_Server ) {
         // TCP Reporting
+        printf( report_bw_header);
         printf( report_bw_format, stats->transferID, 
                 stats->startTime, stats->endTime, 
                 buffer, &buffer[sizeof(buffer)/2] );
     } else {
         // UDP Reporting
+        printf( report_bw_jitter_loss_header);
         printf( report_bw_jitter_loss_format, stats->transferID, 
                 stats->startTime, stats->endTime, 
                 buffer, &buffer[sizeof(buffer)/2],

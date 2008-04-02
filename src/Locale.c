@@ -71,7 +71,6 @@ const char usage_short[] = "\
 Usage: %s [-s|-c host] [options]\n\
 Try `%s --help' for more information.\n";
 
-#ifdef WIN32
 const char usage_long1[] = "\
 Usage: iperf [-s|-c host] [options]\n\
        iperf [-h|--help] [-v|--version]\n\
@@ -94,8 +93,11 @@ Client/Server:\n\
 Server specific:\n\
   -s, --server             run in server mode\n\
   -U, --single_udp         run in single threaded UDP mode\n\
-  -D, --daemon             run the server as a daemon\n\
-  -R, --remove             remove service in win32\n";
+  -D, --daemon             run the server as a daemon\n"
+#ifdef WIN32
+"  -R, --remove             remove service in win32\n"
+#endif
+;
 
 const char usage_long2[] = "\
 \n\
@@ -112,8 +114,11 @@ Client specific:\n\
   -L, --listenport #       port to recieve bidirectional tests back on\n\
   -P, --parallel  #        number of parallel client threads to run\n\
   -T, --ttl       #        time-to-live, for multicast (default 1)\n\
+  -Z, --linux-congestion <algo>  set TCP congestion control algorithm (Linux only)\n\
 \n\
 Miscellaneous:\n\
+  -x, --reportexclude [CDMSV]   exclude C(connection) D(data) M(multicast) S(settings) V(server) reports\n\
+  -y, --reportstyle C      report as a Comma-Separated Values\n\
   -h, --help               print this message and quit\n\
   -v, --version            print version information and quit\n\
 \n\
@@ -123,59 +128,7 @@ The TCP window size option can be set by the environment variable\n\
 TCP_WINDOW_SIZE. Most other options can be set by an environment variable\n\
 IPERF_<long option name>, such as IPERF_BANDWIDTH.\n\
 \n\
-Report bugs to <dast@nlanr.net>\n";
-
-#else
-const char usage_long[] = "\
-Usage: iperf [-s|-c host] [options]\n\
-       iperf [-h|--help] [-v|--version]\n\
-\n\
-Client/Server:\n\
-  -f, --format    [kmKM]   format to report: Kbits, Mbits, KBytes, MBytes\n\
-  -i, --interval  #        seconds between periodic bandwidth reports\n\
-  -l, --len       #[KM]    length of buffer to read or write (default 8 KB)\n\
-  -m, --print_mss          print TCP maximum segment size (MTU - TCP/IP header)\n\
-  -p, --port      #        server port to listen on/connect to\n\
-  -u, --udp                use UDP rather than TCP\n\
-  -w, --window    #[KM]    TCP window size (socket buffer size)\n\
-  -B, --bind      <host>   bind to <host>, an interface or multicast address\n\
-  -C, --compatibility      for use with older versions does not sent extra msgs\n\
-  -M, --mss       #        set TCP maximum segment size (MTU - 40 bytes)\n\
-  -N, --nodelay            set TCP no delay, disabling Nagle's Algorithm\n\
-  -V, --IPv6Version        Set the domain to IPv6\n\
-\n\
-Server specific:\n\
-  -s, --server             run in server mode\n\
-  -U, --single_udp         run in single threaded UDP mode\n\
-  -D, --daemon             run the server as a daemon\n\
-\n\
-Client specific:\n\
-  -b, --bandwidth #[KM]    for UDP, bandwidth to send at in bits/sec\n\
-                           (default 1 Mbit/sec, implies -u)\n\
-  -c, --client    <host>   run in client mode, connecting to <host>\n\
-  -d, --dualtest           Do a bidirectional test simultaneously\n\
-  -n, --num       #[KM]    number of bytes to transmit (instead of -t)\n\
-  -r, --tradeoff           Do a bidirectional test individually\n\
-  -t, --time      #        time in seconds to transmit for (default 10 secs)\n\
-  -F, --fileinput <name>   input the data to be transmitted from a file\n\
-  -I, --stdin              input the data to be transmitted from stdin\n\
-  -L, --listenport #       port to recieve bidirectional tests back on\n\
-  -P, --parallel  #        number of parallel client threads to run\n\
-  -T, --ttl       #        time-to-live, for multicast (default 1)\n\
-   --linux-congestion <algo>  set TCP congestion control algorithm (Linux only)\n\
-\n\
-Miscellaneous:\n\
-  -h, --help               print this message and quit\n\
-  -v, --version            print version information and quit\n\
-\n\
-[KM] Indicates options that support a K or M suffix for kilo- or mega-\n\
-\n\
-The TCP window size option can be set by the environment variable\n\
-TCP_WINDOW_SIZE. Most other options can be set by an environment variable\n\
-IPERF_<long option name>, such as IPERF_BANDWIDTH.\n\
-\n\
-Report bugs to <dast@nlanr.net>\n";
-#endif
+Report bugs to <iperf-users@lists.sourceforge.net>\n";
 
 // include a description of the threading in the version
 #if   defined( HAVE_POSIX_THREAD )
@@ -375,7 +328,7 @@ const char warn_invalid_report_style[] =
 "WARNING: unknown reporting style \"%s\", switching to default\n";
 
 const char warn_invalid_report[] =
-"WARNING: unknown reporting type \"%c\"\n";
+"WARNING: unknown reporting type \"%c\", ignored\n valid options are:\n\t exclude: C(connection) D(data) M(multicast) S(settings) V(server) report\n\n";
 
 #ifdef __cplusplus
 } /* end extern "C" */

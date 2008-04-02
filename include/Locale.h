@@ -63,12 +63,8 @@ extern "C" {
 
 extern const char usage_short[];
 
-#ifdef WIN32
 extern const char usage_long1[];
 extern const char usage_long2[];
-#else
-extern const char usage_long[];
-#endif
 
 extern const char version[];
 

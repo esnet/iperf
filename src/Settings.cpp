@@ -118,9 +118,9 @@ const struct option long_options[] =
 {"tos",        required_argument, NULL, 'S'},
 {"ttl",        required_argument, NULL, 'T'},
 {"single_udp",       no_argument, NULL, 'U'},
-{"ipv6_domian",      no_argument, NULL, 'V'},
+{"ipv6_domain",      no_argument, NULL, 'V'},
 {"suggest_win_size", no_argument, NULL, 'W'},
-{"congestion", required_argument, NULL, 'Z'},
+{"linux-congestion", required_argument, NULL, 'Z'},
 {0, 0, 0, 0}
 };
 
@@ -375,12 +375,8 @@ void Settings_Interpret( char option, const char *optarg, thread_Settings *mExtS
             break;
 
         case 'h': // print help and exit
-#ifndef WIN32
-            fprintf( stderr, usage_long );
-#else
             fprintf(stderr, usage_long1);
             fprintf(stderr, usage_long2);
-#endif
             exit(1);
             break;
 
@@ -672,7 +668,6 @@ void Settings_Interpret( char option, const char *optarg, thread_Settings *mExtS
 	    mExtSettings->mCongestion = new char[strlen(optarg)+1];
 	    strcpy( mExtSettings->mCongestion, optarg);
 #else
-#error fix includes
             fprintf( stderr, "The -Z option is not available on this operating system\n");
 #endif
 	    break;

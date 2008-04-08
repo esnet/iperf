@@ -176,7 +176,8 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = compat doc include src
+AUTOMAKE_OPTIONS = foreign
+SUBDIRS = compat doc include src man
 AM_CPPFLAGS = @STRIP_BEGIN@ \
 	      -I$(top_srcdir)/include \
 	      -I$(top_builddir)/include \

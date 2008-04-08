@@ -5,7 +5,7 @@ dnl ===================================================================
 
 
 AC_PREREQ(2.59)
-AC_INIT(Iperf,2.0.2)
+AC_INIT(Iperf,2.0.4)
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE()
 
@@ -263,5 +263,6 @@ AC_CONFIG_FILES([Makefile
 		compat/Makefile
 		doc/Makefile
 		include/Makefile
-		src/Makefile])
+		src/Makefile
+                man/Makefile])
 AC_OUTPUT

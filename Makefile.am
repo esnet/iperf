@@ -1,4 +1,5 @@
-SUBDIRS = compat doc include src
+AUTOMAKE_OPTIONS = foreign
+SUBDIRS = compat doc include src man
 
 AM_CPPFLAGS = @STRIP_BEGIN@ \
 	      -I$(top_srcdir)/include \

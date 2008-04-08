@@ -1,3 +1,16 @@
+2008-04-07 Jon Dugan <jdugan@x1024.net>
+
+* Add man page to autoconf goo
+* Bump the version in autoconf
+* Add missing LICENSE file
+
+2008-04-04 Jon Dugan <jdugan@x1024.net>
+
+* Incorporate help string fixes from Claus Klein
+* Incorporate patch to restore header line in stats output from Claus Klein
+* Reworked help string code to remove redundancy
+* Add initial man page
+
 2008-03-19 Stephen Hemminger <shemminger@linux-foundation.org>
 
 * Add new option to allow selecting the sender congestion control

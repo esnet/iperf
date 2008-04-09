@@ -1,3 +1,8 @@
+2008-04-08 Jon Dugan <jdugan@x1024.net>
+
+* print report headers only once
+* use appropriate report header for UDP tests
+
 2008-04-07 Jon Dugan <jdugan@x1024.net>
 
 * Add man page to autoconf goo

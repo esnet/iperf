@@ -28,3 +28,6 @@ Andrew Gallatin <gallatin@gmail.com>
 
 Stephen Hemminger <shemminger@linux-foundation.org>
   * Linux congestion control selection and theading improvements
+
+Nathan Jones <nmjones@users.sourceforge.net>
+  * patch for underflow when value specified in -n is not a multiple of -l

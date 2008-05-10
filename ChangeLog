@@ -1,3 +1,9 @@
+2008-05-09 Nathan Jones <nmjones@users.sourceforge.net>
+
+* prevent underflow when the amount of data to be transmitted (-n) is not a
+multiple of the buffer size (-l)  Patch:
+https://sourceforge.net/tracker/index.php?func=detail&aid=1943432&group_id=128336&atid=711373
+
 2008-04-08 Jon Dugan <jdugan@x1024.net>
 
 * print report headers only once

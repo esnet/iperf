@@ -170,7 +170,12 @@ void Client::RunTCP( void ) {
         }	
 
         if ( !mMode_Time ) {
-            mSettings->mAmount -= currLen;
+            /* mAmount may be unsigned, so don't let it underflow! */
+            if( mSettings->mAmount >= currLen ) {
+                mSettings->mAmount -= currLen;
+            } else {
+                mSettings->mAmount = 0;
+            }
         }
 
     } while ( ! (sInterupted  || 
@@ -310,7 +315,12 @@ void Client::Run( void ) {
             delay_loop( delay ); 
         }
         if ( !mMode_Time ) {
-            mSettings->mAmount -= currLen;
+            /* mAmount may be unsigned, so don't let it underflow! */
+            if( mSettings->mAmount >= currLen ) {
+                mSettings->mAmount -= currLen;
+            } else {
+                mSettings->mAmount = 0;
+            }
         }
 
     } while ( ! (sInterupted  || 

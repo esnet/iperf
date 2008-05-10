@@ -116,7 +116,7 @@ const double kSecs_to_usecs = 1e6;
 const int    kBytes_to_Bits = 8; 
 
 void Client::RunTCP( void ) {
-    long currLen = 0; 
+    unsigned long currLen = 0; 
     struct itimerval it;
     max_size_t totLen = 0;
 
@@ -203,7 +203,7 @@ void Client::RunTCP( void ) {
 
 void Client::Run( void ) {
     struct UDP_datagram* mBuf_UDP = (struct UDP_datagram*) mBuf; 
-    long currLen = 0; 
+    unsigned long currLen = 0; 
 
     int delay_target = 0; 
     int delay = 0; 

@@ -51,24 +51,26 @@
  * ------------------------------------------------------------------- */
 
 #include "Timestamp.hpp"
-
+#include "util.h"
 #include "delay.hpp"
 
 /* -------------------------------------------------------------------
- * A micro-second delay function. This uses gettimeofday (underneith
- * the Timestamp) which has a resolution of upto microseconds. I've
- * found it's good to within about 10 usecs.
- * I used to do calibration, but iperf automatically adjusts itself
- * so that isn't necesary, and it causes some problems if the
- * calibration adjustment is larger than your sleep time.
+ * A micro-second delay function using POSIX nanosleep(). This allows a
+ * higher timing resolution (under Linux e.g. it uses hrtimers), does not
+ * affect any signals, and will use up remaining time when interrupted.
  * ------------------------------------------------------------------- */
+void delay_loop(unsigned long usec)
+{
+    struct timespec requested, remaining;
 
-void delay_loop( unsigned long usec ) {
-    Timestamp end;
-    end.add( usec * 1e-6 );
+    requested.tv_sec  = 0;
+    requested.tv_nsec = usec * 1000L;
 
-    Timestamp now;
-    while ( now.before( end ) ) {
-        now.setnow();
-    }
+    while (nanosleep(&requested, &remaining) == -1)
+        if (errno == EINTR)
+            requested = remaining;
+        else {
+            WARN_errno(1, "nanosleep");
+            break;
+        }
 }

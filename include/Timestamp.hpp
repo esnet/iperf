@@ -152,6 +152,16 @@ public:
     }
 
     /* -------------------------------------------------------------------
+     * Return the number of microseconds from now to last time of setting.
+     * ------------------------------------------------------------------- */
+    long delta_usec(void) {
+        struct timeval previous = mTime;
+
+        setnow();
+        return subUsec(previous);
+    }
+
+    /* -------------------------------------------------------------------
      * subtract the right timestamp from my timestamp.
      * return the difference in seconds as a floating point.
      * ------------------------------------------------------------------- */
@@ -202,29 +212,22 @@ public:
     /* -------------------------------------------------------------------
      * return true if my timestamp is before the right timestamp.
      * ------------------------------------------------------------------- */
-    bool before( Timestamp right ) {
-        return mTime.tv_sec < right.mTime.tv_sec  ||
-        (mTime.tv_sec == right.mTime.tv_sec &&
-         mTime.tv_usec < right.mTime.tv_usec);
-    }
-    
-    /* -------------------------------------------------------------------
-     * return true if my timestamp is before the right timestamp.
-     * ------------------------------------------------------------------- */
     bool before( timeval right ) {
         return mTime.tv_sec < right.tv_sec  ||
         (mTime.tv_sec == right.tv_sec &&
          mTime.tv_usec < right.tv_usec);
     }
+    bool before( Timestamp right ) { return before(right.mTime); }
 
     /* -------------------------------------------------------------------
      * return true if my timestamp is after the right timestamp.
      * ------------------------------------------------------------------- */
-    bool after( Timestamp right ) {
-        return mTime.tv_sec > right.mTime.tv_sec  ||
-        (mTime.tv_sec == right.mTime.tv_sec &&
-         mTime.tv_usec > right.mTime.tv_usec);
+    bool after( timeval right ) {
+        return mTime.tv_sec > right.tv_sec  ||
+        (mTime.tv_sec == right.tv_sec &&
+         mTime.tv_usec > right.tv_usec);
     }
+    bool after( Timestamp right ) { return after(right.mTime); }
 
     /**
      * This function returns the fraction of time elapsed after the beginning 

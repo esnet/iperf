@@ -31,3 +31,6 @@ Stephen Hemminger <shemminger@linux-foundation.org>
 
 Nathan Jones <nmjones@users.sourceforge.net>
   * patch for underflow when value specified in -n is not a multiple of -l
+
+Gerrit Renker <grenker@users.sourceforge.net>
+  * replace costly gettimeofday() with nanonsleep()

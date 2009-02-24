@@ -242,7 +242,7 @@ void unit_snprintf( char *s, int inLen,
     } else if ( inNum < 99.95 ) {   /* 99.95 would be rounded to 100 */
         format = "%4.1f %s";        /* ##.# */
     } else if ( inNum < 999.5 ) {   /* 999.5 would be rounded to 1000 */
-	format = " %4.0f %s";       /*  ### */
+	format = "%4.0f %s";       /*  ### */
     } else {                        /* 1000-1024 fits in 4 places 
 				     * If not using Adaptive sizes then
 				     * this code will not control spaces*/

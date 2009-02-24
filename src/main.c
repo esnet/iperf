@@ -48,7 +48,7 @@ enum {
 };
 #define SEC_TO_NS 1000000000 /* too big for enum on some platforms */
 
-struct stream
+struct iperf_stream
 {
     int sock;  /* local socket */
     struct sockaddr_in local; /* local address */
@@ -66,13 +66,15 @@ struct stream
     void *(*server)(void *sp);
     void *(*client)(void *sp);
 
-    struct stream *next;
+    struct iperf_settings *settings;
+
+    struct iperf_stream *next;
 };
 
-void *udp_client_thread(struct stream *sp);
-void *udp_server_thread(struct stream *sp);
-void *tcp_client_thread(struct stream *sp);
-void *tcp_server_thread(struct stream *sp);
+void *udp_client_thread(struct iperf_stream *sp);
+void *udp_server_thread(struct iperf_stream *sp);
+void *tcp_client_thread(struct iperf_stream *sp);
+void *tcp_server_thread(struct iperf_stream *sp);
 
 static struct option longopts[] =
 {
@@ -88,7 +90,7 @@ static struct option longopts[] =
     { NULL,             0,                      NULL,   0   }
 };
 
-struct settings
+struct iperf_settings
 {
     char mode;
     char proto;
@@ -103,37 +105,41 @@ struct settings
     struct sockaddr_in sa;
 };
 
-struct settings settings =
+void
+default_settings(struct iperf_settings *settings)
 {
-    Mundef,
-    Ptcp,
-    NULL,
-    5001,
-    -1,
-    1000000,
-    10,
-    1,
-    DEFAULT_UDP_BUFSIZE,
-    1024*1024
-};
+    settings->mode = Mundef;
+    settings->proto = Ptcp;
+    settings->client = NULL;
+    settings->port = 5001;
+    settings->sock = -1;
+    settings->bw = 1000000;
+    settings->duration = 10;
+    settings->threads = 1;
+    settings->bufsize = DEFAULT_UDP_BUFSIZE;
+    settings->window = 1024*1024;
+    memset(&settings->sa, 0, sizeof(struct sockaddr_in));
+}
 
-struct stream *streams;  /* head of list of streams */
+struct iperf_stream *streams;  /* head of list of streams */
 int done = 0;
 
-struct stream *
-new_stream(int s)
+struct iperf_stream *
+new_stream(int s, struct iperf_settings *settings)
 {
-    struct stream *sp;
+    struct iperf_stream *sp;
     socklen_t len;
 
-    sp = (struct stream *) malloc(sizeof(struct stream));
+    sp = (struct iperf_stream *) malloc(sizeof(struct iperf_stream));
     if(!sp) {
         perror("malloc");
         return(NULL);
     }
 
-    memset(sp, 0, sizeof(struct stream));
 
+    memset(sp, 0, sizeof(struct iperf_stream));
+
+    sp->settings = settings;
     sp->sock = s;
 
     len = sizeof sp->local;
@@ -159,7 +165,7 @@ new_stream(int s)
         perror("inet_pton");
     }
 
-    switch (settings.proto) {
+    switch (settings->proto) {
         case Ptcp:
             sp->client = (void *) tcp_client_thread;
             sp->server = (void *) tcp_server_thread;
@@ -173,8 +179,8 @@ new_stream(int s)
             break;
     }
 
-    if(set_tcp_windowsize(sp->sock, settings.window, 
-                settings.mode == Mserver ? SO_RCVBUF : SO_SNDBUF) < 0)
+    if(set_tcp_windowsize(sp->sock, settings->window, 
+                settings->mode == Mserver ? SO_RCVBUF : SO_SNDBUF) < 0)
         fprintf(stderr, "unable to set window size\n");
 
     int x;
@@ -194,9 +200,9 @@ new_stream(int s)
 }
 
 void
-add_stream(struct stream *sp)
+add_stream(struct iperf_stream *sp)
 {
-    struct stream *n;
+    struct iperf_stream *n;
 
     if(!streams)
         streams = sp;
@@ -209,12 +215,12 @@ add_stream(struct stream *sp)
 }
 
 void
-free_stream(struct stream *sp)
+free_stream(struct iperf_stream *sp)
 {
     free(sp);
 }
 
-void connect_msg(struct stream *sp)
+void connect_msg(struct iperf_stream *sp)
 {
     char *ipl, *ipr;
 
@@ -228,24 +234,24 @@ void connect_msg(struct stream *sp)
 }
 
 void *
-udp_client_thread(struct stream *sp)
+udp_client_thread(struct iperf_stream *sp)
 {
     int i;
     int64_t delayns, adjustns, dtargns;
     char *buf;
     struct timeval before, after;
 
-    buf = (char *) malloc(settings.bufsize);
+    buf = (char *) malloc(sp->settings->bufsize);
     if(!buf) {
         perror("malloc: unable to allocate transmit buffer");
         pthread_exit(NULL);
     }
 
-    for(i=0; i < settings.bufsize; i++)
+    for(i=0; i < sp->settings->bufsize; i++)
         buf[i] = i % 37;
 
-    dtargns = (int64_t) settings.bufsize * SEC_TO_NS * 8;
-    dtargns /= settings.bw;
+    dtargns = (int64_t) sp->settings->bufsize * SEC_TO_NS * 8;
+    dtargns /= sp->settings->bw;
 
     assert(dtargns != 0);
 
@@ -257,8 +263,8 @@ udp_client_thread(struct stream *sp)
     adjustns = 0;
     printf("%lld adj %lld delay\n", adjustns, delayns);
     while(!done) {
-        send(sp->sock, buf, settings.bufsize, 0);
-        sp->bytes_out += settings.bufsize;
+        send(sp->sock, buf, sp->settings->bufsize, 0);
+        sp->bytes_out += sp->settings->bufsize;
 
         if(delayns > 0)
             delay(delayns);
@@ -291,23 +297,24 @@ udp_client_thread(struct stream *sp)
 }
 
 void *
-udp_server_thread(struct stream *sp)
+udp_server_thread(struct iperf_stream *sp)
 {
-    char *buf;
+    char *buf, ubuf[UNIT_LEN];
     ssize_t sz;
 
-    buf = (char *) malloc(settings.bufsize);
+    buf = (char *) malloc(sp->settings->bufsize);
     if(!buf) {
         perror("malloc: unable to allocate receive buffer");
         pthread_exit(NULL);
     }
 
-    while((sz = recv(sp->sock, buf, settings.bufsize, 0)) > 0) {
+    while((sz = recv(sp->sock, buf, sp->settings->bufsize, 0)) > 0) {
         sp->bytes_in += sz;
     }
 
     close(sp->sock);
-    printf("%llu bytes received %g\n", sp->bytes_in, (sp->bytes_in * 8.0)/(settings.duration*1000.0*1000.0));
+    unit_snprintf(ubuf, UNIT_LEN, (double) sp->bytes_in / sp->settings->duration, 'a');
+    printf("%llu bytes received %s/sec\n", sp->bytes_in, ubuf);
     pthread_exit(NULL);
 }
 
@@ -322,12 +329,12 @@ tcp_report(int final)
 }
 
 void *
-tcp_client_thread(struct stream *sp)
+tcp_client_thread(struct iperf_stream *sp)
 {
     int i;
     char *buf;
 
-    buf = (char *) malloc(settings.bufsize);
+    buf = (char *) malloc(sp->settings->bufsize);
     if(!buf) {
         perror("malloc: unable to allocate transmit buffer");
         pthread_exit(NULL);
@@ -335,12 +342,12 @@ tcp_client_thread(struct stream *sp)
 
     printf("window: %d\n", getsock_tcp_windowsize(sp->sock, SO_SNDBUF));
 
-    for(i=0; i < settings.bufsize; i++)
+    for(i=0; i < sp->settings->bufsize; i++)
         buf[i] = i % 37;
 
     while(!done) {
-        send(sp->sock, buf, settings.bufsize, 0);
-        sp->bytes_out += settings.bufsize;
+        send(sp->sock, buf, sp->settings->bufsize, 0);
+        sp->bytes_out += sp->settings->bufsize;
     }
 
     /* a 0 byte packet is the server's cue that we're done */
@@ -355,12 +362,12 @@ tcp_client_thread(struct stream *sp)
 }
 
 void *
-tcp_server_thread(struct stream *sp)
+tcp_server_thread(struct iperf_stream *sp)
 {
-    char *buf;
+    char *buf, ubuf[UNIT_LEN];
     ssize_t sz;
 
-    buf = (char *) malloc(settings.bufsize);
+    buf = (char *) malloc(sp->settings->bufsize);
     if(!buf) {
         perror("malloc: unable to allocate receive buffer");
         pthread_exit(NULL);
@@ -368,44 +375,45 @@ tcp_server_thread(struct stream *sp)
 
     printf("window: %d\n", getsock_tcp_windowsize(sp->sock, SO_RCVBUF));
 
-    while( (sz = recv(sp->sock, buf, settings.bufsize, 0)) > 0) {
+    while( (sz = recv(sp->sock, buf, sp->settings->bufsize, 0)) > 0) {
         sp->bytes_in += sz;
     }
 
     close(sp->sock);
-    printf("%llu bytes received %g\n", sp->bytes_in, (sp->bytes_in * 8.0)/(settings.duration*1000.0*1000.0));
+    unit_snprintf(ubuf, UNIT_LEN, (double) sp->bytes_in / sp->settings->duration, 'a');
+    printf("%llu bytes received %s/sec\n", sp->bytes_in, ubuf);
     pthread_exit(NULL);
 }
 
 int
-client(void)
+client(struct iperf_settings *settings)
 {
     int s, i;
-    struct stream *sp;
+    struct iperf_stream *sp;
     struct timer *timer;
 
-    for(i = 0; i < settings.threads; i++) {
-        s = netdial(settings.proto, settings.client, settings.port);
+    for(i = 0; i < settings->threads; i++) {
+        s = netdial(settings->proto, settings->client, settings->port);
         if(s < 0) {
             fprintf(stderr, "netdial failed\n");
             return -1;
         }
     
-        set_tcp_windowsize(s, settings.window, SO_SNDBUF);
+        set_tcp_windowsize(s, settings->window, SO_SNDBUF);
 
         if(s < 0)
             return -1;
 
-        sp = new_stream(s);
+        sp = new_stream(s, settings);
         add_stream(sp);
         connect_msg(sp);
         pthread_create(&sp->thread, NULL, sp->client, (void *) sp);
     }
 
-    timer = new_timer(settings.duration, 0);
+    timer = new_timer(settings->duration, 0);
 
     while(!timer->expired(timer))
-        sleep(settings.duration);
+        sleep(settings->duration);
 
     done = 1;
 
@@ -420,44 +428,44 @@ client(void)
 }
 
 int
-server()
+server(struct iperf_settings *settings)
 {
     int s, cs, sz;
-    struct stream *sp;
+    struct iperf_stream *sp;
     struct sockaddr_in sa_peer;
     socklen_t len;
-    char buf[settings.bufsize], ubuf[11];
+    char buf[settings->bufsize], ubuf[UNIT_LEN];
 
-    s = netannounce(settings.proto, NULL, settings.port);
+    s = netannounce(settings->proto, NULL, settings->port);
     if(s < 0)
         return -1;
 
-    if(set_tcp_windowsize(s, settings.window, SO_RCVBUF) < 0) {
+    if(set_tcp_windowsize(s, settings->window, SO_RCVBUF) < 0) {
         perror("unable to set window");
         return -1;
     }
 
     printf("-----------------------------------------------------------\n");
-    printf("Server listening on %d\n", settings.port);
+    printf("Server listening on %d\n", settings->port);
     int x;
     if((x = getsock_tcp_windowsize(s, SO_RCVBUF)) < 0) 
         perror("SO_RCVBUF");
 
-    unit_snprintf(ubuf, 11, (double) x, 'A');
+    unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A');
     printf("%s: %s\n",
-            settings.proto == Ptcp ? "TCP window size" : "UDP buffer size", ubuf);
+            settings->proto == Ptcp ? "TCP window size" : "UDP buffer size", ubuf);
     printf("-----------------------------------------------------------\n");
 
     len = sizeof sa_peer;
     while(1) {
-        if (Ptcp == settings.proto) {
+        if (Ptcp == settings->proto) {
             if( (cs = accept(s, (struct sockaddr *) &sa_peer, &len)) < 0) {
                 perror("accept");
                 return -1;
             }
-            sp = new_stream(cs);
-        } else if (Pudp == settings.proto) {
-            sz = recvfrom(s, buf, settings.bufsize, 0, (struct sockaddr *) &sa_peer, &len);
+            sp = new_stream(cs, settings);
+        } else if (Pudp == settings->proto) {
+            sz = recvfrom(s, buf, settings->bufsize, 0, (struct sockaddr *) &sa_peer, &len);
             if(!sz)
                 break;
 
@@ -466,10 +474,10 @@ server()
                 return -1;
             }
 
-            sp = new_stream(s);
+            sp = new_stream(s, settings);
             sp->bytes_in += sz;
 
-            s = netannounce(settings.proto, NULL, settings.port);
+            s = netannounce(settings->proto, NULL, settings->port);
             if(s < 0) {
                 return -1;
             }
@@ -487,6 +495,9 @@ main(int argc, char **argv)
 {
     int rc;
     char ch;
+    struct iperf_settings settings;
+
+    default_settings(&settings);
 
     while( (ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:", longopts, NULL)) != -1 )
         switch (ch) {
@@ -526,10 +537,10 @@ main(int argc, char **argv)
 
     switch (settings.mode) {
         case Mclient:
-            rc = client();
+            rc = client(&settings);
             break;
         case Mserver:
-            rc = server();
+            rc = server(&settings);
             break;
         case Mundef:
             /* FALLTHRU */

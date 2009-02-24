@@ -27,8 +27,10 @@
 
 #include <sys/time.h>
 
+#include "iperf.h"
 #include "timer.h"
 #include "net.h"
+#include "units.h"
 #include "tcp_window_size.h"
 
 enum {
@@ -93,11 +95,11 @@ struct settings
     char *client;
     int port;
     int sock;
-    uint64_t bw;
+    iperf_size_t bw;
     int duration;
     int threads;
-    long int bufsize;
-    long int window;
+    iperf_size_t bufsize;
+    iperf_size_t window;
     struct sockaddr_in sa;
 };
 
@@ -424,7 +426,7 @@ server()
     struct stream *sp;
     struct sockaddr_in sa_peer;
     socklen_t len;
-    char buf[settings.bufsize];
+    char buf[settings.bufsize], ubuf[11];
 
     s = netannounce(settings.proto, NULL, settings.port);
     if(s < 0)
@@ -441,8 +443,9 @@ server()
     if((x = getsock_tcp_windowsize(s, SO_RCVBUF)) < 0) 
         perror("SO_RCVBUF");
 
-    printf("%s: %d\n",
-            settings.proto == Ptcp ? "TCP window size" : "UDP buffer size", x);
+    unit_snprintf(ubuf, 11, (double) x, 'A');
+    printf("%s: %s\n",
+            settings.proto == Ptcp ? "TCP window size" : "UDP buffer size", ubuf);
     printf("-----------------------------------------------------------\n");
 
     len = sizeof sa_peer;
@@ -508,13 +511,13 @@ main(int argc, char **argv)
                 settings.threads = atoi(optarg);
                 break;
             case 'b':
-                settings.bw = atoll(optarg);
+                settings.bw = unit_atoi(optarg);
                 break;
             case 'l':
                 settings.bufsize = atol(optarg);
                 break;
             case 'w':
-                settings.window = atoi(optarg);
+                settings.window = unit_atoi(optarg);
                 break;
         }
 

@@ -51,95 +51,99 @@
  * input and output numbers, converting with kilo, mega, giga
  * ------------------------------------------------------------------- */
 
-#include "headers.h"
-#include "util.h"
+#include <stdio.h>
+#include <assert.h>
+#include <ctype.h>
+#include <stdint.h>
+
+#include "iperf.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-const long kKilo_to_Unit = 1024;
-const long kMega_to_Unit = 1024 * 1024;
-const long kGiga_to_Unit = 1024 * 1024 * 1024;
+const long KILO_UNIT = 1024;
+const long MEGA_UNIT = 1024 * 1024;
+const long GIGA_UNIT = 1024 * 1024 * 1024;
 
-const long kkilo_to_Unit = 1000;
-const long kmega_to_Unit = 1000 * 1000;
-const long kgiga_to_Unit = 1000 * 1000 * 1000;
+const long KILO_UNIT_SI = 1000;
+const long MEGA_UNIT_SI = 1000 * 1000;
+const long GIGA_UNIT_SI = 1000 * 1000 * 1000;
 
 /* -------------------------------------------------------------------
- * byte_atof
+ * unit_atof
  *
  * Given a string of form #x where # is a number and x is a format
  * character listed below, this returns the interpreted integer.
  * Gg, Mm, Kk are giga, mega, kilo respectively
  * ------------------------------------------------------------------- */
 
-double byte_atof( const char *inString ) {
-    double theNum;
+double unit_atof( const char *s ) {
+    double n;
     char suffix = '\0';
 
-    assert( inString != NULL );
+    assert( s != NULL );
 
     /* scan the number and any suffices */
-    sscanf( inString, "%lf%c", &theNum, &suffix );
+    sscanf( s, "%lf%c", &n, &suffix );
 
     /* convert according to [Gg Mm Kk] */
     switch ( suffix ) {
-        case 'G':  theNum *= kGiga_to_Unit;  break;
-        case 'M':  theNum *= kMega_to_Unit;  break;
-        case 'K':  theNum *= kKilo_to_Unit;  break;
-        case 'g':  theNum *= kgiga_to_Unit;  break;
-        case 'm':  theNum *= kmega_to_Unit;  break;
-        case 'k':  theNum *= kkilo_to_Unit;  break;
+        case 'G':  n *= GIGA_UNIT;  break;
+        case 'M':  n *= MEGA_UNIT;  break;
+        case 'K':  n *= KILO_UNIT;  break;
+        case 'g':  n *= GIGA_UNIT_SI;  break;
+        case 'm':  n *= MEGA_UNIT_SI;  break;
+        case 'k':  n *= KILO_UNIT_SI;  break;
         default: break;
     }
-    return theNum;
-} /* end byte_atof */
+    return n;
+} /* end unit_atof */
 
 /* -------------------------------------------------------------------
- * byte_atoi
+ * unit_atoi
  *
  * Given a string of form #x where # is a number and x is a format
  * character listed below, this returns the interpreted integer.
  * Gg, Mm, Kk are giga, mega, kilo respectively
  * ------------------------------------------------------------------- */
 
-max_size_t byte_atoi( const char *inString ) {
-    double theNum;
+iperf_size_t unit_atoi( const char *s ) {
+    double n;
     char suffix = '\0';
 
-    assert( inString != NULL );
+    assert( s != NULL );
 
     /* scan the number and any suffices */
-    sscanf( inString, "%lf%c", &theNum, &suffix );
+    sscanf( s, "%lf%c", &n, &suffix );
 
     /* convert according to [Gg Mm Kk] */
     switch ( suffix ) {
-        case 'G':  theNum *= kGiga_to_Unit;  break;
-        case 'M':  theNum *= kMega_to_Unit;  break;
-        case 'K':  theNum *= kKilo_to_Unit;  break;
-        case 'g':  theNum *= kgiga_to_Unit;  break;
-        case 'm':  theNum *= kmega_to_Unit;  break;
-        case 'k':  theNum *= kkilo_to_Unit;  break;
+        case 'G':  n *= GIGA_UNIT;  break;
+        case 'M':  n *= MEGA_UNIT;  break;
+        case 'K':  n *= KILO_UNIT;  break;
+        case 'g':  n *= GIGA_UNIT_SI;  break;
+        case 'm':  n *= MEGA_UNIT_SI;  break;
+        case 'k':  n *= KILO_UNIT_SI;  break;
         default: break;
     }
-    return (max_size_t) theNum;
-} /* end byte_atof */
+    return (iperf_size_t) n;
+} /* end unit_atof */
 
 /* -------------------------------------------------------------------
  * constants for byte_printf
  * ------------------------------------------------------------------- */
 
-/* used as indices into kConversion[], kLabel_Byte[], and kLabel_bit[] */
+/* used as indices into conversion_bytes[], label_byte[], and label_bit[] */
 enum {
-    kConv_Unit,
-    kConv_Kilo,
-    kConv_Mega,
-    kConv_Giga
+    UNIT_CONV,
+    KILO_CONV,
+    MEGA_CONV,
+    GIGA_CONV
 };
 
 /* factor to multiply the number by */
-const double kConversion[] =
+const double conversion_bytes[] =
 {
     1.0,                       /* unit */
     1.0 / 1024,                /* kilo */
@@ -148,7 +152,7 @@ const double kConversion[] =
 };
 
 /* factor to multiply the number by for bits*/
-const double kConversionForBits[] =
+const double conversion_bits[] =
 {
     1.0,                       /* unit */
     1.0 / 1000,                /* kilo */
@@ -158,7 +162,7 @@ const double kConversionForBits[] =
 
 
 /* labels for Byte formats [KMG] */
-const char* kLabel_Byte[] =
+const char* label_byte[] =
 {
     "Byte",
     "KByte",
@@ -167,7 +171,7 @@ const char* kLabel_Byte[] =
 };
 
 /* labels for bit formats [kmg] */
-const char* kLabel_bit[]  =
+const char* label_bit[]  =
 {
     "bit", 
     "Kbit",
@@ -176,18 +180,18 @@ const char* kLabel_bit[]  =
 };
 
 /* -------------------------------------------------------------------
- * byte_snprintf
+ * unit_snprintf
  *
  * Given a number in bytes and a format, converts the number and
  * prints it out with a bits or bytes label.
  *   B, K, M, G, A for Byte, Kbyte, Mbyte, Gbyte, adaptive byte
  *   b, k, m, g, a for bit,  Kbit,  Mbit,  Gbit,  adaptive bit
  * adaptive picks the "best" one based on the number.
- * outString should be at least 11 chars long
+ * s should be at least 11 chars long
  * (4 digits + space + 5 chars max + null)
  * ------------------------------------------------------------------- */
 
-void byte_snprintf( char* outString, int inLen,
+void unit_snprintf( char *s, int inLen,
                     double inNum, char inFormat ) {
     int conv;
     const char* suffix;
@@ -199,23 +203,23 @@ void byte_snprintf( char* outString, int inLen,
     }
 
     switch ( toupper(inFormat) ) {
-        case 'B': conv = kConv_Unit; break;
-        case 'K': conv = kConv_Kilo; break;
-        case 'M': conv = kConv_Mega; break;
-        case 'G': conv = kConv_Giga; break;
+        case 'B': conv = UNIT_CONV; break;
+        case 'K': conv = KILO_CONV; break;
+        case 'M': conv = MEGA_CONV; break;
+        case 'G': conv = GIGA_CONV; break;
 
         default:
         case 'A': {
                 double tmpNum = inNum;
-                conv = kConv_Unit;
+                conv = UNIT_CONV;
 
                 if ( isupper((int)inFormat) ) {
-                    while ( tmpNum >= 1024.0  &&  conv <= kConv_Giga ) {
+                    while ( tmpNum >= 1024.0  &&  conv <= GIGA_CONV ) {
                         tmpNum /= 1024.0;
                         conv++;
                     }
                 } else {
-                    while ( tmpNum >= 1000.0  &&  conv <= kConv_Giga ) {
+                    while ( tmpNum >= 1000.0  &&  conv <= GIGA_CONV ) {
                         tmpNum /= 1000.0;
                         conv++;
                     }
@@ -225,11 +229,11 @@ void byte_snprintf( char* outString, int inLen,
     }
 
     if ( ! isupper ((int)inFormat) ) {
-        inNum *= kConversionForBits[ conv ];
-        suffix = kLabel_bit[conv];
+        inNum *= conversion_bits[ conv ];
+        suffix = label_bit[conv];
     } else {
-        inNum *= kConversion [conv];
-        suffix = kLabel_Byte[ conv ];
+        inNum *= conversion_bytes [conv];
+        suffix = label_byte[ conv ];
     }
 
     /* print such that we always fit in 4 places */
@@ -244,39 +248,9 @@ void byte_snprintf( char* outString, int inLen,
 				     * this code will not control spaces*/
         format = "%4.0f %s";        /* #### */
     }
-    snprintf( outString, inLen, format, inNum, suffix );
-} /* end byte_snprintf */
-
-/* -------------------------------------------------------------------
- * redirect
- *
- * redirect the stdout into a specified file
- * return: none
- * ------------------------------------------------------------------- */
-
-void redirect(const char *inOutputFileName) {
-#ifdef WIN32
-
-    FILE *fp;
-
-    if ( inOutputFileName == NULL ) {
-        fprintf(stderr, "should specify the output file name.\n");
-        return;
-    }
-
-    fp = freopen(inOutputFileName, "a+", stdout);
-    if ( fp == NULL ) {
-        fprintf(stderr, "redirect stdout failed!\n");
-        return;
-    }
-
-#endif
-
-    return;
-}
-
+    snprintf( s, inLen, format, inNum, suffix );
+} /* end unit_snprintf */
 
 #ifdef __cplusplus
 } /* end extern "C" */
 #endif
-

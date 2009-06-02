@@ -2,7 +2,8 @@
  * iperfjd -- greatly simplified version of iperf with the same interface
  * semantics
  *
- * kprabhu - 29th May 2009
+ * kprabhu - 1st june 2009 - server side code with select
+ * with updated linked list functions.
  *
  */
 

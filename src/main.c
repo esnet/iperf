@@ -1,12 +1,11 @@
 /*
  * iperfjd -- greatly simplified version of iperf with the same interface
  * semantics
- *
- * kprabhu - 1st june 2009 - server side code with select
+ * kprabhu - 2nd june 2009 - server side code with select
  * with updated linked list functions.
+ *kprabhu - 3rd June 2009 - client side code with select
  *
  */
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,6 +15,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <assert.h>
+#include<fcntl.h>
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -126,9 +126,6 @@ default_settings(struct iperf_settings *settings)
 
 struct iperf_stream *streams;  /* head of list of streams */
 int done = 0;
-
-
-
 
 /*--------------------------------------------------------
  * Displays the current list of streams
@@ -315,7 +312,7 @@ free_stream(struct iperf_stream *sp)
  * update the stream
  -------------------------------------------------------*/
 struct iperf_stream * 
-find_update_stream(int j, int result)
+update_stream(int j, int result)
 {
 	struct iperf_stream *n;
 	n=streams;
@@ -352,9 +349,8 @@ void connect_msg(struct iperf_stream *sp)
 		   sp->peer_addr, htons(sp->peer.sin_port));
 }
 
-
 /*--------------------------------------------------------
- * UDP client functionality.
+ * UDP client functionality. - NOT USED
  -------------------------------------------------------*/
 void *
 udp_client_thread(struct iperf_stream *sp)
@@ -385,6 +381,8 @@ udp_client_thread(struct iperf_stream *sp)
     delayns = dtargns;
     adjustns = 0;
     printf("%lld adj %lld delay\n", adjustns, delayns);
+	
+	
     while(!done) {
         send(sp->sock, buf, sp->settings->bufsize, 0);
         sp->bytes_out += sp->settings->bufsize;
@@ -421,7 +419,7 @@ udp_client_thread(struct iperf_stream *sp)
 
 
 /*--------------------------------------------------------
- * UDP Server functionality.
+ * UDP Server functionality. - NOT USED
  -------------------------------------------------------*/
 void *
 udp_server_thread(struct iperf_stream *sp)
@@ -447,7 +445,7 @@ udp_server_thread(struct iperf_stream *sp)
 
 
 /*--------------------------------------------------------
- * UDP Reporting routine
+ * UDP Reporting routine - NOT USED
  -------------------------------------------------------*/
 void
 udp_report(int final)
@@ -457,13 +455,32 @@ udp_report(int final)
 
 
 /*--------------------------------------------------------
- * UDP Reporting routine
+ * TCP Reporting routine - NOT USED
  -------------------------------------------------------*/
 void
 tcp_report(int final)
 {
 }
+/*--------------------------------------------------------
+ * Make socket non-blocking
+ * -------------------------------------------------------*/
 
+void setnonblocking(int sock)
+{
+	int opts;
+	
+	opts = fcntl(sock,F_GETFL);
+	if (opts < 0) {
+		perror("fcntl(F_GETFL)");
+		exit(EXIT_FAILURE);
+	}
+	opts = (opts | O_NONBLOCK);
+	if (fcntl(sock,F_SETFL,opts) < 0) {
+		perror("fcntl(F_SETFL)");
+		exit(EXIT_FAILURE);
+	}
+	return;
+}
 
 /*--------------------------------------------------------
  * TCP client functionality
@@ -503,7 +520,7 @@ tcp_client_thread(struct iperf_stream *sp)
 }
 
 /*--------------------------------------------------------
- * TCP Server functionality
+ * TCP Server functionality - NOT USED
  * -------------------------------------------------------*/
 void *
 tcp_server_thread(struct iperf_stream *sp)
@@ -539,13 +556,33 @@ client(struct iperf_settings *settings)
     int s, i;
     struct iperf_stream *sp;
     struct timer *timer;
+	char *buf;
+	int64_t delayns, adjustns, dtargns; 
+    struct timeval before, after;
+	fd_set write_set;
+	struct timeval tv;
+	int maxfd;
 	
-    for(i = 0; i < settings->threads; i++) {
+	FD_ZERO(&write_set);
+	FD_SET(s, &write_set);	
+	
+	tv.tv_sec = 15;			// timeout interval in seconds
+	tv.tv_usec = 0;
+	
+    for(i = 0; i < settings->threads; i++)
+	{
         s = netdial(settings->proto, settings->client, settings->port);
-        if(s < 0) {
+        if(s < 0) 
+		{
             fprintf(stderr, "netdial failed\n");
             return -1;
         }
+		
+		//setnonblocking(s);
+		
+		FD_SET(s, &write_set);
+		maxfd = (maxfd < s)?s:maxfd;
+		
 		
         set_tcp_windowsize(s, settings->window, SO_SNDBUF);
 		
@@ -555,30 +592,91 @@ client(struct iperf_settings *settings)
         sp = new_stream(s, settings);
         add_stream(sp);
         connect_msg(sp);
-		// need to replace this with Select
-        pthread_create(&sp->thread, NULL, sp->client, (void *) sp);
+		
     }
+		
+	// sety necessary parameters for TCP/UDP
+	buf = (char *) malloc(sp->settings->bufsize);
+	if(!buf)
+	{
+		perror("malloc: unable to allocate transmit buffer");
+	}
+		
+	 printf("window: %d\n", getsock_tcp_windowsize(sp->sock, SO_SNDBUF));
 	
-    timer = new_timer(settings->duration, 0);
+	for(i=0; i < settings->bufsize; i++)
+			buf[i] = i % 37;
+		
+	if (settings->proto==Pudp)
+	{
+		dtargns = (int64_t)settings->bufsize * SEC_TO_NS * 8;
+		dtargns /= settings->bw;
+		
+		assert(dtargns != 0);
+		
+		if(gettimeofday(&before, 0) < 0) {
+			perror("gettimeofday");
+		}
+		
+		delayns = dtargns;
+		adjustns = 0;
+		printf("%lld adj %lld delay\n", adjustns, delayns);			
+	}
+
 	
-	// wait till the timer expires
+    timer = new_timer(settings->duration, 0);	
+		
+	// send data till the timer expires
     while(!timer->expired(timer))
-        sleep(settings->duration);
-	
-	// this is checked in UDP/TCP while loop
-	// to stop sending packets. Global member
-    done = 1;
-	
+	{
+		sp=streams;	
+		for(i=0;i<settings->threads;i++)
+		{
+			if(FD_ISSET(sp->sock,&write_set))
+			{
+				send(sp->sock, buf, sp->settings->bufsize, 0);
+				sp->bytes_out += sp->settings->bufsize;
+				
+				
+				if (settings->proto==Pudp)
+				{
+					if(delayns > 0)
+						delay(delayns);
+				
+					if(gettimeofday(&after, 0) < 0) {
+						perror("gettimeofday");
+					}
+					
+					// need to create this separate for each stream				
+					adjustns = dtargns;
+					adjustns += (before.tv_sec - after.tv_sec) * SEC_TO_NS;
+					adjustns += (before.tv_usec - after.tv_usec) * uS_TO_NS;
+				
+					if( adjustns > 0 || delayns > 0) {
+						//printf("%lld adj %lld delay\n", adjustns, delayns);
+						delayns += adjustns;
+					}
+					memcpy(&before, &after, sizeof before);
+				}
+				
+				if(sp->next==NULL)
+					break;
+				sp=sp->next;
+			}
+		}		
+	}
+		
     /* XXX: report */
     sp = streams;
     do {
-        pthread_join(sp->thread, NULL);
+		send(sp->sock, buf, 0, 0);
+		printf("%llu bytes sent\n", sp->bytes_out);
         sp = sp->next;
+		
     } while (sp);
 	
     return 0;
 }
-
 /*--------------------------------------------------------
  * This is code for Server 
  * -------------------------------------------------------*/
@@ -590,7 +688,7 @@ server(struct iperf_settings *settings)
     struct sockaddr_in sa_peer;
     socklen_t len;
     char buf[settings->bufsize], ubuf[UNIT_LEN];
-	fd_set readset, tempset;
+	fd_set read_set, temp_set;
 	int maxfd;
 	int peersock, j, result;	
 	struct timeval tv;
@@ -623,18 +721,18 @@ server(struct iperf_settings *settings)
 	
     len = sizeof sa_peer;
 	
-	FD_ZERO(&readset);
-	FD_SET(s, &readset);
+	FD_ZERO(&read_set);
+	FD_SET(s, &read_set);
 	maxfd = s;
 	
 	do {
 		
-		memcpy(&tempset, &readset, sizeof(tempset));
-		tv.tv_sec = 15;			// timeout interval in seconds
+		memcpy(&temp_set, &read_set, sizeof(temp_set));
+		tv.tv_sec = 50;			// timeout interval in seconds
 		tv.tv_usec = 0;
 		
 		// using select to check on multiple descriptors.
-		result = select(maxfd + 1, &tempset, NULL, NULL, &tv);
+		result = select(maxfd + 1, &temp_set, NULL, NULL, &tv);
 		
 		if (result == 0) 
 		{
@@ -647,7 +745,7 @@ server(struct iperf_settings *settings)
 		else if (result > 0) 
 		{
 			
-			if (FD_ISSET(s, &tempset))
+			if (FD_ISSET(s, &temp_set))
 			{
 				if(settings->proto== Ptcp)		// New TCP Connection
 				{
@@ -658,8 +756,11 @@ server(struct iperf_settings *settings)
 						printf("Error in accept(): %s\n", strerror(errno));
 					}
 					else 
-					{							
-						FD_SET(peersock, &readset);
+					{
+						//make socket non blocking
+						setnonblocking(peersock);
+
+						FD_SET(peersock, &read_set);
 						maxfd = (maxfd < peersock)?peersock:maxfd;
 						// creating a new stream
 						sp = new_stream(peersock, settings);
@@ -695,12 +796,12 @@ server(struct iperf_settings *settings)
 						return -1;
 					
 					// same as TCP -repetation
-					FD_SET(s, &readset);
+					FD_SET(s, &read_set);
 					maxfd = (maxfd < s)?s:maxfd;
 					
 				}
 				
-				FD_CLR(s, &tempset);
+				FD_CLR(s, &temp_set);
 				
 				Display();
 			}
@@ -709,7 +810,7 @@ server(struct iperf_settings *settings)
 			// scanning all socket descriptors for read
 			for (j=0; j<maxfd+1; j++)
 			{
-				if (FD_ISSET(j, &tempset))
+				if (FD_ISSET(j, &temp_set))
 				{					
 					do
 					{	
@@ -723,14 +824,14 @@ server(struct iperf_settings *settings)
 					
 					if (result > 0)
 					{
-						sp=find_update_stream(j,result);
+						sp= update_stream(j,result);
 						
 					}
 					else if (result == 0)
 					{
 											
 						//just find the stream with zero update
-						sp = find_update_stream(j,0);											
+						sp = update_stream(j,0);											
 						
 						if(settings->proto == Ptcp)
 						{
@@ -741,7 +842,7 @@ server(struct iperf_settings *settings)
 						unit_snprintf(ubuf, UNIT_LEN, (double) sp->bytes_in / sp->settings->duration, 'a');
 						printf("%llu bytes received %s/sec for stream %d\n\n", sp->bytes_in, ubuf,(int)sp);
 						close(j);
-						FD_CLR(j, &readset);
+						FD_CLR(j, &read_set);
 						free_stream(sp);	// this needs to be a linked list delete
 						
 					}
@@ -749,7 +850,7 @@ server(struct iperf_settings *settings)
 					{
 						printf("Error in recv(): %s\n", strerror(errno));
 					}
-				}      // end if (FD_ISSET(j, &tempset))
+				}      // end if (FD_ISSET(j, &temp_set))
 			}      // end for (j=0;...)
 		}      // end else if (result > 0)
 	} while (1);

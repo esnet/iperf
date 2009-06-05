@@ -4,7 +4,7 @@
  * kprabhu - 2nd june 2009 - server side code with select
  * with updated linked list functions.
  *kprabhu - 3rd June 2009 - client side code with select
- *
+ *kprabhu - 5th June 2009 - created functions for Server TCP/UDP connections
  */
 
 #include <stdio.h>
@@ -45,7 +45,7 @@ enum {
     uS_TO_NS = 1000,
 	
 	MAX_BUFFER_SIZE =10,
-    DEFAULT_UDP_BUFSIZE = 1470,
+    DEFAULT_UDP_BUFSIZE = 1,
     DEFAULT_TCP_BUFSIZE = 8192
 };
 #define SEC_TO_NS 1000000000 /* too big for enum on some platforms */
@@ -75,9 +75,11 @@ struct iperf_stream
 
 // Run routines for TCP and UDP- will be called by pthread_create() indirectly
 void *udp_client_thread(struct iperf_stream *sp);
-void *udp_server_thread(struct iperf_stream *sp);
+void *udp_server_thread(int maxfd, fd_set *temp_set, fd_set *read_set);
+int udp_server_accept(int *s, int maxfd, fd_set *read_set, struct iperf_settings *settings);
 void *tcp_client_thread(struct iperf_stream *sp);
-void *tcp_server_thread(struct iperf_stream *sp);
+void *tcp_server_thread(int maxfd, fd_set *temp_set, fd_set *read_set);
+int tcp_server_accept(int s, int maxfd, fd_set *read_set, struct iperf_settings *settings);
 
 static struct option longopts[] =
 {
@@ -140,26 +142,24 @@ void Display()
 	
 	while(1)
 	{
-		if(n->next==NULL)
-		{			
-			printf("position-%d\tsp=%d\tsocket=%d\n",count++,(int)n,n->sock);
-			break;
-		}
 		
-		else
+		if(n)
 		{
-			printf("position-%d\tsp=%d\tsocket=%d\n",count++,(int)n,n->sock);
+			if(n->settings->mode ==Mclient)
+				printf("position-%d\tsp=%d\tsocket=%d\tbytes sent=%llu\n",count++,(int)n,n->sock,n->bytes_out);
+			else
+				printf("position-%d\tsp=%d\tsocket=%d\tbytes received=%llu\n",count++,(int)n,n->sock,n->bytes_in);
+			
 			if(n->next==NULL)
 			{
 				printf("=================END====================\n");
+				fflush(stdout);
 				break;
 			}
 			n=n->next;
 		}
 	}
 }
-
-
 
 /*--------------------------------------------------------
  * sets the parameters for the new stream created
@@ -245,8 +245,6 @@ new_stream(int s, struct iperf_settings *settings)
     return(sp);
 }
 
-
-
 /*--------------------------------------------------------
  * add a stream into stream_list linked list
  -------------------------------------------------------*/
@@ -264,7 +262,6 @@ add_stream(struct iperf_stream *sp)
         n->next = sp;
     }
 }
-
 
 /*--------------------------------------------------------
  * delete the stream
@@ -307,7 +304,6 @@ free_stream(struct iperf_stream *sp)
 	
 }
 
-
 /*--------------------------------------------------------
  * update the stream
  -------------------------------------------------------*/
@@ -319,8 +315,9 @@ update_stream(int j, int result)
 	//find the correct stream for update
 	while(1)
 	{
-		if(n->sock==j)
+		if(n->sock == j)
 		{
+			
 			n->bytes_in+= result;	//update the byte count
 			break;
 		}
@@ -417,32 +414,93 @@ udp_client_thread(struct iperf_stream *sp)
     pthread_exit(NULL);
 }
 
-
 /*--------------------------------------------------------
- * UDP Server functionality. - NOT USED
+ * UDP Server functionality
  -------------------------------------------------------*/
 void *
-udp_server_thread(struct iperf_stream *sp)
+udp_server_thread(int maxfd, fd_set *temp_set, fd_set *read_set)
 {
-    char *buf, ubuf[UNIT_LEN];
-    ssize_t sz;
+   	char buffer[DEFAULT_UDP_BUFSIZE], ubuf[UNIT_LEN];
+	int j,result;
+	struct iperf_stream *n;
 	
-    buf = (char *) malloc(sp->settings->bufsize);
-    if(!buf) {
-        perror("malloc: unable to allocate receive buffer");
-        pthread_exit(NULL);
-    }
+    for (j=0; j<maxfd+1; j++){
+		
+		if (FD_ISSET(j, temp_set)){
+			
+			do{				
+				result = recv(j, buffer,DEFAULT_UDP_BUFSIZE, 0);				
+			} while (result == -1 && errno == EINTR);
+						
+			if (result > 0){				
+				update_stream(j,result);				
+			}
+			
+			else if (result == 0){
+				
+				//just find the stream with zero update
+				n = update_stream(j,0);											
+				
+				unit_snprintf(ubuf, UNIT_LEN, (double) n->bytes_in / n->settings->duration, 'a');
+				printf("%llu bytes received %s/sec for stream %d\n\n", n->bytes_in, ubuf,(int)n);
+				
+				close(j);						
+				free_stream(n);
+				FD_CLR(j, read_set);	
+			}
+			else 
+			{
+				printf("Error in recv(): %s\n", strerror(errno));
+			}
+		}      // end if (FD_ISSET(j, &temp_set))
+		
+	}// end for (j=0;...)
 	
-    while((sz = recv(sp->sock, buf, sp->settings->bufsize, 0)) > 0) {
-        sp->bytes_in += sz;
-    }
-	
-    close(sp->sock);
-    unit_snprintf(ubuf, UNIT_LEN, (double) sp->bytes_in / sp->settings->duration, 'a');
-    printf("%llu bytes received %s/sec\n", sp->bytes_in, ubuf);
-    pthread_exit(NULL);
+	return 0;
 }
 
+
+/*--------------------------------------------------------
+ * UDP Server new connection
+ -------------------------------------------------------*/
+
+int udp_server_accept(int *s, int maxfd, fd_set *read_set, struct iperf_settings *settings)
+{
+	struct iperf_stream *sp;
+	struct sockaddr_in sa_peer;
+	char buf[settings->bufsize];
+	socklen_t len;
+	int sz;
+		
+	 len = sizeof sa_peer;
+	
+	// getting a new UDP packet
+	sz = recvfrom(*s, buf, settings->bufsize, 0, (struct sockaddr *) &sa_peer, &len);
+	if(!sz)
+		return -1;
+	
+	if(connect(*s, (struct sockaddr *) &sa_peer, len) < 0)
+	{
+		perror("connect");
+		return -1;
+	}
+	
+	// get a new socket to connect to client
+	sp = new_stream(*s, settings);
+	sp->bytes_in += sz;
+	add_stream(sp);	
+		
+	printf("calling netannounce within function \n");
+	*s = netannounce(settings->proto, NULL, settings->port);
+	if(*s < 0) 
+		return -1;
+	
+	FD_SET(*s, read_set);
+	maxfd = (maxfd < *s)?*s:maxfd;
+	
+	return maxfd;
+}	
+					  
 
 /*--------------------------------------------------------
  * UDP Reporting routine - NOT USED
@@ -451,8 +509,6 @@ void
 udp_report(int final)
 {
 }
-
-
 
 /*--------------------------------------------------------
  * TCP Reporting routine - NOT USED
@@ -468,14 +524,17 @@ tcp_report(int final)
 void setnonblocking(int sock)
 {
 	int opts;
-	
+	/*
 	opts = fcntl(sock,F_GETFL);
 	if (opts < 0) {
 		perror("fcntl(F_GETFL)");
 		exit(EXIT_FAILURE);
 	}
+	 */
+	
 	opts = (opts | O_NONBLOCK);
-	if (fcntl(sock,F_SETFL,opts) < 0) {
+	if (fcntl(sock,F_SETFL,opts) < 0)
+	{
 		perror("fcntl(F_SETFL)");
 		exit(EXIT_FAILURE);
 	}
@@ -520,32 +579,87 @@ tcp_client_thread(struct iperf_stream *sp)
 }
 
 /*--------------------------------------------------------
- * TCP Server functionality - NOT USED
+ * TCP Server functionality 
  * -------------------------------------------------------*/
 void *
-tcp_server_thread(struct iperf_stream *sp)
+tcp_server_thread(int maxfd, fd_set *temp_set, fd_set *read_set)
 {
-    char *buf, ubuf[UNIT_LEN];
-    ssize_t sz;
 	
-    buf = (char *) malloc(sp->settings->bufsize);
-    if(!buf) {
-        perror("malloc: unable to allocate receive buffer");
-        pthread_exit(NULL);
-    }
+	int j,result;
+	char buffer[DEFAULT_TCP_BUFSIZE], ubuf[UNIT_LEN]; 
+	struct iperf_stream *n;
 	
-    printf("window: %d\n", getsock_tcp_windowsize(sp->sock, SO_RCVBUF));
+    // scanning all socket descriptors for read
+	for (j=0; j<maxfd+1; j++)
+	{
+		if (FD_ISSET(j, temp_set)){
+			
+			do{					
+					result = recv(j, buffer,DEFAULT_TCP_BUFSIZE, 0);
+							
+			} while (result == -1 && errno == EINTR);
+						
+			if (result > 0){
+				update_stream(j,result);				
+			}
+			
+			else if (result == 0){
 	
-    while( (sz = recv(sp->sock, buf, sp->settings->bufsize, 0)) > 0) {
-        sp->bytes_in += sz;
-    }
-	
-    close(sp->sock);
-    unit_snprintf(ubuf, UNIT_LEN, (double) sp->bytes_in / sp->settings->duration, 'a');
-    printf("%llu bytes received %s/sec\n", sp->bytes_in, ubuf);
-    pthread_exit(NULL);
+				n = update_stream(j, 0);	
+				printf("window: %d\n", getsock_tcp_windowsize(n->sock, SO_RCVBUF));
+				
+				unit_snprintf(ubuf, UNIT_LEN, (double) n->bytes_in / n->settings->duration, 'a');
+				printf("%llu bytes received %s/sec for stream %d\n\n", n->bytes_in, ubuf,(int)n);
+				
+				close(j);						
+				free_stream(n);
+				FD_CLR(j, read_set);	
+			}
+			else 
+			{
+				printf("Error in recv(): %s\n", strerror(errno));
+			}
+		}      // end if (FD_ISSET(j, &temp_set))
+		
+	}      // end for (j=0;...)
+		return 0;
 }
 
+/*--------------------------------------------------------
+ * TCP new connection 
+ * -------------------------------------------------------*/
+int 
+tcp_server_accept(int s, int maxfd, fd_set *read_set, struct iperf_settings *settings)
+{
+	socklen_t len;
+	struct sockaddr_in addr;
+	int peersock;
+	struct iperf_stream *sp;
+	
+	len = sizeof(addr);
+	peersock = accept(s,(struct sockaddr *) &addr, &len);
+	if (peersock < 0) 
+	{
+		printf("Error in accept(): %s\n", strerror(errno));
+		return 0;
+	}
+	else 
+	{
+		//make socket non blocking
+		setnonblocking(peersock);
+		
+		FD_SET(peersock, read_set);
+		maxfd = (maxfd < peersock)?peersock:maxfd;
+		// creating a new stream
+		sp = new_stream(peersock, settings);
+		add_stream(sp);					
+		connect_msg(sp);
+		
+		return maxfd;
+	}
+	
+	return -1;
+}
 
 /*--------------------------------------------------------
  * This is code for Client 
@@ -561,7 +675,7 @@ client(struct iperf_settings *settings)
     struct timeval before, after;
 	fd_set write_set;
 	struct timeval tv;
-	int maxfd;
+	int maxfd,ret=0;
 	
 	FD_ZERO(&write_set);
 	FD_SET(s, &write_set);	
@@ -577,22 +691,20 @@ client(struct iperf_settings *settings)
             fprintf(stderr, "netdial failed\n");
             return -1;
         }
-		
-		//setnonblocking(s);
-		
+				
 		FD_SET(s, &write_set);
 		maxfd = (maxfd < s)?s:maxfd;
-		
-		
+				
         set_tcp_windowsize(s, settings->window, SO_SNDBUF);
 		
         if(s < 0)
             return -1;
 		
+		//setting noblock causes error in byte count -kprabhu
+		//setnonblocking(s);
         sp = new_stream(s, settings);
         add_stream(sp);
-        connect_msg(sp);
-		
+        connect_msg(sp);		
     }
 		
 	// sety necessary parameters for TCP/UDP
@@ -624,19 +736,29 @@ client(struct iperf_settings *settings)
 	}
 
 	
-    timer = new_timer(settings->duration, 0);	
+    timer = new_timer(settings->duration, 0);
+	
+	printf("calling select\n");
+	
+	
+	Display();
 		
 	// send data till the timer expires
     while(!timer->expired(timer))
 	{
+		
+    	ret = select(maxfd+1, NULL, &write_set, NULL, &tv);
+		
+		if(ret<0)
+			continue;
+				
 		sp=streams;	
 		for(i=0;i<settings->threads;i++)
 		{
-			if(FD_ISSET(sp->sock,&write_set))
+			if(FD_ISSET(sp->sock, &write_set))
 			{
 				send(sp->sock, buf, sp->settings->bufsize, 0);
-				sp->bytes_out += sp->settings->bufsize;
-				
+				sp->bytes_out += sp->settings->bufsize;								
 				
 				if (settings->proto==Pudp)
 				{
@@ -666,13 +788,16 @@ client(struct iperf_settings *settings)
 		}		
 	}
 		
+	Display();
+	
     /* XXX: report */
     sp = streams;
     do {
 		send(sp->sock, buf, 0, 0);
 		printf("%llu bytes sent\n", sp->bytes_out);
-        sp = sp->next;
-		
+		//close(sp->sock);
+		//free(sp);			
+		sp = sp->next;		
     } while (sp);
 	
     return 0;
@@ -682,20 +807,11 @@ client(struct iperf_settings *settings)
  * -------------------------------------------------------*/
 int
 server(struct iperf_settings *settings)
-{
-    int s,sz;
-    struct iperf_stream *sp;
-    struct sockaddr_in sa_peer;
-    socklen_t len;
-    char buf[settings->bufsize], ubuf[UNIT_LEN];
+{    
+    struct timeval tv;
+    char ubuf[UNIT_LEN];
 	fd_set read_set, temp_set;
-	int maxfd;
-	int peersock, j, result;	
-	struct timeval tv;
-	
- 	char buffer[DEFAULT_TCP_BUFSIZE];
-	
-	struct sockaddr_in addr;
+	int maxfd,result,s;
 	
     s = netannounce(settings->proto, NULL, settings->port);
     if(s < 0)
@@ -710,16 +826,13 @@ server(struct iperf_settings *settings)
     printf("Server listening on %d\n", settings->port);
     int x;
     if((x = getsock_tcp_windowsize(s, SO_RCVBUF)) < 0) 
-        perror("SO_RCVBUF");
-	
+        perror("SO_RCVBUF");	
 	
     unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A');
     printf("%s: %s\n",
 		   settings->proto == Ptcp ? "TCP window size" : "UDP buffer size", ubuf);
 	
     printf("-----------------------------------------------------------\n");
-	
-    len = sizeof sa_peer;
 	
 	FD_ZERO(&read_set);
 	FD_SET(s, &read_set);
@@ -735,128 +848,37 @@ server(struct iperf_settings *settings)
 		result = select(maxfd + 1, &temp_set, NULL, NULL, &tv);
 		
 		if (result == 0) 
-		{
 			printf("select() timed out!\n");
-		}
+		
 		else if (result < 0 && errno != EINTR)
-		{
 			printf("Error in select(): %s\n", strerror(errno));
-		}
+		
 		else if (result > 0) 
 		{
-			
 			if (FD_ISSET(s, &temp_set))
 			{
 				if(settings->proto== Ptcp)		// New TCP Connection
-				{
-					len = sizeof(addr);
-					peersock = accept(s,(struct sockaddr *) &addr, &len);
-					if (peersock < 0) 
-					{
-						printf("Error in accept(): %s\n", strerror(errno));
-					}
-					else 
-					{
-						//make socket non blocking
-						setnonblocking(peersock);
-
-						FD_SET(peersock, &read_set);
-						maxfd = (maxfd < peersock)?peersock:maxfd;
-						// creating a new stream
-						sp = new_stream(peersock, settings);
-						add_stream(sp);					
-						connect_msg(sp);
-												
-					}		
-					
-				}
-				
-				else if ( settings->proto== Pudp)	//New UDP Connection
-				{
-					// getting a new UDP packet
-					sz = recvfrom(s, buf, settings->bufsize, 0, (struct sockaddr *) &sa_peer, &len);
-					if(!sz)
-						break;
-					
-					if(connect(s, (struct sockaddr *) &sa_peer, len) < 0)
-					{
-						perror("connect");
-						return -1;
-					}
-					
-					// get a new socket to connect to client
-					
-					sp = new_stream(s, settings);
-					sp->bytes_in += sz;	
-					add_stream(sp);
-					
-					
-					s = netannounce(settings->proto, NULL, settings->port);
-					if(s < 0) 
-						return -1;
-					
-					// same as TCP -repetation
-					FD_SET(s, &read_set);
-					maxfd = (maxfd < s)?s:maxfd;
-					
-				}
-				
+					maxfd = tcp_server_accept(s, maxfd, &read_set, settings);												
+								
+				else if( settings->proto == Pudp)	//New UDP Connection
+					maxfd = udp_server_accept(&s, maxfd, &read_set, settings);					
+								
 				FD_CLR(s, &temp_set);
 				
 				Display();
 			}
 			
+			// Monitor the sockets for TCP
+			if(settings->proto== Ptcp)
+				tcp_server_thread(maxfd, &temp_set, &read_set);			
 			
-			// scanning all socket descriptors for read
-			for (j=0; j<maxfd+1; j++)
-			{
-				if (FD_ISSET(j, &temp_set))
-				{					
-					do
-					{	
-						if(settings->proto==Ptcp)
-							result = recv(j, buffer,DEFAULT_TCP_BUFSIZE, 0);
-						else
-							result = recv(j, buffer,DEFAULT_UDP_BUFSIZE, 0);
+			// Monitor the sockets for TCP			
+			else if(settings->proto== Pudp)
+				udp_server_thread(maxfd, &temp_set, &read_set);
 						
-					} while (result == -1 && errno == EINTR);
-					
-					
-					if (result > 0)
-					{
-						sp= update_stream(j,result);
-						
-					}
-					else if (result == 0)
-					{
-											
-						//just find the stream with zero update
-						sp = update_stream(j,0);											
-						
-						if(settings->proto == Ptcp)
-						{
-							printf("window: %d\n", getsock_tcp_windowsize(sp->sock, SO_RCVBUF));
-						}
-						
-						
-						unit_snprintf(ubuf, UNIT_LEN, (double) sp->bytes_in / sp->settings->duration, 'a');
-						printf("%llu bytes received %s/sec for stream %d\n\n", sp->bytes_in, ubuf,(int)sp);
-						close(j);
-						FD_CLR(j, &read_set);
-						free_stream(sp);	// this needs to be a linked list delete
-						
-					}
-					else 
-					{
-						printf("Error in recv(): %s\n", strerror(errno));
-					}
-				}      // end if (FD_ISSET(j, &temp_set))
-			}      // end for (j=0;...)
-		}      // end else if (result > 0)
+		} // end else if (result > 0)
 	} while (1);
-	
-	
-	
+		
     return 0;
 }
 

@@ -54,8 +54,7 @@ struct iperf_stream
 	int remote_port;				// remote machine port
 	void *settings;	                // pointer to structure settings  
 	int protocol;					// protocol- TCP/UDP 
-	
-	
+		
 	/* non configurable members */
 	struct iperf_stream_result *result;		//structure pointer to result
 	
@@ -65,8 +64,8 @@ struct iperf_stream
 	struct sockaddr_storage remote_addr;
 	
 	int *(*init)(struct iperf_stream *stream);
-	int *(*recv)(struct iperf_stream *stream);
-	int *(*send)(struct iperf_stream *stream);
+	int *(*recv_stream)(struct iperf_stream *stream);
+	int *(*send_stream)(struct iperf_stream *stream);
 	int *(*update_stats)(struct iperf_stream *stream);
 	
 	struct iperf_stream *next;

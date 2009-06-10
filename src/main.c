@@ -1,10 +1,5 @@
 /*
- * iperfjd -- greatly simplified version of iperf with the same interface
- * semantics
- * kprabhu - 2nd june 2009 - server side code with select
- * with updated linked list functions.
- *kprabhu - 3rd June 2009 - client side code with select
- *kprabhu - 5th June 2009 - created functions for Server TCP/UDP connections
+ * iperf3
  */
 
 #include <stdio.h>
@@ -23,7 +18,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#include <pthread.h>
+#include <pthread.h> 
 #include <stdint.h>
 
 #include <sys/time.h>
@@ -45,7 +40,7 @@ enum {
     uS_TO_NS = 1000,
 	
 	MAX_BUFFER_SIZE =10,
-    DEFAULT_UDP_BUFSIZE = 1,
+    DEFAULT_UDP_BUFSIZE = 1470,
     DEFAULT_TCP_BUFSIZE = 8192
 };
 #define SEC_TO_NS 1000000000 /* too big for enum on some platforms */
@@ -73,7 +68,6 @@ struct iperf_stream
     struct iperf_stream *next;
 };
 
-// Run routines for TCP and UDP- will be called by pthread_create() indirectly
 void *udp_client_thread(struct iperf_stream *sp);
 void *udp_server_thread(int maxfd, fd_set *temp_set, fd_set *read_set);
 int udp_server_accept(int *s, int maxfd, fd_set *read_set, struct iperf_settings *settings);
@@ -176,11 +170,9 @@ new_stream(int s, struct iperf_settings *settings)
         return(NULL);
     }
 	
-	//initialise sp with 0
     memset(sp, 0, sizeof(struct iperf_stream));
 	
-	// copy settings and passed socket into stream
-    sp->settings = settings;
+	sp->settings = settings;
     sp->sock = s;
 	
 	
@@ -210,7 +202,7 @@ new_stream(int s, struct iperf_settings *settings)
         perror("inet_pton");
     }
 	
-	// sets appropriate function pointer
+	//not needed now
     switch (settings->proto) {
         case Ptcp:
             sp->client = (void *) tcp_client_thread;
@@ -274,8 +266,8 @@ free_stream(struct iperf_stream *sp)
 	prev = streams;
 	start = streams;
 	
-	if(streams->sock==sp->sock)
-	{
+	if(streams->sock==sp->sock){
+		
 		streams=streams->next;
 		return 0;
 	}
@@ -285,15 +277,15 @@ free_stream(struct iperf_stream *sp)
 		
 		while(1)
 		{
-			if(start->sock==sp->sock)
-			{				
+			if(start->sock==sp->sock){
+				
 				prev->next = sp->next;
 				free(sp);
 				return 0;				
 			}
 			
-			if(start->next!=NULL)
-			{
+			if(start->next!=NULL){
+				
 				start=start->next;
 				prev=prev->next;
 			}
@@ -312,18 +304,19 @@ update_stream(int j, int result)
 {
 	struct iperf_stream *n;
 	n=streams;
+	
 	//find the correct stream for update
 	while(1)
 	{
 		if(n->sock == j)
 		{
-			
-			n->bytes_in+= result;	//update the byte count
+			n->bytes_in= n->bytes_in + result;
 			break;
 		}
 		
 		if(n->next==NULL)
 			break;
+			
 		n = n->next;
 	}
 	
@@ -344,6 +337,30 @@ void connect_msg(struct iperf_stream *sp)
 		   sp->sock, 
 		   sp->local_addr, htons(sp->local.sin_port),
 		   sp->peer_addr, htons(sp->peer.sin_port));
+}
+
+/*--------------------------------------------------------
+ * Make socket non-blocking
+ * -------------------------------------------------------*/
+
+void setnonblocking(int sock)
+{
+	int opts;
+	/*
+	 opts = fcntl(sock,F_GETFL);
+	 if (opts < 0) {
+	 perror("fcntl(F_GETFL)");
+	 exit(EXIT_FAILURE);
+	 }
+	 */
+	
+	opts = (opts | O_NONBLOCK);
+	if (fcntl(sock,F_SETFL,opts) < 0)
+	{
+		perror("fcntl(F_SETFL)");
+		exit(EXIT_FAILURE);
+	}
+	return;
 }
 
 /*--------------------------------------------------------
@@ -424,11 +441,13 @@ udp_server_thread(int maxfd, fd_set *temp_set, fd_set *read_set)
 	int j,result;
 	struct iperf_stream *n;
 	
+	
     for (j=0; j<maxfd+1; j++){
 		
+		n = streams;
 		if (FD_ISSET(j, temp_set)){
 			
-			do{				
+			do{
 				result = recv(j, buffer,DEFAULT_UDP_BUFSIZE, 0);				
 			} while (result == -1 && errno == EINTR);
 						
@@ -490,7 +509,6 @@ int udp_server_accept(int *s, int maxfd, fd_set *read_set, struct iperf_settings
 	sp->bytes_in += sz;
 	add_stream(sp);	
 		
-	printf("calling netannounce within function \n");
 	*s = netannounce(settings->proto, NULL, settings->port);
 	if(*s < 0) 
 		return -1;
@@ -516,29 +534,6 @@ udp_report(int final)
 void
 tcp_report(int final)
 {
-}
-/*--------------------------------------------------------
- * Make socket non-blocking
- * -------------------------------------------------------*/
-
-void setnonblocking(int sock)
-{
-	int opts;
-	/*
-	opts = fcntl(sock,F_GETFL);
-	if (opts < 0) {
-		perror("fcntl(F_GETFL)");
-		exit(EXIT_FAILURE);
-	}
-	 */
-	
-	opts = (opts | O_NONBLOCK);
-	if (fcntl(sock,F_SETFL,opts) < 0)
-	{
-		perror("fcntl(F_SETFL)");
-		exit(EXIT_FAILURE);
-	}
-	return;
 }
 
 /*--------------------------------------------------------
@@ -644,13 +639,12 @@ tcp_server_accept(int s, int maxfd, fd_set *read_set, struct iperf_settings *set
 		return 0;
 	}
 	else 
-	{
-		//make socket non blocking
+	{		
 		setnonblocking(peersock);
 		
 		FD_SET(peersock, read_set);
 		maxfd = (maxfd < peersock)?peersock:maxfd;
-		// creating a new stream
+		
 		sp = new_stream(peersock, settings);
 		add_stream(sp);					
 		connect_msg(sp);
@@ -707,7 +701,6 @@ client(struct iperf_settings *settings)
         connect_msg(sp);		
     }
 		
-	// sety necessary parameters for TCP/UDP
 	buf = (char *) malloc(sp->settings->bufsize);
 	if(!buf)
 	{
@@ -769,13 +762,13 @@ client(struct iperf_settings *settings)
 						perror("gettimeofday");
 					}
 					
-					// need to create this separate for each stream				
+							
 					adjustns = dtargns;
 					adjustns += (before.tv_sec - after.tv_sec) * SEC_TO_NS;
 					adjustns += (before.tv_usec - after.tv_usec) * uS_TO_NS;
 				
 					if( adjustns > 0 || delayns > 0) {
-						//printf("%lld adj %lld delay\n", adjustns, delayns);
+						printf("%lld adj %lld delay\n", adjustns, delayns);
 						delayns += adjustns;
 					}
 					memcpy(&before, &after, sizeof before);
@@ -866,14 +859,12 @@ server(struct iperf_settings *settings)
 				FD_CLR(s, &temp_set);
 				
 				Display();
-			}
+			}			
 			
-			// Monitor the sockets for TCP
 			if(settings->proto== Ptcp)
-				tcp_server_thread(maxfd, &temp_set, &read_set);			
-			
-			// Monitor the sockets for TCP			
-			else if(settings->proto== Pudp)
+				tcp_server_thread(maxfd, &temp_set, &read_set);					
+				
+			else if(settings->proto == Pudp)
 				udp_server_thread(maxfd, &temp_set, &read_set);
 						
 		} // end else if (result > 0)

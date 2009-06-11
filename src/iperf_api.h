@@ -46,7 +46,6 @@ struct iperf_stream
 	struct sockaddr_storage local_addr;
 	struct sockaddr_storage remote_addr;
 	
-	int *(*init)(struct iperf_stream *stream);	
 	int (*rcv)(struct iperf_stream *stream);
 	int *(*snd)(struct iperf_stream *stream);
 	int *(*update_stats)(struct iperf_stream *stream);
@@ -64,6 +63,9 @@ struct iperf_test
 	int  duration;						// total duration of test  -t
 	
 	int listener_sock;
+
+    int *(*accept)(struct iperf_test *);
+    int *(*new_stream)(struct iperf_test *);
 	
 	int  stats_interval;					// time interval to gather stats -i
 	void *(*stats_callback)(struct iperf_test *);		// callback function pointer for stats

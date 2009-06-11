@@ -312,7 +312,6 @@ struct iperf_stream *iperf_new_tcp_stream(struct iperf_test *testp)
         return(NULL);
     }
 
-    sp->accept = iperf_tcp_accept;
     sp->recv = iperf_tcp_recv;
     sp->send = iperf_tcp_send;
     sp->update_stats = iperf_tcp_update_stats;
@@ -684,29 +683,27 @@ main(int argc, char **argv)
 	printf("interval = %d\n", test->stats_interval);	
 	printf("Parallel streams = %d\n", test->num_streams);
 	
-	test->local_addr= (struct sockaddr_storage *) addr_local;	
-	test->remote_addr= (struct sockaddr_storage *) addr_remote;	
-	
-	
+	test->local_addr = (struct sockaddr_storage *) addr_local;	
+	test->remote_addr = (struct sockaddr_storage *) addr_remote;	
+
+    switch(test->proto)
+    {
+        case Ptcp:
+            test->accept = iperf_tcp_accept;
+            test->new_stream = iperf_new_tcp_stream;
+            break;
+        case Pudp:
+            test->accept = iperf_udp_accept;
+            test->new_stream = ipref_new_udp_stream;
+            break;
+    }
+
 	if(test->role == 'c')
 	{
         for(i=0;i<test->num_streams;i++)
         {
+            sp = test->new_stream(test);
             sp->remote_port = temp.remote_port;
-            switch(test->proto)	{				
-                case Ptcp:
-                    sp = iperf_new_tcp_stream(test);
-                    break;
-				
-                case Pudp:
-                    sp = iperf_new_udp_stream(test);
-                    break;
-
-                case default:
-                    fprintf(stderr, "invalid protocol\n");
-                    exit();
-            }
-				
             iperf_add_stream(test,sp);
         }
     }

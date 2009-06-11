@@ -47,8 +47,8 @@ struct iperf_stream
 	struct sockaddr_storage remote_addr;
 	
 	int (*rcv)(struct iperf_stream *stream);
-	int *(*snd)(struct iperf_stream *stream);
-	int *(*update_stats)(struct iperf_stream *stream);
+	int (*snd)(struct iperf_stream *stream);
+	int (*update_stats)(struct iperf_stream *stream);
 	
 	struct iperf_stream *next;
 };
@@ -56,16 +56,23 @@ struct iperf_stream
 struct iperf_test
 {
 	char role;						// 'c'lient or 's'erver    -s / -c
-	char protocol;
+	int protocol;
 
 	struct sockaddr_storage *remote_addr;  // arg of -c 
 	struct sockaddr_storage *local_addr;	
 	int  duration;						// total duration of test  -t
 	
 	int listener_sock;
+	
+	/* Select related parameters */	
+	int max_fd;
+	
+	fd_set read_set;
+	fd_set temp_set;
+	fd_set write_set;
 
-    int *(*accept)(struct iperf_test *);
-    int *(*new_stream)(struct iperf_test *);
+    int (*accept)(struct iperf_test *);
+    struct iperf_stream *(*new_stream)(struct iperf_test *);
 	
 	int  stats_interval;					// time interval to gather stats -i
 	void *(*stats_callback)(struct iperf_test *);		// callback function pointer for stats
@@ -77,9 +84,8 @@ struct iperf_test
 	int  num_streams;					// total streams in the test -P 
 	struct iperf_stream *streams;				// pointer to list of struct stream
 
-        struct iperf_settings *default_settings;
-	
-	/*function pointers : moved here because of memeber passing problem */
+    struct iperf_settings *default_settings;
+		
 };
 
 /**
@@ -89,6 +95,7 @@ struct iperf_test
  *
  */
 struct iperf_test *iperf_new_test();
+
 void iperf_defaults(struct iperf_test *testp);
 
 /**
@@ -113,8 +120,8 @@ void iperf_free_test(struct iperf_test *testp);
  */
 struct iperf_stream *iperf_new_stream();
 
-struct iperf_stream *iperf_new_tcp_stream(int window);
-struct iperf_stream *iperf_new_udp_stream(int rate, int size);
+struct iperf_stream *iperf_new_tcp_stream(struct iperf_test *testp);
+struct iperf_stream *iperf_new_udp_stream(struct iperf_test *testp);
 
 /**
  * iperf_add_stream -- add a stream to a test
@@ -133,7 +140,7 @@ void iperf_init_stream(struct iperf_stream *stream);
  * iperf_free_stream -- free resources associated with test
  *
  */
-void iperf_free_stream(struct iperf_stream *stream);
+void iperf_free_stream(struct iperf_test *test, struct iperf_stream *stream);
 
 
 /**

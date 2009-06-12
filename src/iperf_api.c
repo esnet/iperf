@@ -61,8 +61,10 @@ static struct option longopts[] =
 int iperf_tcp_recv(struct iperf_stream *sp)
 {
 	int result;
-	int size = ((struct iperf_settings *)(sp->settings))->socket_bufsize;
+	//int size = ((struct iperf_settings *)(sp->settings))->socket_bufsize;
 	char buffer[DEFAULT_TCP_BUFSIZE];
+	
+	printf("the socket is %d", sp->socket);
 	
 	do{
 		result = recv(sp->socket, buffer, DEFAULT_TCP_BUFSIZE, 0);				
@@ -76,10 +78,9 @@ int iperf_tcp_recv(struct iperf_stream *sp)
 int iperf_udp_recv(struct iperf_stream *sp)
 {
 	int result;
-	int size = ((struct iperf_settings *)(sp->settings))->bufsize;
+	//int size = ((struct iperf_settings *)(sp->settings))->bufsize;
 	char buffer[DEFAULT_UDP_BUFSIZE];
-	
-	
+		
 	do{
 		result = recv(sp->socket, buffer, DEFAULT_UDP_BUFSIZE, 0);
 		
@@ -153,7 +154,6 @@ void iperf_init_test(struct iperf_test *test)
 		if(set_tcp_windowsize( test->listener_sock, test->default_settings->socket_bufsize, SO_RCVBUF) < 0) 
 		{
 			perror("unable to set window");
-			return -1;
 		}
 		
 		printf("-----------------------------------------------------------\n");
@@ -256,7 +256,7 @@ struct iperf_stream *iperf_new_tcp_stream(struct iperf_test *testp)
         return(NULL);
     }
 	
-	//sp->settings = testp->default_settings;
+	sp->settings = testp->default_settings;
 
     sp->rcv = iperf_tcp_recv;
     //sp->snd = iperf_tcp_send;
@@ -277,12 +277,13 @@ struct iperf_stream * iperf_new_udp_stream(struct iperf_test *testp)
 	
 	sp->settings = testp->default_settings;
 	
-    sp->rcv = &iperf_udp_recv;
+    sp->rcv = iperf_udp_recv;
     //sp->snd = iperf_udp_send;
     //sp->update_stats = iperf_udp_update_stats;	
    
 	return sp;
 }
+
 
 int iperf_udp_accept(struct iperf_test *test)
 {
@@ -290,7 +291,7 @@ int iperf_udp_accept(struct iperf_test *test)
 	struct sockaddr_in sa_peer;	
 	char *buf;
 	socklen_t len;
-	int sz;
+	int sz, s;
 	
     buf = (char *) malloc(test->default_settings->bufsize);
 	
@@ -311,20 +312,15 @@ int iperf_udp_accept(struct iperf_test *test)
 	}
 	
 	sp->socket = test->listener_sock;
-	sp->result->bytes_received += sz;
-	
-	iperf_init_stream(sp, test);	
+	iperf_init_stream(sp, test);
 	iperf_add_stream(test, sp);	
 	
-	sp->socket = netannounce(test->protocol, NULL,sp->local_port);
-	if(sp->socket < 0) 
-		return -1;
-	
-	FD_SET(sp->socket, &(test->read_set));
-	test->max_fd = (test->max_fd < sp->socket)?sp->socket:test->max_fd;
-	
-	printf(" socket created for new UDP client \n");
-	fflush(stdout);
+	test->listener_sock = netannounce(test->protocol, NULL, ntohs(((struct sockaddr_in *)(test->local_addr))->sin_port));
+	if(test->listener_sock < 0) 
+		return -1;	
+		
+	FD_SET(test->listener_sock, &(test->read_set));
+	test->max_fd = (test->max_fd < s)?s:test->max_fd;
 	
 	return 0;
 	
@@ -347,9 +343,7 @@ int iperf_tcp_accept(struct iperf_test *test)
 	}
 	else 
 	{	
-		
-		
-		 sp = iperf_new_tcp_stream(test);
+		sp = iperf_new_tcp_stream(test);
 		//setnonblocking(peersock);
 		
 		FD_SET(peersock,&(test->read_set));
@@ -371,6 +365,12 @@ void iperf_init_stream(struct iperf_stream *sp, struct iperf_test *testp)
 	socklen_t len;
 	int x;
 	len = sizeof(struct sockaddr_in);	
+	
+	sp->local_port = (((struct sockaddr_in *)(testp->local_addr))->sin_port);
+	sp->remote_port = (((struct sockaddr_in *)(testp->remote_addr))->sin_port);
+	
+	sp->protocol = testp->protocol;
+	
 	if(getsockname(sp->socket, (struct sockaddr *) &sp->local_addr, &len) < 0) 
 	{
         perror("getsockname");        
@@ -531,12 +531,11 @@ void iperf_run_server(struct iperf_test *test)
 		//Process the sockets for read operation
 		for (j=0; j< test->max_fd+1; j++)
 		{				
-			n = test->streams;
-			
 			if (FD_ISSET(j, &(test->temp_set)))
 			{
 				// find the correct stream
-				n = update_stream(test,j,0);					
+				n = update_stream(test,j,0);
+				
 				result = n->rcv(n);
 				
 				if(result == 0)

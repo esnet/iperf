@@ -86,6 +86,10 @@ struct iperf_test
 
     struct iperf_settings *default_settings;
 		
+	/* might be needed */
+	char *client_ip;
+	int remote_port;
+	
 };
 
 /**
@@ -134,7 +138,7 @@ int iperf_add_stream(struct iperf_test *test, struct iperf_stream *stream);
  * iperf_init_stream -- init resources associated with test
  *
  */
-void iperf_init_stream(struct iperf_stream *stream);
+void iperf_init_stream(struct iperf_stream *sp, struct iperf_test *testp);
 
 /**
  * iperf_free_stream -- free resources associated with test

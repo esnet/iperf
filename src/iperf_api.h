@@ -57,12 +57,13 @@ struct iperf_test
 {
 	char role;						// 'c'lient or 's'erver    -s / -c
 	int protocol;
-
+								
 	struct sockaddr_storage *remote_addr;  // arg of -c 
 	struct sockaddr_storage *local_addr;	
 	int  duration;						// total duration of test  -t
 	
 	int listener_sock;
+	int listener_port;
 	
 	/* Select related parameters */	
 	int max_fd;

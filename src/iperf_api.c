@@ -192,7 +192,7 @@ void iperf_defaults(struct iperf_test *testp)
 {
 	testp->protocol = Ptcp;
 	testp->role = 's';
-		
+	testp->port = 5001;	
 	testp->duration = 10;
 	
 	testp->stats_interval = 0;
@@ -217,7 +217,7 @@ void iperf_init_test(struct iperf_test *test)
 	
 	if(test->role == 's')
 	{		
-		test->listener_sock = netannounce(test->protocol, NULL, ntohs(((struct sockaddr_in *)(test->local_addr))->sin_port));
+		test->listener_sock = netannounce(test->protocol, NULL, test->listener_port);
 		if( test->listener_sock < 0)
 			exit(0);
 				
@@ -284,6 +284,8 @@ void iperf_free_test(struct iperf_test *test)
 	free(test);
 }
 
+
+/* TODO */
 void iperf_free_stream(struct iperf_test *test, struct iperf_stream *sp)
 {
     free(sp->settings);
@@ -374,18 +376,18 @@ int iperf_udp_accept(struct iperf_test *test)
 	struct sockaddr_in sa_peer;	
 	char *buf;
 	socklen_t len;
-	int sz, s;
+	int sz;
 	
-    buf = (char *) malloc(test->default_settings->bufsize);
-	
+			
+    buf = (char *) malloc(test->default_settings->bufsize);	
 	sp = test->new_stream(test);
-	
 	len = sizeof sa_peer;
 	
 	sz = recvfrom(test->listener_sock, buf, test->default_settings->bufsize, 0, (struct sockaddr *) &sa_peer, &len);
 	
 	
 	if(!sz)
+		
 		return -1;
 	
 	if(connect(test->listener_sock, (struct sockaddr *) &sa_peer, len) < 0)
@@ -394,18 +396,21 @@ int iperf_udp_accept(struct iperf_test *test)
 		return -1;
 	}
 	
+	
 	sp->socket = test->listener_sock;
 	iperf_init_stream(sp, test);
 	iperf_add_stream(test, sp);	
+		
+	printf(" stream added , socket = %d\n", sp->socket);
 	
-	test->listener_sock = netannounce(test->protocol, NULL, ntohs(((struct sockaddr_in *)(test->local_addr))->sin_port));
+	test->listener_sock = netannounce(test->protocol, NULL, test->listener_port);
 	if(test->listener_sock < 0) 
 		return -1;	
-		
-	FD_SET(test->listener_sock, &(test->read_set));
-	test->max_fd = (test->max_fd < s)?s:test->max_fd;
 	
-	printf(" in udp accept \n");
+	
+	FD_SET(test->listener_sock, &(test->read_set));
+	test->max_fd = (test->max_fd < test->listener_sock)?test->listener_sock:test->max_fd;
+
 	return 0;
 	
 }	
@@ -605,38 +610,38 @@ void iperf_run_server(struct iperf_test *test)
 				
 				Display(test);
 			}				
-		}
-		
+			
 		// test end message ?
 		
 		//result_request message ?		
 		
 		//Process the sockets for read operation
-		for (j=0; j< test->max_fd+1; j++)
-		{				
-			if (FD_ISSET(j, &(test->temp_set)))
-			{
-				// find the correct stream
-				n = update_stream(test,j,0);
-							
-				result = n->rcv(n);
-				
-				if(result == 0)
-				{	
-					// stream shutdown message
-					unit_snprintf(ubuf, UNIT_LEN, (double) (n->result->bytes_received / n->result->duration), 'a');
-					printf("%llu bytes received %s/sec for stream %d\n\n",n->result->bytes_received, ubuf,(int)n);						
-					close(j);						
-					free_stream(test, n);
-					FD_CLR(j, &(test->read_set));	
-				}
-				else if(result < 0)
+			for (j=0; j< test->max_fd+1; j++)
+			{				
+				if (FD_ISSET(j, &(test->temp_set)))
 				{
-					printf("Error in recv(): %s\n", strerror(errno));
-				}
-			}      // end if (FD_ISSET(j, &temp_set))
+					// find the correct stream
+					n = update_stream(test,j,0);
+							
+					result = n->rcv(n);
+				
+					if(result == 0)
+					{	
+						// stream shutdown message
+						unit_snprintf(ubuf, UNIT_LEN, (double) (n->result->bytes_received / n->result->duration), 'a');
+						printf("%llu bytes received %s/sec for stream %d\n\n",n->result->bytes_received, ubuf,(int)n);						
+						close(j);						
+						free_stream(test, n);
+						FD_CLR(j, &(test->read_set));	
+					}
+					else if(result < 0)
+					{
+						printf("Error in recv(): %s\n", strerror(errno));
+					}
+				}      // end if (FD_ISSET(j, &temp_set))
 			
-		}// end for (j=0;...)
+			}// end for (j=0;...)
+		}// end else (result>0)
 		
 	}// end while
 }
@@ -779,6 +784,7 @@ main(int argc, char **argv)
             case 's':
 				test->role = 's';	
 				addr_local->sin_port = htons(5001);
+				test->port = 5001;
                 break;
             case 't':
                 test->duration = atoi(optarg);

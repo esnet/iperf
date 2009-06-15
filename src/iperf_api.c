@@ -32,8 +32,8 @@ enum {
     uS_TO_NS = 1000,
 	
 	MAX_BUFFER_SIZE =10,
-    DEFAULT_UDP_BUFSIZE = 1,
-    DEFAULT_TCP_BUFSIZE = 1
+    DEFAULT_UDP_BUFSIZE = 1470,
+    DEFAULT_TCP_BUFSIZE = 8192
 };
 #define SEC_TO_NS 1000000000 /* too big for enum on some platforms */
 
@@ -53,6 +53,35 @@ static struct option longopts[] =
 {"interval",		required_argument,		NULL,	'i'}	
 };
 
+
+void Display(struct iperf_test *test);
+
+int iperf_tcp_accept(struct iperf_test *test);
+int iperf_udp_accept(struct iperf_test *test);
+int iperf_tcp_recv(struct iperf_stream *sp);
+int iperf_udp_recv(struct iperf_stream *sp);
+int iperf_tcp_send(struct iperf_stream *sp);
+int iperf_udp_send(struct iperf_stream *sp);
+
+
+void iperf_defaults(struct iperf_test *testp);
+
+struct iperf_test *iperf_new_test();
+void iperf_init_test(struct iperf_test *test);
+void iperf_free_test(struct iperf_test *test);
+
+
+struct iperf_stream *iperf_new_stream(struct iperf_test *testp);
+struct iperf_stream *iperf_new_tcp_stream(struct iperf_test *testp);
+struct iperf_stream * iperf_new_udp_stream(struct iperf_test *testp);
+void iperf_init_stream(struct iperf_stream *sp, struct iperf_test *testp);
+int iperf_add_stream(struct iperf_test *test, struct iperf_stream *sp);
+struct iperf_stream * update_stream(struct iperf_test *test, int j, int add);
+void iperf_free_stream(struct iperf_test *test, struct iperf_stream *sp);
+
+void iperf_run_server(struct iperf_test *test);
+void iperf_run_client(struct iperf_test *test);
+int iperf_run(struct iperf_test *test);
 
 void Display(struct iperf_test *test)
 {
@@ -82,7 +111,6 @@ void Display(struct iperf_test *test)
 	}
 }
 
-
 int iperf_tcp_recv(struct iperf_stream *sp)
 {
 	int result;
@@ -106,9 +134,11 @@ int iperf_tcp_recv(struct iperf_stream *sp)
 
 int iperf_udp_recv(struct iperf_stream *sp)
 {
+	
 	int result;
 	int size = ((struct iperf_settings *)(sp->settings))->bufsize;
 	char* buf = (char *)malloc(sizeof(size));
+
 	if(!buf)
 	{
 		perror("malloc: unable to allocate receive buffer");
@@ -118,7 +148,7 @@ int iperf_udp_recv(struct iperf_stream *sp)
 		result = recv(sp->socket, buf, size, 0);
 		
 	} while (result == -1 && errno == EINTR);
-	
+		
 	sp->result->bytes_received+= result;
 	
 	return result;	
@@ -192,7 +222,7 @@ void iperf_defaults(struct iperf_test *testp)
 {
 	testp->protocol = Ptcp;
 	testp->role = 's';
-	testp->port = 5001;	
+	testp->listener_port = 5001;	
 	testp->duration = 10;
 	
 	testp->stats_interval = 0;
@@ -281,19 +311,52 @@ void iperf_init_test(struct iperf_test *test)
 
 void iperf_free_test(struct iperf_test *test)
 {
+	
+	free(test->remote_addr);
+	free(test->local_addr);
+	free(test->default_settings);	
 	free(test);
 }
 
-
-/* TODO */
 void iperf_free_stream(struct iperf_test *test, struct iperf_stream *sp)
 {
-    free(sp->settings);
-    free(sp->result);
-    // TODO: free interval results
-    free(test->remote_addr);
-    free(test->local_addr);
-    free(sp);
+	
+	struct iperf_stream *prev,*start;
+	prev = test->streams;
+	start = test->streams;
+	
+	if(test->streams->socket == sp->socket){
+		
+		test->streams = test->streams->next;
+	}
+	
+	else
+	{	
+		start= test->streams->next;
+		
+		while(1)
+		{
+			if(start->socket == sp->socket){
+				
+				prev->next = sp->next;
+				
+				free(sp->settings);
+				free(sp->result);				
+				free(sp);
+				break;
+			}
+			
+			if(start->next!=NULL){
+				
+				start=start->next;
+				prev=prev->next;
+			}
+			if(start->next == NULL)
+				break;
+		}	
+		
+	}
+	   
 }
 
 struct iperf_stream *iperf_new_stream(struct iperf_test *testp)
@@ -372,6 +435,7 @@ struct iperf_stream * iperf_new_udp_stream(struct iperf_test *testp)
 
 int iperf_udp_accept(struct iperf_test *test)
 {
+		
 	struct iperf_stream *sp;
 	struct sockaddr_in sa_peer;	
 	char *buf;
@@ -387,22 +451,20 @@ int iperf_udp_accept(struct iperf_test *test)
 	
 	
 	if(!sz)
-		
 		return -1;
-	
+		
 	if(connect(test->listener_sock, (struct sockaddr *) &sa_peer, len) < 0)
 	{
 		perror("connect");
 		return -1;
 	}
 	
-	
+	sp->result->bytes_sent+=sz;
+		
 	sp->socket = test->listener_sock;
 	iperf_init_stream(sp, test);
 	iperf_add_stream(test, sp);	
 		
-	printf(" stream added , socket = %d\n", sp->socket);
-	
 	test->listener_sock = netannounce(test->protocol, NULL, test->listener_port);
 	if(test->listener_sock < 0) 
 		return -1;	
@@ -411,6 +473,10 @@ int iperf_udp_accept(struct iperf_test *test)
 	FD_SET(test->listener_sock, &(test->read_set));
 	test->max_fd = (test->max_fd < test->listener_sock)?test->listener_sock:test->max_fd;
 
+	printf("%d socket created for new UDP stream \n", sp->socket);
+	
+	free(buf);
+	
 	return 0;
 	
 }	
@@ -535,42 +601,6 @@ struct iperf_stream * update_stream(struct iperf_test *test, int j, int add)
 	return n;	
 }
 
-int free_stream(struct iperf_test *test, struct iperf_stream *sp)
-{
-	
-	struct iperf_stream *prev,*start;
-	prev = test->streams;
-	start = test->streams;
-	
-	if(test->streams->socket == sp->socket){
-		
-		test->streams = test->streams->next;
-		return 0;
-	}
-	else
-	{	
-		start= test->streams->next;
-		
-		while(1)
-		{
-			if(start->socket == sp->socket){
-				
-				prev->next = sp->next;
-				free(sp);
-				return 0;				
-			}
-			
-			if(start->next!=NULL){
-				
-				start=start->next;
-				prev=prev->next;
-			}
-		}
-		
-		return -1;
-	}
-	
-}
 
 void iperf_run_server(struct iperf_test *test)
 {
@@ -595,7 +625,10 @@ void iperf_run_server(struct iperf_test *test)
 		result = select(test->max_fd + 1, &(test->temp_set), NULL, NULL, &tv);
 		
 		if (result == 0) 
-			printf("select() timed out!\n");		
+		{
+			printf("select() timed out!\n");
+			break;
+		}
 		else if (result < 0 && errno != EINTR)
 			printf("Error in select(): %s\n", strerror(errno));
 		
@@ -606,9 +639,7 @@ void iperf_run_server(struct iperf_test *test)
 			{			
 				test->accept(test);
 				
-				FD_CLR(test->listener_sock, &(test->temp_set));
-				
-				Display(test);
+				FD_CLR(test->listener_sock, &(test->temp_set));								
 			}				
 			
 		// test end message ?
@@ -619,10 +650,9 @@ void iperf_run_server(struct iperf_test *test)
 			for (j=0; j< test->max_fd+1; j++)
 			{				
 				if (FD_ISSET(j, &(test->temp_set)))
-				{
+				{					
 					// find the correct stream
 					n = update_stream(test,j,0);
-							
 					result = n->rcv(n);
 				
 					if(result == 0)
@@ -631,8 +661,8 @@ void iperf_run_server(struct iperf_test *test)
 						unit_snprintf(ubuf, UNIT_LEN, (double) (n->result->bytes_received / n->result->duration), 'a');
 						printf("%llu bytes received %s/sec for stream %d\n\n",n->result->bytes_received, ubuf,(int)n);						
 						close(j);						
-						free_stream(test, n);
-						FD_CLR(j, &(test->read_set));	
+						iperf_free_stream(test, n);
+						FD_CLR(j, &(test->read_set));						
 					}
 					else if(result < 0)
 					{
@@ -644,12 +674,14 @@ void iperf_run_server(struct iperf_test *test)
 		}// end else (result>0)
 		
 	}// end while
+	
+	printf(" test ended\n");
 }
 
 void iperf_run_client(struct iperf_test *test)
 {
 	int i,result;
-    struct iperf_stream *sp;
+    struct iperf_stream *sp, *np;
     struct timer *timer;
 	char *buf;
 	int64_t delayns, adjustns, dtargns; 
@@ -723,14 +755,18 @@ void iperf_run_client(struct iperf_test *test)
 	Display(test);	
     /* XXX: report */
     sp = test->streams;
+	np = sp;
+	
     do {
+		sp = np;
 		send(sp->socket, buf, 0, 0);
 		printf("%llu bytes sent\n", sp->result->bytes_sent);
-		//close(sp->sock);
-		//free(sp);			
-		sp = sp->next;		
-    } while (sp);
-		
+		np = sp->next;	
+		close(sp->socket);
+		iperf_free_stream(test, sp);
+				
+    } while (np);	
+				
 }	
 
 
@@ -784,7 +820,7 @@ main(int argc, char **argv)
             case 's':
 				test->role = 's';	
 				addr_local->sin_port = htons(5001);
-				test->port = 5001;
+				test->listener_port = 5001;
                 break;
             case 't':
                 test->duration = atoi(optarg);

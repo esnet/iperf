@@ -49,8 +49,8 @@ static struct option longopts[] =
 { "bandwidth",      required_argument,      NULL,   'b' },
 { "length",         required_argument,      NULL,   'l' },
 { "window",         required_argument,      NULL,   'w' },
-{ NULL,             0,                      NULL,   0   },
-{"interval",		required_argument,		NULL,	'i'}	
+{"interval",		required_argument,		NULL,	'i'},
+{ NULL,             0,                      NULL,   0   }	
 };
 
 
@@ -63,13 +63,12 @@ int iperf_udp_recv(struct iperf_stream *sp);
 int iperf_tcp_send(struct iperf_stream *sp);
 int iperf_udp_send(struct iperf_stream *sp);
 
-
 void iperf_defaults(struct iperf_test *testp);
 
 struct iperf_test *iperf_new_test();
 void iperf_init_test(struct iperf_test *test);
 void iperf_free_test(struct iperf_test *test);
-
+void *iperf_stats_callback(struct iperf_test *test);
 
 struct iperf_stream *iperf_new_stream(struct iperf_test *testp);
 struct iperf_stream *iperf_new_tcp_stream(struct iperf_test *testp);
@@ -318,6 +317,22 @@ void iperf_free_test(struct iperf_test *test)
 	free(test);
 }
 
+
+// MAY BE WE NEED TO PASS STREAM AS PARAM
+void *iperf_stats_callback(struct iperf_test *test)
+{
+	char ubuf[UNIT_LEN];
+	
+	test->streams->result->interval_results->bytes_transferred = test->streams->result->bytes_sent -  test->streams->result->interval_results->bytes_transferred;
+	
+	unit_snprintf(ubuf, UNIT_LEN, (double) (test->streams->result->interval_results->bytes_transferred / test->stats_interval), 'a');
+	printf("interval === %llu bytes sent \t %s per sec \n", test->streams->result->interval_results->bytes_transferred , ubuf);
+	
+	
+		
+}
+
+
 void iperf_free_stream(struct iperf_test *test, struct iperf_stream *sp)
 {
 	
@@ -379,6 +394,8 @@ struct iperf_stream *iperf_new_stream(struct iperf_test *testp)
 	
 	sp->result = (struct iperf_stream_result *) malloc(sizeof(struct iperf_stream_result));
 	//memset(&sp->result, 0, sizeof(struct iperf_stream_result));
+	
+	sp->result->interval_results = (struct iperf_interval_results *) malloc(sizeof(struct iperf_interval_results));
 
     testp->remote_addr = (struct sockaddr_storage *) malloc(sizeof(struct sockaddr_storage));
 	memset(testp->remote_addr, 0, sizeof(struct sockaddr_storage));
@@ -391,7 +408,9 @@ struct iperf_stream *iperf_new_stream(struct iperf_test *testp)
 	sp->result->duration = testp->duration;
 	sp->result->bytes_received = 0;
 	sp->result->bytes_sent = 0;
-		
+	
+	sp->result->interval_results->bytes_transferred = 0;
+	
 	return sp;
 }
 
@@ -601,7 +620,6 @@ struct iperf_stream * update_stream(struct iperf_test *test, int j, int add)
 	return n;	
 }
 
-
 void iperf_run_server(struct iperf_test *test)
 {
 	printf("Server running now \n");
@@ -682,7 +700,7 @@ void iperf_run_client(struct iperf_test *test)
 {
 	int i,result;
     struct iperf_stream *sp, *np;
-    struct timer *timer;
+    struct timer *timer, *interval;
 	char *buf;
 	int64_t delayns, adjustns, dtargns; 
     struct timeval before, after;
@@ -709,7 +727,11 @@ void iperf_run_client(struct iperf_test *test)
 		printf("%lld adj %lld delay\n", adjustns, delayns);			
 	}	
 	
-    timer = new_timer(test->duration, 0);		
+    timer = new_timer(test->duration, 0);
+	
+	if(test->stats_interval != 0)
+	interval = new_timer(test->stats_interval,0);
+	
 	//Display();
 	// send data till the timer expires
     while(!timer->expired(timer))
@@ -748,9 +770,21 @@ void iperf_run_client(struct iperf_test *test)
 				if(sp->next==NULL)
 					break;
 				sp=sp->next;
-			}
-		}		
-	}
+				
+			}// FD_ISSET
+		}// for
+		
+		if((test->stats_interval!=0) && interval->expired(interval))
+		{
+			// call the reporter for interval
+			test->stats_callback(test);
+			//reset the interval timer
+			interval = new_timer(test->stats_interval,0);
+		}
+			
+		
+		
+	}// while outer timer
 	
 	Display(test);	
     /* XXX: report */
@@ -768,7 +802,6 @@ void iperf_run_client(struct iperf_test *test)
     } while (np);	
 				
 }	
-
 
 int iperf_run(struct iperf_test *test)
 {
@@ -805,7 +838,7 @@ main(int argc, char **argv)
 	// need to set the defaults for default_settings too
 	iperf_defaults(test);
 		
-	while( (ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:", longopts, NULL)) != -1 )
+	while( (ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:", longopts, NULL)) != -1 )
         switch (ch) {
             case 'c':
                 test->role = 'c';	
@@ -855,13 +888,14 @@ main(int argc, char **argv)
 	
 	test->local_addr = (struct sockaddr_storage *) addr_local;	
 	test->remote_addr = (struct sockaddr_storage *) addr_remote;	
-	
+	test->stats_callback = iperf_stats_callback;	
 
     switch(test->protocol)
     {
         case Ptcp:
             test->accept = iperf_tcp_accept;
             test->new_stream = iperf_new_tcp_stream;
+
             break;
         case Pudp:
             test->accept = iperf_udp_accept;

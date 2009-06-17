@@ -32,10 +32,11 @@ struct iperf_settings
 
 struct iperf_stream
 {
+	
 	/* configurable members */
 	int local_port;					// local port
 	int remote_port;				// remote machine port
-	void *settings;	                // pointer to structure settings  
+	 struct iperf_settings *settings;	                // pointer to structure settings  
 	int protocol;					// protocol- TCP/UDP 
 		
 	/* non configurable members */
@@ -86,12 +87,32 @@ struct iperf_test
 	struct iperf_stream *streams;				// pointer to list of struct stream
 
     struct iperf_settings *default_settings;
-		
-	/* might be needed */
-	char *client_ip;
-	int remote_port;
+	
 	
 };
+
+
+
+
+void Display(struct iperf_test *test);
+
+int iperf_tcp_accept(struct iperf_test *test);
+int iperf_udp_accept(struct iperf_test *test);
+int iperf_tcp_recv(struct iperf_stream *sp);
+int iperf_udp_recv(struct iperf_stream *sp);
+int iperf_tcp_send(struct iperf_stream *sp);
+int iperf_udp_send(struct iperf_stream *sp);
+
+void *iperf_stats_callback(struct iperf_test *test);
+void *iperf_reporter_callback(struct iperf_test *test);
+
+struct iperf_stream * update_stream(struct iperf_test *test, int j, int add);
+
+void iperf_run_server(struct iperf_test *test);
+void iperf_run_client(struct iperf_test *test);
+int iperf_run(struct iperf_test *test);
+
+
 
 /**
  * iperf_new_test -- return a new iperf_test with default values
@@ -123,7 +144,7 @@ void iperf_free_test(struct iperf_test *testp);
  * returns NULL on failure
  *
  */
-struct iperf_stream *iperf_new_stream();
+struct iperf_stream *iperf_new_stream(struct iperf_test *testp);
 
 struct iperf_stream *iperf_new_tcp_stream(struct iperf_test *testp);
 struct iperf_stream *iperf_new_udp_stream(struct iperf_test *testp);

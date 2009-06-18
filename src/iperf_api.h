@@ -18,13 +18,13 @@ struct iperf_stream_result
 
 struct iperf_settings
 {
-    int socket_bufsize;                             // -w buffer size for setsockopt(), window size for TCP
-    int socket_snd_bufsize;                         // overrides bufsize in the send direction
-    int socket_rcv_bufsize;                         // overrides bufsize in the receive direction
+    int socket_bufsize;       // -w buffer size for setsockopt(), window size for TCP
+    int socket_snd_bufsize;   // overrides bufsize in the send direction
+    int socket_rcv_bufsize;   // overrides bufsize in the receive direction
 
-    int bufsize;                                    // -s size of each read/write, in UDP this relates directly to packet_size
+    int bufsize;              // -s size of each read/write, in UDP this relates directly to packet_size
 
-    int rate;                                       // target data rate, UDP only
+    int rate;                 // target data rate, UDP only
 
     int ttl;
     int tos;
@@ -34,15 +34,15 @@ struct iperf_stream
 {
     
     /* configurable members */
-    int local_port;                    // local port
-    int remote_port;                // remote machine port
-     struct iperf_settings *settings;                    // pointer to structure settings  
-    int protocol;                    // protocol- TCP/UDP 
+    int local_port;                     // local port
+    int remote_port;                    // remote machine port
+     struct iperf_settings *settings;   // pointer to structure settings  
+    int protocol;                       // protocol- TCP/UDP 
         
     /* non configurable members */
-    struct iperf_stream_result *result;        //structure pointer to result
+    struct iperf_stream_result *result; //structure pointer to result
     
-    int socket;                                     // socket 
+    int socket;                         // socket 
     
     struct sockaddr_storage local_addr;
     struct sockaddr_storage remote_addr;
@@ -56,10 +56,10 @@ struct iperf_stream
 
 struct iperf_test
 {
-    char role;                        // 'c'lient or 's'erver    -s / -c
+    char role;                            // 'c'lient or 's'erver    -s / -c
     int protocol;
                                 
-    struct sockaddr_storage *remote_addr;  // arg of -c 
+    struct sockaddr_storage *remote_addr; // arg of -c 
     struct sockaddr_storage *local_addr;    
     int  duration;                        // total duration of test  -t
     
@@ -76,15 +76,15 @@ struct iperf_test
     int (*accept)(struct iperf_test *);
     struct iperf_stream *(*new_stream)(struct iperf_test *);
     
-    int  stats_interval;                    // time interval to gather stats -i
-    void *(*stats_callback)(struct iperf_test *);        // callback function pointer for stats
+    int  stats_interval;                             // time interval to gather stats -i
+    void *(*stats_callback)(struct iperf_test *);    // callback function pointer for stats
     
-    int  reporter_interval;                        // time interval for reporter
-    void *(*reporter_callback)(struct iperf_test *);    // callback function pointer for reporter
-    int reporter_fd;                            // file descriptor for reporter
+    int  reporter_interval;                          // time interval for reporter
+    void *(*reporter_callback)(struct iperf_test *); // callback function pointer for reporter
+    int reporter_fd;                                 // file descriptor for reporter
 
-    int  num_streams;                    // total streams in the test -P 
-    struct iperf_stream *streams;                // pointer to list of struct stream
+    int  num_streams;                                // total streams in the test -P 
+    struct iperf_stream *streams;                    // pointer to list of struct stream
 
     struct iperf_settings *default_settings;
 };

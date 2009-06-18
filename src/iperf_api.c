@@ -53,6 +53,20 @@ static struct option longopts[] =
 { NULL,             0,                      NULL,   0   }	
 };
 
+
+void connect_msg(struct iperf_stream *sp)
+{
+	char ipl[512], ipr[512];
+	
+	inet_ntop(AF_INET, (void *) (&((struct sockaddr_in *) &sp->local_addr)->sin_addr), (void *) ipl, sizeof(ipl));
+	inet_ntop(AF_INET, (void *) (&((struct sockaddr_in *) &sp->remote_addr)->sin_addr), (void *) ipr, sizeof(ipr));
+	    	
+    printf("[%3d] local %s port %d connected with %s port %d\n",
+		   sp->socket,
+		   ipl, ntohs(((struct sockaddr_in *) &sp->local_addr)->sin_port),
+		   ipr, ntohs(((struct sockaddr_in *) &sp->remote_addr)->sin_port) );
+}
+
 void Display(struct iperf_test *test)
 {
 	struct iperf_stream *n;
@@ -197,12 +211,11 @@ void iperf_defaults(struct iperf_test *testp)
 	testp->listener_port = 5001;	
 	testp->duration = 10;
 	
+	((struct sockaddr_in *) testp->remote_addr)->sin_port = 5001;
 	
-	testp->stats_interval = 0;
-	testp->reporter_interval = 0;
-		
-	testp->num_streams = 1;
-	
+	testp->stats_interval = testp->duration;
+	testp->reporter_interval = testp->duration;		
+	testp->num_streams = 1;	
 	testp->default_settings->socket_bufsize = 1024*1024;
 	testp->default_settings->bufsize = DEFAULT_TCP_BUFSIZE;
 	testp->default_settings->rate = RATE;
@@ -219,7 +232,7 @@ void iperf_init_test(struct iperf_test *test)
 	
 	
 	if(test->role == 's')
-	{		
+	{				
 		test->listener_sock = netannounce(test->protocol, NULL, test->listener_port);
 		if( test->listener_sock < 0)
 			exit(0);
@@ -231,7 +244,7 @@ void iperf_init_test(struct iperf_test *test)
 		}
 		
 		printf("-----------------------------------------------------------\n");
-		printf("Server listening on %d\n",ntohs(((struct sockaddr_in *)(test->local_addr))->sin_port));		// need to change this port assignment
+		printf("Server listening on %d\n", test->listener_port);		//ntohs(((struct sockaddr_in *)(test->local_addr))->sin_port
 		int x;
 		if((x = getsock_tcp_windowsize( test->listener_sock, SO_RCVBUF)) < 0) 
 			perror("SO_RCVBUF");	
@@ -250,6 +263,7 @@ void iperf_init_test(struct iperf_test *test)
 		FD_SET(s, &test->write_set);
 		
 		inet_ntop(AF_INET, &((struct sockaddr_in *)(test->remote_addr))->sin_addr, client, sizeof(client));
+		
 		port = ntohs(((struct sockaddr_in *)(test->remote_addr))->sin_port);
 		
 		for(i = 0; i < test->num_streams; i++)
@@ -277,7 +291,7 @@ void iperf_init_test(struct iperf_test *test)
 			sp->socket = s;
 			iperf_init_stream(sp, test);
 			iperf_add_stream(test, sp);
-			//connect_msg(sp);		
+			connect_msg(sp);		
 		}
 	}						
 }
@@ -316,7 +330,7 @@ void * iperf_reporter_callback(struct iperf_test *test)
 	struct iperf_stream *sp = test->streams;
 	iperf_size_t bytes=0.0;
 		
-	printf("----------------INTERVAL [%d to %d]----------------\n", sp->result->interval_results->interval_duration - test->stats_interval,
+	printf("\n----------------INTERVAL [%d to %d]----------------\n", sp->result->interval_results->interval_duration - test->stats_interval,
 		   sp->result->interval_results->interval_duration);
 	
 	while(sp)
@@ -343,7 +357,7 @@ void * iperf_reporter_callback(struct iperf_test *test)
 	printf("---------------------------------------------------\n");
 	unit_snprintf(ubuf, UNIT_LEN, (double) ( bytes / test->stats_interval), 'a');
 	printf("SUM\t%llu bytes COUNT \t %s per sec \n", bytes , ubuf);
-	printf("---------------------------------------------------\n\n");
+	printf("---------------------------------------------------\n");
 	
 	
 	// PRINT TOTAL
@@ -352,7 +366,7 @@ void * iperf_reporter_callback(struct iperf_test *test)
 	{
 		bytes =0;
 		sp= test->streams;		
-		printf("-----------------------TOTAL-----------------------\n");
+		printf("\n-----------------------TOTAL-----------------------\n");
 		
 		while(sp)
 		{	
@@ -441,13 +455,7 @@ struct iperf_stream *iperf_new_stream(struct iperf_test *testp)
 	//memset(&sp->result, 0, sizeof(struct iperf_stream_result));
 	
 	sp->result->interval_results = (struct iperf_interval_results *) malloc(sizeof(struct iperf_interval_results));
-
-    testp->remote_addr = (struct sockaddr_storage *) malloc(sizeof(struct sockaddr_storage));
-	memset(testp->remote_addr, 0, sizeof(struct sockaddr_storage));
-
-    testp->local_addr = (struct sockaddr_storage *) malloc(sizeof(struct sockaddr_storage));
-	memset(testp->local_addr, 0, sizeof(struct sockaddr_storage));
-		
+	
 	sp->socket = -1;
 	
 	sp->result->duration = testp->duration;
@@ -455,7 +463,7 @@ struct iperf_stream *iperf_new_stream(struct iperf_test *testp)
 	sp->result->bytes_sent = 0;
 	
 	sp->result->interval_results->bytes_transferred = 0;
-	
+	sp->result->interval_results->interval_duration = 0;	
 	return sp;
 }
 
@@ -531,8 +539,6 @@ int iperf_udp_accept(struct iperf_test *test)
 	FD_SET(test->listener_sock, &test->read_set);
 	test->max_fd = (test->max_fd < test->listener_sock) ? test->listener_sock : test->max_fd;
 
-	printf("%d socket created for new UDP stream \n", sp->socket);
-	
 	free(buf);
 	
 	return 0;
@@ -565,9 +571,7 @@ int iperf_tcp_accept(struct iperf_test *test)
 		sp->socket = peersock;		
 		iperf_init_stream(sp, test);		
 		iperf_add_stream(test, sp);					
-		//connect_msg(sp);
-		
-		printf("%d socket created for new TCP client \n", sp->socket);
+		connect_msg(sp);
 		
 		return 0;
 	}		
@@ -579,22 +583,21 @@ void iperf_init_stream(struct iperf_stream *sp, struct iperf_test *testp)
 	int x;
 	len = sizeof(struct sockaddr_in);	
 	
-	sp->local_port = ((struct sockaddr_in *) (testp->local_addr))->sin_port;
-	sp->remote_port = ((struct sockaddr_in *) (testp->remote_addr))->sin_port;
-	
 	sp->protocol = testp->protocol;
 	
 	if(getsockname(sp->socket, (struct sockaddr *) &sp->local_addr, &len) < 0) 
 	{
         perror("getsockname");        
-    }	
+    }
 	
+		
 	//stores the socket id.
     if(getpeername(sp->socket, (struct sockaddr *) &sp->remote_addr, &len) < 0)
 	{
         perror("getpeername");
         free(sp);        
     }
+	
 	
 	if(set_tcp_windowsize(sp->socket, testp->default_settings->socket_bufsize, 
 						  testp->role == 's' ? SO_RCVBUF : SO_SNDBUF) < 0)
@@ -658,7 +661,6 @@ struct iperf_stream * find_stream_by_socket(struct iperf_test *test, int sock)
 
 void iperf_run_server(struct iperf_test *test)
 {
-	printf("Server running now \n");
 	struct timeval tv;
 	struct iperf_stream *n;
 	char ubuf[UNIT_LEN];
@@ -715,7 +717,7 @@ void iperf_run_server(struct iperf_test *test)
 						// stream shutdown message
 						// the duration at server can be wrong unles -t is provided
 						unit_snprintf(ubuf, UNIT_LEN, (double) (n->result->bytes_received / n->result->duration), 'a');
-						printf("%llu bytes received %s/sec for stream %d\n\n",n->result->bytes_received, ubuf,(int)n);						
+						printf("\n%llu bytes received %s/sec for stream %d\n",n->result->bytes_received, ubuf,(int)n);						
 						close(j);						
 						iperf_free_stream(test, n);
 						FD_CLR(j, &test->read_set);						
@@ -733,7 +735,7 @@ void iperf_run_server(struct iperf_test *test)
 		
 	}// end while
 	
-	printf(" test ended\n");
+	printf(" TEST ENDED\n");
 }
 
 void iperf_run_client(struct iperf_test *test)
@@ -878,27 +880,21 @@ main(int argc, char **argv)
 	addr_local = (struct sockaddr_in *)malloc(sizeof (struct sockaddr_in));
 	addr_remote = (struct sockaddr_in *)malloc(sizeof (struct sockaddr_in));
 	
-	
-	test= iperf_new_test();
-	
-	// need to set the defaults for default_settings too
+	test= iperf_new_test();		
 	iperf_defaults(test);
 		
 	while( (ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:", longopts, NULL)) != -1 )
         switch (ch) {
             case 'c':
                 test->role = 'c';	
-				//remote_addr
-				inet_pton(AF_INET, optarg, &addr_remote->sin_addr);
-				addr_remote->sin_port = htons(5001);
-                break;
-				
+				inet_pton(AF_INET, optarg, &addr_remote->sin_addr);				
+                break;				
             case 'p':
-                addr_remote->sin_port = htons(atoi(optarg));
+                test->listener_port = atoi(optarg);				
+				addr_remote->sin_port = htons(atoi(optarg));
                 break;
             case 's':
 				test->role = 's';				
-				test->listener_port = 5001;
                 break;
             case 't':
                 test->duration = atoi(optarg);
@@ -924,12 +920,7 @@ main(int argc, char **argv)
                 break;
         }
 	
-	printf("role = %s\n", (test->role == 's') ? "Server" : "Client");
-	printf("duration = %d\n", test->duration);
-	printf("protocol = %s\n", (test->protocol == Ptcp) ? "TCP" : "UDP");
-	printf("interval = %d\n", test->stats_interval);	
-	printf("Parallel streams = %d\n", test->num_streams);
-	
+	printf("ROLE = %s\n", (test->role == 's') ? "Server" : "Client");
 	
 	test->local_addr = (struct sockaddr_storage *) addr_local;	
 	test->remote_addr = (struct sockaddr_storage *) addr_remote;	
@@ -948,7 +939,7 @@ main(int argc, char **argv)
             test->new_stream = iperf_new_udp_stream;
             break;
     }
-	
+		
 	iperf_init_test(test);
 	
 	iperf_run(test);

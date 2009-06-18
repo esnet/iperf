@@ -92,22 +92,17 @@ struct iperf_test
 };
 
 
-
-
+void connect_msg(struct iperf_stream *sp);
 void Display(struct iperf_test *test);
-
 int iperf_tcp_accept(struct iperf_test *test);
 int iperf_udp_accept(struct iperf_test *test);
 int iperf_tcp_recv(struct iperf_stream *sp);
 int iperf_udp_recv(struct iperf_stream *sp);
 int iperf_tcp_send(struct iperf_stream *sp);
 int iperf_udp_send(struct iperf_stream *sp);
-
 void *iperf_stats_callback(struct iperf_test *test);
 void *iperf_reporter_callback(struct iperf_test *test);
-
 struct iperf_stream * update_stream(struct iperf_test *test, int j, int add);
-
 void iperf_run_server(struct iperf_test *test);
 void iperf_run_client(struct iperf_test *test);
 int iperf_run(struct iperf_test *test);

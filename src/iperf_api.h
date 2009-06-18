@@ -11,9 +11,10 @@ struct iperf_stream_result
 {
     iperf_size_t  bytes_received;
     iperf_size_t  bytes_sent;
-    int  duration;
+    struct timeval start_time;
+    struct timeval end_time;
     struct iperf_interval_results *interval_results;
-    void *custom_data;
+    void *data;
 };
 
 struct iperf_settings
@@ -22,7 +23,7 @@ struct iperf_settings
     int socket_snd_bufsize;   // overrides bufsize in the send direction
     int socket_rcv_bufsize;   // overrides bufsize in the receive direction
 
-    int bufsize;              // -s size of each read/write, in UDP this relates directly to packet_size
+    int blksize;              // -l size of each read/write, in UDP this relates directly to packet_size
 
     int rate;                 // target data rate, UDP only
 
@@ -32,7 +33,6 @@ struct iperf_settings
 
 struct iperf_stream
 {
-    
     /* configurable members */
     int local_port;                     // local port
     int remote_port;                    // remote machine port
@@ -52,6 +52,8 @@ struct iperf_stream
     int (*update_stats)(struct iperf_stream *stream);
     
     struct iperf_stream *next;
+
+    void *data;
 };
 
 struct iperf_test
@@ -59,12 +61,12 @@ struct iperf_test
     char role;                            // 'c'lient or 's'erver    -s / -c
     int protocol;
                                 
-    struct sockaddr_storage *remote_addr; // arg of -c 
-    struct sockaddr_storage *local_addr;    
+    char *server_hostname;                // arg of -c 
+    int server_port;                      // arg of -p
+
     int  duration;                        // total duration of test  -t
     
     int listener_sock;
-    int listener_port;
     
     /* Select related parameters */    
     int max_fd;

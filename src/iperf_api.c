@@ -32,8 +32,8 @@ enum {
     uS_TO_NS = 1000,
     RATE = 1000000,
     MAX_BUFFER_SIZE =10,
-    DEFAULT_UDP_BUFSIZE = 1470,
-    DEFAULT_TCP_BUFSIZE = 8192
+    DEFAULT_UDP_BLKSIZE = 1470,
+    DEFAULT_TCP_BLKSIZE = 8192
 };
 #define SEC_TO_NS 1000000000 /* too big for enum on some platforms */
 
@@ -98,7 +98,7 @@ void Display(struct iperf_test *test)
 int iperf_tcp_recv(struct iperf_stream *sp)
 {
     int result;
-    int size = sp->settings->bufsize;
+    int size = sp->settings->blksize;
     char *buf = (char *) malloc(size);
     if(!buf)
     {
@@ -119,7 +119,7 @@ int iperf_udp_recv(struct iperf_stream *sp)
 {
     
     int result;
-    int size = sp->settings->bufsize;
+    int size = sp->settings->blksize;
     char *buf = (char *) malloc(size);
 
     if(!buf)
@@ -141,7 +141,7 @@ int iperf_udp_recv(struct iperf_stream *sp)
 int iperf_tcp_send(struct iperf_stream *sp)
 {
     int result,i;
-    int size = sp->settings->bufsize;
+    int size = sp->settings->blksize;
     
     char *buf = (char *) malloc(size);
     if(!buf)
@@ -160,7 +160,7 @@ int iperf_tcp_send(struct iperf_stream *sp)
 int iperf_udp_send(struct iperf_stream *sp)
 {
     int result,i;
-    int size = sp->settings->bufsize;
+    int size = sp->settings->blksize;
     
     char *buf = (char *) malloc(size);
     if(!buf)
@@ -191,12 +191,6 @@ struct iperf_test *iperf_new_test()
     // initialise everything to zero
     memset(testp, 0, sizeof(struct iperf_test));
 
-    testp->remote_addr = (struct sockaddr_storage *) malloc(sizeof(struct sockaddr_storage));
-    memset(testp->remote_addr, 0, sizeof(struct sockaddr_storage));
-
-    testp->local_addr = (struct sockaddr_storage *) malloc(sizeof(struct sockaddr_storage));
-    memset(testp->local_addr, 0, sizeof(struct sockaddr_storage));
-
     testp->default_settings = (struct iperf_settings *) malloc(sizeof(struct iperf_settings));
     memset(testp->default_settings, 0, sizeof(struct iperf_settings));
     
@@ -208,32 +202,27 @@ void iperf_defaults(struct iperf_test *testp)
 {
     testp->protocol = Ptcp;
     testp->role = 's';
-    testp->listener_port = 5001;    
     testp->duration = 10;
-    
-    ((struct sockaddr_in *) testp->remote_addr)->sin_port = 5001;
+
+    testp->server_port = 5001;
     
     testp->stats_interval = testp->duration;
     testp->reporter_interval = testp->duration;        
     testp->num_streams = 1;    
     testp->default_settings->socket_bufsize = 1024*1024;
-    testp->default_settings->bufsize = DEFAULT_TCP_BUFSIZE;
+    testp->default_settings->blksize = DEFAULT_TCP_BLKSIZE;
     testp->default_settings->rate = RATE;
-    
-    
 }
     
 void iperf_init_test(struct iperf_test *test)
 {
     char ubuf[UNIT_LEN];
     struct iperf_stream *sp;
-    int i, port,s=0;
-    char client[512];
-    
+    int i, s=0;
     
     if(test->role == 's')
     {                
-        test->listener_sock = netannounce(test->protocol, NULL, test->listener_port);
+        test->listener_sock = netannounce(test->protocol, NULL, test->server_port);
         if( test->listener_sock < 0)
             exit(0);
                 
@@ -244,7 +233,7 @@ void iperf_init_test(struct iperf_test *test)
         }
         
         printf("-----------------------------------------------------------\n");
-        printf("Server listening on %d\n", test->listener_port);        //ntohs(((struct sockaddr_in *)(test->local_addr))->sin_port
+        printf("Server listening on %d\n", test->server_port);
         int x;
         if((x = getsock_tcp_windowsize( test->listener_sock, SO_RCVBUF)) < 0) 
             perror("SO_RCVBUF");    
@@ -262,13 +251,9 @@ void iperf_init_test(struct iperf_test *test)
         FD_ZERO(&test->write_set);
         FD_SET(s, &test->write_set);
         
-        inet_ntop(AF_INET, &((struct sockaddr_in *)(test->remote_addr))->sin_addr, client, sizeof(client));
-        
-        port = ntohs(((struct sockaddr_in *)(test->remote_addr))->sin_port);
-        
         for(i = 0; i < test->num_streams; i++)
         {
-            s = netdial(test->protocol, client, port);
+            s = netdial(test->protocol, test->server_hostname, test->server_port);
             
             if(s < 0) 
             {
@@ -299,8 +284,6 @@ void iperf_init_test(struct iperf_test *test)
 void iperf_free_test(struct iperf_test *test)
 {
     
-    free(test->remote_addr);
-    free(test->local_addr);
     free(test->default_settings);    
     free(test);
 }
@@ -458,7 +441,6 @@ struct iperf_stream *iperf_new_stream(struct iperf_test *testp)
     
     sp->socket = -1;
     
-    sp->result->duration = testp->duration;
     sp->result->bytes_received = 0;
     sp->result->bytes_sent = 0;
     
@@ -510,10 +492,10 @@ int iperf_udp_accept(struct iperf_test *test)
     socklen_t len;
     int sz;
                 
-    buf = (char *) malloc(test->default_settings->bufsize);    
+    buf = (char *) malloc(test->default_settings->blksize);    
     len = sizeof sa_peer;
     
-    sz = recvfrom(test->listener_sock, buf, test->default_settings->bufsize, 0, (struct sockaddr *) &sa_peer, &len);
+    sz = recvfrom(test->listener_sock, buf, test->default_settings->blksize, 0, (struct sockaddr *) &sa_peer, &len);
         
     if(!sz)
         return -1;
@@ -531,7 +513,7 @@ int iperf_udp_accept(struct iperf_test *test)
     sp->result->bytes_received+= sz;
     iperf_add_stream(test, sp);    
         
-    test->listener_sock = netannounce(test->protocol, NULL, test->listener_port);
+    test->listener_sock = netannounce(test->protocol, NULL, test->server_port);
     if(test->listener_sock < 0) 
         return -1;    
     
@@ -716,7 +698,10 @@ void iperf_run_server(struct iperf_test *test)
                     {    
                         // stream shutdown message
                         // the duration at server can be wrong unles -t is provided
-                        unit_snprintf(ubuf, UNIT_LEN, (double) (n->result->bytes_received / n->result->duration), 'a');
+                        //
+                        // TODO: use begin_time and end_time rather than
+                        // test->duration
+                        unit_snprintf(ubuf, UNIT_LEN, (double) (n->result->bytes_received / test->duration), 'a');
                         printf("\n%llu bytes received %s/sec for stream %d\n",n->result->bytes_received, ubuf,(int)n);                        
                         close(j);                        
                         iperf_free_stream(test, n);
@@ -751,11 +736,11 @@ void iperf_run_client(struct iperf_test *test)
     tv.tv_sec = 15;            // timeout interval in seconds
     tv.tv_usec = 0;
     
-    buf = (char *) malloc(test->default_settings->bufsize);
+    buf = (char *) malloc(test->default_settings->blksize);
             
     if (test->protocol == Pudp)
     {
-        dtargns = (int64_t)(test->default_settings->bufsize) * SEC_TO_NS * 8;
+        dtargns = (int64_t)(test->default_settings->blksize) * SEC_TO_NS * 8;
         dtargns /= test->default_settings->rate;
         
         assert(dtargns != 0);
@@ -875,11 +860,7 @@ main(int argc, char **argv)
 {
     char ch;
     struct iperf_test *test;
-    struct sockaddr_in *addr_local, *addr_remote;
             
-    addr_local = (struct sockaddr_in *)malloc(sizeof (struct sockaddr_in));
-    addr_remote = (struct sockaddr_in *)malloc(sizeof (struct sockaddr_in));
-    
     test= iperf_new_test();        
     iperf_defaults(test);
         
@@ -887,11 +868,11 @@ main(int argc, char **argv)
         switch (ch) {
             case 'c':
                 test->role = 'c';    
-                inet_pton(AF_INET, optarg, &addr_remote->sin_addr);                
+                test->server_hostname = (char *) malloc(strlen(optarg));
+                strncpy(test->server_hostname, optarg, strlen(optarg));
                 break;                
             case 'p':
-                test->listener_port = atoi(optarg);                
-                addr_remote->sin_port = htons(atoi(optarg));
+                test->server_port = atoi(optarg);                
                 break;
             case 's':
                 test->role = 's';                
@@ -901,7 +882,7 @@ main(int argc, char **argv)
                 break;
             case 'u':
                 test->protocol = Pudp;
-                test->default_settings->bufsize = DEFAULT_UDP_BUFSIZE;
+                test->default_settings->blksize = DEFAULT_UDP_BLKSIZE;
                 break;
             case 'P':
                 test->num_streams = atoi(optarg);
@@ -910,7 +891,7 @@ main(int argc, char **argv)
                 test->default_settings->rate = atoi(optarg);
                 break;
             case 'l':
-                test->default_settings->bufsize = atol(optarg);
+                test->default_settings->blksize = atol(optarg);
                 break;
             case 'w':
                 test->default_settings->socket_bufsize = atoi(optarg);
@@ -922,8 +903,6 @@ main(int argc, char **argv)
     
     printf("ROLE = %s\n", (test->role == 's') ? "Server" : "Client");
     
-    test->local_addr = (struct sockaddr_storage *) addr_local;    
-    test->remote_addr = (struct sockaddr_storage *) addr_remote;    
     test->stats_callback = iperf_stats_callback;    
     test->reporter_callback = iperf_reporter_callback;
 

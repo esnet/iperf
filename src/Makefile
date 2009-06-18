@@ -1,5 +1,5 @@
 CFLAGS=-g -Wall
-OBJS=main.o timer.o net.o tcp_window_size.o units.o
+OBJS=iperf_api.o timer.o net.o tcp_window_size.o units.o
 
 all: iperf 
 	

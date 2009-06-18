@@ -25,19 +25,6 @@
 #include "units.h"
 #include "tcp_window_size.h"
 
-enum {
-    Ptcp = SOCK_STREAM,
-    Pudp = SOCK_DGRAM,
-    
-    uS_TO_NS = 1000,
-    RATE = 1000000,
-    MAX_BUFFER_SIZE =10,
-    DEFAULT_UDP_BLKSIZE = 1470,
-    DEFAULT_TCP_BLKSIZE = 8192
-};
-#define SEC_TO_NS 1000000000 /* too big for enum on some platforms */
-
-
 static struct option longopts[] =
 {
 { "client",         required_argument,      NULL,   'c' },

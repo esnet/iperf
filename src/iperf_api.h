@@ -107,7 +107,18 @@ void iperf_run_server(struct iperf_test *test);
 void iperf_run_client(struct iperf_test *test);
 int iperf_run(struct iperf_test *test);
 
+enum {
+    Ptcp = SOCK_STREAM,
+    Pudp = SOCK_DGRAM,
+    
+    uS_TO_NS = 1000,
+    RATE = 1000000,
+    MAX_BUFFER_SIZE =10,
+    DEFAULT_UDP_BLKSIZE = 1470,
+    DEFAULT_TCP_BLKSIZE = 8192
+};
 
+#define SEC_TO_NS 1000000000 /* too big for enum on some platforms */
 
 /**
  * iperf_new_test -- return a new iperf_test with default values

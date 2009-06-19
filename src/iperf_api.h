@@ -68,6 +68,7 @@ struct iperf_test
     
     int listener_sock;
     
+    int state;
     /* Select related parameters */    
     int max_fd;
     
@@ -82,7 +83,7 @@ struct iperf_test
     void *(*stats_callback)(struct iperf_test *);    // callback function pointer for stats
     
     int  reporter_interval;                          // time interval for reporter
-    void *(*reporter_callback)(struct iperf_test *); // callback function pointer for reporter
+    char *(*reporter_callback)(struct iperf_test *); // callback function pointer for reporter
     int reporter_fd;                                 // file descriptor for reporter
 
     int  num_streams;                                // total streams in the test -P 
@@ -101,7 +102,7 @@ int iperf_udp_recv(struct iperf_stream *sp);
 int iperf_tcp_send(struct iperf_stream *sp);
 int iperf_udp_send(struct iperf_stream *sp);
 void *iperf_stats_callback(struct iperf_test *test);
-void *iperf_reporter_callback(struct iperf_test *test);
+char *iperf_reporter_callback(struct iperf_test *test);
 struct iperf_stream * update_stream(struct iperf_test *test, int j, int add);
 void iperf_run_server(struct iperf_test *test);
 void iperf_run_client(struct iperf_test *test);
@@ -119,6 +120,10 @@ enum {
 };
 
 #define SEC_TO_NS 1000000000 /* too big for enum on some platforms */
+
+#define TEST_START 1
+#define TEST_RUNNING 2
+#define TEST_END 3
 
 /**
  * iperf_new_test -- return a new iperf_test with default values

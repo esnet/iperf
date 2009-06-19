@@ -190,8 +190,8 @@ void iperf_defaults(struct iperf_test *testp)
     testp->protocol = Ptcp;
     testp->role = 's';
     testp->duration = 10;
-
     testp->server_port = 5001;
+    testp->state = TEST_START;
     
     testp->stats_interval = testp->duration;
     testp->reporter_interval = testp->duration;        
@@ -294,76 +294,100 @@ void *iperf_stats_callback(struct iperf_test *test)
     return 0;
 }
 
-void * iperf_reporter_callback(struct iperf_test *test)
+char *iperf_reporter_callback(struct iperf_test *test)
 {
     char ubuf[UNIT_LEN];
     struct iperf_stream *sp = test->streams;
-    iperf_size_t bytes=0.0;
-        
-    printf("\n----------------INTERVAL [%d to %d]----------------\n", sp->result->interval_results->interval_duration - test->stats_interval,
+    iperf_size_t bytes=0;
+   // char *messege = (char *) malloc((sizeof("[%d]\t %llu bytes received %s per sec \n") * test->num_streams + 1) + 20 );
+    char *messege = (char *) malloc(200);
+    char *messege_final = (char *) malloc(test->num_streams * 50 + 200);
+    
+    if(test->state == TEST_RUNNING) 
+    {
+    
+        printf("\n----------------INTERVAL [%d to %d]----------------\n", sp->result->interval_results->interval_duration - test->stats_interval,
            sp->result->interval_results->interval_duration);
     
-    while(sp)
-    {    
-        if(test->role == 'c')
-        {
-            bytes+= sp->result->interval_results->bytes_transferred;
-            unit_snprintf(ubuf, UNIT_LEN, (double) ( sp->result->interval_results->bytes_transferred / test->stats_interval), 'a');
-            printf("[%d]\t %llu bytes sent \t %s per sec \n",sp->socket, sp->result->interval_results->bytes_transferred , ubuf);    
+        while(sp)
+        {    
+            if(test->role == 'c')
+            {
+                bytes+= sp->result->interval_results->bytes_transferred;
+                unit_snprintf(ubuf, UNIT_LEN, (double) ( sp->result->interval_results->bytes_transferred / test->stats_interval), 'a');
+                printf("[%d]\t %llu bytes sent \t %s per sec \n",sp->socket, sp->result->interval_results->bytes_transferred , ubuf);
+            }
             
-        }
-
-            
-        else if(test->role == 's')
-        {            
-            bytes+= sp->result->interval_results->bytes_transferred;
-            unit_snprintf(ubuf, UNIT_LEN, (double) ( sp->result->interval_results->bytes_transferred / test->stats_interval), 'a');
-            printf("[%d]\t %llu bytes received \t %s per sec \n",sp->socket, sp->result->interval_results->bytes_transferred , ubuf);            
-        }
+            else if(test->role == 's')
+            {            
+                bytes+= sp->result->interval_results->bytes_transferred;
+                unit_snprintf(ubuf, UNIT_LEN, (double) ( sp->result->interval_results->bytes_transferred / test->stats_interval), 'a');
+                printf("[%d]\t %llu bytes received \t %s per sec \n",sp->socket, sp->result->interval_results->bytes_transferred , ubuf);            
+            }
         
-        sp = sp->next;                        
-    }    
-    
-    printf("---------------------------------------------------\n");
-    unit_snprintf(ubuf, UNIT_LEN, (double) ( bytes / test->stats_interval), 'a');
-    printf("SUM\t%llu bytes COUNT \t %s per sec \n", bytes , ubuf);
-    printf("---------------------------------------------------\n");
-    
-    
+            sp = sp->next;                        
+        }
+       
+         printf("---------------------------------------------------\n");
+         unit_snprintf(ubuf, UNIT_LEN, (double) ( bytes / test->stats_interval), 'a');
+         printf("SUM\t %llu bytes COUNT \t %s per sec \n", bytes , ubuf);
+         printf("---------------------------------------------------\n");
+       
+    }
     // PRINT TOTAL
     
-    if(test->streams->result->interval_results->interval_duration >= test->duration)    
+    if(test->state == TEST_END)    
     {
         bytes =0;
         sp= test->streams;        
         printf("\n-----------------------TOTAL-----------------------\n");
+        sprintf(messege, "\n-----------------------TOTAL-----------------------\n");
+        strcat(messege_final, messege);
         
         while(sp)
         {    
             if(test->role == 'c')
             {
                 bytes+= sp->result->bytes_sent;
-                unit_snprintf(ubuf, UNIT_LEN, (double) ( sp->result->bytes_sent / test->duration), 'a');
-                printf("[%d]\t %llu bytes sent \t %s per sec \n",sp->socket, sp->result->bytes_sent , ubuf);    
                 
+                gettimeofday( &sp->result->end_time, NULL);                
+                                
+                unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->bytes_sent /(sp->result->end_time.tv_sec - sp->result->start_time.tv_sec)), 'a');
+                printf("[%d]\t %llu bytes sent     %s per sec \n",sp->socket, sp->result->bytes_sent , ubuf);
             }
             else if(test->role == 's')
             {
                 bytes+= sp->result->bytes_received;
-                unit_snprintf(ubuf, UNIT_LEN, (double) ( sp->result->bytes_received / test->duration), 'a');
-                printf("[%d]\t %llu bytes sent \t %s per sec \n",sp->socket, sp->result->bytes_received, ubuf);
+                gettimeofday( &sp->result->end_time, NULL);                
+                               
+                 unit_snprintf(ubuf, UNIT_LEN, (double) sp->result->bytes_received /(sp->result->end_time.tv_sec - sp->result->start_time.tv_sec), 'a');
+                printf("[%d]\t %llu bytes received %s per sec \n",sp->socket, sp->result->bytes_received, ubuf);
+                // IF SERVER IS DEAMON, ONLY THIS IS NEEDED
+                sprintf(messege,"[%d]\t %llu bytes received %s per sec\n", sp->socket, sp->result->bytes_received, ubuf);
+                strcat(messege_final, messege);
+                
             }            
             sp = sp->next;        
         }
-    printf("---------------------------------------------------\n");
-    unit_snprintf(ubuf, UNIT_LEN, (double) ( bytes / test->duration), 'a');
-    printf("SUM\t%llu bytes TOTAL \t %s per sec \n", bytes , ubuf);
+    
+        sp = test->streams;
+        
+    printf("---------------------------------------------------\n");    
+    unit_snprintf(ubuf, UNIT_LEN, (double) bytes /(sp->result->end_time.tv_sec - sp->result->start_time.tv_sec), 'a');
+                printf("SUM\t %llu bytes TOTAL    %s per sec \n", bytes , ubuf);
     printf("---------------------------------------------------\n\n");
+        
+    //IF SERVER IS DEAMON, ONLY THIS IS NEEDED   
+        sprintf(messege, "---------------------------------------------------\n");
+        strcat(messege_final, messege);
+        sprintf(messege, "SUM\t %llu bytes TOTAL    %s per sec \n", bytes , ubuf);
+        strcat(messege_final, messege);
+        sprintf(messege, "---------------------------------------------------\n\n");
+        strcat(messege_final, messege);
     
-    }
-    
+    }   
             
-    return 0;
+    return messege_final;
     
 }
 
@@ -430,6 +454,7 @@ struct iperf_stream *iperf_new_stream(struct iperf_test *testp)
     
     sp->result->bytes_received = 0;
     sp->result->bytes_sent = 0;
+    gettimeofday(&sp->result->start_time, NULL);
     
     sp->result->interval_results->bytes_transferred = 0;
     sp->result->interval_results->interval_duration = 0;    
@@ -507,7 +532,8 @@ int iperf_udp_accept(struct iperf_test *test)
     
     FD_SET(test->listener_sock, &test->read_set);
     test->max_fd = (test->max_fd < test->listener_sock) ? test->listener_sock : test->max_fd;
-
+    
+    connect_msg(sp);
     free(buf);
     
     return 0;
@@ -519,7 +545,6 @@ int iperf_tcp_accept(struct iperf_test *test)
     socklen_t len;
     struct sockaddr_in addr;    
     int peersock;
-        
     struct iperf_stream *sp;
     
     len = sizeof(addr);
@@ -631,10 +656,9 @@ struct iperf_stream * find_stream_by_socket(struct iperf_test *test, int sock)
 void iperf_run_server(struct iperf_test *test)
 {
     struct timeval tv;
-    struct iperf_stream *n;
-    char ubuf[UNIT_LEN];
-    int j;
-    int result;
+    struct iperf_stream *n;   
+    int j, result,count= 0;
+    char *read = NULL;
     
     FD_ZERO(&test->read_set);
     FD_SET(test->listener_sock, &test->read_set);
@@ -651,10 +675,8 @@ void iperf_run_server(struct iperf_test *test)
         result = select(test->max_fd + 1, &test->temp_set, NULL, NULL, &tv);
         
         if (result == 0) 
-        {
-            printf("select() timed out!\n");
-            break;
-        }
+            printf("SERVER IDLE : %d sec\n", (int)tv.tv_sec);
+            
         else if (result < 0 && errno != EINTR)
             printf("Error in select(): %s\n", strerror(errno));
         
@@ -664,7 +686,7 @@ void iperf_run_server(struct iperf_test *test)
             if (FD_ISSET(test->listener_sock, &test->temp_set))
             {            
                 test->accept(test);
-                
+                count++;
                 FD_CLR(test->listener_sock, &test->temp_set);                                
             }                
             
@@ -684,16 +706,8 @@ void iperf_run_server(struct iperf_test *test)
                     if(result == 0)
                     {    
                         // stream shutdown message
-                        // the duration at server can be wrong unles -t is provided
-                        //
-                        // TODO: use begin_time and end_time rather than
-                        // test->duration
-                        unit_snprintf(ubuf, UNIT_LEN, (double) (n->result->bytes_received / test->duration), 'a');
-                        printf("\n%llu bytes received %s/sec for stream %d\n",n->result->bytes_received, ubuf,(int)n);                        
-                        close(j);                        
-                        iperf_free_stream(test, n);
+                        count --;                        
                         FD_CLR(j, &test->read_set);                        
-                        
                     }
                     else if(result < 0)
                     {
@@ -703,11 +717,29 @@ void iperf_run_server(struct iperf_test *test)
             
             }// end for (j=0;...)
             
-        }// end else (result>0)
-        
-    }// end while
+            // Detect if ALL streams have finished
+            if(count == 0)
+            {
+                test->state = TEST_END;
+                
+              read = test->reporter_callback(test);
+                puts(read);  
+                
+                // FREE ALL STREAMS
+                n = test->streams;        
+                while(n)
+                {
+                    close(n->socket);                        
+                    iperf_free_stream(test, n);
+                    n= n->next;
+                }
+                printf(" TEST ENDED\n");                
+            }            
+            
+        }// end else (result>0)        
+               
+    }// end while    
     
-    printf(" TEST ENDED\n");
 }
 
 void iperf_run_client(struct iperf_test *test)
@@ -748,9 +780,7 @@ void iperf_run_client(struct iperf_test *test)
     
     if(test->reporter_interval != 0)
         reporter_interval = new_timer(test->reporter_interval, 0);
-    
-    
-    //Display();
+        
     // send data till the timer expires
     while(!timer->expired(timer))
     {
@@ -807,11 +837,12 @@ void iperf_run_client(struct iperf_test *test)
     }// while outer timer
     
     
-        
+    test->state = TEST_END;
+    test->reporter_callback(test);
+    
     // Send the EOF - 0 buffer packets
     sp = test->streams;
-    np = sp;
-    
+    np = sp;    
     do {
         sp = np;
         send(sp->socket, buf, 0, 0);
@@ -819,13 +850,14 @@ void iperf_run_client(struct iperf_test *test)
         close(sp->socket);
         iperf_free_stream(test, sp);
                 
-    } while (np);    
+    } while (np);
                 
 }    
 
 int iperf_run(struct iperf_test *test)
 {
-            
+    test->state = TEST_RUNNING;
+    
     if(test->role == 's')
     {
         iperf_run_server(test);

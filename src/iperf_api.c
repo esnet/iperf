@@ -7,16 +7,14 @@
 #include <unistd.h>
 #include <assert.h>
 #include<fcntl.h>
-
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-
 #include <pthread.h> 
 #include <stdint.h>
-
+#include <netinet/tcp.h>
 #include <sys/time.h>
 
 #include "iperf_api.h"
@@ -40,6 +38,69 @@ static struct option longopts[] =
 { NULL,             0,                      NULL,   0   }    
 };
 
+
+int getsock_tcp_mss( int inSock )
+{
+    int theMSS = 0;
+ 
+    int rc;
+    socklen_t len;
+    assert( inSock >= 0 );
+    
+    /* query for MSS */
+    len = sizeof( theMSS );
+    rc = getsockopt( inSock, IPPROTO_TCP, TCP_MAXSEG, (char*) &theMSS, &len );   
+  
+    return theMSS;
+}  
+
+
+
+int set_socket_options(struct iperf_stream *sp, struct iperf_test *tp)
+{
+    
+    socklen_t len;
+    
+    // -N
+    if(tp->mNodelay == 1)
+    {
+        int nodelay = 1;
+        len = sizeof(nodelay);
+        int rc = setsockopt( sp->socket, IPPROTO_TCP, TCP_NODELAY,
+                            (char*) &nodelay, len);
+        if(rc == -1)
+        {
+            perror("TCP_NODELAY");
+            return -1;
+        }
+    }
+    
+        
+    //-M
+    if(tp->default_settings->MSS > 0)
+    {
+        int rc;
+        int newMSS;
+        len = sizeof(newMSS);
+        
+        assert( sp->socket != -1);
+        
+            /* set */
+            newMSS = tp->default_settings->MSS;
+            len = sizeof( newMSS );
+            rc = setsockopt( sp->socket, IPPROTO_TCP, TCP_MAXSEG, (char*) &newMSS, len);
+            if ( rc == -1) {
+                perror("setsockopt");
+                return -1;
+            }
+            
+            /* verify results */
+            rc = getsockopt( sp->socket, IPPROTO_TCP, TCP_MAXSEG, (char*) &newMSS, &len);
+              if ( newMSS != tp->default_settings->MSS ) 
+                perror("mismatch");           
+    }            
+
+}
 
 void connect_msg(struct iperf_stream *sp)
 {
@@ -193,6 +254,8 @@ void iperf_defaults(struct iperf_test *testp)
     testp->server_port = 5001;
     testp->state = TEST_START;
     
+    testp->mFormat = 'a';    
+    
     testp->stats_interval = testp->duration;
     testp->reporter_interval = testp->duration;        
     testp->num_streams = 1;    
@@ -314,14 +377,14 @@ char *iperf_reporter_callback(struct iperf_test *test)
             if(test->role == 'c')
             {
                 bytes+= sp->result->interval_results->bytes_transferred;
-                unit_snprintf(ubuf, UNIT_LEN, (double) ( sp->result->interval_results->bytes_transferred / test->stats_interval), 'a');
+                unit_snprintf(ubuf, UNIT_LEN, (double) ( sp->result->interval_results->bytes_transferred / test->stats_interval), test->mFormat);
                 printf("[%d]\t %llu bytes sent \t %s per sec \n",sp->socket, sp->result->interval_results->bytes_transferred , ubuf);
             }
             
             else if(test->role == 's')
             {            
                 bytes+= sp->result->interval_results->bytes_transferred;
-                unit_snprintf(ubuf, UNIT_LEN, (double) ( sp->result->interval_results->bytes_transferred / test->stats_interval), 'a');
+                unit_snprintf(ubuf, UNIT_LEN, (double) ( sp->result->interval_results->bytes_transferred / test->stats_interval), test->mFormat);
                 printf("[%d]\t %llu bytes received \t %s per sec \n",sp->socket, sp->result->interval_results->bytes_transferred , ubuf);            
             }
         
@@ -329,7 +392,7 @@ char *iperf_reporter_callback(struct iperf_test *test)
         }
        
          printf("---------------------------------------------------\n");
-         unit_snprintf(ubuf, UNIT_LEN, (double) ( bytes / test->stats_interval), 'a');
+         unit_snprintf(ubuf, UNIT_LEN, (double) ( bytes / test->stats_interval), test->mFormat);
          printf("SUM\t %llu bytes COUNT \t %s per sec \n", bytes , ubuf);
          printf("---------------------------------------------------\n");
        
@@ -352,15 +415,16 @@ char *iperf_reporter_callback(struct iperf_test *test)
                 
                 gettimeofday( &sp->result->end_time, NULL);                
                                 
-                unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->bytes_sent /(sp->result->end_time.tv_sec - sp->result->start_time.tv_sec)), 'a');
+                unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->bytes_sent /(sp->result->end_time.tv_sec - sp->result->start_time.tv_sec)), test->mFormat);
                 printf("[%d]\t %llu bytes sent     %s per sec \n",sp->socket, sp->result->bytes_sent , ubuf);
+                
             }
             else if(test->role == 's')
             {
                 bytes+= sp->result->bytes_received;
                 gettimeofday( &sp->result->end_time, NULL);                
                                
-                 unit_snprintf(ubuf, UNIT_LEN, (double) sp->result->bytes_received /(sp->result->end_time.tv_sec - sp->result->start_time.tv_sec), 'a');
+                 unit_snprintf(ubuf, UNIT_LEN, (double) sp->result->bytes_received /(sp->result->end_time.tv_sec - sp->result->start_time.tv_sec), test->mFormat);
                 printf("[%d]\t %llu bytes received %s per sec \n",sp->socket, sp->result->bytes_received, ubuf);
                 // IF SERVER IS DEAMON, ONLY THIS IS NEEDED
                 sprintf(messege,"[%d]\t %llu bytes received %s per sec\n", sp->socket, sp->result->bytes_received, ubuf);
@@ -373,7 +437,7 @@ char *iperf_reporter_callback(struct iperf_test *test)
         sp = test->streams;
         
     printf("---------------------------------------------------\n");    
-    unit_snprintf(ubuf, UNIT_LEN, (double) bytes /(sp->result->end_time.tv_sec - sp->result->start_time.tv_sec), 'a');
+    unit_snprintf(ubuf, UNIT_LEN, (double) bytes /(sp->result->end_time.tv_sec - sp->result->start_time.tv_sec), test->mFormat);
                 printf("SUM\t %llu bytes TOTAL    %s per sec \n", bytes , ubuf);
     printf("---------------------------------------------------\n\n");
         
@@ -384,6 +448,12 @@ char *iperf_reporter_callback(struct iperf_test *test)
         strcat(messege_final, messege);
         sprintf(messege, "---------------------------------------------------\n\n");
         strcat(messege_final, messege);
+                
+        // -m option        
+        if((test->mPrintMSS != 0)  && (test->role == 'c'))
+        {
+            printf(" the TCP maximum segment size MSS = %d \n", getsock_tcp_mss(sp->socket));
+        }
     
     }   
             
@@ -593,6 +663,8 @@ void iperf_init_stream(struct iperf_stream *sp, struct iperf_test *testp)
     }
     
     
+    //set socket options
+    
     if(set_tcp_windowsize(sp->socket, testp->default_settings->socket_bufsize, 
                           testp->role == 's' ? SO_RCVBUF : SO_SNDBUF) < 0)
         fprintf(stderr, "unable to set window size\n");
@@ -601,14 +673,14 @@ void iperf_init_stream(struct iperf_stream *sp, struct iperf_test *testp)
     x = getsock_tcp_windowsize(sp->socket, SO_RCVBUF);
     if(x < 0)
         perror("SO_RCVBUF");
-    
-   // printf("RCV: %d\n", x);
+    // printf("RCV: %d\n", x);
     
     x = getsock_tcp_windowsize(sp->socket, SO_SNDBUF);
     if(x < 0)
         perror("SO_SNDBUF");
+    // printf("SND: %d\n", x);    
     
-   // printf("SND: %d\n", x);    
+    set_socket_options(sp, testp);
     
 }
 
@@ -883,7 +955,7 @@ main(int argc, char **argv)
     test= iperf_new_test();        
     iperf_defaults(test);
         
-    while( (ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:", longopts, NULL)) != -1 )
+    while( (ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:mNM:f:", longopts, NULL)) != -1 )
         switch (ch) {
             case 'c':
                 test->role = 'c';    
@@ -918,6 +990,17 @@ main(int argc, char **argv)
                 test->stats_interval = atoi(optarg);
                 test->reporter_interval = atoi(optarg);
                 break;
+            case 'm':
+                test->mPrintMSS = 1;
+                break;
+            case 'N':
+                test->mNodelay = 1;
+                break;
+            case 'M':
+                test->default_settings->MSS = atoi(optarg);
+            case 'f':
+                test->mFormat = *optarg;
+                break;      
         }
     
     printf("ROLE = %s\n", (test->role == 's') ? "Server" : "Client");

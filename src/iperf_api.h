@@ -26,7 +26,7 @@ struct iperf_settings
     int blksize;              // -l size of each read/write, in UDP this relates directly to packet_size
 
     int rate;                 // target data rate, UDP only
-
+    int MSS;                  //for TCP MSS
     int ttl;
     int tos;
 };
@@ -63,15 +63,19 @@ struct iperf_test
                                 
     char *server_hostname;                // arg of -c 
     int server_port;                      // arg of -p
-
-    int  duration;                        // total duration of test  -t
-    
-    int listener_sock;
-    
+    int  duration;                        // total duration of test  -t    
+    int listener_sock;    
     int state;
-    /* Select related parameters */    
-    int max_fd;
     
+    /*boolen variables for Options */
+    int   mDaemon;                        // -D
+    int   mNodelay;                       // -N
+    int   mPrintMSS;                      // -m
+    int   mDomain;                        // -V
+    char  mFormat;                        // -f  
+   
+    /* Select related parameters */    
+    int max_fd;    
     fd_set read_set;
     fd_set temp_set;
     fd_set write_set;
@@ -93,6 +97,8 @@ struct iperf_test
 };
 
 
+int getsock_tcp_mss( int inSock );
+int set_socket_options(struct iperf_stream *sp, struct iperf_test *test);
 void connect_msg(struct iperf_stream *sp);
 void Display(struct iperf_test *test);
 int iperf_tcp_accept(struct iperf_test *test);

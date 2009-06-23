@@ -36,7 +36,7 @@ struct iperf_stream
     /* configurable members */
     int local_port;                     // local port
     int remote_port;                    // remote machine port
-     struct iperf_settings *settings;   // pointer to structure settings  
+    struct iperf_settings *settings;   // pointer to structure settings  
     int protocol;                       // protocol- TCP/UDP 
         
     /* non configurable members */
@@ -126,6 +126,7 @@ enum {
 };
 
 #define SEC_TO_NS 1000000000 /* too big for enum on some platforms */
+#define SEC_TO_US 1000000
 
 #define TEST_START 1
 #define TEST_RUNNING 2

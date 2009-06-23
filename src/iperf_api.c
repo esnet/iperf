@@ -54,8 +54,6 @@ int getsock_tcp_mss( int inSock )
     return theMSS;
 }  
 
-
-
 int set_socket_options(struct iperf_stream *sp, struct iperf_test *tp)
 {
     
@@ -98,8 +96,8 @@ int set_socket_options(struct iperf_stream *sp, struct iperf_test *tp)
             rc = getsockopt( sp->socket, IPPROTO_TCP, TCP_MAXSEG, (char*) &newMSS, &len);
               if ( newMSS != tp->default_settings->MSS ) 
                 perror("mismatch");           
-    }            
-
+    }        
+    return 0;
 }
 
 void connect_msg(struct iperf_stream *sp)
@@ -206,20 +204,52 @@ int iperf_tcp_send(struct iperf_stream *sp)
 }
 
 int iperf_udp_send(struct iperf_stream *sp)
-{
+{ 
     int result,i;
-    int size = sp->settings->blksize;
-    
+    struct timeval before, after;
+     int64_t delayus, adjustus, dtargus; 
+    int size = sp->settings->blksize;    
     char *buf = (char *) malloc(size);
     if(!buf)
     {
         perror("malloc: unable to allocate transmit buffer");
     }    
+    
+    dtargus = (int64_t)(sp->settings->blksize) * SEC_TO_US * 8;
+    dtargus /= sp->settings->rate;
+     
+    assert(dtargus != 0);
+    
     for(i=0; i < size; i++)
         buf[i] = i % 37;
-    
-    result = send(sp->socket, buf, size, 0);    
-    sp->result->bytes_sent+= result;
+        
+    if(((struct timer *) sp->data)->expired((struct timer *) sp->data))
+    {  
+        
+        if(gettimeofday(&before, 0) < 0)
+            perror("gettimeofday");
+        
+        result = send(sp->socket, buf, size, 0);    
+        sp->result->bytes_sent+= result;
+        
+        if(gettimeofday(&after, 0) < 0)
+            perror("gettimeofday");
+        
+        adjustus = dtargus;
+        adjustus += (before.tv_sec - after.tv_sec) * SEC_TO_US ;
+        adjustus += (before.tv_usec - after.tv_usec);
+        
+        printf(" the adjust time = %lld \n",dtargus- adjustus);        
+       // if( adjustus > 0) {
+           dtargus = adjustus;
+        //}
+        memcpy(&before, &after, sizeof before);
+        
+        // RESET THE TIMER
+        sp->data = new_timer(0, dtargus);
+        printf(" new timer is %lld usec\n", dtargus);
+        
+    } // timer_expired_micro 
     
     
     return result;
@@ -818,10 +848,9 @@ void iperf_run_client(struct iperf_test *test)
 {
     int i,result;
     struct iperf_stream *sp, *np;
-    struct timer *timer, *stats_interval, *reporter_interval;
+    struct timer *timer, *stats_interval, *reporter_interval;    
     char *buf;
-    int64_t delayns, adjustns, dtargns; 
-    struct timeval before, after;
+    int64_t delayus, adjustus, dtargus; 
     struct timeval tv;
     int ret=0;
     tv.tv_sec = 15;            // timeout interval in seconds
@@ -831,18 +860,22 @@ void iperf_run_client(struct iperf_test *test)
             
     if (test->protocol == Pudp)
     {
-        dtargns = (int64_t)(test->default_settings->blksize) * SEC_TO_NS * 8;
-        dtargns /= test->default_settings->rate;
+        dtargus = (int64_t)(test->default_settings->blksize) * SEC_TO_US * 8;
+        dtargus /= test->default_settings->rate;
         
-        assert(dtargns != 0);
+        assert(dtargus != 0);
         
-        if(gettimeofday(&before, 0) < 0) {
-            perror("gettimeofday");
+        delayus = dtargus;
+        adjustus = 0;
+        printf("%lld adj %lld delay\n", adjustus, delayus);
+        
+        sp = test->streams;
+        for(i=0; i< test->num_streams; i++)
+        {
+            sp->data = new_timer(0, dtargus);
+            sp= sp->next;
         }
         
-        delayns = dtargns;
-        adjustns = 0;
-        printf("%lld adj %lld delay\n", adjustns, delayns);            
     }    
     
     timer = new_timer(test->duration, 0);
@@ -865,27 +898,8 @@ void iperf_run_client(struct iperf_test *test)
         for(i=0;i<test->num_streams;i++)
         {
             if(FD_ISSET(sp->socket, &test->write_set))
-            {
-                result = sp->snd(sp);
-                
-                if (test->protocol == Pudp)
-                {
-                    if(delayns > 0)
-                        delay(delayns);
-                    
-                    if(gettimeofday(&after, 0) < 0)
-                        perror("gettimeofday");
-                                        
-                    adjustns = dtargns;
-                    adjustns += (before.tv_sec - after.tv_sec) * SEC_TO_NS;
-                    adjustns += (before.tv_usec - after.tv_usec) * uS_TO_NS;
-                    
-                    if( adjustns > 0 || delayns > 0) {
-                        //printf("%lld adj %lld delay\n", adjustns, delayns);
-                        delayns += adjustns;
-                    }
-                    memcpy(&before, &after, sizeof before);
-                }
+            {  
+               result = sp->snd(sp);             
                 
                 if(sp->next==NULL)
                     break;

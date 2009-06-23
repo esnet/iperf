@@ -21,6 +21,31 @@ timer_expired(struct timer *tp)
     return tp->end.tv_sec <= now.tv_sec;
 }
 
+int
+timer_expired_micro(struct timer *tp)
+{
+    
+    struct timeval now;
+    int64_t  diff= 0, current= 0;
+    if(gettimeofday(&now, NULL) < 0) {
+        perror("gettimeofday");
+        return -1;
+    }
+    
+    diff+= tp->end.tv_sec * 1000000 ;
+    diff+= tp->end.tv_usec;
+    
+    current+= now.tv_sec * 1000000 ;
+    current+= now.tv_usec;
+    
+   return diff <= current;  
+    
+    
+    // currently using microsecond limit. Else we need to introduce timespec instread of timeval
+}
+
+
+
 struct timer *
 new_timer(time_t sec, suseconds_t usec)
 {
@@ -35,8 +60,11 @@ new_timer(time_t sec, suseconds_t usec)
     memcpy(&tp->end, &tp->begin, sizeof(struct timer));
     tp->end.tv_sec = tp->begin.tv_sec + (time_t) sec;
     tp->end.tv_usec = tp->begin.tv_usec + (time_t) usec;
-
-    tp->expired = timer_expired;
+    
+    if( sec != 0)
+        tp->expired = timer_expired;
+    else
+        tp->expired = timer_expired_micro;    
 
     return tp;
 }

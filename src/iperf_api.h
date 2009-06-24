@@ -1,4 +1,4 @@
-typedef uint64_t iperf_size_t;
+		typedef uint64_t iperf_size_t;
 
 struct iperf_interval_results
 {
@@ -29,6 +29,7 @@ struct iperf_settings
     int MSS;                  //for TCP MSS
     int ttl;
     int tos;
+    int state;               // This is state of a stream/test - can use Union for this 
 };
 
 struct iperf_stream
@@ -64,8 +65,8 @@ struct iperf_test
     char *server_hostname;                // arg of -c 
     int server_port;                      // arg of -p
     int  duration;                        // total duration of test  -t    
-    int listener_sock;    
-    int state;
+    int listener_sock;
+   
     
     /*boolen variables for Options */
     int   mDaemon;                        // -D
@@ -130,7 +131,11 @@ enum {
 
 #define TEST_START 1
 #define TEST_RUNNING 2
-#define TEST_END 3
+#define RESULT_REQUEST 3
+#define RESULT_RESPOND 4
+#define TEST_END 5
+#define STREAM_BEGIN 6
+#define STREAM_END 7
 
 /**
  * iperf_new_test -- return a new iperf_test with default values

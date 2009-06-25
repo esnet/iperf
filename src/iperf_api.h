@@ -189,7 +189,7 @@ void iperf_init_stream(struct iperf_stream *sp, struct iperf_test *testp);
  * iperf_free_stream -- free resources associated with test
  *
  */
-void iperf_free_stream(struct iperf_test *test, struct iperf_stream *stream);
+void iperf_free_stream(struct iperf_test *test, struct iperf_stream *sp);
 
 
 /**

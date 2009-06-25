@@ -136,6 +136,7 @@ enum {
 #define TEST_END 5
 #define STREAM_BEGIN 6
 #define STREAM_END 7
+#define ALL_STREAMS_END 8
 
 /**
  * iperf_new_test -- return a new iperf_test with default values

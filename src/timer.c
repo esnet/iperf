@@ -99,3 +99,21 @@ delay(int64_t ns)
     return 0;
 }
 
+
+double timeval_to_double(struct timeval *tv)
+{
+    double d;
+    
+    d = tv->tv_sec + tv->tv_usec /1000000;    
+    
+    return d;
+}
+
+
+double timeval_diff(struct timeval *tv0, struct timeval *tv1)
+{
+    return timeval_to_double(tv1) - timeval_to_double(tv0);
+}
+
+
+

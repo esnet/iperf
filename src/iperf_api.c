@@ -22,6 +22,7 @@
 #include "net.h"
 #include "units.h"
 #include "tcp_window_size.h"
+#include "locale.h"
 
 static struct option longopts[] =
 {
@@ -36,8 +37,8 @@ static struct option longopts[] =
 { "window",         required_argument,      NULL,   'w' },
 {"interval",        required_argument,      NULL,   'i'},
 {"NoDelay",         no_argument,            NULL,   'N'},
-{"Print-MSS",       no_argument,            NULL,   'm'},
-{"Set-MSS",         required_argument,      NULL,   'M'},
+{"Print-mss",       no_argument,            NULL,   'm'},
+{"Set-mss",         required_argument,      NULL,   'M'},
 { NULL,             0,                      NULL,   0   }    
 };
 
@@ -94,17 +95,17 @@ void receive_result_from_server(struct iperf_test *test)
 
 int getsock_tcp_mss( int inSock )
 {
-    int theMSS = 0;
+    int mss = 0;
  
     int rc;
     socklen_t len;
     assert( inSock >= 0 );
     
-    /* query for MSS */
-    len = sizeof( theMSS );
-    rc = getsockopt( inSock, IPPROTO_TCP, TCP_MAXSEG, (char*) &theMSS, &len );   
+    /* query for mss */
+    len = sizeof( mss );
+    rc = getsockopt( inSock, IPPROTO_TCP, TCP_MAXSEG, (char*) &mss, &len );   
   
-    return theMSS;
+    return mss;
 }  
 
 int set_socket_options(struct iperf_stream *sp, struct iperf_test *tp)
@@ -113,12 +114,12 @@ int set_socket_options(struct iperf_stream *sp, struct iperf_test *tp)
     socklen_t len;
     
     // -N
-    if(tp->mNodelay == 1)
+    if(tp->no_delay == 1)
     {
-        int nodelay = 1;
-        len = sizeof(nodelay);
+        int no_delay = 1;
+        len = sizeof(no_delay);
         int rc = setsockopt( sp->socket, IPPROTO_TCP, TCP_NODELAY,
-                            (char*) &nodelay, len);
+                            (char*) &no_delay, len);
         if(rc == -1)
         {
             perror("TCP_NODELAY");
@@ -128,26 +129,26 @@ int set_socket_options(struct iperf_stream *sp, struct iperf_test *tp)
     
         
     //-M
-    if(tp->default_settings->MSS > 0)
+    if(tp->default_settings->mss > 0)
     {
         int rc;
-        int newMSS;
-        len = sizeof(newMSS);
+        int new_mss;
+        len = sizeof(new_mss);
         
         assert( sp->socket != -1);
         
             /* set */
-            newMSS = tp->default_settings->MSS;
-            len = sizeof( newMSS );
-            rc = setsockopt( sp->socket, IPPROTO_TCP, TCP_MAXSEG, (char*) &newMSS, len);
+            new_mss = tp->default_settings->mss;
+            len = sizeof( new_mss );
+            rc = setsockopt( sp->socket, IPPROTO_TCP, TCP_MAXSEG, (char*) &new_mss, len);
             if ( rc == -1) {
                 perror("setsockopt");
                 return -1;
             }
             
             /* verify results */
-            rc = getsockopt( sp->socket, IPPROTO_TCP, TCP_MAXSEG, (char*) &newMSS, &len);
-              if ( newMSS != tp->default_settings->MSS ) 
+            rc = getsockopt( sp->socket, IPPROTO_TCP, TCP_MAXSEG, (char*) &new_mss, &len);
+              if ( new_mss != tp->default_settings->mss ) 
                 perror("mismatch");           
     }        
     return 0;
@@ -410,7 +411,7 @@ void iperf_defaults(struct iperf_test *testp)
     testp->duration = 10;
     testp->server_port = 5001;
     
-    testp->mFormat = 'a';    
+    testp->unit_format = 'a';    
     
     testp->stats_interval = testp->duration;
     testp->reporter_interval = testp->duration;        
@@ -517,79 +518,91 @@ void *iperf_stats_callback(struct iperf_test *test)
 char *iperf_reporter_callback(struct iperf_test *test)
 {
     char ubuf[UNIT_LEN];
+    char nbuf[UNIT_LEN];
     struct iperf_stream *sp = test->streams;
     iperf_size_t bytes=0;
-   // char *message = (char *) malloc((sizeof("[%d]\t %llu bytes received %s per sec \n") * test->num_streams + 1) + 20 );
+    double start_time, end_time;
+    
     char *message = (char *) malloc(300);
     char *message_final = (char *) malloc(test->num_streams * 50 + 200);
     
+    start_time = sp->result->interval_results->interval_duration - test->stats_interval;
+    end_time = sp->result->interval_results->interval_duration;
+    
     if(test->default_settings->state == TEST_RUNNING) 
     {    
-        sprintf(message,"\n----------------INTERVAL [%d to %d]----------------\n", sp->result->interval_results->interval_duration - test->stats_interval,
-           sp->result->interval_results->interval_duration);
-        strcat(message_final, message);
-    
+            
     
         while(sp)
         {    
-            if(test->role == 'c')
+            if(test->protocol == Ptcp)
             {
+                sprintf(message,report_bw_header);        
+                strcat(message_final, message);
+
                 bytes+= sp->result->interval_results->bytes_transferred;
-                unit_snprintf(ubuf, UNIT_LEN, (double) ( sp->result->interval_results->bytes_transferred / test->stats_interval), test->mFormat);
-                sprintf(message,"[%d]\t %llu bytes sent \t %s per sec \n",sp->socket, sp->result->interval_results->bytes_transferred , ubuf);
+                unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->interval_results->bytes_transferred), test->unit_format);
+                unit_snprintf(nbuf, UNIT_LEN, (double) ( sp->result->interval_results->bytes_transferred / test->stats_interval), test->unit_format);
+                
+                sprintf(message, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
                 strcat(message_final, message);               
             }
             
-            else if(test->role == 's')
+            // UDP
+            else 
             {   
                bytes+= sp->result->interval_results->bytes_transferred;
-               unit_snprintf(ubuf, UNIT_LEN, (double) ( sp->result->interval_results->bytes_transferred / test->stats_interval), test->mFormat);
+               unit_snprintf(ubuf, UNIT_LEN, (double) ( sp->result->interval_results->bytes_transferred / test->stats_interval), test->unit_format);
                sprintf(message,"[%d]\t %llu bytes received \t %s per sec \n",sp->socket, sp->result->interval_results->bytes_transferred , ubuf);            
                strcat(message_final, message);
             }
         
             sp = sp->next;                        
-        }
+        }    
        
-         sprintf(message,"---------------------------------------------------\n");
-         strcat(message_final, message);
-         unit_snprintf(ubuf, UNIT_LEN, (double) ( bytes / test->stats_interval), test->mFormat);
-         sprintf(message,"SUM\t %llu bytes COUNT \t %s per sec \n", bytes , ubuf);
-         strcat(message_final, message);   
-         sprintf(message,"---------------------------------------------------\n");
-         strcat(message_final, message);
+        unit_snprintf(ubuf, UNIT_LEN, (double) ( bytes), test->unit_format);
+        unit_snprintf(nbuf, UNIT_LEN, (double) ( bytes / test->stats_interval), test->unit_format);
+        sprintf(message, report_sum_bw_format, start_time, end_time, ubuf, nbuf);
+        strcat(message_final, message);         
        
     }
     // PRINT TOTAL    
     if(test->default_settings->state == RESULT_REQUEST)    
-    {
+    {   
         bytes =0;
-        sp= test->streams;       
-        sprintf(message, "\n-----------------------TOTAL-----------------------\n");
-        strcat(message_final, message);
+        sp= test->streams;      
         
         while(sp)
-        {    
-            if(test->role == 'c')
+        { 
+            
+            if(test->protocol == Ptcp)
             {
                 if(sp->settings->state == STREAM_END)
                 {
-                    bytes+= sp->result->bytes_sent;                
-                    gettimeofday( &sp->result->end_time, NULL);                
+                    bytes+= sp->result->bytes_sent;
+                    gettimeofday( &sp->result->end_time, NULL);
+                    
+                    sprintf(message,report_bw_header);        
+                    strcat(message_final, message);
+                    
+                    
+                    start_time = timeval_diff(&sp->result->start_time, &sp->result->start_time);
+                    end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
                                 
-                    unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->bytes_sent /(sp->result->end_time.tv_sec - sp->result->start_time.tv_sec)), test->mFormat);
-                    sprintf(message,"[%d]\t %llu bytes sent     %s per sec\n", sp->socket, sp->result->bytes_sent, ubuf);
+                    unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->bytes_sent), test->unit_format);
+                    unit_snprintf(nbuf, UNIT_LEN, (double) (sp->result->bytes_sent / end_time), test->unit_format);
+                    sprintf(message, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
                     strcat(message_final, message);
                 }
                 
             }
-            else if(test->role == 's')
+            else
             {
                 if(sp->settings->state == STREAM_END)
                 {
                     bytes+= sp->result->bytes_received;                           
                                
-                    unit_snprintf(ubuf, UNIT_LEN, (double) sp->result->bytes_received /(sp->result->end_time.tv_sec - sp->result->start_time.tv_sec), test->mFormat);
+                    unit_snprintf(ubuf, UNIT_LEN, (double) sp->result->bytes_received /(sp->result->end_time.tv_sec - sp->result->start_time.tv_sec), test->unit_format);
                     sprintf(message,"[%d]\t %llu bytes received %s per sec\n", sp->socket, sp->result->bytes_received, ubuf);
                     strcat(message_final, message);
                 }
@@ -598,22 +611,20 @@ char *iperf_reporter_callback(struct iperf_test *test)
         }
     
         sp = test->streams;
-        
-   
-    unit_snprintf(ubuf, UNIT_LEN, (double) bytes /(sp->result->end_time.tv_sec - sp->result->start_time.tv_sec), test->mFormat);
-        
-    //IF SERVER IS DEAMON, ONLY THIS IS NEEDED   
-        sprintf(message, "---------------------------------------------------\n");
-        strcat(message_final, message);
-        sprintf(message, "SUM\t %llu bytes TOTAL    %s per sec \n", bytes , ubuf);
-        strcat(message_final, message);
-        sprintf(message, "---------------------------------------------------\n\n");
-        strcat(message_final, message);
                 
+        start_time = timeval_diff(&sp->result->start_time, &sp->result->start_time);
+        end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
+        
+        unit_snprintf(ubuf, UNIT_LEN, (double) bytes, test->unit_format);
+        unit_snprintf(nbuf, UNIT_LEN, (double) bytes / end_time, test->unit_format);
+        
+        sprintf(message, report_sum_bw_format, start_time, end_time, ubuf, nbuf);
+        strcat(message_final, message);
+                        
         // -m option        
-        if((test->mPrintMSS != 0)  && (test->role == 'c'))
+        if((test->print_mss != 0)  && (test->role == 'c'))
         {
-            sprintf(message,"the TCP maximum segment size MSS = %d \n", getsock_tcp_mss(sp->socket));
+            sprintf(message,"the TCP maximum segment size mss = %d \n", getsock_tcp_mss(sp->socket));
             strcat(message_final, message);
         }
     }   
@@ -1177,15 +1188,15 @@ main(int argc, char **argv)
                 test->reporter_interval = atoi(optarg);
                 break;
             case 'm':
-                test->mPrintMSS = 1;
+                test->print_mss = 1;
                 break;
             case 'N':
-                test->mNodelay = 1;
+                test->no_delay = 1;
                 break;
             case 'M':
-                test->default_settings->MSS = atoi(optarg);
+                test->default_settings->mss = atoi(optarg);
             case 'f':
-                test->mFormat = *optarg;
+                test->unit_format = *optarg;
                 break;      
         }
     

@@ -5,6 +5,7 @@ struct iperf_interval_results
     iperf_size_t bytes_transferred;
     int  interval_duration;
     void * custom_data;
+    struct iperf_interval_results *next;
 };
 
 struct iperf_stream_result
@@ -13,7 +14,7 @@ struct iperf_stream_result
     iperf_size_t  bytes_sent;
     struct timeval start_time;
     struct timeval end_time;
-    struct iperf_interval_results *interval_results;
+    struct iperf_interval_results *interval_results;    
     void *data;
 };
 
@@ -26,7 +27,7 @@ struct iperf_settings
     int blksize;              // -l size of each read/write, in UDP this relates directly to packet_size
 
     int rate;                 // target data rate, UDP only
-    int MSS;                  //for TCP MSS
+    int mss;                  //for TCP MSS
     int ttl;
     int tos;
     int state;               // This is state of a stream/test - can use Union for this 
@@ -69,11 +70,11 @@ struct iperf_test
    
     
     /*boolen variables for Options */
-    int   mDaemon;                        // -D
-    int   mNodelay;                       // -N
-    int   mPrintMSS;                      // -m
-    int   mDomain;                        // -V
-    char  mFormat;                        // -f  
+    int   daemon;                        // -D
+    int   no_delay;                       // -N
+    int   print_mss;                      // -m
+    int   domain;                        // -V
+    char  unit_format;                        // -f  
    
     /* Select related parameters */    
     int max_fd;    

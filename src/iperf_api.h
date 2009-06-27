@@ -3,9 +3,10 @@
 struct iperf_interval_results
 {
     iperf_size_t bytes_transferred;
-    int  interval_duration;
-    void * custom_data;
+    int  interval_duration;    
     struct iperf_interval_results *next;
+    
+    void * custom_data;
 };
 
 struct iperf_stream_result

@@ -43,6 +43,29 @@ static struct option longopts[] =
 };
 
 
+void add_interval_list(struct iperf_stream_result *rp, struct iperf_interval_results temp)
+{
+    
+    struct iperf_interval_results *n;
+    
+    struct iperf_interval_results *ip = (struct iperf_interval_results *) malloc(sizeof(struct iperf_interval_results));       
+    ip->bytes_transferred = temp.bytes_transferred;
+    ip->interval_duration = temp.interval_duration; 
+    
+    if(!rp->interval_results)
+    { 
+        rp->interval_results = ip;
+    }
+    else
+    {
+        n = rp->interval_results;
+        while(n->next)
+           n = n->next;
+       
+         n->next = ip;
+    }
+}
+
 void send_result_to_client(struct iperf_stream *sp)
 {    
     int result;
@@ -498,19 +521,51 @@ void iperf_free_test(struct iperf_test *test)
 
 void *iperf_stats_callback(struct iperf_test *test)
 {    
+    int i;
     struct iperf_stream *sp = test->streams;
+    struct iperf_stream_result *rp = test->streams->result;
+    struct iperf_interval_results *ip, temp;    
+    
+    for(i=0; i< test->num_streams; i++)
+    {
+        rp = sp->result;
         
-    while(sp)
-    {    
-        if(test->role == 'c')
-            sp->result->interval_results->bytes_transferred = sp->result->bytes_sent  - sp->result->interval_results->bytes_transferred;
+        if(!rp->interval_results)
+        {                        
+            printf(" 1st time \n");
+            if(test ->role == 'c')
+                temp.bytes_transferred = rp->bytes_sent;
+            else
+                temp.bytes_transferred = rp->bytes_received;
+            
+            temp.interval_duration = test->stats_interval;
+            
+            printf("\tnew = %llu \t total bytes = %llu \n", temp.bytes_transferred, sp->result->bytes_sent);
+            
+            add_interval_list(rp, temp); 
+        }
+        
         else
-            sp->result->interval_results->bytes_transferred = sp->result->bytes_received  - sp->result->interval_results->bytes_transferred;
+        {
+            ip = sp->result->interval_results;
+            
+            while(ip->next!= NULL)
+                ip = ip->next;
+
+            if(test ->role == 'c')
+                temp.bytes_transferred = rp->bytes_sent - ip->bytes_transferred;
+            else
+                temp.bytes_transferred = rp->bytes_received - ip->bytes_transferred;
+            
+                temp.interval_duration = test->stats_interval + ip->interval_duration;
         
-        sp->result->interval_results->interval_duration+= test->stats_interval;
-                        
-        sp = sp->next;
-    }
+            printf("\tnew = %llu \t total bytes = %llu  and duration = %d\n", temp.bytes_transferred, sp->result->bytes_sent, temp.interval_duration);
+            
+            add_interval_list(rp, temp);
+        }           
+        
+        sp= sp->next;        
+    }    
     
     return 0;
 }
@@ -522,29 +577,29 @@ char *iperf_reporter_callback(struct iperf_test *test)
     struct iperf_stream *sp = test->streams;
     iperf_size_t bytes=0;
     double start_time, end_time;
-    
+    // need to reassign this
     char *message = (char *) malloc(300);
     char *message_final = (char *) malloc(test->num_streams * 50 + 200);
     
-    start_time = sp->result->interval_results->interval_duration - test->stats_interval;
-    end_time = sp->result->interval_results->interval_duration;
+    struct iperf_interval_results *ip = test->streams->result->interval_results;
     
     if(test->default_settings->state == TEST_RUNNING) 
-    {    
-            
-    
+    {
         while(sp)
-        {    
+        {
             if(test->protocol == Ptcp)
             {
+                while(ip->next!= NULL)
+                    ip = ip->next;                
+                               
                 sprintf(message,report_bw_header);        
                 strcat(message_final, message);
 
-                bytes+= sp->result->interval_results->bytes_transferred;
-                unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->interval_results->bytes_transferred), test->unit_format);
-                unit_snprintf(nbuf, UNIT_LEN, (double) ( sp->result->interval_results->bytes_transferred / test->stats_interval), test->unit_format);
+                bytes+= ip->bytes_transferred;
+                unit_snprintf(ubuf, UNIT_LEN, (double) (ip->bytes_transferred), test->unit_format);
+                unit_snprintf(nbuf, UNIT_LEN, (double) (ip->bytes_transferred / test->stats_interval), test->unit_format);
                 
-                sprintf(message, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
+                sprintf(message, report_bw_format, sp->socket, (double)ip->interval_duration - test->stats_interval, (double)ip->interval_duration, ubuf, nbuf);
                 strcat(message_final, message);               
             }
             
@@ -562,41 +617,52 @@ char *iperf_reporter_callback(struct iperf_test *test)
        
         unit_snprintf(ubuf, UNIT_LEN, (double) ( bytes), test->unit_format);
         unit_snprintf(nbuf, UNIT_LEN, (double) ( bytes / test->stats_interval), test->unit_format);
-        sprintf(message, report_sum_bw_format, start_time, end_time, ubuf, nbuf);
+        sprintf(message, report_sum_bw_format, (double)ip->interval_duration - test->stats_interval, (double)ip->interval_duration, ubuf, nbuf);
         strcat(message_final, message);         
        
     }
-    // PRINT TOTAL    
+    
+      
     if(test->default_settings->state == RESULT_REQUEST)    
     {   
-        bytes =0;
-        sp= test->streams;      
+        sp= test->streams;
         
         while(sp)
-        { 
-            
+        {            
             if(test->protocol == Ptcp)
             {
                 if(sp->settings->state == STREAM_END)
                 {
-                    bytes+= sp->result->bytes_sent;
+                    if(test->role == 'c')
+                        bytes+= sp->result->bytes_sent;
+                    else
+                        bytes+= sp->result->bytes_received;
+                    
                     gettimeofday( &sp->result->end_time, NULL);
                     
                     sprintf(message,report_bw_header);        
-                    strcat(message_final, message);
-                    
+                    strcat(message_final, message);                    
                     
                     start_time = timeval_diff(&sp->result->start_time, &sp->result->start_time);
                     end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
-                                
-                    unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->bytes_sent), test->unit_format);
-                    unit_snprintf(nbuf, UNIT_LEN, (double) (sp->result->bytes_sent / end_time), test->unit_format);
+                    
+                    if(test->role == 'c')
+                    {
+                        unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->bytes_sent), test->unit_format);
+                        unit_snprintf(nbuf, UNIT_LEN, (double) (sp->result->bytes_sent / end_time), test->unit_format);
+                    }
+                    else
+                    {
+                        unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->bytes_received), test->unit_format);
+                        unit_snprintf(nbuf, UNIT_LEN, (double) (sp->result->bytes_received / end_time), test->unit_format);
+                    }
+                        
                     sprintf(message, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
                     strcat(message_final, message);
                 }
                 
             }
-            else
+            else //UDP
             {
                 if(sp->settings->state == STREAM_END)
                 {
@@ -611,7 +677,7 @@ char *iperf_reporter_callback(struct iperf_test *test)
         }
     
         sp = test->streams;
-                
+        
         start_time = timeval_diff(&sp->result->start_time, &sp->result->start_time);
         end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
         
@@ -620,14 +686,13 @@ char *iperf_reporter_callback(struct iperf_test *test)
         
         sprintf(message, report_sum_bw_format, start_time, end_time, ubuf, nbuf);
         strcat(message_final, message);
-                        
         // -m option        
         if((test->print_mss != 0)  && (test->role == 'c'))
         {
             sprintf(message,"the TCP maximum segment size mss = %d \n", getsock_tcp_mss(sp->socket));
             strcat(message_final, message);
         }
-    }   
+    }
     
     return message_final;    
 }
@@ -663,7 +728,7 @@ void iperf_free_stream(struct iperf_test *test, struct iperf_stream *sp)
         }
     }
     free(sp->settings);
-    free(sp->result);
+    free(sp->result);    
     free(sp);
        
 }
@@ -687,18 +752,12 @@ struct iperf_stream *iperf_new_stream(struct iperf_test *testp)
     memcpy(sp->settings, testp->default_settings, sizeof(struct iperf_settings));
     
     sp->result = (struct iperf_stream_result *) malloc(sizeof(struct iperf_stream_result));
-    //memset(&sp->result, 0, sizeof(struct iperf_stream_result));
-    
-    sp->result->interval_results = (struct iperf_interval_results *) malloc(sizeof(struct iperf_interval_results));
-    
+       
     sp->socket = -1;
     
     sp->result->bytes_received = 0;
     sp->result->bytes_sent = 0;
     gettimeofday(&sp->result->start_time, NULL);
-    
-    sp->result->interval_results->bytes_transferred = 0;
-    sp->result->interval_results->interval_duration = 0;
     
     sp->settings->state = STREAM_BEGIN;    
     return sp;
@@ -979,8 +1038,7 @@ void iperf_run_server(struct iperf_test *test)
                     }
                     
                     if( message == ALL_STREAMS_END )
-                    {                        
-                        n->settings->state = ALL_STREAMS_END;                        
+                    {   
                         test->default_settings->state = RESULT_REQUEST;
                         
                         read = test->reporter_callback(test);
@@ -1102,7 +1160,7 @@ void iperf_run_client(struct iperf_test *test)
         np = sp->next;                    
     } while (np);
     
-    test->default_settings->state = RESULT_REQUEST;
+    test->default_settings->state = RESULT_REQUEST;    
     read = test->reporter_callback(test);
     puts(read);
     

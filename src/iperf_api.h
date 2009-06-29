@@ -125,20 +125,20 @@ enum {
     RATE = 1000000,
     MAX_BUFFER_SIZE =10,
     DEFAULT_UDP_BLKSIZE = 1470,
-    DEFAULT_TCP_BLKSIZE = 8192
+    DEFAULT_TCP_BLKSIZE = 8192,
+    TEST_START = 1,
+    TEST_RUNNING = 2,
+    RESULT_REQUEST = 3,
+    RESULT_RESPOND = 4,
+    TEST_END = 5,
+    STREAM_BEGIN = 6,
+    STREAM_END = 7,
+    ALL_STREAMS_END = 8,
+    SEC_TO_US = 1000000
+    
 };
 
 #define SEC_TO_NS 1000000000 /* too big for enum on some platforms */
-#define SEC_TO_US 1000000
-
-#define TEST_START 1
-#define TEST_RUNNING 2
-#define RESULT_REQUEST 3
-#define RESULT_RESPOND 4
-#define TEST_END 5
-#define STREAM_BEGIN 6
-#define STREAM_END 7
-#define ALL_STREAMS_END 8
 
 /**
  * iperf_new_test -- return a new iperf_test with default values

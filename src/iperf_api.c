@@ -44,8 +44,7 @@ static struct option longopts[] =
 
 
 void add_interval_list(struct iperf_stream_result *rp, struct iperf_interval_results temp)
-{
-    
+{    
     struct iperf_interval_results *n;
     
     struct iperf_interval_results *ip = (struct iperf_interval_results *) malloc(sizeof(struct iperf_interval_results));       
@@ -61,9 +60,22 @@ void add_interval_list(struct iperf_stream_result *rp, struct iperf_interval_res
         n = rp->interval_results;
         while(n->next)
            n = n->next;
-       
+        
          n->next = ip;
     }
+}
+
+
+void display_interval_list(struct iperf_stream_result *rp)
+{
+    struct iperf_interval_results *n;
+    n = rp->interval_results;
+    
+    while(n)
+    {
+        printf("Interval = %d\tBytes transferred = %llu\n", n->interval_duration, n->bytes_transferred);
+        n = n->next;
+    }    
 }
 
 void send_result_to_client(struct iperf_stream *sp)
@@ -521,6 +533,7 @@ void iperf_free_test(struct iperf_test *test)
 
 void *iperf_stats_callback(struct iperf_test *test)
 {    
+    iperf_size_t cumulative_bytes = 0;
     int i;
     struct iperf_stream *sp = test->streams;
     struct iperf_stream_result *rp = test->streams->result;
@@ -531,41 +544,44 @@ void *iperf_stats_callback(struct iperf_test *test)
         rp = sp->result;
         
         if(!rp->interval_results)
-        {                        
-            printf(" 1st time \n");
+        {  
             if(test ->role == 'c')
                 temp.bytes_transferred = rp->bytes_sent;
             else
                 temp.bytes_transferred = rp->bytes_received;
             
             temp.interval_duration = test->stats_interval;
-            
-            printf("\tnew = %llu \t total bytes = %llu \n", temp.bytes_transferred, sp->result->bytes_sent);
-            
+            gettimeofday( &sp->result->end_time, NULL);
             add_interval_list(rp, temp); 
         }
         
         else
         {
             ip = sp->result->interval_results;
+            while(1)
+            {
+                cumulative_bytes+= ip->bytes_transferred;
+                if(ip->next!= NULL)
+                    ip = ip->next;
+                else
+                    break;
+            }
             
-            while(ip->next!= NULL)
-                ip = ip->next;
-
             if(test ->role == 'c')
-                temp.bytes_transferred = rp->bytes_sent - ip->bytes_transferred;
+                temp.bytes_transferred = rp->bytes_sent - cumulative_bytes;
             else
-                temp.bytes_transferred = rp->bytes_received - ip->bytes_transferred;
+                temp.bytes_transferred = rp->bytes_received - cumulative_bytes;
             
-                temp.interval_duration = test->stats_interval + ip->interval_duration;
-        
-            printf("\tnew = %llu \t total bytes = %llu  and duration = %d\n", temp.bytes_transferred, sp->result->bytes_sent, temp.interval_duration);
+            temp.interval_duration = test->stats_interval + ip->interval_duration;
+            gettimeofday( &sp->result->end_time, NULL);
             
-            add_interval_list(rp, temp);
-        }           
+            add_interval_list(rp, temp);            
+        }
         
+        //display_interval_list(rp);
+        cumulative_bytes =0;
         sp= sp->next;        
-    }    
+    }
     
     return 0;
 }
@@ -637,8 +653,6 @@ char *iperf_reporter_callback(struct iperf_test *test)
                         bytes+= sp->result->bytes_sent;
                     else
                         bytes+= sp->result->bytes_received;
-                    
-                    gettimeofday( &sp->result->end_time, NULL);
                     
                     sprintf(message,report_bw_header);        
                     strcat(message_final, message);                    

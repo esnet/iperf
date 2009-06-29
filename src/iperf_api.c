@@ -1163,6 +1163,11 @@ void iperf_run_client(struct iperf_test *test)
         
     }// while outer timer
     
+    // for last interval
+    test->stats_callback(test);
+    read = test->reporter_callback(test);
+    puts(read);
+    
     // sending STREAM_END packets
     sp = test->streams;
     np = sp;    

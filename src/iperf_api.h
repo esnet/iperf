@@ -47,6 +47,8 @@ struct iperf_stream
     
     int socket;                         // socket 
     
+    struct timer *send_timer;
+    
     struct sockaddr_storage local_addr;
     struct sockaddr_storage remote_addr;
     
@@ -132,8 +134,9 @@ enum {
     RESULT_RESPOND = 4,
     TEST_END = 5,
     STREAM_BEGIN = 6,
-    STREAM_END = 7,
-    ALL_STREAMS_END = 8,
+    STREAM_RUNNING = 7,
+    STREAM_END = 8,
+    ALL_STREAMS_END = 9,
     SEC_TO_US = 1000000
     
 };

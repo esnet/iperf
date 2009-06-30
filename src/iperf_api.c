@@ -254,7 +254,12 @@ int iperf_tcp_recv(struct iperf_stream *sp)
     {  
         ch = buf[0];
         message = (int) ch;  
-    }  
+    }
+    
+    if(message == 3 || message == 9 || message == 8)
+    {
+        printf(" Recieved %d from client\n", message);
+    }
     
     if(message!= STREAM_END)
         sp->result->bytes_received+= result;
@@ -310,7 +315,8 @@ int iperf_tcp_send(struct iperf_stream *sp)
             buf[0]= STREAM_BEGIN;
             break;            
         case STREAM_END:
-            buf[0]=  STREAM_END;           
+            printf("STREAM END STARTING\n");
+            buf[0]= STREAM_END;           
             break;            
         case RESULT_REQUEST:
             buf[0]= RESULT_REQUEST;             
@@ -324,15 +330,22 @@ int iperf_tcp_send(struct iperf_stream *sp)
     }
     
     for(i=1; i < size; i++)
-        buf[i] =  i % 37;
+        buf[i] = i % 37;
     
     //applicable for 1st packet sent
     if(sp->settings->state == STREAM_BEGIN)
     {     
-        sp->settings->state = TEST_RUNNING;           
+        sp->settings->state = STREAM_RUNNING;           
+    }
+        
+    result = send(sp->socket, buf, size , 0);
+    
+    if(result <=0)
+    {
+        perror("send:");
+        return -1;
     }
     
-    result = send(sp->socket, buf, size , 0);    
     sp->result->bytes_sent+= size;
     
     free(buf);
@@ -347,7 +360,7 @@ int iperf_udp_send(struct iperf_stream *sp)
     
     
     // the || part ensures that last packet is sent to server - the STREAM_END MESSAGE
-    if(((struct timer *) sp->data)->expired((struct timer *) sp->data) || sp->settings->state == STREAM_END)
+    if(sp->send_timer->expired(sp->send_timer) || sp->settings->state == STREAM_END)
     {
         int size = sp->settings->blksize;    
         char *buf = (char *) malloc(size);
@@ -385,14 +398,21 @@ int iperf_udp_send(struct iperf_stream *sp)
         // applicable for 1st packet sent 
         if(sp->settings->state == STREAM_BEGIN)
         {           
-            sp->settings->state = TEST_RUNNING;                        
+            sp->settings->state = STREAM_RUNNING;                        
         }
         
         
         if(gettimeofday(&before, 0) < 0)
             perror("gettimeofday");
         
-        result = send(sp->socket, buf, size, 0);    
+        result = send(sp->socket, buf, size, 0);
+        if(result <=0)
+        {
+            perror("send:");
+            return -1;
+        }
+        
+        
         sp->result->bytes_sent+= result;
         
         if(gettimeofday(&after, 0) < 0)
@@ -409,7 +429,7 @@ int iperf_udp_send(struct iperf_stream *sp)
         memcpy(&before, &after, sizeof before);
         
         // RESET THE TIMER
-        sp->data = new_timer(0, dtargus);
+        sp->send_timer = new_timer(0, dtargus);
         //printf(" new timer is %lld usec\n", dtargus);
         
     } // timer_expired_micro 
@@ -658,10 +678,12 @@ char *iperf_reporter_callback(struct iperf_test *test)
                 if(test->role == 'c')
                     bytes+= sp->result->bytes_sent;
                 else
-                    bytes+= sp->result->bytes_received;
+                {
+                    bytes+= sp->result->bytes_received;                    
+                }
                     
-                sprintf(message,report_bw_header);        
-                strcat(message_final, message);                    
+                sprintf(message,report_bw_header);
+                strcat(message_final, message);
                     
                 start_time = timeval_diff(&sp->result->start_time, &sp->result->start_time);
                 end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
@@ -1014,7 +1036,7 @@ void iperf_run_server(struct iperf_test *test)
             if (FD_ISSET(test->listener_sock, &test->temp_set))
             {            
                 test->accept(test);
-                test->default_settings->state = TEST_RUNNING;                
+                test->default_settings->state = TEST_RUNNING;
                 FD_CLR(test->listener_sock, &test->temp_set);                                
             }
             
@@ -1029,18 +1051,18 @@ void iperf_run_server(struct iperf_test *test)
                     message = n->rcv(n);
                 
                     if(message == STREAM_END)
-                    {                       
+                    {
                         n->settings->state = STREAM_END;
-                        gettimeofday(&n->result->end_time, NULL);                                             
-                        FD_CLR(j, &test->read_set);                        
+                        printf("stream ended \n");
+                        gettimeofday(&n->result->end_time, NULL);
+                        FD_CLR(j, &test->read_set);
                     }
                     
                     if(message == RESULT_REQUEST)
                     {
                         n->settings->state = RESULT_RESPOND;
                         n->data = read;
-                        send_result_to_client(n);
-                        
+                        send_result_to_client(n);                        
                         // FREE ALL STREAMS
                         n = test->streams;
                         while(n)
@@ -1056,8 +1078,21 @@ void iperf_run_server(struct iperf_test *test)
                         test->max_fd = test->listener_sock;                              
                     }
                     
-                    if( message == ALL_STREAMS_END )
+                    if(message == ALL_STREAMS_END)
                     {   
+                        //sometimes the server is not getting the STREAM_END message
+                        // hence changing the state of all but last stream forcefully
+                        n = test->streams;
+                        while(n->next)
+                        {
+                            if(n->settings->state == STREAM_BEGIN)
+                            {
+                                n->settings->state = STREAM_END;
+                                gettimeofday(&n->result->end_time, NULL);
+                            }
+                            n= n->next;
+                        }
+                        
                         test->default_settings->state = RESULT_REQUEST;                        
                         read = test->reporter_callback(test);
                         puts(read);
@@ -1075,7 +1110,6 @@ void iperf_run_server(struct iperf_test *test)
                             iperf_init_test(test);
                             test->max_fd = test->listener_sock;                           
                         }
-                        
                         
                     }
                    
@@ -1117,7 +1151,7 @@ void iperf_run_client(struct iperf_test *test)
         sp = test->streams;
         for(i=0; i< test->num_streams; i++)
         {
-            sp->data = new_timer(0, dtargus);
+            sp->send_timer = new_timer(0, dtargus);
             sp= sp->next;
         }        
     }    
@@ -1179,8 +1213,10 @@ void iperf_run_client(struct iperf_test *test)
     {
         sp = np;
         sp->settings->state = STREAM_END;
-        sp->snd(sp);        
-        np = sp->next;                    
+        sp->snd(sp);
+        printf("sent the STREAM_END message \n");
+        
+        np = sp->next;
     } while (np);
     
     test->default_settings->state = RESULT_REQUEST;    

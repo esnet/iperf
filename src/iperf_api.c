@@ -86,8 +86,11 @@ void send_result_to_client(struct iperf_stream *sp)
     if(!buf)
     {
         perror("malloc: unable to allocate transmit buffer");
-    }    
+    }
     
+    // adding the string terminator to the message
+    buf[strlen((char *)sp->data)] = '\0';
+        
     memcpy(buf, sp->data, strlen((char *)sp->data));
     
     result = send(sp->socket, buf, size , 0);
@@ -124,6 +127,7 @@ void receive_result_from_server(struct iperf_test *test)
     } while (result == -1 && errno == EINTR);
     
     printf( server_reporting, sp->socket);
+        
     puts(buf);    
 }
 
@@ -260,9 +264,8 @@ int iperf_tcp_recv(struct iperf_stream *sp)
     {
         printf(" Recieved %d from client\n", message);
     }
-    
-    if(message!= STREAM_END)
-        sp->result->bytes_received+= result;
+     
+   sp->result->bytes_received+= result;
     
    free(buf);
    return message;    
@@ -291,8 +294,7 @@ int iperf_udp_recv(struct iperf_stream *sp)
         message = (int) ch;  
     }
     
-    if(message!= STREAM_END)
-        sp->result->bytes_received+= result;
+   sp->result->bytes_received+= result;
     
     free(buf);
     return message;
@@ -314,8 +316,7 @@ int iperf_tcp_send(struct iperf_stream *sp)
         case STREAM_BEGIN:
             buf[0]= STREAM_BEGIN;
             break;            
-        case STREAM_END:
-            printf("STREAM END STARTING\n");
+        case STREAM_END:            
             buf[0]= STREAM_END;           
             break;            
         case RESULT_REQUEST:
@@ -338,13 +339,7 @@ int iperf_tcp_send(struct iperf_stream *sp)
         sp->settings->state = STREAM_RUNNING;           
     }
         
-    result = send(sp->socket, buf, size , 0);
-    
-    if(result <=0)
-    {
-        perror("send:");
-        return -1;
-    }
+    result = send(sp->socket, buf, size , 0);   
     
     sp->result->bytes_sent+= size;
     
@@ -354,7 +349,7 @@ int iperf_tcp_send(struct iperf_stream *sp)
 
 int iperf_udp_send(struct iperf_stream *sp)
 { 
-    int result, i;
+    int result = 0, i;
     struct timeval before, after;
      int64_t adjustus, dtargus; 
     
@@ -380,7 +375,7 @@ int iperf_udp_send(struct iperf_stream *sp)
                 buf[0]= STREAM_BEGIN;
                 break;            
             case STREAM_END:
-                buf[0]=  STREAM_END;           
+                buf[0]=  STREAM_END;
                 break;            
             case RESULT_REQUEST:
                 buf[0]= RESULT_REQUEST;             
@@ -406,14 +401,9 @@ int iperf_udp_send(struct iperf_stream *sp)
             perror("gettimeofday");
         
         result = send(sp->socket, buf, size, 0);
-        if(result <=0)
-        {
-            perror("send:");
-            return -1;
-        }
-        
-        
-        sp->result->bytes_sent+= result;
+                
+        if(sp->settings->state != STREAM_END)
+            sp->result->bytes_sent+= result;
         
         if(gettimeofday(&after, 0) < 0)
             perror("gettimeofday");
@@ -422,19 +412,16 @@ int iperf_udp_send(struct iperf_stream *sp)
         adjustus += (before.tv_sec - after.tv_sec) * SEC_TO_US ;
         adjustus += (before.tv_usec - after.tv_usec);
         
-      //printf(" the adjust time = %lld \n",dtargus- adjustus);        
         if( adjustus > 0) {
            dtargus = adjustus;
         }
         memcpy(&before, &after, sizeof before);
         
-        // RESET THE TIMER
-        sp->send_timer = new_timer(0, dtargus);
-        //printf(" new timer is %lld usec\n", dtargus);
+        // RESET THE TIMER       
+        update_timer(sp->send_timer, 0, dtargus);
         
-    } // timer_expired_micro 
-    
-    
+    } // timer_expired_micro    
+        
     return result;
 }
 
@@ -527,10 +514,10 @@ void iperf_init_test(struct iperf_test *test)
             FD_SET(s, &test->write_set);
             test->max_fd = (test->max_fd < s) ? s : test->max_fd;
             
-            set_tcp_windowsize(sp->socket, test->default_settings->socket_bufsize, SO_SNDBUF);
-            
-            if(s < 0)
-                exit(0);
+            if( set_tcp_windowsize(s, test->default_settings->socket_bufsize, SO_SNDBUF)) 
+            {
+                perror("unable to set window");
+            }
             
             //setting noblock causes error in byte count -kprabhu
             //setnonblocking(s);
@@ -539,7 +526,9 @@ void iperf_init_test(struct iperf_test *test)
             sp->socket = s;
             iperf_init_stream(sp, test);
             iperf_add_stream(test, sp);
-            connect_msg(sp);        
+            
+            if(test->default_settings->state != RESULT_REQUEST)
+            connect_msg(sp);
         }
     }                        
 }
@@ -547,7 +536,8 @@ void iperf_init_test(struct iperf_test *test)
 void iperf_free_test(struct iperf_test *test)
 {
     
-    free(test->default_settings);    
+    free(test->default_settings);
+    test->streams = NULL;
     free(test);
 }
 
@@ -617,7 +607,8 @@ char *iperf_reporter_callback(struct iperf_test *test)
     double start_time, end_time;
     // need to reassign this
     char *message = (char *) malloc(300);
-    char *message_final = (char *) malloc(test->num_streams * 50 + 200);
+    char *message_final = (char *) malloc(test->num_streams * (strlen(report_bw_header) + strlen(report_bw_format)) + strlen(report_sum_bw_format));
+    
     
     struct iperf_interval_results *ip = test->streams->result->interval_results;
     
@@ -876,9 +867,10 @@ int iperf_udp_accept(struct iperf_test *test)
     FD_SET(test->listener_sock, &test->read_set);
     test->max_fd = (test->max_fd < test->listener_sock) ? test->listener_sock : test->max_fd;
     
-    connect_msg(sp);
-    free(buf);
+    if(test->default_settings->state != RESULT_REQUEST)
+        connect_msg(sp);
     
+    free(buf);    
     return 0;
     
 }    
@@ -905,9 +897,11 @@ int iperf_tcp_accept(struct iperf_test *test)
         FD_SET(peersock, &test->read_set);
         test->max_fd = (test->max_fd < peersock) ? peersock : test->max_fd;
         
-        sp->socket = peersock;        
-        iperf_init_stream(sp, test);        
-        iperf_add_stream(test, sp);                    
+        sp->socket = peersock;
+        iperf_init_stream(sp, test);
+        iperf_add_stream(test, sp);
+        
+        if(test->default_settings->state != RESULT_REQUEST)
         connect_msg(sp);
         
         return 0;
@@ -1073,9 +1067,9 @@ void iperf_run_server(struct iperf_test *test)
                         }                       
                         printf("TEST_END\n\n\n");
                                                
-                        // reset TEST params
-                        iperf_defaults(test);
-                        test->max_fd = test->listener_sock;                              
+                        // reset TEST params                        
+                        test->default_settings->state = TEST_START;
+                        test->max_fd = test->listener_sock;                        
                     }
                     
                     if(message == ALL_STREAMS_END)
@@ -1125,11 +1119,11 @@ void iperf_run_server(struct iperf_test *test)
 
 void iperf_run_client(struct iperf_test *test)
 {
-    int i,result;
+    int i,result=0;
     struct iperf_stream *sp, *np;
     struct timer *timer, *stats_interval, *reporter_interval;    
     char *buf, *read= NULL;
-    int64_t delayus, adjustus, dtargus; 
+    int64_t delayus, adjustus, dtargus, remaining, min; 
     struct timeval tv;
     int ret=0;
     tv.tv_sec = 15;            // timeout interval in seconds
@@ -1168,24 +1162,42 @@ void iperf_run_client(struct iperf_test *test)
     while(!timer->expired(timer))
     {
         ret = select(test->max_fd+1, NULL, &test->write_set, NULL, &tv);
-        if(ret<0)
+        if(ret < 0)
             continue;
         
-        sp= test->streams;    
+        sp= test->streams;
         
         for(i=0;i<test->num_streams;i++)
         {
             if(FD_ISSET(sp->socket, &test->write_set))
             {  
-               result = sp->snd(sp);             
+               result+= sp->snd(sp);
                 
                 if(sp->next==NULL)
                     break;
                 sp=sp->next;
                 
             }// FD_ISSET
-        }// for
+        }// for        
         
+        //result =0 hence no data sent, hence sleep 
+
+        if(result == 0)
+        {            
+            sp = test->streams;
+            min = timer_remaining(sp->send_timer);
+            while(sp)
+            {
+                remaining = timer_remaining(sp->send_timer);
+                min = min < remaining ? min : remaining;
+                sp = sp->next;
+            }
+            usleep (min/2);
+        }
+        else
+            result = 0;
+
+         
         if((test->stats_interval!= 0) && stats_interval->expired(stats_interval))
         {    
             test->stats_callback(test);            
@@ -1213,9 +1225,7 @@ void iperf_run_client(struct iperf_test *test)
     {
         sp = np;
         sp->settings->state = STREAM_END;
-        sp->snd(sp);
-        printf("sent the STREAM_END message \n");
-        
+        sp->snd(sp);        
         np = sp->next;
     } while (np);
     
@@ -1235,7 +1245,11 @@ void iperf_run_client(struct iperf_test *test)
     } while (np);
     
     // Requesting for result from Server
-    receive_result_from_server(test);                
+    receive_result_from_server(test);
+    
+    free_timer(stats_interval);
+    free_timer(reporter_interval);
+    free_timer(timer);
 }    
 
 int iperf_run(struct iperf_test *test)
@@ -1312,10 +1326,9 @@ main(int argc, char **argv)
                 test->default_settings->mss = atoi(optarg);
             case 'f':
                 test->unit_format = *optarg;
+                printf("%c is format \n", test->unit_format); 
                 break;      
         }
-    
-    printf("ROLE = %s\n", (test->role == 's') ? "Server" : "Client");
     
     test->stats_callback = iperf_stats_callback;    
     test->reporter_callback = iperf_reporter_callback;
@@ -1337,5 +1350,7 @@ main(int argc, char **argv)
     
     iperf_run(test);
     
+    iperf_free_test(test);
+        
     return 0;
 }

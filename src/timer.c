@@ -118,19 +118,19 @@ int64_t
 timer_remaining(struct timer *tp)
 {
     struct timeval now;
-    int64_t  end = 0, current= 0, diff= 0;
+    long int end_time = 0, current_time= 0, diff= 0;
     if(gettimeofday(&now, NULL) < 0) {
         perror("gettimeofday");
         return -1;
     }
     
-    end+= tp->end.tv_sec * 1000000 ;
-    end+= tp->end.tv_usec;
+    end_time+= tp->end.tv_sec * 1000000 ;
+    end_time+= tp->end.tv_usec;
     
-    current+= now.tv_sec * 1000000 ;
-    current+= now.tv_usec;
+    current_time+= now.tv_sec * 1000000 ;
+    current_time+= now.tv_usec;
     
-    diff = end - current;
+    diff = end_time - current_time;
     if(diff > 0)
         return diff;
     else

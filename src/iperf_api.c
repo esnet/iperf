@@ -619,32 +619,23 @@ char *iperf_reporter_callback(struct iperf_test *test)
     if(test->default_settings->state == TEST_RUNNING) 
     {
         while(sp)
-        {            
+        {
             while(ip->next!= NULL)
                     ip = ip->next;
             
             bytes+= ip->bytes_transferred;
             unit_snprintf(ubuf, UNIT_LEN, (double) (ip->bytes_transferred), test->unit_format);
             
-            if(test->stats_interval <= test->duration && test->stats_interval!= 0)
-            {
-                printf("NORMAL ip->interval_duration = %d \n", ip->interval_duration);
-                unit_snprintf(nbuf, UNIT_LEN, (double) (ip->bytes_transferred / test->stats_interval), test->unit_format);                
-            }
-            // for  duration(t) != multiple(i)
-            else
-            {
-                printf("ELSE ip->interval_duration = %d \n", ip->interval_duration);
-                unit_snprintf(nbuf, UNIT_LEN, (double) (ip->bytes_transferred / (test->duration - ip->interval_duration)), test->unit_format);
-            }
+            test->stats_interval = test->stats_interval== 0 ? test->duration : test->stats_interval;
             
-            sprintf(message,report_bw_header);        
+            unit_snprintf(nbuf, UNIT_LEN, (double) (ip->bytes_transferred / test->stats_interval), test->unit_format);                
+                        
+            sprintf(message,report_bw_header);
             strcat(message_final, message);
             
             if(test->stats_interval!= 0)
                 sprintf(message, report_bw_format, sp->socket, (double)ip->interval_duration, (double)ip->interval_duration + test->stats_interval, ubuf, nbuf);
-            else
-                sprintf(message, report_bw_format, sp->socket, (double)ip->interval_duration, (double)ip->interval_duration + test->duration, ubuf, nbuf);
+
             strcat(message_final, message);
             
             sp = sp->next;                        
@@ -652,17 +643,12 @@ char *iperf_reporter_callback(struct iperf_test *test)
        
         unit_snprintf(ubuf, UNIT_LEN, (double) ( bytes), test->unit_format);
         
-        if(test->stats_interval <= test->duration && test->stats_interval!=0)
-            unit_snprintf(nbuf, UNIT_LEN, (double) ( bytes / test->stats_interval), test->unit_format);
-        else
-            unit_snprintf(nbuf, UNIT_LEN, (double) ( bytes /(test->duration - ip->interval_duration)), test->unit_format);           
-                
+        unit_snprintf(nbuf, UNIT_LEN, (double) ( bytes / test->stats_interval), test->unit_format);
+       
+        
         if(test->stats_interval!= 0)
             sprintf(message, report_sum_bw_format, (double)ip->interval_duration, 
                     (double)ip->interval_duration + test->stats_interval, ubuf, nbuf);
-        else
-            sprintf(message, report_sum_bw_format, (double)ip->interval_duration, 
-                    (double)ip->interval_duration + test->duration, ubuf, nbuf);
             
         strcat(message_final, message);       
     }    
@@ -1041,12 +1027,11 @@ void iperf_run_server(struct iperf_test *test)
         {
              // Accept a new connection
             if (FD_ISSET(test->listener_sock, &test->temp_set))
-            {            
+            {
                 test->accept(test);
                 test->default_settings->state = TEST_RUNNING;
-                FD_CLR(test->listener_sock, &test->temp_set);                                
+                FD_CLR(test->listener_sock, &test->temp_set);
             }
-            
             
         //Process the sockets for read operation
             for (j=0; j< test->max_fd+1; j++)
@@ -1077,7 +1062,7 @@ void iperf_run_server(struct iperf_test *test)
                             close(n->socket);            
                             iperf_free_stream(test, n);
                             n= n->next;
-                        }                       
+                        }
                         printf("TEST_END\n\n\n");
                                                
                         // reset TEST params                        
@@ -1223,12 +1208,12 @@ void iperf_run_client(struct iperf_test *test)
             reporter_interval = new_timer(test->reporter_interval,0);
         }
         
-    }// while outer timer
+    }// while outer timer    
     
-    // for last interval
-   test->stats_callback(test);
-   read = test->reporter_callback(test);
-   puts(read);
+   // for last interval    
+    test->stats_callback(test);
+    read = test->reporter_callback(test);
+    puts(read);
     
     // sending STREAM_END packets
     sp = test->streams;

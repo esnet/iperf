@@ -45,7 +45,7 @@ struct iperf_stream
     /* non configurable members */
     struct iperf_stream_result *result; //structure pointer to result
     
-    int socket;                         // socket 
+    int socket;                         // socket
     
     struct timer *send_timer;
     
@@ -69,8 +69,8 @@ struct iperf_test
     char *server_hostname;                // arg of -c 
     int server_port;                      // arg of -p
     int  duration;                        // total duration of test  -t    
-    int listener_sock;
-   
+    int listener_sock_tcp;
+    int listener_sock_udp;
     
     /*boolen variables for Options */
     int   daemon;                        // -D
@@ -97,7 +97,6 @@ struct iperf_test
 
     int  num_streams;                                // total streams in the test -P 
     struct iperf_stream *streams;                    // pointer to list of struct stream
-
     struct iperf_settings *default_settings;
 };
 

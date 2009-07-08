@@ -82,7 +82,7 @@ void send_result_to_client(struct iperf_stream *sp)
     int result;
     int size = sp->settings->blksize;
     
-    printf(" blksize = %d \n\n", size);
+    printf("BLKSIZE = %d \n", size);
     
     char *buf = (char *) malloc(size);
     if(!buf)
@@ -97,6 +97,7 @@ void send_result_to_client(struct iperf_stream *sp)
     
     result = send(sp->socket, buf, size , 0);
     
+    free(buf);    
 }
 
 void receive_result_from_server(struct iperf_test *test)
@@ -116,25 +117,23 @@ void receive_result_from_server(struct iperf_test *test)
     sp = test->streams;
        
     sp->settings->state = ALL_STREAMS_END;
-    sp->snd(sp);    
+    sp->snd(sp);
     
     sp->settings->state = RESULT_REQUEST;
     sp->snd(sp);
     
     // receive from server
-    size = sp->settings->blksize; 
+    size = sp->settings->blksize;
     buf = (char *) malloc(size);
     
-   //printf(" RCV blksize = %d \n\n", size);
-    
     do{
-        result = recv(sp->socket, buf, size, 0);
-        
+        result = recv(sp->socket, buf, size, 0);        
     } while (result == -1 && errno == EINTR);
     
-    printf( server_reporting, sp->socket);
-        
-    puts(buf);    
+    printf( server_reporting, sp->socket);        
+    puts(buf);
+    
+    iperf_free_stream(test, sp);
 }
 
 int getsock_tcp_mss( int inSock )
@@ -268,7 +267,7 @@ int iperf_tcp_recv(struct iperf_stream *sp)
     
     if(message == 3 || message == 9 || message == 8)
     {
-        printf(" Recieved %d from client\n", message);
+        printf("Recieved %d from client\n", message);
     }
    
     if(message != STREAM_END)
@@ -302,7 +301,7 @@ int iperf_udp_recv(struct iperf_stream *sp)
     
     if(message == 3 || message == 9 || message == 8)
     {
-        printf(" Recieved %d from client\n", message);
+        printf("Recieved %d from client\n", message);
     }
     
     if(message != STREAM_END)
@@ -431,9 +430,11 @@ int iperf_udp_send(struct iperf_stream *sp)
         
         // RESET THE TIMER       
         update_timer(sp->send_timer, 0, dtargus);
-        
-    } // timer_expired_micro    
-        
+        free(buf);
+    } // timer_expired_micro
+    
+   
+    
     return result;
 }
 
@@ -620,15 +621,25 @@ void *iperf_stats_callback(struct iperf_test *test)
 
 char *iperf_reporter_callback(struct iperf_test *test)
 {
+    int count = 0;
     char ubuf[UNIT_LEN];
     char nbuf[UNIT_LEN];
     struct iperf_stream *sp = test->streams;
     iperf_size_t bytes=0;
     double start_time, end_time;
     // need to reassign this
-    char *message = (char *) malloc(300);
-    char *message_final = (char *) malloc(test->num_streams * (strlen(report_bw_header) + strlen(report_bw_format)) + strlen(report_sum_bw_format));
+    char *message = (char *) malloc(500);
     
+    // used to determine the length of reporter buffer
+    while(sp)
+    {
+        count ++;
+        sp = sp->next;
+    }
+    
+    sp = test->streams;
+      
+    char *message_final = (char *) malloc((count+1) * (strlen(report_bw_jitter_loss_header) + strlen(report_bw_jitter_loss_format) + strlen(report_sum_bw_jitter_loss_format)) );
     
     struct iperf_interval_results *ip = test->streams->result->interval_results;
     
@@ -666,8 +677,9 @@ char *iperf_reporter_callback(struct iperf_test *test)
             sprintf(message, report_sum_bw_format, (double)ip->interval_duration, 
                     (double)ip->interval_duration + test->stats_interval, ubuf, nbuf);
             
-        strcat(message_final, message);       
-    }    
+        strcat(message_final, message);
+        free(message);
+    }
       
     if(test->default_settings->state == RESULT_REQUEST)    
     {
@@ -685,10 +697,15 @@ char *iperf_reporter_callback(struct iperf_test *test)
                 }
                 
                 if(test->protocol == Ptcp)
-                    sprintf(message,report_bw_header);
+                {
+                    sprintf(message, report_bw_header);
+                    strncat(message_final, message, strlen(report_bw_header));
+                }
                 else
+                {
                     sprintf(message,report_bw_jitter_loss_header);
-                strcat(message_final, message);
+                    strncat(message_final, message, strlen(report_bw_jitter_loss_header));
+                }                
                     
                 start_time = timeval_diff(&sp->result->start_time, &sp->result->start_time);
                 end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
@@ -706,12 +723,16 @@ char *iperf_reporter_callback(struct iperf_test *test)
                 }            
             
                 if( test->protocol == Ptcp)
+                {
                     sprintf(message, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
+                    strcat(message_final, message);
+                }
                 else
+                {
                     sprintf(message, report_bw_jitter_loss_format, sp->socket, start_time,
-                            end_time, ubuf, nbuf, 0.0, 0, 0, 0.0);
-                
-                strcat(message_final, message);
+                           end_time, ubuf, nbuf, 0.0, 0, 0, 0.0);
+                    strcat(message_final, message);
+                }
             }
                     
             sp = sp->next;
@@ -726,11 +747,16 @@ char *iperf_reporter_callback(struct iperf_test *test)
         unit_snprintf(nbuf, UNIT_LEN, (double) bytes / end_time, test->unit_format);
         
         if(test->protocol == Ptcp)
+        {
             sprintf(message, report_sum_bw_format, start_time, end_time, ubuf, nbuf);
+            strcat(message_final, message);
+        }
         else
+        {
             sprintf(message, report_sum_bw_jitter_loss_format, start_time, end_time, ubuf, nbuf, 0.0, 0, 0, 0.0);
+            strcat(message_final, message);
+        }
         
-        strcat(message_final, message);
         
         // -m option        
         if((test->print_mss != 0)  && (test->role == 'c'))
@@ -738,6 +764,8 @@ char *iperf_reporter_callback(struct iperf_test *test)
             sprintf(message,"the TCP maximum segment size mss = %d \n", getsock_tcp_mss(sp->socket));
             strcat(message_final, message);
         }
+        
+         free(message);
     }
     
     return message_final;
@@ -745,44 +773,39 @@ char *iperf_reporter_callback(struct iperf_test *test)
 
 void iperf_free_stream(struct iperf_test *test, struct iperf_stream *sp)
 {
-    
     struct iperf_stream *prev,*start;
     prev = test->streams;
     start = test->streams;
     
     if(test->streams->socket == sp->socket)
-    {        
+    {
         test->streams = test->streams->next;        
     }    
     else
     {    
-        start= test->streams->next;
-        
+        start= test->streams->next;        
         while(1)
         {
-            if(start->socket == sp->socket){
-                
+            if(start->socket == sp->socket){                
                 prev->next = sp->next;                
                 break;
             }
             
             if(start->next!=NULL){
-                
                 start=start->next;
                 prev=prev->next;
             }
         }
     }
+    
     free(sp->settings);
     free(sp->result);
     free(sp->send_timer);
-    free(sp);
-       
+    free(sp);    
 }
 
 struct iperf_stream *iperf_new_stream(struct iperf_test *testp)
 {
-    
     struct iperf_stream *sp;
     
     sp = (struct iperf_stream *) malloc(sizeof(struct iperf_stream));
@@ -791,7 +814,6 @@ struct iperf_stream *iperf_new_stream(struct iperf_test *testp)
         perror("malloc");
         return(NULL);
     }
-    
     
     memset(sp, 0, sizeof(struct iperf_stream));
     
@@ -939,8 +961,7 @@ void iperf_init_stream(struct iperf_stream *sp, struct iperf_test *testp)
     //stores the socket id.
     if(getpeername(sp->socket, (struct sockaddr *) &sp->remote_addr, &len) < 0)
     {
-        perror("getpeername");
-        free(sp);        
+        perror("getpeername");        
     }
     
     
@@ -1009,7 +1030,7 @@ struct iperf_stream * find_stream_by_socket(struct iperf_test *test, int sock)
 void iperf_run_server(struct iperf_test *test)
 {
     struct timeval tv;
-    struct iperf_stream *n;   
+    struct iperf_stream *np, *sp;   
     int j,result, message;
     char *read = NULL;
     
@@ -1045,18 +1066,19 @@ void iperf_run_server(struct iperf_test *test)
              // Accept a new TCP connection
             if (FD_ISSET(test->listener_sock_tcp, &test->temp_set) )
             {
+                test->protocol = Ptcp;
                 test->default_settings->blksize = DEFAULT_TCP_BLKSIZE;
                 test->accept = iperf_tcp_accept;
                 test->new_stream = iperf_new_tcp_stream;
                 test->accept(test);
                 test->default_settings->state = TEST_RUNNING;
-                FD_CLR(test->listener_sock_tcp, &test->temp_set);                
+                FD_CLR(test->listener_sock_tcp, &test->temp_set);
             }
             
              // Accept a new UDP connection
             else if (FD_ISSET(test->listener_sock_udp, &test->temp_set) )
             {
-                printf("New UDP connection\n");
+                test->protocol = Pudp;
                 test->default_settings->blksize = DEFAULT_UDP_BLKSIZE;
                 test->accept = iperf_udp_accept;
                 test->new_stream = iperf_new_udp_stream;
@@ -1072,60 +1094,65 @@ void iperf_run_server(struct iperf_test *test)
                 if (FD_ISSET(j, &test->temp_set))
                 {
                     // find the correct stream
-                    n = find_stream_by_socket(test,j);
-                    message = n->rcv(n);
+                    np = find_stream_by_socket(test,j);
+                    message = np->rcv(np);
                 
                     if(message == STREAM_END)
                     {
-                        n->settings->state = STREAM_END;
-                        printf("stream ended \n");
-                        gettimeofday(&n->result->end_time, NULL);
+                        np->settings->state = STREAM_END;                        
+                        gettimeofday(&np->result->end_time, NULL);
                         FD_CLR(j, &test->read_set);
                     }
                     
                     if(message == RESULT_REQUEST)
                     {
-                        n->settings->state = RESULT_RESPOND;
-                        n->data = read;
-                        send_result_to_client(n);                        
-                        // FREE ALL STREAMS
-                        n = test->streams;
-                        while(n)
+                        np->settings->state = RESULT_RESPOND;
+                        np->data = read;
+                        send_result_to_client(np);
+                        // FREE ALL STREAMS                        
+                        np = test->streams;                        
+                        do
                         {
-                            close(n->socket);
-                            FD_CLR(n->socket, &test->read_set);
-                            iperf_free_stream(test, n);
-                            n= n->next;
-                        }
-                        printf("TEST_END\n\n\n");                        
+                            sp = np;
+                            close(sp->socket);
+                            FD_CLR(sp->socket, &test->read_set);
+                            np = sp->next;
+                            iperf_free_stream(test, sp);
+                        } while (np!= NULL);
+                        
+                        printf("TEST_END\n\n");                        
                         
                        test->default_settings->state = TEST_START;                        
                         if(test->listener_sock_udp > test->listener_sock_tcp)
                             test->max_fd = test->listener_sock_udp;
                         else
-                            test->max_fd = test->listener_sock_tcp;                        
+                            test->max_fd = test->listener_sock_tcp; 
+                        
+                        read = NULL;
                     }
                     
                     if(message == ALL_STREAMS_END)
                     {
                         //sometimes the server is not getting the STREAM_END message
                         // hence changing the state of all but last stream forcefully
-                        n = test->streams;
-                        while(n->next)
+                        np = test->streams;
+                        while(np->next)
                         {
-                            if(n->settings->state == STREAM_BEGIN)
+                            if(np->settings->state == STREAM_BEGIN)
                             {
-                                n->settings->state = STREAM_END;
-                                gettimeofday(&n->result->end_time, NULL);
+                                np->settings->state = STREAM_END;
+                                gettimeofday(&np->result->end_time, NULL);
                             }
-                            n= n->next;
+                            np = np->next;
                         }
+                        
+                        // This is necessary to preserve reporting format
+                        test->protocol = test->streams->protocol;
                         
                         test->default_settings->state = RESULT_REQUEST;
                         read = test->reporter_callback(test);
-                        puts(read);
-                        printf("Reporter has been called\n");
-                        printf("ALL_STREAMS_END\n"); 
+                        puts(read);                        
+                        printf("REPORTER CALL + ALL_STREAMS_END\n"); 
                     }
                    
                 }// end if (FD_ISSET(j, &temp_set))
@@ -1259,8 +1286,9 @@ void iperf_run_client(struct iperf_test *test)
     {
         sp = np;
         close(sp->socket);
+        np = sp->next;
         iperf_free_stream(test, sp);
-        np = sp->next;                    
+        
     } while (np);
     
     // Requesting for result from Server

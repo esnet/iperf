@@ -43,6 +43,27 @@ static struct option longopts[] =
 };
 
 
+
+void setnonblocking(int sock)
+{
+	int opts;
+	/*
+	 opts = fcntl(sock,F_GETFL);
+	 if (opts < 0) {
+	 perror("fcntl(F_GETFL)");
+	 exit(EXIT_FAILURE);
+	 }
+	 */
+	
+	opts = (opts | O_NONBLOCK);
+	if (fcntl(sock,F_SETFL,opts) < 0)
+	{
+		perror("fcntl(F_SETFL)");
+		exit(EXIT_FAILURE);
+	}
+	return;
+}
+
 void add_interval_list(struct iperf_stream_result *rp, struct iperf_interval_results temp)
 {    
     struct iperf_interval_results *n;
@@ -80,7 +101,7 @@ void display_interval_list(struct iperf_stream_result *rp)
 void send_result_to_client(struct iperf_stream *sp)
 {    
     int result;
-    int size = sp->settings->blksize;
+    int size = strlen((char *)sp->data) + 1;
     
     printf("BLKSIZE = %d \n", size);
     
@@ -97,7 +118,7 @@ void send_result_to_client(struct iperf_stream *sp)
     
     result = send(sp->socket, buf, size , 0);
     
-    free(buf);    
+    free(buf);
 }
 
 void receive_result_from_server(struct iperf_test *test)
@@ -170,7 +191,7 @@ int set_socket_options(struct iperf_stream *sp, struct iperf_test *tp)
         }
     }
     
-        
+#ifdef TCP_MAXSEG        
     //-M
     if(tp->default_settings->mss > 0)
     {
@@ -181,22 +202,23 @@ int set_socket_options(struct iperf_stream *sp, struct iperf_test *tp)
         assert( sp->socket != -1);
         
             /* set */
-            new_mss = tp->default_settings->mss;
-            len = sizeof( new_mss );
-            rc = setsockopt( sp->socket, IPPROTO_TCP, TCP_MAXSEG, (char*) &new_mss, len);
-            if ( rc == -1) {
-                perror("setsockopt");
-                return -1;
-            }
+        new_mss = tp->default_settings->mss;
+        len = sizeof( new_mss );
+        rc = setsockopt( sp->socket, IPPROTO_TCP, TCP_MAXSEG, (char*) &new_mss, len);
+        if ( rc == -1) {
+            perror("setsockopt");
+            return -1;
+        }
             
             /* verify results */
-            rc = getsockopt( sp->socket, IPPROTO_TCP, TCP_MAXSEG, (char*) &new_mss, &len);
-              if ( new_mss != tp->default_settings->mss )
-              {
-                  perror("mismatch");
-                  return -1;
-              }
-    }        
+        rc = getsockopt( sp->socket, IPPROTO_TCP, TCP_MAXSEG, (char*) &new_mss, &len);
+        if ( new_mss != tp->default_settings->mss )
+        {
+            perror("mismatch");
+            return -1;
+        }
+    }
+#endif    
     return 0;
 }
 
@@ -327,23 +349,30 @@ int iperf_tcp_send(struct iperf_stream *sp)
     {           
         case STREAM_BEGIN:
             buf[0]= STREAM_BEGIN;
-            break;            
+            for(i=1; i < size; i++)
+                buf[i] = i % 37;
+            break;
+            
         case STREAM_END:            
-            buf[0]= STREAM_END;           
-            break;            
+            buf[0]= STREAM_END;            
+            break;
+            
         case RESULT_REQUEST:
             buf[0]= RESULT_REQUEST;             
             break;
+            
         case ALL_STREAMS_END:
-            buf[0]= ALL_STREAMS_END;             
+            buf[0]= ALL_STREAMS_END;            
             break;
+            
         default:
             buf[0]= 0;
+            for(i=1; i < size; i++)
+                buf[i] = i % 37;
             break;
     }
     
-    for(i=1; i < size; i++)
-        buf[i] = i % 37;
+    
     
     //applicable for 1st packet sent
     if(sp->settings->state == STREAM_BEGIN)
@@ -384,23 +413,29 @@ int iperf_udp_send(struct iperf_stream *sp)
         {           
             case STREAM_BEGIN:
                 buf[0]= STREAM_BEGIN;
-                break;            
-            case STREAM_END:
-                buf[0]=  STREAM_END;
-                break;            
+                for(i=1; i < size; i++)
+                    buf[i] = i % 37;
+                break;
+                
+            case STREAM_END:            
+                buf[0]= STREAM_END;            
+                break;
+                
             case RESULT_REQUEST:
                 buf[0]= RESULT_REQUEST;             
                 break;
+                
             case ALL_STREAMS_END:
-                buf[0]= ALL_STREAMS_END;
+                buf[0]= ALL_STREAMS_END;            
+                break;
+                
             default:
                 buf[0]= 0;
-                break;
-        }  
-        
-        for(i=1; i < size; i++)
-            buf[i] =  i % 37;
-        
+                for(i=1; i < size; i++)
+                    buf[i] = i % 37;
+                break;                
+        }        
+               
         // applicable for 1st packet sent 
         if(sp->settings->state == STREAM_BEGIN)
         {           
@@ -432,8 +467,6 @@ int iperf_udp_send(struct iperf_stream *sp)
         update_timer(sp->send_timer, 0, dtargus);
         free(buf);
     } // timer_expired_micro
-    
-   
     
     return result;
 }
@@ -540,7 +573,6 @@ void iperf_init_test(struct iperf_test *test)
                 perror("unable to set window");
             }
             
-            //setting noblock causes error in byte count -kprabhu
             //setnonblocking(s);
             
             sp = test->new_stream(test);
@@ -628,44 +660,43 @@ char *iperf_reporter_callback(struct iperf_test *test)
     iperf_size_t bytes=0;
     double start_time, end_time;
     // need to reassign this
-    char *message = (char *) malloc(500);
-    
+    char *message = (char *) malloc(500);    
     // used to determine the length of reporter buffer
     while(sp)
     {
         count ++;
         sp = sp->next;
     }
-    
-    sp = test->streams;
       
-    char *message_final = (char *) malloc((count+1) * (strlen(report_bw_jitter_loss_header) + strlen(report_bw_jitter_loss_format) + strlen(report_sum_bw_jitter_loss_format)) );
+    char *message_final = (char *) malloc((count+1) * (strlen(report_bw_jitter_loss_header) + strlen(report_bw_jitter_loss_format) + strlen(report_sum_bw_jitter_loss_format)));
     
     struct iperf_interval_results *ip = test->streams->result->interval_results;
+    
+    sp = test->streams;
     
     if(test->default_settings->state == TEST_RUNNING) 
     {
         while(sp)
         {
-            while(ip->next!= NULL)
-                    ip = ip->next;
+           while(ip->next!= NULL)
+               ip = ip->next;
             
-            bytes+= ip->bytes_transferred;
-            unit_snprintf(ubuf, UNIT_LEN, (double) (ip->bytes_transferred), test->unit_format);
+           bytes+= ip->bytes_transferred;
+           unit_snprintf(ubuf, UNIT_LEN, (double) (ip->bytes_transferred), test->unit_format);
             
-            test->stats_interval = test->stats_interval== 0 ? test->duration : test->stats_interval;
+           test->stats_interval = test->stats_interval== 0 ? test->duration : test->stats_interval;
             
-            unit_snprintf(nbuf, UNIT_LEN, (double) (ip->bytes_transferred / test->stats_interval), test->unit_format);                
+           unit_snprintf(nbuf, UNIT_LEN, (double) (ip->bytes_transferred / test->stats_interval), test->unit_format);
                         
-            sprintf(message,report_bw_header);
-            strcat(message_final, message);
-            
-            if(test->stats_interval!= 0)
-                sprintf(message, report_bw_format, sp->socket, (double)ip->interval_duration, (double)ip->interval_duration + test->stats_interval, ubuf, nbuf);
+           sprintf(message,report_bw_header);
+           strcat(message_final, message);
+           
+           if(test->stats_interval!= 0)
+               sprintf(message, report_bw_format, sp->socket, (double)ip->interval_duration, (double)ip->interval_duration + test->stats_interval, ubuf, nbuf);
 
-            strcat(message_final, message);
+           strcat(message_final, message);
             
-            sp = sp->next;                        
+           sp = sp->next;                        
         }    
        
         unit_snprintf(ubuf, UNIT_LEN, (double) ( bytes), test->unit_format);
@@ -761,7 +792,7 @@ char *iperf_reporter_callback(struct iperf_test *test)
         // -m option        
         if((test->print_mss != 0)  && (test->role == 'c'))
         {
-            sprintf(message,"the TCP maximum segment size mss = %d \n", getsock_tcp_mss(sp->socket));
+            sprintf(message,"\nThe TCP maximum segment size mss = %d \n", getsock_tcp_mss(sp->socket));
             strcat(message_final, message);
         }
         
@@ -891,6 +922,9 @@ int iperf_udp_accept(struct iperf_test *test)
     sp = test->new_stream(test);
     sp->socket = test->listener_sock_udp;
     
+    //setting noblock doesn't report back to client
+    //setnonblocking( sp->socket);
+    
     iperf_init_stream(sp, test);
     sp->result->bytes_received+= sz;
     iperf_add_stream(test, sp);    
@@ -928,6 +962,8 @@ int iperf_tcp_accept(struct iperf_test *test)
     else 
     {    
         sp = test->new_stream(test);
+        
+        //setting noblock doesn't report back to client
         //setnonblocking(peersock);
         
         FD_SET(peersock, &test->read_set);
@@ -1355,7 +1391,8 @@ main(int argc, char **argv)
                 test->default_settings->rate = unit_atof(optarg);
                 break;
             case 'l':
-                test->default_settings->blksize = atol(optarg);
+                test->default_settings->blksize = unit_atoi(optarg);
+                printf("%lld is the blksize\n", unit_atoi(optarg));
                 break;
             case 'w':
                 test->default_settings->socket_bufsize = unit_atof(optarg);
@@ -1371,6 +1408,7 @@ main(int argc, char **argv)
                 break;
             case 'M':
                 test->default_settings->mss = atoi(optarg);
+                break;
             case 'f':
                 test->unit_format = *optarg;
                 printf("%c is format \n", test->unit_format); 

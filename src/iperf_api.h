@@ -4,8 +4,7 @@ struct iperf_interval_results
 {
     iperf_size_t bytes_transferred;
     int  interval_duration;    
-    struct iperf_interval_results *next;
-    
+    struct iperf_interval_results *next;    
     void * custom_data;
 };
 
@@ -35,7 +34,7 @@ struct iperf_settings
 };
 
 struct iperf_stream
-{
+{   
     /* configurable members */
     int local_port;                     // local port
     int remote_port;                    // remote machine port
@@ -43,11 +42,15 @@ struct iperf_stream
     int protocol;                       // protocol- TCP/UDP 
         
     /* non configurable members */
-    struct iperf_stream_result *result; //structure pointer to result
+    struct iperf_stream_result *result; //structure pointer to result    
+    int socket;                         // socket    
+    struct timer *send_timer;   
     
-    int socket;                         // socket
-    
-    struct timer *send_timer;
+    /* for udp measurements - Need to change the members */
+    int packet_count;
+    int stream_id;                      // stream identity
+    double jitter;
+    double prev_transit;
     
     struct sockaddr_storage local_addr;
     struct sockaddr_storage remote_addr;
@@ -101,6 +104,19 @@ struct iperf_test
 };
 
 
+struct udp_datagram
+{
+    int state;
+    int stream_id;
+    int packet_count;
+    struct timeval sent_time;
+};
+
+
+void add_interval_list(struct iperf_stream_result *rp, struct iperf_interval_results temp);
+void display_interval_list(struct iperf_stream_result *rp);
+void send_result_to_client(struct iperf_stream *sp);
+void receive_result_from_server(struct iperf_test *test);
 int getsock_tcp_mss( int inSock );
 int set_socket_options(struct iperf_stream *sp, struct iperf_test *test);
 void connect_msg(struct iperf_stream *sp);

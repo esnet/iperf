@@ -3,7 +3,8 @@
 struct iperf_interval_results
 {
     iperf_size_t bytes_transferred;
-    int  interval_duration;    
+    struct timeval  interval_time;
+    float interval_duration;
     struct iperf_interval_results *next;    
     void * custom_data;
 };
@@ -51,6 +52,8 @@ struct iperf_stream
     int stream_id;                      // stream identity
     double jitter;
     double prev_transit;
+    int outoforder_packets;
+    int cnt_error;
     
     struct sockaddr_storage local_addr;
     struct sockaddr_storage remote_addr;

@@ -323,16 +323,18 @@ int iperf_udp_recv(struct iperf_stream *sp)
     {
         message = udp->state;
     }
-    
+        
     if(message != STREAM_END && message != STREAM_BEGIN && (sp->stream_id == udp->stream_id))
     {
-        sp->result->bytes_received+= result;        
+        sp->result->bytes_received+= result;
+        if(udp->packet_count == sp->packet_count + 1)
         sp->packet_count++;
         
         //jitter measurement
         if(gettimeofday(&arrival_time, NULL) < 0) {
             perror("gettimeofday");        
-        }        
+        }
+        
         transit =  timeval_diff(&udp->sent_time, &arrival_time);
         d = transit - sp->prev_transit;
         if(d < 0)
@@ -342,22 +344,22 @@ int iperf_udp_recv(struct iperf_stream *sp)
         
         
         //OUT OF ORDER PACKETS
-        if(udp->packet_count != sp->packet_count + 1)
+        if(udp->packet_count != sp->packet_count)
         {
             if( udp->packet_count < sp->packet_count + 1)
             {
                 sp->outoforder_packets++;
-                //printf("OUT OF ORDER - incoming packet = %d and received packet = %d AND SP = %d\n", udp->packet_count, sp->packet_count, sp->socket);
+                printf("OUT OF ORDER - incoming packet = %d and received packet = %d AND SP = %d\n", udp->packet_count, sp->packet_count, sp->socket);
             }
             else 
-                sp->cnt_error += udp->packet_count - sp->packet_count;                        
+                sp->cnt_error += udp->packet_count - sp->packet_count;
         }
         
         // store the latest packet id
         if(udp->packet_count > sp->packet_count)
             sp->packet_count = udp->packet_count;
         
-        //printf("incoming packet = %d and received packet = %d AND SP = %d\n", udp->packet_count, sp->packet_count, sp->socket);
+       //printf("incoming packet = %d and received packet = %d AND SP = %d\n", udp->packet_count, sp->packet_count, sp->socket);
         
     }
     
@@ -496,7 +498,7 @@ int iperf_udp_send(struct iperf_stream *sp)
         result = send(sp->socket, buf, size, 0);
         
         if(sp->settings->state == STREAM_RUNNING)
-           //printf("State = %d Outgoing packet = %d AND SP = %d\n",sp->settings->state, sp->packet_count, sp->socket);        
+           printf("State = %d Outgoing packet = %d AND SP = %d\n",sp->settings->state, sp->packet_count, sp->socket);        
                 
         if(sp->settings->state == STREAM_RUNNING)
             sp->result->bytes_sent+= result;
@@ -659,8 +661,7 @@ void *iperf_stats_callback(struct iperf_test *test)
         rp = sp->result;
         
         if(!rp->interval_results)
-        {
-            printf("1st time sp is %d \n", (int)sp);
+        {            
             if(test ->role == 'c')
                 temp.bytes_transferred = rp->bytes_sent;
             else
@@ -676,8 +677,6 @@ void *iperf_stats_callback(struct iperf_test *test)
         
         else
         {
-            printf("sp is %d \n", (int)sp);
-            
             ip = sp->result->interval_results;
             while(1)
             {
@@ -688,7 +687,7 @@ void *iperf_stats_callback(struct iperf_test *test)
                     break;
             }
             
-            if(test ->role == 'c')
+            if(test ->role == 'c')            
                 temp.bytes_transferred = rp->bytes_sent - cumulative_bytes;
             else
                 temp.bytes_transferred = rp->bytes_received - cumulative_bytes;
@@ -696,8 +695,7 @@ void *iperf_stats_callback(struct iperf_test *test)
             gettimeofday(&temp.interval_time, NULL);
             temp.interval_duration = timeval_diff(&sp->result->start_time, &temp.interval_time);
             
-            gettimeofday( &sp->result->end_time, NULL);
-            
+            gettimeofday( &sp->result->end_time, NULL);            
             add_interval_list(rp, temp);            
         }
         
@@ -737,7 +735,9 @@ char *iperf_reporter_callback(struct iperf_test *test)
     if(test->default_settings->state == TEST_RUNNING) 
     {
         while(sp)
-        {            
+        {
+            ip = sp->result->interval_results;
+            
             while(ip->next!= NULL)
             {
                 ip_prev = ip;
@@ -764,7 +764,7 @@ char *iperf_reporter_callback(struct iperf_test *test)
                 sprintf(message, report_bw_format, sp->socket, 0.0, ip->interval_duration, ubuf, nbuf);
             }
             strcat(message_final, message);            
-            sp = sp->next;                        
+            sp = sp->next;            
         }   
        
         unit_snprintf(ubuf, UNIT_LEN, (double) ( bytes), test->unit_format);
@@ -846,11 +846,9 @@ char *iperf_reporter_callback(struct iperf_test *test)
                     {
                         sprintf(message, report_datagrams, sp->socket, sp->packet_count);
                         strcat(message_final, message);
-                    }
-                    
-                    if ( sp->cnt_error > 0 )
-                        printf( report_sum_outoforder, start_time, end_time, sp->cnt_error);
-                        
+                    }                    
+                    if ( sp->outoforder_packets > 0 )
+                        printf( report_sum_outoforder, start_time, end_time, sp->cnt_error);                        
                 }
             }
                     
@@ -872,7 +870,7 @@ char *iperf_reporter_callback(struct iperf_test *test)
         }
         else
         {
-            sprintf(message, report_sum_bw_jitter_loss_format, start_time, end_time, ubuf, nbuf,sp->jitter, lost_packets, total_packets, (double)(100.0 * sp->cnt_error / sp->packet_count));
+            sprintf(message, report_sum_bw_jitter_loss_format, start_time, end_time, ubuf, nbuf,sp->jitter, lost_packets, total_packets, (double)(100.0 * lost_packets/total_packets));
             strcat(message_final, message);
         }
         
@@ -1036,7 +1034,7 @@ int iperf_udp_accept(struct iperf_test *test)
         connect_msg(sp);
     
     printf("1st UDP data  packet for socket %d has arrived \n", sp->socket);
-    sp->stream_id = udp->stream_id;    
+    sp->stream_id = udp->stream_id;   
     sp->result->bytes_received+= sz;
     
     //OUT OF ORDER PACKETS
@@ -1051,7 +1049,8 @@ int iperf_udp_accept(struct iperf_test *test)
     // store the latest packet id
     if(udp->packet_count > sp->packet_count)
         sp->packet_count = udp->packet_count;
-    printf("incoming packet = %d and received packet = %d AND SP = %d\n", udp->packet_count, sp->packet_count, sp->socket);
+    
+    //printf("incoming packet = %d and received packet = %d AND SP = %d\n", udp->packet_count, sp->packet_count, sp->socket);
     
     free(buf);    
     return 0;    

@@ -140,6 +140,8 @@ void receive_result_from_server(struct iperf_test *test)
     sp->settings->state = ALL_STREAMS_END;
     sp->snd(sp);
     
+    sleep(1);
+    
     sp->settings->state = RESULT_REQUEST;
     sp->snd(sp);
     
@@ -266,14 +268,15 @@ void Display(struct iperf_test *test)
 
 int iperf_tcp_recv(struct iperf_stream *sp)
 {
-    int result, message;
-    char ch;
+    int result, message;   
     int size = sp->settings->blksize;
     char *buf = (char *) malloc(size);
     if(!buf)
     {
         perror("malloc: unable to allocate receive buffer");
     }
+    
+    struct tcp_datagram *tcp = (struct tcp_datagram *) buf;
     
     do{
         result = recv(sp->socket, buf, size, 0);        
@@ -283,8 +286,7 @@ int iperf_tcp_recv(struct iperf_stream *sp)
     //interprete the type of message in packet
     if(result > 0)
     {  
-        ch = buf[0];
-        message = (int) ch;  
+        message =  tcp->state;
     }
     
     if(message == 3 || message == 9 || message == 8)
@@ -382,30 +384,40 @@ int iperf_tcp_send(struct iperf_stream *sp)
         perror("malloc: unable to allocate transmit buffer");
     }
     
+    //memset(buf,0, size);
+    
+    struct tcp_datagram *tcp = (struct tcp_datagram *) buf;
+    
     switch(sp->settings->state)
     {           
         case STREAM_BEGIN:
-            buf[0]= STREAM_BEGIN;
-            for(i=1; i < size; i++)
-                buf[i] = i % 37;
+            tcp->state = STREAM_BEGIN;
+            tcp->stream_id = (int)sp;
+            for(i = 2*sizeof(int); i < size ; i++)
+                buf[i] =0;
             break;
             
         case STREAM_END:            
-            buf[0]= STREAM_END;            
+            tcp->state = STREAM_END;
+            printf("sent stream_end\n");
+            tcp->stream_id = (int)sp;
             break;
             
         case RESULT_REQUEST:
-            buf[0]= RESULT_REQUEST;             
+            tcp->state = RESULT_REQUEST;
+            tcp->stream_id = (int)sp;
             break;
             
         case ALL_STREAMS_END:
-            buf[0]= ALL_STREAMS_END;            
+            tcp->state = ALL_STREAMS_END;
+            tcp->stream_id = (int)sp;
             break;
             
         default:
-            buf[0]= 0;
-            for(i=1; i < size; i++)
-                buf[i] = i % 37;
+            tcp->state = 0;
+            tcp->stream_id = (int)sp;
+            for(i = 2*sizeof(int); i < size; i++)
+                buf[i] =0;
             break;
     }
     
@@ -419,7 +431,7 @@ int iperf_tcp_send(struct iperf_stream *sp)
         
     result = send(sp->socket, buf, size , 0);   
     
-    if(buf[0] != STREAM_END)
+    if(tcp->state != STREAM_END)
         sp->result->bytes_sent+= size;
     
     free(buf);
@@ -498,7 +510,7 @@ int iperf_udp_send(struct iperf_stream *sp)
         result = send(sp->socket, buf, size, 0);
         
         if(sp->settings->state == STREAM_RUNNING)
-           printf("State = %d Outgoing packet = %d AND SP = %d\n",sp->settings->state, sp->packet_count, sp->socket);        
+          // printf("State = %d Outgoing packet = %d AND SP = %d\n",sp->settings->state, sp->packet_count, sp->socket);        
                 
         if(sp->settings->state == STREAM_RUNNING)
             sp->result->bytes_sent+= result;
@@ -1406,7 +1418,7 @@ void iperf_run_client(struct iperf_test *test)
         
     }// while outer timer    
     
-   // for last interval    
+   // for last interval
     test->stats_callback(test);
     read = test->reporter_callback(test);
     puts(read);

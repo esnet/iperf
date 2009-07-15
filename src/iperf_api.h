@@ -47,7 +47,8 @@ struct iperf_stream
     int socket;                         // socket    
     struct timer *send_timer;   
     
-    /* for udp measurements - Need to change the members */
+    /* for udp measurements - This can be a structure outside stream,
+     and stream can have a pointer to this  */
     int packet_count;
     int stream_id;                      // stream identity
     double jitter;
@@ -113,6 +114,13 @@ struct udp_datagram
     int stream_id;
     int packet_count;
     struct timeval sent_time;
+};
+
+
+struct tcp_datagram
+{
+    int state;
+    int stream_id;
 };
 
 

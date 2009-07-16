@@ -286,7 +286,7 @@ int iperf_tcp_recv(struct iperf_stream *sp)
     //interprete the type of message in packet
     if(result > 0)
     {  
-        message =  tcp->state;
+        message = ntohl(tcp->state);
     }
     
     if(message == 3 || message == 9 || message == 8)
@@ -323,7 +323,7 @@ int iperf_udp_recv(struct iperf_stream *sp)
     //interprete the type of message in packet
     if(result > 0)
     {
-        message = udp->state;
+        message = ntohl(udp->state);
     }
         
     if(message != STREAM_END && message != STREAM_BEGIN && (sp->stream_id == udp->stream_id))
@@ -384,43 +384,51 @@ int iperf_tcp_send(struct iperf_stream *sp)
         perror("malloc: unable to allocate transmit buffer");
     }
     
-    //memset(buf,0, size);
+    memset(buf,0, size);
     
     struct tcp_datagram *tcp = (struct tcp_datagram *) buf;
     
     switch(sp->settings->state)
     {           
         case STREAM_BEGIN:
-            tcp->state = STREAM_BEGIN;
-            tcp->stream_id = (int)sp;
-            for(i = 2*sizeof(int); i < size ; i++)
-                buf[i] =0;
+            tcp->state = htonl(STREAM_BEGIN);
+            tcp->stream_id = htonl((int)sp);
+            
             break;
             
         case STREAM_END:            
-            tcp->state = STREAM_END;
+            tcp->state = htonl(STREAM_END);
             printf("sent stream_end\n");
-            tcp->stream_id = (int)sp;
+            tcp->stream_id = htonl((int)sp);
             break;
             
         case RESULT_REQUEST:
-            tcp->state = RESULT_REQUEST;
-            tcp->stream_id = (int)sp;
+            tcp->state = htonl(RESULT_REQUEST);
+            tcp->stream_id = htonl((int)sp);
             break;
             
         case ALL_STREAMS_END:
-            tcp->state = ALL_STREAMS_END;
-            tcp->stream_id = (int)sp;
+            tcp->state = htonl(ALL_STREAMS_END);
+            tcp->stream_id = htonl((int)sp);
             break;
             
         default:
-            tcp->state = 0;
-            tcp->stream_id = (int)sp;
-            for(i = 2*sizeof(int); i < size; i++)
-                buf[i] =0;
+            tcp->state = htonl(0);
+            tcp->stream_id = htonl((int)sp);            
             break;
     }
     
+    
+    /* 
+    if(sp->settings->state == RESULT_REQUEST)
+    {
+        FILE *fp;
+        fp = fopen("send.txt", "w+");        
+        buf[size] = '\0';
+        fwrite(buf, 1, size, fp);        
+        fclose(fp);
+    }
+     */
     
     
     //applicable for 1st packet sent
@@ -429,9 +437,9 @@ int iperf_tcp_send(struct iperf_stream *sp)
         sp->settings->state = STREAM_RUNNING;           
     }
         
-    result = send(sp->socket, buf, size , 0);   
+    result = send(sp->socket, buf, size, 0);   
     
-    if(tcp->state != STREAM_END)
+    if(sp->settings->state != STREAM_END)
         sp->result->bytes_sent+= size;
     
     free(buf);
@@ -469,28 +477,28 @@ int iperf_udp_send(struct iperf_stream *sp)
         switch(sp->settings->state)
         {           
             case STREAM_BEGIN:
-                udp->state = STREAM_BEGIN;
-                udp->stream_id = (int)sp;
+                udp->state = htonl(STREAM_BEGIN);
+                udp->stream_id =  htonl((int)sp);
                 //udp->packet_count = ++sp->packet_count;
                 break;
                 
             case STREAM_END:
-                udp->state = STREAM_END;
-                udp->stream_id  = (int) sp;
+                udp->state = htonl(STREAM_END);
+                udp->stream_id  =  htonl((int)sp);
                 break;
                 
             case RESULT_REQUEST:
-                udp->state = RESULT_REQUEST;
-                udp->stream_id  = (int) sp;
+                udp->state = htonl(RESULT_REQUEST);
+                udp->stream_id  =  htonl((int)sp);
                 break;
                 
             case ALL_STREAMS_END:
-                udp->state = ALL_STREAMS_END;
+                udp->state = htonl(ALL_STREAMS_END);
                 break;
                 
             default:
-                udp->state = 0;
-                udp->stream_id = (int)sp;
+                udp->state = htonl(0);
+                udp->stream_id =  htonl((int)sp);
                 udp->packet_count = ++sp->packet_count;
                 break;                
         }        

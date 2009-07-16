@@ -82,8 +82,9 @@ void add_interval_list(struct iperf_stream_result *rp, struct iperf_interval_res
         while(n->next)
            n = n->next;
         
-         n->next = ip;
+         n->next = ip;         
     }
+    ip->next = NULL;
 }
 
 void display_interval_list(struct iperf_stream_result *rp)
@@ -139,8 +140,6 @@ void receive_result_from_server(struct iperf_test *test)
        
     sp->settings->state = ALL_STREAMS_END;
     sp->snd(sp);
-    
-    sleep(1);
     
     sp->settings->state = RESULT_REQUEST;
     sp->snd(sp);
@@ -268,7 +267,8 @@ void Display(struct iperf_test *test)
 
 int iperf_tcp_recv(struct iperf_stream *sp)
 {
-    int result, message;   
+    int result, message;
+    char ch;
     int size = sp->settings->blksize;
     char *buf = (char *) malloc(size);
     if(!buf)
@@ -276,21 +276,24 @@ int iperf_tcp_recv(struct iperf_stream *sp)
         perror("malloc: unable to allocate receive buffer");
     }
     
-    struct tcp_datagram *tcp = (struct tcp_datagram *) buf;
-    
     do{
-        result = recv(sp->socket, buf, size, 0);        
+        result = recv(sp->socket, buf, size, MSG_WAITALL);        
         
     } while (result == -1 && errno == EINTR);
     
     //interprete the type of message in packet
     if(result > 0)
     {  
-        message = ntohl(tcp->state);
+        ch = buf[0];
+        message = (int) ch;
+        
+        // CHECK: packet length and state
+        // printf("result = %d state = %d\n",result, buf[0]);
     }
     
-    if(message == 3 || message == 9 || message == 8)
+    if(message == 3 || message == 8 || message == 9 )
     {
+       // printf("count = %ld result = %d\n", strlen(buf), result);
         printf("Recieved %d from client\n", message);
     }
    
@@ -323,10 +326,10 @@ int iperf_udp_recv(struct iperf_stream *sp)
     //interprete the type of message in packet
     if(result > 0)
     {
-        message = ntohl(udp->state);
+        message = udp->state;
     }
         
-    if(message != STREAM_END && message != STREAM_BEGIN && (sp->stream_id == udp->stream_id))
+    if(message == STREAM_RUNNING && (sp->stream_id == udp->stream_id))
     {
         sp->result->bytes_received+= result;
         if(udp->packet_count == sp->packet_count + 1)
@@ -384,51 +387,42 @@ int iperf_tcp_send(struct iperf_stream *sp)
         perror("malloc: unable to allocate transmit buffer");
     }
     
-    memset(buf,0, size);
-    
-    struct tcp_datagram *tcp = (struct tcp_datagram *) buf;
-    
     switch(sp->settings->state)
     {           
         case STREAM_BEGIN:
-            tcp->state = htonl(STREAM_BEGIN);
-            tcp->stream_id = htonl((int)sp);
-            
+            buf[0]= (STREAM_BEGIN);
+            for(i=1; i < size; i++)
+                buf[i] = 97;
             break;
             
         case STREAM_END:            
-            tcp->state = htonl(STREAM_END);
-            printf("sent stream_end\n");
-            tcp->stream_id = htonl((int)sp);
+            buf[0]= (STREAM_END);
+            for(i=1; i < size; i++)
+                buf[i] = 97;
             break;
             
         case RESULT_REQUEST:
-            tcp->state = htonl(RESULT_REQUEST);
-            tcp->stream_id = htonl((int)sp);
+            buf[0]= (RESULT_REQUEST);
+            for(i=1; i < size; i++)
+                 buf[i] = 97;
             break;
             
         case ALL_STREAMS_END:
-            tcp->state = htonl(ALL_STREAMS_END);
-            tcp->stream_id = htonl((int)sp);
+            buf[0]= (ALL_STREAMS_END);
+            for(i=1; i < size; i++)
+                 buf[i] = 97;
             break;
             
+        case STREAM_RUNNING:
+            buf[0]= STREAM_RUNNING;
+            for(i=1; i < size; i++)
+                 buf[i] = 97;
+            break;
         default:
-            tcp->state = htonl(0);
-            tcp->stream_id = htonl((int)sp);            
+            printf("State of the stream can't be determined\n");
             break;
     }
     
-    
-    /* 
-    if(sp->settings->state == RESULT_REQUEST)
-    {
-        FILE *fp;
-        fp = fopen("send.txt", "w+");        
-        buf[size] = '\0';
-        fwrite(buf, 1, size, fp);        
-        fclose(fp);
-    }
-     */
     
     
     //applicable for 1st packet sent
@@ -437,9 +431,9 @@ int iperf_tcp_send(struct iperf_stream *sp)
         sp->settings->state = STREAM_RUNNING;           
     }
         
-    result = send(sp->socket, buf, size, 0);   
+    result = send(sp->socket, buf, size , 0);   
     
-    if(sp->settings->state != STREAM_END)
+    if(buf[0] != STREAM_END)
         sp->result->bytes_sent+= size;
     
     free(buf);
@@ -477,28 +471,28 @@ int iperf_udp_send(struct iperf_stream *sp)
         switch(sp->settings->state)
         {           
             case STREAM_BEGIN:
-                udp->state = htonl(STREAM_BEGIN);
-                udp->stream_id =  htonl((int)sp);
+                udp->state = STREAM_BEGIN;
+                udp->stream_id = (int)sp;
                 //udp->packet_count = ++sp->packet_count;
                 break;
                 
             case STREAM_END:
-                udp->state = htonl(STREAM_END);
-                udp->stream_id  =  htonl((int)sp);
+                udp->state = STREAM_END;
+                udp->stream_id  = (int) sp;
                 break;
                 
             case RESULT_REQUEST:
-                udp->state = htonl(RESULT_REQUEST);
-                udp->stream_id  =  htonl((int)sp);
+                udp->state = RESULT_REQUEST;
+                udp->stream_id  = (int) sp;
                 break;
                 
             case ALL_STREAMS_END:
-                udp->state = htonl(ALL_STREAMS_END);
+                udp->state = ALL_STREAMS_END;
                 break;
-                
-            default:
-                udp->state = htonl(0);
-                udp->stream_id =  htonl((int)sp);
+           
+            case STREAM_RUNNING:
+                udp->state = STREAM_RUNNING;
+                udp->stream_id  = (int) sp;
                 udp->packet_count = ++sp->packet_count;
                 break;                
         }        
@@ -517,8 +511,9 @@ int iperf_udp_send(struct iperf_stream *sp)
         //else
         result = send(sp->socket, buf, size, 0);
         
-        if(sp->settings->state == STREAM_RUNNING)
-          // printf("State = %d Outgoing packet = %d AND SP = %d\n",sp->settings->state, sp->packet_count, sp->socket);        
+        // CHECK: Packet length and ID
+        //if(sp->settings->state == STREAM_RUNNING)
+        //   printf("State = %d Outgoing packet = %d AND SP = %d\n",sp->settings->state, sp->packet_count, sp->socket);        
                 
         if(sp->settings->state == STREAM_RUNNING)
             sp->result->bytes_sent+= result;
@@ -745,6 +740,7 @@ char *iperf_reporter_callback(struct iperf_test *test)
     }
       
     char *message_final = (char *) malloc((count+1) * (strlen(report_bw_jitter_loss_header) + strlen(report_bw_jitter_loss_format) + strlen(report_sum_bw_jitter_loss_format)));
+    memset(message_final,0, strlen(message_final));
     
     struct iperf_interval_results *ip = test->streams->result->interval_results;
     
@@ -968,6 +964,9 @@ struct iperf_stream *iperf_new_stream(struct iperf_test *testp)
     sp->outoforder_packets = 0;
     sp->cnt_error = 0;
     
+    sp->send_timer = NULL;
+    
+    sp->result->interval_results = NULL;    
     sp->result->bytes_received = 0;
     sp->result->bytes_sent = 0;
     gettimeofday(&sp->result->start_time, NULL);
@@ -1310,7 +1309,8 @@ void iperf_run_server(struct iperf_test *test)
                                 np->settings->state = STREAM_END;
                                 gettimeofday(&np->result->end_time, NULL);
                             }
-                            np = np->next;
+                            
+                            np = np->next;                             
                         }
                         
                         // This is necessary to preserve reporting format
@@ -1426,7 +1426,7 @@ void iperf_run_client(struct iperf_test *test)
         
     }// while outer timer    
     
-   // for last interval
+   // for last interval    
     test->stats_callback(test);
     read = test->reporter_callback(test);
     puts(read);

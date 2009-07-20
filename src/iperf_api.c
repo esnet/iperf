@@ -656,10 +656,17 @@ void iperf_init_test(struct iperf_test *test)
 }
 
 void iperf_free_test(struct iperf_test *test)
-{
-    
+{    
     free(test->default_settings);
+    
+    close(test->listener_sock_tcp);
+    close(test->listener_sock_udp);
+    
     test->streams = NULL;
+    test->accept = NULL;
+    test->stats_callback = NULL;
+    test->reporter_callback = NULL;
+    test->new_stream = NULL;
     free(test);
 }
 
@@ -1209,7 +1216,7 @@ void iperf_run_server(struct iperf_test *test)
     test->num_streams = 0;
     test->default_settings->state = TEST_RUNNING;
         
-    while(1)
+    while(test->default_settings->state != TEST_END)
     {    
         memcpy(&test->temp_set, &test->read_set,sizeof(test->temp_set));
         tv.tv_sec = 50;            
@@ -1287,14 +1294,7 @@ void iperf_run_server(struct iperf_test *test)
                         } while (np!= NULL);
                         
                         printf("TEST_END\n\n");                        
-                        
-                       test->default_settings->state = TEST_START;                        
-                        if(test->listener_sock_udp > test->listener_sock_tcp)
-                            test->max_fd = test->listener_sock_udp;
-                        else
-                            test->max_fd = test->listener_sock_tcp; 
-                        
-                        read = NULL;
+                       test->default_settings->state = TEST_END;                        
                     }
                     
                     if(message == ALL_STREAMS_END)
@@ -1328,7 +1328,7 @@ void iperf_run_server(struct iperf_test *test)
                        
         }// end else (result>0)        
                
-    }// end while    
+    }// end while
     
 }
 
@@ -1489,16 +1489,17 @@ int iperf_run(struct iperf_test *test)
 int
 main(int argc, char **argv)
 {
-    char ch;
+    char ch, role;
     struct iperf_test *test;
             
-    test = iperf_new_test();        
+    test = iperf_new_test();
     iperf_defaults(test);
         
     while( (ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:mNM:f:", longopts, NULL)) != -1 )
         switch (ch) {
             case 'c':
-                test->role = 'c';    
+                test->role = 'c';
+                role = test->role;
                 test->server_hostname = (char *) malloc(strlen(optarg));
                 strncpy(test->server_hostname, optarg, strlen(optarg));
                 break;                
@@ -1506,7 +1507,8 @@ main(int argc, char **argv)
                 test->server_port = atoi(optarg);                
                 break;
             case 's':
-                test->role = 's';                
+                test->role = 's';
+                role = test->role;
                 break;
             case 't':
                 test->duration = atoi(optarg);                
@@ -1559,12 +1561,39 @@ main(int argc, char **argv)
             test->new_stream = iperf_new_udp_stream;
             break;
     }
-        
+    
+    
     iperf_init_test(test);
-    
     iperf_run(test);
-    
     iperf_free_test(test);
+    
+    if(role == 's')
+    {
+        while(1)
+        {
+            //start a new test 
+            struct iperf_test *test;
+            test = iperf_new_test();        
+            iperf_defaults(test);
+            
+            test->stats_callback = iperf_stats_callback;    
+            test->reporter_callback = iperf_reporter_callback;
+            
+            switch(test->protocol)
+            {
+                case Ptcp:
+                    test->new_stream = iperf_new_tcp_stream;
+                    break;                    
+                case Pudp:            
+                    test->new_stream = iperf_new_udp_stream;
+                    break;
+            }            
+            
+            iperf_init_test(test);
+            iperf_run(test);
+            iperf_free_test(test);
+        }
+    }
         
     return 0;
 }

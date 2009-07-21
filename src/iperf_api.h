@@ -31,7 +31,9 @@ struct iperf_settings
     int mss;                  //for TCP MSS
     int ttl;
     int tos;
-    int state;               // This is state of a stream/test - can use Union for this 
+    char  unit_format;                        // -f
+    int state;              // This is state of a stream/test  
+    uuid_t cookie;          // cookie for a stream/test
 };
 
 struct iperf_stream
@@ -45,7 +47,7 @@ struct iperf_stream
     /* non configurable members */
     struct iperf_stream_result *result; //structure pointer to result    
     int socket;                         // socket    
-    struct timer *send_timer;   
+    struct timer *send_timer;
     
     /* for udp measurements - This can be a structure outside stream,
      and stream can have a pointer to this  */
@@ -77,17 +79,16 @@ struct iperf_test
     int server_port;                      // arg of -p
     int  duration;                        // total duration of test  -t    
     int listener_sock_tcp;
-    int listener_sock_udp;
+    int listener_sock_udp;    
     
     /*boolen variables for Options */
     int   daemon;                        // -D
     int   no_delay;                       // -N
     int   print_mss;                      // -m
-    int   domain;                        // -V
-    char  unit_format;                        // -f  
+    int   domain;                        // -V    
    
     /* Select related parameters */    
-    int max_fd;    
+    int max_fd;
     fd_set read_set;
     fd_set temp_set;
     fd_set write_set;
@@ -107,9 +108,8 @@ struct iperf_test
     struct iperf_settings *default_settings;
 };
 
-
 struct udp_datagram
-{
+{   
     int state;
     int stream_id;
     int packet_count;
@@ -117,13 +117,20 @@ struct udp_datagram
 };
 
 
-struct tcp_datagram
+struct param_exchange
 {
+    uuid_t cookie;
     int state;
     int stream_id;
+    int blksize;
+    int recv_window;
+    int send_window;
+    int mss;
+    char format;    
 };
 
 
+void exchange_parameters(struct iperf_test *test);
 void add_interval_list(struct iperf_stream_result *rp, struct iperf_interval_results temp);
 void display_interval_list(struct iperf_stream_result *rp);
 void send_result_to_client(struct iperf_stream *sp);
@@ -147,8 +154,7 @@ int iperf_run(struct iperf_test *test);
 
 enum {
     Ptcp = SOCK_STREAM,
-    Pudp = SOCK_DGRAM,
-    
+    Pudp = SOCK_DGRAM,    
     uS_TO_NS = 1000,
     RATE = 1000000,
     MAX_BUFFER_SIZE =10,
@@ -163,6 +169,7 @@ enum {
     STREAM_RUNNING = 7,
     STREAM_END = 8,
     ALL_STREAMS_END = 9,
+    PARAM_EXCHANGE = 10,
     SEC_TO_US = 1000000
     
 };

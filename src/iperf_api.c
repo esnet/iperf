@@ -1218,7 +1218,7 @@ void iperf_run_server(struct iperf_test *test)
         
     while(test->default_settings->state != TEST_END)
     {    
-        memcpy(&test->temp_set, &test->read_set,sizeof(test->temp_set));
+        FD_COPY(&test->read_set, &test->temp_set);
         tv.tv_sec = 50;            
         tv.tv_usec = 0;
         
@@ -1341,6 +1341,7 @@ void iperf_run_client(struct iperf_test *test)
     int64_t delayus, adjustus, dtargus, remaining, min; 
     struct timeval tv;
     int ret=0;
+
     tv.tv_sec = 15;            // timeout interval in seconds
     tv.tv_usec = 0;
     
@@ -1376,14 +1377,15 @@ void iperf_run_client(struct iperf_test *test)
     // send data till the timer expires
     while(!timer->expired(timer))
     {
-        ret = select(test->max_fd+1, NULL, &test->write_set, NULL, &tv);
+        FD_COPY(&test->write_set, &test->temp_set);
+        ret = select(test->max_fd+1, NULL, &test->temp_set, NULL, &tv);
         if(ret < 0)
             continue;
         
         sp= test->streams;        
         for(i=0;i<test->num_streams;i++)
         {
-            if(FD_ISSET(sp->socket, &test->write_set))
+            if(FD_ISSET(sp->socket, &test->temp_set))
             {  
                result+= sp->snd(sp);
                

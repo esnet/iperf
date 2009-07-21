@@ -768,7 +768,7 @@ char *iperf_reporter_callback(struct iperf_test *test)
             }
             
             bytes+= ip->bytes_transferred;
-            unit_snprintf(ubuf, UNIT_LEN, (double) (ip->bytes_transferred), test->unit_format);
+            unit_snprintf(ubuf, UNIT_LEN, (double) (ip->bytes_transferred), 'A');
             
             test->stats_interval = test->stats_interval== 0 ? test->duration : test->stats_interval;            
             
@@ -790,7 +790,7 @@ char *iperf_reporter_callback(struct iperf_test *test)
             sp = sp->next;            
         }   
        
-        unit_snprintf(ubuf, UNIT_LEN, (double) ( bytes), test->unit_format);
+        unit_snprintf(ubuf, UNIT_LEN, (double) ( bytes), 'A');
         
         if(test->streams->result->interval_results->next != NULL)
         {
@@ -844,13 +844,13 @@ char *iperf_reporter_callback(struct iperf_test *test)
                     
                 if(test->role == 'c')
                 {
-                    unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->bytes_sent), test->unit_format);
+                    unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->bytes_sent), 'A');
                     unit_snprintf(nbuf, UNIT_LEN, (double) (sp->result->bytes_sent / end_time), test->unit_format);
                     
                 }
                 else
                 {
-                    unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->bytes_received), test->unit_format);
+                    unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->bytes_received), 'A');
                     unit_snprintf(nbuf, UNIT_LEN, (double) (sp->result->bytes_received / end_time), test->unit_format);
                 }            
             
@@ -883,7 +883,7 @@ char *iperf_reporter_callback(struct iperf_test *test)
         start_time = timeval_diff(&sp->result->start_time, &sp->result->start_time);
         end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
         
-        unit_snprintf(ubuf, UNIT_LEN, (double) bytes, test->unit_format);
+        unit_snprintf(ubuf, UNIT_LEN, (double) bytes, 'A');
         unit_snprintf(nbuf, UNIT_LEN, (double) bytes / end_time, test->unit_format);
         
         if(test->protocol == Ptcp)

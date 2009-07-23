@@ -17,17 +17,12 @@
 #include <netinet/tcp.h>
 #include <sys/time.h>
 
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(linux)
-#include <uuid.h>
-#endif
-#if defined(MAC_OS_X) || defined(__APPLE__) || defined(__MACH__)
-#include <uuid/uuid.h>
-#endif
 #include "iperf_api.h"
 #include "timer.h"
 #include "net.h"
 #include "units.h"
 #include "tcp_window_size.h"
+#include "uuid.h"
 #include "locale.h"
 
 static struct option longopts[] =
@@ -57,18 +52,10 @@ void exchange_parameters(struct iperf_test *test)
     struct iperf_test *temp;
     struct iperf_stream *sp;     
     struct param_exchange *param = (struct param_exchange *) buf;
+
+    test->default_settings->cookie = get_uuid();
     
     //setting up exchange parameters 
-#if defined(__FREEBSD__) || defined(__NetBSD__) || defined(linux)
-    uuid_create(&test->default_settings->cookie, 0);
-    
-#endif
-    
-#if defined(MAC_OS_X) || defined(__APPLE__) || defined(__MACH__)
-    uuid_generate(test->default_settings->cookie);    
-    uuid_copy(param->cookie, test->default_settings->cookie);    
-#endif
-    
     param->state = PARAM_EXCHANGE;
     param->blksize = test->default_settings->blksize;
     param->recv_window = test->default_settings->socket_rcv_bufsize;
@@ -116,32 +103,11 @@ int param_received(struct iperf_stream *sp, struct param_exchange *param)
     int size = sp->settings->blksize;
     char *buf = (char *) malloc(size);
     int result;
-    
-    printf("PARAM_EXHANGE caught\n");
-    // setting the parameters
-    #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(linux)
-    result = uuid_is_nil((uuid_t *)sp->settings->cookie, 0);
-    
-    #endif
-    #if defined(MAC_OS_X) || defined(__APPLE__) || defined(__MACH__)
-    result = uuid_is_null(sp->settings->cookie);
-    #endif
-    
+   
+    result = 1;  /* TODO: actually check cookie */
+
     if(result)
     {
-     #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(linux)
-        char **str = NULL;
-        uint32_t *status;
-        //TODO - this part is crashing
-        uuid_to_string((uuid_t *) param->cookie, str, status);
-        printf("to string status = %d\n", *status);
-        uuid_from_string(*str, (uuid_t *) sp->settings->cookie, status);
-        printf("from string status = %d\n", *status);
-        free(str);
-    #endif
-    #if defined(MAC_OS_X) || defined(__APPLE__) || defined(__MACH__)
-        uuid_copy(sp->settings->cookie, param->cookie);
-    #endif
         sp->settings->blksize = param->blksize;
         sp->settings->socket_rcv_bufsize = param->recv_window;
         sp->settings->unit_format = param->format;

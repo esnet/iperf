@@ -33,11 +33,7 @@ struct iperf_settings
     int tos;
     char  unit_format;                        // -f
     int state;              // This is state of a stream/test
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(linux)
-    struct uuid_t *cookie;
-#elif defined(MAC_OS_X) || defined(__APPLE__) || defined(__MACH__)
-     uuid_t cookie;          // cookie for a stream/test    
-#endif
+    char *cookie;
 };
 
 struct iperf_stream
@@ -129,11 +125,7 @@ struct param_exchange
     int send_window;
     int mss;
     char format;
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(linux)
-    struct uuid_t *cookie;
-#elif defined(MAC_OS_X) || defined(__APPLE__) || defined(__MACH__)
-    uuid_t cookie;          // cookie for a stream/test    
-#endif
+    char *cookie;
 };
 
 

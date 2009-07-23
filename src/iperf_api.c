@@ -16,8 +16,13 @@
 #include <stdint.h>
 #include <netinet/tcp.h>
 #include <sys/time.h>
-#include <uuid/uuid.h>
 
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(linux)
+#include <uuid.h>
+#endif
+#if defined(MAC_OS_X) || defined(__APPLE__) || defined(__MACH__)
+#include <uuid/uuid.h>
+#endif
 #include "iperf_api.h"
 #include "timer.h"
 #include "net.h"
@@ -54,8 +59,16 @@ void exchange_parameters(struct iperf_test *test)
     struct param_exchange *param = (struct param_exchange *) buf;
     
     //setting up exchange parameters 
+#if defined(__FREEBSD__) || defined(__NetBSD__) || defined(linux)
+    uuid_create(&test->default_settings->cookie, 0);
+    
+#endif
+    
+#if defined(MAC_OS_X) || defined(__APPLE__) || defined(__MACH__)
     uuid_generate(test->default_settings->cookie);    
     uuid_copy(param->cookie, test->default_settings->cookie);    
+#endif
+    
     param->state = PARAM_EXCHANGE;
     param->blksize = test->default_settings->blksize;
     param->recv_window = test->default_settings->socket_rcv_bufsize;
@@ -82,7 +95,7 @@ void exchange_parameters(struct iperf_test *test)
         result = recv(sp->socket, buf, size, 0);
     } while (result == -1 && errno == EINTR);
     
-    if (result > 0 && buf[0] == -1)
+    if (result > 0 && buf[0] == ACCESS_DENIED)
     {
         printf("Busy server Detected\n");
         exit(0);
@@ -96,6 +109,56 @@ void exchange_parameters(struct iperf_test *test)
     iperf_free_test(temp);
     free(buf);    
 
+}
+
+int param_received(struct iperf_stream *sp, struct param_exchange *param)
+{
+    int size = sp->settings->blksize;
+    char *buf = (char *) malloc(size);
+    int result;
+    
+    printf("PARAM_EXHANGE caught\n");
+    // setting the parameters
+    #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(linux)
+    result = uuid_is_nil((uuid_t *)sp->settings->cookie, 0);
+    
+    #endif
+    #if defined(MAC_OS_X) || defined(__APPLE__) || defined(__MACH__)
+    result = uuid_is_null(sp->settings->cookie);
+    #endif
+    
+    if(result)
+    {
+     #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(linux)
+        char **str = NULL;
+        uint32_t *status;
+        //TODO - this part is crashing
+        uuid_to_string((uuid_t *) param->cookie, str, status);
+        printf("to string status = %d\n", *status);
+        uuid_from_string(*str, (uuid_t *) sp->settings->cookie, status);
+        printf("from string status = %d\n", *status);
+        free(str);
+    #endif
+    #if defined(MAC_OS_X) || defined(__APPLE__) || defined(__MACH__)
+        uuid_copy(sp->settings->cookie, param->cookie);
+    #endif
+        sp->settings->blksize = param->blksize;
+        sp->settings->socket_rcv_bufsize = param->recv_window;
+        sp->settings->unit_format = param->format;
+        
+        return param->state;
+    }
+    
+    else
+    {
+        printf("New connection denied\n");
+        // send NO to client
+        int size = DEFAULT_TCP_BLKSIZE;
+        buf = (char *) malloc(size);
+        buf[0] = -1;            
+        result = send(sp->socket, buf, size, 0);
+        return ACCESS_DENIED;
+    }
 }
 
 void setnonblocking(int sock)
@@ -348,27 +411,8 @@ int iperf_tcp_recv(struct iperf_stream *sp)
     
     if(param->state == PARAM_EXCHANGE)
     {
-        printf("PARAM_EXHANGE caught\n");
-        message = param->state;        
-         // setting the parameters 
-        if(uuid_is_null(sp->settings->cookie))
-        {
-            uuid_copy(sp->settings->cookie, param->cookie);        
-            sp->settings->blksize = param->blksize;
-            sp->settings->socket_rcv_bufsize = param->recv_window;
-            sp->settings->unit_format = param->format;
-        }
-        else
-        {
-            printf("New connection denied\n");
-            // send NO to client
-            int size = DEFAULT_TCP_BLKSIZE;
-            buf = (char *) malloc(size);
-            buf[0] = -1;            
-            result = send(sp->socket, buf, size, 0);
-            return -1;
-        }        
-    } 
+        message = param_received(sp, param);
+    }
     
     if(message == 6)
         printf("the blksize = %d\n", sp->settings->blksize);
@@ -1358,11 +1402,11 @@ void iperf_run_server(struct iperf_test *test)
                     np = find_stream_by_socket(test,j);
                     message = np->rcv(np);
                                         
-                    if(message == PARAM_EXCHANGE || message == -1)
+                    if(message == PARAM_EXCHANGE || message == ACCESS_DENIED)
                     {
                         //copy the received settings into test
-                        if(message != -1)
-                        memcpy(test->default_settings, test->streams->settings, sizeof(struct iperf_settings));
+                        if(message != ACCESS_DENIED)
+                            memcpy(test->default_settings, test->streams->settings, sizeof(struct iperf_settings));
                         // FREE ALL STREAMS                        
                          close(np->socket);
                          FD_CLR(np->socket, &test->read_set);
@@ -1596,7 +1640,7 @@ main(int argc, char **argv)
     char ch, role;
     struct iperf_test *test;
     int port= -1;
-            
+
     test = iperf_new_test();
     iperf_defaults(test);
         

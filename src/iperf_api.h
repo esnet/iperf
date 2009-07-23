@@ -1,4 +1,4 @@
-		typedef uint64_t iperf_size_t;
+typedef uint64_t iperf_size_t;
 
 struct iperf_interval_results
 {
@@ -32,8 +32,12 @@ struct iperf_settings
     int ttl;
     int tos;
     char  unit_format;                        // -f
-    int state;              // This is state of a stream/test  
-    uuid_t cookie;          // cookie for a stream/test
+    int state;              // This is state of a stream/test
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(linux)
+    struct uuid_t *cookie;
+#elif defined(MAC_OS_X) || defined(__APPLE__) || defined(__MACH__)
+     uuid_t cookie;          // cookie for a stream/test    
+#endif
 };
 
 struct iperf_stream
@@ -116,21 +120,25 @@ struct udp_datagram
     struct timeval sent_time;
 };
 
-
 struct param_exchange
 {
-    uuid_t cookie;
     int state;
     int stream_id;
     int blksize;
     int recv_window;
     int send_window;
     int mss;
-    char format;    
+    char format;
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(linux)
+    struct uuid_t *cookie;
+#elif defined(MAC_OS_X) || defined(__APPLE__) || defined(__MACH__)
+    uuid_t cookie;          // cookie for a stream/test    
+#endif
 };
 
 
 void exchange_parameters(struct iperf_test *test);
+int param_received(struct iperf_stream *sp, struct param_exchange *param);
 void add_interval_list(struct iperf_stream_result *rp, struct iperf_interval_results temp);
 void display_interval_list(struct iperf_stream_result *rp);
 void send_result_to_client(struct iperf_stream *sp);
@@ -170,6 +178,7 @@ enum {
     STREAM_END = 8,
     ALL_STREAMS_END = 9,
     PARAM_EXCHANGE = 10,
+    ACCESS_DENIED = -1,
     SEC_TO_US = 1000000
     
 };

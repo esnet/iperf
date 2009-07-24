@@ -1592,21 +1592,21 @@ void iperf_run_client(struct iperf_test *test)
 int iperf_run(struct iperf_test *test)
 {
     test->default_settings->state = TEST_RUNNING;
-    
-    if(test->role == 's')
+   
+    switch (test->role)
     {
-        iperf_run_server(test);
-        return 0;
+        case 's':
+            iperf_run_server(test);
+            return 0;
+            break;
+        case 'c':
+            iperf_run_client(test);
+            return 0;
+            break;
+        default:
+            return -1;
+            break;
     }
-                
-            
-    else if ( test->role == 'c')
-    {
-        iperf_run_client(test);
-        return 0;
-    }
-        
-    return -1;
 }
 
 int
@@ -1655,6 +1655,7 @@ main(int argc, char **argv)
                 break;
             case 'w':
                 test->default_settings->socket_bufsize = unit_atof(optarg);
+                break;
             case 'i':
                 test->stats_interval = atoi(optarg);
                 test->reporter_interval = atoi(optarg);

@@ -33,7 +33,7 @@ struct iperf_settings
     int tos;
     char  unit_format;                        // -f
     int state;              // This is state of a stream/test
-    char *cookie;
+    char cookie[37];
 };
 
 struct iperf_stream
@@ -125,7 +125,7 @@ struct param_exchange
     int send_window;
     int mss;
     char format;
-    char *cookie;
+    char cookie[37];
 };
 
 
@@ -171,8 +171,7 @@ enum {
     ALL_STREAMS_END = 9,
     PARAM_EXCHANGE = 10,
     ACCESS_DENIED = -1,
-    SEC_TO_US = 1000000
-    
+    SEC_TO_US = 1000000,
 };
 
 #define SEC_TO_NS 1000000000 /* too big for enum on some platforms */

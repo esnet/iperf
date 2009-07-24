@@ -1,14 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
-
+#include<string.h>
 #if defined(__FreeBSD__)
 #include <uuid.h>
 #else
 #include <uuid/uuid.h>
 #endif
 
-char *
-get_uuid()
+void
+get_uuid(char *temp)
 {
     char *s;
     uuid_t uu;
@@ -19,8 +19,7 @@ get_uuid()
 #else
     s = (char *) malloc(37); /* UUID is 36 chars + \0 */
     uuid_generate(uu);
-    uuid_unparse(uu, s);
+    uuid_unparse(uu, s);    
 #endif
-
-    return s;
+    memcpy(temp, s, 37);  
 }

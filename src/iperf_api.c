@@ -36,10 +36,10 @@ static struct option longopts[] =
 { "bandwidth",      required_argument,      NULL,   'b' },
 { "length",         required_argument,      NULL,   'l' },
 { "window",         required_argument,      NULL,   'w' },
-{"interval",        required_argument,      NULL,   'i'},
-{"NoDelay",         no_argument,            NULL,   'N'},
-{"Print-mss",       no_argument,            NULL,   'm'},
-{"Set-mss",         required_argument,      NULL,   'M'},
+{ "interval",        required_argument,     NULL,   'i' },
+{ "NoDelay",         no_argument,           NULL,   'N' },
+{ "Print-mss",       no_argument,           NULL,   'm' },
+{ "Set-mss",         required_argument,     NULL,   'M' },
 { NULL,             0,                      NULL,   0   }
 };
 

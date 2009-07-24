@@ -2,6 +2,11 @@ CFLAGS=-g -Wall
 OBJS=iperf_api.o timer.o net.o tcp_window_size.o units.o uuid.o
 LDFLAGS=
 
+UNAME=$(shell uname)
+ifeq ($(UNAME), Linux)
+LDFLAGS=$(LDFLAGS) -luuid
+endif
+
 all: iperf 
 	
 iperf: $(OBJS)

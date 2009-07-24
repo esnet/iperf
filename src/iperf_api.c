@@ -27,20 +27,20 @@
 
 static struct option longopts[] =
 {
-{ "client",         required_argument,      NULL,   'c' },
-{ "server",         no_argument,            NULL,   's' },
-{ "time",           required_argument,      NULL,   't' },
-{ "port",           required_argument,      NULL,   'p' },
-{ "parallel",       required_argument,      NULL,   'P' },
-{ "udp",            no_argument,            NULL,   'u' },
-{ "bandwidth",      required_argument,      NULL,   'b' },
-{ "length",         required_argument,      NULL,   'l' },
-{ "window",         required_argument,      NULL,   'w' },
-{ "interval",        required_argument,     NULL,   'i' },
-{ "NoDelay",         no_argument,           NULL,   'N' },
-{ "Print-mss",       no_argument,           NULL,   'm' },
-{ "Set-mss",         required_argument,     NULL,   'M' },
-{ NULL,             0,                      NULL,   0   }
+    { "client",         required_argument,      NULL,   'c' },
+    { "server",         no_argument,            NULL,   's' },
+    { "time",           required_argument,      NULL,   't' },
+    { "port",           required_argument,      NULL,   'p' },
+    { "parallel",       required_argument,      NULL,   'P' },
+    { "udp",            no_argument,            NULL,   'u' },
+    { "bandwidth",      required_argument,      NULL,   'b' },
+    { "length",         required_argument,      NULL,   'l' },
+    { "window",         required_argument,      NULL,   'w' },
+    { "interval",        required_argument,     NULL,   'i' },
+    { "NoDelay",         no_argument,           NULL,   'N' },
+    { "Print-mss",       no_argument,           NULL,   'm' },
+    { "Set-mss",         required_argument,     NULL,   'M' },
+    { NULL,             0,                      NULL,   0   }
 };
 
 
@@ -1326,7 +1326,7 @@ void iperf_run_server(struct iperf_test *test)
         
     while(test->default_settings->state != TEST_END)
     {
-        FD_COPY(&test->read_set, &test->temp_set);
+        memcpy(&test->temp_set, &test->read_set, sizeof(test->read_set));
         tv.tv_sec = 15;            
         tv.tv_usec = 0;
         
@@ -1495,7 +1495,7 @@ void iperf_run_client(struct iperf_test *test)
     // send data till the timer expires
     while(!timer->expired(timer))
     {
-        FD_COPY(&test->write_set, &test->temp_set);
+        memcpy(&test->temp_set, &test->write_set, sizeof(test->write_set));
         ret = select(test->max_fd+1, NULL, &test->write_set, NULL, &tv);
         if(ret < 0)
             continue;

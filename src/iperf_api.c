@@ -74,11 +74,12 @@ void exchange_parameters(struct iperf_test *test)
     iperf_init_test(temp);
         
     sp = temp->streams;
-    sp->settings->state = PARAM_EXCHANGE;    
-   
+    sp->settings->state = PARAM_EXCHANGE;       
    
     printf("Sending EXCHANGE Request \n");
     result = send(sp->socket, buf, size , 0);
+    
+      printf("result = %d state = %d, %d = error\n",result, buf[0], errno);
     
     do{
         result = recv(sp->socket, buf, size, 0);
@@ -102,9 +103,7 @@ void exchange_parameters(struct iperf_test *test)
 }
 
 int param_received(struct iperf_stream *sp, struct param_exchange *param)
-{
-    int size = sp->settings->blksize;
-    char *buf = (char *) malloc(size);
+{  
     int result;
 
     if(sp->settings->cookie[0] == '\0')
@@ -117,22 +116,23 @@ int param_received(struct iperf_stream *sp, struct param_exchange *param)
 
         sp->settings->blksize = param->blksize;
         sp->settings->socket_rcv_bufsize = param->recv_window;
-        sp->settings->unit_format = param->format;
-        
+        sp->settings->unit_format = param->format;        
         return param->state;
     }
     
-    else 
+    else if (strncmp(param->cookie, sp->settings->cookie, 37) != 0) 
     {
         printf("New connection denied\n");
         // send NO to client
         int size = DEFAULT_TCP_BLKSIZE;
-        buf = (char *) malloc(size);
+        char *buf = (char *) malloc(size);
         buf[0] = -1;            
-        result = send(sp->socket, buf, size, 0);
+        result = send(sp->socket, buf, size, 0);        
+        free(buf);
         return ACCESS_DENIED;
     }
-    return 0;
+    
+    return param->state;
 }
 
 void setnonblocking(int sock)
@@ -207,6 +207,7 @@ void send_result_to_client(struct iperf_stream *sp)
     memcpy(buf, sp->data, strlen((char *)sp->data));
     
     result = send(sp->socket, buf, size , 0);
+    printf("RESULT SENT TO CLIENT\n");
     
     free(buf);
 }
@@ -214,22 +215,28 @@ void send_result_to_client(struct iperf_stream *sp)
 void receive_result_from_server(struct iperf_test *test)
 {
     int result;
+    struct iperf_test *temp;
     struct iperf_stream *sp;
     int size =0;
     char *buf = NULL;
    
-    //Overriding actual Test parameters for result exchange
-    test->protocol = Ptcp;
-    test->new_stream = iperf_new_tcp_stream;
-    test->num_streams= 1;
+    temp = iperf_new_test();
+    iperf_defaults(temp);
+    temp->role = 'c';
+    temp->default_settings->blksize = DEFAULT_TCP_BLKSIZE;
+    temp->new_stream = iperf_new_tcp_stream;    
+    temp->server_hostname = test->server_hostname;
+    temp->server_port = test->server_port;
+    strncpy(temp->default_settings->cookie,test->default_settings->cookie, 37);
+
+    iperf_init_test(temp);
+    sp = temp->streams;
     
-    iperf_init_test(test);
-    sp = test->streams;
-       
+    puts(sp->settings->cookie);
     sp->settings->state = ALL_STREAMS_END;
     sp->snd(sp);
     
-    sp->settings->state = RESULT_REQUEST;
+    sp->settings->state = RESULT_REQUEST;   
     sp->snd(sp);
     
     // receive from server
@@ -243,7 +250,8 @@ void receive_result_from_server(struct iperf_test *test)
     printf( server_reporting, sp->socket);        
     puts(buf);
     
-    iperf_free_stream(test, sp);
+    iperf_free_stream(temp, sp);
+    iperf_free_test(temp);
 }
 
 int getsock_tcp_mss( int inSock )
@@ -377,25 +385,21 @@ int iperf_tcp_recv(struct iperf_stream *sp)
     {
         ch = buf[0];
         message = (int) ch;
-        
         // CHECK: packet length and state
-        
+       // printf("result = %d state = %d, %d = error\n",result, message, errno);
+    }
+    else
+    {
+        printf("socket has been closed by client, result = 0\n");
+        return 0;
     }
     
-    if(message == PARAM_EXCHANGE)
+    if(message != 7)
     {
-        //printf("result = %d state = %d, %d = error\n",result, buf[0], errno);
+        printf("result = %d state = %d, %d = error\n",result, buf[0], errno);
         message = param_received(sp, param);
     }
     
-    if(message == 6)
-        printf("stream begin %d\n", sp->settings->blksize);
-    
-    if(message == 3 || message == 8 || message == 9 )
-    {       
-       printf("Recieved %d from client\n", message);
-    }
-   
     if(message != STREAM_END)
         sp->result->bytes_received+= result;
     
@@ -426,6 +430,11 @@ int iperf_udp_recv(struct iperf_stream *sp)
     if(result > 0)
     {
         message = udp->state;
+    }
+    
+    if(message != 7)
+    {
+        printf("result = %d state = %d, %d = error\n",result, buf[0], errno);
     }
         
     if(message == STREAM_RUNNING && (sp->stream_id == udp->stream_id))
@@ -467,9 +476,6 @@ int iperf_udp_recv(struct iperf_stream *sp)
         
     }
     
-    if(message == 3 || message == 9 || message == 8)
-        printf("Recieved %d from client\n", message);
-    
     free(buf);
     return message;
     
@@ -478,9 +484,9 @@ int iperf_udp_recv(struct iperf_stream *sp)
 int iperf_tcp_send(struct iperf_stream *sp)
 {
     int result,i;
-    int size = sp->settings->blksize;
-        
+    int size = sp->settings->blksize;        
     char *buf = (char *) malloc(size);
+    struct param_exchange *param = (struct param_exchange *) buf;
     
     
     if(!buf)
@@ -489,36 +495,42 @@ int iperf_tcp_send(struct iperf_stream *sp)
     }
     
     switch(sp->settings->state)
-    {
-            
+    {            
         case STREAM_BEGIN:
-            buf[0]= (STREAM_BEGIN);
-            for(i=1; i < size; i++)
-                buf[i] = 97;
+            param->state = STREAM_BEGIN;
+            strncpy(param->cookie,sp->settings->cookie,37);
+            for(i = sizeof(struct param_exchange);i< size; i++)
+                buf[i] = rand();
             break;
             
         case STREAM_END:            
-            buf[0]= (STREAM_END);
-            for(i=1; i < size; i++)
-                buf[i] = 97;
+            param->state = STREAM_END;
+            strncpy(param->cookie,sp->settings->cookie,37);
+            printf("STREAM_END\n");
+            for(i = sizeof(struct param_exchange);i< size; i++)
+                buf[i] = rand();
             break;
             
         case RESULT_REQUEST:
-            buf[0]= (RESULT_REQUEST);
-            for(i=1; i < size; i++)
-                 buf[i] = 97;
+            param->state = RESULT_REQUEST;
+            strncpy(param->cookie,sp->settings->cookie,37);
+            printf("RESULT_REQUEST\n");
+            for(i = sizeof(struct param_exchange);i< size; i++)
+                buf[i] = rand();
             break;
             
         case ALL_STREAMS_END:
-            buf[0]= (ALL_STREAMS_END);
-            for(i=1; i < size; i++)
-                 buf[i] = 97;
+            param->state = ALL_STREAMS_END;
+            strncpy(param->cookie,sp->settings->cookie,37);
+            printf("ALL_STREAM_END\n");
+            for(i = sizeof(struct param_exchange);i< size; i++)
+                buf[i] = rand();
             break;
             
         case STREAM_RUNNING:
             buf[0]= STREAM_RUNNING;
             for(i=1; i < size; i++)
-                 buf[i] = 97;
+                 buf[i] = rand();
             break;
         default:
             printf("State of the stream can't be determined\n");
@@ -530,13 +542,15 @@ int iperf_tcp_send(struct iperf_stream *sp)
     {     
         sp->settings->state = STREAM_RUNNING;           
     }
-        
-    result = send(sp->socket, buf, size , 0);   
+                
+    result = send(sp->socket, buf, size , 0);
+    
+    //printf("result = %d state = %d, %d = error\n",result, buf[0], errno);
     
     if(buf[0] != STREAM_END)
         sp->result->bytes_sent+= size;
     
-    free(buf);
+    free(buf);    
     return result;    
 }
 
@@ -1205,9 +1219,8 @@ int iperf_tcp_accept(struct iperf_test *test)
         return -1;
     }
     else 
-    {    
-        sp = test->new_stream(test);
-        
+    {
+        sp = test->new_stream(test);        
         //setting noblock doesn't report back to client
         //setnonblocking(peersock);
         
@@ -1217,6 +1230,14 @@ int iperf_tcp_accept(struct iperf_test *test)
         sp->socket = peersock;
         iperf_init_stream(sp, test);
         iperf_add_stream(test, sp);
+        
+        
+        // this means the new connection is for requesting result
+        //set the blksize to DEFAULT_TCP_SIZE explicitly
+        //in case of udp test -- need to improve this
+        if(test->default_settings->state == TEST_RUNNING)
+            sp->settings->blksize = DEFAULT_TCP_BLKSIZE;
+        
         
         if(test->default_settings->state != RESULT_REQUEST)
         connect_msg(sp);
@@ -1382,17 +1403,17 @@ void iperf_run_server(struct iperf_test *test)
                         //copy the received settings into test
                         if(message != ACCESS_DENIED)
                             memcpy(test->default_settings, test->streams->settings, sizeof(struct iperf_settings));
-                        // FREE ALL STREAMS                        
+                        
                          close(np->socket);
                          FD_CLR(np->socket, &test->read_set);
                          iperf_free_stream(test, np);                        
-                    }   
-                
+                    }
+                    
+                    
                     if(message == STREAM_END)
                     {
                         np->settings->state = STREAM_END;                        
-                        gettimeofday(&np->result->end_time, NULL);
-                        FD_CLR(j, &test->read_set);
+                        gettimeofday(&np->result->end_time, NULL);                        
                     }
                     
                     if(message == RESULT_REQUEST)
@@ -1436,7 +1457,7 @@ void iperf_run_server(struct iperf_test *test)
                         
                         test->default_settings->state = RESULT_REQUEST;
                         read = test->reporter_callback(test);
-                        puts(read);                        
+                        puts(read);
                         printf("REPORTER CALL + ALL_STREAMS_END\n"); 
                     }
                    
@@ -1548,7 +1569,7 @@ void iperf_run_client(struct iperf_test *test)
     
    // for last interval    
     test->stats_callback(test);
-    read = test->reporter_callback(test);
+    read = test->reporter_callback(test);   
     puts(read);
     
     // sending STREAM_END packets
@@ -1558,7 +1579,6 @@ void iperf_run_client(struct iperf_test *test)
     {
         sp = np;
         sp->settings->state = STREAM_END;
-        printf("sp blksize = %d \n", sp->settings->blksize);
         sp->snd(sp);
         np = sp->next;
     } while (np);
@@ -1566,6 +1586,9 @@ void iperf_run_client(struct iperf_test *test)
     test->default_settings->state = RESULT_REQUEST;    
     read = test->reporter_callback(test);
     puts(read);
+    
+    // Requesting for result from Server
+    receive_result_from_server(test);
     
     // Deleting all streams - CAN CHANGE FREE_STREAM FN
     sp = test->streams;
@@ -1575,12 +1598,8 @@ void iperf_run_client(struct iperf_test *test)
         sp = np;
         close(sp->socket);
         np = sp->next;
-        iperf_free_stream(test, sp);
-        
-    } while (np);
-    
-    // Requesting for result from Server
-    receive_result_from_server(test);
+        iperf_free_stream(test, sp);        
+    } while (np);    
     
     if(test->stats_interval!= 0)
         free_timer(stats_interval);

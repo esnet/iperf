@@ -222,14 +222,16 @@ void receive_result_from_server(struct iperf_test *test)
    
     temp = iperf_new_test();
     iperf_defaults(temp);
+    
     temp->role = 'c';
-    temp->default_settings->blksize = DEFAULT_TCP_BLKSIZE;
+    temp->default_settings->blksize = test->default_settings->blksize;
     temp->new_stream = iperf_new_tcp_stream;    
     temp->server_hostname = test->server_hostname;
     temp->server_port = test->server_port;
     strncpy(temp->default_settings->cookie,test->default_settings->cookie, 37);
 
     iperf_init_test(temp);
+    
     sp = temp->streams;
     
     puts(sp->settings->cookie);
@@ -893,7 +895,7 @@ char *iperf_reporter_callback(struct iperf_test *test)
             bytes+= ip->bytes_transferred;
             unit_snprintf(ubuf, UNIT_LEN, (double) (ip->bytes_transferred), 'A');
             
-            test->stats_interval = test->stats_interval== 0 ? test->duration : test->stats_interval;            
+            //test->stats_interval = test->stats_interval== 0 ? test->duration : test->stats_interval;            
             
             sprintf(message,report_bw_header);
             strcat(message_final, message);
@@ -1231,13 +1233,13 @@ int iperf_tcp_accept(struct iperf_test *test)
         iperf_init_stream(sp, test);
         iperf_add_stream(test, sp);
         
-        
+        /*
         // this means the new connection is for requesting result
         //set the blksize to DEFAULT_TCP_SIZE explicitly
         //in case of udp test -- need to improve this
-        if(test->default_settings->state == TEST_RUNNING)
+        if(test->default_settings->state == TEST_RUNNING  && test->protocol == Pudp)
             sp->settings->blksize = DEFAULT_TCP_BLKSIZE;
-        
+        */
         
         if(test->default_settings->state != RESULT_REQUEST)
         connect_msg(sp);

@@ -36,13 +36,41 @@ static struct option longopts[] =
     { "bandwidth",      required_argument,      NULL,   'b' },
     { "length",         required_argument,      NULL,   'l' },
     { "window",         required_argument,      NULL,   'w' },
-    { "interval",        required_argument,     NULL,   'i' },
+    { "interval",       required_argument,      NULL,   'i' },
+    { "bytes",          required_argument,      NULL,   'n' },
     { "NoDelay",         no_argument,           NULL,   'N' },
     { "Print-mss",       no_argument,           NULL,   'm' },
     { "Set-mss",         required_argument,     NULL,   'M' },
     { NULL,             0,                      NULL,   0   }
 };
 
+
+int all_data_sent(struct iperf_test *test)
+{
+    if(test->default_settings->bytes == 0)
+        return 0;
+    else
+    {
+        int total_bytes = 0;
+        struct iperf_stream *sp;
+        sp = test->streams;
+        
+        while(sp)
+        {
+            total_bytes += sp->result->bytes_sent;
+            sp = sp->next;
+        }
+        
+        if(total_bytes >= (test->num_streams * test->default_settings->bytes))
+        {
+            
+            return 1;
+        }
+        else
+            return 0;        
+    }
+    
+}
 
 void exchange_parameters(struct iperf_test *test)
 {
@@ -1515,8 +1543,8 @@ void iperf_run_client(struct iperf_test *test)
     if(test->reporter_interval != 0)
         reporter_interval = new_timer(test->reporter_interval, 0);
         
-    // send data till the timer expires
-    while(!timer->expired(timer))
+    // send data till the timer expires or bytes sent
+    while(!all_data_sent(test) && !timer->expired(timer))
     {
         memcpy(&test->temp_set, &test->write_set, sizeof(test->write_set));
         ret = select(test->max_fd+1, NULL, &test->write_set, NULL, &tv);
@@ -1640,7 +1668,7 @@ main(int argc, char **argv)
     test = iperf_new_test();
     iperf_defaults(test);
         
-    while( (ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:mNM:f:", longopts, NULL)) != -1 )
+    while( (ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:n:mNM:f:", longopts, NULL)) != -1 )
         switch (ch) {
             case 'c':
                 test->role = 'c';
@@ -1680,6 +1708,10 @@ main(int argc, char **argv)
             case 'i':
                 test->stats_interval = atoi(optarg);
                 test->reporter_interval = atoi(optarg);
+                break;
+            case 'n':
+                test->default_settings->bytes = unit_atoi(optarg);
+                printf("total bytes to be transferred = %ld\n", test->default_settings->bytes); 
                 break;
             case 'm':
                 test->print_mss = 1;

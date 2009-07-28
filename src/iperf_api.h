@@ -31,6 +31,7 @@ struct iperf_settings
     int mss;                  //for TCP MSS
     int ttl;
     int tos;
+    long bytes;                 // -n option
     char  unit_format;                        // -f
     int state;              // This is state of a stream/test
     char cookie[37];
@@ -128,30 +129,6 @@ struct param_exchange
     char cookie[37];
 };
 
-
-void exchange_parameters(struct iperf_test *test);
-int param_received(struct iperf_stream *sp, struct param_exchange *param);
-void add_interval_list(struct iperf_stream_result *rp, struct iperf_interval_results temp);
-void display_interval_list(struct iperf_stream_result *rp);
-void send_result_to_client(struct iperf_stream *sp);
-void receive_result_from_server(struct iperf_test *test);
-int getsock_tcp_mss( int inSock );
-int set_socket_options(struct iperf_stream *sp, struct iperf_test *test);
-void connect_msg(struct iperf_stream *sp);
-void Display(struct iperf_test *test);
-int iperf_tcp_accept(struct iperf_test *test);
-int iperf_udp_accept(struct iperf_test *test);
-int iperf_tcp_recv(struct iperf_stream *sp);
-int iperf_udp_recv(struct iperf_stream *sp);
-int iperf_tcp_send(struct iperf_stream *sp);
-int iperf_udp_send(struct iperf_stream *sp);
-void *iperf_stats_callback(struct iperf_test *test);
-char *iperf_reporter_callback(struct iperf_test *test);
-struct iperf_stream * update_stream(struct iperf_test *test, int j, int add);
-void iperf_run_server(struct iperf_test *test);
-void iperf_run_client(struct iperf_test *test);
-int iperf_run(struct iperf_test *test);
-
 enum {
     Ptcp = SOCK_STREAM,
     Pudp = SOCK_DGRAM,    
@@ -175,6 +152,173 @@ enum {
 };
 
 #define SEC_TO_NS 1000000000 /* too big for enum on some platforms */
+
+
+/**
+ * exchange_parameters - handles the param_Exchange part for client 
+ *  
+ */
+void exchange_parameters(struct iperf_test *test);
+
+/**
+ * param_received - handles the param_Exchange part for server 
+ * returns state on success, -1 on failure  
+ *
+ */
+int param_received(struct iperf_stream *sp, struct param_exchange *param);
+
+
+/**
+ * add_interval_list -- adds new interval to the interval_list
+ *  
+ */
+void add_interval_list(struct iperf_stream_result *rp, struct iperf_interval_results temp);
+
+/**
+ * Display -- Displays interval results for test
+ * Mainly for DEBUG purpose
+ *  
+ */
+void display_interval_list(struct iperf_stream_result *rp);
+
+/**
+ * send_result_to_client - sends result to client via 
+ *  a new TCP connection
+ */
+void send_result_to_client(struct iperf_stream *sp);
+
+/**
+ * receive_result_from_server - Receives result from server via 
+ *  a new TCP connection
+ */
+void receive_result_from_server(struct iperf_test *test);
+
+/**
+ * getsock_tcp_mss - Returns the MSS size for TCP
+ *  
+ */
+int getsock_tcp_mss( int inSock );
+
+
+/**
+ * set_socket_options - used for setsockopt()
+ * 
+ *  
+ */
+int set_socket_options(struct iperf_stream *sp, struct iperf_test *test);
+
+/**
+ * connect_msg -- displays connection message
+ * denoting senfer/receiver details
+ *  
+ */
+void connect_msg(struct iperf_stream *sp);
+
+
+
+/**
+ * Display -- Displays streams in a test
+ * Mainly for DEBUG purpose
+ *  
+ */
+void Display(struct iperf_test *test);
+
+
+/**
+ * iperf_tcp_accept -- accepts a new TCP connection
+ * on tcp_listener_socket for TCP data and param/result
+ * exchange messages
+ *returns 0 on success
+ *
+ */
+int iperf_tcp_accept(struct iperf_test *test);
+
+/**
+ * iperf_udp_accept -- accepts a new UDP connection
+ * on udp_listener_socket
+ *returns 0 on success
+ *
+ */
+int iperf_udp_accept(struct iperf_test *test);
+
+
+/**
+ * iperf_tcp_recv -- receives the data for TCP 
+ * and the Param/result message exchange
+ *returns state of packet received
+ *
+ */
+int iperf_tcp_recv(struct iperf_stream *sp);
+
+/**
+ * iperf_udp_recv -- receives the client data for UDP 
+ * 
+ *returns state of packet received
+ *
+ */
+int iperf_udp_recv(struct iperf_stream *sp);
+
+/**
+ * iperf_tcp_send -- sends the client data for TCP 
+ * and the  Param/result message exchanges
+ *returns bytes sent
+ *
+ */
+int iperf_tcp_send(struct iperf_stream *sp);
+
+/**
+ * iperf_udp_send -- sends the client data for UDP
+ *
+ *returns bytes sent
+ *
+ */
+int iperf_udp_send(struct iperf_stream *sp);
+
+/**
+ * iperf_stats_callback -- handles the statistic gathering
+ *
+ *returns void *
+ *
+ */
+void *iperf_stats_callback(struct iperf_test *test);
+
+
+/**
+ * iperf_reporter_callback -- handles the report printing
+ *
+ *returns report
+ *
+ */
+char *iperf_reporter_callback(struct iperf_test *test);
+
+
+/**
+ * find_stream_by_socket -- finds the stream based on socket
+ *
+ *returns stream
+ *
+ */
+struct iperf_stream * find_stream_by_socket(struct iperf_test *test, int sock);
+
+/**
+ * iperf_run_server -- Runs the server portion of a test
+ *
+ */
+void iperf_run_server(struct iperf_test *test);
+
+/**
+ * iperf_run_client -- Runs the client portion of a test
+ *
+ */
+void iperf_run_client(struct iperf_test *test);
+
+/**
+ * iperf_run -- runs the test either as client or server
+ *
+ * returns status 
+ *
+ */
+int iperf_run(struct iperf_test *test);
 
 /**
  * iperf_new_test -- return a new iperf_test with default values
@@ -230,10 +374,3 @@ void iperf_init_stream(struct iperf_stream *sp, struct iperf_test *testp);
  */
 void iperf_free_stream(struct iperf_test *test, struct iperf_stream *sp);
 
-
-/**
- * iperf_run -- run iperf
- *
- * returns an exit status
- */
-int iperf_run(struct iperf_test *test);

@@ -63,7 +63,6 @@ int all_data_sent(struct iperf_test *test)
         
         if(total_bytes >= (test->num_streams * test->default_settings->bytes))
         {
-            
             return 1;
         }
         else
@@ -724,6 +723,7 @@ void iperf_defaults(struct iperf_test *testp)
     testp->default_settings->rate = RATE;
     testp->default_settings->state = TEST_START;
     testp->default_settings->mss = 0;
+    testp->default_settings->bytes = 0;
     
     for(i=0; i<37; i++)
         testp->default_settings->cookie[i] = '\0';
@@ -1533,9 +1533,13 @@ void iperf_run_client(struct iperf_test *test)
             sp->send_timer = new_timer(0, dtargus);
             sp= sp->next;
         }        
-    }
+    }    
     
-    timer = new_timer(test->duration, 0);
+    // if -n specified, set zero timer
+    if(test->default_settings->bytes == 0)
+        timer = new_timer(test->duration, 0);
+    else
+        timer = new_timer(0,0);            
     
     if(test->stats_interval != 0)
         stats_interval = new_timer(test->stats_interval, 0);

@@ -31,6 +31,10 @@ timeval_diff(struct timeval *tv0, struct timeval *tv1)
 int
 timer_expired(struct timer *tp)
 { 
+    // for timer with zero time
+    if (tp->end.tv_sec == tp->begin.tv_sec && tp->end.tv_usec == tp->begin.tv_usec)
+        return 0;
+    
     struct timeval now;
     int64_t  end = 0, current= 0, diff= 0;
     if(gettimeofday(&now, NULL) < 0) {

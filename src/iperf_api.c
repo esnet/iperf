@@ -93,8 +93,7 @@ void exchange_parameters(struct iperf_test *test)
     
     temp = iperf_new_test();
     iperf_defaults(temp);
-    temp->role = 'c';
-    temp->new_stream = iperf_new_tcp_stream;    
+    temp->role = 'c';    
     temp->server_hostname = test->server_hostname;
     temp->server_port = test->server_port;
     
@@ -251,8 +250,7 @@ void receive_result_from_server(struct iperf_test *test)
     iperf_defaults(temp);
     
     temp->role = 'c';
-    temp->default_settings->blksize = test->default_settings->blksize;
-    temp->new_stream = iperf_new_tcp_stream;    
+    temp->default_settings->blksize = test->default_settings->blksize;    
     temp->server_hostname = test->server_hostname;
     temp->server_port = test->server_port;
     strncpy(temp->default_settings->cookie,test->default_settings->cookie, 37);
@@ -711,13 +709,17 @@ void iperf_defaults(struct iperf_test *testp)
     testp->protocol = Ptcp;
     testp->role = 's';
     testp->duration = 10;
-    testp->server_port = 5001;   
+    testp->server_port = 5001;
     
-    testp->default_settings->unit_format = 'a';
+    testp->new_stream = iperf_new_tcp_stream;
+    testp->stats_callback = iperf_stats_callback;    
+    testp->reporter_callback = iperf_reporter_callback;
     
     testp->stats_interval = 0;
     testp->reporter_interval = 0;
-    testp->num_streams = 1;    
+    testp->num_streams = 1;
+    
+    testp->default_settings->unit_format = 'a';
     testp->default_settings->socket_bufsize = 1024*1024;
     testp->default_settings->blksize = DEFAULT_TCP_BLKSIZE;
     testp->default_settings->rate = RATE;
@@ -798,11 +800,8 @@ void iperf_init_test(struct iperf_test *test)
             iperf_init_stream(sp, test);
             iperf_add_stream(test, sp);
             
-
-            
             if(test->default_settings->state != RESULT_REQUEST)
-            connect_msg(sp);
-            
+            connect_msg(sp);            
         }
     }                        
 }
@@ -1652,7 +1651,7 @@ int iperf_run(struct iperf_test *test)
             iperf_run_server(test);
             return 0;
             break;
-        case 'c':
+        case 'c':           
             iperf_run_client(test);
             return 0;
             break;
@@ -1665,125 +1664,89 @@ int iperf_run(struct iperf_test *test)
 int
 main(int argc, char **argv)
 {
+    
     char ch, role;
     struct iperf_test *test;
     int port= -1;
-
-    test = iperf_new_test();
-    iperf_defaults(test);
+    
+    while (1)
+    {
+        test = iperf_new_test();
+        iperf_defaults(test);
         
-    while( (ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:n:mNM:f:", longopts, NULL)) != -1 )
-        switch (ch) {
-            case 'c':
-                test->role = 'c';
-                role = test->role;
-                test->server_hostname = (char *) malloc(strlen(optarg));
-                strncpy(test->server_hostname, optarg, strlen(optarg));
-                break;                
-            case 'p':
-                test->server_port = atoi(optarg);
-                port = test->server_port;
-                
-                break;
-            case 's':
-                test->role = 's';
-                role = test->role;
-                break;
-            case 't':
-                test->duration = atoi(optarg);
-                break;
-            case 'u':
-                test->protocol = Pudp;
-                test->default_settings->blksize = DEFAULT_UDP_BLKSIZE;
-                break;
-            case 'P':
-                test->num_streams = atoi(optarg);
-                break;
-            case 'b':
-                test->default_settings->rate = unit_atof(optarg);
-                break;
-            case 'l':
-                test->default_settings->blksize = unit_atoi(optarg);
-                printf("%d is the blksize\n", test->default_settings->blksize);
-                break;
-            case 'w':
-                test->default_settings->socket_bufsize = unit_atof(optarg);
-                break;
-            case 'i':
-                test->stats_interval = atoi(optarg);
-                test->reporter_interval = atoi(optarg);
-                break;
-            case 'n':
-                test->default_settings->bytes = unit_atoi(optarg);
-                printf("total bytes to be transferred = %ld\n", test->default_settings->bytes); 
-                break;
-            case 'm':
-                test->print_mss = 1;
-                break;
-            case 'N':
-                test->no_delay = 1;
-                break;
-            case 'M':
-                test->default_settings->mss = atoi(optarg);
-                break;
-            case 'f':
-                test->default_settings->unit_format = *optarg;               
-                break;      
-        }
-    
-    test->stats_callback = iperf_stats_callback;    
-    test->reporter_callback = iperf_reporter_callback;
-
-    switch(test->protocol)
-    {
-        case Ptcp:
-           test->new_stream = iperf_new_tcp_stream;
-            break;
-            
-        case Pudp:            
-            test->new_stream = iperf_new_udp_stream;
-            break;
-    }
-    
-    // param exchange
-    if(test->role == 'c')
-        exchange_parameters(test);
-    
-    // actual test begins
-    iperf_init_test(test);    
-    fflush(stdout);
-    iperf_run(test);
-    iperf_free_test(test);
-    
-    if(role == 's')
-    {
-        while(1)
-        {
-            //start a new test 
-            struct iperf_test *test;
-            test = iperf_new_test();        
-            iperf_defaults(test);
-            
-            test->stats_callback = iperf_stats_callback;    
-            test->reporter_callback = iperf_reporter_callback;
-            
-            switch(test->protocol)
-            {
-                case Ptcp:
-                    test->new_stream = iperf_new_tcp_stream;
-                    break;                    
-                case Pudp:            
+        while( (ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:n:mNM:f:", longopts, NULL)) != -1 )
+            switch (ch) {
+                case 'c':
+                    test->role = 'c';
+                    role = test->role;
+                    test->server_hostname = (char *) malloc(strlen(optarg));
+                    strncpy(test->server_hostname, optarg, strlen(optarg));
+                    break;                
+                case 'p':
+                    test->server_port = atoi(optarg);
+                    port = test->server_port;                
+                    break;
+                case 's':
+                    test->role = 's';
+                    role = test->role;
+                    break;
+                case 't':
+                    test->duration = atoi(optarg);
+                    break;
+                case 'u':
+                    test->protocol = Pudp;
+                    test->default_settings->blksize = DEFAULT_UDP_BLKSIZE;
                     test->new_stream = iperf_new_udp_stream;
                     break;
+                case 'P':
+                    test->num_streams = atoi(optarg);
+                    break;
+                case 'b':
+                    test->default_settings->rate = unit_atof(optarg);
+                    break;
+                case 'l':
+                    test->default_settings->blksize = unit_atoi(optarg);
+                    printf("%d is the blksize\n", test->default_settings->blksize);
+                    break;
+                case 'w':
+                    test->default_settings->socket_bufsize = unit_atof(optarg);
+                    break;
+                case 'i':
+                    test->stats_interval = atoi(optarg);
+                    test->reporter_interval = atoi(optarg);
+                    break;
+                case 'n':
+                    test->default_settings->bytes = unit_atoi(optarg);
+                    printf("total bytes to be transferred = %ld\n", test->default_settings->bytes); 
+                    break;
+                case 'm':
+                    test->print_mss = 1;
+                    break;
+                case 'N':
+                    test->no_delay = 1;
+                    break;
+                case 'M':
+                    test->default_settings->mss = atoi(optarg);
+                    break;
+                case 'f':
+                    test->default_settings->unit_format = *optarg;               
+                    break;      
             }
-            
-            if(port != -1)
-                test->server_port = port;
-            
-            iperf_init_test(test);
-            iperf_run(test);
-            iperf_free_test(test);
-        }
+        
+        // param exchange       
+        if(test->role == 'c')
+            exchange_parameters(test);
+        
+        //used for subsequent runs of server
+        if(test->role == 's');
+            test->server_port = port;
+        
+        iperf_init_test(test);
+        iperf_run(test);
+        iperf_free_test(test);  
+    
+        if(role == 'c')
+            break;
     }
         
     return 0;

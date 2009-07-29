@@ -1667,7 +1667,7 @@ main(int argc, char **argv)
     
     char ch, role;
     struct iperf_test *test;
-    int port= -1;
+    int port= 5001;
     
     while (1)
     {

@@ -142,6 +142,7 @@ int param_received(struct iperf_stream *sp, struct param_exchange *param)
 
         sp->settings->blksize = param->blksize;
         sp->settings->socket_rcv_bufsize = param->recv_window;
+        sp->settings->socket_bufsize = param->recv_window;
         sp->settings->unit_format = param->format;        
         return param->state;
     }
@@ -399,6 +400,7 @@ int iperf_tcp_recv(struct iperf_stream *sp)
     if(!buf)
     {
         perror("malloc: unable to allocate receive buffer");
+        exit(0);
     }
     
     do{
@@ -417,7 +419,7 @@ int iperf_tcp_recv(struct iperf_stream *sp)
     }
     else
     {
-        printf("socket has been closed by client, result = 0\n");
+        //printf("socket has been closed by client, result = 0\n");
         return 0;
     }
     
@@ -756,6 +758,9 @@ void iperf_init_test(struct iperf_test *test)
         {
             perror("unable to set window");
         }
+        
+        setnonblocking(test->listener_sock_tcp);
+        setnonblocking(test->listener_sock_udp);
         
         printf("-----------------------------------------------------------\n");
         printf("Server listening on %d\n", test->server_port);
@@ -1193,8 +1198,8 @@ int iperf_udp_accept(struct iperf_test *test)
     sp = test->new_stream(test);
     sp->socket = test->listener_sock_udp;
     
-    //setting noblock doesn't report back to client
-    //setnonblocking( sp->socket);
+    //setting noblock
+    setnonblocking( sp->socket);
     
     iperf_init_stream(sp, test);    
     iperf_add_stream(test, sp);
@@ -1250,8 +1255,8 @@ int iperf_tcp_accept(struct iperf_test *test)
     else 
     {
         sp = test->new_stream(test);        
-        //setting noblock doesn't report back to client
-        //setnonblocking(peersock);
+        //setting noblock
+        setnonblocking(peersock);
         
         FD_SET(peersock, &test->read_set);
         test->max_fd = (test->max_fd < peersock) ? peersock : test->max_fd;
@@ -1259,14 +1264,6 @@ int iperf_tcp_accept(struct iperf_test *test)
         sp->socket = peersock;
         iperf_init_stream(sp, test);
         iperf_add_stream(test, sp);
-        
-        /*
-        // this means the new connection is for requesting result
-        //set the blksize to DEFAULT_TCP_SIZE explicitly
-        //in case of udp test -- need to improve this
-        if(test->default_settings->state == TEST_RUNNING  && test->protocol == Pudp)
-            sp->settings->blksize = DEFAULT_TCP_BLKSIZE;
-        */
         
         if(test->default_settings->state != RESULT_REQUEST)
         connect_msg(sp);
@@ -1417,7 +1414,7 @@ void iperf_run_server(struct iperf_test *test)
                 FD_CLR(test->listener_sock_udp, &test->temp_set);
             }
             
-            
+   
         //Process the sockets for read operation
             for (j=0; j< test->max_fd+1; j++)
             {
@@ -1491,6 +1488,8 @@ void iperf_run_server(struct iperf_test *test)
                     }
                    
                 }// end if (FD_ISSET(j, &temp_set))
+                
+                
             
             }// end for (j=0;...)            
                        
@@ -1567,7 +1566,7 @@ void iperf_run_client(struct iperf_test *test)
                 
             }// FD_ISSET
         }
-        
+        /*
         //result =0 hence no data sent, hence sleep
         if(result == 0 && test->protocol == Pudp)
         {
@@ -1583,6 +1582,7 @@ void iperf_run_client(struct iperf_test *test)
         }
         else
             result = 0;
+         */
 
          
         if((test->stats_interval!= 0) && stats_interval->expired(stats_interval))
@@ -1717,7 +1717,7 @@ main(int argc, char **argv)
                     break;
                 case 'n':
                     test->default_settings->bytes = unit_atoi(optarg);
-                    printf("total bytes to be transferred = %ld\n", test->default_settings->bytes); 
+                    printf("total bytes to be transferred = %llu\n", test->default_settings->bytes); 
                     break;
                 case 'm':
                     test->print_mss = 1;

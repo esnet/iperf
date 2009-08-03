@@ -31,7 +31,7 @@ struct iperf_settings
     int mss;                  //for TCP MSS
     int ttl;
     int tos;
-    long bytes;                 // -n option
+    iperf_size_t bytes;                 // -n option
     char  unit_format;                        // -f
     int state;              // This is state of a stream/test
     char cookie[37];

@@ -142,6 +142,7 @@ int param_received(struct iperf_stream *sp, struct param_exchange *param)
 
         sp->settings->blksize = param->blksize;
         sp->settings->socket_rcv_bufsize = param->recv_window;
+        if( param->recv_window != 0)
         sp->settings->socket_bufsize = param->recv_window;
         sp->settings->unit_format = param->format;        
         return param->state;
@@ -395,6 +396,8 @@ int iperf_tcp_recv(struct iperf_stream *sp)
     char ch;
     int size = sp->settings->blksize;
     char *buf = (char *) malloc(size);
+    errno = 0;
+    
     struct param_exchange *param = (struct param_exchange *) buf;
     
     if(!buf)
@@ -415,11 +418,13 @@ int iperf_tcp_recv(struct iperf_stream *sp)
         ch = buf[0];
         message = (int) ch;
         // CHECK: packet length and state
-       // printf("result = %d state = %d, %d = error\n",result, message, errno);
+        // printf("result = %d state = %d, %d = error\n",result, message, errno);
     }
     else
     {
-        //printf("socket has been closed by client, result = 0\n");
+       // printf("result = %d state = %d, %d = error\n",result, message, errno);
+       //printf("%d socket has been closed by client, result = 0\n", sp->socket);      
+        free(buf);
         return 0;
     }
     
@@ -430,9 +435,8 @@ int iperf_tcp_recv(struct iperf_stream *sp)
     }
     
     if(message != STREAM_END)
-        sp->result->bytes_received+= result;
-    
-   free(buf);
+        sp->result->bytes_received+= result;    
+   
    return message;    
 }
 
@@ -752,7 +756,9 @@ void iperf_init_test(struct iperf_test *test)
         
         test->listener_sock_tcp = netannounce(Ptcp, NULL, test->server_port);
         if( test->listener_sock_tcp < 0)
-            exit(0);                
+            exit(0);
+        
+        test->default_settings->socket_bufsize = getsock_tcp_windowsize( test->listener_sock_tcp, SO_RCVBUF); 
         
         if(set_tcp_windowsize( test->listener_sock_tcp, test->default_settings->socket_bufsize, SO_RCVBUF) < 0) 
         {
@@ -792,6 +798,8 @@ void iperf_init_test(struct iperf_test *test)
             
             FD_SET(s, &test->write_set);
             test->max_fd = (test->max_fd < s) ? s : test->max_fd;
+            
+            test->default_settings->socket_bufsize = getsock_tcp_windowsize( test->listener_sock_tcp, SO_SNDBUF); 
             
             if( set_tcp_windowsize(s, test->default_settings->socket_bufsize, SO_SNDBUF)) 
             {

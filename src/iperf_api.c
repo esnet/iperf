@@ -1695,6 +1695,17 @@ main(int argc, char **argv)
     struct iperf_test *test;
     int port= 5001;
     
+    
+    //increasing the priority of the process to minimise packet generation
+    //delay    
+    int rc =  setpriority(PRIO_PROCESS,0, -15);
+    if(rc < 0)
+    {
+        perror("setpriority:");
+        printf("setting priority to valid level\n");
+        rc =  setpriority(PRIO_PROCESS,0, 1);        
+    }
+    
     while (1)
     {
         test = iperf_new_test();

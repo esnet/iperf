@@ -27,7 +27,7 @@ struct iperf_settings
 
     int blksize;              // -l size of each read/write, in UDP this relates directly to packet_size
 
-    int rate;                 // target data rate, UDP only
+    uint64_t rate;                 // target data rate, UDP only
     int mss;                  //for TCP MSS
     int ttl;
     int tos;
@@ -49,6 +49,8 @@ struct iperf_stream
     struct iperf_stream_result *result; //structure pointer to result    
     int socket;                         // socket    
     struct timer *send_timer;
+    
+    char *buffer;
     
     /* for udp measurements - This can be a structure outside stream,
      and stream can have a pointer to this  */

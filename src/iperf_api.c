@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <netinet/tcp.h>
 #include <sys/time.h>
+#include<sys/resource.h>
 
 #include "iperf_api.h"
 #include "timer.h"
@@ -73,23 +74,10 @@ int all_data_sent(struct iperf_test *test)
 
 void exchange_parameters(struct iperf_test *test)
 {
-    int result, size = DEFAULT_TCP_BLKSIZE;
-    char *buf = (char *) malloc(size);
+    int result, size = DEFAULT_TCP_BLKSIZE;    
     struct iperf_test *temp;
-    struct iperf_stream *sp;     
-    struct param_exchange *param = (struct param_exchange *) buf;    
-    
-    get_uuid( test->default_settings->cookie);
-    strncpy(param->cookie,  test->default_settings->cookie,37);
-    
-    puts(param->cookie);
-           
-    //setting up exchange parameters 
-    param->state = PARAM_EXCHANGE;
-    param->blksize = test->default_settings->blksize;
-    param->recv_window = test->default_settings->socket_rcv_bufsize;
-    param->send_window = test->default_settings->socket_snd_bufsize;
-    param->format = test->default_settings->unit_format;
+    struct iperf_stream *sp;
+    struct param_exchange *param ; 
     
     temp = iperf_new_test();
     iperf_defaults(temp);
@@ -98,20 +86,33 @@ void exchange_parameters(struct iperf_test *test)
     temp->server_port = test->server_port;
     
     iperf_init_test(temp);
-        
     sp = temp->streams;
-    sp->settings->state = PARAM_EXCHANGE;       
+    sp->settings->state = PARAM_EXCHANGE;    
+    param = (struct param_exchange *) sp->buffer;
+    
+    get_uuid( test->default_settings->cookie);
+    strncpy(param->cookie,  test->default_settings->cookie,37);
+    
+    puts(param->cookie);
+    
+    //setting up exchange parameters 
+    param->state = PARAM_EXCHANGE;
+    param->blksize = test->default_settings->blksize;
+    // need to decide setting of window size
+    param->recv_window = test->default_settings->socket_rcv_bufsize;
+    param->send_window = test->default_settings->socket_snd_bufsize;
+    param->format = test->default_settings->unit_format;
    
     printf("Sending EXCHANGE Request \n");
-    result = send(sp->socket, buf, size , 0);
+    result = send(sp->socket, sp->buffer, size , 0);
     
-      printf("result = %d state = %d, %d = error\n",result, buf[0], errno);
+      printf("result = %d state = %d, %d = error\n",result, sp->buffer[0], errno);
     
     do{
-        result = recv(sp->socket, buf, size, 0);
+        result = recv(sp->socket, sp->buffer, size, 0);
     } while (result == -1 && errno == EINTR);
     
-    if (result > 0 && buf[0] == ACCESS_DENIED)
+    if (result > 0 && sp->buffer[0] == ACCESS_DENIED)
     {
         printf("Busy server Detected\n");
         exit(0);
@@ -124,7 +125,7 @@ void exchange_parameters(struct iperf_test *test)
     close(sp->socket);
     iperf_free_stream(temp, sp);
     iperf_free_test(temp);
-    free(buf);    
+    //free(buf);    
 
 }
 
@@ -142,8 +143,10 @@ int param_received(struct iperf_stream *sp, struct param_exchange *param)
 
         sp->settings->blksize = param->blksize;
         sp->settings->socket_rcv_bufsize = param->recv_window;
+        
         if( param->recv_window != 0)
-        sp->settings->socket_bufsize = param->recv_window;
+            sp->settings->socket_bufsize = param->recv_window;
+        
         sp->settings->unit_format = param->format;        
         return param->state;
     }
@@ -437,6 +440,7 @@ int iperf_tcp_recv(struct iperf_stream *sp)
     if(message != STREAM_END)
         sp->result->bytes_received+= result;    
    
+    free(buf);
    return message;    
 }
 
@@ -518,11 +522,10 @@ int iperf_tcp_send(struct iperf_stream *sp)
 {
     int result,i;
     int size = sp->settings->blksize;        
-    char *buf = (char *) malloc(size);
-    struct param_exchange *param = (struct param_exchange *) buf;
+    //char *buf = (char *) malloc(size);
+    struct param_exchange *param = (struct param_exchange *) sp->buffer;    
     
-    
-    if(!buf)
+    if(!sp->buffer)
     {
         perror("malloc: unable to allocate transmit buffer");
     }
@@ -533,7 +536,7 @@ int iperf_tcp_send(struct iperf_stream *sp)
             param->state = STREAM_BEGIN;
             strncpy(param->cookie,sp->settings->cookie,37);
             for(i = sizeof(struct param_exchange);i< size; i++)
-                buf[i] = rand();
+                sp->buffer[i] = rand();
             break;
             
         case STREAM_END:            
@@ -541,7 +544,7 @@ int iperf_tcp_send(struct iperf_stream *sp)
             strncpy(param->cookie,sp->settings->cookie,37);
             printf("STREAM_END\n");
             for(i = sizeof(struct param_exchange);i< size; i++)
-                buf[i] = rand();
+                sp->buffer[i] = rand();
             break;
             
         case RESULT_REQUEST:
@@ -549,7 +552,7 @@ int iperf_tcp_send(struct iperf_stream *sp)
             strncpy(param->cookie,sp->settings->cookie,37);
             printf("RESULT_REQUEST\n");
             for(i = sizeof(struct param_exchange);i< size; i++)
-                buf[i] = rand();
+                sp->buffer[i] = rand();
             break;
             
         case ALL_STREAMS_END:
@@ -557,13 +560,13 @@ int iperf_tcp_send(struct iperf_stream *sp)
             strncpy(param->cookie,sp->settings->cookie,37);
             printf("ALL_STREAM_END\n");
             for(i = sizeof(struct param_exchange);i< size; i++)
-                buf[i] = rand();
+                sp->buffer[i] = rand();
             break;
             
         case STREAM_RUNNING:
-            buf[0]= STREAM_RUNNING;
+            sp->buffer[0]= STREAM_RUNNING;
             for(i=1; i < size; i++)
-                 buf[i] = rand();
+                 sp->buffer[i] = rand();
             break;
         default:
             printf("State of the stream can't be determined\n");
@@ -576,14 +579,14 @@ int iperf_tcp_send(struct iperf_stream *sp)
         sp->settings->state = STREAM_RUNNING;           
     }
                 
-    result = send(sp->socket, buf, size , 0);
+    result = send(sp->socket, sp->buffer, size , 0);
     
     //printf("result = %d state = %d, %d = error\n",result, buf[0], errno);
     
-    if(buf[0] != STREAM_END)
+    if(sp->buffer[0] != STREAM_END)
         sp->result->bytes_sent+= size;
     
-    free(buf);    
+    //free(buf);    
     return result;    
 }
 
@@ -591,18 +594,19 @@ int iperf_udp_send(struct iperf_stream *sp)
 { 
     int result = 0;
     struct timeval before, after;
-    int64_t adjustus, dtargus;    
+    int64_t dtargus;    
+    int64_t adjustus = 0;
     
     // the || part ensures that last packet is sent to server - the STREAM_END MESSAGE
     if(sp->send_timer->expired(sp->send_timer) || sp->settings->state == STREAM_END)
     {
-        int size = sp->settings->blksize;    
-        char *buf = (char *) malloc(size);
+        int size = sp->settings->blksize;
+        //char *buf = (char *) malloc(size);
         // this is for udp packet/jitter/lost packet measurements
-        struct udp_datagram *udp = (struct udp_datagram *) buf;
-        struct param_exchange *param =NULL; 
+        struct udp_datagram *udp = (struct udp_datagram *) sp->buffer;
+        struct param_exchange *param =NULL;
         
-        if(!buf)
+        if(!sp->buffer)
         {
             perror("malloc: unable to allocate transmit buffer");
         }
@@ -657,7 +661,10 @@ int iperf_udp_send(struct iperf_stream *sp)
         // TEST: lost packet
         //if(udp->packet_count == 4 ||  udp->packet_count == 5  || udp->packet_count == 6) ;
         //else
-        result = send(sp->socket, buf, size, 0);
+        result = send(sp->socket, sp->buffer, size, 0);        
+        
+        if(gettimeofday(&after, 0) < 0)
+            perror("gettimeofday");
         
         // CHECK: Packet length and ID
         //if(sp->settings->state == STREAM_RUNNING)
@@ -666,9 +673,6 @@ int iperf_udp_send(struct iperf_stream *sp)
         if(sp->settings->state == STREAM_RUNNING)
             sp->result->bytes_sent+= result;
         
-        if(gettimeofday(&after, 0) < 0)
-            perror("gettimeofday");
-        
         adjustus = dtargus;
         adjustus += (before.tv_sec - after.tv_sec) * SEC_TO_US ;
         adjustus += (before.tv_usec - after.tv_usec);
@@ -676,11 +680,12 @@ int iperf_udp_send(struct iperf_stream *sp)
         if( adjustus > 0) {
            dtargus = adjustus;
         }
-        memcpy(&before, &after, sizeof before);
+        //    else       
+       //     printf("adjust = %lld \n", adjustus);    
         
         // RESET THE TIMER       
         update_timer(sp->send_timer, 0, dtargus);
-        free(buf);
+        //free(buf);
         param = NULL;
         
     } // timer_expired_micro
@@ -726,7 +731,7 @@ void iperf_defaults(struct iperf_test *testp)
     testp->num_streams = 1;
     
     testp->default_settings->unit_format = 'a';
-    testp->default_settings->socket_bufsize = 1024*1024;
+    testp->default_settings->socket_bufsize = 0;
     testp->default_settings->blksize = DEFAULT_TCP_BLKSIZE;
     testp->default_settings->rate = RATE;
     testp->default_settings->state = TEST_START;
@@ -758,7 +763,8 @@ void iperf_init_test(struct iperf_test *test)
         if( test->listener_sock_tcp < 0)
             exit(0);
         
-        test->default_settings->socket_bufsize = getsock_tcp_windowsize( test->listener_sock_tcp, SO_RCVBUF); 
+        if( test->default_settings->socket_bufsize == 0)
+            test->default_settings->socket_bufsize = getsock_tcp_windowsize( test->listener_sock_tcp, SO_RCVBUF); 
         
         if(set_tcp_windowsize( test->listener_sock_tcp, test->default_settings->socket_bufsize, SO_RCVBUF) < 0) 
         {
@@ -786,7 +792,7 @@ void iperf_init_test(struct iperf_test *test)
     {   
         FD_ZERO(&test->write_set);
         FD_SET(s, &test->write_set);
-        
+                
         for(i = 0; i < test->num_streams; i++)
         {        
             s = netdial(test->protocol, test->server_hostname, test->server_port);
@@ -799,7 +805,8 @@ void iperf_init_test(struct iperf_test *test)
             FD_SET(s, &test->write_set);
             test->max_fd = (test->max_fd < s) ? s : test->max_fd;
             
-            test->default_settings->socket_bufsize = getsock_tcp_windowsize( test->listener_sock_tcp, SO_SNDBUF); 
+             if( test->default_settings->socket_bufsize == 0)
+                test->default_settings->socket_bufsize = getsock_tcp_windowsize( test->listener_sock_tcp, SO_SNDBUF); 
             
             if( set_tcp_windowsize(s, test->default_settings->socket_bufsize, SO_SNDBUF)) 
             {
@@ -816,6 +823,9 @@ void iperf_init_test(struct iperf_test *test)
             if(test->default_settings->state != RESULT_REQUEST)
             connect_msg(sp);            
         }
+        
+        unit_snprintf(ubuf, UNIT_LEN, (double) test->default_settings->socket_bufsize, 'A');
+        printf(" the windowsize is set to %s \n", ubuf);
     }                        
 }
 
@@ -1101,12 +1111,13 @@ void iperf_free_stream(struct iperf_test *test, struct iperf_stream *sp)
                 prev=prev->next;
             }
         }
-    }   
+    }
     
+    free(sp->buffer);
     free(sp->settings);
     free(sp->result);
-    free(sp->send_timer);
-    free(sp);    
+    free(sp->send_timer);    
+    free(sp);
 }
 
 struct iperf_stream *iperf_new_stream(struct iperf_test *testp)
@@ -1119,7 +1130,10 @@ struct iperf_stream *iperf_new_stream(struct iperf_test *testp)
         perror("malloc");
         return(NULL);
     }
-    memset(sp, 0, sizeof(struct iperf_stream));        
+    memset(sp, 0, sizeof(struct iperf_stream));
+    
+    sp->buffer = (char *) malloc(testp->default_settings->blksize);
+    //memset(sp->buffer, 0, testp->default_settings->blksize);
     
     sp->settings = (struct iperf_settings *) malloc(sizeof(struct iperf_settings));
     memcpy(sp->settings, testp->default_settings, sizeof(struct iperf_settings));    
@@ -1283,7 +1297,6 @@ int iperf_tcp_accept(struct iperf_test *test)
 void iperf_init_stream(struct iperf_stream *sp, struct iperf_test *testp)
 {
     socklen_t len;
-    int x;
     len = sizeof(struct sockaddr_in);    
     
     sp->protocol = testp->protocol;
@@ -1307,16 +1320,20 @@ void iperf_init_stream(struct iperf_stream *sp, struct iperf_test *testp)
                           testp->role == 's' ? SO_RCVBUF : SO_SNDBUF) < 0)
         fprintf(stderr, "unable to set window size\n");
     
-    
+    /*
     x = getsock_tcp_windowsize(sp->socket, SO_RCVBUF);
     if(x < 0)
         perror("SO_RCVBUF");
-    // printf("RCV: %d\n", x);
+    unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A'); 
+    printf("RCV: %s\n", ubuf);
     
     x = getsock_tcp_windowsize(sp->socket, SO_SNDBUF);
     if(x < 0)
         perror("SO_SNDBUF");
-    // printf("SND: %d\n", x);
+    unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A'); 
+    printf("SND: %s\n", ubuf);
+     */
+
   
     set_socket_options(sp, testp);
     
@@ -1574,6 +1591,7 @@ void iperf_run_client(struct iperf_test *test)
                 
             }// FD_ISSET
         }
+        
         /*
         //result =0 hence no data sent, hence sleep
         if(result == 0 && test->protocol == Pudp)
@@ -1586,12 +1604,12 @@ void iperf_run_client(struct iperf_test *test)
                min = min < remaining ? min : remaining;
                sp = sp->next;
            }
-           usleep (min/2);
+            
+            usleep(min);
         }
         else
             result = 0;
-         */
-
+        */
          
         if((test->stats_interval!= 0) && stats_interval->expired(stats_interval))
         {    

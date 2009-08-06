@@ -536,7 +536,7 @@ int iperf_tcp_send(struct iperf_stream *sp)
             param->state = STREAM_BEGIN;
             strncpy(param->cookie,sp->settings->cookie,37);
             for(i = sizeof(struct param_exchange);i< size; i++)
-                sp->buffer[i] = rand();
+                sp->buffer[i] = i %37;
             break;
             
         case STREAM_END:            
@@ -544,7 +544,7 @@ int iperf_tcp_send(struct iperf_stream *sp)
             strncpy(param->cookie,sp->settings->cookie,37);
             printf("STREAM_END\n");
             for(i = sizeof(struct param_exchange);i< size; i++)
-                sp->buffer[i] = rand();
+                sp->buffer[i] = i %37;
             break;
             
         case RESULT_REQUEST:
@@ -552,7 +552,7 @@ int iperf_tcp_send(struct iperf_stream *sp)
             strncpy(param->cookie,sp->settings->cookie,37);
             printf("RESULT_REQUEST\n");
             for(i = sizeof(struct param_exchange);i< size; i++)
-                sp->buffer[i] = rand();
+                sp->buffer[i] = i %37;
             break;
             
         case ALL_STREAMS_END:
@@ -560,13 +560,13 @@ int iperf_tcp_send(struct iperf_stream *sp)
             strncpy(param->cookie,sp->settings->cookie,37);
             printf("ALL_STREAM_END\n");
             for(i = sizeof(struct param_exchange);i< size; i++)
-                sp->buffer[i] = rand();
+                sp->buffer[i] = i %37;
             break;
             
         case STREAM_RUNNING:
             sp->buffer[0]= STREAM_RUNNING;
             for(i=1; i < size; i++)
-                 sp->buffer[i] = rand();
+                 sp->buffer[i] = i %37;
             break;
         default:
             printf("State of the stream can't be determined\n");
@@ -601,7 +601,7 @@ int iperf_udp_send(struct iperf_stream *sp)
     if(sp->send_timer->expired(sp->send_timer) || sp->settings->state == STREAM_END)
     {
         int size = sp->settings->blksize;
-        //char *buf = (char *) malloc(size);
+        
         // this is for udp packet/jitter/lost packet measurements
         struct udp_datagram *udp = (struct udp_datagram *) sp->buffer;
         struct param_exchange *param =NULL;

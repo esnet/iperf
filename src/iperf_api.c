@@ -969,13 +969,13 @@ char *iperf_reporter_callback(struct iperf_test *test)
         
         if(test->streams->result->interval_results->next != NULL)
         {
-            unit_snprintf(nbuf, UNIT_LEN, (double) (ip->bytes_transferred / (ip->interval_duration -ip_prev->interval_duration)),
+            unit_snprintf(nbuf, UNIT_LEN, (double) (bytes / (ip->interval_duration -ip_prev->interval_duration)),
                           test->default_settings->unit_format);
             sprintf(message, report_sum_bw_format, ip_prev->interval_duration, ip->interval_duration, ubuf, nbuf);
         }            
         else
         {
-            unit_snprintf(nbuf, UNIT_LEN, (double) (ip->bytes_transferred /ip->interval_duration), test->default_settings->unit_format);
+            unit_snprintf(nbuf, UNIT_LEN, (double) (bytes/ip->interval_duration), test->default_settings->unit_format);
             sprintf(message, report_sum_bw_format, 0.0, ip->interval_duration, ubuf, nbuf);
         }
             

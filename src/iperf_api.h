@@ -60,6 +60,7 @@ struct iperf_stream
     double prev_transit;
     int outoforder_packets;
     int cnt_error;
+    uint64_t target;
     
     struct sockaddr_storage local_addr;
     struct sockaddr_storage remote_addr;

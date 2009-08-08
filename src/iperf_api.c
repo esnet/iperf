@@ -397,20 +397,19 @@ int iperf_tcp_recv(struct iperf_stream *sp)
 {
     int result, message;
     char ch;
-    int size = sp->settings->blksize;
-    char *buf = (char *) malloc(size);
+    int size = sp->settings->blksize;    
     errno = 0;
     
-    struct param_exchange *param = (struct param_exchange *) buf;
+    struct param_exchange *param = (struct param_exchange *) sp->buffer;
     
-    if(!buf)
+    if(!sp->buffer)
     {
         perror("malloc: unable to allocate receive buffer");
         exit(0);
     }
     
     do{
-        result = recv(sp->socket, buf, size, MSG_WAITALL);        
+        result = recv(sp->socket, sp->buffer, size, MSG_WAITALL);        
         
     } while (result == -1 && errno == EINTR);
     
@@ -418,7 +417,7 @@ int iperf_tcp_recv(struct iperf_stream *sp)
     //TODO = change this for Cookie implementation
     if(result > 0)
     {
-        ch = buf[0];
+        ch = sp->buffer[0];
         message = (int) ch;
         // CHECK: packet length and state
         // printf("result = %d state = %d, %d = error\n",result, message, errno);
@@ -426,21 +425,19 @@ int iperf_tcp_recv(struct iperf_stream *sp)
     else
     {
        // printf("result = %d state = %d, %d = error\n",result, message, errno);
-       //printf("%d socket has been closed by client, result = 0\n", sp->socket);      
-        free(buf);
+       //printf("%d socket has been closed by client, result = 0\n", sp->socket);
         return 0;
     }
     
     if(message != 7)
     {
-        printf("result = %d state = %d, %d = error\n",result, buf[0], errno);
+        printf("result = %d state = %d, %d = error\n",result, sp->buffer[0], errno);
         message = param_received(sp, param);
     }
     
     if(message != STREAM_END)
-        sp->result->bytes_received+= result;    
-   
-    free(buf);
+        sp->result->bytes_received+= result;
+    
    return message;    
 }
 
@@ -448,18 +445,17 @@ int iperf_udp_recv(struct iperf_stream *sp)
 {   
     int result, message;
     int size = sp->settings->blksize;
-    double transit = 0, d = 0;
-    char *buf = (char *) malloc(size);
-    struct udp_datagram *udp = (struct udp_datagram *) buf;
+    double transit = 0, d = 0;    
+    struct udp_datagram *udp = (struct udp_datagram *) sp->buffer;
     struct timeval arrival_time;
     
-    if(!buf)
+    if(!sp->buffer)
     {
         perror("malloc: unable to allocate receive buffer");
     }
     
     do{
-        result = recv(sp->socket, buf, size, 0);        
+        result = recv(sp->socket, sp->buffer, size, 0);        
     
     } while (result == -1 && errno == EINTR);
     
@@ -471,7 +467,7 @@ int iperf_udp_recv(struct iperf_stream *sp)
     
     if(message != 7)
     {
-        printf("result = %d state = %d, %d = error\n",result, buf[0], errno);
+        printf("result = %d state = %d, %d = error\n",result, sp->buffer[0], errno);
     }
         
     if(message == STREAM_RUNNING && (sp->stream_id == udp->stream_id))
@@ -512,8 +508,7 @@ int iperf_udp_recv(struct iperf_stream *sp)
        //printf("incoming packet = %d and received packet = %d AND SP = %d\n", udp->packet_count, sp->packet_count, sp->socket);
         
     }
-    
-    free(buf);
+
     return message;
     
 }
@@ -535,38 +530,38 @@ int iperf_tcp_send(struct iperf_stream *sp)
         case STREAM_BEGIN:
             param->state = STREAM_BEGIN;
             strncpy(param->cookie,sp->settings->cookie,37);
-            for(i = sizeof(struct param_exchange);i< size; i++)
-                sp->buffer[i] = i %37;
+            //for(i = sizeof(struct param_exchange);i< size; i++)
+             //   sp->buffer[i] = i %37;
             break;
             
         case STREAM_END:            
             param->state = STREAM_END;
             strncpy(param->cookie,sp->settings->cookie,37);
             printf("STREAM_END\n");
-            for(i = sizeof(struct param_exchange);i< size; i++)
-                sp->buffer[i] = i %37;
+            //for(i = sizeof(struct param_exchange);i< size; i++)
+            //    sp->buffer[i] = i %37;
             break;
             
         case RESULT_REQUEST:
             param->state = RESULT_REQUEST;
             strncpy(param->cookie,sp->settings->cookie,37);
             printf("RESULT_REQUEST\n");
-            for(i = sizeof(struct param_exchange);i< size; i++)
-                sp->buffer[i] = i %37;
+            //for(i = sizeof(struct param_exchange);i< size; i++)
+            //    sp->buffer[i] = i %37;
             break;
             
         case ALL_STREAMS_END:
             param->state = ALL_STREAMS_END;
             strncpy(param->cookie,sp->settings->cookie,37);
             printf("ALL_STREAM_END\n");
-            for(i = sizeof(struct param_exchange);i< size; i++)
-                sp->buffer[i] = i %37;
+            //for(i = sizeof(struct param_exchange);i< size; i++)
+            //    sp->buffer[i] = i %37;
             break;
             
         case STREAM_RUNNING:
             sp->buffer[0]= STREAM_RUNNING;
-            for(i=1; i < size; i++)
-                 sp->buffer[i] = i %37;
+          //  for(i=1; i < size; i++)
+          //       sp->buffer[i] = i %37;
             break;
         default:
             printf("State of the stream can't be determined\n");
@@ -661,14 +656,14 @@ int iperf_udp_send(struct iperf_stream *sp)
         // TEST: lost packet
         //if(udp->packet_count == 4 ||  udp->packet_count == 5  || udp->packet_count == 6) ;
         //else
-        result = send(sp->socket, sp->buffer, size, 0);        
+        result = send(sp->socket, sp->buffer, size, 0);
         
         if(gettimeofday(&after, 0) < 0)
             perror("gettimeofday");
         
         // CHECK: Packet length and ID
         //if(sp->settings->state == STREAM_RUNNING)
-        // printf("State = %d Outgoing packet = %d AND SP = %d\n",sp->settings->state, sp->packet_count, sp->socket);        
+         //printf("State = %d Outgoing packet = %d AND SP = %d\n",sp->settings->state, sp->packet_count, sp->socket);        
                 
         if(sp->settings->state == STREAM_RUNNING)
             sp->result->bytes_sent+= result;
@@ -975,7 +970,7 @@ char *iperf_reporter_callback(struct iperf_test *test)
         }            
         else
         {
-            unit_snprintf(nbuf, UNIT_LEN, (double) (bytes/ip->interval_duration), test->default_settings->unit_format);
+            unit_snprintf(nbuf, UNIT_LEN, (double) (bytes /ip->interval_duration), test->default_settings->unit_format);
             sprintf(message, report_sum_bw_format, 0.0, ip->interval_duration, ubuf, nbuf);
         }
             
@@ -1001,7 +996,6 @@ char *iperf_reporter_callback(struct iperf_test *test)
                     total_packets+= sp->packet_count;
                     lost_packets += sp->cnt_error;
                 }
-               
                 
                 if(test->protocol == Ptcp)
                 {
@@ -1133,7 +1127,7 @@ struct iperf_stream *iperf_new_stream(struct iperf_test *testp)
     memset(sp, 0, sizeof(struct iperf_stream));
     
     sp->buffer = (char *) malloc(testp->default_settings->blksize);
-    //memset(sp->buffer, 0, testp->default_settings->blksize);
+    //memset(sp->buffer, 37, testp->default_settings->blksize);
     
     sp->settings = (struct iperf_settings *) malloc(sizeof(struct iperf_settings));
     memcpy(sp->settings, testp->default_settings, sizeof(struct iperf_settings));    
@@ -1142,7 +1136,7 @@ struct iperf_stream *iperf_new_stream(struct iperf_test *testp)
        
     sp->socket = -1;
     
-    sp->packet_count =0;
+    sp->packet_count = 0;
     sp->stream_id = (int)sp;
     sp->jitter = 0.0;
     sp->prev_transit = 0.0;
@@ -1362,14 +1356,11 @@ struct iperf_stream * find_stream_by_socket(struct iperf_test *test, int sock)
 {
     struct iperf_stream *n;
     n=test->streams;
-        
-    //find the correct stream for update
+    
     while(1)
     {
         if(n->socket == sock)
-        {                    
             break;
-        }
         
         if(n->next==NULL)
             break;
@@ -1438,14 +1429,13 @@ void iperf_run_server(struct iperf_test *test)
                 test->default_settings->state = TEST_RUNNING;
                 FD_CLR(test->listener_sock_udp, &test->temp_set);
             }
-            
    
         //Process the sockets for read operation
             for (j=0; j< test->max_fd+1; j++)
             {
                 if (FD_ISSET(j, &test->temp_set))
                 {
-                    // find the correct stream
+                    // find the correct stream - possibly time consuming
                     np = find_stream_by_socket(test,j);
                     message = np->rcv(np);
                                         
@@ -1581,7 +1571,7 @@ void iperf_run_client(struct iperf_test *test)
         sp= test->streams;        
         for(i=0;i<test->num_streams;i++)
         {
-            if(FD_ISSET(sp->socket, &test->temp_set))
+            //if(FD_ISSET(sp->socket, &test->temp_set))
             {  
                result+= sp->snd(sp);
                 
@@ -1605,7 +1595,7 @@ void iperf_run_client(struct iperf_test *test)
                sp = sp->next;
            }
             
-            usleep(min);
+            usleep(min/10);
         }
         else
             result = 0;
@@ -1703,7 +1693,7 @@ main(int argc, char **argv)
     {
         perror("setpriority:");
         printf("setting priority to valid level\n");
-        rc =  setpriority(PRIO_PROCESS,0, 1);        
+        rc =  setpriority(PRIO_PROCESS,0, 0);        
     }
     
     while (1)

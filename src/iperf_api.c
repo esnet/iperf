@@ -17,6 +17,9 @@
 #include <netinet/tcp.h>
 #include <sys/time.h>
 #include<sys/resource.h>
+#include<sched.h>
+#include<signal.h>
+#include <setjmp.h>
 
 #include "iperf_api.h"
 #include "timer.h"
@@ -45,6 +48,7 @@ static struct option longopts[] =
     { NULL,             0,                      NULL,   0   }
 };
 
+jmp_buf env;
 
 int all_data_sent(struct iperf_test *test)
 {
@@ -431,7 +435,7 @@ int iperf_tcp_recv(struct iperf_stream *sp)
     
     if(message != 7)
     {
-        printf("result = %d state = %d, %d = error\n",result, sp->buffer[0], errno);
+        //printf("result = %d state = %d, %d = error\n",result, sp->buffer[0], errno);
         message = param_received(sp, param);
     }
     
@@ -467,7 +471,7 @@ int iperf_udp_recv(struct iperf_stream *sp)
     
     if(message != 7)
     {
-        printf("result = %d state = %d, %d = error\n",result, sp->buffer[0], errno);
+        //printf("result = %d state = %d, %d = error\n",result, sp->buffer[0], errno);
     }
         
     if(message == STREAM_RUNNING && (sp->stream_id == udp->stream_id))
@@ -601,19 +605,10 @@ int iperf_udp_send(struct iperf_stream *sp)
         struct udp_datagram *udp = (struct udp_datagram *) sp->buffer;
         struct param_exchange *param =NULL;
         
-        if(!sp->buffer)
-        {
-            perror("malloc: unable to allocate transmit buffer");
-        }
-        
         dtargus = (int64_t)(sp->settings->blksize) * SEC_TO_US * 8;
         dtargus /= sp->settings->rate;
      
         assert(dtargus != 0);
-        
-        // record the packet sent time
-        if(gettimeofday(&udp->sent_time, 0) < 0)
-            perror("gettimeofday");
     
         switch(sp->settings->state)
         {           
@@ -642,9 +637,8 @@ int iperf_udp_send(struct iperf_stream *sp)
                 udp->stream_id  = (int) sp;
                 udp->packet_count = ++sp->packet_count;
                 break;                
-        }        
-               
-        // applicable for 1st packet sent for each stream
+        }               
+        
         if(sp->settings->state == STREAM_BEGIN)
         {           
             sp->settings->state = STREAM_RUNNING;                        
@@ -652,6 +646,8 @@ int iperf_udp_send(struct iperf_stream *sp)
         
         if(gettimeofday(&before, 0) < 0)
             perror("gettimeofday");
+        
+        udp->sent_time = before;
                 
         // TEST: lost packet
         //if(udp->packet_count == 4 ||  udp->packet_count == 5  || udp->packet_count == 6) ;
@@ -675,9 +671,7 @@ int iperf_udp_send(struct iperf_stream *sp)
         if( adjustus > 0) {
            dtargus = adjustus;
         }
-        //    else       
-       //     printf("adjust = %lld \n", adjustus);    
-        
+       
         // RESET THE TIMER       
         update_timer(sp->send_timer, 0, dtargus);
         //free(buf);
@@ -1499,7 +1493,7 @@ void iperf_run_server(struct iperf_test *test)
                         test->default_settings->state = RESULT_REQUEST;
                         read = test->reporter_callback(test);
                         puts(read);
-                        printf("REPORTER CALL + ALL_STREAMS_END\n"); 
+                        //printf("REPORTER CALL + ALL_STREAMS_END\n"); 
                     }
                    
                 }// end if (FD_ISSET(j, &temp_set))
@@ -1514,6 +1508,13 @@ void iperf_run_server(struct iperf_test *test)
     
 }
 
+
+void catcher(int sig)
+{   
+    longjmp(env,sig);    
+}
+
+
 void iperf_run_client(struct iperf_test *test)
 {
     int i,result=0;
@@ -1524,8 +1525,17 @@ void iperf_run_client(struct iperf_test *test)
     struct timeval tv;
     int ret=0;
     
+    int returned_from_longjump;
+    struct sigaction sact;
+    
     tv.tv_sec = 15;            // timeout interval in seconds
     tv.tv_usec = 0;
+    
+    sigemptyset( &sact.sa_mask );
+    sact.sa_flags = 0;
+    sact.sa_handler = catcher;
+    sigaction( SIGINT, &sact, NULL );
+
     
     buf = (char *) malloc(test->default_settings->blksize);
             
@@ -1580,27 +1590,8 @@ void iperf_run_client(struct iperf_test *test)
                 sp=sp->next;
                 
             }// FD_ISSET
-        }
-        
-        /*
-        //result =0 hence no data sent, hence sleep
-        if(result == 0 && test->protocol == Pudp)
-        {
-           sp = test->streams;
-           min = timer_remaining(sp->send_timer);
-           while(sp)
-           {
-               remaining = timer_remaining(sp->send_timer);
-               min = min < remaining ? min : remaining;
-               sp = sp->next;
-           }
-            
-            usleep(min/10);
-        }
-        else
-            result = 0;
-        */
-         
+        }        
+                 
         if((test->stats_interval!= 0) && stats_interval->expired(stats_interval))
         {    
             test->stats_callback(test);            
@@ -1613,6 +1604,10 @@ void iperf_run_client(struct iperf_test *test)
             puts(read); 
             reporter_interval = new_timer(test->reporter_interval,0);
         }
+        
+        // detecting Ctrl+C
+        if (setjmp(env))
+            break;
         
     }// while outer timer    
     
@@ -1688,14 +1683,37 @@ main(int argc, char **argv)
     
     //increasing the priority of the process to minimise packet generation
     //delay    
+    int priority = getpriority(PRIO_PROCESS, 0);
+    printf("priority is already zero\n");
+    
     int rc =  setpriority(PRIO_PROCESS,0, -15);
     if(rc < 0)
     {
         perror("setpriority:");
         printf("setting priority to valid level\n");
-        rc =  setpriority(PRIO_PROCESS,0, 0);        
+        rc =  setpriority(PRIO_PROCESS, 0, 0);        
     }
+   
+    /*
+    //setting the affinity of the process    
+    cpu_set_t cpu_set;
+    int affinity = -1;
+    int ncores = 1;
+    sched_getaffinity(0, sizeof(cpu_set_t),&cpu_set);
+    if (errno)
+        perror("couldn't get affinity:");
     
+  
+    if ((ncores = sysconf(_SC_NPROCESSORS_CONF)) <= 0)
+        err("sysconf: couldn't get _SC_NPROCESSORS_CONF");
+    
+	CPU_ZERO(&cpu_set);
+	CPU_SET(affinity, &cpu_set);
+	if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0)
+			err("couldn't change CPU affinity");
+    */
+       
+
     while (1)
     {
         test = iperf_new_test();

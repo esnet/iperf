@@ -155,7 +155,7 @@ enum {
 };
 
 #define SEC_TO_NS 1000000000 /* too big for enum on some platforms */
-
+jmp_buf env;
 
 /**
  * exchange_parameters - handles the param_Exchange part for client 

@@ -7,12 +7,12 @@
 int
 main(int argc, char **argv)
 {
-    char *uuid;
+    char     *uuid;
     get_uuid(uuid);
-    if(strlen(uuid) != 36)
+    if (strlen(uuid) != 36)
     {
-        printf("uuid is not 37 characters long %s.\n", uuid);
-        exit(-1);
+	printf("uuid is not 37 characters long %s.\n", uuid);
+	exit(-1);
     }
     exit(0);
 }

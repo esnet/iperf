@@ -80,7 +80,7 @@ Client/Server:\n\
   -M, --mss       #        set TCP maximum segment size (MTU - 40 bytes)\n\
   -N, --nodelay            set TCP no delay, disabling Nagle's Algorithm\n\
   -V, --IPv6Version        Set the domain to IPv6\n\
-\n\
+  -T, --tcpinfo            Output detailed TCP info\n\
 Server specific:\n\
   -s, --server             run in server mode\n\
   -U, --single_udp         run in single threaded UDP mode\n\
@@ -106,6 +106,7 @@ Client specific:\n\
   -P, --parallel  #        number of parallel client threads to run\n\
   -T, --ttl       #        time-to-live, for multicast (default 1)\n\
   -Z, --linux-congestion <algo>  set TCP congestion control algorithm (Linux only)\n\
+  -T, --tcpinfo            Output detailed TCP info (Linux and FreeBSD only)\n\
 \n\
 Miscellaneous:\n\
   -x, --reportexclude [CDMSV]   exclude C(connection) D(data) M(multicast) S(settings) V(server) reports\n\
@@ -218,6 +219,9 @@ const char server_reporting[] =
 
 const char reportCSV_peer[] =
 "%s,%u,%s,%u";
+
+const char report_tcpInfo[] =
+"\t  TCP Info: CWND=%u SND_SSTHRESH=%u RCV_SSTHRESH=%u UNACKED=%u SACK=%u LOST=%u RETRANS=%u FACK=%u";
 
 #ifdef HAVE_QUAD_SUPPORT
 #ifdef HAVE_PRINTF_QD

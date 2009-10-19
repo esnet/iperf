@@ -1,4 +1,10 @@
 
+/* 
+   Copyright (c) 2004, The Regents of the University of California, through 
+   Lawrence Berkeley National Laboratory (subject to receipt of any required 
+   approvals from the U.S. Dept. of Energy).  All rights reserved.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,7 +13,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <assert.h>
-#include<fcntl.h>
+#include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -48,7 +54,6 @@ static struct option longopts[] =
     {"Set-mss", required_argument, NULL, 'M'},
     {NULL, 0, NULL, 0}
 };
-
 
 
 int 
@@ -165,13 +170,6 @@ void
 setnonblocking(int sock)
 {
     int       opts;
-    /*
-     opts = fcntl(sock,F_GETFL);
-     if (opts < 0) {
-     perror("fcntl(F_GETFL)");
-     exit(EXIT_FAILURE);
-     }
-     */
 
     opts = (opts | O_NONBLOCK);
     if (fcntl(sock, F_SETFL, opts) < 0)
@@ -190,6 +188,9 @@ add_interval_list(struct iperf_stream_result * rp, struct iperf_interval_results
     struct iperf_interval_results *ip = (struct iperf_interval_results *) malloc(sizeof(struct iperf_interval_results));
     ip->bytes_transferred = temp.bytes_transferred;
     ip->interval_duration = temp.interval_duration;
+#if defined(linux) || defined(__FreeBSD__)
+    ip->tcpInfo = temp.tcpInfo;
+#endif
 
     if (!rp->interval_results)
     {
@@ -214,6 +215,12 @@ display_interval_list(struct iperf_stream_result * rp)
     while (n)
     {
 	printf("Interval = %f\tBytes transferred = %llu\n", n->interval_duration, n->bytes_transferred);
+#if defined(linux) || defined(__FreeBSD__)
+	/* TODO: figure out a way to check command line flag for -T option here */
+	printf(report_tcpInfo, n->tcp_info.tcpi_snd_cwnd, n->tcp_info.tcpi_snd_ssthresh, 
+		n->tcp_info.tcpi_rcv_ssthresh, n->tcp_info.tcpi_unacked, n->tcp_info.tcpi_sacked, 
+		n->tcp_info.tcpi_lost, n->tcp_info.tcpi_retrans, n->tcp_info.tcpi_fackets);
+#endif
 	n = n->next;
     }
 }
@@ -332,14 +339,14 @@ set_socket_options(struct iperf_stream * sp, struct iperf_test * tp)
 	rc = setsockopt(sp->socket, IPPROTO_TCP, TCP_MAXSEG, (char *) &new_mss, len);
 	if (rc == -1)
 	{
-	    perror("setsockoptBING");
+	    perror("setsockopt");
 	    return -1;
 	}
 	/* verify results */
 	rc = getsockopt(sp->socket, IPPROTO_TCP, TCP_MAXSEG, (char *) &new_mss, &len);
 	if (new_mss != tp->default_settings->mss)
 	{
-	    perror("mismatch");
+	    perror("setsockopt value mismatch");
 	    return -1;
 	}
     }
@@ -402,13 +409,13 @@ iperf_tcp_recv(struct iperf_stream * sp)
 
     if (!sp->buffer)
     {
-	perror("malloc: unable to allocate receive buffer");
+	fprintf(stderr,"receive buffer not allocated");
 	exit(0);
     }
+
     do
     {
 	result = recv(sp->socket, sp->buffer, size, MSG_WAITALL);
-
     } while (result == -1 && errno == EINTR);
 
     /* interprete the type of message in packet */
@@ -448,7 +455,8 @@ iperf_udp_recv(struct iperf_stream * sp)
 
     if (!sp->buffer)
     {
-	perror("malloc: unable to allocate receive buffer");
+	fprintf(stderr,"receive buffer not allocated");
+	exit(0);
     }
     do
     {
@@ -803,6 +811,9 @@ iperf_stats_callback(struct iperf_test * test)
 {
     iperf_size_t cumulative_bytes = 0;
     int       i;
+#if defined(linux) || defined(__FreeBSD__)
+    socklen_t tcp_info_length;
+#endif
     struct iperf_stream *sp = test->streams;
     struct iperf_stream_result *rp = test->streams->result;
     struct iperf_interval_results *ip, temp;
@@ -821,6 +832,14 @@ iperf_stats_callback(struct iperf_test * test)
 	    gettimeofday(&temp.interval_time, NULL);
 
 	    temp.interval_duration = timeval_diff(&sp->result->start_time, &temp.interval_time);
+
+#if defined(linux) || defined(__FreeBSD__)
+	    if (test->tcp_info) {
+	        tcp_info_length = sizeof(tcp_info);
+                if ( getsockopt( socket, SOL_TCP, TCP_INFO, (void *)&temp.tcp_info, &tcp_info_length ) == 0 ) {
+	             perror("getsockopt");
+           }
+#endif
 
 	    gettimeofday(&sp->result->end_time, NULL);
 	    add_interval_list(rp, temp);
@@ -874,7 +893,7 @@ iperf_reporter_callback(struct iperf_test * test)
     }
 
     char     *message_final = (char *) malloc((count + 1) * (strlen(report_bw_jitter_loss_header)
-							     + strlen(report_bw_jitter_loss_format) + strlen(report_sum_bw_jitter_loss_format)));
+				+ strlen(report_bw_jitter_loss_format) + strlen(report_sum_bw_jitter_loss_format)));
     memset(message_final, 0, strlen(message_final));
 
     struct iperf_interval_results *ip = test->streams->result->interval_results;
@@ -900,6 +919,13 @@ iperf_reporter_callback(struct iperf_test * test)
 		unit_snprintf(nbuf, UNIT_LEN, (double) (ip->bytes_transferred / (ip->interval_duration - ip_prev->interval_duration)),
 			      test->default_settings->unit_format);
 		sprintf(message, report_bw_format, sp->socket, ip_prev->interval_duration, ip->interval_duration, ubuf, nbuf);
+
+#if defined(linux) || defined(__FreeBSD__)
+	        /* TODO: do something similar to this everywhere */
+		sprintf(message, report_tcpInfo, ip->tcp_info.tcpi_snd_cwnd, ip->tcp_info.tcpi_snd_ssthresh, 
+			ip->tcp_info.tcpi_rcv_ssthresh, ip->tcp_info.tcpi_unacked, ip->tcp_info.tcpi_sacked, 
+			ip->tcp_info.tcpi_lost, ip->tcp_info.tcpi_retrans, ip->tcp_info.tcpi_fackets);
+#endif
 	    } else
 	    {
 		sprintf(message, report_bw_header);
@@ -1637,7 +1663,7 @@ main(int argc, char **argv)
 	test = iperf_new_test();
 	iperf_defaults(test);
 
-	while ((ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:n:mNM:f:", longopts, NULL)) != -1)
+	while ((ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:n:mNMT:f:", longopts, NULL)) != -1)
 	    switch (ch)
 	    {
 	    case 'c':
@@ -1694,6 +1720,9 @@ main(int argc, char **argv)
 		break;
 	    case 'f':
 		test->default_settings->unit_format = *optarg;
+		break;
+	    case 'T':
+		test->tcp_info = 1;
 		break;
 	    }
 

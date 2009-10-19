@@ -1,3 +1,10 @@
+
+/* 
+   Copyright (c) 2004, The Regents of the University of California, through 
+   Lawrence Berkeley National Laboratory (subject to receipt of any required 
+   approvals from the U.S. Dept. of Energy).  All rights reserved.
+*/
+
 typedef uint64_t iperf_size_t;
 
 struct iperf_interval_results
@@ -5,6 +12,10 @@ struct iperf_interval_results
     iperf_size_t bytes_transferred;
     struct timeval  interval_time;
     float interval_duration;
+#if defined(linux) || defined(__FreeBSD__)
+    /* include getsockopt(TCP_INFO results here for Linux and FreeBSD */
+    struct tcp_info tcpInfo;
+#endif
     struct iperf_interval_results *next;    
     void * custom_data;
 };
@@ -28,12 +39,12 @@ struct iperf_settings
     int blksize;              // -l size of each read/write, in UDP this relates directly to packet_size
 
     uint64_t rate;                 // target data rate, UDP only
-    int mss;                  //for TCP MSS
+    int mss;                  /* for TCP MSS */
     int ttl;
     int tos;
-    iperf_size_t bytes;                 // -n option
-    char  unit_format;                        // -f
-    int state;              // This is state of a stream/test
+    iperf_size_t bytes;                 /* -n option */
+    char  unit_format;    /* -f */
+    int state;          /* This is state of a stream/test */
     char cookie[37];
 };
 
@@ -108,6 +119,7 @@ struct iperf_test
     int reporter_fd;                                 // file descriptor for reporter
 
     int  num_streams;                                // total streams in the test -P 
+    int tcp_info;				     /* display getsockopt(TCP_INFO) results */
     struct iperf_stream *streams;                    // pointer to list of struct stream
     struct iperf_settings *default_settings;
 };

@@ -2,6 +2,14 @@
  * iperf3
  */
 
+/* 
+   Copyright (c) 2004, The Regents of the University of California, through 
+   Lawrence Berkeley National Laboratory (subject to receipt of any required 
+   approvals from the U.S. Dept. of Energy).  All rights reserved.
+*/
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

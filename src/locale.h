@@ -220,8 +220,14 @@ const char server_reporting[] =
 const char reportCSV_peer[] =
 "%s,%u,%s,%u";
 
+#if defined(linux)
 const char report_tcpInfo[] =
 "\t  TCP Info: CWND=%u SND_SSTHRESH=%u RCV_SSTHRESH=%u UNACKED=%u SACK=%u LOST=%u RETRANS=%u FACK=%u";
+#endif
+#if defined(__FreeBSD__)
+"\t  TCP Info: CWND=%u SND_SSTHRESH=%u RCV_WIND=%u";
+#endif
+
 
 #ifdef HAVE_QUAD_SUPPORT
 #ifdef HAVE_PRINTF_QD

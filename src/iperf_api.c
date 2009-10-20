@@ -215,11 +215,15 @@ display_interval_list(struct iperf_stream_result * rp)
     while (n)
     {
 	printf("Interval = %f\tBytes transferred = %llu\n", n->interval_duration, n->bytes_transferred);
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) 
 	/* TODO: figure out a way to check command line flag for -T option here */
-	printf(report_tcpInfo, n->tcp_info.tcpi_snd_cwnd, n->tcp_info.tcpi_snd_ssthresh, 
-		n->tcp_info.tcpi_rcv_ssthresh, n->tcp_info.tcpi_unacked, n->tcp_info.tcpi_sacked, 
-		n->tcp_info.tcpi_lost, n->tcp_info.tcpi_retrans, n->tcp_info.tcpi_fackets);
+	printf(report_tcpInfo, n->tcpInfo.tcpi_snd_cwnd, n->tcpInfo.tcpi_snd_ssthresh, 
+		n->tcpInfo.tcpi_rcv_ssthresh, n->tcpInfo.tcpi_unacked, n->tcpInfo.tcpi_sacked, 
+		n->tcpInfo.tcpi_lost, n->tcpInfo.tcpi_retrans, n->tcpInfo.tcpi_fackets);
+#endif
+#if defined(__FreeBSD__)
+	printf(report_tcpInfo, n->tcpInfo.tcpi_snd_cwnd, 
+		n->tcpInfo.tcpi_snd_ssthresh, n->tcpInfo.tcpi_rcv_space);
 #endif
 	n = n->next;
     }
@@ -835,8 +839,8 @@ iperf_stats_callback(struct iperf_test * test)
 
 #if defined(linux) || defined(__FreeBSD__)
 	    if (test->tcp_info) {
-	        tcp_info_length = sizeof(tcp_info);
-                if ( getsockopt( socket, SOL_TCP, TCP_INFO, (void *)&temp.tcp_info, &tcp_info_length ) == 0 ) {
+	        tcp_info_length = sizeof(temp.tcpInfo);
+                if ( getsockopt( socket, SOL_TCP, TCP_INFO, (void *)&temp.tcpInfo, &tcp_info_length ) == 0 ) {
 	             perror("getsockopt");
            }
 #endif
@@ -920,12 +924,18 @@ iperf_reporter_callback(struct iperf_test * test)
 			      test->default_settings->unit_format);
 		sprintf(message, report_bw_format, sp->socket, ip_prev->interval_duration, ip->interval_duration, ubuf, nbuf);
 
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) 
 	        /* TODO: do something similar to this everywhere */
-		sprintf(message, report_tcpInfo, ip->tcp_info.tcpi_snd_cwnd, ip->tcp_info.tcpi_snd_ssthresh, 
-			ip->tcp_info.tcpi_rcv_ssthresh, ip->tcp_info.tcpi_unacked, ip->tcp_info.tcpi_sacked, 
-			ip->tcp_info.tcpi_lost, ip->tcp_info.tcpi_retrans, ip->tcp_info.tcpi_fackets);
+		sprintf(message, report_tcpInfo, ip->tcpInfo.tcpi_snd_cwnd, ip->tcpInfo.tcpi_snd_ssthresh, 
+			ip->tcpInfo.tcpi_rcv_ssthresh, ip->tcpInfo.tcpi_unacked, ip->tcpInfo.tcpi_sacked, 
+			ip->tcpInfo.tcpi_lost, ip->tcpInfo.tcpi_retrans, ip->tcpInfo.tcpi_fackets);
 #endif
+#if defined(__FreeBSD__)
+		sprintf(message, report_tcpInfo, ip->tcpInfo.tcpi_snd_cwnd, 
+			ip->tcpInfo.tcpi_snd_ssthresh, ip->tcpInfo.tcpi_rcv_space);
+#endif
+
+
 	    } else
 	    {
 		sprintf(message, report_bw_header);

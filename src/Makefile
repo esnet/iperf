@@ -10,7 +10,7 @@ endif
 all: iperf 
 	
 iperf: $(OBJS)
-	$(CC) $(LDFLAGS) -o iperf $(OBJS)
+	$(CC) $(LDFLAGS) -o iperf3 $(OBJS)
 
 profile: iperf
 	$(CC) -pg -o iperf-profile $(OBJS)

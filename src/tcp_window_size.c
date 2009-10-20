@@ -57,13 +57,9 @@
  * removed some cruft
  */
 
+#include <stdio.h>
 #include <sys/socket.h>
 #include <assert.h>
-
-#ifdef __cplusplus
-extern    "C"
-{
-#endif
 
 /* -------------------------------------------------------------------
  * If bufsize > 0, set the TCP window size (via the socket buffer
@@ -75,104 +71,55 @@ extern    "C"
  * This now works on UNICOS also, by setting TCP_WINSHIFT.
  * This now works on AIX, by enabling RFC1323.
  * returns -1 on error, 0 on no error.
- * ------------------------------------------------------------------- */
+ * -------------------------------------------------------------------
+ */
 
-    int
-              set_tcp_windowsize(int sock, int bufsize, int dir)
+int 
+set_tcp_windowsize(int sock, int bufsize, int dir)
+{
+    int       rc;
+    int       newbufsize;
+
+    assert(sock >= 0);
+
+    if (bufsize > 0)
     {
-#ifdef SO_SNDBUF
-	int       rc;
-	int       newbufsize;
-
-	          assert(sock >= 0);
-
-	if        (bufsize > 0)
-	{
-
-#ifdef TCP_WINSHIFT
-	    /* XXX: audit -- do we care about UNICOS? */
-	    /* UNICOS requires setting the winshift explicitly */
-	    if (bufsize > 65535)
-	    {
-		int       winshift = 0;
-		int       scaledwin = bufsize >> 16;
-		while     (scaledwin > 0)
-		{
-		    scaledwin >>= 1;
-		    winshift++;
-		}
-
-		/* set TCP window shift */
-		          rc = setsockopt(sock, IPPROTO_TCP, TCP_WINSHIFT,
-			              (char *) &winshift, sizeof(winshift));
-		if        (rc < 0)
-		              return rc;
-
-		/*
-		 * Note: you cannot verify TCP window shift, since it returns
-		 * a structure and not the same integer we use to set it.
-		 * (ugh)
-		 */
-	    }
-#endif				/* TCP_WINSHIFT  */
-
-#ifdef TCP_RFC1323
-	    /*
-	     * On AIX, RFC 1323 extensions can be set system-wide, using the
-	     * 'no' network options command. But we can also set them
-	     * per-socket, so let's try just in case.
-	     */
-	    if        (bufsize > 65535)
-	    {
-		/* enable RFC 1323 */
-		int       on = 1;
-		rc = setsockopt(sock, IPPROTO_TCP, TCP_RFC1323,
-				(char *) &on, sizeof(on));
-		if (rc < 0)
-		    return rc;
-	    }
-#endif				/* TCP_RFC1323 */
-
-	    /*
-	     * note: results are verified after connect() or listen(), since
-	     * some OS's don't show the corrected value until then.
-	     */
-	    newbufsize = bufsize;
-	    rc = setsockopt(sock, SOL_SOCKET, dir, (char *) &newbufsize, sizeof newbufsize);
-	    if (rc < 0)
-		return rc;
-	}
-#endif				/* SO_SNDBUF */
-
-	return 0;
+	/*
+         * note: results are verified after connect() or listen(), since
+         * some OS's don't show the corrected value until then.
+         */
+        printf("Setting TCP buffer to size: %d\n", bufsize);
+	newbufsize = bufsize;
+	rc = setsockopt(sock, SOL_SOCKET, dir, (char *) &newbufsize, sizeof newbufsize);
+	if (rc < 0)
+	    return rc;
+    } else {
+        printf("Using default TCP buffer size and assuming OS will do autotuning \n");
     }
+
+    return 0;
+}
 
 /* -------------------------------------------------------------------
  * returns the TCP window size (on the sending buffer, SO_SNDBUF),
  * or -1 on error.
  * ------------------------------------------------------------------- */
 
-    int
-              getsock_tcp_windowsize(int sock, int dir)
-    {
-	int       bufsize = 0;
+int
+get_tcp_windowsize(int sock, int dir)
+{
+    int       bufsize = 0;
 
-#ifdef SO_SNDBUF
-	int       rc;
-	socklen_t len;
+    int       rc;
+    socklen_t len;
 
-	/* send buffer -- query for buffer size */
-	          len = sizeof bufsize;
-	          rc = getsockopt(sock, SOL_SOCKET, dir, (char *) &bufsize, &len);
+    /* send buffer -- query for buffer size */
+    len = sizeof bufsize;
+    rc = getsockopt(sock, SOL_SOCKET, dir, (char *) &bufsize, &len);
 
-	if        (rc < 0)
-	              return rc;
-#endif
+    if (rc < 0)
+	return rc;
 
-	          return bufsize;
-    }
+    return bufsize;
+}
 
-#ifdef __cplusplus
-}				/* end extern "C" */
-
-#endif

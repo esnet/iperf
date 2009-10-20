@@ -8,6 +8,7 @@
 
 #include <string.h>
 
+/* make connection to server */
 int
 netdial(int proto, char *client, int port)
 {
@@ -16,6 +17,7 @@ netdial(int proto, char *client, int port)
     struct sockaddr_in sa;
     socklen_t sn;
 
+    /* XXX: should this be called server?? -blt */
     if ((hent = gethostbyname(client)) == 0)
     {
 	perror("gethostbyname");

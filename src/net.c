@@ -5,8 +5,10 @@
 #include <sys/errno.h>
 #include <netinet/in.h>
 #include <netdb.h>
-
 #include <string.h>
+
+#include "net.h"
+#include "timer.h"
 
 /* make connection to server */
 int
@@ -80,4 +82,79 @@ netannounce(int proto, char *local, int port)
 	listen(s, 5);
 
     return s;
+}
+
+
+/*******************************************************************/
+/* reads 'count' byptes from a socket  */
+/********************************************************************/
+
+int
+Nread(int fd, char *buf, int count, int udp)
+{
+    struct sockaddr from;
+    socklen_t len = sizeof(from);
+    register int cnt;
+    if (udp)
+    {
+	cnt = recvfrom(fd, buf, count, 0, &from, &len);
+    } else
+    {
+	cnt = mread(fd, buf, count);
+    }
+    return (cnt);
+}
+
+
+/*
+ *                      N W R I T E
+ */
+int
+Nwrite(int fd, char *buf, int count, int udp, struct sockaddr dest)
+{
+    register int cnt;
+    if (udp)
+    {
+again:
+	cnt = sendto(fd, buf, count, 0, &dest, (socklen_t) sizeof(dest));
+	if (cnt < 0 && errno == ENOBUFS)
+	{
+	    delay(18000);	/* XXX: Fixme! */
+	    errno = 0;
+	    goto again;
+	}
+    } else
+    {
+	cnt = write(fd, buf, count);
+    }
+    return (cnt);
+}
+
+
+/*
+ *  mread: keep reading until have expected read size
+ */
+int
+mread(int fd, char *bufp, int n)
+{
+    register unsigned count = 0;
+    register int nread;
+
+    do
+    {
+	nread = read(fd, bufp, n - count);
+	if (nread < 0)		/* if get back -1, just keep trying */
+	{
+	    continue;
+	} else
+	{
+	    //printf("mread: got %d bytes \n", nread);
+	    if (nread == 0)
+		return ((int) count);
+	    count += (unsigned) nread;
+	    bufp += nread;
+	}
+    } while (count < n);
+
+    return ((int) count);
 }

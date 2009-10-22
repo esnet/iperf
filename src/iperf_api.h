@@ -151,7 +151,7 @@ enum
     RATE = 1024 * 1024, /* 1 Mbps */
     DURATION = 10, /* seconds */
     DEFAULT_UDP_BLKSIZE = 1450, /* 1 packet per ethernet frame, IPV6 too */
-    DEFAULT_TCP_BLKSIZE = 256 * 1024,  /* default read/write block size */
+    DEFAULT_TCP_BLKSIZE = 128 * 1024,  /* default read/write block size */
 
     /* other useful constants */
     TEST_START = 1,

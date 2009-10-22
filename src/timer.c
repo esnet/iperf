@@ -118,9 +118,21 @@ delay(int64_t ns)
 	    memcpy(&req, &rem, sizeof rem);
 	else
 	    return -1;
-
     return 0;
 }
+
+# ifdef DELAY_SELECT_METHOD
+int
+delay(int us)
+{
+    struct timeval tv;
+
+    tv.tv_sec = 0;
+    tv.tv_usec = us;
+    (void) select(1, (fd_set *) 0, (fd_set *) 0, (fd_set *) 0, &tv);
+    return (1);
+}
+#endif
 
 int64_t
 timer_remaining(struct timer * tp)

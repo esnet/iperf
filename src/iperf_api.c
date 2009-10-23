@@ -7,7 +7,7 @@
 
 /*
  * TO DO list:
- *    test TCP_INFO
+ *    test TCP_INFO on Linux
  *    restructure code pull out main.c
  *    cleanup/fix/test UDP mode
  *    add verbose and debug options
@@ -884,7 +884,7 @@ iperf_stats_callback(struct iperf_test * test)
     struct iperf_stream_result *rp = test->streams->result;
     struct iperf_interval_results *ip, temp;
 
-    printf("in stats_callback: num_streams = %d \n", test->num_streams);
+    //printf("in stats_callback: num_streams = %d \n", test->num_streams);
     for (i = 0; i < test->num_streams; i++)
     {
 	rp = sp->result;
@@ -899,9 +899,6 @@ iperf_stats_callback(struct iperf_test * test)
 	    gettimeofday(&temp.interval_time, NULL);
 
 	    temp.interval_duration = timeval_diff(&sp->result->start_time, &temp.interval_time);
-
-	    if (test->tcp_info)
-                get_tcpinfo(test);
 
 	    gettimeofday(&sp->result->end_time, NULL);
 	    add_interval_list(rp, temp);
@@ -924,12 +921,12 @@ iperf_stats_callback(struct iperf_test * test)
 
 	    gettimeofday(&temp.interval_time, NULL);
 	    temp.interval_duration = timeval_diff(&sp->result->start_time, &temp.interval_time);
-	    if (test->tcp_info)
-                get_tcpinfo(test);
 
 	    gettimeofday(&sp->result->end_time, NULL);
 	    add_interval_list(rp, temp);
 	}
+	if (test->tcp_info)
+            get_tcpinfo(test, &temp);
 
 	/* for debugging */
 	/* display_interval_list(rp, test->tcp_info); */
@@ -941,6 +938,7 @@ iperf_stats_callback(struct iperf_test * test)
 }
 
 /**************************************************************************/
+/* XXX: this routine is confusing, and should be cleaned up and/or better commented -blt */
 char     *
 iperf_reporter_callback(struct iperf_test * test)
 {
@@ -952,6 +950,7 @@ iperf_reporter_callback(struct iperf_test * test)
     double    start_time, end_time;
     char     *message = (char *) malloc(500);
 
+    //printf("in iperf_reporter_callback \n");
     /* used to determine the length of reporter buffer */
     while (sp)
     {
@@ -971,7 +970,7 @@ iperf_reporter_callback(struct iperf_test * test)
 
     if (test->default_settings->state == TEST_RUNNING)
     {
-	while (sp)
+	while (sp)  /* for each stream */
 	{
 	    ip = sp->result->interval_results;
 	    while (ip->next != NULL)
@@ -990,17 +989,6 @@ iperf_reporter_callback(struct iperf_test * test)
 			      test->default_settings->unit_format);
 		sprintf(message, report_bw_format, sp->socket, ip_prev->interval_duration, ip->interval_duration, ubuf, nbuf);
 
-#if defined(linux)
-		/* TODO: do something similar to this everywhere */
-		sprintf(message, report_tcpInfo, ip->tcpInfo.tcpi_snd_cwnd, ip->tcpInfo.tcpi_snd_ssthresh,
-			ip->tcpInfo.tcpi_rcv_ssthresh, ip->tcpInfo.tcpi_unacked, ip->tcpInfo.tcpi_sacked,
-			ip->tcpInfo.tcpi_lost, ip->tcpInfo.tcpi_retrans, ip->tcpInfo.tcpi_fackets);
-#endif
-#if defined(__FreeBSD__)
-		sprintf(message, report_tcpInfo, ip->tcpInfo.tcpi_snd_cwnd,
-		 ip->tcpInfo.tcpi_snd_ssthresh, ip->tcpInfo.tcpi_rcv_space, ip->tcpInfo.__tcpi_retrans);
-#endif
-
 
 	    } else
 	    {
@@ -1011,6 +999,11 @@ iperf_reporter_callback(struct iperf_test * test)
 		sprintf(message, report_bw_format, sp->socket, 0.0, ip->interval_duration, ubuf, nbuf);
 	    }
 	    strcat(message_final, message);
+	    if(test->tcp_info)
+            {
+		 build_tcpinfo_message(ip, message);
+	         strcat(message_final, message);
+            }
 	    sp = sp->next;
 	}
 
@@ -1029,8 +1022,12 @@ iperf_reporter_callback(struct iperf_test * test)
 		unit_snprintf(nbuf, UNIT_LEN, (double) (bytes / ip->interval_duration), test->default_settings->unit_format);
 		sprintf(message, report_sum_bw_format, 0.0, ip->interval_duration, ubuf, nbuf);
 	    }
-
 	    strcat(message_final, message);
+	    if(test->tcp_info)
+            {
+		 build_tcpinfo_message(ip, message);
+	         strcat(message_final, message);
+            }
 	    free(message);
 	}
     }
@@ -1084,6 +1081,7 @@ iperf_reporter_callback(struct iperf_test * test)
 		    if (sp->outoforder_packets > 0)
 			printf(report_sum_outoforder, start_time, end_time, sp->cnt_error);
 		}
+		/* XXX: do we need to do something with any TCP_INFO results here too? */
 	    }
 	    sp = sp->next;
 	}

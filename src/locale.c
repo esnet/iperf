@@ -226,11 +226,11 @@ const char reportCSV_peer[] =
 
 #if defined(linux)
 const char report_tcpInfo[] =
-"  event=TCP_Info CWND=%u RCV_WIND=%u SND_SSTHRESH=%u UNACKED=%u SACK=%u LOST=%u RETRANS=%u FACK=%u RTT=%u";
+"event=TCP_Info CWND=%u RCV_WIND=%u SND_SSTHRESH=%u UNACKED=%u SACK=%u LOST=%u RETRANS=%u FACK=%u RTT=%u";
 #endif
 #if defined(__FreeBSD__)
 const char report_tcpInfo[] =
-"  event=TCP_Info CWND=%u RCV_WIND=%u SND_SSTHRESH=%u RTT=%u";
+"event=TCP_Info CWND=%u RCV_WIND=%u SND_SSTHRESH=%u RTT=%u";
 #endif
 
 

@@ -392,8 +392,10 @@ void      iperf_init_stream(struct iperf_stream * sp, struct iperf_test * testp)
  */
 void      iperf_free_stream(struct iperf_test * test, struct iperf_stream * sp);
 
-void get_tcpinfo(struct iperf_test *test);
+void get_tcpinfo(struct iperf_test *test, struct iperf_interval_results *rp);
 void print_tcpinfo(struct iperf_interval_results *);
+void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
+
 
 #endif  /* IPERF_API_H */
 

@@ -46,7 +46,7 @@
 #include "uuid.h"
 #include "locale.h"
 
-jmp_buf   env; /* to handle longjmp on signal */
+jmp_buf   env;			/* to handle longjmp on signal */
 
 /*************************************************************/
 int
@@ -56,7 +56,7 @@ all_data_sent(struct iperf_test * test)
 	return 0;
     else
     {
-	uint64_t       total_bytes = 0;
+	uint64_t  total_bytes = 0;
 	struct iperf_stream *sp;
 
 	sp = test->streams;
@@ -121,9 +121,8 @@ exchange_parameters(struct iperf_test * test)
     if (result > 0 && sp->buffer[0] == ACCESS_DENIED)
     {
 	fprintf(stderr, "Busy server Detected. Exiting.\n");
-        exit(-1);
+	exit(-1);
     }
-     
     return;
 }
 
@@ -140,21 +139,20 @@ param_received(struct iperf_stream * sp, struct param_exchange * param)
 	sp->settings->blksize = param->blksize;
 	sp->settings->socket_bufsize = param->recv_window;
 	sp->settings->unit_format = param->format;
-        printf("Got params from client: block size = %d, recv_window = %d \n",
-		sp->settings->blksize, sp->settings->socket_bufsize);
-        param->state = TEST_START;
+	printf("Got params from client: block size = %d, recv_window = %d \n",
+	       sp->settings->blksize, sp->settings->socket_bufsize);
+	param->state = TEST_START;
 	buf[0] = TEST_START;
 
     } else if (strncmp(param->cookie, sp->settings->cookie, 37) != 0)
     {
 	fprintf(stderr, "New connection denied\n");
-        param->state = ACCESS_DENIED;
+	param->state = ACCESS_DENIED;
 	buf[0] = ACCESS_DENIED;
     }
-
     free(buf);
     result = send(sp->socket, buf, sizeof(struct param_exchange), 0);
-    if (result < 0) 
+    if (result < 0)
 	perror("Error sending param ack to client");
     return param->state;
 }
@@ -187,7 +185,7 @@ add_interval_list(struct iperf_stream_result * rp, struct iperf_interval_results
 #if defined(linux) || defined(__FreeBSD__)
     ip->tcpInfo = temp.tcpInfo;
 #endif
-    //printf("add_interval_list: Mbytes = %d, duration = %f \n", (int)(ip->bytes_transferred/1000000), ip->interval_duration);
+    //printf("add_interval_list: Mbytes = %d, duration = %f \n", (int) (ip->bytes_transferred / 1000000), ip->interval_duration);
 
     if (!rp->interval_results)
     {
@@ -217,7 +215,7 @@ display_interval_list(struct iperf_stream_result * rp, int tflag)
     {
 	printf("Interval = %f\tBytes transferred = %llu\n", n->interval_duration, n->bytes_transferred);
 	if (tflag)
-            print_tcpinfo(n);
+	    print_tcpinfo(n);
 	n = n->next;
     }
 }
@@ -421,14 +419,14 @@ iperf_tcp_recv(struct iperf_stream * sp)
     {
 	if (result == 0)
 	    printf("Client Disconnected. \n");
-        else
+	else
 	    perror("iperf_tcp_recv: recv error: MSG_PEEK");
 	return -1;
     }
-
     message = (int) ch;
-    if( message != 7) /* tell me about non STREAM_RUNNING messages for debugging */
-        printf("iperf_tcp_recv: got message type %d \n", message);
+    if (message != 7)		/* tell me about non STREAM_RUNNING messages
+				 * for debugging */
+	printf("iperf_tcp_recv: got message type %d \n", message);
 
     switch (message)
     {
@@ -458,6 +456,9 @@ iperf_tcp_recv(struct iperf_stream * sp)
     case ALL_STREAMS_END:
 	size = sp->settings->blksize;
 #ifdef USE_RECV
+/* NOTE: Nwrite/Nread seems to be 10-15% faster than send/recv for localhost on OSX.
+    More testing needed on other OSes to be sure.
+*/
 	do
 	{			/* XXX: is the do/while really needed? */
 	    printf("iperf_tcp_recv: Calling recv: expecting %d bytes \n", size);
@@ -623,10 +624,13 @@ iperf_tcp_send(struct iperf_stream * sp)
 	sp->settings->state = STREAM_RUNNING;
 
     if (sp->buffer[0] != STREAM_END)
-	/* XXX: check/fix this. Maybe only want STREAM_BEGIN and STREAM_RUNNING */
+	/*
+	 * XXX: check/fix this. Maybe only want STREAM_BEGIN and
+	 * STREAM_RUNNING
+	 */
 	sp->result->bytes_sent += size;
 
-    //printf("number bytes sent so far = %d \n", (int)sp->result->bytes_sent);
+    //printf("number bytes sent so far = %d \n", (int) sp->result->bytes_sent);
 
     return result;
 }
@@ -926,7 +930,7 @@ iperf_stats_callback(struct iperf_test * test)
 	    add_interval_list(rp, temp);
 	}
 	if (test->tcp_info)
-            get_tcpinfo(test, &temp);
+	    get_tcpinfo(test, &temp);
 
 	/* for debugging */
 	/* display_interval_list(rp, test->tcp_info); */
@@ -959,7 +963,7 @@ iperf_reporter_callback(struct iperf_test * test)
     }
 
     char     *message_final = (char *) malloc((count + 1) * (strlen(report_bw_jitter_loss_header)
-	+ strlen(report_bw_jitter_loss_format) + strlen(report_sum_bw_jitter_loss_format)));
+							     + strlen(report_bw_jitter_loss_format) + strlen(report_sum_bw_jitter_loss_format)));
 
     memset(message_final, 0, strlen(message_final));
 
@@ -970,7 +974,7 @@ iperf_reporter_callback(struct iperf_test * test)
 
     if (test->default_settings->state == TEST_RUNNING)
     {
-	while (sp)  /* for each stream */
+	while (sp)		/* for each stream */
 	{
 	    ip = sp->result->interval_results;
 	    while (ip->next != NULL)
@@ -984,8 +988,8 @@ iperf_reporter_callback(struct iperf_test * test)
 
 	    if (test->streams->result->interval_results->next != NULL)
 	    {
-		unit_snprintf(nbuf, UNIT_LEN, 
-			(double) (ip->bytes_transferred / (ip->interval_duration - ip_prev->interval_duration)),
+		unit_snprintf(nbuf, UNIT_LEN,
+			      (double) (ip->bytes_transferred / (ip->interval_duration - ip_prev->interval_duration)),
 			      test->default_settings->unit_format);
 		sprintf(message, report_bw_format, sp->socket, ip_prev->interval_duration, ip->interval_duration, ubuf, nbuf);
 
@@ -999,11 +1003,11 @@ iperf_reporter_callback(struct iperf_test * test)
 		sprintf(message, report_bw_format, sp->socket, 0.0, ip->interval_duration, ubuf, nbuf);
 	    }
 	    strcat(message_final, message);
-	    if(test->tcp_info)
-            {
-		 build_tcpinfo_message(ip, message);
-	         strcat(message_final, message);
-            }
+	    if (test->tcp_info)
+	    {
+		build_tcpinfo_message(ip, message);
+		strcat(message_final, message);
+	    }
 	    sp = sp->next;
 	}
 
@@ -1023,11 +1027,11 @@ iperf_reporter_callback(struct iperf_test * test)
 		sprintf(message, report_sum_bw_format, 0.0, ip->interval_duration, ubuf, nbuf);
 	    }
 	    strcat(message_final, message);
-	    if(test->tcp_info)
-            {
-		 build_tcpinfo_message(ip, message);
-	         strcat(message_final, message);
-            }
+	    if (test->tcp_info)
+	    {
+		build_tcpinfo_message(ip, message);
+		strcat(message_final, message);
+	    }
 	    free(message);
 	}
     }
@@ -1081,7 +1085,10 @@ iperf_reporter_callback(struct iperf_test * test)
 		    if (sp->outoforder_packets > 0)
 			printf(report_sum_outoforder, start_time, end_time, sp->cnt_error);
 		}
-		/* XXX: do we need to do something with any TCP_INFO results here too? */
+		/*
+		 * XXX: do we need to do something with any TCP_INFO results
+		 * here too?
+		 */
 	    }
 	    sp = sp->next;
 	}
@@ -1159,7 +1166,7 @@ iperf_free_stream(struct iperf_test * test, struct iperf_stream * sp)
 struct iperf_stream *
 iperf_new_stream(struct iperf_test * testp)
 {
-    int i=0;
+    int       i = 0;
     struct iperf_stream *sp;
 
     sp = (struct iperf_stream *) malloc(sizeof(struct iperf_stream));
@@ -1177,8 +1184,8 @@ iperf_new_stream(struct iperf_test * testp)
 
     /* fill in buffer with random stuff */
     /* XXX: probably better to use truely random stuff here */
-    for(i=0; i < testp->default_settings->blksize; i++)
-        sp->buffer[i] = i%255;
+    for (i = 0; i < testp->default_settings->blksize; i++)
+	sp->buffer[i] = i % 255;
 
     sp->socket = -1;
 
@@ -1606,20 +1613,21 @@ iperf_run_client(struct iperf_test * test)
 	reporter_interval = new_timer(test->reporter_interval, 0);
 
     if (test->default_settings->bytes == 0)
-        printf("Starting Test: %d streams, %d byte blocks, %d second test \n",
-		test->num_streams, test->default_settings->blksize, test->duration);
+	printf("Starting Test: %d streams, %d byte blocks, %d second test \n",
+	test->num_streams, test->default_settings->blksize, test->duration);
     else
-        printf("Starting Test: %d streams, %d byte blocks, %d bytes to send\n",
-		test->num_streams, test->default_settings->blksize, (int) test->default_settings->bytes);
+	printf("Starting Test: %d streams, %d byte blocks, %d bytes to send\n",
+	       test->num_streams, test->default_settings->blksize, (int) test->default_settings->bytes);
 
 
     /* send data till the timer expires or bytes sent */
     while (!all_data_sent(test) && !timer->expired(timer))
     {
 
-#ifdef NEED_THIS  /* not sure what this was for, so removed -blt */
+#ifdef NEED_THIS		/* not sure what this was for, so removed
+				 * -blt */
 	memcpy(&test->temp_set, &test->write_set, sizeof(test->write_set));
-        printf("Calling select... \n");
+	printf("Calling select... \n");
 	ret = select(test->max_fd + 1, NULL, &test->write_set, NULL, &tv);
 	if (ret < 0)
 	    continue;
@@ -1673,7 +1681,7 @@ iperf_run_client(struct iperf_test * test)
 
     /* Requesting for result from Server */
     test->default_settings->state = RESULT_REQUEST;
-    // receive_result_from_server(test);  /* XXX: current broken? bus error */
+    //receive_result_from_server(test);	/* XXX: current broken? bus error */
     read = test->reporter_callback(test);
     printf("Summary results as measured by the server: \n");
     puts(read);
@@ -1788,7 +1796,7 @@ main(int argc, char **argv)
 #endif
 
     test = iperf_new_test();
-    iperf_defaults(test); /* sets defaults */
+    iperf_defaults(test);	/* sets defaults */
 
     while ((ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:n:mNThM:f:", longopts, NULL)) != -1)
     {
@@ -1865,12 +1873,11 @@ main(int argc, char **argv)
     printf("Connection to port %d on host %s \n", test->server_port, test->server_hostname);
     iperf_init_test(test);
 
-    if (test->role == 'c')  /* if client, send params to server */
+    if (test->role == 'c')	/* if client, send params to server */
     {
 	exchange_parameters(test);
-        test->streams->settings->state = STREAM_BEGIN;
+	test->streams->settings->state = STREAM_BEGIN;
     }
-
     //printf("in main: calling iperf_run \n");
     iperf_run(test);
     iperf_free_test(test);

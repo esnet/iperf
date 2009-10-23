@@ -5,6 +5,16 @@
  * approvals from the U.S. Dept. of Energy).  All rights reserved.
  */
 
+/*
+ * TO DO list:
+ *    test TCP_INFO
+ *    restructure code pull out main.c
+ *    cleanup/fix/test UDP mode
+ *    add verbose and debug options
+ *    lots more testing
+ *    see issue tracker for other wish list items
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,6 +46,7 @@
 #include "uuid.h"
 #include "locale.h"
 
+/*************************************************************/
 int
 all_data_sent(struct iperf_test * test)
 {
@@ -121,8 +132,6 @@ param_received(struct iperf_stream * sp, struct param_exchange * param)
     int       result;
     char     *buf = (char *) malloc(sizeof(struct param_exchange));
 
-    printf("in param_received \n");
-
     if (sp->settings->cookie[0] == '\0')
     {
 	strncpy(sp->settings->cookie, param->cookie, 37);
@@ -148,6 +157,7 @@ param_received(struct iperf_stream * sp, struct param_exchange * param)
     return param->state;
 }
 
+/*************************************************************/
 void
 setnonblocking(int sock)
 {
@@ -162,6 +172,7 @@ setnonblocking(int sock)
     return;
 }
 
+/*************************************************************/
 void
 add_interval_list(struct iperf_stream_result * rp, struct iperf_interval_results temp)
 {
@@ -174,7 +185,7 @@ add_interval_list(struct iperf_stream_result * rp, struct iperf_interval_results
 #if defined(linux) || defined(__FreeBSD__)
     ip->tcpInfo = temp.tcpInfo;
 #endif
-    printf("add_interval_list: Mbytes = %d, duration = %f \n", (int)ip->bytes_transferred/1000000, ip->interval_duration);
+    //printf("add_interval_list: Mbytes = %d, duration = %f \n", (int)(ip->bytes_transferred/1000000), ip->interval_duration);
 
     if (!rp->interval_results)
     {
@@ -217,6 +228,7 @@ display_interval_list(struct iperf_stream_result * rp)
     }
 }
 
+/*************************************************************/
 void
 send_result_to_client(struct iperf_stream * sp)
 {
@@ -295,6 +307,7 @@ getsock_tcp_mss(int inSock)
     return mss;
 }
 
+/*************************************************************/
 int
 set_socket_options(struct iperf_stream * sp, struct iperf_test * tp)
 {
@@ -346,6 +359,7 @@ set_socket_options(struct iperf_stream * sp, struct iperf_test * tp)
     return 0;
 }
 
+/*************************************************************/
 void
 connect_msg(struct iperf_stream * sp)
 {
@@ -354,12 +368,13 @@ connect_msg(struct iperf_stream * sp)
     inet_ntop(AF_INET, (void *) (&((struct sockaddr_in *) & sp->local_addr)->sin_addr), (void *) ipl, sizeof(ipl));
     inet_ntop(AF_INET, (void *) (&((struct sockaddr_in *) & sp->remote_addr)->sin_addr), (void *) ipr, sizeof(ipr));
 
-    printf("[%3d] local %s port %d connected with %s port %d\n",
+    printf("[%3d] local %s port %d connected to %s port %d\n",
 	   sp->socket,
 	   ipl, ntohs(((struct sockaddr_in *) & sp->local_addr)->sin_port),
 	   ipr, ntohs(((struct sockaddr_in *) & sp->remote_addr)->sin_port));
 }
 
+/*************************************************************/
 void
 Display(struct iperf_test * test)
 {
@@ -410,9 +425,13 @@ iperf_tcp_recv(struct iperf_stream * sp)
     /* get the 1st byte: then based on that, decide how much to read */
     if ((result = recv(sp->socket, &ch, sizeof(int), MSG_PEEK)) != sizeof(int))
     {
-	perror("iperf_tcp_recv: recv error: MSG_PEEK");
+	if (result == 0)
+	    printf("Client Disconnected. \n");
+        else
+	    perror("iperf_tcp_recv: recv error: MSG_PEEK");
 	return -1;
     }
+
     message = (int) ch;
     if( message != 7) /* tell me about non STREAM_RUNNING messages for debugging */
         printf("iperf_tcp_recv: got message type %d \n", message);
@@ -1649,14 +1668,13 @@ iperf_run_client(struct iperf_test * test)
 	    break;
 
     }				/* while outer timer  */
-    printf("Test Complete. \n");
 
     /* for last interval   */
     test->stats_callback(test);
     read = test->reporter_callback(test);
-    printf("Client measured results: \n");
     puts(read);
 
+    printf("Test Complete. \n");
     /* sending STREAM_END packets */
     sp = test->streams;
     np = sp;
@@ -1673,10 +1691,10 @@ iperf_run_client(struct iperf_test * test)
     test->default_settings->state = RESULT_REQUEST;
     // receive_result_from_server(test);  /* XXX: current broken? bus error */
     read = test->reporter_callback(test);
-    printf("Server measured results: \n");
+    printf("Summary results as measured by the server: \n");
     puts(read);
 
-    printf("Done getting/printing results. \n");
+    //printf("Done getting/printing results. \n");
 
     /* Deleting all streams - CAN CHANGE FREE_STREAM FN */
     sp = test->streams;
@@ -1869,7 +1887,7 @@ main(int argc, char **argv)
         test->streams->settings->state = STREAM_BEGIN;
     }
 
-    printf("in main: calling iperf_run \n");
+    //printf("in main: calling iperf_run \n");
     iperf_run(test);
     iperf_free_test(test);
 

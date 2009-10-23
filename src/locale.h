@@ -183,7 +183,7 @@ const char report_bw_format[] =
 "[%3d] %4.1f-%4.1f sec  %ss  %ss/sec\n";
 
 const char report_sum_bw_format[] =
-"[SUM] %4.1f-%4.1f sec  %ss  %ss/sec";
+"[SUM] %4.1f-%4.1f sec  %ss  %ss/sec\n";
 
 const char report_bw_jitter_loss_header[] =
 "[ ID] Interval       Transfer     Bandwidth       Jitter   Lost/Total \

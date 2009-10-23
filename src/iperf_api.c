@@ -46,6 +46,8 @@
 #include "uuid.h"
 #include "locale.h"
 
+jmp_buf   env; /* to handle longjmp on signal */
+
 /*************************************************************/
 int
 all_data_sent(struct iperf_test * test)
@@ -201,8 +203,11 @@ add_interval_list(struct iperf_stream_result * rp, struct iperf_interval_results
     ip->next = NULL;
 }
 
+/*************************************************************/
+
+/* for debugging only */
 void
-display_interval_list(struct iperf_stream_result * rp)
+display_interval_list(struct iperf_stream_result * rp, int tflag)
 {
     struct iperf_interval_results *n;
 
@@ -211,19 +216,8 @@ display_interval_list(struct iperf_stream_result * rp)
     while (n)
     {
 	printf("Interval = %f\tBytes transferred = %llu\n", n->interval_duration, n->bytes_transferred);
-#if defined(linux)
-	/*
-	 * TODO: figure out a way to check command line flag for -T option
-	 * here
-	 */
-	printf(report_tcpInfo, n->tcpInfo.tcpi_snd_cwnd, n->tcpInfo.tcpi_snd_ssthresh,
-	       n->tcpInfo.tcpi_rcv_ssthresh, n->tcpInfo.tcpi_unacked, n->tcpInfo.tcpi_sacked,
-	       n->tcpInfo.tcpi_lost, n->tcpInfo.tcpi_retrans, n->tcpInfo.tcpi_fackets);
-#endif
-#if defined(__FreeBSD__)
-	printf(report_tcpInfo, n->tcpInfo.tcpi_snd_cwnd,
-	       n->tcpInfo.tcpi_snd_ssthresh, n->tcpInfo.tcpi_rcv_space);
-#endif
+	if (tflag)
+            print_tcpinfo(n);
 	n = n->next;
     }
 }
@@ -886,15 +880,11 @@ iperf_stats_callback(struct iperf_test * test)
     iperf_size_t cumulative_bytes = 0;
     int       i;
 
-#if defined(linux) || defined(__FreeBSD__)
-    socklen_t tcp_info_length;
-
-#endif
     struct iperf_stream *sp = test->streams;
     struct iperf_stream_result *rp = test->streams->result;
     struct iperf_interval_results *ip, temp;
 
-    //printf("in stats_callback: num_streams = %d \n", test->num_streams);
+    printf("in stats_callback: num_streams = %d \n", test->num_streams);
     for (i = 0; i < test->num_streams; i++)
     {
 	rp = sp->result;
@@ -910,16 +900,8 @@ iperf_stats_callback(struct iperf_test * test)
 
 	    temp.interval_duration = timeval_diff(&sp->result->start_time, &temp.interval_time);
 
-#if defined(linux) || defined(__FreeBSD__)
 	    if (test->tcp_info)
-	    {
-		tcp_info_length = sizeof(temp.tcpInfo);
-		if (getsockopt(sp->socket, IPPROTO_TCP, TCP_INFO, (void *) &temp.tcpInfo, &tcp_info_length) == 0)
-		{
-		    perror("getsockopt");
-		}
-	    }
-#endif
+                get_tcpinfo(test);
 
 	    gettimeofday(&sp->result->end_time, NULL);
 	    add_interval_list(rp, temp);
@@ -942,12 +924,15 @@ iperf_stats_callback(struct iperf_test * test)
 
 	    gettimeofday(&temp.interval_time, NULL);
 	    temp.interval_duration = timeval_diff(&sp->result->start_time, &temp.interval_time);
+	    if (test->tcp_info)
+                get_tcpinfo(test);
 
 	    gettimeofday(&sp->result->end_time, NULL);
 	    add_interval_list(rp, temp);
 	}
 
-	/* display_interval_list(rp); */
+	/* for debugging */
+	/* display_interval_list(rp, test->tcp_info); */
 	cumulative_bytes = 0;
 	sp = sp->next;
     }
@@ -1013,7 +998,7 @@ iperf_reporter_callback(struct iperf_test * test)
 #endif
 #if defined(__FreeBSD__)
 		sprintf(message, report_tcpInfo, ip->tcpInfo.tcpi_snd_cwnd,
-		 ip->tcpInfo.tcpi_snd_ssthresh, ip->tcpInfo.tcpi_rcv_space);
+		 ip->tcpInfo.tcpi_snd_ssthresh, ip->tcpInfo.tcpi_rcv_space, ip->tcpInfo.__tcpi_retrans);
 #endif
 
 
@@ -1176,6 +1161,7 @@ iperf_free_stream(struct iperf_test * test, struct iperf_stream * sp)
 struct iperf_stream *
 iperf_new_stream(struct iperf_test * testp)
 {
+    int i=0;
     struct iperf_stream *sp;
 
     sp = (struct iperf_stream *) malloc(sizeof(struct iperf_stream));
@@ -1193,8 +1179,8 @@ iperf_new_stream(struct iperf_test * testp)
 
     /* fill in buffer with random stuff */
     /* XXX: probably better to use truely random stuff here */
-    memset_pattern16( sp->buffer, "abcdefghijklmnop", (size_t) testp->default_settings->blksize);
-
+    for(i=0; i < testp->default_settings->blksize; i++)
+        sp->buffer[i] = i%255;
 
     sp->socket = -1;
 

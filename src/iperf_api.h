@@ -5,6 +5,9 @@
    approvals from the U.S. Dept. of Energy).  All rights reserved.
 */
 
+#ifndef        IPERF_API_H
+#define        IPERF_API_H
+
 typedef uint64_t iperf_size_t;
 
 struct iperf_interval_results
@@ -168,7 +171,6 @@ enum
 };
 
 #define SEC_TO_NS 1000000000	/* too big for enum on some platforms */
-jmp_buf   env;
 
 /**
  * exchange_parameters - handles the param_Exchange part for client
@@ -195,7 +197,7 @@ void      add_interval_list(struct iperf_stream_result * rp, struct iperf_interv
  * Mainly for DEBUG purpose
  *
  */
-void      display_interval_list(struct iperf_stream_result * rp);
+void      display_interval_list(struct iperf_stream_result * rp, int tflag);
 
 /**
  * send_result_to_client - sends result to client via
@@ -389,3 +391,9 @@ void      iperf_init_stream(struct iperf_stream * sp, struct iperf_test * testp)
  *
  */
 void      iperf_free_stream(struct iperf_test * test, struct iperf_stream * sp);
+
+void get_tcpinfo(struct iperf_test *test);
+void print_tcpinfo(struct iperf_interval_results *);
+
+#endif  /* IPERF_API_H */
+

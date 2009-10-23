@@ -149,7 +149,7 @@ enum
     uS_TO_NS = 1000,
     SEC_TO_US = 1000000,
     RATE = 1024 * 1024, /* 1 Mbps */
-    DURATION = 10, /* seconds */
+    DURATION = 5, /* seconds */
     DEFAULT_UDP_BLKSIZE = 1450, /* 1 packet per ethernet frame, IPV6 too */
     DEFAULT_TCP_BLKSIZE = 128 * 1024,  /* default read/write block size */
 

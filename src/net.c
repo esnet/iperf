@@ -125,8 +125,10 @@ again:
 	}
     } else
     {
+	//printf("Nwrite: writing %d bytes to socket %d \n", count, fd);
 	cnt = write(fd, buf, count);
     }
+    //printf("Nwrite: wrote %d bytes \n", cnt);
     return (cnt);
 }
 

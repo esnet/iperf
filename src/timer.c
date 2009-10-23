@@ -49,7 +49,6 @@ timer_expired(struct timer * tp)
     current += now.tv_usec;
 
     diff = end - current;
-
     return diff <= 0;
 
     /*

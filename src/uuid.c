@@ -7,6 +7,14 @@
 #include <uuid/uuid.h>
 #endif
 
+/* XXX: this code is not portable: not all versions of linux install libuuidgen
+	by default
+ * if not installed, may need to do something like this:
+ *   yum install libuuid-devel
+ *   apt-get install apt-get install
+*/
+
+
 void
 get_uuid(char *temp)
 {

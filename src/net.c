@@ -43,7 +43,6 @@ netdial(int proto, char *client, int port)
 	perror("connect");
 	return (-1);
     }
-    /* XXX: is this necessary? */
     sn = sizeof sa;
     if (getpeername(s, (struct sockaddr *) & sa, &sn) >= 0)
     {

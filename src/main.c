@@ -7,11 +7,22 @@
 
 /*
  * TO DO list:
- *    restructure code pull out main.c
+ *    finish/fix receive_result_from_server()
+ *      - also: should this be called for TCP too, or only UDP (currently its both,
+ *		but I think it should be UDP only, or maybe a command line option for TCP
+ *       (and related to this, check, test, document 'state machine' aspect of this.
+ *        eg: are TEST_START and TEST_END, and STREAM_END / ALL_STREAMS_END all required?
+ *		is it an error to get these in a strange order? etc. )
+ *    much better/standard error handling throughout
+ *    better packaging/makefile, README, LICENCE, etc files
  *    cleanup/fix/test UDP mode
- #    IPV6
+ *    IPV6
  *    add verbose and debug options
+ *    add human readable vs machine readable output mode
+ *      (my idea on this is that "human readable" = compatable with old iperf,
+ *	and that "machine readable is all name=value pairs -blt )
  *    lots more testing
+ *    look for 'XXX' in code and address
  *    see issue tracker for other wish list items
  */
 

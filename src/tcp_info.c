@@ -6,8 +6,9 @@
  * 
  * Note that this is only supported on Linux and FreeBSD, and that for FreeBSD
  * only the following are returned: tcpi_snd_ssthresh, tcpi_snd_cwnd,
- * tcpi_rcv_space, tcpi_rtt
+ * tcpi_rcv_space, tcpi_rtt, so not all that useful on FreeBSD yet
  */
+
 
 #include <stdio.h>
 #include <stdlib.h>

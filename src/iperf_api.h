@@ -18,6 +18,8 @@ struct iperf_interval_results
 #if defined(linux) || defined(__FreeBSD__)
     struct tcp_info tcpInfo;	/* getsockopt(TCP_INFO) results here for
 				 * Linux and FreeBSD stored here */
+#else
+    char *tcpInfo;	/* just a placeholder */
 #endif
     struct iperf_interval_results *next;
     void     *custom_data;

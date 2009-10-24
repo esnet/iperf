@@ -19,7 +19,9 @@ netdial(int proto, char *client, int port)
     struct sockaddr_in sa;
     socklen_t sn;
 
-    /* XXX: should this be called server?? -blt */
+    /* XXX: This is not working for non-fully qualified host names 
+	use getaddrinfo() instead?
+    */
     if ((hent = gethostbyname(client)) == 0)
     {
 	perror("gethostbyname");

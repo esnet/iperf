@@ -4,9 +4,16 @@
  * 
  * Brian Tierney, ESnet  (bltierney@es.net)
  * 
- * Note that this is only supported on Linux and FreeBSD, and that for FreeBSD
- * only the following are returned: tcpi_snd_ssthresh, tcpi_snd_cwnd,
- * tcpi_rcv_space, tcpi_rtt, so not all that useful on FreeBSD yet
+ * Note that this is only really useful on Linux.
+ #
+ * FreeBSD has a limitted implementation that only includes the following:
+ *   tcpi_snd_ssthresh, tcpi_snd_cwnd, tcpi_rcv_space, tcpi_rtt
+ * Based on information on http://wiki.freebsd.org/8.0TODO, I dont think this will be
+ * fixed before v8.1 at the earliest.
+ *
+ * OSX has no support.
+ *
+ * I think MS Windows does support TCP_INFO, but iperf3 does not currently support Windows.
  */
 
 

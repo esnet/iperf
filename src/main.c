@@ -188,7 +188,8 @@ main(int argc, char **argv)
 
 
     //printf("in main: calling iperf_init_test \n");
-    printf("Connection to port %d on host %s \n", test->server_port, test->server_hostname);
+    if (test->role == 'c')
+        printf("Connecting to port %d on host %s \n", test->server_port, test->server_hostname);
     iperf_init_test(test);
 
     if (test->role == 'c')	/* if client, send params to server */

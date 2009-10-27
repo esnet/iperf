@@ -37,6 +37,8 @@ timer_expired(struct timer * tp)
 
     struct timeval now;
     int64_t   end = 0, current = 0, diff = 0;
+
+    //printf("checking if timer has expired \n");
     if (gettimeofday(&now, NULL) < 0)
     {
 	perror("gettimeofday");

@@ -88,7 +88,7 @@ exchange_parameters(struct iperf_test *test)
     param->send_window = test->default_settings->socket_bufsize;
     param->format = test->default_settings->unit_format;
 
-    //printf(" sending exchange params: size = %d \n", (int)sizeof(struct param_exchange));
+    printf(" sending exchange params: size = %d \n", (int)sizeof(struct param_exchange));
     /* XXX: can we use iperf_tcp_send for this? that would be cleaner */
     result = send(sp->socket, sp->buffer, sizeof(struct param_exchange), 0);
     if (result < 0)
@@ -474,6 +474,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     struct udp_datagram *udp = (struct udp_datagram *)sp->buffer;
     struct timeval  arrival_time;
 
+    printf("in iperf_udp_recv: reading %d bytes \n", size);
     if (!sp->buffer) {
 	fprintf(stderr, "receive buffer not allocated \n");
 	exit(0);
@@ -616,6 +617,7 @@ iperf_udp_send(struct iperf_stream *sp)
     int64_t	    dtargus;
     int64_t	    adjustus = 0;
 
+    //printf("in iperf_udp_send \n");
     /*
      * the || part ensures that last packet is sent to server - the
      * STREAM_END MESSAGE
@@ -668,6 +670,7 @@ iperf_udp_send(struct iperf_stream *sp)
 
 	udp->sent_time = before;
 
+        printf("iperf_udp_send: writing %d bytes \n", size);
 #ifdef USE_SEND
 	result = send(sp->socket, sp->buffer, size, 0);
 #else
@@ -804,6 +807,7 @@ iperf_init_test(struct iperf_test *test)
 	FD_ZERO(&test->write_set);
 	FD_SET(s, &test->write_set);
 
+	/* XXX: I think we need to create a TCP control socket here too for UDP mode -blt */
 	for (i = 0; i < test->num_streams; i++) {
 	    s = netdial(test->protocol, test->server_hostname, test->server_port);
 	    if (s < 0) {
@@ -1229,7 +1233,7 @@ iperf_udp_accept(struct iperf_test *test)
     if (test->default_settings->state != RESULT_REQUEST)
 	connect_msg(sp);
 
-    printf("1st UDP data  packet for socket %d has arrived \n", sp->socket);
+    printf("iperf_udp_accept: 1st UDP data  packet for socket %d has arrived \n", sp->socket);
     sp->stream_id = udp->stream_id;
     sp->result->bytes_received += sz;
 
@@ -1516,7 +1520,7 @@ iperf_run_client(struct iperf_test *test)
 
 	delayus = dtargus;
 	adjustus = 0;
-	printf("%lld adj %lld delay\n", adjustus, delayus);
+	printf("iperf_run_client: adjustus: %lld, delayus: %lld \n", adjustus, delayus);
 
 	sp = test->streams;
 	for (i = 0; i < test->num_streams; i++) {

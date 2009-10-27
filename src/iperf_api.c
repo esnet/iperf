@@ -432,8 +432,7 @@ iperf_tcp_recv(struct iperf_stream *sp)
 
 	} while (result == -1 && errno == EINTR);
 #else
-	result = Nread(sp->socket, sp->buffer, size, 0);	/* XXX: TCP only for the
-								 * momment! */
+	result = Nread(sp->socket, sp->buffer, size, Ptcp);
 #endif
 	if (result == -1) {
 	    perror("Read error");
@@ -444,7 +443,7 @@ iperf_tcp_recv(struct iperf_stream *sp)
 	break;
     case ALL_STREAMS_END:
 	size = sizeof(struct param_exchange);
-	result = Nread(sp->socket, sp->buffer, size, 0);
+	result = Nread(sp->socket, sp->buffer, size, Ptcp);
 	/*XXX: is there anything that should be done at the point ? */
 	break;
     case RESULT_REQUEST:
@@ -479,10 +478,14 @@ iperf_udp_recv(struct iperf_stream *sp)
 	fprintf(stderr, "receive buffer not allocated \n");
 	exit(0);
     }
+#ifdef USE_SEND
     do {
 	result = recv(sp->socket, sp->buffer, size, 0);
 
     } while (result == -1 && errno == EINTR);
+#else
+    result = Nread(sp->socket, sp->buffer, size, Pudp);
+#endif
 
     /* interprete the type of message in packet */
     if (result > 0) {
@@ -535,7 +538,6 @@ iperf_tcp_send(struct iperf_stream *sp)
     int		    result;
     int		    size = sp->settings->blksize;
     struct param_exchange *param = (struct param_exchange *)sp->buffer;
-    struct sockaddr dest;
 
     if (!sp->buffer) {
 	perror("transmit buffer not allocated");
@@ -583,8 +585,7 @@ iperf_tcp_send(struct iperf_stream *sp)
 #ifdef USE_SEND
     result = send(sp->socket, sp->buffer, size, 0);
 #else
-    result = Nwrite(sp->socket, sp->buffer, size, 0, dest);	/* XXX: TCP only at the
-								 * moment! */
+    result = Nwrite(sp->socket, sp->buffer, size, Ptcp);	
 #endif
     if (result < 0)
 	perror("Write error");
@@ -667,7 +668,11 @@ iperf_udp_send(struct iperf_stream *sp)
 
 	udp->sent_time = before;
 
+#ifdef USE_SEND
 	result = send(sp->socket, sp->buffer, size, 0);
+#else
+        result = Nwrite(sp->socket, sp->buffer, size, Pudp); 
+#endif
 
 	if (gettimeofday(&after, 0) < 0)
 	    perror("gettimeofday");
@@ -765,8 +770,9 @@ iperf_init_test(struct iperf_test *test)
 	if (test->listener_sock_tcp < 0)
 	    exit(0);
 
-	if (set_tcp_windowsize(test->listener_sock_tcp, test->default_settings->socket_bufsize, SO_RCVBUF) < 0) {
-	    perror("unable to set TCP window");
+	if (test->protocol == Ptcp) {
+	    if (set_tcp_windowsize(test->listener_sock_tcp, test->default_settings->socket_bufsize, SO_RCVBUF) < 0) 
+	        perror("unable to set TCP window");
 	}
 	/* XXX: why do we do this?? -blt */
 	//setnonblocking(test->listener_sock_tcp);
@@ -1155,6 +1161,7 @@ iperf_new_tcp_stream(struct iperf_test *testp)
     sp->rcv = iperf_tcp_recv;	/* pointer to receive function */
     sp->snd = iperf_tcp_send;	/* pointer to send function */
 
+    /* XXX: not yet written... */
     //sp->update_stats = iperf_tcp_update_stats;
 
     return sp;
@@ -1172,7 +1179,6 @@ iperf_new_udp_stream(struct iperf_test *testp)
 	return (NULL);
     }
     sp->rcv = iperf_udp_recv;
-
     sp->snd = iperf_udp_send;
 
     return sp;
@@ -1295,12 +1301,14 @@ iperf_init_stream(struct iperf_stream *sp, struct iperf_test *testp)
 	perror("getpeername");
     }
     //printf("in init_stream: calling set_tcp_windowsize: %d \n", testp->default_settings->socket_bufsize);
-    if (set_tcp_windowsize(sp->socket, testp->default_settings->socket_bufsize,
+    if (testp->protocol == Ptcp) {
+        if (set_tcp_windowsize(sp->socket, testp->default_settings->socket_bufsize,
 			   testp->role == 's' ? SO_RCVBUF : SO_SNDBUF) < 0)
-	fprintf(stderr, "unable to set window size\n");
+	    fprintf(stderr, "unable to set window size\n");
 
-    set_socket_options(sp, testp);	/* set other options (TCP_NODELAY,
+        set_socket_options(sp, testp);	/* set other options (TCP_NODELAY,
 					 * MSS, etc.) */
+     }
 }
 
 /**************************************************************************/
@@ -1484,12 +1492,14 @@ iperf_run_client(struct iperf_test *test)
     int		    i     , result = 0;
     struct iperf_stream *sp, *np;
     struct timer   *timer, *stats_interval, *reporter_interval;
-    char           *read = NULL;
+    char           *read = NULL; 
+    char	   *prot = NULL;
     int64_t	    delayus, adjustus, dtargus;
     struct timeval  tv;
     int		    ret = 0;
     struct sigaction sact;
 
+    printf("in iperf_run_client \n");
     tv.tv_sec = 15;		/* timeout interval in seconds */
     tv.tv_usec = 0;
 
@@ -1526,13 +1536,16 @@ iperf_run_client(struct iperf_test *test)
     if (test->reporter_interval != 0)
 	reporter_interval = new_timer(test->reporter_interval, 0);
 
-    if (test->default_settings->bytes == 0)
-	printf("Starting Test: %d streams, %d byte blocks, %d second test \n",
-	test->num_streams, test->default_settings->blksize, test->duration);
+    if (test->protocol == Pudp) 
+	prot = "UDP";
     else
-	printf("Starting Test: %d streams, %d byte blocks, %d bytes to send\n",
-	       test->num_streams, test->default_settings->blksize, (int)test->default_settings->bytes);
-
+	prot = "TCP";
+    if (test->default_settings->bytes == 0)
+	printf("Starting Test: protocol: %s, %d streams, %d byte blocks, %d second test \n",
+	prot, test->num_streams, test->default_settings->blksize, test->duration);
+    else
+	printf("Starting Test: protocol: %s, %d streams, %d byte blocks, %d bytes to send\n",
+	       prot, test->num_streams, test->default_settings->blksize, (int)test->default_settings->bytes);
 
     /* send data till the timer expires or bytes sent */
     while (!all_data_sent(test) && !timer->expired(timer)) {
@@ -1590,10 +1603,10 @@ iperf_run_client(struct iperf_test *test)
 
     /* Requesting for result from Server */
     test->default_settings->state = RESULT_REQUEST;
-    receive_result_from_server(test);	/* XXX: current broken! bus error */
-    read = test->reporter_callback(test);
-    printf("Summary results as measured by the server: \n");
-    puts(read);
+    //receive_result_from_server(test);	/* XXX: currently broken! */
+    //read = test->reporter_callback(test);
+    //printf("Summary results as measured by the server: \n");
+    //puts(read);
 
     //printf("Done getting/printing results. \n");
 

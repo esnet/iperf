@@ -91,12 +91,12 @@ netannounce(int proto, char *local, int port)
 /********************************************************************/
 
 int
-Nread(int fd, char *buf, int count, int udp)
+Nread(int fd, char *buf, int count, int prot)
 {
     struct sockaddr from;
     socklen_t len = sizeof(from);
     register int cnt;
-    if (udp)
+    if (prot == SOCK_DGRAM)
     {
 	cnt = recvfrom(fd, buf, count, 0, &from, &len);
     } else
@@ -111,15 +111,17 @@ Nread(int fd, char *buf, int count, int udp)
  *                      N W R I T E
  */
 int
-Nwrite(int fd, char *buf, int count, int udp, struct sockaddr dest)
+Nwrite(int fd, char *buf, int count, int prot)
 {
     register int cnt;
-    if (udp)
+    if (prot == SOCK_DGRAM) /* UDP mode */
     {
 again:
-	cnt = sendto(fd, buf, count, 0, &dest, (socklen_t) sizeof(dest));
+	cnt = send(fd, buf, count, 0);
 	if (cnt < 0 && errno == ENOBUFS)
 	{
+	 /* wait if run out of buffers */
+	/* XXX: but how long to wait? Start shorter and increase delay each time?? */
 	    delay(18000);	/* XXX: Fixme! */
 	    errno = 0;
 	    goto again;

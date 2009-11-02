@@ -224,17 +224,18 @@ iperf_run(struct iperf_test * test)
     switch (test->role)
     {
     case 's':
-        iperf_run_server(test);
+	while (1)
+        {
+          iperf_run_server(test);
+	  sleep(1);
+	  iperf_init_test(test); /* re-initialize everything */
+        }
         return 0;
-        break;
     case 'c':
         iperf_run_client(test);
         return 0;
-        break;
     default:
         return -1;
-        break;
     }
-    printf("Done iperf_run. \n");
 }
 

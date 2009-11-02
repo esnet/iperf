@@ -52,7 +52,6 @@ int
 iperf_tcp_recv(struct iperf_stream * sp)
 {
     int       result, message;
-    char      ch;
     int       size = sp->settings->blksize;
     char     *final_message = NULL;
 
@@ -66,7 +65,7 @@ iperf_tcp_recv(struct iperf_stream * sp)
 	return -1;
     }
     /* get the 1st byte: then based on that, decide how much to read */
-    if ((result = recv(sp->socket, &ch, sizeof(int), MSG_PEEK)) != sizeof(int))
+    if ((result = recv(sp->socket, &message, sizeof(int), MSG_PEEK)) != sizeof(int))
     {
 	if (result == 0)
 	    printf("Client Disconnected. \n");
@@ -74,9 +73,8 @@ iperf_tcp_recv(struct iperf_stream * sp)
 	    perror("iperf_tcp_recv: recv error: MSG_PEEK");
 	return -1;
     }
-    message = (int) ch;
     sp->settings->state = message;
-    if (message != 7)		/* tell me about non STREAM_RUNNING messages
+    if (message != STREAM_RUNNING)	/* tell me about non STREAM_RUNNING messages
 				 * for debugging */
 	printf("iperf_tcp_recv: got message type %d \n", message);
 
@@ -107,7 +105,6 @@ iperf_tcp_recv(struct iperf_stream * sp)
     case TEST_START:
     case STREAM_BEGIN:
     case STREAM_RUNNING:
-    case STREAM_END:
 	size = sp->settings->blksize;
 #ifdef USE_RECV
 	/*
@@ -131,19 +128,23 @@ iperf_tcp_recv(struct iperf_stream * sp)
 	//printf("iperf_tcp_recv: recv returned %d bytes \n", result);
 	sp->result->bytes_received += result;
 	break;
+    case STREAM_END:
     case ALL_STREAMS_END:
 	size = sizeof(struct param_exchange);
 	result = Nread(sp->socket, sp->buffer, size, Ptcp);
-	/* XXX: is there anything that should be done at the point ? */
+	break;
+    case TEST_END:
+	size = sizeof(struct param_exchange);
+	result = Nread(sp->socket, sp->buffer, size, Ptcp);
 	break;
     case RESULT_REQUEST:
 	/* XXX: not working yet  */
 	//final_message = iperf_reporter_callback(test);
 	final_message = "final server results string will go here \n";
-	memcpy(sp->buffer, final_message, strlen(final_message));
-	result = send(sp->socket, sp->buffer, sp->settings->blksize, 0);
-	if (result < 0)
-	    perror("Error sending results back to client");
+	//memcpy(sp->buffer, final_message, strlen(final_message));
+	//result = send(sp->socket, sp->buffer, sp->settings->blksize, 0);
+	//if (result < 0)
+	//    perror("Error sending results back to client");
 
 	break;
     default:
@@ -167,53 +168,48 @@ iperf_tcp_send(struct iperf_stream * sp)
 {
     int       result;
     int       size = sp->settings->blksize;
-    struct param_exchange *param = (struct param_exchange *) sp->buffer;
 
     if (!sp->buffer)
     {
 	perror("transmit buffer not allocated");
 	return -1;
     }
-    strncpy(param->cookie, sp->settings->cookie, 37);
+
+    //printf("iperf_tcp_send: state = %d \n", sp->settings->state);
+    sp->buffer[0] = sp->settings->state;
+
+    /* set read size based on message type */
     switch (sp->settings->state)
     {
     case PARAM_EXCHANGE:
-	param->state = PARAM_EXCHANGE;
 	size = sizeof(struct param_exchange);
 	break;
-
     case STREAM_BEGIN:
-	param->state = STREAM_BEGIN;
 	size = sp->settings->blksize;
 	break;
-
     case STREAM_END:
-	param->state = STREAM_END;
-	size = sp->settings->blksize;	/* XXX: this might not be right, will
-					 * the last block always be full
-					 * size? */
+	size = sizeof(struct param_exchange);
 	break;
-
     case RESULT_REQUEST:
-	param->state = RESULT_REQUEST;
-	size = sizeof(struct param_exchange);
+	size = sp->settings->blksize; /* XXX: what size should this be? */
 	break;
-
     case ALL_STREAMS_END:
-	param->state = ALL_STREAMS_END;
 	size = sizeof(struct param_exchange);
 	break;
-
+    case TEST_END:
+	size = sizeof(struct param_exchange);
+	break;
     case STREAM_RUNNING:
-	param->state = STREAM_RUNNING;
 	size = sp->settings->blksize;
 	break;
     default:
 	printf("State of the stream can't be determined\n");
-	break;
+	return -1;
     }
 
-    //printf("   in iperf_tcp_send, message type = %d (total = %d bytes) \n", param->state, size);
+    if(sp->settings->state != STREAM_RUNNING)
+        printf("   in iperf_tcp_send, message type = %d (total = %d bytes) \n", sp->settings->state, size);
+
 #ifdef USE_SEND
     result = send(sp->socket, sp->buffer, size, 0);
 #else
@@ -223,18 +219,14 @@ iperf_tcp_send(struct iperf_stream * sp)
 	perror("Write error");
     //printf("   iperf_tcp_send: %d bytes sent \n", result);
 
+    if (sp->settings->state == STREAM_BEGIN || sp->settings->state == STREAM_RUNNING)
+	sp->result->bytes_sent += result;
+
+    //printf("iperf_tcp_send: number bytes sent so far = %u \n", (uint64_t) sp->result->bytes_sent);
+
     /* change state after 1st send */
     if (sp->settings->state == STREAM_BEGIN)
 	sp->settings->state = STREAM_RUNNING;
-
-    if (sp->buffer[0] != STREAM_END)
-	/*
-	 * XXX: check/fix this. Maybe only want to increment the size with
-	 * STREAM_BEGIN and STREAM_RUNNING?
-	 */
-	sp->result->bytes_sent += size;
-
-    //printf("iperf_tcp_send: number bytes sent so far = %u \n", (uint64_t) sp->result->bytes_sent);
 
     return result;
 }
@@ -287,7 +279,8 @@ iperf_tcp_accept(struct iperf_test * test)
     } else
     {
 	sp = test->new_stream(test);
-	setnonblocking(peersock);
+	/* XXX: what is this for? */
+	//setnonblocking(peersock);
 
 	FD_SET(peersock, &test->read_set);
 	test->max_fd = (test->max_fd < peersock) ? peersock : test->max_fd;

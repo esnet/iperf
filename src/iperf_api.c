@@ -104,7 +104,7 @@ exchange_parameters(struct iperf_test * test)
     param->send_window = test->default_settings->socket_bufsize;
     param->format = test->default_settings->unit_format;
 
-    printf(" sending exchange params: size = %d \n", (int) sizeof(struct param_exchange));
+    //printf(" sending exchange params: size = %d \n", (int) sizeof(struct param_exchange));
     /* XXX: can we use iperf_tcp_send for this? that would be cleaner */
     result = send(sp->socket, sp->buffer, sizeof(struct param_exchange), 0);
     if (result < 0)
@@ -115,7 +115,7 @@ exchange_parameters(struct iperf_test * test)
     /* get answer back from server */
     do
     {
-	printf("exchange_parameters: reading result from server .. \n");
+	//printf("exchange_parameters: reading result from server .. \n");
 	result = recv(sp->socket, sp->buffer, sizeof(struct param_exchange), 0);
     } while (result == -1 && errno == EINTR);
     if (result < 0)
@@ -221,10 +221,6 @@ receive_result_from_server(struct iperf_test * test)
 
     printf(server_reporting, sp->socket);
     puts(buf);			/* prints results */
-
-    printf("receive_result_from_server: send TEST_END to server \n");
-    sp->settings->state = TEST_END;
-    sp->snd(sp);		/* send message to server */
 
 }
 
@@ -346,6 +342,7 @@ iperf_init_test(struct iperf_test * test)
     struct iperf_stream *sp;
     int       i, s = 0;
 
+    printf("in iperf_init_test \n");
     if (test->role == 's')
     {				/* server */
 	if (test->protocol == Pudp)
@@ -416,8 +413,7 @@ iperf_init_test(struct iperf_test * test)
 	    iperf_init_stream(sp, test);
 	    iperf_add_stream(test, sp);
 
-	    if (test->default_settings->state != RESULT_REQUEST)
-		connect_msg(sp);/* XXX: what is this ?? */
+	    connect_msg(sp); /* print connection established message */
 	}
     }
 }
@@ -543,7 +539,7 @@ iperf_reporter_callback(struct iperf_test * test)
 
     sp = test->streams;
     curr_state = sp->settings->state;
-    printf("in iperf_reporter_callback: state = %d \n", curr_state);
+    //printf("in iperf_reporter_callback: state = %d \n", curr_state);
 
     if (curr_state == TEST_RUNNING)
     {
@@ -697,34 +693,8 @@ iperf_reporter_callback(struct iperf_test * test)
 
 /**************************************************************************/
 void
-iperf_free_stream(struct iperf_test * test, struct iperf_stream * sp)
+iperf_free_stream(struct iperf_stream * sp)
 {
-    struct iperf_stream *prev, *start;
-
-    prev = test->streams;
-    start = test->streams;
-
-    if (test->streams->socket == sp->socket)
-    {
-	test->streams = test->streams->next;
-    } else
-    {
-	start = test->streams->next;
-	while (1)
-	{
-	    if (start->socket == sp->socket)
-	    {
-		prev->next = sp->next;
-		break;
-	    }
-	    if (start->next != NULL)
-	    {
-		start = start->next;
-		prev = prev->next;
-	    }
-	}
-    }
-
     free(sp->buffer);
     free(sp->settings);
     free(sp->result);
@@ -879,7 +849,7 @@ iperf_run_client(struct iperf_test * test)
     int       ret = 0;
     struct sigaction sact;
 
-    printf("in iperf_run_client \n");
+    //printf("in iperf_run_client \n");
     tv.tv_sec = 15;		/* timeout interval in seconds */
     tv.tv_usec = 0;
 
@@ -980,7 +950,7 @@ iperf_run_client(struct iperf_test * test)
     /* send STREAM_END packets */
     np = test->streams;
     do
-    {
+    {  /* send STREAM_END to all sockets */
 	sp = np;
 	sp->settings->state = STREAM_END;
 	sp->snd(sp);
@@ -999,7 +969,6 @@ iperf_run_client(struct iperf_test * test)
     result_string = test->reporter_callback(test);
     puts(result_string);
 
-
     /* Requesting for result from Server */
     test->default_settings->state = RESULT_REQUEST;
     //receive_result_from_server(test);	/* XXX: currently broken! */
@@ -1009,6 +978,10 @@ iperf_run_client(struct iperf_test * test)
 
     //printf("Done getting/printing results. \n");
 
+    printf("send TEST_END to server \n");
+    sp->settings->state = TEST_END;
+    sp->snd(sp);		/* send message to server */
+
     /* Deleting all streams - CAN CHANGE FREE_STREAM FN */
     sp = test->streams;
     np = sp;
@@ -1017,7 +990,7 @@ iperf_run_client(struct iperf_test * test)
 	sp = np;
 	close(sp->socket);
 	np = sp->next;
-	iperf_free_stream(test, sp);
+	iperf_free_stream(sp);
     } while (np);
 
     if (test->stats_interval != 0)

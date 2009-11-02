@@ -75,7 +75,7 @@ param_received(struct iperf_stream * sp, struct param_exchange * param)
 	buf[0] = ACCESS_DENIED;
     }
     free(buf);
-    printf("param_received: Sending message back to client \n");
+    //printf("param_received: Sending message back to client \n");
     result = send(sp->socket, buf, sizeof(struct param_exchange), 0);
     if (result < 0)
 	perror("param_received: Error sending param ack to client");
@@ -190,8 +190,8 @@ iperf_run_server(struct iperf_test * test)
 		    {
 		        /* XXX: test this! */
 			close(np->socket);
-			FD_CLR(np->socket, &test->read_set);
-			iperf_free_stream(test, np);
+			//FD_CLR(np->socket, &test->read_set);
+			iperf_free_stream(np);
                     }
 		    if (message == STREAM_END)
 		    {
@@ -221,10 +221,11 @@ iperf_run_server(struct iperf_test * test)
 			do
 			{
 			    sp = np;
+			    printf(" closing socket: %d \n", sp->socket);
 			    close(sp->socket);
-			    FD_CLR(sp->socket, &test->read_set);
-			    np = sp->next;
-			    iperf_free_stream(test, sp);
+			    //FD_CLR(sp->socket, &test->read_set);
+			    np = sp->next; /* get next pointer before freeing */
+			    iperf_free_stream(sp);
 			} while (np != NULL);
 
 			printf("TEST_END\n\n");

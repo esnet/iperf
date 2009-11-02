@@ -155,7 +155,7 @@ void      iperf_init_stream(struct iperf_stream * sp, struct iperf_test * testp)
  * iperf_free_stream -- free resources associated with test
  *
  */
-void      iperf_free_stream(struct iperf_test * test, struct iperf_stream * sp);
+void      iperf_free_stream(struct iperf_stream * sp);
 
 void get_tcpinfo(struct iperf_test *test, struct iperf_interval_results *rp);
 void print_tcpinfo(struct iperf_interval_results *);

@@ -4,8 +4,11 @@
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <assert.h>
 #include <netdb.h>
 #include <string.h>
+#include <sys/fcntl.h>
 
 #include "net.h"
 #include "timer.h"
@@ -51,6 +54,8 @@ netdial(int proto, char *client, int port)
     perror("connect");
     return (-1);
 }
+
+/***************************************************************/
 
 int
 netannounce(int proto, char *local, int port)
@@ -163,3 +168,97 @@ mread(int fd, char *bufp, int n)
 
     return ((int) count);
 }
+
+
+/*************************************************************************/
+
+/**
+ * getsock_tcp_mss - Returns the MSS size for TCP
+ *
+ */
+
+int
+getsock_tcp_mss(int inSock)
+{
+    int             mss = 0;
+
+    int             rc;
+    socklen_t       len;
+
+    assert(inSock >= 0); /* print error and exit if this is not true */
+
+    /* query for mss */
+    len = sizeof(mss);
+    rc = getsockopt(inSock, IPPROTO_TCP, TCP_MAXSEG, (char *)&mss, &len);
+
+    return mss;
+}
+
+
+
+/*************************************************************/
+
+/* sets TCP_NODELAY and TCP_MAXSEG if requested */
+
+int
+set_tcp_options(int sock, int no_delay, int mss)
+{
+
+    socklen_t       len;
+
+    if (no_delay == 1) {
+        int             no_delay = 1;
+
+        len = sizeof(no_delay);
+        int             rc = setsockopt(sock, IPPROTO_TCP, TCP_NODELAY,
+                             (char *)&no_delay, len);
+
+        if (rc == -1) {
+            perror("TCP_NODELAY");
+            return -1;
+        }
+    }
+#ifdef TCP_MAXSEG
+    if (mss > 0) {
+        int             rc;
+        int             new_mss;
+
+        len = sizeof(new_mss);
+
+        assert(sock != -1);
+
+        /* set */
+        new_mss = mss;
+        len = sizeof(new_mss);
+        rc = setsockopt(sock, IPPROTO_TCP, TCP_MAXSEG, (char *)&new_mss, len);
+        if (rc == -1) {
+            perror("setsockopt");
+            return -1;
+        }
+        /* verify results */
+        rc = getsockopt(sock, IPPROTO_TCP, TCP_MAXSEG, (char *)&new_mss, &len);
+        if (new_mss != mss) {
+            perror("setsockopt value mismatch");
+            return -1;
+        }
+    }
+#endif
+    return 0;
+}
+
+/****************************************************************************/
+
+int
+setnonblocking(int sock)
+{
+    int       opts;
+
+    opts = (opts | O_NONBLOCK);
+    if (fcntl(sock, F_SETFL, opts) < 0)
+    {
+        perror("fcntl(F_SETFL)");
+        return -1;
+    }
+    return 0;
+}
+

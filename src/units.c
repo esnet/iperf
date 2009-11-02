@@ -55,6 +55,8 @@
 #include <assert.h>
 #include <ctype.h>
 #include <stdint.h>
+#include <sys/socket.h>
+#include <sys/time.h>
 
 #include "iperf.h"
 

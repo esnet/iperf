@@ -44,8 +44,10 @@ get_tcpinfo(struct iperf_test *test, struct iperf_interval_results *rp)
 	perror("getsockopt");
     }
     memcpy(&rp->tcpInfo, &tcpInfo, sizeof(tcpInfo));
+    /* for debugging
     printf("   got TCP_INFO: %d, %d, %d, %d\n", rp->tcpInfo.tcpi_snd_cwnd,
 	   rp->tcpInfo.tcpi_snd_ssthresh, rp->tcpInfo.tcpi_rcv_space, rp->tcpInfo.tcpi_rtt);
+    */
     return;
 #else
     return;
@@ -59,7 +61,7 @@ print_tcpinfo(struct iperf_interval_results *r)
 #if defined(linux)
     printf(report_tcpInfo, r->tcpInfo.tcpi_snd_cwnd, r->tcpInfo.tcpi_snd_ssthresh,
 	   r->tcpInfo.tcpi_rcv_ssthresh, r->tcpInfo.tcpi_unacked, r->tcpInfo.tcpi_sacked,
-    r->tcpInfo.tcpi_lost, r->tcpInfo.tcpi_retrans, r->tcpInfo.tcpi_fackets);
+    r->tcpInfo.tcpi_lost, r->tcpInfo.tcpi_retrans, r->tcpInfo.tcpi_fackets, tcpi_reordering);
 #endif
 #if defined(__FreeBSD__)
     printf(report_tcpInfo, r->tcpInfo.tcpi_snd_cwnd, r->tcpInfo.tcpi_rcv_space,

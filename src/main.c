@@ -13,6 +13,8 @@
  *       (and related to this, check, test, document 'state machine' aspect of this.
  *        eg: are TEST_START and TEST_END, and STREAM_END / ALL_STREAMS_END all required?
  *		is it an error to get these in a strange order? etc. )
+ *    verify placment of all timing calls and total_bytes_sent computations
+ *    break up into client/sever files and TCP/UDP files
  *    much better/standard error handling throughout
  *    better packaging/makefile, README, LICENCE, etc files
  *    cleanup/fix/test UDP mode
@@ -43,10 +45,13 @@
 #include <netinet/tcp.h>
 
 
+#include "iperf.h"
 #include "iperf_api.h"
+#include "iperf_server_api.h"
 #include "units.h"
 #include "locale.h"
 
+int       iperf_run(struct iperf_test * test);
 
 /**************************************************************************/
 
@@ -186,6 +191,11 @@ main(int argc, char **argv)
 	}
     }
 
+    /* untill this is done.... */
+    if (test->protocol == Pudp) {
+	printf("UDP mode not yet supported. Exiting. \n");
+	exit(0);
+    }
 
     //printf("in main: calling iperf_init_test \n");
     if (test->role == 'c')
@@ -204,3 +214,27 @@ main(int argc, char **argv)
     printf("\niperf Done.\n");
     exit(0);
 }
+
+/**************************************************************************/
+int
+iperf_run(struct iperf_test * test)
+{
+    test->default_settings->state = TEST_RUNNING;
+
+    switch (test->role)
+    {
+    case 's':
+        iperf_run_server(test);
+        return 0;
+        break;
+    case 'c':
+        iperf_run_client(test);
+        return 0;
+        break;
+    default:
+        return -1;
+        break;
+    }
+    printf("Done iperf_run. \n");
+}
+

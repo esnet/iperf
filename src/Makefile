@@ -1,5 +1,5 @@
 CFLAGS=-g -Wall
-OBJS=main.o iperf_api.o timer.o net.o tcp_window_size.o units.o uuid.o tcp_info.o locale.o
+OBJS=main.o iperf_api.o iperf_server_api.o iperf_tcp.o iperf_udp.o timer.o net.o tcp_window_size.o units.o uuid.o tcp_info.o locale.o
 LDFLAGS=
 
 UNAME=$(shell uname)
@@ -10,7 +10,7 @@ endif
 all: iperf 
 	
 iperf: $(OBJS)
-	$(CC) $(LDFLAGS) -o iperf3 $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o iperf3 $(OBJS)
 
 profile: iperf
 	$(CC) -pg -o iperf-profile $(OBJS)

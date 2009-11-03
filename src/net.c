@@ -43,7 +43,7 @@ netdial(int proto, char *client, int port)
 
     if (connect(s, (struct sockaddr *) & sa, sizeof sa) < 0 && errno != EINPROGRESS)
     {
-	perror("connect");
+	perror("connect error");
 	return (-1);
     }
     sn = sizeof sa;
@@ -51,7 +51,7 @@ netdial(int proto, char *client, int port)
     {
 	return (s);
     }
-    perror("connect");
+    perror("getpeername error");
     return (-1);
 }
 

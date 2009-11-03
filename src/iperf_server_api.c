@@ -201,15 +201,15 @@ iperf_run_server(struct iperf_test * test)
 		    {
 			/* XXX: test this! */
 			close(np->socket);
-			//FD_CLR(np->socket, &test->read_set);
+			FD_CLR(np->socket, &test->read_set);
 			iperf_free_stream(np);
 		    }
 		    if (message == STREAM_END)
 		    {
 			/*
-			 * XXX: should I expect one of these per stream. If
-			 * so, only timestamp the 1st one??
+			 * should get one of these for each stream
 			 */
+			/* XXX: fixme: use this timestamp for all streams */
 			gettimeofday(&np->result->end_time, NULL);
 		    }
 		    if (message == RESULT_REQUEST)

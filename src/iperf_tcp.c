@@ -129,6 +129,10 @@ iperf_tcp_recv(struct iperf_stream * sp)
 	sp->result->bytes_received += result;
 	break;
     case STREAM_END:
+	size = sizeof(struct param_exchange);
+	/* XXX: Fixme: neeed to read from all sockets if find a STREAM_END message */
+	result = Nread(sp->socket, sp->buffer, size, Ptcp);
+	break;
     case ALL_STREAMS_END:
 	size = sizeof(struct param_exchange);
 	result = Nread(sp->socket, sp->buffer, size, Ptcp);

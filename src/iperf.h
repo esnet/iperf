@@ -72,7 +72,7 @@ struct iperf_stream
      * stream can have a pointer to this
      */
     int       packet_count;
-    int       stream_id;	/* stream identity */
+    int       stream_id;	/* stream identity for UDP mode */
     double    jitter;
     double    prev_transit;
     int       outoforder_packets;
@@ -176,6 +176,7 @@ enum
 };
 
 #define SEC_TO_NS 1000000000	/* too big for enum on some platforms */
+#define MAX_RESULT_STRING 4096
 
 #endif  /* IPERF_API_H */
 

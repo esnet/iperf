@@ -64,6 +64,7 @@ netannounce(int proto, char *local, int port)
     struct sockaddr_in sa;
     /* XXX: implement binding to a local address rather than * */
 
+    printf("in netannounce: port = %d \n", port);
     memset((void *) &sa, 0, sizeof sa);
 
     s = socket(AF_INET, proto, 0);

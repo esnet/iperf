@@ -290,6 +290,7 @@ iperf_new_test()
 {
     struct iperf_test *testp;
 
+    printf("in iperf_new_test: reinit default settings \n");
     testp = (struct iperf_test *) malloc(sizeof(struct iperf_test));
     if (!testp)
     {
@@ -526,7 +527,7 @@ iperf_reporter_callback(struct iperf_test * test)
     struct iperf_stream *sp = test->streams;
     iperf_size_t bytes = 0;
     double    start_time, end_time;
-    char     *message = (char *) malloc(500);
+    char     *message = (char *) malloc(500); /* XXX: define this size in iperf.h */
 
 
     char     *message_final = (char *) malloc(test->num_streams * (strlen(report_bw_jitter_loss_header)
@@ -709,6 +710,7 @@ iperf_new_stream(struct iperf_test * testp)
     int       i = 0;
     struct iperf_stream *sp;
 
+    printf("in iperf_new_stream \n");
     sp = (struct iperf_stream *) malloc(sizeof(struct iperf_stream));
     if (!sp)
     {
@@ -717,6 +719,7 @@ iperf_new_stream(struct iperf_test * testp)
     }
     memset(sp, 0, sizeof(struct iperf_stream));
 
+    printf("Allocating new stream buffer: size = %d \n", testp->default_settings->blksize);
     sp->buffer = (char *) malloc(testp->default_settings->blksize);
     sp->settings = (struct iperf_settings *) malloc(sizeof(struct iperf_settings));
     memcpy(sp->settings, testp->default_settings, sizeof(struct iperf_settings));

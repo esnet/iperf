@@ -113,7 +113,7 @@ iperf_tcp_recv(struct iperf_stream * sp)
 	 */
 	do
 	{
-	    printf("iperf_tcp_recv: Calling recv: expecting %d bytes \n", size);
+	    //printf("iperf_tcp_recv: Calling recv: expecting %d bytes \n", size);
 	    result = recv(sp->socket, sp->buffer, size, MSG_WAITALL);
 
 	} while (result == -1 && errno == EINTR);
@@ -176,7 +176,7 @@ iperf_tcp_send(struct iperf_stream * sp)
     }
 
     //printf("iperf_tcp_send: state = %d \n", sp->settings->state);
-    sp->buffer[0] = sp->settings->state;
+    memcpy(sp->buffer, &(sp->settings->state), sizeof(int));;
 
     /* set read size based on message type */
     switch (sp->settings->state)
@@ -284,9 +284,10 @@ iperf_tcp_accept(struct iperf_test * test)
 
 	FD_SET(peersock, &test->read_set);
 	test->max_fd = (test->max_fd < peersock) ? peersock : test->max_fd;
+        //printf("iperf_tcp_accept: max_fd now set to: %d \n", test->max_fd );
 
 	sp->socket = peersock;
-	//printf("in iperf_tcp_accept: tcp_windowsize: %d \n", test->default_settings->socket_bufsize);
+	//printf("in iperf_tcp_accept: socket = %d, tcp_windowsize: %d \n", peersock, test->default_settings->socket_bufsize);
 	iperf_init_stream(sp, test);
 	iperf_add_stream(test, sp);
 

@@ -121,11 +121,13 @@ iperf_run_server(struct iperf_test * test)
     int       j, result, message;
     char     *results_string = NULL;
 
+    printf("in iperf_run_server \n");
     FD_ZERO(&test->read_set);
     FD_SET(test->listener_sock_tcp, &test->read_set);
     FD_SET(test->listener_sock_udp, &test->read_set);
 
     test->max_fd = test->listener_sock_tcp > test->listener_sock_udp ? test->listener_sock_tcp : test->listener_sock_udp;
+    printf("iperf_run_server: max_fd set to %d \n", test->max_fd);
 
     test->num_streams = 0;
     test->default_settings->state = TEST_RUNNING;
@@ -138,15 +140,15 @@ iperf_run_server(struct iperf_test * test)
 	tv.tv_usec = 0;
 
 	/* using select to check on multiple descriptors. */
+	//printf("calling select.. sock = %d \n", test->max_fd + 1);
 	result = select(test->max_fd + 1, &test->temp_set, NULL, NULL, &tv);
-
 	if (result == 0)
 	{
 	    //printf("SERVER IDLE : %d sec\n", (int) tv.tv_sec);
 	    continue;
 	} else if (result < 0 && errno != EINTR)
 	{
-	    printf("Error in select(): %s\n", strerror(errno));
+	    printf("Error in select(): %s, socket = %d\n", strerror(errno), test->max_fd + 1);
 	    exit(0);
 	} else if (result > 0)
 	{
@@ -159,6 +161,7 @@ iperf_run_server(struct iperf_test * test)
 		test->accept(test);
 		test->default_settings->state = TEST_RUNNING;
 		FD_CLR(test->listener_sock_tcp, &test->temp_set);
+		printf("iperf_run_server: accepted TCP connection \n");
 	    }
 	    /* Accept a new UDP connection */
 	    else if (FD_ISSET(test->listener_sock_udp, &test->temp_set))
@@ -177,8 +180,15 @@ iperf_run_server(struct iperf_test * test)
 		{
 		    /* find the correct stream - possibly time consuming */
 		    np = find_stream_by_socket(test, j);
-		    message = np->rcv(np);	/* get data from client using receiver callback  */
-	            //printf ("iperf_run_server: iperf_tcp_recv returned %d \n", message);
+		    message = np->rcv(np);	/* get data from client using
+						 * receiver callback  */
+		    //printf("iperf_run_server: iperf_tcp_recv returned %d \n", message);
+	            if (message < 0)
+		    {
+			printf("Error reading data from client \n");
+			close(np->socket);
+		        return;
+		    }
 		    np->settings->state = message;
 
 		    if (message == PARAM_EXCHANGE)
@@ -186,13 +196,14 @@ iperf_run_server(struct iperf_test * test)
 			/* copy the received settings into test */
 			memcpy(test->default_settings, test->streams->settings, sizeof(struct iperf_settings));
 		    }
-		    if (message == ACCESS_DENIED)  /* this might get set by PARAM_EXCHANGE */
+		    if (message == ACCESS_DENIED)	/* this might get set by
+							 * PARAM_EXCHANGE */
 		    {
-		        /* XXX: test this! */
+			/* XXX: test this! */
 			close(np->socket);
 			//FD_CLR(np->socket, &test->read_set);
 			iperf_free_stream(np);
-                    }
+		    }
 		    if (message == STREAM_END)
 		    {
 			/*
@@ -221,24 +232,25 @@ iperf_run_server(struct iperf_test * test)
 			do
 			{
 			    sp = np;
-			    printf(" closing socket: %d \n", sp->socket);
+			    //printf(" closing socket: %d \n", sp->socket);
 			    close(sp->socket);
-			    //FD_CLR(sp->socket, &test->read_set);
-			    np = sp->next; /* get next pointer before freeing */
+			    FD_CLR(sp->socket, &test->read_set);
+			    np = sp->next;	/* get next pointer before
+						 * freeing */
 			    iperf_free_stream(sp);
 			} while (np != NULL);
 
-			printf("TEST_END\n\n");
 			test->default_settings->state = TEST_END;
-			/* reset cookie with client is finished */
+			/* reset cookie when client is finished */
 			memset(test->default_settings->cookie, '\0', 37);
-
+			break; /* always break out of for loop on TEST_END message */
 		    }
 		}		/* end if (FD_ISSET(j, &temp_set)) */
 	    }			/* end for (j=0;...) */
 
 	}			/* end else (result>0)   */
     }				/* end while */
+    printf("Test Complete. \n\n");
+    return;
 
 }
-

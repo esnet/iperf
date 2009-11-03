@@ -228,7 +228,7 @@ iperf_run(struct iperf_test * test)
         {
           iperf_run_server(test);
 	  sleep(1);
-	  iperf_init_test(test); /* re-initialize everything */
+	  //iperf_init_test(test); /* re-initialize everything */
         }
         return 0;
     case 'c':

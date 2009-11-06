@@ -84,7 +84,8 @@ main(int argc, char **argv)
 
     char      ch, role;
     struct iperf_test *test;
-    int       port = PORT;
+    int       port = PORT, cnt = 0;
+    struct iperf_stream *np;
 
 #ifdef TEST_PROC_AFFINITY
     /* didnt seem to work.... */
@@ -207,6 +208,7 @@ main(int argc, char **argv)
 	exchange_parameters(test);
 	test->streams->settings->state = STREAM_BEGIN;
     }
+
     //printf("in main: calling iperf_run \n");
     iperf_run(test);
     iperf_free_test(test);
@@ -219,6 +221,7 @@ main(int argc, char **argv)
 int
 iperf_run(struct iperf_test * test)
 {
+
     test->default_settings->state = TEST_RUNNING;
 
     switch (test->role)
@@ -227,8 +230,8 @@ iperf_run(struct iperf_test * test)
 	while (1)
         {
           iperf_run_server(test);
+          test->streams = NULL;
 	  sleep(1);
-	  //iperf_init_test(test); /* re-initialize everything */
         }
         return 0;
     case 'c':

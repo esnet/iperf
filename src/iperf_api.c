@@ -161,7 +161,7 @@ add_interval_list(struct iperf_stream_result *rp, struct iperf_interval_results 
     }
     else {
 	n = rp->interval_results;
-	while (n->next)
+	while (n->next)  /* find the end of the list */
 	    n = n->next;
 
 	n->next = ip;
@@ -449,7 +449,7 @@ iperf_stats_callback(struct iperf_test *test)
     struct iperf_stream_result *rp = test->streams->result;
     struct iperf_interval_results *ip, temp;
 
-    //printf("in stats_callback: num_streams = %d \n", test->num_streams);
+    printf("in stats_callback: num_streams = %d \n", test->num_streams);
     for (i = 0; i < test->num_streams; i++) {
 	rp = sp->result;
 

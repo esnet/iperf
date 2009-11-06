@@ -120,10 +120,11 @@ iperf_run_server(struct iperf_test * test)
 {
     struct timeval tv;
     struct iperf_stream *np, *sp;
-    int       j, result, message;
+    int       j, result=0, message, cnt=0;
     char     *results_string = NULL;
 
     printf("in iperf_run_server \n");
+
     FD_ZERO(&test->read_set);
     FD_SET(test->listener_sock_tcp, &test->read_set);
     FD_SET(test->listener_sock_udp, &test->read_set);
@@ -135,6 +136,7 @@ iperf_run_server(struct iperf_test * test)
     test->default_settings->state = TEST_RUNNING;
 
     printf("iperf_run_server: Waiting for client connect.... \n");
+
     while (test->default_settings->state != TEST_END)
     {
 	memcpy(&test->temp_set, &test->read_set, sizeof(test->read_set));

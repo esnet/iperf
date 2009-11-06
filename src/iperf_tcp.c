@@ -248,7 +248,7 @@ iperf_new_tcp_stream(struct iperf_test * testp)
     sp->rcv = iperf_tcp_recv;	/* pointer to receive function */
     sp->snd = iperf_tcp_send;	/* pointer to send function */
 
-    /* XXX: not yet written... */
+    /* XXX: not yet written...  (what is this supposed to do? ) */
     //sp->update_stats = iperf_tcp_update_stats;
 
     return sp;

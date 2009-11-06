@@ -36,6 +36,7 @@ struct iperf_stream_result
     void     *data;
 };
 
+#define COOKIE_SIZE 37  /* size of an ascii uuid */
 struct iperf_settings
 {
     int       socket_bufsize; /* window size for TCP */
@@ -49,8 +50,7 @@ struct iperf_settings
     /* XXX: not sure about this design: everything else is this struct is static state, 
 	but the last 2 are dymanic state. Should they be in iperf_stream instead? */
     int       state;		/* This is state of a stream/test */
-    char      cookie[37];	/* XXX: why 37?  This should be a constant
-				 * -blt */
+    char      cookie[COOKIE_SIZE];	
 };
 
 struct iperf_stream
@@ -145,7 +145,7 @@ struct param_exchange
     int       send_window;
     int       mss;
     char      format;
-    char      cookie[37];  /* size 37 makes total size 64 */
+    char      cookie[COOKIE_SIZE]; 
 };
 
 enum
@@ -172,6 +172,7 @@ enum
     STREAM_END = 8,
     ALL_STREAMS_END = 9,
     PARAM_EXCHANGE = 10,
+    PARAM_EXCHANGE_ACK = 11,
     ACCESS_DENIED = -1,
 };
 

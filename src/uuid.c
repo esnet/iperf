@@ -25,7 +25,7 @@ get_uuid(char *temp)
     uuid_create(&uu, NULL);
     uuid_to_string(&uu, &s, 0);
 #else
-    s = (char *) malloc(37);	/* UUID is 36 chars + \0 */
+    s = (char *) malloc(37);
     uuid_generate(uu);
     uuid_unparse(uu, s);
 #endif

@@ -51,7 +51,7 @@ jmp_buf   env;			/* to handle longjmp on signal */
 int
 iperf_tcp_recv(struct iperf_stream * sp)
 {
-    int       result, message;
+    int       result = 0, message = 0;
     int       size = sp->settings->blksize;
     char     *final_message = NULL;
 
@@ -130,7 +130,6 @@ iperf_tcp_recv(struct iperf_stream * sp)
 	break;
     case STREAM_END:
 	size = sizeof(struct param_exchange);
-	/* XXX: Fixme: neeed to read from all sockets if find a STREAM_END message */
 	result = Nread(sp->socket, sp->buffer, size, Ptcp);
 	break;
     case ALL_STREAMS_END:
@@ -144,11 +143,10 @@ iperf_tcp_recv(struct iperf_stream * sp)
     case RESULT_REQUEST:
 	/* XXX: not working yet  */
 	//final_message = iperf_reporter_callback(test);
-	final_message = "final server results string will go here \n";
 	//memcpy(sp->buffer, final_message, strlen(final_message));
-	//result = send(sp->socket, sp->buffer, sp->settings->blksize, 0);
-	//if (result < 0)
-	//    perror("Error sending results back to client");
+	//result = send(sp->socket, sp->buffer, MAX_RESULT_STRING, 0);
+	if (result < 0)
+	    perror("Error sending results back to client");
 
 	break;
     default:
@@ -195,7 +193,7 @@ iperf_tcp_send(struct iperf_stream * sp)
 	size = sizeof(struct param_exchange);
 	break;
     case RESULT_REQUEST:
-	size = sp->settings->blksize; /* XXX: what size should this be? */
+	size = MAX_RESULT_STRING;
 	break;
     case ALL_STREAMS_END:
 	size = sizeof(struct param_exchange);

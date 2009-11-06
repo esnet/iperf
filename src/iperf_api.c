@@ -97,7 +97,7 @@ exchange_parameters(struct iperf_test *test)
     param = (struct param_exchange *)sp->buffer;
 
     get_uuid(test->default_settings->cookie);
-    strncpy(param->cookie, test->default_settings->cookie, 37);
+    strncpy(param->cookie, test->default_settings->cookie, COOKIE_SIZE);
     //printf("client cookie: %s \n", param->cookie);
 
     /* setting up exchange parameters  */
@@ -107,6 +107,7 @@ exchange_parameters(struct iperf_test *test)
     param->send_window = test->default_settings->socket_bufsize;
     param->format = test->default_settings->unit_format;
 
+#ifdef OLD_WAY
     //printf(" sending exchange params: size = %d \n", (int)sizeof(struct param_exchange));
     /* XXX: can we use iperf_tcp_send for this? that would be cleaner */
     result = send(sp->socket, sp->buffer, sizeof(struct param_exchange), 0);
@@ -120,9 +121,15 @@ exchange_parameters(struct iperf_test *test)
 	//printf("exchange_parameters: reading result from server .. \n");
 	result = recv(sp->socket, sp->buffer, sizeof(struct param_exchange), 0);
     } while (result == -1 && errno == EINTR);
+#else
+    result = sp->snd(sp);
+    if (result < 0)
+	perror("Error sending exchange params to server");
+    result = Nread(sp->socket, sp->buffer, sizeof(struct param_exchange), Ptcp);
+#endif
+
     if (result < 0)
 	perror("Error getting exchange params ack from server");
-
     if (result > 0 && sp->buffer[0] == ACCESS_DENIED) {
 	fprintf(stderr, "Busy server Detected. Try again later. Exiting.\n");
 	exit(-1);
@@ -196,8 +203,7 @@ receive_result_from_server(struct iperf_test *test)
 
     printf("in receive_result_from_server \n");
     sp = test->streams;
-    size = sp->settings->blksize;	/* XXX: Is blksize really what we
-					 * want to use for the results? */
+    size = MAX_RESULT_STRING;
 
     buf = (char *)malloc(size);
 
@@ -325,7 +331,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->default_settings->state = TEST_START;
     testp->default_settings->mss = 0;
     testp->default_settings->bytes = 0;
-    memset(testp->default_settings->cookie, '\0', 37);
+    memset(testp->default_settings->cookie, '\0', COOKIE_SIZE);
 }
 
 /**************************************************************************/
@@ -353,9 +359,9 @@ iperf_init_test(struct iperf_test *test)
 	    if (set_tcp_windowsize(test->listener_sock_tcp, test->default_settings->socket_bufsize, SO_RCVBUF) < 0)
 		perror("unable to set TCP window");
 	}
-	/* XXX: why do we do this?? -blt */
-	//setnonblocking(test->listener_sock_tcp);
-	//setnonblocking(test->listener_sock_udp);
+	/* make sure that accept call does not block */
+	setnonblocking(test->listener_sock_tcp);
+	setnonblocking(test->listener_sock_udp);
 
 	printf("-----------------------------------------------------------\n");
 	printf("Server listening on %d\n", test->server_port);
@@ -508,7 +514,7 @@ iperf_reporter_callback(struct iperf_test *test)
     int		    total_packets = 0, lost_packets = 0, curr_state = 0;
     char	    ubuf   [UNIT_LEN];
     char	    nbuf   [UNIT_LEN];
-    struct iperf_stream *sp = test->streams;
+    struct iperf_stream *sp = NULL;
     iperf_size_t    bytes = 0;
     double	    start_time, end_time;
     char           *message = (char *)malloc(MAX_RESULT_STRING);
@@ -521,7 +527,7 @@ iperf_reporter_callback(struct iperf_test *test)
 
     sp = test->streams;
     curr_state = sp->settings->state;
-    //printf("in iperf_reporter_callback: state = %d \n", curr_state);
+    printf("in iperf_reporter_callback: state = %d \n", curr_state);
 
     if (curr_state == TEST_RUNNING) {
 	/* print interval results */
@@ -671,7 +677,7 @@ safe_strcat(char *s1, char *s2)
 	strcat(s1, s2);
     else {
 	printf("Error: results string too long \n");
-	exit(-1);  /* XXX: should return an error instead */
+	exit(-1);  /* XXX: should return an error instead! */
 	//return -1;
     }
 }

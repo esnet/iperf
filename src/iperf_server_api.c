@@ -57,9 +57,9 @@ param_received(struct iperf_stream * sp, struct param_exchange * param)
     char     *buf = (char *) malloc(sizeof(struct param_exchange));
 
     if (sp->settings->cookie[0] == '\0' ||
-	(strncmp(param->cookie, sp->settings->cookie, 37) == 0))
+	(strncmp(param->cookie, sp->settings->cookie, COOKIE_SIZE) == 0))
     {
-	strncpy(sp->settings->cookie, param->cookie, 37);
+	strncpy(sp->settings->cookie, param->cookie, COOKIE_SIZE);
 	sp->settings->blksize = param->blksize;
 	sp->settings->socket_bufsize = param->recv_window;
 	sp->settings->unit_format = param->format;
@@ -70,15 +70,17 @@ param_received(struct iperf_stream * sp, struct param_exchange * param)
 
     } else
     {
-	fprintf(stderr, "Connection from new client denied\n");
+	fprintf(stderr, "Connection from new client denied.\n");
+	printf("cookie still set to %s \n", sp->settings->cookie);
 	param->state = ACCESS_DENIED;
 	buf[0] = ACCESS_DENIED;
     }
-    free(buf);
-    //printf("param_received: Sending message back to client \n");
-    result = send(sp->socket, buf, sizeof(struct param_exchange), 0);
+    memcpy(sp->buffer, buf, sizeof(struct param_exchange));;
+    printf("param_received: Sending message (%d) back to client \n", sp->buffer[0]);
+    result = Nwrite(sp->socket, sp->buffer, sizeof(struct param_exchange), Ptcp);
     if (result < 0)
 	perror("param_received: Error sending param ack to client");
+    free(buf);
     return param->state;
 }
 
@@ -127,7 +129,7 @@ iperf_run_server(struct iperf_test * test)
     FD_SET(test->listener_sock_udp, &test->read_set);
 
     test->max_fd = test->listener_sock_tcp > test->listener_sock_udp ? test->listener_sock_tcp : test->listener_sock_udp;
-    printf("iperf_run_server: max_fd set to %d \n", test->max_fd);
+    //printf("iperf_run_server: max_fd set to %d \n", test->max_fd);
 
     test->num_streams = 0;
     test->default_settings->state = TEST_RUNNING;
@@ -174,6 +176,10 @@ iperf_run_server(struct iperf_test * test)
 		FD_CLR(test->listener_sock_udp, &test->temp_set);
 	    }
 	    /* Process the sockets for read operation */
+	    /* XXX: Need to try to read equal amounts from each socket, so keep
+		track of last socket read from, and always start with the next 
+		socket
+		*/
 	    for (j = 0; j < test->max_fd + 1; j++)
 	    {
 		if (FD_ISSET(j, &test->temp_set))
@@ -206,10 +212,6 @@ iperf_run_server(struct iperf_test * test)
 		    }
 		    if (message == STREAM_END)
 		    {
-			/*
-			 * should get one of these for each stream
-			 */
-			/* XXX: fixme: use this timestamp for all streams */
 			gettimeofday(&np->result->end_time, NULL);
 		    }
 		    if (message == RESULT_REQUEST)
@@ -221,6 +223,7 @@ iperf_run_server(struct iperf_test * test)
 		    }
 		    if (message == ALL_STREAMS_END)
 		    {
+		        printf("client send ALL_STREAMS_END message, printing results \n");
 			/* print server results */
 			results_string = test->reporter_callback(test);
 			puts(results_string);	/* send to stdio */
@@ -242,7 +245,8 @@ iperf_run_server(struct iperf_test * test)
 
 			test->default_settings->state = TEST_END;
 			/* reset cookie when client is finished */
-			memset(test->default_settings->cookie, '\0', 37);
+			printf("got TEST_END message, reseting cookie \n");
+			memset(test->default_settings->cookie, '\0', COOKIE_SIZE);
 			break; /* always break out of for loop on TEST_END message */
 		    }
 		}		/* end if (FD_ISSET(j, &temp_set)) */

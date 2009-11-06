@@ -275,7 +275,8 @@ iperf_udp_accept(struct iperf_test * test)
 
     if (connect(test->listener_sock_udp, (struct sockaddr *) & sa_peer, len) < 0)
     {
-	perror("connect");
+	perror("iperf_udp_accept: connect error");
+	exit(-1);  /* XXX: for debugging */
 	return -1;
     }
     sp = test->new_stream(test);

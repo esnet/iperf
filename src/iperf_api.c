@@ -449,7 +449,7 @@ iperf_stats_callback(struct iperf_test *test)
     struct iperf_stream_result *rp = test->streams->result;
     struct iperf_interval_results *ip, temp;
 
-    printf("in stats_callback: num_streams = %d \n", test->num_streams);
+    //printf("in stats_callback: num_streams = %d \n", test->num_streams);
     for (i = 0; i < test->num_streams; i++) {
 	rp = sp->result;
 
@@ -527,7 +527,7 @@ iperf_reporter_callback(struct iperf_test *test)
 
     sp = test->streams;
     curr_state = sp->settings->state;
-    printf("in iperf_reporter_callback: state = %d \n", curr_state);
+    //printf("in iperf_reporter_callback: state = %d \n", curr_state);
 
     if (curr_state == TEST_RUNNING) {
 	/* print interval results */
@@ -700,7 +700,7 @@ iperf_new_stream(struct iperf_test *testp)
     int		    i = 0;
     struct iperf_stream *sp;
 
-    printf("in iperf_new_stream \n");
+    //printf("in iperf_new_stream \n");
     sp = (struct iperf_stream *)malloc(sizeof(struct iperf_stream));
     if (!sp) {
 	perror("malloc");
@@ -708,9 +708,10 @@ iperf_new_stream(struct iperf_test *testp)
     }
     memset(sp, 0, sizeof(struct iperf_stream));
 
-    printf("Allocating new stream buffer: size = %d \n", testp->default_settings->blksize);
+    printf("iperf_new_stream: Allocating new stream buffer: size = %d \n", testp->default_settings->blksize);
     sp->buffer = (char *)malloc(testp->default_settings->blksize);
     sp->settings = (struct iperf_settings *)malloc(sizeof(struct iperf_settings));
+    /* make a per stream copy of default_settings in each stream structure */
     memcpy(sp->settings, testp->default_settings, sizeof(struct iperf_settings));
     sp->result = (struct iperf_stream_result *)malloc(sizeof(struct iperf_stream_result));
 

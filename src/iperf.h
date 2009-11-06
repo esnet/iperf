@@ -58,7 +58,8 @@ struct iperf_stream
     /* configurable members */
     int       local_port;
     int       remote_port;
-	/* XXX: I think settings should be one per test, not one per stream  -blt */
+	/* XXX: is this just a pointer to the same struct in iperf_test? if not, 
+		should it be? */
     struct iperf_settings *settings;	/* pointer to structure settings */
 
     /* non configurable members */

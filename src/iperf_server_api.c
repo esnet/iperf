@@ -43,6 +43,8 @@
 #include "uuid.h"
 #include "locale.h"
 
+void      handle_message(struct iperf_test * test, int m, struct iperf_stream * sp);
+
 /*********************************************************************/
 /**
  * param_received - handles the param_Exchange part for server
@@ -119,9 +121,9 @@ void
 iperf_run_server(struct iperf_test * test)
 {
     struct timeval tv;
-    struct iperf_stream *np, *sp;
-    int       j, result=0, message, cnt=0;
-    char     *results_string = NULL;
+    struct iperf_stream *np;
+    int       j = 0, result = 0, message = 0;
+    int       nfd = 0;
 
     printf("in iperf_run_server \n");
 
@@ -161,6 +163,8 @@ iperf_run_server(struct iperf_test * test)
 	    {
 		test->protocol = Ptcp;
 		test->accept = iperf_tcp_accept;
+		if (test->accept < 0)
+		    return;
 		test->new_stream = iperf_new_tcp_stream;
 		test->accept(test);
 		test->default_settings->state = TEST_RUNNING;
@@ -172,91 +176,118 @@ iperf_run_server(struct iperf_test * test)
 	    {
 		test->protocol = Pudp;
 		test->accept = iperf_udp_accept;
+		if (test->accept < 0)
+		    return;
 		test->new_stream = iperf_new_udp_stream;
 		test->accept(test);
 		test->default_settings->state = TEST_RUNNING;
 		FD_CLR(test->listener_sock_udp, &test->temp_set);
 	    }
 	    /* Process the sockets for read operation */
-	    /* XXX: Need to try to read equal amounts from each socket, so keep
-		track of last socket read from, and always start with the next 
-		socket
-		*/
-	    for (j = 0; j < test->max_fd + 1; j++)
+	    /*
+	     * XXX: Need to try to read equal amounts from each socket, so
+	     * keep track of last socket read from, and always start with the
+	     * next socket
+	     */
+	    nfd = test->max_fd + 1;
+	    for (j = 0; j <= test->max_fd; j++)
 	    {
+		//printf("Checking socket %d \n", j);
 		if (FD_ISSET(j, &test->temp_set))
 		{
+		    //printf("iperf_run_server: data ready on socket %d \n", j);
 		    /* find the correct stream - possibly time consuming */
 		    np = find_stream_by_socket(test, j);
 		    message = np->rcv(np);	/* get data from client using
 						 * receiver callback  */
-		    //printf("iperf_run_server: iperf_tcp_recv returned %d \n", message);
-	            if (message < 0)
-		    {
-			printf("Error reading data from client \n");
-			close(np->socket);
-		        return;
-		    }
-		    np->settings->state = message;
-
-		    if (message == PARAM_EXCHANGE)
-		    {
-			/* copy the received settings into test */
-			memcpy(test->default_settings, test->streams->settings, sizeof(struct iperf_settings));
-		    }
-		    if (message == ACCESS_DENIED)	/* this might get set by
-							 * PARAM_EXCHANGE */
-		    {
-			/* XXX: test this! */
-			close(np->socket);
-			FD_CLR(np->socket, &test->read_set);
-			iperf_free_stream(np);
-		    }
-		    if (message == STREAM_END)
-		    {
-			gettimeofday(&np->result->end_time, NULL);
-		    }
-		    if (message == RESULT_REQUEST)
-		    {
-			np->settings->state = RESULT_RESPOND;
-			results_string = test->reporter_callback(test);
-			np->data = results_string;
-			send_result_to_client(np);
-		    }
-		    if (message == ALL_STREAMS_END)
-		    {
-		        printf("client send ALL_STREAMS_END message, printing results \n");
-			/* print server results */
-			results_string = test->reporter_callback(test);
-			puts(results_string);	/* send to stdio */
-		    }
+		    if (message < 0)
+			goto done;
+		    handle_message(test, message, np);
 		    if (message == TEST_END)
-		    {
-			/* FREE ALL STREAMS  */
-			np = test->streams;
-			do
-			{
-			    sp = np;
-			    //printf(" closing socket: %d \n", sp->socket);
-			    close(sp->socket);
-			    FD_CLR(sp->socket, &test->read_set);
-			    np = sp->next;	/* get next pointer before
-						 * freeing */
-			    iperf_free_stream(sp);
-			} while (np != NULL);
-
-			test->default_settings->state = TEST_END;
-			/* reset cookie when client is finished */
-			printf("got TEST_END message, reseting cookie \n");
-			memset(test->default_settings->cookie, '\0', COOKIE_SIZE);
-			break; /* always break out of for loop on TEST_END message */
-		    }
+			break;	/* test done, so break out of loop */
 		}		/* end if (FD_ISSET(j, &temp_set)) */
 	    }			/* end for (j=0;...) */
-
 	}			/* end else (result>0)   */
     }				/* end while */
-    printf("Test Complete. \n\n");
-    return;
 
+done:
+    printf("Test Complete. \n\n");
+    /* reset cookie when client is finished */
+    memset(test->streams->settings->cookie, '\0', COOKIE_SIZE);
+    return;
+}
+
+/********************************************************/
+
+void
+handle_message(struct iperf_test * test, int message, struct iperf_stream * sp)
+{
+    char     *results_string = NULL;
+    struct iperf_stream *tp1 = NULL;
+    struct iperf_stream *tp2 = NULL;
+
+    //printf("handle_message: %d \n", message);
+    if (message < 0)
+    {
+	printf("Error reading data from client \n");
+	close(sp->socket);
+	return;
+    }
+    sp->settings->state = message;
+
+    if (message == PARAM_EXCHANGE)
+    {
+	/* copy the received settings into test */
+	memcpy(test->default_settings, test->streams->settings, sizeof(struct iperf_settings));
+    }
+    if (message == ACCESS_DENIED)	/* this might get set by
+					 * PARAM_EXCHANGE */
+    {
+	/* XXX: test this! */
+	close(sp->socket);
+	FD_CLR(sp->socket, &test->read_set);
+	iperf_free_stream(sp);
+    }
+    if (message == STREAM_END)
+    {
+	/* get final timestamp for all streams */
+	tp1 = test->streams;
+	do
+	{
+	    gettimeofday(&tp1->result->end_time, NULL);
+	    tp1 = tp1->next;
+	} while (tp1 != NULL);
+    }
+    if (message == RESULT_REQUEST)
+    {
+	sp->settings->state = RESULT_RESPOND;
+	results_string = test->reporter_callback(test);
+	sp->data = results_string;
+	send_result_to_client(sp);
+    }
+    if (message == ALL_STREAMS_END)
+    {
+	printf("client sent ALL_STREAMS_END message, printing results \n");
+	/* print server results */
+	results_string = test->reporter_callback(test);
+	puts(results_string);	/* send to stdio */
+    }
+    if (message == TEST_END)
+    {
+	printf("client sent TEST_END message, shuting down sockets.. \n");
+	/* FREE ALL STREAMS  */
+	tp1 = test->streams;
+	do
+	{
+	    tp2 = tp1;
+	    printf(" closing socket: %d \n", tp2->socket);
+	    close(tp2->socket);
+	    FD_CLR(tp2->socket, &test->read_set);
+	    tp1 = tp2->next;	/* get next pointer before freeing */
+	    iperf_free_stream(tp2);
+	} while (tp1 != NULL);
+
+	test->default_settings->state = TEST_END;
+	memset(test->default_settings->cookie, '\0', COOKIE_SIZE);
+    }
 }

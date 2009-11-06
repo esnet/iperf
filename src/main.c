@@ -84,8 +84,7 @@ main(int argc, char **argv)
 
     char      ch, role;
     struct iperf_test *test;
-    int       port = PORT, cnt = 0;
-    struct iperf_stream *np;
+    int       port = PORT;
 
 #ifdef TEST_PROC_AFFINITY
     /* didnt seem to work.... */

@@ -17,14 +17,6 @@
 void      exchange_parameters(struct iperf_test * test);
 
 /**
- * param_received - handles the param_Exchange part for server
- * returns state on success, -1 on failure
- *
- */
-int       param_received(struct iperf_stream * sp, struct param_exchange * param);
-
-
-/**
  * add_interval_list -- adds new interval to the interval_list
  *
  */

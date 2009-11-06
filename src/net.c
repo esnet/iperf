@@ -43,7 +43,7 @@ netdial(int proto, char *client, int port)
 
     if (connect(s, (struct sockaddr *) & sa, sizeof sa) < 0 && errno != EINPROGRESS)
     {
-	perror("connect error");
+	perror("netdial: connect error");
 	return (-1);
     }
     sn = sizeof sa;

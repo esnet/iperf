@@ -30,6 +30,7 @@
 
 #include "iperf.h"
 #include "iperf_api.h"
+#include "iperf_server_api.h"
 #include "iperf_tcp.h"
 #include "timer.h"
 #include "net.h"

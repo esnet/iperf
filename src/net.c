@@ -13,6 +13,10 @@
 #include "net.h"
 #include "timer.h"
 
+/* netdial and netannouce code comes from libtask: http://swtch.com/libtask/
+ * Copyright: http://swtch.com/libtask/COPYRIGHT
+*/
+
 /* make connection to server */
 int
 netdial(int proto, char *client, int port)

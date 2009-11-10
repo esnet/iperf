@@ -282,10 +282,9 @@ iperf_tcp_accept(struct iperf_test * test)
     } else
     {
 	sp = test->new_stream(test);
-	/* XXX: what is this for? */
-	//setnonblocking(peersock);
+	setnonblocking(peersock);
 
-	FD_SET(peersock, &test->read_set);
+	FD_SET(peersock, &test->read_set);  /* add new socket to master set */
 	test->max_fd = (test->max_fd < peersock) ? peersock : test->max_fd;
         //printf("iperf_tcp_accept: max_fd now set to: %d \n", test->max_fd );
 

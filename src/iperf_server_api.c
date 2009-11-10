@@ -128,10 +128,18 @@ iperf_run_server(struct iperf_test * test)
     printf("in iperf_run_server \n");
 
     FD_ZERO(&test->read_set);
-    FD_SET(test->listener_sock_tcp, &test->read_set);
-    FD_SET(test->listener_sock_udp, &test->read_set);
+    FD_ZERO(&test->temp_set);
+    if (test->protocol == Ptcp)
+    {
+	/* add listener to the master set */
+        FD_SET(test->listener_sock_tcp, &test->read_set);
+        test->max_fd = test->listener_sock_tcp;
+    } else
+    {
+        FD_SET(test->listener_sock_udp, &test->read_set);
+        test->max_fd = test->listener_sock_udp;
+    }
 
-    test->max_fd = test->listener_sock_tcp > test->listener_sock_udp ? test->listener_sock_tcp : test->listener_sock_udp;
     //printf("iperf_run_server: max_fd set to %d \n", test->max_fd);
 
     test->num_streams = 0;
@@ -158,37 +166,38 @@ iperf_run_server(struct iperf_test * test)
 	    exit(0);
 	} else if (result > 0)
 	{
-	    /* Accept a new TCP connection */
-	    if (FD_ISSET(test->listener_sock_tcp, &test->temp_set))
+	    if (test->protocol == Ptcp)
 	    {
-		test->protocol = Ptcp;
-		test->accept = iperf_tcp_accept;
-		if (test->accept < 0)
-		    return;
-		test->new_stream = iperf_new_tcp_stream;
-		test->accept(test);
-		test->default_settings->state = TEST_RUNNING;
-		FD_CLR(test->listener_sock_tcp, &test->temp_set);
-		printf("iperf_run_server: accepted TCP connection \n");
-	    }
-	    /* Accept a new UDP connection */
-	    else if (FD_ISSET(test->listener_sock_udp, &test->temp_set))
+		/* Accept a new TCP connection */
+		if (FD_ISSET(test->listener_sock_tcp, &test->temp_set))
+		{
+		    test->protocol = Ptcp;
+		    test->accept = iperf_tcp_accept;
+		    if (test->accept < 0)
+			return;
+		    test->new_stream = iperf_new_tcp_stream;
+		    test->accept(test);
+		    test->default_settings->state = TEST_RUNNING;
+		    FD_CLR(test->listener_sock_tcp, &test->temp_set);
+		    printf("iperf_run_server: accepted TCP connection \n");
+		}
+	    } else
 	    {
-		test->protocol = Pudp;
-		test->accept = iperf_udp_accept;
-		if (test->accept < 0)
-		    return;
-		test->new_stream = iperf_new_udp_stream;
-		test->accept(test);
-		test->default_settings->state = TEST_RUNNING;
-		FD_CLR(test->listener_sock_udp, &test->temp_set);
+		/* Accept a new UDP connection */
+		if (FD_ISSET(test->listener_sock_udp, &test->temp_set))
+		{
+		    test->protocol = Pudp;
+		    test->accept = iperf_udp_accept;
+		    if (test->accept < 0)
+			return;
+		    test->new_stream = iperf_new_udp_stream;
+		    test->accept(test);
+		    test->default_settings->state = TEST_RUNNING;
+		    FD_CLR(test->listener_sock_udp, &test->temp_set);
+		    printf("iperf_run_server: accepted UDP connection \n");
+		}
 	    }
 	    /* Process the sockets for read operation */
-	    /*
-	     * XXX: Need to try to read equal amounts from each socket, so
-	     * keep track of last socket read from, and always start with the
-	     * next socket
-	     */
 	    nfd = test->max_fd + 1;
 	    for (j = 0; j <= test->max_fd; j++)
 	    {
@@ -196,7 +205,7 @@ iperf_run_server(struct iperf_test * test)
 		if (FD_ISSET(j, &test->temp_set))
 		{
 		    //printf("iperf_run_server: data ready on socket %d \n", j);
-		    /* find the correct stream - possibly time consuming */
+		    /* find the correct stream - possibly time consuming? */
 		    np = find_stream_by_socket(test, j);
 		    message = np->rcv(np);	/* get data from client using
 						 * receiver callback  */
@@ -205,6 +214,7 @@ iperf_run_server(struct iperf_test * test)
 		    handle_message(test, message, np);
 		    if (message == TEST_END)
 			break;	/* test done, so break out of loop */
+
 		}		/* end if (FD_ISSET(j, &temp_set)) */
 	    }			/* end for (j=0;...) */
 	}			/* end else (result>0)   */

@@ -110,9 +110,9 @@ struct iperf_test
 
     /* Select related parameters */
     int       max_fd;
-    fd_set    read_set;
-    fd_set    temp_set;
-    fd_set    write_set;
+    fd_set    read_set;  /* set of read sockets */
+    fd_set    temp_set;  /* temp set for select */
+    fd_set    write_set; /* set of write sockets */
 
     int       (*accept) (struct iperf_test *);
     struct iperf_stream *(*new_stream) (struct iperf_test *);

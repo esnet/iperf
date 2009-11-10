@@ -118,6 +118,13 @@ main(int argc, char **argv)
 	    break;
 	case 't':
 	    test->duration = atoi(optarg);
+	    if (test->duration > MAX_TIME)
+	    {
+	        fprintf(stderr, "\n Error: test duration too long. Maximum value = %d \n\n",  MAX_TIME);
+	        fprintf(stderr, usage_long1);
+	        fprintf(stderr, usage_long2);
+	        exit(1);
+	    }
 	    break;
 	case 'u':
 	    test->protocol = Pudp;
@@ -126,20 +133,47 @@ main(int argc, char **argv)
 	    break;
 	case 'P':
 	    test->num_streams = atoi(optarg);
+	    if (test->num_streams > MAX_STREAMS)
+	    {
+	        fprintf(stderr, "\n Error: Number of parallel streams too large. Maximum value = %d \n\n",  MAX_STREAMS);
+	        fprintf(stderr, usage_long1);
+	        fprintf(stderr, usage_long2);
+	        exit(1);
+	    }
 	    break;
 	case 'b':
 	    test->default_settings->rate = unit_atof(optarg);
 	    break;
 	case 'l':
 	    test->default_settings->blksize = unit_atoi(optarg);
-	    printf("%d is the blksize\n", test->default_settings->blksize);
+	    if (test->default_settings->blksize > MAX_BLOCKSIZE)
+	    {
+	        fprintf(stderr, "\n Error: Block size too large. Maximum value = %d \n\n",  MAX_BLOCKSIZE);
+	        fprintf(stderr, usage_long1);
+	        fprintf(stderr, usage_long2);
+	        exit(1);
+	    }
 	    break;
 	case 'w':
 	    test->default_settings->socket_bufsize = unit_atof(optarg);
+	    if (test->default_settings->socket_bufsize > MAX_TCP_BUFFER)
+	    {
+	        fprintf(stderr, "\n Error: TCP buffer too large. Maximum value = %d \n\n",  MAX_TCP_BUFFER);
+	        fprintf(stderr, usage_long1);
+	        fprintf(stderr, usage_long2);
+	        exit(1);
+	    }
 	    break;
 	case 'i':
 	    test->stats_interval = atoi(optarg);
 	    test->reporter_interval = atoi(optarg);
+	    if (test->stats_interval > MAX_INTERVAL)
+	    {
+	        fprintf(stderr, "\n Error: Report interval too large. Maximum value = %d \n\n",  MAX_INTERVAL);
+	        fprintf(stderr, usage_long1);
+	        fprintf(stderr, usage_long2);
+	        exit(1);
+	    }
 	    break;
 	case 'n':
 	    test->default_settings->bytes = unit_atoi(optarg);
@@ -153,6 +187,13 @@ main(int argc, char **argv)
 	    break;
 	case 'M':
 	    test->default_settings->mss = atoi(optarg);
+	    if (test->default_settings->mss > MAX_MSS)
+	    {
+	        fprintf(stderr, "\n Error: MSS too large. Maximum value = %d \n\n",  MAX_MSS);
+	        fprintf(stderr, usage_long1);
+	        fprintf(stderr, usage_long2);
+	        exit(1);
+	    }
 	    break;
 	case 'f':
 	    test->default_settings->unit_format = *optarg;
@@ -168,7 +209,7 @@ main(int argc, char **argv)
 	}
     }
 
-    /* untill this is done.... */
+    /* exit until this is done.... */
     if (test->protocol == Pudp) {
 	printf("UDP mode not yet supported. Exiting. \n");
 	exit(0);

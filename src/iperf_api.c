@@ -144,32 +144,32 @@ exchange_parameters(struct iperf_test * test)
 
 /*************************************************************/
 /**
- * add_interval_list -- adds new interval to the interval_list
+ * add_to_interval_list -- adds new interval to the interval_list
  *
  */
 
 void
-add_interval_list(struct iperf_stream_result * rp, struct iperf_interval_results temp)
+add_to_interval_list(struct iperf_stream_result * rp, struct iperf_interval_results *new)
 {
     struct iperf_interval_results *n;
 
     struct iperf_interval_results *ip = (struct iperf_interval_results *) malloc(sizeof(struct iperf_interval_results));
 
-    ip->bytes_transferred = temp.bytes_transferred;
-    ip->interval_duration = temp.interval_duration;
-    ip->tcpInfo = temp.tcpInfo;
+    ip->bytes_transferred = new->bytes_transferred;
+    ip->interval_duration = new->interval_duration;
+    ip->tcpInfo = new->tcpInfo; /* XXX: or should this be a memcpy? */
+    ip->next = NULL;
 
-    //printf("add_interval_list: Mbytes = %d, duration = %f \n", (int) (ip->bytes_transferred / 1000000), ip->interval_duration);
+    //printf("add_to_interval_list: Mbytes = %d, duration = %f \n", (int) (ip->bytes_transferred / 1000000), ip->interval_duration);
 
-    if (!rp->interval_results)
+    if (!rp->interval_results)  /* if 1st interval */
     {
 	rp->interval_results = ip;
-    } else
+    } else  /* add to end of list */
     {
 	n = rp->interval_results;
 	while (n->next)		/* find the end of the list */
 	    n = n->next;
-
 	n->next = ip;
     }
     ip->next = NULL;
@@ -466,14 +466,14 @@ iperf_stats_callback(struct iperf_test * test)
 
     struct iperf_stream *sp = test->streams;
     struct iperf_stream_result *rp = test->streams->result;
-    struct iperf_interval_results *ip, temp;
+    struct iperf_interval_results *ip = NULL, temp;
 
     //printf("in stats_callback: num_streams = %d \n", test->num_streams);
     for (i = 0; i < test->num_streams; i++)
     {
 	rp = sp->result;
 
-	if (!rp->interval_results)
+	if (!rp->interval_results) /* 1st entry in list */
 	{
 	    if (test->role == 'c')
 		temp.bytes_transferred = rp->bytes_sent;
@@ -485,14 +485,14 @@ iperf_stats_callback(struct iperf_test * test)
 	    temp.interval_duration = timeval_diff(&sp->result->start_time, &temp.interval_time);
 
 	    gettimeofday(&sp->result->end_time, NULL);
-	    add_interval_list(rp, temp);
+	    add_to_interval_list(rp, &temp);
 	} else
 	{
 	    ip = sp->result->interval_results;
 	    while (1)
 	    {
 		cumulative_bytes += ip->bytes_transferred;
-		if (ip->next != NULL)
+		if (ip->next != NULL) /* find end of list */
 		    ip = ip->next;
 		else
 		    break;
@@ -507,7 +507,7 @@ iperf_stats_callback(struct iperf_test * test)
 	    temp.interval_duration = timeval_diff(&sp->result->start_time, &temp.interval_time);
 
 	    gettimeofday(&sp->result->end_time, NULL);
-	    add_interval_list(rp, temp);
+	    add_to_interval_list(rp, &temp);
 	}
 	if (test->tcp_info)
 	    get_tcpinfo(test, &temp);
@@ -540,13 +540,11 @@ iperf_reporter_callback(struct iperf_test * test)
     struct iperf_stream *sp = NULL;
     iperf_size_t bytes = 0;
     double    start_time, end_time;
+    struct iperf_interval_results *ip = NULL, *ip_prev = NULL;
     char     *message = (char *) malloc(MAX_RESULT_STRING);
     char     *message_final = (char *) malloc(MAX_RESULT_STRING);
 
     memset(message_final, 0, strlen(message_final));
-
-    struct iperf_interval_results *ip = test->streams->result->interval_results;
-    struct iperf_interval_results *ip_prev = ip;
 
     sp = test->streams;
     curr_state = sp->settings->state;
@@ -558,6 +556,11 @@ iperf_reporter_callback(struct iperf_test * test)
 	while (sp)
 	{			/* for each stream */
 	    ip = sp->result->interval_results;
+	    if (ip == NULL)
+            {
+		printf("iperf_reporter_callback Error: interval_results = NULL \n");
+	        break;
+	    }
 	    while (ip->next != NULL) /* find end of list. XXX: why not just keep track of this pointer?? */
 	    {
 		ip_prev = ip;
@@ -957,7 +960,9 @@ iperf_run_client(struct iperf_test * test)
 	sp = np;
 	sp->settings->state = STREAM_END;
 	printf("sending state = STREAM_END to stream %d \n", sp->socket);
-	sp->snd(sp);
+	result = sp->snd(sp);
+	if (result < 0)
+	    break;
 	np = sp->next;
     } while (np);
     //printf("Done Sending STREAM_END. \n");

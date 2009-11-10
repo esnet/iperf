@@ -17,10 +17,10 @@
 void      exchange_parameters(struct iperf_test * test);
 
 /**
- * add_interval_list -- adds new interval to the interval_list
+ * add_to_interval_list -- adds new interval to the interval_list
  *
  */
-void      add_interval_list(struct iperf_stream_result * rp, struct iperf_interval_results temp);
+void      add_to_interval_list(struct iperf_stream_result * rp, struct iperf_interval_results *temp);
 
 /**
  * Display -- Displays interval results for test

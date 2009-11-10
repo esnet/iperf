@@ -187,6 +187,7 @@ iperf_run_server(struct iperf_test * test)
 		    test->default_settings->state = TEST_RUNNING;
 		    FD_CLR(test->listener_sock_tcp, &test->temp_set);
 		    printf("iperf_run_server: accepted TCP connection \n");
+		    test->num_streams++;
 		}
 	    } else
 	    {

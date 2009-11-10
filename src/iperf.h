@@ -180,5 +180,14 @@ enum
 #define SEC_TO_NS 1000000000	/* too big for enum on some platforms */
 #define MAX_RESULT_STRING 4096
 
+/* constants for command line arg sanity checks
+*/
+#define MAX_TCP_BUFFER 128 * 1024 * 1024
+#define MAX_BLOCKSIZE 1024 * 1024
+#define MAX_INTERVAL 60
+#define MAX_TIME 3600
+#define MAX_MSS 9 * 1024
+#define MAX_STREAMS 128
+
 #endif  /* IPERF_API_H */
 

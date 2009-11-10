@@ -1,24 +1,26 @@
 
 Current list of things to fix/add to iperf 3.0
 
--  finish/fix receive_result_from_server()
-      - also: should this be called for TCP too, or only UDP (currently its both,
-              but I think it should be UDP only, or maybe a command line option for TCP
--  document and verify the 'state machine'. Is it an error to send messages in the wrong order?
-     - what is "STREAM_RUNNING" vs "TEST_RUNNING"??
--  (-i N) mode on server does not work
+-  (-i N) mode on server does not work (bus error)
+-  add sanity checks on -l, -i, -t, -n, and -w options
+-  separate iperf_api.c into iperf_client.c and iperf_utils.c 
 -  verify placment of all timing calls and total_bytes_sent computations
--  break up into client/sever files and TCP/UDP files
+-  look for 'XXX' in code and address
+-  add -v (version)
 -  much better/standard error handling throughout
 -  better packaging/makefile, README, LICENCE, etc files
+-  finish/fix receive_result_from_server()
+      - should this be called for TCP too, or only UDP (currently its both,
+              but I think it should be UDP only, or maybe a command line option for TCP
+-  document and verify the 'state machine'. Is it an error to send messages in the wrong order?
+     - e.g.: what is "STREAM_RUNNING" vs "TEST_RUNNING"??
 -  cleanup/fix/test UDP mode
--  IPV6
 -  add verbose and debug options
 -  add human readable vs machine readable output mode
      (my idea on this is that "human readable" = compatable with old iperf,
      and that "machine readable is all name=value pairs -blt )
+-  add IPV6
 -  lots more testing
--  look for 'XXX' in code and address
--  deamon mode
+-  add daemon mode (-D)
 -  see issue tracker for other wish list items
 

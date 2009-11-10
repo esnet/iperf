@@ -691,7 +691,7 @@ iperf_reporter_callback(struct iperf_test * test)
 	unit_snprintf(ubuf, UNIT_LEN, (double) bytes, 'A');
 	unit_snprintf(nbuf, UNIT_LEN, (double) bytes / end_time, test->default_settings->unit_format);
 
-	if ((test->role == 'c' && test->num_streams > 1) || (test->role == 's'))
+	if ((test->role == 'c' || (test->role == 's')) && test->num_streams > 1)
 	{
 	    if (test->protocol == Ptcp)
 	    {
@@ -840,36 +840,6 @@ iperf_add_stream(struct iperf_test * test, struct iperf_stream * sp)
     return 0;
 }
 
-/**************************************************************************/
-
-/**
- * find_stream_by_socket -- finds the stream based on socket ID
- *
- *returns stream
- *
- */
-
-struct iperf_stream *
-find_stream_by_socket(struct iperf_test * test, int sock)
-{
-    struct iperf_stream *n;
-
-    n = test->streams;
-
-    while (1)
-    {
-	if (n->socket == sock)
-	    break;
-
-	if (n->next == NULL)
-	    break;
-
-	n = n->next;
-    }
-
-    return n;
-}
-
 
 /**************************************************************************/
 void
@@ -889,7 +859,6 @@ iperf_run_client(struct iperf_test * test)
     char     *prot = NULL;
     int64_t   delayus, adjustus, dtargus;
     struct timeval tv;
-    int       ret = 0;
     struct sigaction sact;
 
     printf("in iperf_run_client \n");
@@ -945,16 +914,6 @@ iperf_run_client(struct iperf_test * test)
     /* send data till the timer expires or bytes sent */
     while (!all_data_sent(test) && !timer->expired(timer))
     {
-
-#ifdef NEED_THIS		/* not sure what this was for, so removed
-				 * -blt */
-	memcpy(&test->temp_set, &test->write_set, sizeof(test->write_set));
-	printf("Calling select... \n");
-	ret = select(test->max_fd + 1, NULL, &test->write_set, NULL, &tv);
-	if (ret < 0)
-	    continue;
-#endif
-
 	sp = test->streams;
 	for (i = 0; i < test->num_streams; i++)
 	{

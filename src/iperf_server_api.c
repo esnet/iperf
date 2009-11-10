@@ -122,6 +122,8 @@ iperf_run_server(struct iperf_test * test)
 {
     struct timeval tv;
     struct iperf_stream *np;
+    struct timer *stats_interval, *reporter_interval;
+    char     *result_string = NULL;
     int       j = 0, result = 0, message = 0;
     int       nfd = 0;
 
@@ -144,6 +146,11 @@ iperf_run_server(struct iperf_test * test)
 
     test->num_streams = 0;
     test->default_settings->state = TEST_RUNNING;
+
+   if (test->stats_interval != 0)
+        stats_interval = new_timer(test->stats_interval, 0);
+    if (test->reporter_interval != 0)
+        reporter_interval = new_timer(test->reporter_interval, 0);
 
     printf("iperf_run_server: Waiting for client connect.... \n");
 
@@ -218,10 +225,24 @@ iperf_run_server(struct iperf_test * test)
 		}		/* end if (FD_ISSET(j, &temp_set)) */
 	    }			/* end for (j=0;...) */
 	}			/* end else (result>0)   */
+
+       if ((test->stats_interval != 0) && stats_interval->expired(stats_interval))
+        {
+            test->stats_callback(test);
+            update_timer(stats_interval, test->stats_interval, 0);
+        }
+        if ((test->reporter_interval != 0) && reporter_interval->expired(reporter_interval))
+        {
+            result_string = test->reporter_callback(test);
+            //printf("interval expired: printing results: \n");
+            puts(result_string);
+            update_timer(reporter_interval, test->reporter_interval, 0);
+        }
     }				/* end while */
 
 done:
     printf("Test Complete. \n\n");
+
     /* reset cookie when client is finished */
     memset(test->streams->settings->cookie, '\0', COOKIE_SIZE);
     return;
@@ -290,7 +311,7 @@ handle_message(struct iperf_test * test, int message, struct iperf_stream * sp)
 	do
 	{
 	    tp2 = tp1;
-	    printf(" closing socket: %d \n", tp2->socket);
+	    //printf(" closing socket: %d \n", tp2->socket);
 	    close(tp2->socket);
 	    FD_CLR(tp2->socket, &test->read_set);
 	    tp1 = tp2->next;	/* get next pointer before freeing */
@@ -301,3 +322,34 @@ handle_message(struct iperf_test * test, int message, struct iperf_stream * sp)
 	memset(test->default_settings->cookie, '\0', COOKIE_SIZE);
     }
 }
+
+/**************************************************************************/
+
+/**
+ * find_stream_by_socket -- finds the stream based on socket ID
+ *   simple sequential scan: not more effiecient, but should be fine
+ *	for a small number of streams.
+ *
+ *returns stream
+ *
+ */
+
+struct iperf_stream *
+find_stream_by_socket(struct iperf_test * test, int sock)
+{
+    struct iperf_stream *n;
+
+    n = test->streams;
+    while (1)
+    {
+        if (n->socket == sock)
+            break;
+        if (n->next == NULL)
+            break;
+
+        n = n->next;
+    }
+    return n;
+}
+
+

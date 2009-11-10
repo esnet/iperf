@@ -77,20 +77,6 @@ char     *iperf_reporter_callback(struct iperf_test * test);
 
 
 /**
- * find_stream_by_socket -- finds the stream based on socket
- *
- *returns stream
- *
- */
-struct iperf_stream *find_stream_by_socket(struct iperf_test * test, int sock);
-
-/**
- * iperf_run_server -- Runs the server portion of a test
- *
- */
-void      iperf_run_server(struct iperf_test * test);
-
-/**
  * iperf_run_client -- Runs the client portion of a test
  *
  */

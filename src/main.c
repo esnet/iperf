@@ -98,7 +98,7 @@ main(int argc, char **argv)
     test = iperf_new_test();
     iperf_defaults(test);	/* sets defaults */
 
-    while ((ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:n:mNThM:f:", longopts, NULL)) != -1)
+    while ((ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:n:mNTvhM:f:", longopts, NULL)) != -1)
     {
 	switch (ch)
 	{
@@ -201,6 +201,9 @@ main(int argc, char **argv)
 	case 'T':
 	    test->tcp_info = 1;
 	    break;
+        case 'v': // print version and exit
+            fprintf( stderr, version );
+	    exit(1);
 	case 'h':
 	default:
 	    fprintf(stderr, usage_long1);

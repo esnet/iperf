@@ -52,8 +52,7 @@
  * Strings and other stuff that is locale specific.
  * ------------------------------------------------------------------- */
 
-#ifndef        IPERF_LOCALE_H
-#define        IPERF_LOCALE_H
+#include "version.h"
 
 
 /* -------------------------------------------------------------------
@@ -79,20 +78,27 @@ Client/Server:\n\
   -M, --mss       #        set TCP maximum segment size (MTU - 40 bytes)\n\
   -N, --nodelay            set TCP no delay, disabling Nagle's Algorithm\n\
   -T, --tcpinfo            Output detailed TCP info\n\
+  -v, --version            print version information and quit\n\
 Server specific:\n\
   -s, --server             run in server mode\n\
   -U, --single_udp         run in single threaded UDP mode\n\
   -D, --daemon             run the server as a daemon\n"
-#ifdef WIN32
-"  -R, --remove             remove service in win32\n"
-#endif
 ;
 
-#ifdef OBSOLETE /* from old iperf: no longer supported. Add someday?? */
+#ifdef NOT_YET_SUPPORTED /* still working on these */
+  -Z, --linux-congestion <algo>  set TCP congestion control algorithm (Linux only)\n\
+  -6, --IPv6Version        Set the domain to IPv6\n\
+
+#endif
+
+#ifdef OBSOLETE /* no current plan to support */
   -o, --output    <filename> output the report or error message to this specified file\n\
   -B, --bind      <host>   bind to <host>, an interface or multicast address\n\
-  -V, --IPv6Version        Set the domain to IPv6\n\
   -C, --compatibility      for use with older versions does not sent extra msgs
+#ifdef WIN32
+"  -R, --remove             remove service in win32\n"
+
+#endif
 #endif
 
 const char usage_long2[] = "\
@@ -114,8 +120,6 @@ Miscellaneous:\n\
 Report bugs to <iperf-users@lists.sourceforge.net>\n";
 
 #ifdef OBSOLETE /* from old iperf: no longer supported. Add some of these back someday */
-  -v, --version            print version information and quit\n\
-  -Z, --linux-congestion <algo>  set TCP congestion control algorithm (Linux only)\n\
   -d, --dualtest           Do a bidirectional test simultaneously\n\
   -L, --listenport #       port to recieve bidirectional tests back on\n\
   -I, --stdin              input the data to be transmitted from stdin\n\
@@ -126,7 +130,7 @@ Report bugs to <iperf-users@lists.sourceforge.net>\n";
   -y, --reportstyle C      report as a Comma-Separated Values
 #endif
 
-//const char version[] = "iperf version " IPERF_VERSION " (" IPERF_VERSION_DATE ") " IPERF_THREADS "\n";
+const char version[] = "iperf version " IPERF_VERSION " (" IPERF_VERSION_DATE ") \n";
 
 /* -------------------------------------------------------------------
  * settings
@@ -330,4 +334,3 @@ const char warn_invalid_report[] =
 } /* end extern "C" */
 #endif
 
-#endif /* IPERF_LOCALE_H */

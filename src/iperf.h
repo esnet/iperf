@@ -106,7 +106,10 @@ struct iperf_test
     int       daemon;		/* -D option */
     int       no_delay;		/* -N option */
     int       print_mss;	/* -m option */
-    int       domain;		/* -V option */
+    int       v6domain;		/* -6 option */
+    int       output_format;    /* -O option */
+    int	      verbose;	        /* -V (verbose) option */
+    int	      debug;	        /* debug mode */
 
     /* Select related parameters */
     int       max_fd;

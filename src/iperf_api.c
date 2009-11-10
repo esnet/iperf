@@ -302,7 +302,7 @@ iperf_new_test()
 {
     struct iperf_test *testp;
 
-    printf("in iperf_new_test: reinit default settings \n");
+    //printf("in iperf_new_test: reinit default settings \n");
     testp = (struct iperf_test *) malloc(sizeof(struct iperf_test));
     if (!testp)
     {

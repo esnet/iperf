@@ -5,6 +5,7 @@
 extern char usage_short[];
 extern char usage_long1[];
 extern char usage_long2[];
+extern char version[];
 
 extern char seperator_line[];
 

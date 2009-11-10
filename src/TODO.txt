@@ -5,7 +5,6 @@ Current list of things to fix/add to iperf 3.0
 -  separate iperf_api.c into iperf_client.c and iperf_utils.c 
 -  verify placment of all timing calls and total_bytes_sent computations
 -  look for 'XXX' in code and address
--  add -v (version)
 -  much better/standard error handling throughout
 -  better packaging/makefile, README, LICENCE, etc files
 -  currently several places in the code where a linked list must be scanned to find the end.

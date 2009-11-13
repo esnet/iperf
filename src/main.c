@@ -49,6 +49,7 @@ static struct option longopts[] =
     {"NoDelay", no_argument, NULL, 'N'},
     {"Print-mss", no_argument, NULL, 'm'},
     {"Set-mss", required_argument, NULL, 'M'},
+    {"version", no_argument, NULL, 'v'},
     {"help", no_argument, NULL, 'h'},
     {NULL, 0, NULL, 0}
 };

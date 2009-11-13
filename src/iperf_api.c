@@ -187,7 +187,7 @@ display_interval_list(struct iperf_stream_result * rp, int tflag)
 
     while (n)
     {
-	printf("Interval = %f\tBytes transferred = %llu\n", n->interval_duration, n->bytes_transferred);
+	printf("Interval = %f\tMBytes transferred = %u\n", n->interval_duration, (uint) (n->bytes_transferred / MB));
 	if (tflag)
 	    print_tcpinfo(n);
 	n = n->next;
@@ -280,9 +280,9 @@ Display(struct iperf_test * test)
 	if (n)
 	{
 	    if (test->role == 'c')
-		printf("position-%d\tsp=%d\tsocket=%d\tbytes sent=%llu\n", count++, (int) n, n->socket, n->result->bytes_sent);
+		printf("position-%d\tsp=%d\tsocket=%d\tMbytes sent=%u\n", count++, (int) n, n->socket, (uint) (n->result->bytes_sent / MB));
 	    else
-		printf("position-%d\tsp=%d\tsocket=%d\tbytes received=%llu\n", count++, (int) n, n->socket, n->result->bytes_received);
+		printf("position-%d\tsp=%d\tsocket=%d\tMbytes received=%u\n", count++, (int) n, n->socket, (uint) (n->result->bytes_received / MB));
 
 	    if (n->next == NULL)
 	    {
@@ -485,6 +485,8 @@ iperf_stats_callback(struct iperf_test * test)
 	    temp.interval_duration = timeval_diff(&sp->result->start_time, &temp.interval_time);
 
 	    gettimeofday(&sp->result->end_time, NULL);
+	    if (test->tcp_info)
+	        get_tcpinfo(test, &temp);
 	    add_to_interval_list(rp, &temp);
 	} else
 	{
@@ -507,10 +509,10 @@ iperf_stats_callback(struct iperf_test * test)
 	    temp.interval_duration = timeval_diff(&sp->result->start_time, &temp.interval_time);
 
 	    gettimeofday(&sp->result->end_time, NULL);
+	    if (test->tcp_info)
+	        get_tcpinfo(test, &temp);
 	    add_to_interval_list(rp, &temp);
 	}
-	if (test->tcp_info)
-	    get_tcpinfo(test, &temp);
 
 	/* for debugging */
 	/* display_interval_list(rp, test->tcp_info); */
@@ -577,7 +579,6 @@ iperf_reporter_callback(struct iperf_test * test)
 			      test->default_settings->unit_format);
 		sprintf(message, report_bw_format, sp->socket, ip_prev->interval_duration, ip->interval_duration, ubuf, nbuf);
 
-
 	    } else
 	    {
 		if (first_stream) /* only print header for 1st stream */
@@ -623,11 +624,14 @@ iperf_reporter_callback(struct iperf_test * test)
 		sprintf(message, report_sum_bw_format, 0.0, ip->interval_duration, ubuf, nbuf);
 	    }
 	    safe_strcat(message_final, message);
+
+#ifdef NOT_DONE  /* is it usful to figure out a way so sum TCP_info acrross multiple streams? */
 	    if (test->tcp_info)
 	    {
 		build_tcpinfo_message(ip, message);
 		safe_strcat(message_final, message);
 	    }
+#endif
 	}
     } else
     {
@@ -666,6 +670,12 @@ iperf_reporter_callback(struct iperf_test * test)
 		{
 		    sprintf(message, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
 		    safe_strcat(message_final, message);
+	            if (test->tcp_info)
+	            {
+		        printf("Final TCP_INFO results: \n");
+		        build_tcpinfo_message(ip, message);
+		        safe_strcat(message_final, message);
+	            }
 		} else
 		{		/* UDP mode */
 		    sprintf(message, report_bw_jitter_loss_format, sp->socket, start_time,
@@ -680,9 +690,7 @@ iperf_reporter_callback(struct iperf_test * test)
 		    if (sp->outoforder_packets > 0)
 			printf(report_sum_outoforder, start_time, end_time, sp->cnt_error);
 		}
-		/*
-	         * XXX: we need to do something with any TCP_INFO results here
-	         */
+
 		sp = sp->next;
 	    }
 	}			/* while (sp) */

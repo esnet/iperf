@@ -32,7 +32,8 @@ struct iperf_stream_result
     iperf_size_t bytes_sent;
     struct timeval start_time;
     struct timeval end_time;
-    struct iperf_interval_results *interval_results;
+    struct iperf_interval_results *interval_results; /* head of list */
+    struct iperf_interval_results *last_interval_results; /* end of list */
     void     *data;
 };
 
@@ -185,8 +186,9 @@ enum
 
 /* constants for command line arg sanity checks
 */
-#define MAX_TCP_BUFFER 128 * 1024 * 1024
-#define MAX_BLOCKSIZE 1024 * 1024
+#define MB 1024 * 1024
+#define MAX_TCP_BUFFER 128 * MB
+#define MAX_BLOCKSIZE MB
 #define MAX_INTERVAL 60
 #define MAX_TIME 3600
 #define MAX_MSS 9 * 1024

@@ -5,7 +5,6 @@ LDFLAGS=
 UNAME=$(shell uname)
 ifeq ($(UNAME), Linux)
 LDFLAGS= -luuid
-#LDFLAGS=$(LDFLAGS) -luuid
 endif
 
 all: iperf 

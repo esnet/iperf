@@ -171,6 +171,8 @@ main(int argc, char **argv)
 	    }
 	    break;
 	case 'i':
+	    /* could potentially want separate stat collection and reporting intervals,
+		but just set them to be the same for now */
 	    test->stats_interval = atoi(optarg);
 	    test->reporter_interval = atoi(optarg);
 	    if (test->stats_interval > MAX_INTERVAL)

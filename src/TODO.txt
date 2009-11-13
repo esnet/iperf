@@ -9,6 +9,8 @@ Current list of things to fix/add to iperf 3.0
 -  better packaging/makefile, README, LICENCE, etc files
 -  currently several places in the code where a linked list must be scanned to find the end.
       It would be better to store a pointer to the last element.
+-  reedd -Z option (linux tcp congestion control algoritm)
+-  readd flog to set IP_TOS (-S)
 -  finish/fix receive_result_from_server()
       - should this be called for TCP too, or only UDP (currently its both,
               but I think it should be UDP only, or maybe a command line option for TCP

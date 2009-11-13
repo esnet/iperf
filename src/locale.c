@@ -86,6 +86,7 @@ Server specific:\n\
 ;
 
 #ifdef NOT_YET_SUPPORTED /* still working on these */
+  -S, --tos N  set IP 'Type of Service' bit \n\
   -Z, --linux-congestion <algo>  set TCP congestion control algorithm (Linux only)\n\
   -6, --IPv6Version        Set the domain to IPv6\n\
 

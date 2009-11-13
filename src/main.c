@@ -51,6 +51,11 @@ static struct option longopts[] =
     {"Set-mss", required_argument, NULL, 'M'},
     {"version", no_argument, NULL, 'v'},
     {"help", no_argument, NULL, 'h'},
+#ifdef ADD_WHEN_SUPPORTED
+    {"tos",        required_argument, NULL, 'S'},
+    {"linux-congestion", required_argument, NULL, 'Z'},
+    {"daemon",           no_argument, NULL, 'D'},
+#endif
     {NULL, 0, NULL, 0}
 };
 

@@ -1,6 +1,7 @@
 
 iperf3 is a complete rewrite of iperf2, with a goal of making the
-code smaller and easier to maintain.
+code smaller and easier to maintain, and to support a client library 
+verion of the functionality.
 
 
 Main designer: Jon Dugan, ESnet

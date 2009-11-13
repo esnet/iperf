@@ -768,9 +768,9 @@ iperf_new_stream(struct iperf_test * testp)
     sp->result = (struct iperf_stream_result *) malloc(sizeof(struct iperf_stream_result));
 
     /* fill in buffer with random stuff */
-    /* XXX: probably better to use something truely random here */
+    srandom (time(0));
     for (i = 0; i < testp->default_settings->blksize; i++)
-	sp->buffer[i] = i % 255;
+	sp->buffer[i] = random();
 
     sp->socket = -1;
 

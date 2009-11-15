@@ -515,7 +515,7 @@ iperf_reporter_callback(struct iperf_test * test)
         sp = test->streams; /* reset back to 1st stream */
 	if (test->num_streams > 1)
 	{
-	    ip = test->streams->result->interval_results;	/* use 1st stream for timing info */
+	    ip = test->streams->result->last_interval_results;	/* use 1st stream for timing info */
 	    unit_snprintf(ubuf, UNIT_LEN, (double) (bytes), 'A');
 
             start_time = timeval_diff(&sp->result->start_time,&ip->interval_start_time);
@@ -637,7 +637,7 @@ print_interval_results(struct iperf_test * test, struct iperf_stream * sp, char 
     char     *message = (char *) malloc(MAX_RESULT_STRING);
 
     //printf("in print_interval_results for stream %d \n", sp->socket);
-    ir = sp->result->interval_results;
+    ir = sp->result->last_interval_results; /* get last entry in linked list */
     if (ir == NULL)
     {
 	printf("print_interval_results Error: interval_results = NULL \n");
@@ -941,7 +941,7 @@ iperf_run_client(struct iperf_test * test)
 
     //printf("Done getting/printing results. \n");
 
-    printf("send TEST_END to server \n");
+    //printf("send TEST_END to server \n");
     sp->settings->state = TEST_END;
     sp->snd(sp);		/* send message to server */
 

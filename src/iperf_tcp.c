@@ -75,9 +75,12 @@ iperf_tcp_recv(struct iperf_stream * sp)
 	return -1;
     }
     sp->settings->state = message;
+
+#ifdef DEBUG
     if (message != STREAM_RUNNING)	/* tell me about non STREAM_RUNNING messages
 				 * for debugging */
 	printf("iperf_tcp_recv: got message type %d \n", message);
+#endif
 
     switch (message)
     {

@@ -182,7 +182,7 @@ iperf_run_server(struct iperf_test * test)
 		    test->accept(test);
 		    test->default_settings->state = TEST_RUNNING;
 		    FD_CLR(test->listener_sock_tcp, &test->temp_set);
-		    printf("iperf_run_server: accepted TCP connection \n");
+		    //printf("iperf_run_server: accepted TCP connection \n");
 		    test->num_streams++;
 		}
 	    } else
@@ -310,14 +310,14 @@ handle_message(struct iperf_test * test, int message, struct iperf_stream * sp)
     }
     if (message == ALL_STREAMS_END)
     {
-	printf("client sent ALL_STREAMS_END message, printing results \n");
+	printf("Client done sending data. Printing final results. \n");
 	/* print server results */
 	results_string = test->reporter_callback(test);
 	puts(results_string);	/* send to stdio */
     }
     if (message == TEST_END)
     {
-	printf("client sent TEST_END message, shuting down sockets.. \n");
+	//printf("client sent TEST_END message, shuting down sockets.. \n");
 	/* FREE ALL STREAMS  */
 	tp1 = test->streams;
 	do

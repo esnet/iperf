@@ -446,12 +446,6 @@ iperf_stats_callback(struct iperf_test * test)
 	else
 	    temp.bytes_transferred = rp->bytes_received;
      
-        if (temp.bytes_transferred == 0)
-        {
-	    printf("iperf_stats_callback: should not be here, no data read \n");
-	    exit(-1);  /* XXX: clean up later once understand why this happends */
-        }
-
 	ip = sp->result->interval_results;
 	/* result->end_time contains timestamp of previous interval */
         if ( ip != NULL ) /* not the 1st interval */
@@ -573,12 +567,14 @@ iperf_reporter_callback(struct iperf_test * test)
 		    sprintf(message, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
                     //printf("iperf_reporter_callback 2: message = %s \n", message);
 		    safe_strcat(message_final, message);
+#if defined(linux) || defined(__FreeBSD__)
 		    if (test->tcp_info)
 		    {
 			printf("Final TCP_INFO results: \n");
 			build_tcpinfo_message(ip, message);
 			safe_strcat(message_final, message);
 		    }
+#endif
 		} else
 		{		/* UDP mode */
 		    sprintf(message, report_bw_jitter_loss_format, sp->socket, start_time,
@@ -659,11 +655,13 @@ print_interval_results(struct iperf_test * test, struct iperf_stream * sp, char 
     //printf("print_interval_results 1: message = %s \n", message);
     safe_strcat(message_final, message);
 
+#if defined(linux) || defined(__FreeBSD__)
     if (test->tcp_info)
     {
 	build_tcpinfo_message(ir, message);
 	safe_strcat(message_final, message);
     }
+#endif
     //printf("reporter_callback: built interval string: %s \n", message_final);
     free(message);
     return message_final;
@@ -680,6 +678,7 @@ safe_strcat(char *s1, char *s2)
     {
 	printf("Error: results string too long \n");
 	exit(-1);		/* XXX: should return an error instead! */
+	/* but code that calls this needs to check for error first */
 	//return -1;
     }
 }

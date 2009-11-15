@@ -50,7 +50,7 @@ struct iperf_settings
     iperf_size_t bytes;		/* -n option */
     char      unit_format;	/* -f */
     /* XXX: not sure about this design: everything else is this struct is static state, 
-	but the last 2 are dymanic state. Should they be in iperf_stream instead? */
+	but the last 2 are dynamic state. Should they be in iperf_stream instead? */
     int       state;		/* This is state of a stream/test */
     char      cookie[COOKIE_SIZE];	
 };
@@ -60,7 +60,7 @@ struct iperf_stream
     /* configurable members */
     int       local_port;
     int       remote_port;
-	/* XXX: is this just a pointer to the same struct in iperf_test? if not, 
+	/* XXX: is settings just a pointer to the same struct in iperf_test? if not, 
 		should it be? */
     struct iperf_settings *settings;	/* pointer to structure settings */
 

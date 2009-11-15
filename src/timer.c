@@ -33,7 +33,10 @@ timer_expired(struct timer * tp)
 {
     /* for timer with zero time */
     if (tp->end.tv_sec == tp->begin.tv_sec && tp->end.tv_usec == tp->begin.tv_usec)
+    {
+	//printf(" timer_expired: begining and end times are equal \n");
 	return 0;
+    }
 
     struct timeval now;
     int64_t   end = 0, current = 0, diff = 0;
@@ -53,10 +56,6 @@ timer_expired(struct timer * tp)
     diff = end - current;
     return diff <= 0;
 
-    /*
-     * currently using microsecond limit. Else we need to introduce timespec
-     * instread of timeval
-     */
 }
 
 void

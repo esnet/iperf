@@ -78,7 +78,7 @@ param_received(struct iperf_stream * sp, struct param_exchange * param)
 	buf[0] = ACCESS_DENIED;
     }
     memcpy(sp->buffer, buf, sizeof(struct param_exchange));;
-    printf("param_received: Sending message (%d) back to client \n", sp->buffer[0]);
+    //printf("param_received: Sending message (%d) back to client \n", sp->buffer[0]);
     result = Nwrite(sp->socket, sp->buffer, sizeof(struct param_exchange), Ptcp);
     if (result < 0)
 	perror("param_received: Error sending param ack to client");
@@ -127,19 +127,19 @@ iperf_run_server(struct iperf_test * test)
     int       j = 0, result = 0, message = 0;
     int       nfd = 0;
 
-    printf("in iperf_run_server \n");
+    //printf("in iperf_run_server \n");
 
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->temp_set);
     if (test->protocol == Ptcp)
     {
 	/* add listener to the master set */
-        FD_SET(test->listener_sock_tcp, &test->read_set);
-        test->max_fd = test->listener_sock_tcp;
+	FD_SET(test->listener_sock_tcp, &test->read_set);
+	test->max_fd = test->listener_sock_tcp;
     } else
     {
-        FD_SET(test->listener_sock_udp, &test->read_set);
-        test->max_fd = test->listener_sock_udp;
+	FD_SET(test->listener_sock_udp, &test->read_set);
+	test->max_fd = test->listener_sock_udp;
     }
 
     //printf("iperf_run_server: max_fd set to %d \n", test->max_fd);
@@ -147,10 +147,6 @@ iperf_run_server(struct iperf_test * test)
     test->num_streams = 0;
     test->default_settings->state = TEST_RUNNING;
 
-   if (test->stats_interval != 0)
-        stats_interval = new_timer(test->stats_interval, 0);
-    if (test->reporter_interval != 0)
-        reporter_interval = new_timer(test->reporter_interval, 0);
 
     printf("iperf_run_server: Waiting for client connect.... \n");
 
@@ -225,20 +221,35 @@ iperf_run_server(struct iperf_test * test)
 
 		}		/* end if (FD_ISSET(j, &temp_set)) */
 	    }			/* end for (j=0;...) */
-	}			/* end else (result>0)   */
 
-       if ((test->stats_interval != 0) && stats_interval->expired(stats_interval))
-        {
-            test->stats_callback(test);
-            update_timer(stats_interval, test->stats_interval, 0);
-        }
-        if ((test->reporter_interval != 0) && reporter_interval->expired(reporter_interval))
-        {
-            result_string = test->reporter_callback(test);
-            //printf("interval expired: printing results: \n");
-            puts(result_string);
-            update_timer(reporter_interval, test->reporter_interval, 0);
-        }
+	    if (message == PARAM_EXCHANGE)
+	    {
+		    /* start timer at end of PARAM_EXCHANGE */
+    		    if (test->stats_interval != 0)
+			    stats_interval = new_timer(test->stats_interval, 0);
+    		    if (test->reporter_interval != 0)
+			    reporter_interval = new_timer(test->reporter_interval, 0);
+	    }
+	    if ((message == STREAM_BEGIN) || (message == STREAM_RUNNING))
+	    {
+		/*
+		 * XXX: is this right? Might there be cases where we want
+		 * stats for while in another state?
+		 */
+		if ((test->stats_interval != 0) && stats_interval->expired(stats_interval))
+		{
+		    test->stats_callback(test);
+		    update_timer(stats_interval, test->stats_interval, 0);
+		}
+		if ((test->reporter_interval != 0) && reporter_interval->expired(reporter_interval))
+		{
+		    result_string = test->reporter_callback(test);
+		    //printf("interval expired: printing results: \n");
+		    puts(result_string);
+		    update_timer(reporter_interval, test->reporter_interval, 0);
+		}
+	    }
+	}			/* end else (result>0)   */
     }				/* end while */
 
 done:
@@ -343,14 +354,12 @@ find_stream_by_socket(struct iperf_test * test, int sock)
     n = test->streams;
     while (1)
     {
-        if (n->socket == sock)
-            break;
-        if (n->next == NULL)
-            break;
+	if (n->socket == sock)
+	    break;
+	if (n->next == NULL)
+	    break;
 
-        n = n->next;
+	n = n->next;
     }
     return n;
 }
-
-

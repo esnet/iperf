@@ -93,7 +93,7 @@ exchange_parameters(struct iperf_test * test)
     struct iperf_stream *sp;
     struct param_exchange *param;
 
-    printf("in exchange_parameters \n");
+    //printf("in exchange_parameters \n");
     sp = test->streams;
     sp->settings->state = PARAM_EXCHANGE;
     param = (struct param_exchange *) sp->buffer;
@@ -109,28 +109,11 @@ exchange_parameters(struct iperf_test * test)
     param->send_window = test->default_settings->socket_bufsize;
     param->format = test->default_settings->unit_format;
 
-#ifdef OLD_WAY
     //printf(" sending exchange params: size = %d \n", (int) sizeof(struct param_exchange));
-    /* XXX: can we use iperf_tcp_send for this? that would be cleaner */
-    result = send(sp->socket, sp->buffer, sizeof(struct param_exchange), 0);
-    if (result < 0)
-	perror("Error sending exchange params to server");
-
-    //printf("result = %d state = %d, error = %d \n", result, sp->buffer[0], errno);
-
-    /* get answer back from server */
-    do
-    {
-	//printf("exchange_parameters: reading result from server .. \n");
-	result = recv(sp->socket, sp->buffer, sizeof(struct param_exchange), 0);
-    } while (result == -1 && errno == EINTR);
-#else
-    printf(" sending exchange params: size = %d \n", (int) sizeof(struct param_exchange));
     result = sp->snd(sp);
     if (result < 0)
 	perror("Error sending exchange params to server");
     result = Nread(sp->socket, sp->buffer, sizeof(struct param_exchange), Ptcp);
-#endif
 
     if (result < 0)
 	perror("Error getting exchange params ack from server");
@@ -151,21 +134,16 @@ exchange_parameters(struct iperf_test * test)
 void
 add_to_interval_list(struct iperf_stream_result * rp, struct iperf_interval_results * new)
 {
-    struct iperf_interval_results *ip = (struct iperf_interval_results *) malloc(sizeof(struct iperf_interval_results));
+    struct iperf_interval_results *ip = NULL;
 
-    ip->bytes_transferred = new->bytes_transferred;
-    ip->interval_duration = new->interval_duration;
-#if defined(linux) || defined(__FreeBSD__)
-    memcpy(&ip->tcpInfo, &new->tcpInfo, sizeof(struct tcp_info));
-#endif
+    ip = (struct iperf_interval_results *) malloc(sizeof(struct iperf_interval_results));
+    memcpy(ip, new, sizeof(struct iperf_interval_results));
     ip->next = NULL;
 
-    //printf("add_to_interval_list: Mbytes = %d, duration = %f \n", (int) (ip->bytes_transferred / 1000000), ip->interval_duration);
-
-    if (!rp->interval_results)	/* if 1st interval */
+    if (rp->interval_results == NULL)	/* if 1st interval */
     {
 	rp->interval_results = ip;
-	rp->last_interval_results = ip;
+	rp->last_interval_results = ip; /* pointer to last element in list */
     } else
     {
 	/* add to end of list */
@@ -183,7 +161,8 @@ display_interval_list(struct iperf_stream_result * rp, int tflag)
 
     n = rp->interval_results;
 
-    while (n)
+    printf("----------------------------------------\n");
+    while (n!=NULL)
     {
 	printf("Interval = %f\tMBytes transferred = %u\n", n->interval_duration, (uint) (n->bytes_transferred / MB));
 	if (tflag)
@@ -273,24 +252,17 @@ Display(struct iperf_test * test)
 
     printf("===============DISPLAY==================\n");
 
-    while (1)
+    while (n != NULL)
     {
-	if (n)
-	{
-	    if (test->role == 'c')
+	 if (test->role == 'c')
 		printf("position-%d\tsp=%d\tsocket=%d\tMbytes sent=%u\n", count++, (int) n, n->socket, (uint) (n->result->bytes_sent / MB));
-	    else
+	 else
 		printf("position-%d\tsp=%d\tsocket=%d\tMbytes received=%u\n", count++, (int) n, n->socket, (uint) (n->result->bytes_received / MB));
 
-	    if (n->next == NULL)
-	    {
-		printf("=================END====================\n");
-		fflush(stdout);
-		break;
-	    }
-	    n = n->next;
-	}
+         n = n->next;
     }
+    printf("=================END====================\n");
+    fflush(stdout);
 }
 
 /**************************************************************************/
@@ -353,7 +325,7 @@ iperf_init_test(struct iperf_test * test)
     struct iperf_stream *sp;
     int       i, s = 0;
 
-    printf("in iperf_init_test \n");
+    //printf("in iperf_init_test \n");
     if (test->role == 's')
     {				/* server */
 	if (test->protocol == Pudp)
@@ -459,50 +431,43 @@ iperf_free_test(struct iperf_test * test)
 void     *
 iperf_stats_callback(struct iperf_test * test)
 {
-    iperf_size_t cumulative_bytes = 0;
-    int       i;
-
     struct iperf_stream *sp = test->streams;
-    struct iperf_stream_result *rp = test->streams->result;
+    struct iperf_stream_result *rp = NULL;
     struct iperf_interval_results *ip = NULL, temp;
 
-    //printf("in stats_callback: num_streams = %d \n", test->num_streams);
-    for (i = 0; i < test->num_streams; i++)
+    //printf("in stats_callback: num_streams = %d role = %c\n", test->num_streams, test->role);
+
+    while (sp != NULL)
     {
 	rp = sp->result;
 
-	if (!rp->interval_results)	/* 1st entry in list */
-	{
-	    if (test->role == 'c')
-		temp.bytes_transferred = rp->bytes_sent;
-	    else
-		temp.bytes_transferred = rp->bytes_received;
-	} else
-	{
-	    ip = sp->result->interval_results;
-	    cumulative_bytes = 0;
-	    while (ip->next != NULL)
-	    {			/* compute cumulative_bytes over all
-				 * intervals */
-		cumulative_bytes += ip->bytes_transferred;
-		ip = ip->next;
-	    }
-	    /* compute number of bytes transferred on this stream */
-	    /* XXX: fix this calculation: this is really awkward */
-	    if (test->role == 'c')
-		temp.bytes_transferred = rp->bytes_sent - cumulative_bytes;
-	    else
-		temp.bytes_transferred = rp->bytes_received - cumulative_bytes;
-	}
+	if (test->role == 'c')
+	    temp.bytes_transferred = rp->bytes_sent;
+	else
+	    temp.bytes_transferred = rp->bytes_received;
+     
+        if (temp.bytes_transferred == 0)
+        {
+	    printf("iperf_stats_callback: should not be here, no data read \n");
+	    exit(-1);  /* XXX: clean up later once understand why this happends */
+        }
 
+	ip = sp->result->interval_results;
+	/* result->end_time contains timestamp of previous interval */
+        if ( ip != NULL ) /* not the 1st interval */
+	    memcpy(&temp.interval_start_time, &sp->result->end_time, sizeof(struct timeval));
+        else /* or use timestamp from beginning */
+            memcpy(&temp.interval_start_time, &sp->result->start_time, sizeof(struct timeval));
+	/* now save time of end of this interval */
 	gettimeofday(&sp->result->end_time, NULL);
-	temp.interval_duration = timeval_diff(&sp->result->start_time, &sp->result->end_time);
+	memcpy(&temp.interval_end_time, &sp->result->end_time, sizeof(struct timeval));
+	temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
 	if (test->tcp_info)
 	    get_tcpinfo(test, &temp);
 	add_to_interval_list(rp, &temp);
 
 	/* for debugging */
-	/* display_interval_list(rp, test->tcp_info); */
+	//display_interval_list(rp, test->tcp_info); 
 	sp = sp->next;
     }				/* for each stream */
 
@@ -522,13 +487,12 @@ char     *
 iperf_reporter_callback(struct iperf_test * test)
 {
     int       total_packets = 0, lost_packets = 0, curr_state = 0;
-    int       first_stream = 1;
     char      ubuf[UNIT_LEN];
     char      nbuf[UNIT_LEN];
     struct iperf_stream *sp = NULL;
     iperf_size_t bytes = 0;
     double    start_time, end_time;
-    struct iperf_interval_results *ip = NULL, *ip_prev = NULL;
+    struct iperf_interval_results *ip = NULL;
     char     *message = (char *) malloc(MAX_RESULT_STRING);
     char     *message_final = (char *) malloc(MAX_RESULT_STRING);
 
@@ -540,75 +504,27 @@ iperf_reporter_callback(struct iperf_test * test)
 
     if (curr_state == TEST_RUNNING || curr_state == STREAM_RUNNING)
     {
-	/* print interval results */
+	/* print interval results for each stream */
 	while (sp)
-	{			/* for each stream */
-	    ip = sp->result->interval_results;
-	    if (ip == NULL)
-	    {
-		printf("iperf_reporter_callback Error: interval_results = NULL \n");
-		break;
-	    }
-	    while (ip->next != NULL)	/* find end of list. XXX: why not
-					 * just keep track of this pointer?? */
-	    {
-		ip_prev = ip;
-		ip = ip->next;
-	    }
-
-	    bytes += ip->bytes_transferred;
-	    unit_snprintf(ubuf, UNIT_LEN, (double) (ip->bytes_transferred), 'A');
-
-	    if (test->streams->result->interval_results->next != NULL)
-	    {
-		unit_snprintf(nbuf, UNIT_LEN,
-			      (double) (ip->bytes_transferred / (ip->interval_duration - ip_prev->interval_duration)),
-			      test->default_settings->unit_format);
-		sprintf(message, report_bw_format, sp->socket, ip_prev->interval_duration, ip->interval_duration, ubuf, nbuf);
-
-	    } else
-	    {
-		if (first_stream)	/* only print header for 1st stream */
-		{
-		    sprintf(message, report_bw_header);
-		    safe_strcat(message_final, message);
-		    first_stream = 0;
-		}
-		unit_snprintf(nbuf, UNIT_LEN, (double) (ip->bytes_transferred / ip->interval_duration), test->default_settings->unit_format);
-		sprintf(message, report_bw_format, sp->socket, 0.0, ip->interval_duration, ubuf, nbuf);
-	    }
-	    if (strlen(message_final) + strlen(message) < MAX_RESULT_STRING)
-		safe_strcat(message_final, message);
-	    else
-	    {
-		printf("Error: results string too long \n");
-		return NULL;
-	    }
-
-	    if (test->tcp_info)
-	    {
-		build_tcpinfo_message(ip, message);
-		safe_strcat(message_final, message);
-	    }
-	    //printf("reporter_callback: built interval string: %s \n", message_final);
-	    sp = sp->next;
-	}			/* while (sp) */
-
-
-	if (test->num_streams > 1)	/* sum of all streams */
 	{
+	    message_final = print_interval_results(test, sp, message_final);
+            bytes += sp->result->interval_results->bytes_transferred; /* sum up all streams */
+	    sp = sp->next;
+	}
+	/* next build string with sum of all streams */
+        sp = test->streams; /* reset back to 1st stream */
+	if (test->num_streams > 1)
+	{
+	    ip = test->streams->result->interval_results;	/* use 1st stream for timing info */
 	    unit_snprintf(ubuf, UNIT_LEN, (double) (bytes), 'A');
 
-	    if (test->streams->result->interval_results->next != NULL)
-	    {
-		unit_snprintf(nbuf, UNIT_LEN, (double) (bytes / (ip->interval_duration - ip_prev->interval_duration)),
+            start_time = timeval_diff(&sp->result->start_time,&ip->interval_start_time);
+            end_time = timeval_diff(&sp->result->start_time,&ip->interval_end_time);
+            unit_snprintf(nbuf, UNIT_LEN, (double) (bytes / ip->interval_duration),
 			      test->default_settings->unit_format);
-		sprintf(message, report_sum_bw_format, ip_prev->interval_duration, ip->interval_duration, ubuf, nbuf);
-	    } else
-	    {
-		unit_snprintf(nbuf, UNIT_LEN, (double) (bytes / ip->interval_duration), test->default_settings->unit_format);
-		sprintf(message, report_sum_bw_format, 0.0, ip->interval_duration, ubuf, nbuf);
-	    }
+	    sprintf(message, report_sum_bw_format, start_time, end_time, ubuf, nbuf);
+            //printf("iperf_reporter_callback 1: start_time: %.3f  end_time: %.3f \n", start_time, end_time);
+            //printf("iperf_reporter_callback 1: message = %s \n", message);
 	    safe_strcat(message_final, message);
 
 #ifdef NOT_DONE			/* is it usful to figure out a way so sum
@@ -622,10 +538,12 @@ iperf_reporter_callback(struct iperf_test * test)
 	}
     } else
     {
+	/* print final summary for all intervals */
 	if (curr_state == ALL_STREAMS_END || curr_state == RESULT_REQUEST)
 	{
-	    /* if TEST_RUNNING */
 	    sp = test->streams;
+	    start_time = 0.;
+	    end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
 
 	    while (sp)
 	    {
@@ -639,14 +557,11 @@ iperf_reporter_callback(struct iperf_test * test)
 		    total_packets += sp->packet_count;
 		    lost_packets += sp->cnt_error;
 		}
-		start_time = timeval_diff(&sp->result->start_time, &sp->result->start_time);
-		end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
 
 		if (test->role == 'c')
 		{
 		    unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->bytes_sent), 'A');
 		    unit_snprintf(nbuf, UNIT_LEN, (double) (sp->result->bytes_sent / end_time), test->default_settings->unit_format);
-
 		} else
 		{
 		    unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->bytes_received), 'A');
@@ -656,6 +571,7 @@ iperf_reporter_callback(struct iperf_test * test)
 		if (test->protocol == Ptcp)
 		{
 		    sprintf(message, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
+                    //printf("iperf_reporter_callback 2: message = %s \n", message);
 		    safe_strcat(message_final, message);
 		    if (test->tcp_info)
 		    {
@@ -681,10 +597,6 @@ iperf_reporter_callback(struct iperf_test * test)
 		sp = sp->next;
 	    }
 	}			/* while (sp) */
-	sp = test->streams;	/* reset to first socket */
-
-	start_time = timeval_diff(&sp->result->start_time, &sp->result->start_time);
-	end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
 
 	unit_snprintf(ubuf, UNIT_LEN, (double) bytes, 'A');
 	unit_snprintf(nbuf, UNIT_LEN, (double) bytes / end_time, test->default_settings->unit_format);
@@ -709,6 +621,50 @@ iperf_reporter_callback(struct iperf_test * test)
 	    }
 	}
     }
+    free(message);
+    return message_final;
+}
+
+/**************************************************************************/
+char     *
+print_interval_results(struct iperf_test * test, struct iperf_stream * sp, char *message_final)
+{
+    static int       first_stream = 1;
+    char      ubuf[UNIT_LEN];
+    char      nbuf[UNIT_LEN];
+    double    st = 0., et = 0.;
+    struct iperf_interval_results *ir = NULL;
+    char     *message = (char *) malloc(MAX_RESULT_STRING);
+
+    //printf("in print_interval_results for stream %d \n", sp->socket);
+    ir = sp->result->interval_results;
+    if (ir == NULL)
+    {
+	printf("print_interval_results Error: interval_results = NULL \n");
+	return NULL;
+    }
+    if (first_stream)		/* only print header for 1st stream */
+    {
+	sprintf(message, report_bw_header);
+	safe_strcat(message_final, message);
+	first_stream = 0;
+    }
+    unit_snprintf(ubuf, UNIT_LEN, (double) (ir->bytes_transferred), 'A');
+
+    unit_snprintf(nbuf, UNIT_LEN,
+		  (double) (ir->bytes_transferred / ir->interval_duration), test->default_settings->unit_format);
+    st = timeval_diff(&sp->result->start_time,&ir->interval_start_time);
+    et = timeval_diff(&sp->result->start_time,&ir->interval_end_time);
+    sprintf(message, report_bw_format, sp->socket, st, et, ubuf, nbuf);
+    //printf("print_interval_results 1: message = %s \n", message);
+    safe_strcat(message_final, message);
+
+    if (test->tcp_info)
+    {
+	build_tcpinfo_message(ir, message);
+	safe_strcat(message_final, message);
+    }
+    //printf("reporter_callback: built interval string: %s \n", message_final);
     free(message);
     return message_final;
 }
@@ -755,7 +711,7 @@ iperf_new_stream(struct iperf_test * testp)
     }
     memset(sp, 0, sizeof(struct iperf_stream));
 
-    printf("iperf_new_stream: Allocating new stream buffer: size = %d \n", testp->default_settings->blksize);
+    //printf("iperf_new_stream: Allocating new stream buffer: size = %d \n", testp->default_settings->blksize);
     sp->buffer = (char *) malloc(testp->default_settings->blksize);
     sp->settings = (struct iperf_settings *) malloc(sizeof(struct iperf_settings));
     /* make a per stream copy of default_settings in each stream structure */
@@ -860,7 +816,7 @@ iperf_run_client(struct iperf_test * test)
     struct timeval tv;
     struct sigaction sact;
 
-    printf("in iperf_run_client \n");
+    //printf("in iperf_run_client \n");
     tv.tv_sec = 15;		/* timeout interval in seconds */
     tv.tv_usec = 0;
 
@@ -943,19 +899,20 @@ iperf_run_client(struct iperf_test * test)
 
     }				/* while outer timer  */
     /* show last interval if necessary */
-    test->stats_callback(test);
-    result_string = test->reporter_callback(test);
-    puts(result_string);
+    // I think this is un-necesary, but maybe needed with -n option? 
+    //test->stats_callback(test); /* dont need this I think .. */
+    //result_string = test->reporter_callback(test);
+    //puts(result_string);
 
 
-    printf("Test Complete. \n");
+    printf("Test Complete. Summary Results:\n");
     /* send STREAM_END packets */
     np = test->streams;
     do
     {				/* send STREAM_END to all sockets */
 	sp = np;
 	sp->settings->state = STREAM_END;
-	printf("sending state = STREAM_END to stream %d \n", sp->socket);
+	//printf("sending state = STREAM_END to stream %d \n", sp->socket);
 	result = sp->snd(sp);
 	if (result < 0)
 	    break;
@@ -969,7 +926,8 @@ iperf_run_client(struct iperf_test * test)
     sp->snd(sp);
     //printf("Done Sending ALL_STREAMS_END. \n");
 
-    /* show and final summary */
+    /* show final summary */
+    /* XXX: check to make sure this is needed */
     test->stats_callback(test);
     result_string = test->reporter_callback(test);
     puts(result_string);

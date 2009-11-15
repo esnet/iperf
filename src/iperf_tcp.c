@@ -126,7 +126,7 @@ iperf_tcp_recv(struct iperf_stream * sp)
 	    perror("Read error");
 	    return -1;
 	}
-	//printf("iperf_tcp_recv: recv returned %d bytes \n", result);
+	//printf("iperf_tcp_recv: recv on socket %d returned %d bytes \n", sp->socket, result);
 	sp->result->bytes_received += result;
 	break;
     case STREAM_END:
@@ -210,8 +210,8 @@ iperf_tcp_send(struct iperf_stream * sp)
 	return -1;
     }
 
-    if(sp->settings->state != STREAM_RUNNING)
-        printf("   in iperf_tcp_send, message type = %d (total = %d bytes) \n", sp->settings->state, size);
+    //if(sp->settings->state != STREAM_RUNNING)
+    //    printf("   in iperf_tcp_send, message type = %d (total = %d bytes) \n", sp->settings->state, size);
 
 #ifdef USE_SEND
     result = send(sp->socket, sp->buffer, size, 0);

@@ -14,7 +14,8 @@ typedef uint64_t iperf_size_t;
 struct iperf_interval_results
 {
     iperf_size_t bytes_transferred;
-    struct timeval interval_time;
+    struct timeval interval_start_time;
+    struct timeval interval_end_time;
     float     interval_duration;
 #if defined(linux) || defined(__FreeBSD__)
     struct tcp_info tcpInfo;	/* getsockopt(TCP_INFO) results here for

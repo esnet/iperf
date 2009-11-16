@@ -210,6 +210,7 @@ receive_result_from_server(struct iperf_test * test)
 
     printf(server_reporting, sp->socket);
     puts(buf);			/* prints results */
+    free(buf);
 
 }
 
@@ -690,6 +691,7 @@ safe_strcat(char *s1, char *s2)
 void
 iperf_free_stream(struct iperf_stream * sp)
 {
+    /* XXX: need to free interval list too! */
     free(sp->buffer);
     free(sp->settings);
     free(sp->result);
@@ -894,6 +896,7 @@ iperf_run_client(struct iperf_test * test)
 	    //printf("interval expired: printing results: \n");
 	    puts(result_string);
 	    update_timer(reporter_interval, test->reporter_interval, 0);
+	    free(result_string);
 	}
 	/* detecting Ctrl+C */
 	if (setjmp(env))
@@ -933,6 +936,7 @@ iperf_run_client(struct iperf_test * test)
     test->stats_callback(test);
     result_string = test->reporter_callback(test);
     puts(result_string);
+    free(result_string);
 
     /* Requesting for result from Server */
     test->default_settings->state = RESULT_REQUEST;

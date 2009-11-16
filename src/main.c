@@ -113,7 +113,7 @@ main(int argc, char **argv)
 	case 'c':
 	    test->role = 'c';
 	    role = test->role;
-	    test->server_hostname = (char *) malloc(strlen(optarg));
+	    test->server_hostname = (char *) malloc(strlen(optarg)+1);
 	    strncpy(test->server_hostname, optarg, strlen(optarg));
 	    break;
 	case 'p':

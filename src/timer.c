@@ -65,7 +65,6 @@ update_timer(struct timer * tp, time_t sec, suseconds_t usec)
     {
 	perror("gettimeofday");
     }
-    memcpy(&tp->end, &tp->begin, sizeof(struct timer));
     tp->end.tv_sec = tp->begin.tv_sec + (time_t) sec;
     tp->end.tv_usec = tp->begin.tv_usec + (time_t) usec;
 
@@ -75,8 +74,8 @@ update_timer(struct timer * tp, time_t sec, suseconds_t usec)
 struct timer *
 new_timer(time_t sec, suseconds_t usec)
 {
-    struct timer *tp;
-    tp = (struct timer *) malloc(sizeof(struct timer));
+    struct timer *tp = NULL;
+    tp = (struct timer *) calloc(1, sizeof(struct timer));
     if (tp == NULL)
     {
 	perror("malloc");
@@ -88,7 +87,7 @@ new_timer(time_t sec, suseconds_t usec)
 	perror("gettimeofday");
 	return NULL;
     }
-    memcpy(&tp->end, &tp->begin, sizeof(struct timer));
+
     tp->end.tv_sec = tp->begin.tv_sec + (time_t) sec;
     tp->end.tv_usec = tp->begin.tv_usec + (time_t) usec;
 

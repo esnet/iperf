@@ -481,16 +481,17 @@ char     *
 iperf_reporter_callback(struct iperf_test * test)
 {
     int       total_packets = 0, lost_packets = 0, curr_state = 0;
+    char     *message = NULL;
+    char     *message_final = NULL;
     char      ubuf[UNIT_LEN];
     char      nbuf[UNIT_LEN];
     struct iperf_stream *sp = NULL;
     iperf_size_t bytes = 0;
     double    start_time, end_time;
     struct iperf_interval_results *ip = NULL;
-    char     *message = (char *) malloc(MAX_RESULT_STRING);
-    char     *message_final = (char *) malloc(MAX_RESULT_STRING);
 
-    memset(message_final, 0, strlen(message_final));
+    message = (char *)calloc(MAX_RESULT_STRING, sizeof(char));
+    message_final = (char *)calloc(MAX_RESULT_STRING, sizeof(char));
 
     sp = test->streams;
     curr_state = sp->settings->state;
@@ -570,7 +571,7 @@ iperf_reporter_callback(struct iperf_test * test)
 #if defined(linux) || defined(__FreeBSD__)
 		    if (test->tcp_info)
 		    {
-			printf("Final TCP_INFO results: \n");
+			//printf("Final TCP_INFO results: \n");
 	                ip = sp->result->last_interval_results;	
 			build_tcpinfo_message(ip, message);
 			safe_strcat(message_final, message);

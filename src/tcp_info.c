@@ -71,7 +71,6 @@ print_tcpinfo(struct iperf_interval_results *r)
 void
 build_tcpinfo_message(struct iperf_interval_results *r, char *message)
 {
-    printf("in build_tcpinfo_message \n");
 #if defined(linux)
     sprintf(message, report_tcpInfo, r->tcpInfo.tcpi_snd_cwnd, r->tcpInfo.tcpi_snd_ssthresh,
 	    r->tcpInfo.tcpi_rcv_ssthresh, r->tcpInfo.tcpi_unacked, r->tcpInfo.tcpi_sacked,

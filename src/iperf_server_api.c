@@ -56,7 +56,7 @@ int
 param_received(struct iperf_stream * sp, struct param_exchange * param)
 {
     int       result;
-    char     *buf = (char *) malloc(sizeof(struct param_exchange));
+    char     *buf = (char *) calloc(1, sizeof(struct param_exchange));
 
     if (sp->settings->cookie[0] == '\0' ||
 	(strncmp(param->cookie, sp->settings->cookie, COOKIE_SIZE) == 0))

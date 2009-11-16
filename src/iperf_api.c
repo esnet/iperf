@@ -571,6 +571,7 @@ iperf_reporter_callback(struct iperf_test * test)
 		    if (test->tcp_info)
 		    {
 			printf("Final TCP_INFO results: \n");
+	                ip = sp->result->last_interval_results;	
 			build_tcpinfo_message(ip, message);
 			safe_strcat(message_final, message);
 		    }
@@ -578,7 +579,8 @@ iperf_reporter_callback(struct iperf_test * test)
 		} else
 		{		/* UDP mode */
 		    sprintf(message, report_bw_jitter_loss_format, sp->socket, start_time,
-			    end_time, ubuf, nbuf, sp->jitter * 1000, sp->cnt_error, sp->packet_count, (double) (100.0 * sp->cnt_error / sp->packet_count));
+			    end_time, ubuf, nbuf, sp->jitter * 1000, sp->cnt_error, 
+				sp->packet_count, (double) (100.0 * sp->cnt_error / sp->packet_count));
 		    safe_strcat(message_final, message);
 
 		    if (test->role == 'c')

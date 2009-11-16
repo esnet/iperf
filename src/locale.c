@@ -68,26 +68,27 @@ Usage: iperf [-s|-c host] [options]\n\
        iperf [-h|--help] [-v|--version]\n\
 \n\
 Client/Server:\n\
-  -f, --format    [kmKM]   format to report: Kbits, Mbits, KBytes, MBytes\n\
+  -f, --format    [kmgKMG]   format to report: Kbits, Mbits, KBytes, MBytes\n\
   -i, --interval  #        seconds between periodic bandwidth reports\n\
-  -l, --len       #[KM]    length of buffer to read or write (default 8 KB)\n\
+  -l, --len       #[KMG]   length of buffer to read or write (default 8 KB)\n\
   -m, --print_mss          print TCP maximum segment size (MTU - TCP/IP header)\n\
   -p, --port      #        server port to listen on/connect to\n\
   -u, --udp                use UDP rather than TCP\n\
-  -w, --window    #[KM]    TCP window size (socket buffer size)\n\
+  -w, --window    #[KMG]   TCP window size (socket buffer size)\n\
   -M, --mss       #        set TCP maximum segment size (MTU - 40 bytes)\n\
   -N, --nodelay            set TCP no delay, disabling Nagle's Algorithm\n\
   -T, --tcpinfo            Output detailed TCP info\n\
   -v, --version            print version information and quit\n\
+  -V, --verbose            more verbose output \n\
+  -d, --debug              debug mode \n\
 Server specific:\n\
-  -s, --server             run in server mode\n\
-  -U, --single_udp         run in single threaded UDP mode\n\
-  -D, --daemon             run the server as a daemon\n"
+  -s, --server             run in server mode"
 ;
 
 #ifdef NOT_YET_SUPPORTED /* still working on these */
   -S, --tos N  set IP 'Type of Service' bit \n\
   -Z, --linux-congestion <algo>  set TCP congestion control algorithm (Linux only)\n\
+  -D, --daemon             run the server as a daemon\n"
   -6, --IPv6Version        Set the domain to IPv6\n\
 
 #endif
@@ -105,10 +106,10 @@ Server specific:\n\
 const char usage_long2[] = "\
 \n\
 Client specific:\n\
-  -b, --bandwidth #[KM]    for UDP, bandwidth to send at in bits/sec\n\
+  -b, --bandwidth #[KMG]    for UDP, bandwidth to send at in bits/sec\n\
                            (default 1 Mbit/sec, implies -u)\n\
   -c, --client    <host>   run in client mode, connecting to <host>\n\
-  -n, --num       #[KM]    number of bytes to transmit (instead of -t)\n\
+  -n, --num       #[KMG]    number of bytes to transmit (instead of -t)\n\
   -t, --time      #        time in seconds to transmit for (default 10 secs)\n\
   -P, --parallel  #        number of parallel client threads to run\n\
   -T, --tcpinfo            Output detailed TCP info (Linux and FreeBSD only)\n\
@@ -116,7 +117,7 @@ Client specific:\n\
 Miscellaneous:\n\
   -h, --help               print this message and quit\n\
 \n\
-[KM] Indicates options that support a K or M suffix for kilo- or mega-\n\
+[KMG] Indicates options that support a K,M, or G suffix for kilo-, mega-, or giga- \n\
 \n\
 Report bugs to <iperf-users@lists.sourceforge.net>\n";
 

@@ -34,20 +34,16 @@ get_tcpinfo(struct iperf_test *test, struct iperf_interval_results *rp)
 {
 #if defined(linux) || defined(__FreeBSD__)
     socklen_t	    tcp_info_length;
-    struct tcp_info tcpInfo;
     struct iperf_stream *sp = test->streams;
 
-    tcp_info_length = sizeof(tcpInfo);
-    memset((char *)&tcpInfo, 0, tcp_info_length);
+    tcp_info_length = sizeof(struct tcp_info);
     //printf("getting TCP_INFO for socket %d \n", sp->socket);
-    if (getsockopt(sp->socket, IPPROTO_TCP, TCP_INFO, (void *)&tcpInfo, &tcp_info_length) < 0) {
+    if (getsockopt(sp->socket, IPPROTO_TCP, TCP_INFO, (void *)&rp->tcpInfo, &tcp_info_length) < 0) {
 	perror("getsockopt");
     }
-    memcpy(&(rp->tcpInfo), &tcpInfo, sizeof(tcpInfo));
-    /* for debugging
+    /* for debugging */
     printf("   got TCP_INFO: %d, %d, %d, %d\n", rp->tcpInfo.tcpi_snd_cwnd,
 	   rp->tcpInfo.tcpi_snd_ssthresh, rp->tcpInfo.tcpi_rcv_space, rp->tcpInfo.tcpi_rtt);
-    */
     return;
 #else
     return;
@@ -75,6 +71,7 @@ print_tcpinfo(struct iperf_interval_results *r)
 void
 build_tcpinfo_message(struct iperf_interval_results *r, char *message)
 {
+    printf("in build_tcpinfo_message \n");
 #if defined(linux)
     sprintf(message, report_tcpInfo, r->tcpInfo.tcpi_snd_cwnd, r->tcpInfo.tcpi_snd_ssthresh,
 	    r->tcpInfo.tcpi_rcv_ssthresh, r->tcpInfo.tcpi_unacked, r->tcpInfo.tcpi_sacked,
@@ -87,3 +84,4 @@ build_tcpinfo_message(struct iperf_interval_results *r, char *message)
 #endif
 
 }
+

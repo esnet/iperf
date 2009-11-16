@@ -256,7 +256,7 @@ set_tcp_options(int sock, int no_delay, int mss)
 int
 setnonblocking(int sock)
 {
-    int       opts;
+    int       opts = 0;
 
     opts = (opts | O_NONBLOCK);
     if (fcntl(sock, F_SETFL, opts) < 0)

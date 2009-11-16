@@ -50,6 +50,8 @@ static struct option longopts[] =
     {"Print-mss", no_argument, NULL, 'm'},
     {"Set-mss", required_argument, NULL, 'M'},
     {"version", no_argument, NULL, 'v'},
+    {"verbose", no_argument, NULL, 'V'},
+    {"debug", no_argument, NULL, 'd'},
     {"help", no_argument, NULL, 'h'},
 #ifdef ADD_WHEN_SUPPORTED
     {"tos",        required_argument, NULL, 'S'},
@@ -104,7 +106,7 @@ main(int argc, char **argv)
     test = iperf_new_test();
     iperf_defaults(test);	/* sets defaults */
 
-    while ((ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:n:mNTvhM:f:", longopts, NULL)) != -1)
+    while ((ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:n:mNTvhVdM:f:", longopts, NULL)) != -1)
     {
 	switch (ch)
 	{
@@ -126,7 +128,7 @@ main(int argc, char **argv)
 	    test->duration = atoi(optarg);
 	    if (test->duration > MAX_TIME)
 	    {
-	        fprintf(stderr, "\n Error: test duration too long. Maximum value = %d \n\n",  MAX_TIME);
+	        fprintf(stderr, "\n Error: test duration too long. Maximum value = %d \n\n",  (int)MAX_TIME);
 	        fprintf(stderr, usage_long1);
 	        fprintf(stderr, usage_long2);
 	        exit(1);
@@ -208,6 +210,12 @@ main(int argc, char **argv)
 	    break;
 	case 'T':
 	    test->tcp_info = 1;
+	    break;
+        case 'V': 
+	    test->verbose = 1;
+	    break;
+        case 'd': 
+	    test->debug = 1;
 	    break;
         case 'v': // print version and exit
             fprintf( stderr, version );

@@ -256,7 +256,9 @@ done:
     printf("Test Complete. \n\n");
 
     /* reset cookie when client is finished */
-    memset(test->streams->settings->cookie, '\0', COOKIE_SIZE);
+    /* XXX: which cookie to reset, and why is it stored to 2 places? */
+    //memset(test->streams->settings->cookie, '\0', COOKIE_SIZE);
+    memset(test->default_settings->cookie, '\0', COOKIE_SIZE);
     return;
 }
 

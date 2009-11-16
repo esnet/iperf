@@ -77,6 +77,11 @@ new_timer(time_t sec, suseconds_t usec)
 {
     struct timer *tp;
     tp = (struct timer *) malloc(sizeof(struct timer));
+    if (tp == NULL)
+    {
+	perror("malloc");
+	return NULL;
+    }
 
     if (gettimeofday(&tp->begin, NULL) < 0)
     {

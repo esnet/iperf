@@ -13,7 +13,7 @@ typedef uint64_t iperf_size_t;
 
 struct iperf_interval_results
 {
-    iperf_size_t bytes_transferred;
+    iperf_size_t bytes_transferred; /* bytes transfered in this interval */
     struct timeval interval_start_time;
     struct timeval interval_end_time;
     float     interval_duration;
@@ -31,6 +31,8 @@ struct iperf_stream_result
 {
     iperf_size_t bytes_received;
     iperf_size_t bytes_sent;
+    iperf_size_t bytes_received_this_interval;
+    iperf_size_t bytes_sent_this_interval;
     struct timeval start_time;
     struct timeval end_time;
     struct iperf_interval_results *interval_results; /* head of list */
@@ -159,7 +161,7 @@ enum
     /* default settings */
     Ptcp = SOCK_STREAM,
     Pudp = SOCK_DGRAM,
-    PORT = 5001,  /* default port to listen on */
+    PORT = 5002,  /* default port to listen on (don't use the same port as iperf2) */
     uS_TO_NS = 1000,
     SEC_TO_US = 1000000,
     RATE = 1024 * 1024, /* 1 Mbps */

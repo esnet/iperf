@@ -158,13 +158,15 @@ void
 display_interval_list(struct iperf_stream_result * rp, int tflag)
 {
     struct iperf_interval_results *n;
+    float gb = 0.;
 
     n = rp->interval_results;
 
     printf("----------------------------------------\n");
     while (n!=NULL)
     {
-	printf("Interval = %f\tMBytes transferred = %u\n", n->interval_duration, (uint) (n->bytes_transferred / MB));
+	gb = (float)n->bytes_transferred / (1024. * 1024. * 1024.);
+	printf("Interval = %f\tGBytes transferred = %.3f\n", n->interval_duration, gb);
 	if (tflag)
 	    print_tcpinfo(n);
 	n = n->next;
@@ -443,9 +445,9 @@ iperf_stats_callback(struct iperf_test * test)
 	rp = sp->result;
 
 	if (test->role == 'c')
-	    temp.bytes_transferred = rp->bytes_sent;
+	    temp.bytes_transferred = rp->bytes_sent_this_interval;
 	else
-	    temp.bytes_transferred = rp->bytes_received;
+	    temp.bytes_transferred = rp->bytes_received_this_interval;
      
 	ip = sp->result->interval_results;
 	/* result->end_time contains timestamp of previous interval */
@@ -459,7 +461,9 @@ iperf_stats_callback(struct iperf_test * test)
 	temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
 	if (test->tcp_info)
 	    get_tcpinfo(test, &temp);
+        //printf(" iperf_stats_callback: adding to interval list: \n");
 	add_to_interval_list(rp, &temp);
+        rp->bytes_sent_this_interval = rp->bytes_sent_this_interval = 0;
 
 	/* for debugging */
 	//display_interval_list(rp, test->tcp_info); 
@@ -561,7 +565,7 @@ iperf_reporter_callback(struct iperf_test * test)
 		} else
 		{
 		    unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->bytes_received), 'A');
-		    unit_snprintf(nbuf, UNIT_LEN, (double) (sp->result->bytes_received / end_time), test->default_settings->unit_format);
+		    unit_snprintf(nbuf, UNIT_LEN, (double) (sp->result->bytes_received/ end_time), test->default_settings->unit_format);
 		}
 
 		if (test->protocol == Ptcp)
@@ -743,6 +747,8 @@ iperf_new_stream(struct iperf_test * testp)
     sp->result->last_interval_results = NULL;
     sp->result->bytes_received = 0;
     sp->result->bytes_sent = 0;
+    sp->result->bytes_received_this_interval = 0;
+    sp->result->bytes_sent_this_interval = 0;
     gettimeofday(&sp->result->start_time, NULL);
 
     sp->settings->state = STREAM_BEGIN;

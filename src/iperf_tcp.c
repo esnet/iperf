@@ -131,6 +131,7 @@ iperf_tcp_recv(struct iperf_stream * sp)
 	}
 	//printf("iperf_tcp_recv: recv on socket %d returned %d bytes \n", sp->socket, result);
 	sp->result->bytes_received += result;
+	sp->result->bytes_received_this_interval += result;
 	break;
     case STREAM_END:
 	size = sizeof(struct param_exchange);
@@ -226,7 +227,10 @@ iperf_tcp_send(struct iperf_stream * sp)
     //printf("   iperf_tcp_send: %d bytes sent \n", result);
 
     if (sp->settings->state == STREAM_BEGIN || sp->settings->state == STREAM_RUNNING)
+    {
 	sp->result->bytes_sent += result;
+	sp->result->bytes_sent_this_interval += result;
+    }
 
     //printf("iperf_tcp_send: number bytes sent so far = %u \n", (uint64_t) sp->result->bytes_sent);
 

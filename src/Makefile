@@ -16,7 +16,7 @@ profile: iperf
 	$(CC) -pg -o iperf-profile $(OBJS)
 
 dist:
-	make clean ; cd .. ; tar cvfz iperf3.0a2.tar.gz iperf3 --exclude .svn; cd iperf3
+	make clean ; cd .. ; tar cvfz iperf3.0a3.tar.gz iperf3 --exclude .svn; cd iperf3
 
 test: t_timer t_units t_uuid
 	./t_timer
@@ -33,4 +33,4 @@ t_uuid: uuid.o t_uuid.o
 	$(CC) -o t_uuid uuid.o t_uuid.o
 
 clean:
-	rm -f *.o iperf iperf-profile t_timer t_units t_uuid
+	rm -f *.o iperf iperf-profile t_timer t_units t_uuid *.gz iperf3 *.BAK *~

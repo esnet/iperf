@@ -16,7 +16,7 @@ profile: iperf
 	$(CC) -pg -o iperf-profile $(OBJS)
 
 dist:
-	tar cvfz iperf3.0a2.tar.gz *.c *.h *.txt Makefile AUTHORS 
+	make clean ; cd .. ; tar cvfz iperf3.0a2.tar.gz iperf3 --exclude .svn; cd iperf3
 
 test: t_timer t_units t_uuid
 	./t_timer

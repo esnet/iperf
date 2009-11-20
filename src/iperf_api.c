@@ -512,6 +512,9 @@ iperf_reporter_callback(struct iperf_test * test)
             bytes += sp->result->interval_results->bytes_transferred; /* sum up all streams */
 	    sp = sp->next;
 	}
+        if (bytes <=0 )  /* this can happen if timer goes off just when client exits */
+	     return NULL;
+
 	/* next build string with sum of all streams */
         sp = test->streams; /* reset back to 1st stream */
 	if (test->num_streams > 1)
@@ -559,46 +562,41 @@ iperf_reporter_callback(struct iperf_test * test)
 		    lost_packets += sp->cnt_error;
 		}
 
-		if (test->role == 'c')
-		{
-		    unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->bytes_sent), 'A');
-		    unit_snprintf(nbuf, UNIT_LEN, (double) (sp->result->bytes_sent / end_time), test->default_settings->unit_format);
-		} else
-		{
-		    unit_snprintf(ubuf, UNIT_LEN, (double) (sp->result->bytes_received), 'A');
-		    unit_snprintf(nbuf, UNIT_LEN, (double) (sp->result->bytes_received/ end_time), test->default_settings->unit_format);
-		}
+                if (bytes > 0 ) 
+	        {
+		    unit_snprintf(ubuf, UNIT_LEN, (double) (bytes), 'A');
+		    unit_snprintf(nbuf, UNIT_LEN, (double) (bytes / end_time), test->default_settings->unit_format);
 
-		if (test->protocol == Ptcp)
-		{
-		    sprintf(message, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
-                    //printf("iperf_reporter_callback 2: message = %s \n", message);
-		    safe_strcat(message_final, message);
+		    if (test->protocol == Ptcp)
+		    {
+		        sprintf(message, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
+                        //printf("iperf_reporter_callback 2: message = %s \n", message);
+		        safe_strcat(message_final, message);
 #if defined(linux) || defined(__FreeBSD__)
-		    if (test->tcp_info)
-		    {
-			//printf("Final TCP_INFO results: \n");
-	                ip = sp->result->last_interval_results;	
-			build_tcpinfo_message(ip, message);
-			safe_strcat(message_final, message);
-		    }
+		        if (test->tcp_info)
+		        {
+			    //printf("Final TCP_INFO results: \n");
+	                    ip = sp->result->last_interval_results;	
+			    build_tcpinfo_message(ip, message);
+			    safe_strcat(message_final, message);
+		        }
 #endif
-		} else
-		{		/* UDP mode */
-		    sprintf(message, report_bw_jitter_loss_format, sp->socket, start_time,
-			    end_time, ubuf, nbuf, sp->jitter * 1000, sp->cnt_error, 
-				sp->packet_count, (double) (100.0 * sp->cnt_error / sp->packet_count));
-		    safe_strcat(message_final, message);
-
-		    if (test->role == 'c')
-		    {
-			sprintf(message, report_datagrams, sp->socket, sp->packet_count);
-			safe_strcat(message_final, message);
+		    } else
+		    {		/* UDP mode */
+		        sprintf(message, report_bw_jitter_loss_format, sp->socket, start_time,
+			        end_time, ubuf, nbuf, sp->jitter * 1000, sp->cnt_error, 
+				    sp->packet_count, (double) (100.0 * sp->cnt_error / sp->packet_count));
+		        safe_strcat(message_final, message);
+    
+		        if (test->role == 'c')
+		        {
+			    sprintf(message, report_datagrams, sp->socket, sp->packet_count);
+			    safe_strcat(message_final, message);
+		        }
+		        if (sp->outoforder_packets > 0)
+			    printf(report_sum_outoforder, start_time, end_time, sp->cnt_error);
 		    }
-		    if (sp->outoforder_packets > 0)
-			printf(report_sum_outoforder, start_time, end_time, sp->cnt_error);
 		}
-
 		sp = sp->next;
 	    }
 	}			/* while (sp) */

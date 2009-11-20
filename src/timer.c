@@ -24,8 +24,7 @@ timeval_to_double(struct timeval * tv)
 double
 timeval_diff(struct timeval * tv0, struct timeval * tv1)
 {
-    //return timeval_to_double(tv1) - timeval_to_double(tv0);
-    return (tv1->tv_sec - tv0->tv_sec) + abs(tv1->tv_usec - tv0->tv_usec) / 1000000.0;
+    return ((tv1->tv_sec - tv0->tv_sec) + (abs(tv1->tv_usec - tv0->tv_usec) / 1000000.0));
 }
 
 int

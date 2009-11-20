@@ -88,7 +88,7 @@ Server specific:\n\
 #ifdef NOT_YET_SUPPORTED /* still working on these */
   -S, --tos N  set IP 'Type of Service' bit \n\
   -Z, --linux-congestion <algo>  set TCP congestion control algorithm (Linux only)\n\
-  -D, --daemon             run the server as a daemon\n"
+  -D, --daemon             run the server as a daemon\n\n
   -6, --IPv6Version        Set the domain to IPv6\n\
 
 #endif
@@ -188,10 +188,10 @@ const char report_bw_header[] =
 "[ ID] Interval       Transfer     Bandwidth\n";
 
 const char report_bw_format[] =
-"[%3d] %4.1f-%4.1f sec  %ss  %ss/sec\n";
+"[%3d] %4.2f-%4.2f sec  %ss  %ss/sec\n";
 
 const char report_sum_bw_format[] =
-"[SUM] %4.1f-%4.1f sec  %ss  %ss/sec\n";
+"[SUM] %4.2f-%4.2f sec  %ss  %ss/sec\n";
 
 const char report_bw_jitter_loss_header[] =
 "[ ID] Interval       Transfer     Bandwidth       Jitter   Lost/Total \

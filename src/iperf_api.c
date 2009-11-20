@@ -258,9 +258,9 @@ Display(struct iperf_test * test)
     while (n != NULL)
     {
 	 if (test->role == 'c')
-		printf("position-%d\tsp=%d\tsocket=%d\tMbytes sent=%u\n", count++, (int) n, n->socket, (uint) (n->result->bytes_sent / MB));
+		printf("position-%d\tsp=%d\tsocket=%d\tMbytes sent=%u\n", count++, (int) n, n->socket, (uint) (n->result->bytes_sent / (float)MB));
 	 else
-		printf("position-%d\tsp=%d\tsocket=%d\tMbytes received=%u\n", count++, (int) n, n->socket, (uint) (n->result->bytes_received / MB));
+		printf("position-%d\tsp=%d\tsocket=%d\tMbytes received=%u\n", count++, (int) n, n->socket, (uint) (n->result->bytes_received / (float)MB));
 
          n = n->next;
     }
@@ -459,11 +459,12 @@ iperf_stats_callback(struct iperf_test * test)
 	gettimeofday(&sp->result->end_time, NULL);
 	memcpy(&temp.interval_end_time, &sp->result->end_time, sizeof(struct timeval));
 	temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
+	//temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
 	if (test->tcp_info)
 	    get_tcpinfo(test, &temp);
         //printf(" iperf_stats_callback: adding to interval list: \n");
 	add_to_interval_list(rp, &temp);
-        rp->bytes_sent_this_interval = rp->bytes_sent_this_interval = 0;
+        rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;
 
 	/* for debugging */
 	//display_interval_list(rp, test->tcp_info); 

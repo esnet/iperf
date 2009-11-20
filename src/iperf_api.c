@@ -938,7 +938,6 @@ iperf_run_client(struct iperf_test * test)
     //printf("Done Sending ALL_STREAMS_END. \n");
 
     /* show final summary */
-    /* XXX: check to make sure this is needed */
     test->stats_callback(test);
     result_string = test->reporter_callback(test);
     puts(result_string);

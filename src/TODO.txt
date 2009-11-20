@@ -1,14 +1,13 @@
 
-Current list of things to fix/add to iperf 3.0
+Current list of things to fix/add to iperf3
 
--  test -T option on server
+-  readd -Z option (linux tcp congestion control algoritm)
+-  readd flag to set IP_TOS (-S)
+-  finish adding verbose and debug options
 -  separate iperf_api.c into iperf_client.c and iperf_utils.c 
 -  look for 'XXX' in code and address
 -  much better/standard error handling throughout
 -  better packaging/makefile, README, LICENCE, etc files
--  readd -Z option (linux tcp congestion control algoritm)
--  readd flog to set IP_TOS (-S)
--  add verbose and debug options
 -  finish/fix receive_result_from_server()
       - should this be called for TCP too, or only UDP (currently its both,
               but I think it should be UDP only, or maybe a command line option for TCP
@@ -18,6 +17,7 @@ Current list of things to fix/add to iperf 3.0
        add TCP control socket?
        use clock_nanosleep() for more accurate timing in Linux?
 	(http://www.kernel.org/doc/man-pages/online/pages/man2/clock_nanosleep.2.html)
+       fix server to handle both TCP and UDP
 -  add human readable vs machine readable output mode
      (my idea on this is that "human readable" = compatable with old iperf,
      and that "machine readable is all name=value pairs -blt )
@@ -25,4 +25,5 @@ Current list of things to fix/add to iperf 3.0
 -  lots more testing
 -  add daemon mode (-D)
 -  see issue tracker for other wish list items
+	http://code.google.com/p/iperf/issues/list
 

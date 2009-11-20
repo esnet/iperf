@@ -161,7 +161,7 @@ enum
     /* default settings */
     Ptcp = SOCK_STREAM,
     Pudp = SOCK_DGRAM,
-    PORT = 5002,  /* default port to listen on (don't use the same port as iperf2) */
+    PORT = 5201,  /* default port to listen on (don't use the same port as iperf2) */
     uS_TO_NS = 1000,
     SEC_TO_US = 1000000,
     RATE = 1024 * 1024, /* 1 Mbps */

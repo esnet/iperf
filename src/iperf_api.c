@@ -492,7 +492,7 @@ iperf_reporter_callback(struct iperf_test * test)
     char      ubuf[UNIT_LEN];
     char      nbuf[UNIT_LEN];
     struct iperf_stream *sp = NULL;
-    iperf_size_t bytes = 0;
+    iperf_size_t bytes = 0, total_bytes = 0;
     double    start_time, end_time;
     struct iperf_interval_results *ip = NULL;
 
@@ -552,10 +552,11 @@ iperf_reporter_callback(struct iperf_test * test)
 	    while (sp)
 	    {
 		if (test->role == 'c')
-		    bytes += sp->result->bytes_sent;
+		    bytes = sp->result->bytes_sent;
 		else
-		    bytes += sp->result->bytes_received;
+		    bytes = sp->result->bytes_received;
 
+                total_bytes += bytes;
 		if (test->protocol == Pudp)
 		{
 		    total_packets += sp->packet_count;
@@ -601,8 +602,8 @@ iperf_reporter_callback(struct iperf_test * test)
 	    }
 	}			/* while (sp) */
 
-	unit_snprintf(ubuf, UNIT_LEN, (double) bytes, 'A');
-	unit_snprintf(nbuf, UNIT_LEN, (double) bytes / end_time, test->default_settings->unit_format);
+	unit_snprintf(ubuf, UNIT_LEN, (double) total_bytes, 'A');
+	unit_snprintf(nbuf, UNIT_LEN, (double) total_bytes / end_time, test->default_settings->unit_format);
 
 	if ((test->role == 'c' || (test->role == 's')) && test->num_streams > 1)
 	{

@@ -306,6 +306,7 @@ handle_message(struct iperf_test * test, int message, struct iperf_stream * sp)
     if (message == RESULT_REQUEST)
     {
 	sp->settings->state = RESULT_RESPOND;
+        test->stats_callback(test);
 	results_string = test->reporter_callback(test);
 	sp->data = results_string;
 	send_result_to_client(sp);
@@ -314,6 +315,7 @@ handle_message(struct iperf_test * test, int message, struct iperf_stream * sp)
     {
 	printf("Client done sending data. Printing final results. \n");
 	/* print server results */
+        test->stats_callback(test);  
 	results_string = test->reporter_callback(test);
 	puts(results_string);	/* send to stdio */
     }

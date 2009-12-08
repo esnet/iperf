@@ -7,7 +7,7 @@
 int
 main(int argc, char **argv)
 {
-    char     *uuid;
+    char     uuid[37];
     get_uuid(uuid);
     if (strlen(uuid) != 36)
     {

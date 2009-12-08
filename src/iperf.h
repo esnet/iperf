@@ -9,6 +9,10 @@
 #ifndef        IPERF_H
 #define        IPERF_H
 
+#include <sys/time.h>
+#include <sys/socket.h>
+#include <netinet/tcp.h>
+
 typedef uint64_t iperf_size_t;
 
 struct iperf_interval_results

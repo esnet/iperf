@@ -37,7 +37,7 @@ iperf3_CFLAGS           = -g -Wall
 iperf3_LDADD            = libiperf.a
 
 # Linux installs require the uuid library explicitly linked in
-if LINUX
+if USE_UUID_LIBRARY
 iperf3_LDFLAGS          = -luuid
 else
 iperf3_LDFLAGS          = 
@@ -73,7 +73,7 @@ iperf3_profile_CFLAGS   = -pg -Wall
 iperf3_profile_LDADD    = libiperf.a
 
 # Linux installs require the uuid library explicitly linked in
-if LINUX
+if USE_UUID_LIBRARY
 iperf3_profile_LDFLAGS  = -luuid
 else
 iperf3_profile_LDFLAGS  =

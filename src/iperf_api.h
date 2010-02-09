@@ -14,7 +14,7 @@
  * exchange_parameters - handles the param_Exchange part for client
  *
  */
-void      exchange_parameters(struct iperf_test * test);
+int      iperf_exchange_parameters(struct iperf_test * test);
 
 /**
  * add_to_interval_list -- adds new interval to the interval_list
@@ -80,7 +80,7 @@ char     *iperf_reporter_callback(struct iperf_test * test);
  * iperf_run_client -- Runs the client portion of a test
  *
  */
-void      iperf_run_client(struct iperf_test * test);
+int      iperf_run_client(struct iperf_test * test);
 
 /**
  * iperf_new_test -- return a new iperf_test with default values

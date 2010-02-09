@@ -82,12 +82,12 @@ all_data_sent(struct iperf_test * test)
 /*********************************************************/
 
 /**
- * exchange_parameters - handles the param_Exchange part for client
+ * iperf_exchange_parameters - handles the param_Exchange part for client
  *
  */
 
-void
-exchange_parameters(struct iperf_test * test)
+int
+iperf_exchange_parameters(struct iperf_test * test)
 {
     int       result;
     struct iperf_stream *sp;
@@ -112,17 +112,26 @@ exchange_parameters(struct iperf_test * test)
     //printf(" sending exchange params: size = %d \n", (int) sizeof(struct param_exchange));
     result = sp->snd(sp);
     if (result < 0)
+    {
 	perror("Error sending exchange params to server");
+        return -1;
+    }
+
     result = Nread(sp->socket, sp->buffer, sizeof(struct param_exchange), Ptcp);
 
     if (result < 0)
+    {
 	perror("Error getting exchange params ack from server");
+        return -1;
+    }
+
     if (result > 0 && sp->buffer[0] == ACCESS_DENIED)
     {
 	fprintf(stderr, "Busy server Detected. Try again later. Exiting.\n");
-	exit(-1);
+	return -1;
     }
-    return;
+
+    return 0;
 }
 
 /*************************************************************/
@@ -814,7 +823,7 @@ catcher(int sig)
 }
 
 /**************************************************************************/
-void
+int
 iperf_run_client(struct iperf_test * test)
 {
     int       i, result = 0;
@@ -825,6 +834,13 @@ iperf_run_client(struct iperf_test * test)
     int64_t   delayus, adjustus, dtargus;
     struct timeval tv;
     struct sigaction sact;
+
+    if (iperf_exchange_parameters(test) < 0)
+    {
+        return -1;
+    }
+
+    test->streams->settings->state = STREAM_BEGIN;
 
     //printf("in iperf_run_client \n");
     tv.tv_sec = 15;		/* timeout interval in seconds */

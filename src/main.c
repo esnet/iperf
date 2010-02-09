@@ -237,13 +237,8 @@ main(int argc, char **argv)
     //printf("in main: calling iperf_init_test \n");
     if (test->role == 'c')
         printf("Connecting to port %d on host %s \n", test->server_port, test->server_hostname);
-    iperf_init_test(test);
 
-    if (test->role == 'c')	/* if client, send params to server */
-    {
-	exchange_parameters(test);
-	test->streams->settings->state = STREAM_BEGIN;
-    }
+    iperf_init_test(test);
 
     //printf("in main: calling iperf_run \n");
     iperf_run(test);
@@ -271,8 +266,7 @@ iperf_run(struct iperf_test * test)
         }
         return 0;
     case 'c':
-        iperf_run_client(test);
-        return 0;
+        return iperf_run_client(test);
     default:
         return -1;
     }

@@ -337,7 +337,6 @@ iperf_init_test(struct iperf_test * test)
     struct iperf_stream *sp;
     int       i, s = 0;
 
-    //printf("in iperf_init_test \n");
     if (test->role == 's')
     {				/* server */
 	if (test->protocol == Pudp)
@@ -383,15 +382,15 @@ iperf_init_test(struct iperf_test * test)
 	}
 	printf("-----------------------------------------------------------\n");
 
-    } else if (test->role == 'c')
-    {				/* Client */
+    }
+    /* This code is being removed. Commented out until removal
+    else if (test->role == 'c')
+    {				// Client
 	FD_ZERO(&test->write_set);
 	FD_SET(s, &test->write_set);
 
-	/*
-         * XXX: I think we need to create a TCP control socket here too for
-         * UDP mode -blt
-         */
+         // XXX: I think we need to create a TCP control socket here too for
+         // UDP mode -blt
 	for (i = 0; i < test->num_streams; i++)
 	{
 	    s = netdial(test->protocol, test->server_hostname, test->server_port);
@@ -408,9 +407,40 @@ iperf_init_test(struct iperf_test * test)
 	    iperf_init_stream(sp, test);
 	    iperf_add_stream(test, sp);
 
-	    connect_msg(sp);	/* print connection established message */
+	    connect_msg(sp);	// print connection established message
 	}
     }
+    */
+}
+
+/* iperf_connect -- client to server connection function */
+int
+iperf_connect(struct iperf_test *test)
+{
+    struct iperf_stream *sp;
+    int i, s = 0;
+
+    /* For Select: Set the test->write_set select set to zero, then set the s fd */
+    FD_ZERO(&test->write_set);
+
+    for (i = 0; i < test->num_streams; i++) {
+        s = netdial(test->protocol, test->server_hostname, test->server_port);
+        if (s < 0) {
+            fprintf(stderr, "error: netdial failed\n");
+            exit(1);
+        }
+        FD_SET(s, &test->write_set);
+        test->max_fd = (test->max_fd < s) ? s : test->max_fd;
+
+        sp = test->new_stream(test);
+        sp->socket = s;
+        iperf_init_stream(sp, test);
+        iperf_add_stream(test, sp);
+
+        connect_msg(sp);
+    }
+    
+    return 1;
 }
 
 /**************************************************************************/
@@ -418,6 +448,9 @@ void
 iperf_free_test(struct iperf_test * test)
 {
     free(test->default_settings);
+
+    // This funciton needs to be updated to free and close streams
+    // Currently it just sets the pointer to the streams list to NULL...
 
     close(test->listener_sock_tcp);
     close(test->listener_sock_udp);
@@ -834,6 +867,11 @@ iperf_run_client(struct iperf_test * test)
     int64_t   delayus, adjustus, dtargus;
     struct timeval tv;
     struct sigaction sact;
+
+    if (iperf_connect(test) < 0) {
+        // set error and return
+        return -1;
+    }
 
     if (iperf_exchange_parameters(test) < 0)
     {

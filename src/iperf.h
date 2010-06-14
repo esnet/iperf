@@ -136,6 +136,16 @@ struct iperf_test
     int       reporter_fd;	/* file descriptor for reporter */
     int       num_streams;	/* total streams in the test (-P) */
     int       tcp_info;		/* display getsockopt(TCP_INFO) results */
+
+    /* iperf error reporting
+     * - errtype: (0,1,2)
+     *   0: use perror(errno)
+     *   1: use herror(errno)
+     *   2: use ierror(errno)
+     */
+    //int       errtype;
+    //int       errno;
+
     struct iperf_stream *streams;	/* pointer to list of struct stream */
     struct iperf_settings *default_settings;
 };

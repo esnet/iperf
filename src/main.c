@@ -28,6 +28,7 @@
 #include "units.h"
 #include "locale.h"
 
+
 int       iperf_run(struct iperf_test * test);
 
 /**************************************************************************/
@@ -53,10 +54,15 @@ static struct option longopts[] =
     {"verbose", no_argument, NULL, 'V'},
     {"debug", no_argument, NULL, 'd'},
     {"help", no_argument, NULL, 'h'},
+    {"daemon", no_argument, NULL, 'D'},
+    {"format", required_argument, NULL, 'f'},
+
+/*  The following ifdef needs to be split up. linux-congestion is not necessarily supported
+ *  by systems that support tos.
+ */
 #ifdef ADD_WHEN_SUPPORTED
     {"tos",        required_argument, NULL, 'S'},
     {"linux-congestion", required_argument, NULL, 'Z'},
-    {"daemon",           no_argument, NULL, 'D'},
 #endif
     {NULL, 0, NULL, 0}
 };
@@ -70,6 +76,11 @@ main(int argc, char **argv)
     char      ch, role;
     struct iperf_test *test;
     int       port = PORT;
+
+    // The following lines need to be removed and moved to somewhere else!!!
+    const char *usage_long1 = "this is usage_long1";
+    const char *usage_long2 = "this is usage_long2";
+
 
 #ifdef TEST_PROC_AFFINITY
     /* didnt seem to work.... */
@@ -230,8 +241,8 @@ main(int argc, char **argv)
 
     /* exit until this is done.... */
     if (test->protocol == Pudp) {
-	printf("UDP mode not yet supported. Exiting. \n");
-	exit(0);
+	    printf("UDP mode not yet supported. Exiting. \n");
+	    exit(0);
     }
 
     //printf("in main: calling iperf_init_test \n");

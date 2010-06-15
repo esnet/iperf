@@ -243,9 +243,7 @@ iperf_run_server(struct iperf_test * test)
 		}
 		if ((test->reporter_interval != 0) && reporter_interval->expired(reporter_interval))
 		{
-		    result_string = test->reporter_callback(test);
-		    //printf("interval expired: printing results: \n");
-		    puts(result_string);
+		    test->reporter_callback(test);
 		    update_timer(reporter_interval, test->reporter_interval, 0);
 		}
 	    }
@@ -307,17 +305,17 @@ handle_message(struct iperf_test * test, int message, struct iperf_stream * sp)
     {
 	sp->settings->state = RESULT_RESPOND;
         test->stats_callback(test);
-	results_string = test->reporter_callback(test);
-	sp->data = results_string;
-	send_result_to_client(sp);
+	    test->reporter_callback(test);
+    // results_string = test->reporter_callback(test);
+	// sp->data = results_string;
+	// send_result_to_client(sp);
     }
     if (message == ALL_STREAMS_END)
     {
 	printf("Client done sending data. Printing final results. \n");
 	/* print server results */
         test->stats_callback(test);  
-	results_string = test->reporter_callback(test);
-	puts(results_string);	/* send to stdio */
+        test->reporter_callback(test);
     }
     if (message == TEST_END)
     {

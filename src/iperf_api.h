@@ -73,7 +73,7 @@ void     *iperf_stats_callback(struct iperf_test * test);
  *returns report
  *
  */
-char     *iperf_reporter_callback(struct iperf_test * test);
+void     iperf_reporter_callback(struct iperf_test * test);
 
 
 /**

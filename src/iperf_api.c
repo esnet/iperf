@@ -55,26 +55,24 @@ jmp_buf   env;			/* to handle longjmp on signal */
 int
 all_data_sent(struct iperf_test * test)
 {
-    if (test->default_settings->bytes == 0)
-	return 0;
-    else
-    {
-	uint64_t  total_bytes = 0;
-	struct iperf_stream *sp;
+    if (test->default_settings->bytes == 0) {
+        return 0;
+    } else {
+        uint64_t  total_bytes = 0;
+        struct iperf_stream *sp;
 
-	sp = test->streams;
+        sp = test->streams;
 
-	while (sp)
-	{
-	    total_bytes += sp->result->bytes_sent;
-	    sp = sp->next;
-	}
+        while (sp) {
+            total_bytes += sp->result->bytes_sent;
+            sp = sp->next;
+        }
 
-	if (total_bytes >= (test->num_streams * test->default_settings->bytes))
-	{
-	    return 1;
-	} else
-	    return 0;
+        if (total_bytes >= (test->num_streams * test->default_settings->bytes)) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 
 }
@@ -89,18 +87,16 @@ all_data_sent(struct iperf_test * test)
 int
 iperf_exchange_parameters(struct iperf_test * test)
 {
-    int       result;
+    int result;
     struct iperf_stream *sp;
     struct param_exchange *param;
 
-    //printf("in exchange_parameters \n");
     sp = test->streams;
     sp->settings->state = PARAM_EXCHANGE;
     param = (struct param_exchange *) sp->buffer;
 
     get_uuid(test->default_settings->cookie);
     strncpy(param->cookie, test->default_settings->cookie, COOKIE_SIZE);
-    //printf("client cookie: %s \n", param->cookie);
 
     /* setting up exchange parameters  */
     param->state = PARAM_EXCHANGE;
@@ -109,26 +105,20 @@ iperf_exchange_parameters(struct iperf_test * test)
     param->send_window = test->default_settings->socket_bufsize;
     param->format = test->default_settings->unit_format;
 
-    //printf(" sending exchange params: size = %d \n", (int) sizeof(struct param_exchange));
-    result = sp->snd(sp);
-    if (result < 0)
-    {
-	perror("Error sending exchange params to server");
+    if (sp->snd(sp) < 0) {
+        perror("Error sending exchange params to server");
         return -1;
     }
 
     result = Nread(sp->socket, sp->buffer, sizeof(struct param_exchange), Ptcp);
-
-    if (result < 0)
-    {
-	perror("Error getting exchange params ack from server");
+    if (result < 0) {
+        perror("Error getting exchange params ack from server");
         return -1;
     }
 
-    if (result > 0 && sp->buffer[0] == ACCESS_DENIED)
-    {
-	fprintf(stderr, "Busy server Detected. Try again later. Exiting.\n");
-	return -1;
+    if (result > 0 && sp->buffer[0] == ACCESS_DENIED) {
+        fprintf(stderr, "Busy server Detected. Try again later. Exiting.\n");
+        return -1;
     }
 
     return 0;
@@ -526,17 +516,17 @@ iperf_stats_callback(struct iperf_test * test)
  *
  */
 
-char     *
+void
 iperf_reporter_callback(struct iperf_test * test)
 {
-    int       total_packets = 0, lost_packets = 0, curr_state = 0;
-    char     *message = NULL;
-    char     *message_final = NULL;
-    char      ubuf[UNIT_LEN];
-    char      nbuf[UNIT_LEN];
+    int total_packets = 0, lost_packets = 0, curr_state = 0;
+    char *message = NULL;
+    char *message_final = NULL;
+    char ubuf[UNIT_LEN];
+    char nbuf[UNIT_LEN];
     struct iperf_stream *sp = NULL;
     iperf_size_t bytes = 0, total_bytes = 0;
-    double    start_time, end_time;
+    double start_time, end_time;
     struct iperf_interval_results *ip = NULL;
 
     message = (char *)calloc(MAX_RESULT_STRING, sizeof(char));
@@ -544,132 +534,109 @@ iperf_reporter_callback(struct iperf_test * test)
 
     sp = test->streams;
     curr_state = sp->settings->state;
-    //printf("in iperf_reporter_callback: state = %d \n", curr_state);
 
-    if (curr_state == TEST_RUNNING || curr_state == STREAM_RUNNING)
-    {
-	/* print interval results for each stream */
-	while (sp)
-	{
-	    message_final = print_interval_results(test, sp, message_final);
-            bytes += sp->result->interval_results->bytes_transferred; /* sum up all streams */
-	    sp = sp->next;
-	}
-        if (bytes <=0 )  /* this can happen if timer goes off just when client exits */
-	     return NULL;
+    switch (curr_state) {
+        case TEST_RUNNING:
+        case STREAM_RUNNING:
+            /* print interval results for each stream */
+            while (sp) {
+                message_final = print_interval_results(test, sp, message_final);
+                bytes += sp->result->interval_results->bytes_transferred; /* sum up all streams */
+                sp = sp->next;
+            }
+            if (bytes <=0 ) { /* this can happen if timer goes off just when client exits */
+                fprintf(stderr, "error: bytes <= 0!\n");
+                break;
+            }
+            /* next build string with sum of all streams */
+            sp = test->streams; /* reset back to 1st stream */
+            if (test->num_streams > 1) {
+                ip = test->streams->result->last_interval_results;	/* use 1st stream for timing info */
+                unit_snprintf(ubuf, UNIT_LEN, (double) (bytes), 'A');
 
-	/* next build string with sum of all streams */
-        sp = test->streams; /* reset back to 1st stream */
-	if (test->num_streams > 1)
-	{
-	    ip = test->streams->result->last_interval_results;	/* use 1st stream for timing info */
-	    unit_snprintf(ubuf, UNIT_LEN, (double) (bytes), 'A');
+                start_time = timeval_diff(&sp->result->start_time,&ip->interval_start_time);
+                end_time = timeval_diff(&sp->result->start_time,&ip->interval_end_time);
+                unit_snprintf(nbuf, UNIT_LEN, (double) (bytes / ip->interval_duration),
+                    test->default_settings->unit_format);
+                sprintf(message, report_sum_bw_format, start_time, end_time, ubuf, nbuf);
+                safe_strcat(message_final, message);
 
-            start_time = timeval_diff(&sp->result->start_time,&ip->interval_start_time);
-            end_time = timeval_diff(&sp->result->start_time,&ip->interval_end_time);
-            unit_snprintf(nbuf, UNIT_LEN, (double) (bytes / ip->interval_duration),
-			      test->default_settings->unit_format);
-	    sprintf(message, report_sum_bw_format, start_time, end_time, ubuf, nbuf);
-            //printf("iperf_reporter_callback 1: start_time: %.3f  end_time: %.3f \n", start_time, end_time);
-            //printf("iperf_reporter_callback 1: message = %s \n", message);
-	    safe_strcat(message_final, message);
-
-#ifdef NOT_DONE			/* is it usful to figure out a way so sum
-				 * TCP_info acrross multiple streams? */
-	    if (test->tcp_info)
-	    {
-		build_tcpinfo_message(ip, message);
-		safe_strcat(message_final, message);
-	    }
+#ifdef NOT_DONE			/* is it usful to figure out a way so sum * TCP_info acrross multiple streams? */
+                if (test->tcp_info) {
+                    build_tcpinfo_message(ip, message);
+                    safe_strcat(message_final, message);
+                }
 #endif
-	}
-    } else
-    {
-	/* print final summary for all intervals */
-	if (curr_state == ALL_STREAMS_END || curr_state == RESULT_REQUEST)
-	{
-	    sp = test->streams;
-	    start_time = 0.;
-	    end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
-
-	    while (sp)
-	    {
-		if (test->role == 'c')
-		    bytes = sp->result->bytes_sent;
-		else
-		    bytes = sp->result->bytes_received;
-
+            }
+            break;
+        case ALL_STREAMS_END:
+        case RESULT_REQUEST:
+            /* print final summary for all intervals */
+            sp = test->streams;
+            start_time = 0.;
+            end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
+            while (sp) {
+                if (test->role == 'c')
+                    bytes = sp->result->bytes_sent;
+                else
+                    bytes = sp->result->bytes_received;
                 total_bytes += bytes;
-		if (test->protocol == Pudp)
-		{
-		    total_packets += sp->packet_count;
-		    lost_packets += sp->cnt_error;
-		}
-
-                if (bytes > 0 ) 
-	        {
-		    unit_snprintf(ubuf, UNIT_LEN, (double) (bytes), 'A');
-		    unit_snprintf(nbuf, UNIT_LEN, (double) (bytes / end_time), test->default_settings->unit_format);
-
-		    if (test->protocol == Ptcp)
-		    {
-		        sprintf(message, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
-                        //printf("iperf_reporter_callback 2: message = %s \n", message);
-		        safe_strcat(message_final, message);
+                if (test->protocol == Pudp) {
+                    total_packets += sp->packet_count;
+                    lost_packets += sp->cnt_error;
+                }
+                if (bytes > 0 ) {
+                    unit_snprintf(ubuf, UNIT_LEN, (double) (bytes), 'A');
+                    unit_snprintf(nbuf, UNIT_LEN, (double) (bytes / end_time), test->default_settings->unit_format);
+                    if (test->protocol == Ptcp) { // TCP mode
+                        sprintf(message, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
+                        safe_strcat(message_final, message);
 #if defined(linux) || defined(__FreeBSD__)
-		        if (test->tcp_info)
-		        {
-			    //printf("Final TCP_INFO results: \n");
-	                    ip = sp->result->last_interval_results;	
-			    build_tcpinfo_message(ip, message);
-			    safe_strcat(message_final, message);
-		        }
+                        if (test->tcp_info) {
+                            ip = sp->result->last_interval_results;	
+                            build_tcpinfo_message(ip, message);
+                            safe_strcat(message_final, message);
+                        }
 #endif
-		    } else
-		    {		/* UDP mode */
-		        sprintf(message, report_bw_jitter_loss_format, sp->socket, start_time,
-			        end_time, ubuf, nbuf, sp->jitter * 1000, sp->cnt_error, 
-				    sp->packet_count, (double) (100.0 * sp->cnt_error / sp->packet_count));
-		        safe_strcat(message_final, message);
-    
-		        if (test->role == 'c')
-		        {
-			    sprintf(message, report_datagrams, sp->socket, sp->packet_count);
-			    safe_strcat(message_final, message);
-		        }
-		        if (sp->outoforder_packets > 0)
-			    printf(report_sum_outoforder, start_time, end_time, sp->cnt_error);
-		    }
-		}
-		sp = sp->next;
-	    }
-	}			/* while (sp) */
+                    } else { // UDP mode
+                        sprintf(message, report_bw_jitter_loss_format, sp->socket, start_time,
+                        end_time, ubuf, nbuf, sp->jitter * 1000, sp->cnt_error, 
+                        sp->packet_count, (double) (100.0 * sp->cnt_error / sp->packet_count));
+                        safe_strcat(message_final, message);
+                        if (test->role == 'c') {
+                            sprintf(message, report_datagrams, sp->socket, sp->packet_count);
+                            safe_strcat(message_final, message);
+                        }
+                        if (sp->outoforder_packets > 0)
+                            printf(report_sum_outoforder, start_time, end_time, sp->cnt_error);
+                    }
+                }
+                sp = sp->next;
+            }
+            unit_snprintf(ubuf, UNIT_LEN, (double) total_bytes, 'A');
+            unit_snprintf(nbuf, UNIT_LEN, (double) total_bytes / end_time, test->default_settings->unit_format);
 
-	unit_snprintf(ubuf, UNIT_LEN, (double) total_bytes, 'A');
-	unit_snprintf(nbuf, UNIT_LEN, (double) total_bytes / end_time, test->default_settings->unit_format);
+            if (test->num_streams > 1) {
+                if (test->protocol == Ptcp) {
+                    sprintf(message, report_sum_bw_format, start_time, end_time, ubuf, nbuf);
+                    safe_strcat(message_final, message);
+                } else {
+                    sprintf(message, report_sum_bw_jitter_loss_format, start_time, end_time, ubuf, nbuf, sp->jitter,
+                        lost_packets, total_packets, (double) (100.0 * lost_packets / total_packets));
+                    safe_strcat(message_final, message);
+                }
 
-	if ((test->role == 'c' || (test->role == 's')) && test->num_streams > 1)
-	{
-	    if (test->protocol == Ptcp)
-	    {
-		sprintf(message, report_sum_bw_format, start_time, end_time, ubuf, nbuf);
-		safe_strcat(message_final, message);
-	    } else
-	    {
-		sprintf(message, report_sum_bw_jitter_loss_format, start_time, end_time, ubuf, nbuf, sp->jitter, lost_packets, total_packets, (double) (100.0 * lost_packets / total_packets));
-		safe_strcat(message_final, message);
-	    }
+                if ((test->print_mss != 0) && (test->role == 'c')) {
+                    sprintf(message, "\nThe TCP maximum segment size mss = %d \n", getsock_tcp_mss(sp->socket));
+                    safe_strcat(message_final, message);
+                }
+            }
+            break;
+    } // end switch
 
-
-	    if ((test->print_mss != 0) && (test->role == 'c'))
-	    {
-		sprintf(message, "\nThe TCP maximum segment size mss = %d \n", getsock_tcp_mss(sp->socket));
-		safe_strcat(message_final, message);
-	    }
-	}
-    }
     free(message);
-    return message_final;
+    printf("%s\n", message_final);
+    free(message_final);
 }
 
 /**************************************************************************/
@@ -925,10 +892,8 @@ iperf_client_start(struct iperf_test *test)
             update_timer(stats_interval, test->stats_interval, 0);
         }
         if ((test->reporter_interval != 0) && reporter_interval->expired(reporter_interval)) {
-            result_string = test->reporter_callback(test);
-            puts(result_string);
+            test->reporter_callback(test);
             update_timer(reporter_interval, test->reporter_interval, 0);
-            free(result_string);
         }
 
         /* detecting Ctrl+C */
@@ -969,9 +934,7 @@ iperf_client_end(struct iperf_test *test)
 
     /* show final summary */
     test->stats_callback(test);
-    result_string = test->reporter_callback(test);
-    puts(result_string);
-    free(result_string);
+    test->reporter_callback(test);
 
     /* Requesting for result from Server
      *

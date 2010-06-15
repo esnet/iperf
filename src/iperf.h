@@ -131,7 +131,7 @@ struct iperf_test
     void     *(*stats_callback) (struct iperf_test *);	/* callback function
 							 * pointer for stats */
     int       reporter_interval;/* time interval for reporter */
-    char     *(*reporter_callback) (struct iperf_test *);	/* callback function
+    void      (*reporter_callback) (struct iperf_test *);	/* callback function
 								 * pointer for reporter */
     int       reporter_fd;	/* file descriptor for reporter */
     int       num_streams;	/* total streams in the test (-P) */

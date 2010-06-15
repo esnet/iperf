@@ -426,6 +426,7 @@ iperf_connect(struct iperf_test *test)
     for (i = 0; i < test->num_streams; i++) {
         s = netdial(test->protocol, test->server_hostname, test->server_port);
         if (s < 0) {
+            // Change to new error handling mode
             fprintf(stderr, "error: netdial failed\n");
             exit(1);
         }
@@ -805,23 +806,19 @@ iperf_init_stream(struct iperf_stream * sp, struct iperf_test * testp)
 
     len = sizeof(struct sockaddr_in);
 
-    if (getsockname(sp->socket, (struct sockaddr *) & sp->local_addr, &len) < 0)
-    {
-	perror("getsockname");
+    if (getsockname(sp->socket, (struct sockaddr *) & sp->local_addr, &len) < 0) {
+        perror("getsockname");
     }
-    if (getpeername(sp->socket, (struct sockaddr *) & sp->remote_addr, &len) < 0)
-    {
-	perror("getpeername");
+    if (getpeername(sp->socket, (struct sockaddr *) & sp->remote_addr, &len) < 0) {
+        perror("getpeername");
     }
-    //printf("in init_stream: calling set_tcp_windowsize: %d \n", testp->default_settings->socket_bufsize);
-    if (testp->protocol == Ptcp)
-    {
-	if (set_tcp_windowsize(sp->socket, testp->default_settings->socket_bufsize,
-			    testp->role == 's' ? SO_RCVBUF : SO_SNDBUF) < 0)
-	    fprintf(stderr, "unable to set window size\n");
+    if (testp->protocol == Ptcp) {
+        if (set_tcp_windowsize(sp->socket, testp->default_settings->socket_bufsize,
+                testp->role == 's' ? SO_RCVBUF : SO_SNDBUF) < 0)
+            fprintf(stderr, "unable to set window size\n");
 
-	/* set TCP_NODELAY and TCP_MAXSEG if requested */
-	set_tcp_options(sp->socket, testp->no_delay, testp->default_settings->mss);
+        /* set TCP_NODELAY and TCP_MAXSEG if requested */
+        set_tcp_options(sp->socket, testp->no_delay, testp->default_settings->mss);
     }
 }
 
@@ -831,17 +828,15 @@ iperf_add_stream(struct iperf_test * test, struct iperf_stream * sp)
 {
     struct iperf_stream *n;
 
-    if (!test->streams)
-    {
-	test->streams = sp;
-	return 1;
-    } else
-    {
-	n = test->streams;
-	while (n->next)
-	    n = n->next;
-	n->next = sp;
-	return 1;
+    if (!test->streams) {
+        test->streams = sp;
+        return 1;
+    } else {
+        n = test->streams;
+        while (n->next)
+            n = n->next;
+        n->next = sp;
+        return 1;
     }
 
     return 0;
@@ -856,134 +851,115 @@ catcher(int sig)
 }
 
 /**************************************************************************/
+
 int
-iperf_run_client(struct iperf_test * test)
+iperf_client_start(struct iperf_test *test)
 {
-    int       i, result = 0;
+    int i;
+    char *prot, *result_string;
+    int64_t delayus, adjustus, dtargus;
     struct iperf_stream *sp, *np;
     struct timer *timer, *stats_interval, *reporter_interval;
-    char     *result_string = NULL;
-    char     *prot = NULL;
-    int64_t   delayus, adjustus, dtargus;
-    struct timeval tv;
     struct sigaction sact;
 
-    if (iperf_connect(test) < 0) {
-        // set error and return
-        return -1;
-    }
-
-    if (iperf_exchange_parameters(test) < 0)
-    {
-        return -1;
-    }
-
     test->streams->settings->state = STREAM_BEGIN;
+    timer = stats_interval = reporter_interval = NULL;
 
-    //printf("in iperf_run_client \n");
-    tv.tv_sec = 15;		/* timeout interval in seconds */
-    tv.tv_usec = 0;
-
+    // Set signal handling
     sigemptyset(&sact.sa_mask);
     sact.sa_flags = 0;
     sact.sa_handler = catcher;
     sigaction(SIGINT, &sact, NULL);
 
-    if (test->protocol == Pudp)
-    {
-	dtargus = (int64_t) (test->default_settings->blksize) * SEC_TO_US * 8;
-	dtargus /= test->default_settings->rate;
+    // Not sure what the following code does yet. It's UDP, so I'll get to fixing it eventually
+    if (test->protocol == Pudp) {
+        prot = "UDP";
+        dtargus = (int64_t) (test->default_settings->blksize) * SEC_TO_US * 8;
+        dtargus /= test->default_settings->rate;
 
-	assert(dtargus != 0);
+        assert(dtargus != 0);
 
-	delayus = dtargus;
-	adjustus = 0;
-	printf("iperf_run_client: adjustus: %lld, delayus: %lld \n", adjustus, delayus);
+        delayus = dtargus;
+        adjustus = 0;
 
-	sp = test->streams;
-	for (i = 0; i < test->num_streams; i++)
-	{
-	    sp->send_timer = new_timer(0, dtargus);
-	    sp = sp->next;
-	}
+        printf("iperf_run_client: adjustus: %lld, delayus %lld \n", adjustus, delayus);
+
+        // New method for iterating through streams
+        for (sp = test->streams; sp != NULL; sp = sp->next)
+            sp->send_timer = new_timer(0, dtargus);
+
+    } else {
+        prot = "TCP";
     }
+
     /* if -n specified, set zero timer */
-    if (test->default_settings->bytes == 0)
-	timer = new_timer(test->duration, 0);
-    else
-	timer = new_timer(0, 0);
-
+    // Set timers and print usage message
+    if (test->default_settings->bytes == 0) {
+        timer = new_timer(test->duration, 0);
+        printf("Starting Test: protocol: %s, %d streams, %d byte blocks, %d second test \n",
+            prot, test->num_streams, test->default_settings->blksize, test->duration);
+    } else {
+        timer = new_timer(0, 0);
+        printf("Starting Test: protocol: %s, %d streams, %d byte blocks, %d bytes to send\n",
+            prot, test->num_streams, test->default_settings->blksize, (int) test->default_settings->bytes);
+    }
     if (test->stats_interval != 0)
-	stats_interval = new_timer(test->stats_interval, 0);
-
+        stats_interval = new_timer(test->stats_interval, 0);
     if (test->reporter_interval != 0)
-	reporter_interval = new_timer(test->reporter_interval, 0);
+        reporter_interval = new_timer(test->reporter_interval, 0);
 
-    if (test->protocol == Pudp)
-	prot = "UDP";
-    else
-	prot = "TCP";
-    if (test->default_settings->bytes == 0)
-	printf("Starting Test: protocol: %s, %d streams, %d byte blocks, %d second test \n",
-	       prot, test->num_streams, test->default_settings->blksize, test->duration);
-    else
-	printf("Starting Test: protocol: %s, %d streams, %d byte blocks, %d bytes to send\n",
-	       prot, test->num_streams, test->default_settings->blksize, (int) test->default_settings->bytes);
+    // Begin testing...
+    while (!all_data_sent(test) && !timer->expired(timer)) {
 
-    /* send data till the timer expires or bytes sent */
-    while (!all_data_sent(test) && !timer->expired(timer))
-    {
-	sp = test->streams;
-	for (i = 0; i < test->num_streams; i++)
-	{
-	    //printf("sending data to stream %d \n", i);
-	    result += sp->snd(sp);
+        // Send data
+        for (sp = test->streams; sp != NULL; sp = sp->next) {
+	        if (sp->snd(sp) < 0) {
+                perror("iperf_client_start: snd");
+                // do other stuff on error
+            }
+        }
 
-	    if (sp->next == NULL)
-		break;
-	    sp = sp->next;
-	}
+        // Perform callbacks
+        if ((test->stats_interval != 0) && stats_interval->expired(stats_interval)) {
+            test->stats_callback(test);
+            update_timer(stats_interval, test->stats_interval, 0);
+        }
+        if ((test->reporter_interval != 0) && reporter_interval->expired(reporter_interval)) {
+            result_string = test->reporter_callback(test);
+            puts(result_string);
+            update_timer(reporter_interval, test->reporter_interval, 0);
+            free(result_string);
+        }
 
+        /* detecting Ctrl+C */
+        // Why is the setjmp inside of the while??
+        if (setjmp(env))
+            break;
+    }
+    
+    // Free timers
+    free(timer);
+    free(stats_interval);
+    free(reporter_interval);
 
-	if ((test->stats_interval != 0) && stats_interval->expired(stats_interval))
-	{
-	    test->stats_callback(test);
-	    update_timer(stats_interval, test->stats_interval, 0);
-	}
-	if ((test->reporter_interval != 0) && reporter_interval->expired(reporter_interval))
-	{
-	    result_string = test->reporter_callback(test);
-	    //printf("interval expired: printing results: \n");
-	    puts(result_string);
-	    update_timer(reporter_interval, test->reporter_interval, 0);
-	    free(result_string);
-	}
-	/* detecting Ctrl+C */
-	if (setjmp(env))
-	    break;
+    return 0;
+}
 
-    }				/* while outer timer  */
-    /* show last interval if necessary */
-    // I think this is un-necesary, but maybe needed with -n option? 
-    //test->stats_callback(test); /* dont need this I think .. */
-    //result_string = test->reporter_callback(test);
-    //puts(result_string);
-
-
+int
+iperf_client_end(struct iperf_test *test)
+{
+    // Delete the char *
+    char *result_string;
+    struct iperf_stream *sp, *np;
     printf("Test Complete. Summary Results:\n");
+    
     /* send STREAM_END packets */
-    np = test->streams;
-    do
-    {				/* send STREAM_END to all sockets */
-	sp = np;
-	sp->settings->state = STREAM_END;
-	//printf("sending state = STREAM_END to stream %d \n", sp->socket);
-	result = sp->snd(sp);
-	if (result < 0)
-	    break;
-	np = sp->next;
-    } while (np);
-    //printf("Done Sending STREAM_END. \n");
+    test->streams->settings->state = STREAM_END;
+    for (sp = test->streams; sp != NULL; sp = sp->next) {
+        if (sp->snd(sp) < 0) {
+            // Add some error handling code
+        }
+    }
 
     /* send ALL_STREAMS_END packet to 1st socket */
     sp = test->streams;
@@ -997,7 +973,12 @@ iperf_run_client(struct iperf_test * test)
     puts(result_string);
     free(result_string);
 
-    /* Requesting for result from Server */
+    /* Requesting for result from Server
+     *
+     * This still needs to be implemented. It looks like the last
+     * intern worked on it, but it needs to be finished.
+     */
+
     test->default_settings->state = RESULT_REQUEST;
     //receive_result_from_server(test);	/* XXX: currently broken! */
     //result_string = test->reporter_callback(test);
@@ -1011,19 +992,40 @@ iperf_run_client(struct iperf_test * test)
     sp->snd(sp);		/* send message to server */
 
     /* Deleting all streams - CAN CHANGE FREE_STREAM FN */
-    sp = test->streams;
-    np = sp;
-    do
-    {
-	sp = np;
-	close(sp->socket);
-	np = sp->next;
-	iperf_free_stream(sp);
-    } while (np);
+    for (sp = test->streams; sp != NULL; sp = np) {
+        close(sp->socket);
+        np = sp->next;
+        iperf_free_stream(sp);
+    }
 
-    if (test->stats_interval != 0)
-	free_timer(stats_interval);
-    if (test->reporter_interval != 0)
-	free_timer(reporter_interval);
-    free_timer(timer);
+    return 0;
+
+}
+
+int
+iperf_run_client(struct iperf_test * test)
+{
+    /* Start the client and connect to the server */
+    if (iperf_connect(test) < 0) {
+        // set error and return
+        return -1;
+    }
+
+    /* Exchange parameters with the server */
+    if (iperf_exchange_parameters(test) < 0) {
+        // This needs to set error
+        return -1;
+    }
+
+    /* Start the iperf test */
+    if (iperf_client_start(test) < 0) {
+        return -1;
+    }
+
+    /* End the iperf test and clean up client specific memory */
+    if (iperf_client_end(test) < 0) {
+        return -1;
+    }
+
+    return 0;
 }

@@ -141,7 +141,8 @@ void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 void safe_strcat(char *s1, char *s2);
 char * print_interval_results(struct iperf_test * test, struct iperf_stream *sp, char *m);
 int iperf_connect(struct iperf_test *);
-
+int iperf_client_start(struct iperf_test *);
+int iperf_client_end(struct iperf_test *);
 
 #endif  /* IPERF_API_H */
 

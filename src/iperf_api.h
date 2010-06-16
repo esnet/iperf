@@ -139,7 +139,7 @@ void get_tcpinfo(struct iperf_test *test, struct iperf_interval_results *rp);
 void print_tcpinfo(struct iperf_interval_results *);
 void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 void safe_strcat(char *s1, char *s2);
-char * print_interval_results(struct iperf_test * test, struct iperf_stream *sp, char *m);
+void print_interval_results(struct iperf_test * test, struct iperf_stream *sp);
 int iperf_connect(struct iperf_test *);
 int iperf_client_start(struct iperf_test *);
 int iperf_client_end(struct iperf_test *);

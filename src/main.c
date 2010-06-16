@@ -29,7 +29,7 @@
 #include "locale.h"
 
 
-int       iperf_run(struct iperf_test * test);
+int iperf_run(struct iperf_test *);
 
 /**************************************************************************/
 
@@ -72,15 +72,9 @@ static struct option longopts[] =
 int
 main(int argc, char **argv)
 {
-
-    char      ch, role;
+    char ch, role;
     struct iperf_test *test;
-    int       port = PORT;
-
-    // The following lines need to be removed and moved to somewhere else!!!
-    const char *usage_long1 = "this is usage_long1";
-    const char *usage_long2 = "this is usage_long2";
-
+    int port = PORT;
 
 #ifdef TEST_PROC_AFFINITY
     /* didnt seem to work.... */
@@ -88,166 +82,154 @@ main(int argc, char **argv)
      * increasing the priority of the process to minimise packet generation
      * delay
      */
-    int       rc = setpriority(PRIO_PROCESS, 0, -15);
+    int rc = setpriority(PRIO_PROCESS, 0, -15);
 
-    if (rc < 0)
-    {
-	perror("setpriority:");
-	printf("setting priority to valid level\n");
-	rc = setpriority(PRIO_PROCESS, 0, 0);
+    if (rc < 0) {
+        perror("setpriority:");
+        printf("setting priority to valid level\n");
+        rc = setpriority(PRIO_PROCESS, 0, 0);
     }
+    
     /* setting the affinity of the process  */
     cpu_set_t cpu_set;
-    int       affinity = -1;
-    int       ncores = 1;
+    int affinity = -1;
+    int ncores = 1;
 
     sched_getaffinity(0, sizeof(cpu_set_t), &cpu_set);
     if (errno)
-	perror("couldn't get affinity:");
+        perror("couldn't get affinity:");
 
     if ((ncores = sysconf(_SC_NPROCESSORS_CONF)) <= 0)
-	err("sysconf: couldn't get _SC_NPROCESSORS_CONF");
+        err("sysconf: couldn't get _SC_NPROCESSORS_CONF");
 
     CPU_ZERO(&cpu_set);
     CPU_SET(affinity, &cpu_set);
     if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0)
-	err("couldn't change CPU affinity");
+        err("couldn't change CPU affinity");
 #endif
 
     test = iperf_new_test();
     iperf_defaults(test);	/* sets defaults */
 
-    while ((ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:n:mNTvhVdM:f:", longopts, NULL)) != -1)
-    {
-	switch (ch)
-	{
-	case 'c':
-	    test->role = 'c';
-	    role = test->role;
-	    test->server_hostname = (char *) malloc(strlen(optarg)+1);
-	    strncpy(test->server_hostname, optarg, strlen(optarg));
-	    break;
-	case 'p':
-	    test->server_port = atoi(optarg);
-	    port = test->server_port;
-	    break;
-	case 's':
-	    test->role = 's';
-	    role = test->role;
-	    break;
-	case 't':
-	    test->duration = atoi(optarg);
-	    if (test->duration > MAX_TIME)
-	    {
-	        fprintf(stderr, "\n Error: test duration too long. Maximum value = %d \n\n",  (int)MAX_TIME);
-	        fprintf(stderr, usage_long1);
-	        fprintf(stderr, usage_long2);
-	        exit(1);
-	    }
-	    break;
-	case 'u':
-	    test->protocol = Pudp;
-	    test->default_settings->blksize = DEFAULT_UDP_BLKSIZE;
-	    test->new_stream = iperf_new_udp_stream;
-	    break;
-	case 'P':
-	    test->num_streams = atoi(optarg);
-	    if (test->num_streams > MAX_STREAMS)
-	    {
-	        fprintf(stderr, "\n Error: Number of parallel streams too large. Maximum value = %d \n\n",  MAX_STREAMS);
-	        fprintf(stderr, usage_long1);
-	        fprintf(stderr, usage_long2);
-	        exit(1);
-	    }
-	    break;
-	case 'b':
-	    test->default_settings->rate = unit_atof(optarg);
-	    break;
-	case 'l':
-	    test->default_settings->blksize = unit_atoi(optarg);
-	    if (test->default_settings->blksize > MAX_BLOCKSIZE)
-	    {
-	        fprintf(stderr, "\n Error: Block size too large. Maximum value = %d \n\n",  MAX_BLOCKSIZE);
-	        fprintf(stderr, usage_long1);
-	        fprintf(stderr, usage_long2);
-	        exit(1);
-	    }
-	    break;
-	case 'w':
-	    test->default_settings->socket_bufsize = unit_atof(optarg);
-	    if (test->default_settings->socket_bufsize > MAX_TCP_BUFFER)
-	    {
-	        fprintf(stderr, "\n Error: TCP buffer too large. Maximum value = %d \n\n",  MAX_TCP_BUFFER);
-	        fprintf(stderr, usage_long1);
-	        fprintf(stderr, usage_long2);
-	        exit(1);
-	    }
-	    break;
-	case 'i':
-	    /* could potentially want separate stat collection and reporting intervals,
-		but just set them to be the same for now */
-	    test->stats_interval = atoi(optarg);
-	    test->reporter_interval = atoi(optarg);
-	    if (test->stats_interval > MAX_INTERVAL)
-	    {
-	        fprintf(stderr, "\n Error: Report interval too large. Maximum value = %d \n\n",  MAX_INTERVAL);
-	        fprintf(stderr, usage_long1);
-	        fprintf(stderr, usage_long2);
-	        exit(1);
-	    }
-	    break;
-	case 'n':
-	    test->default_settings->bytes = unit_atoi(optarg);
-	    printf("total bytes to be transferred = %llu\n", test->default_settings->bytes);
-	    break;
-	case 'm':
-	    test->print_mss = 1;
-	    break;
-	case 'N':
-	    test->no_delay = 1;
-	    break;
-	case 'M':
-	    test->default_settings->mss = atoi(optarg);
-	    if (test->default_settings->mss > MAX_MSS)
-	    {
-	        fprintf(stderr, "\n Error: MSS too large. Maximum value = %d \n\n",  MAX_MSS);
-	        fprintf(stderr, usage_long1);
-	        fprintf(stderr, usage_long2);
-	        exit(1);
-	    }
-	    break;
-	case 'f':
-	    test->default_settings->unit_format = *optarg;
-	    break;
-	case 'T':
-	    test->tcp_info = 1;
-	    break;
-        case 'V': 
-	    test->verbose = 1;
-	    break;
-        case 'd': 
-	    test->debug = 1;
-	    break;
-        case 'v': // print version and exit
-            fprintf( stderr, version );
-	    exit(1);
-	case 'h':
-	default:
-	    fprintf(stderr, usage_long1);
-	    fprintf(stderr, usage_long2);
-	    exit(1);
-	}
+    while ((ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:n:mNTvhVdM:f:", longopts, NULL)) != -1) {
+        switch (ch) {
+            case 'c':
+                test->role = 'c';
+                role = test->role;
+                test->server_hostname = (char *) malloc(strlen(optarg)+1);
+                strncpy(test->server_hostname, optarg, strlen(optarg));
+                break;
+            case 'p':
+                test->server_port = atoi(optarg);
+                port = test->server_port;
+                break;
+            case 's':
+                test->role = 's';
+                role = test->role;
+                break;
+            case 't':
+                test->duration = atoi(optarg);
+                if (test->duration > MAX_TIME) {
+                    fprintf(stderr, "\n Error: test duration too long. Maximum value = %d \n\n",  (int)MAX_TIME);
+                    fprintf(stderr, usage_long1);
+                    fprintf(stderr, usage_long2);
+                    exit(1);
+                }
+                break;
+            case 'u':
+                test->protocol = Pudp;
+                test->default_settings->blksize = DEFAULT_UDP_BLKSIZE;
+                test->new_stream = iperf_new_udp_stream;
+                break;
+            case 'P':
+                test->num_streams = atoi(optarg);
+                if (test->num_streams > MAX_STREAMS) {
+                    fprintf(stderr, "\n Error: Number of parallel streams too large. Maximum value = %d \n\n",  MAX_STREAMS);
+                    fprintf(stderr, usage_long1);
+                    fprintf(stderr, usage_long2);
+                    exit(1);
+                }
+                break;
+            case 'b':
+                test->default_settings->rate = unit_atof(optarg);
+                break;
+            case 'l':
+                test->default_settings->blksize = unit_atoi(optarg);
+                if (test->default_settings->blksize > MAX_BLOCKSIZE) {
+                    fprintf(stderr, "\n Error: Block size too large. Maximum value = %d \n\n",  MAX_BLOCKSIZE);
+                    fprintf(stderr, usage_long1);
+                    fprintf(stderr, usage_long2);
+                    exit(1);
+                }
+                break;
+            case 'w':
+                test->default_settings->socket_bufsize = unit_atof(optarg);
+                if (test->default_settings->socket_bufsize > MAX_TCP_BUFFER) {
+                    fprintf(stderr, "\n Error: TCP buffer too large. Maximum value = %d \n\n",  MAX_TCP_BUFFER);
+                    fprintf(stderr, usage_long1);
+                    fprintf(stderr, usage_long2);
+                    exit(1);
+                }
+                break;
+            case 'i':
+                /* could potentially want separate stat collection and reporting intervals,
+                   but just set them to be the same for now */
+                test->stats_interval = atoi(optarg);
+                test->reporter_interval = atoi(optarg);
+                if (test->stats_interval > MAX_INTERVAL) {
+                    fprintf(stderr, "\n Error: Report interval too large. Maximum value = %d \n\n",  MAX_INTERVAL);
+                    fprintf(stderr, usage_long1);
+                    fprintf(stderr, usage_long2);
+                    exit(1);
+                }
+                break;
+            case 'n':
+                test->default_settings->bytes = unit_atoi(optarg);
+                printf("total bytes to be transferred = %llu\n", test->default_settings->bytes);
+                break;
+            case 'm':
+                test->print_mss = 1;
+                break;
+            case 'N':
+                test->no_delay = 1;
+                break;
+            case 'M':
+                test->default_settings->mss = atoi(optarg);
+                if (test->default_settings->mss > MAX_MSS) {
+                    fprintf(stderr, "\n Error: MSS too large. Maximum value = %d \n\n",  MAX_MSS);
+                    fprintf(stderr, usage_long1);
+                    fprintf(stderr, usage_long2);
+                    exit(1);
+                }
+                break;
+            case 'f':
+                test->default_settings->unit_format = *optarg;
+                break;
+            case 'T':
+                test->tcp_info = 1;
+                break;
+            case 'V':
+                test->verbose = 1;
+                break;
+            case 'd': 
+                test->debug = 1;
+                break;
+            case 'v': // print version and exit
+                fprintf( stderr, version );
+                exit(1);
+            case 'h':
+            default:
+                fprintf(stderr, usage_long1);
+                fprintf(stderr, usage_long2);
+                exit(1);
+        }
     }
 
     /* exit until this is done.... */
     if (test->protocol == Pudp) {
-	    printf("UDP mode not yet supported. Exiting. \n");
-	    exit(0);
+        printf("UDP mode not yet supported. Exiting. \n");
+        exit(0);
     }
-
-    //printf("in main: calling iperf_init_test \n");
-    if (test->role == 'c')
-        printf("Connecting to port %d on host %s \n", test->server_port, test->server_hostname);
 
     iperf_init_test(test);
 
@@ -256,7 +238,8 @@ main(int argc, char **argv)
     iperf_free_test(test);
 
     printf("\niperf Done.\n");
-    exit(0);
+
+    return 0;
 }
 
 /**************************************************************************/

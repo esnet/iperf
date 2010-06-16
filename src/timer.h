@@ -1,3 +1,9 @@
+#ifndef __TIMER_H
+#define __TIMER_H
+
+#include <time.h>
+#include <sys/time.h>
+
 struct timer {
     struct timeval begin;
     struct timeval end;
@@ -18,3 +24,4 @@ int64_t timer_remaining(struct timer *tp);
 
 void free_timer(struct timer *tp);
 
+#endif

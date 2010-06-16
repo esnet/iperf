@@ -61,16 +61,12 @@ void      Display(struct iperf_test * test);
 /**
  * iperf_stats_callback -- handles the statistic gathering
  *
- *returns void *
- *
  */
-void     *iperf_stats_callback(struct iperf_test * test);
+void     iperf_stats_callback(struct iperf_test * test);
 
 
 /**
  * iperf_reporter_callback -- handles the report printing
- *
- *returns report
  *
  */
 void     iperf_reporter_callback(struct iperf_test * test);

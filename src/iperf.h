@@ -125,12 +125,12 @@ struct iperf_test
 
     int       (*accept) (struct iperf_test *);
     struct iperf_stream *(*new_stream) (struct iperf_test *);
-    int       stats_interval;	/* time interval to gather stats (-i) */
-    void     *(*stats_callback) (struct iperf_test *);	/* callback function
-							 * pointer for stats */
-    int       reporter_interval;/* time interval for reporter */
-    void      (*reporter_callback) (struct iperf_test *);	/* callback function
-								 * pointer for reporter */
+    
+    int       stats_interval;
+    int       reporter_interval;
+    void      (*stats_callback) (struct iperf_test *);
+    void      (*reporter_callback) (struct iperf_test *);
+   
     int       reporter_fd;	/* file descriptor for reporter */
     int       num_streams;	/* total streams in the test (-P) */
     int       tcp_info;		/* display getsockopt(TCP_INFO) results */

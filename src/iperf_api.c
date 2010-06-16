@@ -466,16 +466,14 @@ iperf_free_test(struct iperf_test * test)
  */
 
 
-void     *
+void
 iperf_stats_callback(struct iperf_test * test)
 {
-    struct iperf_stream *sp = test->streams;
+    struct iperf_stream *sp;
     struct iperf_stream_result *rp = NULL;
     struct iperf_interval_results *ip = NULL, temp;
 
-    //printf("in stats_callback: num_streams = %d role = %c\n", test->num_streams, test->role);
-
-    while (sp != NULL) {
+    for (sp = test->streams; sp != NULL; sp = sp->next) {
         rp = sp->result;
 
         if (test->role == 'c')
@@ -500,12 +498,8 @@ iperf_stats_callback(struct iperf_test * test)
         add_to_interval_list(rp, &temp);
         rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;
 
-        /* for debugging */
-        //display_interval_list(rp, test->tcp_info); 
-        sp = sp->next;
-    }				/* for each stream */
+    }
 
-    return 0;
 }
 
 /**************************************************************************/

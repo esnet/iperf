@@ -173,45 +173,43 @@ iperf_tcp_recv(struct iperf_stream * sp)
 int
 iperf_tcp_send(struct iperf_stream * sp)
 {
-    int       result;
-    int       size = sp->settings->blksize;
+    int result;
+    int size = sp->settings->blksize;
 
-    if (!sp->buffer)
-    {
-	perror("transmit buffer not allocated");
-	return -1;
+    if (!sp->buffer) {
+        perror("transmit buffer not allocated");
+        return -1;
     }
 
     //printf("iperf_tcp_send: state = %d \n", sp->settings->state);
     memcpy(sp->buffer, &(sp->settings->state), sizeof(int));;
 
     /* set read size based on message type */
-    switch (sp->settings->state)
-    {
-    case PARAM_EXCHANGE:
-	size = sizeof(struct param_exchange);
-	break;
-    case STREAM_BEGIN:
-	size = sp->settings->blksize;
-	break;
-    case STREAM_END:
-	size = sizeof(struct param_exchange);
-	break;
-    case RESULT_REQUEST:
-	size = MAX_RESULT_STRING;
-	break;
-    case ALL_STREAMS_END:
-	size = sizeof(struct param_exchange);
-	break;
-    case TEST_END:
-	size = sizeof(struct param_exchange);
-	break;
-    case STREAM_RUNNING:
-	size = sp->settings->blksize;
-	break;
-    default:
-	printf("State of the stream can't be determined\n");
-	return -1;
+    switch (sp->settings->state) {
+        case PARAM_EXCHANGE:
+            size = sizeof(struct param_exchange);
+            break;
+        case STREAM_BEGIN:
+            size = sp->settings->blksize;
+            break;
+        case STREAM_END:
+            size = sizeof(struct param_exchange);
+            break;
+        case RESULT_REQUEST:
+            size = MAX_RESULT_STRING;
+            break;
+        case ALL_STREAMS_END:
+            size = sizeof(struct param_exchange);
+            break;
+        case TEST_END:
+            size = sizeof(struct param_exchange);
+            break;
+        case STREAM_RUNNING:
+            size = sp->settings->blksize;
+            break;
+        default:
+            printf("State of the stream can't be determined\n");
+            return -1;
     }
 
     //if(sp->settings->state != STREAM_RUNNING)
@@ -223,20 +221,19 @@ iperf_tcp_send(struct iperf_stream * sp)
     result = Nwrite(sp->socket, sp->buffer, size, Ptcp);
 #endif
     if (result < 0)
-	perror("Write error");
+        perror("Write error");
     //printf("   iperf_tcp_send: %d bytes sent \n", result);
 
-    if (sp->settings->state == STREAM_BEGIN || sp->settings->state == STREAM_RUNNING)
-    {
-	sp->result->bytes_sent += result;
-	sp->result->bytes_sent_this_interval += result;
+    if (sp->settings->state == STREAM_BEGIN || sp->settings->state == STREAM_RUNNING) {
+        sp->result->bytes_sent += result;
+        sp->result->bytes_sent_this_interval += result;
     }
 
     //printf("iperf_tcp_send: number bytes sent so far = %u \n", (uint64_t) sp->result->bytes_sent);
 
     /* change state after 1st send */
     if (sp->settings->state == STREAM_BEGIN)
-	sp->settings->state = STREAM_RUNNING;
+        sp->settings->state = STREAM_RUNNING;
 
     return result;
 }

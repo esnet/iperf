@@ -5,8 +5,8 @@
    approvals from the U.S. Dept. of Energy).  All rights reserved.
 */
 
-#ifndef        IPERF_API_H
-#define        IPERF_API_H
+#ifndef        __IPERF_API_H
+#define        __IPERF_API_H
 
 #include "iperf.h"
 
@@ -88,11 +88,6 @@ struct iperf_test *iperf_new_test();
 
 void      iperf_defaults(struct iperf_test * testp);
 
-/**
- * iperf_init_test -- perform pretest initialization (listen on sockets, etc)
- *
- */
-void      iperf_init_test(struct iperf_test * testp);
 
 /**
  * iperf_free_test -- free resources used by test, calls iperf_free_stream to
@@ -140,5 +135,5 @@ int iperf_connect(struct iperf_test *);
 int iperf_client_start(struct iperf_test *);
 int iperf_client_end(struct iperf_test *);
 
-#endif  /* IPERF_API_H */
+#endif
 

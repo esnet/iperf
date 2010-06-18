@@ -21,40 +21,39 @@
 int
 netdial(int proto, char *client, int port)
 {
-    int       s;
+    int s;
     struct hostent *hent;
     struct sockaddr_in sa;
     socklen_t sn;
 
-    /* XXX: This is not working for non-fully qualified host names 
-	use getaddrinfo() instead?
-    */
-    if ((hent = gethostbyname(client)) == 0)
-    {
-	perror("gethostbyname");
-	return (-1);
+    /* XXX: This is not working for non-fully qualified host names use getaddrinfo() instead? */
+    if ((hent = gethostbyname(client)) == 0) {
+        perror("gethostbyname");
+        return (-1);
     }
+
     s = socket(AF_INET, proto, 0);
-    if (s < 0)
-    {
-	perror("socket");
-	return (-1);
+    if (s < 0) {
+        perror("socket");
+        return (-1);
     }
+
     memset(&sa, 0, sizeof sa);
     memmove(&sa.sin_addr, hent->h_addr, 4);
     sa.sin_port = htons(port);
     sa.sin_family = AF_INET;
 
-    if (connect(s, (struct sockaddr *) & sa, sizeof sa) < 0 && errno != EINPROGRESS)
-    {
-	perror("netdial: connect error");
-	return (-1);
+    if (connect(s, (struct sockaddr *) & sa, sizeof sa) < 0 && errno != EINPROGRESS) {
+        perror("netdial: connect error");
+        return (-1);
     }
+    
     sn = sizeof sa;
-    if (getpeername(s, (struct sockaddr *) & sa, &sn) >= 0)
-    {
-	return (s);
+    
+    if (getpeername(s, (struct sockaddr *) & sa, &sn) >= 0) {
+        return (s);
     }
+
     perror("getpeername error");
     return (-1);
 }
@@ -64,33 +63,31 @@ netdial(int proto, char *client, int port)
 int
 netannounce(int proto, char *local, int port)
 {
-    int       s;
+    int s;
     struct sockaddr_in sa;
     /* XXX: implement binding to a local address rather than * */
 
-    //printf("in netannounce: port = %d \n", port);
     memset((void *) &sa, 0, sizeof sa);
 
     s = socket(AF_INET, proto, 0);
-    if (s < 0)
-    {
-	perror("socket");
-	return (-1);
+    if (s < 0) {
+        perror("socket");
+        return (-1);
     }
-    int       opt = 1;
+    int opt = 1;
     setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *) &opt, sizeof(opt));
 
     sa.sin_port = htons(port);
     sa.sin_family = AF_INET;
 
-    if (bind(s, (struct sockaddr *) & sa, sizeof(struct sockaddr_in)) < 0)
-    {
-	close(s);
-	perror("bind");
-	return (-1);
+    if (bind(s, (struct sockaddr *) & sa, sizeof(struct sockaddr_in)) < 0) {
+        close(s);
+        perror("bind");
+        return (-1);
     }
+    
     if (proto == SOCK_STREAM)
-	listen(s, 5);
+        listen(s, 5);
 
     return s;
 }
@@ -106,12 +103,11 @@ Nread(int fd, char *buf, int count, int prot)
     struct sockaddr from;
     socklen_t len = sizeof(from);
     register int cnt;
-    if (prot == SOCK_DGRAM)
-    {
-	cnt = recvfrom(fd, buf, count, 0, &from, &len);
-    } else
-    {
-	cnt = mread(fd, buf, count);
+
+    if (prot == SOCK_DGRAM) {
+        cnt = recvfrom(fd, buf, count, 0, &from, &len);
+    } else {
+        cnt = mread(fd, buf, count);
     }
     return (cnt);
 }

@@ -4,8 +4,8 @@
    approvals from the U.S. Dept. of Energy).  All rights reserved.
 */
 
-#ifndef        IPERF_H
-#define        IPERF_H
+#ifndef        __IPERF_H
+#define        __IPERF_H
 
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -64,13 +64,13 @@ struct iperf_stream
     /* configurable members */
     int       local_port;
     int       remote_port;
+    int       socket;
 	/* XXX: is settings just a pointer to the same struct in iperf_test? if not, 
 		should it be? */
     struct iperf_settings *settings;	/* pointer to structure settings */
 
     /* non configurable members */
     struct iperf_stream_result *result;	/* structure pointer to result */
-    int       socket;
     struct timer *send_timer;
     char     *buffer;		/* data to send */
 
@@ -100,28 +100,37 @@ struct iperf_stream
 
 struct iperf_test
 {
-    char      role;		/* c' lient or 's' erver */
+    char      role;                             /* c' lient or 's' erver */
     int       protocol;
-    char     *server_hostname;	/* -c option */
+    int       state;
+    char     *server_hostname;                  /* -c option */
     int       server_port;
-    int       duration;		/* total duration of test (-t flag) */
+    int       duration;                         /* total duration of test (-t flag) */
+
+    /* The following two members should be replaced by a single TCP control socket */
     int       listener_sock_tcp;
     int       listener_sock_udp;
 
+    int       ctrl_sck;
+    // Server is the only one that needs these
+    int       listener;
+    int       prot_listener;
+
+
     /* boolen variables for Options */
-    int       daemon;		/* -D option */
-    int       no_delay;		/* -N option */
-    int       print_mss;	/* -m option */
-    int       v6domain;		/* -6 option */
-    int       output_format;    /* -O option */
-    int	      verbose;	        /* -V (verbose) option */
-    int	      debug;	        /* debug mode */
+    int       daemon;                           /* -D option */
+    int       no_delay;                         /* -N option */
+    int       print_mss;                        /* -m option */
+    int       v6domain;                         /* -6 option */
+    int       output_format;                    /* -O option */
+    int	      verbose;                          /* -V (verbose) option */
+    int	      debug;                            /* debug mode */
 
     /* Select related parameters */
     int       max_fd;
-    fd_set    read_set;  /* set of read sockets */
-    fd_set    temp_set;  /* temp set for select */
-    fd_set    write_set; /* set of write sockets */
+    fd_set    read_set;                         /* set of read sockets */
+    fd_set    temp_set;                         /* temp set for select */
+    fd_set    write_set;                        /* set of write sockets */
 
     int       (*accept) (struct iperf_test *);
     struct iperf_stream *(*new_stream) (struct iperf_test *);
@@ -131,9 +140,9 @@ struct iperf_test
     void      (*stats_callback) (struct iperf_test *);
     void      (*reporter_callback) (struct iperf_test *);
    
-    int       reporter_fd;	/* file descriptor for reporter */
-    int       num_streams;	/* total streams in the test (-P) */
-    int       tcp_info;		/* display getsockopt(TCP_INFO) results */
+    int       reporter_fd;                      /* file descriptor for reporter */
+    int       num_streams;                      /* total streams in the test (-P) */
+    int       tcp_info;                         /* display getsockopt(TCP_INFO) results. Should this be moved to Options? */
 
     /* iperf error reporting
      * - errtype: (0,1,2)
@@ -144,7 +153,7 @@ struct iperf_test
     //int       errtype;
     //int       errno;
 
-    struct iperf_stream *streams;	/* pointer to list of struct stream */
+    struct iperf_stream *streams;               /* pointer to list of struct stream */
     struct iperf_settings *default_settings;
 };
 
@@ -159,6 +168,7 @@ struct udp_datagram
 struct param_exchange
 {
     int       state;
+    int       protocol;
     int       stream_id;
     int       blksize;
     int       recv_window;
@@ -193,6 +203,7 @@ enum
     ALL_STREAMS_END = 9,
     PARAM_EXCHANGE = 10,
     PARAM_EXCHANGE_ACK = 11,
+    CREATE_STREAMS = 12,
     ACCESS_DENIED = -1,
 };
 
@@ -209,5 +220,5 @@ enum
 #define MAX_MSS 9 * 1024
 #define MAX_STREAMS 128
 
-#endif  /* IPERF_API_H */
+#endif
 

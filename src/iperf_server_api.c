@@ -43,7 +43,7 @@
 #include "uuid.h"
 #include "locale.h"
 
-void      handle_message(struct iperf_test * test, int m, struct iperf_stream * sp);
+void handle_message(struct iperf_test * test, int m, struct iperf_stream * sp);
 
 /*********************************************************************/
 /**
@@ -116,139 +116,277 @@ send_result_to_client(struct iperf_stream * sp)
     free(buf);
 }
 
-/**************************************************************************/
-void
-iperf_run_server(struct iperf_test * test)
+int
+iperf_server_listen(struct iperf_test *test)
 {
-    struct timeval tv;
-    struct iperf_stream *np;
-    struct timer *stats_interval, *reporter_interval;
-    char     *result_string = NULL;
-    int       j = 0, result = 0, message = 0;
-    int       nfd = 0;
+    char ubuf[UNIT_LEN];
+    int x;
 
-    //printf("in iperf_run_server \n");
+/*    
+    if (test->protocol == Pudp) {
+        test->listener_sock_udp = netannounce(Pudp, NULL, test->server_port);
+        if (test->listener_sock_udp < 0) {
+            // Needs to set some sort of error number/message
+            return -1;
+        }
+    }
+ 
+    test->listener_sock_tcp = netannounce(Ptcp, NULL, test->server_port);
+    if (test->listener_sock_tcp < 0) {
+        // Needs to set some sort of error number/message
+        return -1;
+    }
+
+    if (test->protocol == Ptcp) {
+        if (set_tcp_windowsize(test->listener_sock_tcp, test->default_settings->socket_bufsize, SO_RCVBUF) < 0) {
+            // Needs to set some sort of error number/message
+            perror("unable to set TCP window");
+            return -1;
+        }
+    }
+
+    // make sure that accept call does not block
+    setnonblocking(test->listener_sock_tcp);
+    setnonblocking(test->listener_sock_udp);
+*/
+    if((test->listener = netannounce(Ptcp, NULL, test->server_port)) < 0) {
+        // Needs to set some sort of error number/message
+        return -1;
+    }
+    setnonblocking(test->listener);
+
+    printf("-----------------------------------------------------------\n");
+    printf("Server listening on %d\n", test->server_port);
+
+    // This needs to be changed to reflect if client has different window size
+    // make sure we got what we asked for
+    if ((x = get_tcp_windowsize(test->listener_sock_tcp, SO_RCVBUF)) < 0) {
+        // Needs to set some sort of error number/message
+        perror("SO_RCVBUF");
+        return -1;
+    }
+
+    // This code needs to be moved to after parameter exhange
+    if (test->protocol == Ptcp) {
+        if (test->default_settings->socket_bufsize > 0) {
+            unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A');
+            printf("TCP window size: %s\n", ubuf);
+        } else {
+            printf("Using TCP Autotuning\n");
+        }
+    }
+    printf("-----------------------------------------------------------\n");
 
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->temp_set);
-    if (test->protocol == Ptcp)
-    {
-	/* add listener to the master set */
-	FD_SET(test->listener_sock_tcp, &test->read_set);
-	test->max_fd = test->listener_sock_tcp;
-    } else
-    {
-	FD_SET(test->listener_sock_udp, &test->read_set);
-	test->max_fd = test->listener_sock_udp;
+    FD_SET(test->listener, &test->read_set);
+    test->max_fd = test->ctrl_sck;
+
+    return 0;
+}
+
+int
+iperf_accept(struct iperf_test *test)
+{
+    int s;
+    char ipl[512], ipr[512];
+    socklen_t len;
+    struct sockaddr_in addr;
+
+    if (test->ctrl_sck == 0) {
+        if ((s = accept(test->listener, (struct sockaddr *) &addr, &len)) < 0) {
+            perror("accept");
+            return -1;
+        }
+
+        inet_ntop(AF_INET, (void *) (&((struct sockaddr_in *) & addr.local_addr)->sin_addr),
+                (void *) ipl, sizeof(ipl));
+        inet_ntop(AF_INET, (void *) (&((struct sockaddr_in *) & addr.remote_addr)->sin_addr),
+                (void *) ipr, sizeof(ipr));
+        printf(report_peer, s,
+                ipl, ntohs(((struct sockaddr_in *) & addr.local_addr)->sin_port),
+                ipr, ntohs(((struct sockaddr_in *) & addr.remote_addr)->sin_port));
+
+        return s;
+    } else {
+        // This message needs to be sent to the client
+        printf("The server is busy running a test. Try again later.\n");
+        return 0;
+    }
+}
+
+/**************************************************************************/
+int
+iperf_handle_message(struct iperf_test *test)
+{
+    if (read(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
+        // indicate error on read
+        return -1;
     }
 
-    //printf("iperf_run_server: max_fd set to %d \n", test->max_fd);
+    switch(test->state) {
+        case PARAM_EXCHANGE:
+            iperf_exchange_parameters(test);
+            break;
+    }
+
+    return 0;
+}
+
+void
+iperf_run_server(struct iperf_test *test)
+{
+    struct timeval tv;
+    //struct iperf_stream *np;
+    struct iperf_stream *sp;
+    struct timer *stats_interval, *reporter_interval;
+    char *result_string = NULL;
+    int j = 0, result = 0, message = 0;
+    int nfd = 0;
+
+    // Open socket and listen
+    if (iperf_server_listen(test) < 0) {
+        // This needs to be replaced by more formal error handling
+        fprintf(stderr, "An error occurred. Exiting.\n");
+        exit(1);
+    }
 
     test->num_streams = 0;
     test->default_settings->state = TEST_RUNNING;
 
-
     printf("iperf_run_server: Waiting for client connect.... \n");
 
-    while (test->default_settings->state != TEST_END)
-    {
-	memcpy(&test->temp_set, &test->read_set, sizeof(test->read_set));
-	tv.tv_sec = 15;
-	tv.tv_usec = 0;
+    while (test->default_settings != TEST_END) {
 
-	/* using select to check on multiple descriptors. */
-	//printf("calling select.. sock = %d \n", test->max_fd + 1);
-	result = select(test->max_fd + 1, &test->temp_set, NULL, NULL, &tv);
-	if (result == 0)
-	{
-	    //printf("SERVER IDLE : %d sec\n", (int) tv.tv_sec);
-	    continue;
-	} else if (result < 0 && errno != EINTR)
-	{
-	    printf("Error in select(): %s, socket = %d\n", strerror(errno), test->max_fd + 1);
-	    exit(0);
-	} else if (result > 0)
-	{
-	    if (test->protocol == Ptcp)
-	    {
-		/* Accept a new TCP connection */
-		if (FD_ISSET(test->listener_sock_tcp, &test->temp_set))
-		{
-		    test->protocol = Ptcp;
-		    test->accept = iperf_tcp_accept;
-		    if (test->accept < 0)
-			return;
-		    test->new_stream = iperf_new_tcp_stream;
-		    test->accept(test);
-		    test->default_settings->state = TEST_RUNNING;
-		    FD_CLR(test->listener_sock_tcp, &test->temp_set);
-		    //printf("iperf_run_server: accepted TCP connection \n");
-		    test->num_streams++;
-		}
-	    } else
-	    {
-		/* Accept a new UDP connection */
-		if (FD_ISSET(test->listener_sock_udp, &test->temp_set))
-		{
-		    test->protocol = Pudp;
-		    test->accept = iperf_udp_accept;
-		    if (test->accept < 0)
-			return;
-		    test->new_stream = iperf_new_udp_stream;
-		    test->accept(test);
-		    test->default_settings->state = TEST_RUNNING;
-		    FD_CLR(test->listener_sock_udp, &test->temp_set);
-		    printf("iperf_run_server: accepted UDP connection \n");
-		}
-	    }
-	    /* Process the sockets for read operation */
-	    nfd = test->max_fd + 1;
-	    for (j = 0; j <= test->max_fd; j++)
-	    {
-		//printf("Checking socket %d \n", j);
-		if (FD_ISSET(j, &test->temp_set))
-		{
-		    //printf("iperf_run_server: data ready on socket %d \n", j);
-		    /* find the correct stream - possibly time consuming? */
-		    np = find_stream_by_socket(test, j);
-		    message = np->rcv(np);	/* get data from client using
-						 * receiver callback  */
-		    if (message < 0)
-			goto done;
-		    handle_message(test, message, np);
-		    if (message == TEST_END)
-			break;	/* test done, so break out of loop */
+        // Copy select set and renew timers
+        FD_COPY(&test->read_set, &test->temp_set);
+        tv.tv_sec = 15;
+        tv.tv_usec = 0;
 
-		}		/* end if (FD_ISSET(j, &temp_set)) */
-	    }			/* end for (j=0;...) */
+        result = select(test->max_fd + 1, &test->temp_set, NULL, NULL, &tv);
+        if (result < 0 && errno != EINTR) {
+            // Change the way this handles errors
+            perror("select");
+            exit(1);
+        } else if (result > 0) {
+            if (FD_ISSET(test->listener, &test->temp_set)) {
+                test->ctrl_sck = iperf_accept(test);
+                if (test->ctrl_sck < 0) {
+                    fprintf(stderr, "error: could not open control socket. exiting.\n");
+                    exit(1);
+                } else if (test->ctrl_sck > 0) {
+                    // Accepted! exchange parameters / setup
 
-	    if (message == PARAM_EXCHANGE)
-	    {
-		    /* start timer at end of PARAM_EXCHANGE */
-    		    if (test->stats_interval != 0)
-			    stats_interval = new_timer(test->stats_interval, 0);
-    		    if (test->reporter_interval != 0)
-			    reporter_interval = new_timer(test->reporter_interval, 0);
-	    }
-	    if ((message == STREAM_BEGIN) || (message == STREAM_RUNNING))
-	    {
-		/*
-		 * XXX: is this right? Might there be cases where we want
-		 * stats for while in another state?
-		 */
-		if ((test->stats_interval != 0) && stats_interval->expired(stats_interval))
-		{
-		    test->stats_callback(test);
-		    update_timer(stats_interval, test->stats_interval, 0);
-		}
-		if ((test->reporter_interval != 0) && reporter_interval->expired(reporter_interval))
-		{
-		    test->reporter_callback(test);
-		    update_timer(reporter_interval, test->reporter_interval, 0);
-		}
-	    }
-	}			/* end else (result>0)   */
-    }				/* end while */
+                }
+                FD_CLR(test->listener, &test->temp_set);
+            }
+            if (FD_ISSET(test->ctrl_sck, &test->temp_set)) {
+                // Handle control messages
+
+                FD_CLR(test->ctrl_sck, &test->temp_set);                
+            }
+            if (FD_ISSET(test->prot_listener, &test->temp_set)) {
+                // Spawn new streams
+
+                FD_CLR(test->ctrl_sck, &test->temp_set);
+            }
+            // Iterate through the streams to see if their socket FD_ISSET
+            for (sp = test->streams; sp != NULL; sp = sp->next) {
+                if (FD_ISSET(sp->socket, &test->temp_set)) {
+
+
+                }
+            }
+        }
+    }
+
+/*
+    while (test->default_settings->state != TEST_END) {
+        memcpy(&test->temp_set, &test->read_set, sizeof(test->read_set));
+        tv.tv_sec = 15;
+        tv.tv_usec = 0;
+
+        // using select to check on multiple descriptors.
+        result = select(test->max_fd + 1, &test->temp_set, NULL, NULL, &tv);
+        if (result == 0) {
+            continue;
+        } else if (result < 0 && errno != EINTR) {
+            printf("Error in select(): %s, socket = %d\n", strerror(errno), test->max_fd + 1);
+            exit(0);
+        } else if (result > 0) {
+            if (test->protocol == Ptcp) {
+                // Accept a new TCP connection 
+                if (FD_ISSET(test->ctrl_sck, &test->temp_set)) {
+                    test->protocol = Ptcp;
+
+                    // The following line needs to be moved to test initialization
+                    test->accept = iperf_tcp_accept;
+                    if (test->accept < 0) // .. really??!
+                        return;
+
+                    // Again, needs to be moved to test initialization
+                    test->new_stream = iperf_new_tcp_stream;
+                    test->accept(test);
+                    test->default_settings->state = TEST_RUNNING;
+                    FD_CLR(test->listener_sock_tcp, &test->temp_set);
+                    //printf("iperf_run_server: accepted TCP connection \n");
+                    test->num_streams++;
+                }
+            } else {
+                // Accept a new UDP connection
+                if (FD_ISSET(test->listener_sock_udp, &test->temp_set)) {
+                    test->protocol = Pudp;
+                    test->accept = iperf_udp_accept;
+                    if (test->accept < 0)
+                        return;
+                    test->new_stream = iperf_new_udp_stream;
+                    test->accept(test);
+                    test->default_settings->state = TEST_RUNNING;
+                    FD_CLR(test->listener_sock_udp, &test->temp_set);
+                    printf("iperf_run_server: accepted UDP connection \n");
+                }
+            }
+            // Process the sockets for read operation
+            nfd = test->max_fd + 1;
+            for (j = 0; j <= test->max_fd; j++) {
+                if (FD_ISSET(j, &test->temp_set)) {
+                    // find the correct stream - possibly time consuming?
+                    np = find_stream_by_socket(test, j);
+                    message = np->rcv(np);	// get data from client using receiver callback
+                    // This code needs to be fixed to work without goto
+                    if (message < 0)
+                        goto done;
+                    handle_message(test, message, np);
+                    if (message == TEST_END)
+                        break;
+                }
+            }
+
+            if (message == PARAM_EXCHANGE) {
+                // start timer at end of PARAM_EXCHANGE
+                if (test->stats_interval != 0)
+                    stats_interval = new_timer(test->stats_interval, 0);
+                if (test->reporter_interval != 0)
+                    reporter_interval = new_timer(test->reporter_interval, 0);
+            }
+
+            if ((message == STREAM_BEGIN) || (message == STREAM_RUNNING)) {
+                //
+                // XXX: is this right? Might there be cases where we want
+                // stats for while in another state?
+                //
+                if ((test->stats_interval != 0) && stats_interval->expired(stats_interval)) {
+                    test->stats_callback(test);
+                    update_timer(stats_interval, test->stats_interval, 0);
+                }
+                if ((test->reporter_interval != 0) && reporter_interval->expired(reporter_interval)) {
+                    test->reporter_callback(test);
+                    update_timer(reporter_interval, test->reporter_interval, 0);
+                }
+            }
+        }
+    }
+*/ // End of the WHILE
 
 done:
     printf("Test Complete. \n\n");

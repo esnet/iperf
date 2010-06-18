@@ -228,12 +228,10 @@ main(int argc, char **argv)
     /* exit until this is done.... */
     if (test->protocol == Pudp) {
         printf("UDP mode not yet supported. Exiting. \n");
-        exit(0);
+        iperf_free_test(test);
+        return 0;
     }
 
-    iperf_init_test(test);
-
-    //printf("in main: calling iperf_run \n");
     iperf_run(test);
     iperf_free_test(test);
 
@@ -251,11 +249,12 @@ iperf_run(struct iperf_test * test)
 
     switch (test->role) {
         case 's':
-            while (1) {
+// The following lines are commented out until I fix the bind issue with porting
+//            while (1) {
                 iperf_run_server(test);
-                test->streams = NULL;
-                sleep(1);
-            }
+//                test->streams = NULL;
+//                sleep(1);
+//            }
             return 0;
         case 'c':
             return iperf_run_client(test);

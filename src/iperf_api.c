@@ -87,38 +87,57 @@ all_data_sent(struct iperf_test * test)
 int
 iperf_exchange_parameters(struct iperf_test * test)
 {
-    int result;
-    struct iperf_stream *sp;
-    struct param_exchange *param;
+    struct param_exchange param;
 
-    sp = test->streams;
-    sp->settings->state = PARAM_EXCHANGE;
-    param = (struct param_exchange *) sp->buffer;
+    if (test->role == 'c') {
 
-    get_uuid(test->default_settings->cookie);
-    strncpy(param->cookie, test->default_settings->cookie, COOKIE_SIZE);
+        // XXX: Probably should get the cookie at the start of iperf rather than
+        //      waiting till here
+        get_uuid(test->default_settings->cookie);
+        strncpy(param->cookie, test->default_settings->cookie, COOKIE_SIZE);
 
-    /* setting up exchange parameters  */
-    param->state = PARAM_EXCHANGE;
-    param->blksize = test->default_settings->blksize;
-    param->recv_window = test->default_settings->socket_bufsize;
-    param->send_window = test->default_settings->socket_bufsize;
-    param->format = test->default_settings->unit_format;
+        /* setting up exchange parameters  */
+        param->state = PARAM_EXCHANGE;
+        param->protocol = test->protocol;
+        param->blksize = test->default_settings->blksize;
+        param->recv_window = test->default_settings->socket_bufsize;
+        param->send_window = test->default_settings->socket_bufsize;
+        param->format = test->default_settings->unit_format;
 
-    if (sp->snd(sp) < 0) {
-        perror("Error sending exchange params to server");
-        return -1;
-    }
+        if (write(test->ctrl_sck, &param, sizeof(struct param_exchange)) < 0) {
+            perror("write param_exchange");
+            return -1;
+        }
 
-    result = Nread(sp->socket, sp->buffer, sizeof(struct param_exchange), Ptcp);
-    if (result < 0) {
-        perror("Error getting exchange params ack from server");
-        return -1;
-    }
+        // This code needs to be moved to the server rejection part of the server code
+        /*
+        if (result > 0 && sp->buffer[0] == ACCESS_DENIED) {
+            fprintf(stderr, "Busy server Detected. Try again later. Exiting.\n");
+            return -1;
+        }
+        */
 
-    if (result > 0 && sp->buffer[0] == ACCESS_DENIED) {
-        fprintf(stderr, "Busy server Detected. Try again later. Exiting.\n");
-        return -1;
+    } else {
+
+        if (read(ctrl_sck, &param, sizeof(struct param_exchange)) < 0) {
+            perror("read param_exchange");
+            return -1;
+        }
+
+        // set test parameters
+        test->default_settings->cookie = param->cookie;
+        test->protocol = param->protocol;
+        test->default_settings->blksize = param->blksize;
+        test->default_settings->socket_bufsize = param->recv_window;
+        // need to add support for send_window
+        test->default_settings->unit_format = param->format;
+
+        // Send the control message to create streams and start the test
+        test->state = CREATE_STREAMS;
+        if (write(ctrl_sck, &test->state, sizeof(int)) < 0) {
+            perror("write CREATE_STREAMS");
+            return -1;
+        }
     }
 
     return 0;
@@ -320,87 +339,53 @@ iperf_defaults(struct iperf_test * testp)
 
 /**************************************************************************/
 
-void
-iperf_init_test(struct iperf_test * test)
+int
+iperf_create_streams(struct iperf_test *test)
 {
-    char      ubuf[UNIT_LEN];
     struct iperf_stream *sp;
-    int       i, s = 0;
+    int i, s;
 
-    if (test->role == 's')
-    {				/* server */
-	if (test->protocol == Pudp)
-	{
-	    test->listener_sock_udp = netannounce(Pudp, NULL, test->server_port);
-	    if (test->listener_sock_udp < 0)
-		exit(0);
-	}
-	/* always create TCP connection for control messages */
-	test->listener_sock_tcp = netannounce(Ptcp, NULL, test->server_port);
-	if (test->listener_sock_tcp < 0)
-	    exit(0);
+    for (i = 0; i < test->num_streams; ++i) {
+        s = netdial(test->protocol, test->server_hostname, test->server_port);
+        if (s < 0) {
+            perror("netdial stream");
+            return -1;
+        }
+        FD_SET(s, &test->read_set);
+        FD_SET(s, &test->write_set);
+        test->max_fd = (test->max_fd < s) ? s : test->max_fd;
 
-	if (test->protocol == Ptcp)
-	{
-	    if (set_tcp_windowsize(test->listener_sock_tcp, test->default_settings->socket_bufsize, SO_RCVBUF) < 0)
-		perror("unable to set TCP window");
-	}
-	/* make sure that accept call does not block */
-	setnonblocking(test->listener_sock_tcp);
-	setnonblocking(test->listener_sock_udp);
+        // XXX: This doesn't fit our API model!
+        sp = test->new_stream(test);
+        sp->socket = s;
+        iperf_init_stream(test, sp);
+        iperf_add_stream(sp, test);
 
-	printf("-----------------------------------------------------------\n");
-	printf("Server listening on %d\n", test->server_port);
-	int       x;
-
-	/* make sure we got what we asked for */
-	if ((x = get_tcp_windowsize(test->listener_sock_tcp, SO_RCVBUF)) < 0)
-	    perror("SO_RCVBUF");
-
-	if (test->protocol == Ptcp)
-	{
-	    {
-		if (test->default_settings->socket_bufsize > 0)
-		{
-		    unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A');
-		    printf("TCP window size: %s\n", ubuf);
-		} else
-		{
-		    printf("Using TCP Autotuning \n");
-		}
-	    }
-	}
-	printf("-----------------------------------------------------------\n");
-
+        // XXX: This line probably needs to be replaced
+        connect_msg(sp);
     }
-    /* This code is being removed. Commented out until removal
-    else if (test->role == 'c')
-    {				// Client
-	FD_ZERO(&test->write_set);
-	FD_SET(s, &test->write_set);
 
-         // XXX: I think we need to create a TCP control socket here too for
-         // UDP mode -blt
-	for (i = 0; i < test->num_streams; i++)
-	{
-	    s = netdial(test->protocol, test->server_hostname, test->server_port);
-	    if (s < 0)
-	    {
-		fprintf(stderr, "netdial failed\n");
-		exit(0);
-	    }
-	    FD_SET(s, &test->write_set);
-	    test->max_fd = (test->max_fd < s) ? s : test->max_fd;
+    return 0;
+}
 
-	    sp = test->new_stream(test);
-	    sp->socket = s;
-	    iperf_init_stream(sp, test);
-	    iperf_add_stream(test, sp);
-
-	    connect_msg(sp);	// print connection established message
-	}
+int
+iperf_handle_message_client(struct iperf_test *test)
+{
+    if (read(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
+        // indicate error on read
+        return -1;
     }
-    */
+
+    switch (test->state) {
+        case CREATE_STREAMS:
+            iperf_create_streams(test);
+            break;
+        default:
+            printf("How did you get here? test->state = %d\n", test->state);
+            break;
+    }
+
+    return 0;
 }
 
 /* iperf_connect -- client to server connection function */
@@ -412,9 +397,30 @@ iperf_connect(struct iperf_test *test)
 
     printf("Connecting to host %s, port %d\n", test->server_hostname, test->server_port);
 
-    /* For Select: Set the test->write_set select set to zero, then set the s fd */
+    FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);
 
+    /* Create and connect the control channel */
+    test->ctrl_sck = netdial(test->protocol, test->server_hostname, test->server_port);
+
+    FD_SET(test->ctrl_sck, &test->read_set);
+    FD_SET(test->ctrl_sck, &test->write_set);
+
+    /* Exchange parameters */
+    test->state = PARAM_EXCHANGE;
+    if (write(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
+        perror("write PARAM_EXCHANGE");
+        return -1;
+    }
+    if (iperf_exchange_parameters(test) < 0) {
+        fprintf(stderr, "iperf_exchange_parameters failed\n");
+        return -1;
+    }
+
+
+    /* Create and connect the individual streams */
+    // This code has been moved to iperf_create_streams
+/*
     for (i = 0; i < test->num_streams; i++) {
         s = netdial(test->protocol, test->server_hostname, test->server_port);
         if (s < 0) {
@@ -432,8 +438,9 @@ iperf_connect(struct iperf_test *test)
 
         connect_msg(sp);
     }
+*/
     
-    return 1;
+    return 0;
 }
 
 /**************************************************************************/
@@ -461,8 +468,7 @@ iperf_free_test(struct iperf_test * test)
 /**
  * iperf_stats_callback -- handles the statistic gathering for both the client and server
  *
- *returns void *
- *
+ * XXX: This function needs to be updated to reflect the new code
  */
 
 
@@ -508,7 +514,7 @@ iperf_stats_callback(struct iperf_test * test)
  * iperf_reporter_callback -- handles the report printing
  *
  *returns report
- *
+ * XXX: This function needs to be updated to reflect the new code
  */
 
 void
@@ -654,15 +660,13 @@ print_interval_results(struct iperf_test * test, struct iperf_stream * sp)
 void
 safe_strcat(char *s1, char *s2)
 {
-    //printf(" adding string %s to end of string %s \n", s1, s1);
-    if (strlen(s1) + strlen(s2) < MAX_RESULT_STRING)
-	strcat(s1, s2);
-    else
-    {
-	printf("Error: results string too long \n");
-	exit(-1);		/* XXX: should return an error instead! */
-	/* but code that calls this needs to check for error first */
-	//return -1;
+    if (strlen(s1) + strlen(s2) < MAX_RESULT_STRING) {
+        strcat(s1, s2);
+    } else {
+        printf("Error: results string too long \n");
+        exit(-1);		/* XXX: should return an error instead! */
+                        /* but code that calls this needs to check for error first */
+                        //return -1;
     }
 }
 

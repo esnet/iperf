@@ -170,6 +170,7 @@ struct param_exchange
     int       state;
     int       protocol;
     int       stream_id;
+    int       num_streams;
     int       blksize;
     int       recv_window;
     int       send_window;

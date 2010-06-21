@@ -94,15 +94,16 @@ iperf_exchange_parameters(struct iperf_test * test)
         // XXX: Probably should get the cookie at the start of iperf rather than
         //      waiting till here
         get_uuid(test->default_settings->cookie);
-        strncpy(param->cookie, test->default_settings->cookie, COOKIE_SIZE);
+        strncpy(param.cookie, test->default_settings->cookie, COOKIE_SIZE);
 
         /* setting up exchange parameters  */
-        param->state = PARAM_EXCHANGE;
-        param->protocol = test->protocol;
-        param->blksize = test->default_settings->blksize;
-        param->recv_window = test->default_settings->socket_bufsize;
-        param->send_window = test->default_settings->socket_bufsize;
-        param->format = test->default_settings->unit_format;
+        param.state = PARAM_EXCHANGE;
+        param.protocol = test->protocol;
+        param.num_streams = test->num_streams;
+        param.blksize = test->default_settings->blksize;
+        param.recv_window = test->default_settings->socket_bufsize;
+        param.send_window = test->default_settings->socket_bufsize;
+        param.format = test->default_settings->unit_format;
 
         if (write(test->ctrl_sck, &param, sizeof(struct param_exchange)) < 0) {
             perror("write param_exchange");
@@ -119,22 +120,25 @@ iperf_exchange_parameters(struct iperf_test * test)
 
     } else {
 
-        if (read(ctrl_sck, &param, sizeof(struct param_exchange)) < 0) {
+        if (read(test->ctrl_sck, &param, sizeof(struct param_exchange)) < 0) {
             perror("read param_exchange");
             return -1;
         }
 
         // set test parameters
-        test->default_settings->cookie = param->cookie;
-        test->protocol = param->protocol;
-        test->default_settings->blksize = param->blksize;
-        test->default_settings->socket_bufsize = param->recv_window;
+        strncpy(test->default_settings->cookie, param.cookie, COOKIE_SIZE);
+        test->protocol = param.protocol;
+        test->num_streams = param.num_streams;
+        test->default_settings->blksize = param.blksize;
+        test->default_settings->socket_bufsize = param.recv_window;
         // need to add support for send_window
-        test->default_settings->unit_format = param->format;
+        test->default_settings->unit_format = param.format;
+
+        test->prot_listener = netannounce(test->protocol, NULL, 5202);
 
         // Send the control message to create streams and start the test
         test->state = CREATE_STREAMS;
-        if (write(ctrl_sck, &test->state, sizeof(int)) < 0) {
+        if (write(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
             perror("write CREATE_STREAMS");
             return -1;
         }
@@ -346,7 +350,7 @@ iperf_create_streams(struct iperf_test *test)
     int i, s;
 
     for (i = 0; i < test->num_streams; ++i) {
-        s = netdial(test->protocol, test->server_hostname, test->server_port);
+        s = netdial(test->protocol, test->server_hostname, test->server_port+1);
         if (s < 0) {
             perror("netdial stream");
             return -1;
@@ -381,6 +385,7 @@ iperf_handle_message_client(struct iperf_test *test)
             iperf_create_streams(test);
             break;
         default:
+            // XXX: This needs to be replaced
             printf("How did you get here? test->state = %d\n", test->state);
             break;
     }
@@ -851,7 +856,7 @@ iperf_client_start(struct iperf_test *test)
         for (sp = test->streams; sp != NULL; sp = sp->next) {
 	        if (sp->snd(sp) < 0) {
                 perror("iperf_client_start: snd");
-                // do other stuff on error
+                // XXX: needs to indicate an iperf error on stream send 
             }
         }
 
@@ -875,6 +880,13 @@ iperf_client_start(struct iperf_test *test)
     free(timer);
     free(stats_interval);
     free(reporter_interval);
+
+    // Send TEST_DONE (ALL_STREAMS_END) message
+    test->state = ALL_STREAMS_END;
+    if (write(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
+        perror("write ALL_STREAMS_END");
+        return -1;
+    }
 
     return 0;
 }
@@ -937,24 +949,53 @@ iperf_client_end(struct iperf_test *test)
 int
 iperf_run_client(struct iperf_test * test)
 {
+    struct timeval tv;
+    struct iperf_stream *sp;
+    fd_set temp_set;
+    int result;
+
+
     /* Start the client and connect to the server */
     if (iperf_connect(test) < 0) {
         // set error and return
         return -1;
     }
 
+    while (test->state != TEST_END) {
+
+        FD_COPY(&test->read_set, &temp_set);
+        tv.tv_sec = 15;
+        tv.tv_usec = 0;
+
+        result = select(test->max_fd + 1, &temp_set, NULL, NULL, &tv);
+        if (result < 0 && errno != EINTR) {
+            perror("select");
+            exit(1);
+        } else if (result > 0) {
+            if (FD_ISSET(test->ctrl_sck, &temp_set)) {
+                iperf_handle_message_client(test);
+                FD_CLR(test->ctrl_sck, &temp_set);
+            }
+        }
+    }
+
     /* Exchange parameters with the server */
+    /* Moved to iperf_connect
     if (iperf_exchange_parameters(test) < 0) {
         // This needs to set error
         return -1;
     }
+    */
 
     /* Start the iperf test */
+    /* Moved to while above
     if (iperf_client_start(test) < 0) {
         return -1;
     }
+    */
 
     /* End the iperf test and clean up client specific memory */
+    
     if (iperf_client_end(test) < 0) {
         return -1;
     }

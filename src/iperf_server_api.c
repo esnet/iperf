@@ -160,13 +160,16 @@ iperf_server_listen(struct iperf_test *test)
 
     // This needs to be changed to reflect if client has different window size
     // make sure we got what we asked for
+    /* XXX: This needs to be moved to the stream listener
     if ((x = get_tcp_windowsize(test->listener_sock_tcp, SO_RCVBUF)) < 0) {
         // Needs to set some sort of error number/message
         perror("SO_RCVBUF");
         return -1;
     }
+    */
 
-    // This code needs to be moved to after parameter exhange
+    // XXX: This code needs to be moved to after parameter exhange
+    // XXX: Last thing I was working on
     if (test->protocol == Ptcp) {
         if (test->default_settings->socket_bufsize > 0) {
             unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A');
@@ -199,6 +202,7 @@ iperf_accept(struct iperf_test *test)
             return -1;
         }
 
+/*
         inet_ntop(AF_INET, (void *) (&((struct sockaddr_in *) & addr.local_addr)->sin_addr),
                 (void *) ipl, sizeof(ipl));
         inet_ntop(AF_INET, (void *) (&((struct sockaddr_in *) & addr.remote_addr)->sin_addr),
@@ -206,6 +210,8 @@ iperf_accept(struct iperf_test *test)
         printf(report_peer, s,
                 ipl, ntohs(((struct sockaddr_in *) & addr.local_addr)->sin_port),
                 ipr, ntohs(((struct sockaddr_in *) & addr.remote_addr)->sin_port));
+*/
+        printf("just accepted a control connection from somebody.. need to change this message\n");
 
         return s;
     } else {
@@ -220,7 +226,7 @@ int
 iperf_handle_message(struct iperf_test *test)
 {
     if (read(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
-        // indicate error on read
+        // XXX: Needs to indicate read error
         return -1;
     }
 
@@ -228,6 +234,16 @@ iperf_handle_message(struct iperf_test *test)
         case PARAM_EXCHANGE:
             iperf_exchange_parameters(test);
             break;
+        case TEST_START:
+            break;
+        case ALL_STREAMS_END:
+            // close the streams
+            printf("made it to ALL_STREAMS_END!\n");
+            exit(1);
+        default:
+            // XXX: This needs to be replaced by actual error handling
+            fprintf("How did you get here? test->state = %d\n", test->state);
+            return -1;
     }
 
     return 0;
@@ -256,7 +272,7 @@ iperf_run_server(struct iperf_test *test)
 
     printf("iperf_run_server: Waiting for client connect.... \n");
 
-    while (test->default_settings != TEST_END) {
+    while (test->state != TEST_END) {
 
         // Copy select set and renew timers
         FD_COPY(&test->read_set, &test->temp_set);
@@ -282,19 +298,19 @@ iperf_run_server(struct iperf_test *test)
             }
             if (FD_ISSET(test->ctrl_sck, &test->temp_set)) {
                 // Handle control messages
-
+                iperf_handle_message(test);
                 FD_CLR(test->ctrl_sck, &test->temp_set);                
             }
             if (FD_ISSET(test->prot_listener, &test->temp_set)) {
                 // Spawn new streams
-
+                // XXX: Fix this!
+                iperf_tcp_accept(test);
                 FD_CLR(test->ctrl_sck, &test->temp_set);
             }
             // Iterate through the streams to see if their socket FD_ISSET
             for (sp = test->streams; sp != NULL; sp = sp->next) {
                 if (FD_ISSET(sp->socket, &test->temp_set)) {
-
-
+                    iperf_tcp_recv(sp);
                 }
             }
         }

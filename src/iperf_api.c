@@ -170,9 +170,9 @@ iperf_send(struct iperf_test *test)
                 free(reporter_interval);
 
                 // Send TEST_DONE (ALL_STREAMS_END) message
-                test->state = ALL_STREAMS_END;
+                test->state = TEST_END;
                 if (write(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
-                    perror("write ALL_STREAMS_END");
+                    perror("write TEST_END");
                     return -1;
                 }
             }
@@ -268,7 +268,7 @@ iperf_exchange_parameters(struct iperf_test * test)
         // XXX: need to add support for send_window
         test->default_settings->unit_format = param.format;
 
-        test->prot_listener = netannounce(test->protocol, NULL, 5202);
+        test->prot_listener = netannounce(test->protocol, NULL, test->server_port + 1);
         FD_SET(test->prot_listener, &test->read_set);
         FD_SET(test->prot_listener, &test->write_set);
         test->max_fd = (test->prot_listener > test->max_fd) ? test->prot_listener : test->max_fd;
@@ -483,7 +483,7 @@ iperf_create_streams(struct iperf_test *test)
     int i, s;
 
     for (i = 0; i < test->num_streams; ++i) {
-        s = netdial(test->protocol, test->server_hostname, test->server_port+1);
+        s = netdial(test->protocol, test->server_hostname, test->server_port + 1);
         if (s < 0) {
             perror("netdial stream");
             return -1;
@@ -522,6 +522,11 @@ iperf_handle_message_client(struct iperf_test *test)
         case TEST_RUNNING:
             break;
         case TEST_END:
+            break;
+        case DISPLAY_RESULTS:
+            iperf_client_end(test);
+            break;
+        case IPERF_DONE:
             break;
         case SERVER_TERMINATE:
             fprintf(stderr, "The server has terminated. Exiting...\n");
@@ -659,11 +664,7 @@ iperf_reporter_callback(struct iperf_test * test)
     double start_time, end_time;
     struct iperf_interval_results *ip = NULL;
 
-    sp = test->streams;
-    iperf_state = sp->settings->state;
-
-
-    switch (iperf_state) {
+    switch (test->state) {
         case TEST_RUNNING:
         case STREAM_RUNNING:
             /* print interval results for each stream */
@@ -694,10 +695,11 @@ iperf_reporter_callback(struct iperf_test * test)
 #endif
             }
             break;
-        case ALL_STREAMS_END:
-        case RESULT_REQUEST:
+        case TEST_END:
+        case DISPLAY_RESULTS:
             /* print final summary for all intervals */
             start_time = 0.;
+            sp = test->streams;
             end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
             for (sp = test->streams; sp != NULL; sp = sp->next) {
                 if (test->role == 'c')
@@ -861,8 +863,9 @@ iperf_new_stream(struct iperf_test *testp)
     sp->result->bytes_sent = 0;
     sp->result->bytes_received_this_interval = 0;
     sp->result->bytes_sent_this_interval = 0;
-    gettimeofday(&sp->result->start_time, NULL);
     */
+
+    gettimeofday(&sp->result->start_time, NULL);
 
     sp->settings->state = STREAM_BEGIN;
     return sp;
@@ -919,25 +922,10 @@ iperf_add_stream(struct iperf_test * test, struct iperf_stream * sp)
 int
 iperf_client_end(struct iperf_test *test)
 {
-    // Delete the char *
     char *result_string;
-    struct iperf_stream *sp, *np;
+    struct iperf_stream *sp;
     printf("Test Complete. Summary Results:\n");
-    
-    /* send STREAM_END packets */
-    test->streams->settings->state = STREAM_END;
-    for (sp = test->streams; sp != NULL; sp = sp->next) {
-        if (sp->snd(sp) < 0) {
-            // Add some error handling code
-        }
-    }
-
-    /* send ALL_STREAMS_END packet to 1st socket */
-    sp = test->streams;
-    sp->settings->state = ALL_STREAMS_END;
-    sp->snd(sp);
-    //printf("Done Sending ALL_STREAMS_END. \n");
-
+ 
     /* show final summary */
     test->stats_callback(test);
     test->reporter_callback(test);
@@ -948,7 +936,8 @@ iperf_client_end(struct iperf_test *test)
      * intern worked on it, but it needs to be finished.
      */
 
-    test->default_settings->state = RESULT_REQUEST;
+    // XXX: Need to implement getting results from server
+    test->state = RESULT_REQUEST;
     //receive_result_from_server(test);	/* XXX: currently broken! */
     //result_string = test->reporter_callback(test);
     //printf("Summary results as measured by the server: \n");
@@ -956,19 +945,19 @@ iperf_client_end(struct iperf_test *test)
 
     //printf("Done getting/printing results. \n");
 
-    //printf("send TEST_END to server \n");
-    sp->settings->state = TEST_END;
-    sp->snd(sp);		/* send message to server */
-
     /* Deleting all streams - CAN CHANGE FREE_STREAM FN */
-    for (sp = test->streams; sp != NULL; sp = np) {
+    for (sp = test->streams; sp != NULL; sp = sp->next) {
         close(sp->socket);
-        np = sp->next;
         iperf_free_stream(sp);
     }
 
-    return 0;
+    test->state = IPERF_DONE;
+    if (write(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
+        perror("write IPERF_DONE");
+        return -1;
+    }
 
+    return 0;
 }
 
 int
@@ -1004,7 +993,7 @@ iperf_run_client(struct iperf_test * test)
         exit(1);
     }
 
-    while (test->state != TEST_END) {
+    while (test->state != IPERF_DONE) {
 
         FD_COPY(&test->read_set, &temp_read_set);
         FD_COPY(&test->write_set, &temp_write_set);

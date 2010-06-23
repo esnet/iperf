@@ -180,14 +180,13 @@ iperf_handle_message_server(struct iperf_test *test)
         case TEST_RUNNING:
             break;
         case TEST_END:
-            break;
-        case ALL_STREAMS_END:
-            // Send TEST_END! 
-            test->state = TEST_END;
+            test->state = DISPLAY_RESULTS;
             if (write(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
-                perror("write TEST_END");
+                perror("write DISPLAY_RESULTS");
                 exit(1);
             }
+            break;
+        case IPERF_DONE:
             break;
         case CLIENT_TERMINATE:
             fprintf(stderr, "The client has terminated. Exiting...\n");
@@ -235,7 +234,7 @@ iperf_run_server(struct iperf_test *test)
 
     printf("iperf_run_server: Waiting for client connect.... \n");
 
-    while (test->state != TEST_END) {
+    while (test->state != IPERF_DONE) {
 
         FD_COPY(&test->read_set, &test->temp_set);
         tv.tv_sec = 15;

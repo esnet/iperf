@@ -56,6 +56,7 @@ static struct option longopts[] =
     {"help", no_argument, NULL, 'h'},
     {"daemon", no_argument, NULL, 'D'},
     {"format", required_argument, NULL, 'f'},
+    {"reverse", no_argument, NULL, 'R'},
 
 /*  The following ifdef needs to be split up. linux-congestion is not necessarily supported
  *  by systems that support tos.
@@ -111,7 +112,7 @@ main(int argc, char **argv)
     test = iperf_new_test();
     iperf_defaults(test);	/* sets defaults */
 
-    while ((ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:n:mNTvhVdM:f:", longopts, NULL)) != -1) {
+    while ((ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:n:mRNTvhVdM:f:", longopts, NULL)) != -1) {
         switch (ch) {
             case 'c':
                 test->role = 'c';
@@ -214,6 +215,9 @@ main(int argc, char **argv)
             case 'd': 
                 test->debug = 1;
                 break;
+            case 'R':
+                test->reverse = 1;
+                break;
             case 'v': // print version and exit
                 fprintf( stderr, version );
                 exit(1);
@@ -232,7 +236,11 @@ main(int argc, char **argv)
         return 0;
     }
 
-    iperf_run(test);
+    if (iperf_run(test) < 0) {
+        fprintf(stderr, "An error occurred. Exiting...\n");
+        return -1;
+    }
+
     iperf_free_test(test);
 
     printf("\niperf Done.\n");

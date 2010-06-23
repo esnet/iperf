@@ -52,85 +52,32 @@ jmp_buf   env;			/* to handle longjmp on signal */
 int
 iperf_tcp_recv(struct iperf_stream * sp)
 {
-    int result = 0, message = 0;
+    int result = 0;
     int size = sp->settings->blksize;
-    char *final_message = NULL;
-
-    errno = 0;
-
-    struct param_exchange *param = (struct param_exchange *) sp->buffer;
 
     if (!sp->buffer) {
-        fprintf(stderr, "receive buffer not allocated \n");
+        fprintf(stderr, "iperf_tcp_recv: receive buffer not allocated\n");
         return -1;
     }
-
-    /* get the 1st byte: then based on that, decide how much to read */
-    if ((result = recv(sp->socket, &message, sizeof(int), MSG_PEEK)) != sizeof(int)) {
-        if (result == 0)
-            printf("Client Disconnected. \n");
-        else
-            perror("iperf_tcp_recv: recv error: MSG_PEEK");
-        return -1;
-    }
-    sp->settings->state = message;
-
-#ifdef DEBUG
-    if (message != STREAM_RUNNING)	// tell me about non STREAM_RUNNING messages
-                                    // for debugging
-	printf("iperf_tcp_recv: got message type %d \n", message);
-#endif
-
-    switch (message) {
-        case TEST_START:
-        case STREAM_BEGIN:
-        case STREAM_RUNNING:
-            size = sp->settings->blksize;
 #ifdef USE_RECV
 	/*
 	 * NOTE: Nwrite/Nread seems to be 10-15% faster than send/recv for
 	 * localhost on OSX. More testing needed on other OSes to be sure.
 	 */
-            do {
-                result = recv(sp->socket, sp->buffer, size, MSG_WAITALL);
-            } while (result == -1 && errno == EINTR);
+    do {
+        result = recv(sp->socket, sp->buffer, size, MSG_WAITALL);
+    } while (result == -1 && errno == EINTR);
 #else
-            result = Nread(sp->socket, sp->buffer, size, Ptcp);
+    result = Nread(sp->socket, sp->buffer, size, Ptcp);
 #endif
-            if (result == -1) {
-                perror("Read error");
-                return -1;
-            }
-            sp->result->bytes_received += result;
-            sp->result->bytes_received_this_interval += result;
-            break;
-        case STREAM_END: // What's the purpose of reading this?
-            size = sizeof(struct param_exchange);
-            result = Nread(sp->socket, sp->buffer, size, Ptcp);
-            break;
-        case ALL_STREAMS_END:
-            size = sizeof(struct param_exchange);
-            result = Nread(sp->socket, sp->buffer, size, Ptcp);
-            break;
-        case TEST_END:
-            size = sizeof(struct param_exchange);
-            result = Nread(sp->socket, sp->buffer, size, Ptcp);
-            break;
-        case RESULT_REQUEST:
-            /* XXX: not working yet  */
-            //final_message = iperf_reporter_callback(test);
-            //memcpy(sp->buffer, final_message, strlen(final_message));
-            //result = send(sp->socket, sp->buffer, MAX_RESULT_STRING, 0);
-            //if (result < 0)
-            //    perror("Error sending results back to client");
-
-            break;
-        default:
-            printf("unexpected state encountered: %d \n", message);
-            return -1;
+    if (result == -1) {
+        perror("Read error");
+        return -1;
     }
+    sp->result->bytes_received += result;
+    sp->result->bytes_received_this_interval += result;
 
-    return message;
+    return 0;
 }
 
 /**************************************************************************/
@@ -148,40 +95,9 @@ iperf_tcp_send(struct iperf_stream * sp)
     int size = sp->settings->blksize;
 
     if (!sp->buffer) {
-        perror("transmit buffer not allocated");
+        fprintf(stderr, "iperf_tcp_send: transmit buffer not allocated\n");
         return -1;
     }
-
-    //printf("iperf_tcp_send: state = %d \n", sp->settings->state);
-    memcpy(sp->buffer, &(sp->settings->state), sizeof(int));;
-
-    /* set read size based on message type */
-    switch (sp->settings->state) {
-        case STREAM_BEGIN:
-            size = sp->settings->blksize;
-            break;
-        case STREAM_END:
-            size = sizeof(struct param_exchange);
-            break;
-        case RESULT_REQUEST:
-            size = MAX_RESULT_STRING;
-            break;
-        case ALL_STREAMS_END:
-            size = sizeof(struct param_exchange);
-            break;
-        case TEST_END:
-            size = sizeof(struct param_exchange);
-            break;
-        case STREAM_RUNNING:
-            size = sp->settings->blksize;
-            break;
-        default:
-            printf("State of the stream can't be determined\n");
-            return -1;
-    }
-
-    //if(sp->settings->state != STREAM_RUNNING)
-    //    printf("   in iperf_tcp_send, message type = %d (total = %d bytes) \n", sp->settings->state, size);
 
 #ifdef USE_SEND
     result = send(sp->socket, sp->buffer, size, 0);
@@ -190,18 +106,9 @@ iperf_tcp_send(struct iperf_stream * sp)
 #endif
     if (result < 0)
         perror("Write error");
-    //printf("   iperf_tcp_send: %d bytes sent \n", result);
 
-    if (sp->settings->state == STREAM_BEGIN || sp->settings->state == STREAM_RUNNING) {
-        sp->result->bytes_sent += result;
-        sp->result->bytes_sent_this_interval += result;
-    }
-
-    //printf("iperf_tcp_send: number bytes sent so far = %u \n", (uint64_t) sp->result->bytes_sent);
-
-    /* change state after 1st send */
-    if (sp->settings->state == STREAM_BEGIN)
-        sp->settings->state = STREAM_RUNNING;
+    sp->result->bytes_sent += result;
+    sp->result->bytes_sent_this_interval += result;
 
     return result;
 }
@@ -213,10 +120,9 @@ iperf_new_tcp_stream(struct iperf_test * testp)
     struct iperf_stream *sp;
 
     sp = (struct iperf_stream *) iperf_new_stream(testp);
-    if (!sp)
-    {
-	perror("malloc");
-	return (NULL);
+    if (!sp) {
+        perror("malloc");
+        return (NULL);
     }
     sp->rcv = iperf_tcp_recv;	/* pointer to receive function */
     sp->snd = iperf_tcp_send;	/* pointer to send function */
@@ -242,28 +148,29 @@ iperf_tcp_accept(struct iperf_test * test)
 {
     socklen_t len;
     struct sockaddr_in addr;
-    int       peersock;
+    int peersock;
     struct iperf_stream *sp;
 
     len = sizeof(addr);
     peersock = accept(test->prot_listener, (struct sockaddr *) & addr, &len);
     if (peersock < 0) {
+        // XXX: Needs to implement better error handling
         printf("Error in accept(): %s\n", strerror(errno));
         return -1;
     }
 
-    sp = test->new_stream(test);
     setnonblocking(peersock);
 
-    FD_SET(peersock, &test->read_set);  /* add new socket to master set */
-    test->max_fd = (test->max_fd < peersock) ? peersock : test->max_fd;
-
+    sp = test->new_stream(test);
     sp->socket = peersock;
     iperf_init_stream(sp, test);
     iperf_add_stream(test, sp);
 
-    if (test->default_settings->state != RESULT_REQUEST)
-        connect_msg(sp);	/* print connect message */
+    FD_SET(peersock, &test->read_set);  /* add new socket to master set */
+    FD_SET(peersock, &test->write_set);
+    test->max_fd = (test->max_fd < peersock) ? peersock : test->max_fd;
+
+    connect_msg(sp);    /* print connect message */
 
     return 0;
 }

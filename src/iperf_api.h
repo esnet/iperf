@@ -132,8 +132,10 @@ void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 void safe_strcat(char *s1, char *s2);
 void print_interval_results(struct iperf_test * test, struct iperf_stream *sp);
 int iperf_connect(struct iperf_test *);
-int iperf_client_start(struct iperf_test *);
 int iperf_client_end(struct iperf_test *);
+int iperf_send(struct iperf_test *);
+int iperf_recv(struct iperf_test *);
+int sig_handler(int);
 
 #endif
 

@@ -65,6 +65,7 @@ struct iperf_stream
     int       local_port;
     int       remote_port;
     int       socket;
+    int       id;
 	/* XXX: is settings just a pointer to the same struct in iperf_test? if not, 
 		should it be? */
     struct iperf_settings *settings;	/* pointer to structure settings */
@@ -118,6 +119,7 @@ struct iperf_test
 
 
     /* boolen variables for Options */
+    int       reverse;                          /* -R option */
     int       daemon;                           /* -D option */
     int       no_delay;                         /* -N option */
     int       print_mss;                        /* -m option */
@@ -171,6 +173,7 @@ struct param_exchange
     int       protocol;
     int       stream_id;
     int       num_streams;
+    int       reverse;
     int       blksize;
     int       recv_window;
     int       send_window;
@@ -205,6 +208,8 @@ enum
     PARAM_EXCHANGE = 10,
     PARAM_EXCHANGE_ACK = 11,
     CREATE_STREAMS = 12,
+    SERVER_TERMINATE = 13,
+    CLIENT_TERMINATE = 14,
     ACCESS_DENIED = -1,
 };
 

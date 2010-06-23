@@ -63,4 +63,4 @@ extern char warn_invalid_single_threaded[] ;
 extern char warn_invalid_report_style[] ;
 extern char warn_invalid_report[] ;
 
-#endif /* IPERF_LOCALE_H */
+#endif

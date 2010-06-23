@@ -412,11 +412,11 @@ Display(struct iperf_test * test)
 
     while (n != NULL) {
         if (test->role == 'c') {
-            printf("position-%d\tsp=%d\tsocket=%d\tMbytes sent=%u\n",
-                count++, (int) n, n->socket, (uint) (n->result->bytes_sent / (float)MB));
+            printf("position-%d\tsp=%llu\tsocket=%d\tMbytes sent=%u\n",
+                count++, (uint64_t) n, n->socket, (unsigned int) (n->result->bytes_sent / (float) MB));
         } else {
-            printf("position-%d\tsp=%d\tsocket=%d\tMbytes received=%u\n",
-                count++, (int) n, n->socket, (uint) (n->result->bytes_received / (float)MB));
+            printf("position-%d\tsp=%llu\tsocket=%d\tMbytes received=%u\n",
+                count++, (uint64_t) n, n->socket, (unsigned int) (n->result->bytes_received / (float) MB));
         }
         n = n->next;
     }
@@ -547,9 +547,6 @@ iperf_handle_message_client(struct iperf_test *test)
 int
 iperf_connect(struct iperf_test *test)
 {
-    struct iperf_stream *sp;
-    int i, s = 0;
-
     printf("Connecting to host %s, port %d\n", test->server_hostname, test->server_port);
 
     FD_ZERO(&test->read_set);
@@ -656,7 +653,7 @@ iperf_stats_callback(struct iperf_test * test)
 void
 iperf_reporter_callback(struct iperf_test * test)
 {
-    int total_packets = 0, lost_packets = 0, iperf_state;
+    int total_packets = 0, lost_packets = 0;
     char ubuf[UNIT_LEN];
     char nbuf[UNIT_LEN];
     struct iperf_stream *sp = NULL;
@@ -845,9 +842,9 @@ iperf_new_stream(struct iperf_test *testp)
     sp->socket = -1;
 
     // XXX: Not entirely sure what this does
-    sp->stream_id = (int) sp;
+    sp->stream_id = (uint64_t) sp;
 
-    /* XXX: None of this commented code is needed since everything is set to zero anyways.
+    //  XXX: Some of this code is needed, even though everything is already zero.
     sp->packet_count = 0;
     sp->jitter = 0.0;
     sp->prev_transit = 0.0;
@@ -863,7 +860,6 @@ iperf_new_stream(struct iperf_test *testp)
     sp->result->bytes_sent = 0;
     sp->result->bytes_received_this_interval = 0;
     sp->result->bytes_sent_this_interval = 0;
-    */
 
     gettimeofday(&sp->result->start_time, NULL);
 
@@ -922,7 +918,6 @@ iperf_add_stream(struct iperf_test * test, struct iperf_stream * sp)
 int
 iperf_client_end(struct iperf_test *test)
 {
-    char *result_string;
     struct iperf_stream *sp;
     printf("Test Complete. Summary Results:\n");
  
@@ -960,7 +955,7 @@ iperf_client_end(struct iperf_test *test)
     return 0;
 }
 
-int
+void
 sig_handler(int sig)
 {
    longjmp(env, 1); 
@@ -970,12 +965,8 @@ int
 iperf_run_client(struct iperf_test * test)
 {
     int result;
-    char *prot;
-    int64_t delayus, adjustus, dtargus;
     fd_set temp_read_set, temp_write_set;
     struct timeval tv;
-    struct iperf_stream *sp;
-    struct timer *timer, *stats_interval, *reporter_interval;
 
     /* Start the client and connect to the server */
     if (iperf_connect(test) < 0) {

@@ -135,7 +135,7 @@ int iperf_connect(struct iperf_test *);
 int iperf_client_end(struct iperf_test *);
 int iperf_send(struct iperf_test *);
 int iperf_recv(struct iperf_test *);
-int sig_handler(int);
+void sig_handler(int);
 
 #endif
 

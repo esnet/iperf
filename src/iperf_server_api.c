@@ -193,23 +193,19 @@ iperf_handle_message_server(struct iperf_test *test)
             exit(1);
         default:
             // XXX: This needs to be replaced by actual error handling
-            fprintf("How did you get here? test->state = %d\n", test->state);
+            fprintf(stderr, "How did you get here? test->state = %d\n", test->state);
             return -1;
     }
 
     return 0;
 }
 
-void
+int
 iperf_run_server(struct iperf_test *test)
 {
-    struct timeval tv;
-    struct iperf_stream *sp;
-    struct timer *stats_interval, *reporter_interval;
-    char *result_string = NULL;
-    int j = 0, result = 0, message = 0;
-    int nfd = 0;
+    int result;
     int streams_accepted = 0;
+    struct timeval tv;
 
     // Open socket and listen
     if (iperf_server_listen(test) < 0) {
@@ -297,6 +293,6 @@ iperf_run_server(struct iperf_test *test)
     //memset(test->streams->settings->cookie, '\0', COOKIE_SIZE);
     /* All memory for the previous run needs to be freed here */
     memset(test->default_settings->cookie, '\0', COOKIE_SIZE);
-    return;
+    return 0;
 }
 

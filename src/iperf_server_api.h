@@ -5,7 +5,7 @@
 
 void send_result_to_client(struct iperf_stream *);
 
-void iperf_run_server(struct iperf_test *);
+int iperf_run_server(struct iperf_test *);
 
 int iperf_server_listen(struct iperf_test *);
 

@@ -80,7 +80,7 @@ struct iperf_stream
      * stream can have a pointer to this
      */
     int       packet_count;
-    int       stream_id;	/* stream identity for UDP mode */
+    uint64_t  stream_id;	/* stream identity for UDP mode */
     double    jitter;
     double    prev_transit;
     int       outoforder_packets;
@@ -171,7 +171,6 @@ struct param_exchange
 {
     int       state;
     int       protocol;
-    int       stream_id;
     int       num_streams;
     int       reverse;
     int       blksize;

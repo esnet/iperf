@@ -156,18 +156,18 @@ iperf_udp_send(struct iperf_stream * sp)
 	{
 	case STREAM_BEGIN:
 	    udp->state = STREAM_BEGIN;
-	    udp->stream_id = (int) sp;
+	    udp->stream_id = (uint64_t) sp;
 	    /* udp->packet_count = ++sp->packet_count; */
 	    break;
 
 	case STREAM_END:
 	    udp->state = STREAM_END;
-	    udp->stream_id = (int) sp;
+	    udp->stream_id = (uint64_t) sp;
 	    break;
 
 	case RESULT_REQUEST:
 	    udp->state = RESULT_REQUEST;
-	    udp->stream_id = (int) sp;
+	    udp->stream_id = (uint64_t) sp;
 	    break;
 
 	case ALL_STREAMS_END:
@@ -176,7 +176,7 @@ iperf_udp_send(struct iperf_stream * sp)
 
 	case STREAM_RUNNING:
 	    udp->state = STREAM_RUNNING;
-	    udp->stream_id = (int) sp;
+	    udp->stream_id = (uint64_t) sp;
 	    udp->packet_count = ++sp->packet_count;
 	    break;
 	}

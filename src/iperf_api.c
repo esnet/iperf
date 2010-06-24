@@ -270,7 +270,7 @@ int
 parse_parameters(struct iperf_test *test)
 {
     int n;
-    char *arg, **args;
+    char *param, **params;
     char len, ch;
     char pstring[256];
     char readbuf[256];
@@ -291,16 +291,16 @@ parse_parameters(struct iperf_test *test)
         strcat(pstring, readbuf);
     }
 
-    for (arg = strtok(pstring, " "), n = 0, args = NULL; arg; arg = strtok(NULL, " ")) {
-        if ((args = realloc(args, (n+1)*sizeof(char *))) == NULL) {
+    for (param = strtok(pstring, " "), n = 0, params = NULL; param; param = strtok(NULL, " ")) {
+        if ((params = realloc(params, (n+1)*sizeof(char *))) == NULL) {
             perror("realloc");
             return -1;
         }
-        args[n] = arg;
+        params[n] = param;
         n++;
     }
 
-    while ((ch = getopt(n, args, "puP:Rw:f:C:")) != -1) {
+    while ((ch = getopt(n, params, "puP:Rw:f:C:")) != -1) {
         switch (ch) {
             case 'p':
                 test->protocol = Ptcp;
@@ -321,13 +321,12 @@ parse_parameters(struct iperf_test *test)
                 test->default_settings->unit_format = *optarg;
                 break;
             case 'C':
-                memset(test->default_settings->cookie, 0, COOKIE_SIZE);
                 memcpy(test->default_settings->cookie, optarg, COOKIE_SIZE);
                 break;
         }
     }
 
-    free(args);
+    free(params);
 
     return 0;
 }
@@ -557,7 +556,7 @@ iperf_defaults(struct iperf_test * testp)
     testp->default_settings->state = TEST_START;
     testp->default_settings->mss = 0;
     testp->default_settings->bytes = 0;
-    memset(testp->default_settings->cookie, '\0', COOKIE_SIZE);
+    memset(testp->default_settings->cookie, 0, COOKIE_SIZE);
 }
 
 /**************************************************************************/

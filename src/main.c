@@ -229,6 +229,11 @@ main(int argc, char **argv)
         }
     }
 
+    /* For subsequent calls to getopt */
+    optreset = 1;
+    optind = 0;
+    
+
     /* exit until this is done.... */
     if (test->protocol == Pudp) {
         printf("UDP mode not yet supported. Exiting. \n");
@@ -252,18 +257,9 @@ main(int argc, char **argv)
 int
 iperf_run(struct iperf_test * test)
 {
-
-    test->default_settings->state = TEST_RUNNING;
-
     switch (test->role) {
         case 's':
-// The following lines are commented out until I fix the bind issue with porting
-//            while (1) {
-                iperf_run_server(test);
-//                test->streams = NULL;
-//                sleep(1);
-//            }
-            return 0;
+            return iperf_run_server(test);
         case 'c':
             return iperf_run_client(test);
         default:

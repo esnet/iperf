@@ -166,7 +166,7 @@ iperf_accept(struct iperf_test *test)
 int
 iperf_handle_message_server(struct iperf_test *test)
 {
-    if (read(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
+    if (read(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
         // XXX: Needs to indicate read error
         return -1;
     }
@@ -181,7 +181,7 @@ iperf_handle_message_server(struct iperf_test *test)
             break;
         case TEST_END:
             test->state = DISPLAY_RESULTS;
-            if (write(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
+            if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
                 perror("write DISPLAY_RESULTS");
                 exit(1);
             }
@@ -219,7 +219,7 @@ iperf_run_server(struct iperf_test *test)
         fprintf(stderr, "Interrupt received. Exiting...\n");
         test->state = SERVER_TERMINATE;
         if (test->ctrl_sck >= 0) {
-            if (write(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
+            if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
                 fprintf(stderr, "Unable to send SERVER_TERMINATE message to client\n");
             }
         }
@@ -270,7 +270,7 @@ iperf_run_server(struct iperf_test *test)
                     FD_CLR(test->prot_listener, &test->read_set);
                     close(test->prot_listener);
                     test->state = TEST_START;
-                    if (write(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
+                    if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
                         perror("write TEST_START");
                         return -1;
                     }

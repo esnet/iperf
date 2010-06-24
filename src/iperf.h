@@ -103,7 +103,7 @@ struct iperf_test
 {
     char      role;                             /* c' lient or 's' erver */
     int       protocol;
-    int       state;
+    char      state;
     char     *server_hostname;                  /* -c option */
     int       server_port;
     int       duration;                         /* total duration of test (-t flag) */

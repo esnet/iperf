@@ -128,7 +128,7 @@ iperf_send(struct iperf_test *test)
             reporter_interval = new_timer(test->reporter_interval, 0);
         
         test->state = TEST_RUNNING;
-        if (write(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
+        if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
             perror("write TEST_RUNNING");
             exit(1);
         }
@@ -171,7 +171,7 @@ iperf_send(struct iperf_test *test)
 
                 // Send TEST_DONE (ALL_STREAMS_END) message
                 test->state = TEST_END;
-                if (write(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
+                if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
                     perror("write TEST_END");
                     return -1;
                 }
@@ -360,7 +360,7 @@ iperf_exchange_parameters(struct iperf_test * test)
 
         // Send the control message to create streams and start the test
         test->state = CREATE_STREAMS;
-        if (write(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
+        if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
             perror("write CREATE_STREAMS");
             return -1;
         }
@@ -593,7 +593,7 @@ iperf_create_streams(struct iperf_test *test)
 int
 iperf_handle_message_client(struct iperf_test *test)
 {
-    if (read(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
+    if (read(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
         // indicate error on read
         return -1;
     }
@@ -649,7 +649,7 @@ iperf_connect(struct iperf_test *test)
 
     /* Exchange parameters */
     test->state = PARAM_EXCHANGE;
-    if (write(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
+    if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
         perror("write PARAM_EXCHANGE");
         return -1;
     }
@@ -1032,7 +1032,7 @@ iperf_client_end(struct iperf_test *test)
     }
 
     test->state = IPERF_DONE;
-    if (write(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
+    if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
         perror("write IPERF_DONE");
         return -1;
     }
@@ -1063,7 +1063,7 @@ iperf_run_client(struct iperf_test * test)
     if (setjmp(env)) {
         fprintf(stderr, "Interrupt received. Exiting...\n");
         test->state = CLIENT_TERMINATE;
-        if (write(test->ctrl_sck, &test->state, sizeof(int)) < 0) {
+        if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
             fprintf(stderr, "Unable to send CLIENT_TERMINATE message to serer\n");
         }
         exit(1);

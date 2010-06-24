@@ -232,7 +232,8 @@ iperf_run_server(struct iperf_test *test)
 
     while (test->state != IPERF_DONE) {
 
-        FD_COPY(&test->read_set, &test->temp_set);
+        // XXX: Move test->temp_set over to local fd_set
+        memcpy(&test->temp_set, &test->read_set, sizeof(fd_set));
         tv.tv_sec = 15;
         tv.tv_usec = 0;
 

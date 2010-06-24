@@ -134,7 +134,7 @@ iperf_send(struct iperf_test *test)
         }
 
     } else if (test->state == TEST_RUNNING) {
-        FD_COPY(&test->write_set, &temp_write_set);
+        memcpy(&temp_write_set, &test->write_set, sizeof(fd_set));
         tv.tv_sec = 15;
         tv.tv_usec = 0;
 
@@ -191,7 +191,7 @@ iperf_recv(struct iperf_test *test)
     struct iperf_stream *sp;
 
     if (test->state == TEST_RUNNING) {
-        FD_COPY(&test->read_set, &temp_read_set);
+        memcpy(&temp_read_set, &test->read_set, sizeof(fd_set));
         tv.tv_sec = 15;
         tv.tv_usec = 0;
 
@@ -219,6 +219,119 @@ iperf_recv(struct iperf_test *test)
 
 /*********************************************************/
 
+int
+package_parameters(struct iperf_test *test)
+{
+    char pstring[256];
+    char optbuf[128];
+    memset(pstring, 0, 256*sizeof(char));
+
+    *pstring = ' ';
+
+    if (test->protocol == Ptcp) {
+        strcat(pstring, "-p ");
+    } else if (test->protocol == Pudp) {
+        strcat(pstring, "-u ");
+    }
+
+    sprintf(optbuf, "-P %d ", test->num_streams);
+    strcat(pstring, optbuf);
+    
+    if (test->reverse)
+        strcat(pstring, "-R ");
+    
+    if (test->default_settings->socket_bufsize) {
+        sprintf(optbuf, "-w %d ", test->default_settings->socket_bufsize);
+        strcat(pstring, optbuf);
+    }
+
+    if (test->default_settings->unit_format) {
+        sprintf(optbuf, "-f %c ", test->default_settings->unit_format);
+        strcat(pstring, optbuf);
+    }
+
+    if (strcmp(test->default_settings->cookie, "") != 0) {
+        sprintf(optbuf, "-C %s ", test->default_settings->cookie);
+        strcat(pstring, optbuf);
+    }
+
+    *pstring = (char) (strlen(pstring) - 1);
+
+    if (write(test->ctrl_sck, pstring, (size_t) strlen(pstring)) < 0) {
+        perror("write pstring");
+        return -1;
+    }
+
+    return 0;
+}
+
+
+int
+parse_parameters(struct iperf_test *test)
+{
+    int n;
+    char *arg, **args;
+    char len, ch;
+    char pstring[256];
+    char readbuf[256];
+
+    memset(pstring, 0, 256 * sizeof(char));
+
+    if (read(test->ctrl_sck, &len, sizeof(char)) < 0) {
+        perror("read len");
+        return -1;
+    }
+
+    while (len > 0) {
+        memset(readbuf, 0, 256 * sizeof(char));
+        if ((len -= read(test->ctrl_sck, readbuf, (size_t) len)) < 0) {
+            perror("read pstring");
+            return -1;
+        }
+        strcat(pstring, readbuf);
+    }
+
+    for (arg = strtok(pstring, " "), n = 0, args = NULL; arg; arg = strtok(NULL, " ")) {
+        if ((args = realloc(args, (n+1)*sizeof(char *))) == NULL) {
+            perror("realloc");
+            return -1;
+        }
+        args[n] = arg;
+        n++;
+    }
+
+    while ((ch = getopt(n, args, "puP:Rw:f:C:")) != -1) {
+        switch (ch) {
+            case 'p':
+                test->protocol = Ptcp;
+                break;
+            case 'u':
+                test->protocol = Pudp;
+                break;
+            case 'P':
+                test->num_streams = atoi(optarg);
+                break;
+            case 'R':
+                test->reverse = 1;
+                break;
+            case 'w':
+                test->default_settings->socket_bufsize = atoi(optarg);
+                break;
+            case 'f':
+                test->default_settings->unit_format = *optarg;
+                break;
+            case 'C':
+                memset(test->default_settings->cookie, 0, COOKIE_SIZE);
+                memcpy(test->default_settings->cookie, optarg, COOKIE_SIZE);
+                break;
+        }
+    }
+
+    free(args);
+
+    return 0;
+}
+
 /**
  * iperf_exchange_parameters - handles the param_Exchange part for client
  *
@@ -227,46 +340,19 @@ iperf_recv(struct iperf_test *test)
 int
 iperf_exchange_parameters(struct iperf_test * test)
 {
-    struct param_exchange param;
-
     if (test->role == 'c') {
 
-        // XXX: Probably should get the cookie at the start of iperf rather than
+        // XXX: Probably should get the cookie at the start of iperf client rather than
         //      waiting till here
         get_uuid(test->default_settings->cookie);
-        strncpy(param.cookie, test->default_settings->cookie, COOKIE_SIZE);
 
-        /* setting up exchange parameters  */
-        param.state = PARAM_EXCHANGE;
-        param.protocol = test->protocol;
-        param.num_streams = test->num_streams;
-        param.reverse = test->reverse;
-        param.blksize = test->default_settings->blksize;
-        param.recv_window = test->default_settings->socket_bufsize;
-        param.send_window = test->default_settings->socket_bufsize;
-        param.format = test->default_settings->unit_format;
-
-        if (write(test->ctrl_sck, &param, sizeof(struct param_exchange)) < 0) {
-            perror("write param_exchange");
-            return -1;
-        }
+        package_parameters(test);
 
     } else {
 
-        if (read(test->ctrl_sck, &param, sizeof(struct param_exchange)) < 0) {
-            perror("read param_exchange");
-            return -1;
-        }
+        parse_parameters(test);
 
-        // set test parameters
-        strncpy(test->default_settings->cookie, param.cookie, COOKIE_SIZE);
-        test->protocol = param.protocol;
-        test->num_streams = param.num_streams;
-        test->reverse = param.reverse;
-        test->default_settings->blksize = param.blksize;
-        test->default_settings->socket_bufsize = param.recv_window;
-        // XXX: need to add support for send_window
-        test->default_settings->unit_format = param.format;
+        printf("test cookie: %s\n", test->default_settings->cookie);
 
         test->prot_listener = netannounce(test->protocol, NULL, test->server_port + 1);
         FD_SET(test->prot_listener, &test->read_set);
@@ -986,8 +1072,8 @@ iperf_run_client(struct iperf_test * test)
 
     while (test->state != IPERF_DONE) {
 
-        FD_COPY(&test->read_set, &temp_read_set);
-        FD_COPY(&test->write_set, &temp_write_set);
+        memcpy(&temp_read_set, &test->read_set, sizeof(fd_set));
+        memcpy(&temp_write_set, &test->write_set, sizeof(fd_set));
         tv.tv_sec = 15;
         tv.tv_usec = 0;
 

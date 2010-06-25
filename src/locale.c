@@ -59,67 +59,60 @@
  * usage
  * ------------------------------------------------------------------- */
 
-const char usage_short[] = "\
-Usage: %s [-s|-c host] [options]\n\
-Try `%s --help' for more information.\n";
+const char usage_short[] = "Usage: iperf [-s|-c host] [options]\n"
+                           "Try `iperf --help' for more information.\n";
 
-const char usage_long1[] = "\
-Usage: iperf [-s|-c host] [options]\n\
-       iperf [-h|--help] [-v|--version]\n\
-\n\
-Client/Server:\n\
-  -f, --format    [kmgKMG]   format to report: Kbits, Mbits, KBytes, MBytes\n\
-  -i, --interval  #        seconds between periodic bandwidth reports\n\
-  -l, --len       #[KMG]   length of buffer to read or write (default 8 KB)\n\
-  -m, --print_mss          print TCP maximum segment size (MTU - TCP/IP header)\n\
-  -p, --port      #        server port to listen on/connect to\n\
-  -u, --udp                use UDP rather than TCP\n\
-  -w, --window    #[KMG]   TCP window size (socket buffer size)\n\
-  -M, --mss       #        set TCP maximum segment size (MTU - 40 bytes)\n\
-  -N, --nodelay            set TCP no delay, disabling Nagle's Algorithm\n\
-  -T, --tcpinfo            Output detailed TCP info\n\
-  -v, --version            print version information and quit\n\
-  -V, --verbose            more verbose output \n\
-  -d, --debug              debug mode \n\
-Server specific:\n\
-  -s, --server             run in server mode"
-;
+const char usage_long1[] = "Usage: iperf [-s|-c host] [options]\n"
+                           "       iperf [-h|--help] [-v|--version]\n\n"
+                           "Client/Server:\n"
+                           "  -f, --format    [kmgKMG]  format to report: Kbits, Mbits, KBytes, MBytes\n"
+                           "  -i, --interval  #         seconds between periodic bandwidth reports\n"
+                           "  -l, --len       #[KMG]    length of buffer to read or write (default 8 KB)\n"
+                           "  -m, --print_mss           print TCP maximum segment size (MTU - TCP/IP header)\n"
+                           "  -p, --port      #         server port to listen on/connect to\n"
+                           "  -u, --udp                 use UDP rather than TCP\n"
+                           "  -w, --window    #[KMG]    TCP window size (socket buffer size)\n"
+                           "  -M, --mss       #         set TCP maximum segment size (MTU - 40 bytes)\n"
+                           "  -N, --nodelay             set TCP no delay, disabling Nagle's Algorithm\n"
+                           "  -T, --tcpinfo             Output detailed TCP info\n"
+                           "  -v, --version             print version information and quit\n"
+                           "  -V, --verbose             more verbose output\n"
+                           "  -d, --debug               debug mode\n"
+                           "Server specific:\n"
+                           "  -s, --server              run in server mode\n"
 
 #ifdef NOT_YET_SUPPORTED /* still working on these */
-  -S, --tos N  set IP 'Type of Service' bit \n\
-  -Z, --linux-congestion <algo>  set TCP congestion control algorithm (Linux only)\n\
-  -D, --daemon             run the server as a daemon\n\n
-  -6, --IPv6Version        Set the domain to IPv6\n\
+                           "  -S, --tos N               set IP 'Type of Service' bit\n"
+                           "  -Z, --linux-congestion <algo>  set TCP congestion control algorithm (Linux only)\n"
+                           "  -D, --daemon              run the server as a daemon\n"
+                           "  -6, --IPv6Version         Set the domain to IPv6\n"
 
 #endif
 
 #ifdef OBSOLETE /* no current plan to support */
-  -o, --output    <filename> output the report or error message to this specified file\n\
-  -B, --bind      <host>   bind to <host>, an interface or multicast address\n\
-  -C, --compatibility      for use with older versions does not sent extra msgs
+                           "  -o, --output    <filename> output the report or error message to this specified file\n"
+                           "  -B, --bind      <host>    bind to <host>, an interface or multicast address\n"
+                           "  -C, --compatibility       for use with older versions does not sent extra msgs\n"
 #ifdef WIN32
-"  -R, --remove             remove service in win32\n"
+                           "  -R, --remove              remove service in win32\n"
 
 #endif
 #endif
+;
 
-const char usage_long2[] = "\
-\n\
-Client specific:\n\
-  -b, --bandwidth #[KMG]    for UDP, bandwidth to send at in bits/sec\n\
-                           (default 1 Mbit/sec, implies -u)\n\
-  -c, --client    <host>   run in client mode, connecting to <host>\n\
-  -n, --num       #[KMG]    number of bytes to transmit (instead of -t)\n\
-  -t, --time      #        time in seconds to transmit for (default 10 secs)\n\
-  -P, --parallel  #        number of parallel client threads to run\n\
-  -T, --tcpinfo            Output detailed TCP info (Linux and FreeBSD only)\n\
-\n\
-Miscellaneous:\n\
-  -h, --help               print this message and quit\n\
-\n\
-[KMG] Indicates options that support a K,M, or G suffix for kilo-, mega-, or giga- \n\
-\n\
-Report bugs to <iperf-users@lists.sourceforge.net>\n";
+
+const char usage_long2[] = "Client specific:\n"
+                           "  -b, --bandwidth #[KMG]    for UDP, bandwidth to send at in bits/sec\n"
+                           "                             (default 1 Mbit/sec, implies -u)\n"
+                           "  -c, --client    <host>    run in client mode, connecting to <host>\n"
+                           "  -n, --num       #[KMG]    number of bytes to transmit (instead of -t)\n"
+                           "  -t, --time      #         time in seconds to transmit for (default 10 secs)\n"
+                           "  -P, --parallel  #         number of parallel client threads to run\n"
+                           "  -T, --tcpinfo             Output detailed TCP info (Linux and FreeBSD only)\n\n"
+                           "Miscellaneous:\n"
+                           "  -h, --help               print this message and quit\n\n"
+                           "[KMG] Indicates options that support a K,M, or G suffix for kilo-, mega-, or giga-\n\n"
+                           "Report bugs to <iperf-users@lists.sourceforge.net>\n";
 
 #ifdef OBSOLETE /* from old iperf: no longer supported. Add some of these back someday */
   -d, --dualtest           Do a bidirectional test simultaneously\n\

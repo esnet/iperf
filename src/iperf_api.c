@@ -43,10 +43,18 @@ jmp_buf env;			/* to handle longjmp on signal */
 
 /*************************************************************/
 
-/*
- * check to see if client has sent the requested number of bytes to the
- * server yet
- */
+void
+usage()
+{
+    fprintf(stderr, usage_short);
+}
+
+void
+usage_long()
+{
+    fprintf(stderr, usage_long1);
+    fprintf(stderr, usage_long2);
+}
 
 /*
  * XXX: should probably just compute this as we go and store it in the
@@ -536,7 +544,6 @@ void
 iperf_defaults(struct iperf_test * testp)
 {
     testp->protocol = Ptcp;
-    testp->role = 's';
     testp->duration = DURATION;
     testp->server_port = PORT;
     testp->ctrl_sck = -1;

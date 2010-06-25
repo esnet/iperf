@@ -132,8 +132,7 @@ main(int argc, char **argv)
                 test->duration = atoi(optarg);
                 if (test->duration > MAX_TIME) {
                     fprintf(stderr, "\n Error: test duration too long. Maximum value = %d \n\n",  (int)MAX_TIME);
-                    fprintf(stderr, usage_long1);
-                    fprintf(stderr, usage_long2);
+                    usage_long();
                     exit(1);
                 }
                 break;
@@ -146,8 +145,7 @@ main(int argc, char **argv)
                 test->num_streams = atoi(optarg);
                 if (test->num_streams > MAX_STREAMS) {
                     fprintf(stderr, "\n Error: Number of parallel streams too large. Maximum value = %d \n\n",  MAX_STREAMS);
-                    fprintf(stderr, usage_long1);
-                    fprintf(stderr, usage_long2);
+                    usage_long();
                     exit(1);
                 }
                 break;
@@ -158,8 +156,7 @@ main(int argc, char **argv)
                 test->default_settings->blksize = unit_atoi(optarg);
                 if (test->default_settings->blksize > MAX_BLOCKSIZE) {
                     fprintf(stderr, "\n Error: Block size too large. Maximum value = %d \n\n",  MAX_BLOCKSIZE);
-                    fprintf(stderr, usage_long1);
-                    fprintf(stderr, usage_long2);
+                    usage_long();
                     exit(1);
                 }
                 break;
@@ -167,8 +164,7 @@ main(int argc, char **argv)
                 test->default_settings->socket_bufsize = unit_atof(optarg);
                 if (test->default_settings->socket_bufsize > MAX_TCP_BUFFER) {
                     fprintf(stderr, "\n Error: TCP buffer too large. Maximum value = %d \n\n",  MAX_TCP_BUFFER);
-                    fprintf(stderr, usage_long1);
-                    fprintf(stderr, usage_long2);
+                    usage_long();
                     exit(1);
                 }
                 break;
@@ -179,8 +175,7 @@ main(int argc, char **argv)
                 test->reporter_interval = atoi(optarg);
                 if (test->stats_interval > MAX_INTERVAL) {
                     fprintf(stderr, "\n Error: Report interval too large. Maximum value = %d \n\n",  MAX_INTERVAL);
-                    fprintf(stderr, usage_long1);
-                    fprintf(stderr, usage_long2);
+                    usage_long();
                     exit(1);
                 }
                 break;
@@ -198,8 +193,7 @@ main(int argc, char **argv)
                 test->default_settings->mss = atoi(optarg);
                 if (test->default_settings->mss > MAX_MSS) {
                     fprintf(stderr, "\n Error: MSS too large. Maximum value = %d \n\n",  MAX_MSS);
-                    fprintf(stderr, usage_long1);
-                    fprintf(stderr, usage_long2);
+                    usage_long();
                     exit(1);
                 }
                 break;
@@ -212,19 +206,18 @@ main(int argc, char **argv)
             case 'V':
                 test->verbose = 1;
                 break;
-            case 'd': 
+            case 'd':
                 test->debug = 1;
                 break;
             case 'R':
                 test->reverse = 1;
                 break;
-            case 'v': // print version and exit
-                fprintf( stderr, version );
-                exit(1);
+            case 'v':
+                printf(version);
+                exit(0);
             case 'h':
             default:
-                fprintf(stderr, usage_long1);
-                fprintf(stderr, usage_long2);
+                usage_long();
                 exit(1);
         }
     }
@@ -263,7 +256,8 @@ iperf_run(struct iperf_test * test)
         case 'c':
             return iperf_run_client(test);
         default:
-            return -1;
+            usage();
+            return 0;
     }
 }
 

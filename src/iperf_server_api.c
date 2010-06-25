@@ -80,7 +80,6 @@ iperf_server_listen(struct iperf_test *test)
         perror("netannounce test->listener");
         return -1;
     }
-    setnonblocking(test->listener);
 
     printf("-----------------------------------------------------------\n");
     printf("Server listening on %d\n", test->server_port);

@@ -137,6 +137,7 @@ int iperf_send(struct iperf_test *);
 int iperf_recv(struct iperf_test *);
 void sig_handler(int);
 void usage();
+void usage_long();
 
 #endif
 

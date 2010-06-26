@@ -425,48 +425,6 @@ display_interval_list(struct iperf_stream_result * rp, int tflag)
 /************************************************************/
 
 /**
- * receive_result_from_server - Receives result from server
- */
-
-void
-receive_result_from_server(struct iperf_test * test)
-{
-    int result;
-    struct iperf_stream *sp;
-    int size = 0;
-    char *buf = NULL;
-
-    printf("in receive_result_from_server \n");
-    sp = test->streams;
-    size = MAX_RESULT_STRING;
-
-    buf = (char *) malloc(size);
-
-    printf("receive_result_from_server: send ALL_STREAMS_END to server \n");
-    sp->settings->state = ALL_STREAMS_END;
-    sp->snd(sp);		/* send message to server */
-
-    printf("receive_result_from_server: send RESULT_REQUEST to server \n");
-    sp->settings->state = RESULT_REQUEST;
-    sp->snd(sp);		/* send message to server */
-
-    /* receive from server */
-
-    printf("reading results (size=%d) back from server \n", size);
-    do {
-        result = recv(sp->socket, buf, size, 0);
-    } while (result == -1 && errno == EINTR);
-    printf("Got size of results from server: %d \n", result);
-
-    printf(server_reporting, sp->socket);
-    puts(buf);			/* prints results */
-    free(buf);
-
-}
-
-/*************************************************************/
-
-/**
  * connect_msg -- displays connection message
  * denoting sender/receiver details
  *
@@ -880,20 +838,6 @@ print_interval_results(struct iperf_test * test, struct iperf_stream * sp)
 
 /**************************************************************************/
 void
-safe_strcat(char *s1, char *s2)
-{
-    if (strlen(s1) + strlen(s2) < MAX_RESULT_STRING) {
-        strcat(s1, s2);
-    } else {
-        printf("Error: results string too long \n");
-        exit(-1);		/* XXX: should return an error instead! */
-                        /* but code that calls this needs to check for error first */
-                        //return -1;
-    }
-}
-
-/**************************************************************************/
-void
 iperf_free_stream(struct iperf_stream * sp)
 {
     /* XXX: need to free interval list too! */
@@ -1102,13 +1046,6 @@ iperf_run_client(struct iperf_test * test)
             }
         }
     }
-
-    /* End the iperf test and clean up client specific memory */
-    /* XXX: Commented out until fixed. Probably should be controlled by ctrl_sck
-    if (iperf_client_end(test) < 0) {
-        return -1;
-    }
-    */
 
     return 0;
 }

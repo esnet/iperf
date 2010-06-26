@@ -3,10 +3,12 @@
 
 #include "iperf.h"
 
-void send_result_to_client(struct iperf_stream *);
-
 int iperf_run_server(struct iperf_test *);
 
 int iperf_server_listen(struct iperf_test *);
+
+int iperf_acept(struct iperf_test *);
+
+int iperf_handle_message_server(struct iperf_test *);
 
 #endif

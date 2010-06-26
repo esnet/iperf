@@ -44,31 +44,6 @@
 
 jmp_buf env;
 
-/* send_result_to_client - sends result string from server to client */
-void
-send_result_to_client(struct iperf_stream * sp)
-{
-    int       result;
-    int       size = sp->settings->blksize;
-
-    char     *buf = (char *) malloc(size);
-
-    if (!buf)
-    {
-	perror("malloc: unable to allocate transmit buffer");
-    }
-    /* adding the string terminator to the message */
-    buf[strlen((char *) sp->data)] = '\0';
-
-    memcpy(buf, sp->data, strlen((char *) sp->data));
-
-    printf("send_result_to_client: sending %d bytes \n", (int) strlen((char *) sp->data));
-    result = send(sp->socket, buf, size, 0);
-    printf("RESULT SENT TO CLIENT\n");
-
-    free(buf);
-}
-
 int
 iperf_server_listen(struct iperf_test *test)
 {
@@ -286,7 +261,8 @@ iperf_run_server(struct iperf_test *test)
         }
     }
 
-    printf("Test Complete. \n\n");
+    // XXX: Need to put the above while loop into another control structure
+    //      that initiates a new test upon each connection rather than dying.
 
     /* reset cookie when client is finished */
     /* XXX: which cookie to reset, and why is it stored to 2 places? */

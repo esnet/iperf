@@ -30,18 +30,6 @@ void      add_to_interval_list(struct iperf_stream_result * rp, struct iperf_int
 void      display_interval_list(struct iperf_stream_result * rp, int tflag);
 
 /**
- * send_result_to_client - sends result to client via
- *  a new TCP connection
- */
-void      send_result_to_client(struct iperf_stream * sp);
-
-/**
- * receive_result_from_server - Receives result from server via
- *  a new TCP connection
- */
-void      receive_result_from_server(struct iperf_test * test);
-
-/**
  * connect_msg -- displays connection message
  * denoting senfer/receiver details
  *
@@ -129,7 +117,6 @@ void      iperf_free_stream(struct iperf_stream * sp);
 void get_tcpinfo(struct iperf_test *test, struct iperf_interval_results *rp);
 void print_tcpinfo(struct iperf_interval_results *);
 void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
-void safe_strcat(char *s1, char *s2);
 void print_interval_results(struct iperf_test * test, struct iperf_stream *sp);
 int iperf_connect(struct iperf_test *);
 int iperf_client_end(struct iperf_test *);
@@ -138,6 +125,11 @@ int iperf_recv(struct iperf_test *);
 void sig_handler(int);
 void usage();
 void usage_long();
+int all_data_sent(struct iperf_test *);
+int package_parameters(struct iperf_test *);
+int parse_parameters(struct iperf_test *);
+int iperf_create_streams(struct iperf_test *);
+int iperf_handle_message_client(struct iperf_test *);
 
 #endif
 

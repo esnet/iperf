@@ -383,41 +383,47 @@ iperf_exchange_parameters(struct iperf_test * test)
 int
 iperf_exchange_results(struct iperf_test *test)
 {
-    size_t len;
-    uint32_t nlen;
-    int tlen;
-    char *sbuf;
+    size_t size = 0;
+    char buf[32];
+    char *rbuf;
+    char *results;
+    struct iperf_stream *sp;
 
-    if (test->result_str == NULL)
-        return 0;
+    rbuf = (char *) malloc(5*sizeof(char));
+    if (rbuf == NULL) {
+        perror("malloc results");
+        return -1;
+    }
+    results = rbuf + 4;
+    *results = '\0';
 
     if (test->role == 'c') {
-        len = strlen(test->result_str);
-        sbuf = (char *) malloc(len*sizeof(char) + sizeof(nlen));
-        nlen = htonl(len);
-        memcpy(sbuf, &nlen, sizeof(nlen));
-        memcpy(sbuf+sizeof(nlen), test->result_str, len);
-
-        tlen = len + sizeof(nlen);
-        len = 0;
-        while (tlen) {
-            if ((len += write(test->ctrl_sck, sbuf + len, tlen)) < 0) {
-                perror("write results client");
+        for (sp = test->streams; sp; sp = sp->next) {
+            snprintf(buf, 32, "%d:%llu\n", sp->id, sp->result->bytes_sent);
+            size += strlen(buf);
+            if ((rbuf = realloc(rbuf, size+5)) == NULL) {
+                perror("realloc results");
                 return -1;
             }
-            tlen -= len;
+            strncat(results, buf, size+1);
         }
-
-        // Need to read
-
-
+        size = htonl(size);
+        memcpy(rbuf, &size, sizeof(size));
     } else {
-
-
-
-
-
+        for (sp = test->streams; sp; sp = sp->next) {
+            snprintf(buf, 32, "%d:%llu\n", sp->id, sp->result->bytes_received);
+            size += strlen(buf);
+            if ((rbuf = realloc(rbuf, size+5)) == NULL) {
+                perror("realloc results");
+                return (-1);
+            }
+            strncat(results, buf, size+1);
+        }
+        size = htonl(size);
+        memcpy(rbuf, &size, sizeof(size));
     }
+
+    free(rbuf);
 
     return 0;
 }
@@ -793,6 +799,9 @@ iperf_reporter_callback(struct iperf_test * test)
         case TEST_END:
         case DISPLAY_RESULTS:
             /* print final summary for all intervals */
+
+            iperf_exchange_results(test);
+
             start_time = 0.;
             sp = test->streams;
             end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);

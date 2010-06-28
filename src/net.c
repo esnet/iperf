@@ -102,74 +102,75 @@ Nread(int fd, char *buf, int count, int prot)
 {
     struct sockaddr from;
     socklen_t len = sizeof(from);
-    register int cnt;
+    register int n;
+    register int nleft = count;
 
     if (prot == SOCK_DGRAM) {
-        cnt = recvfrom(fd, buf, count, 0, &from, &len);
+        // XXX: Does recvfrom guarantee all count bytes are sent at once?
+        fprintf(stderr, "READING UDP DATA IN Nread SOCK_DGRAM\n");
+        n = recvfrom(fd, buf, count, 0, &from, &len);
     } else {
-        cnt = mread(fd, buf, count);
+        while (nleft > 0) {
+            if ((n = read(fd, buf, nleft)) < 0) {
+                if (errno == EINTR)
+                    n = 0;
+                else
+                    return (-1);
+            } else if (n == 0)
+                break;
+            
+            nleft -= n;
+            buf += n;
+        }
     }
-    return (cnt);
+    return (count - nleft);
 }
 
 
 /*
  *                      N W R I T E
+ *
+ * XXX: After updating this function to use read/write, the only difference between
+ *      TCP and UDP is that udp handles ENOBUFS. Should we merge the two?
  */
+
 int
 Nwrite(int fd, char *buf, int count, int prot)
 {
-    register int cnt;
-    if (prot == SOCK_DGRAM) /* UDP mode */
-    {
-again:
-	cnt = send(fd, buf, count, 0);
-	if (cnt < 0 && errno == ENOBUFS)
-	{
-	 /* wait if run out of buffers */
-	/* XXX: but how long to wait? Start shorter and increase delay each time?? */
-	    delay(18000);	/* XXX: Fixme! */
-	    errno = 0;
-	    goto again;
-	}
-    } else
-    {
-	//printf("Nwrite: writing %d bytes to socket %d \n", count, fd);
-	cnt = write(fd, buf, count);
+    register int n;
+    register int nleft = count;
+
+    if (prot == SOCK_DGRAM) { /* UDP mode */
+        while (nleft > 0) {
+            if ((n = write(fd, buf, nleft)) < 0) {
+                if (errno == EINTR) {
+                    n = 0;
+                } else if (errno == ENOBUFS) {
+                    /* wait if run out of buffers */
+                    /* XXX: but how long to wait? Start shorter and increase delay each time?? */
+                    delay(18000);   // XXX: Fixme!
+                    n = 0;
+                } else {
+                    return (-1);
+                }
+            }
+            nleft -= n;
+            buf += n;
+        }
+    } else {
+        while (nleft > 0) {
+            if ((n = write(fd, buf, nleft)) < 0) {
+                if (errno == EINTR)
+                    n = 0;
+                else
+                    return (-1);
+            }
+            nleft -= n;
+            buf += n;
+        }
     }
-    //printf("Nwrite: wrote %d bytes \n", cnt);
-    return (cnt);
+    return (count);
 }
-
-
-/*
- *  mread: keep reading until have expected read size
- */
-int
-mread(int fd, char *bufp, int n)
-{
-    register unsigned count = 0;
-    register int nread;
-
-    do
-    {
-	nread = read(fd, bufp, n - count);
-	if (nread < 0)		/* if get back -1, just keep trying */
-	{
-	    continue;
-	} else
-	{
-	    //printf("mread: got %d bytes \n", nread);
-	    if (nread == 0)
-		return ((int) count);
-	    count += (unsigned) nread;
-	    bufp += nread;
-	}
-    } while (count < n);
-
-    return ((int) count);
-}
-
 
 /*************************************************************************/
 

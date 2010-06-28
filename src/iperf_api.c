@@ -379,6 +379,53 @@ iperf_exchange_parameters(struct iperf_test * test)
 }
 
 /*************************************************************/
+
+int
+iperf_exchange_results(struct iperf_test *test)
+{
+    size_t len;
+    uint32_t nlen;
+    int tlen;
+    char *sbuf;
+
+    if (test->result_str == NULL)
+        return 0;
+
+    if (test->role == 'c') {
+        len = strlen(test->result_str);
+        sbuf = (char *) malloc(len*sizeof(char) + sizeof(nlen));
+        nlen = htonl(len);
+        memcpy(sbuf, &nlen, sizeof(nlen));
+        memcpy(sbuf+sizeof(nlen), test->result_str, len);
+
+        tlen = len + sizeof(nlen);
+        len = 0;
+        while (tlen) {
+            if ((len += write(test->ctrl_sck, sbuf + len, tlen)) < 0) {
+                perror("write results client");
+                return -1;
+            }
+            tlen -= len;
+        }
+
+        // Need to read
+
+
+    } else {
+
+
+
+
+
+    }
+
+    return 0;
+}
+
+
+
+
+/*************************************************************/
 /**
  * add_to_interval_list -- adds new interval to the interval_list
  *
@@ -513,6 +560,7 @@ iperf_defaults(struct iperf_test * testp)
     testp->stats_interval = 0;
     testp->reporter_interval = 0;
     testp->num_streams = 1;
+    testp->result_str = NULL;
 
     testp->default_settings->unit_format = 'a';
     testp->default_settings->socket_bufsize = 0;	/* use autotuning */

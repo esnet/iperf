@@ -159,7 +159,8 @@ iperf_tcp_accept(struct iperf_test * test)
         return -1;
     }
 
-    setnonblocking(peersock);
+    // XXX: Nonblocking off. OKAY since we use select.
+    // setnonblocking(peersock);
 
     sp = test->new_stream(test);
     sp->socket = peersock;

@@ -141,6 +141,9 @@ struct iperf_test
     int       reporter_interval;
     void      (*stats_callback) (struct iperf_test *);
     void      (*reporter_callback) (struct iperf_test *);
+
+    /* result string */
+    char     *result_str;
    
     int       reporter_fd;                      /* file descriptor for reporter */
     int       num_streams;                      /* total streams in the test (-P) */

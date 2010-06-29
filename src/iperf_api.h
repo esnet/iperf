@@ -130,6 +130,8 @@ int package_parameters(struct iperf_test *);
 int parse_parameters(struct iperf_test *);
 int iperf_create_streams(struct iperf_test *);
 int iperf_handle_message_client(struct iperf_test *);
+int iperf_exchange_results(struct iperf_test *);
+int parse_results(struct iperf_test *, char *);
 
 #endif
 

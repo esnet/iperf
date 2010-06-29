@@ -162,6 +162,7 @@ iperf_tcp_accept(struct iperf_test * test)
     // XXX: Nonblocking off. OKAY since we use select.
     // setnonblocking(peersock);
 
+    // XXX: This doesn't fit our API model!
     sp = test->new_stream(test);
     sp->socket = peersock;
     iperf_init_stream(sp, test);

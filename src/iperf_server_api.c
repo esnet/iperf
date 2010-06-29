@@ -154,11 +154,18 @@ iperf_handle_message_server(struct iperf_test *test)
         case TEST_RUNNING:
             break;
         case TEST_END:
+            test->state = EXCHANGE_RESULTS;
+            if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
+                perror("write EXCHANGE_RESULTS");
+                exit(1);
+            }
+            iperf_exchange_results(test);
             test->state = DISPLAY_RESULTS;
             if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
                 perror("write DISPLAY_RESULTS");
                 exit(1);
             }
+            test->reporter_callback(test);
             break;
         case IPERF_DONE:
             break;
@@ -201,8 +208,6 @@ iperf_run_server(struct iperf_test *test)
     }
 
     test->default_settings->state = TEST_RUNNING;
-
-    printf("iperf_run_server: Waiting for client connect.... \n");
 
     while (test->state != IPERF_DONE) {
 

@@ -359,7 +359,7 @@ iperf_exchange_parameters(struct iperf_test * test)
 
         parse_parameters(test);
 
-        printf("test cookie: %s\n", test->default_settings->cookie);
+        printf("      cookie: %s\n", test->default_settings->cookie);
 
         test->prot_listener = netannounce(test->protocol, NULL, test->server_port + 1);
         FD_SET(test->prot_listener, &test->read_set);
@@ -383,52 +383,140 @@ iperf_exchange_parameters(struct iperf_test * test)
 int
 iperf_exchange_results(struct iperf_test *test)
 {
-    size_t size = 0;
+    unsigned int size;
     char buf[32];
-    char *rbuf;
     char *results;
     struct iperf_stream *sp;
-
-    rbuf = (char *) malloc(5*sizeof(char));
-    if (rbuf == NULL) {
-        perror("malloc results");
-        return -1;
-    }
-    results = rbuf + 4;
-    *results = '\0';
+    iperf_size_t bytes_transferred;
 
     if (test->role == 'c') {
+        /* Prepare results string and send to server */
+        results = NULL;
+        size = 0;
         for (sp = test->streams; sp; sp = sp->next) {
-            snprintf(buf, 32, "%d:%llu\n", sp->id, sp->result->bytes_sent);
+            bytes_transferred = (test->reverse ? sp->result->bytes_received : sp->result->bytes_sent);
+            snprintf(buf, 32, "%d:%llu\n", sp->id, bytes_transferred);
             size += strlen(buf);
-            if ((rbuf = realloc(rbuf, size+5)) == NULL) {
+            if ((results = realloc(results, size+1)) == NULL) {
                 perror("realloc results");
                 return -1;
             }
+            if (sp == test->streams)
+                *results = '\0';
             strncat(results, buf, size+1);
         }
+        size++;
         size = htonl(size);
-        memcpy(rbuf, &size, sizeof(size));
+        if (Nwrite(test->ctrl_sck, &size, sizeof(size), Ptcp) < 0) {
+            perror("Nwrite size");
+            return (-1);
+        }
+        if (Nwrite(test->ctrl_sck, results, ntohl(size), Ptcp) < 0) {
+            perror("Nwrite results");
+            return (-1);
+        }
+        free(results);
+
+        /* Get server results string */
+        if (Nread(test->ctrl_sck, &size, sizeof(size), Ptcp) < 0) {
+            perror("Nread size");
+            return (-1);
+        }
+        size = ntohl(size);
+        results = (char *) malloc(size * sizeof(char));
+        if (results == NULL) {
+            perror("malloc results");
+            return (-1);
+        }
+        if (Nread(test->ctrl_sck, results, size, Ptcp) < 0) {
+            perror("Nread results");
+            return (-1);
+        }
+
+        parse_results(test, results);
+
+        free(results);
+
     } else {
+        /* Get client results string */
+        if (Nread(test->ctrl_sck, &size, sizeof(size), Ptcp) < 0) {
+            perror("Nread size");
+            return (-1);
+        }
+        size = ntohl(size);
+        results = (char *) malloc(size * sizeof(char));
+        if (results == NULL) {
+            perror("malloc results");
+            return (-1);
+        }
+        if (Nread(test->ctrl_sck, results, size, Ptcp) < 0) {
+            perror("Nread results");
+            return (-1);
+        }
+
+        parse_results(test, results);
+
+        free(results);
+
+        /* Prepare results string and send to client */
+        results = NULL;
+        size = 0;
         for (sp = test->streams; sp; sp = sp->next) {
-            snprintf(buf, 32, "%d:%llu\n", sp->id, sp->result->bytes_received);
+            bytes_transferred = (test->reverse ? sp->result->bytes_sent : sp->result->bytes_received);
+            snprintf(buf, 32, "%d:%llu\n", sp->id, bytes_transferred);
             size += strlen(buf);
-            if ((rbuf = realloc(rbuf, size+5)) == NULL) {
+            if ((results = realloc(results, size+1)) == NULL) {
                 perror("realloc results");
                 return (-1);
             }
+            if (sp == test->streams)
+                *results = '\0';
             strncat(results, buf, size+1);
         }
+        size++;
         size = htonl(size);
-        memcpy(rbuf, &size, sizeof(size));
-    }
+        if (Nwrite(test->ctrl_sck, &size, sizeof(size), Ptcp) < 0) {
+            perror("Nwrite size");
+            return (-1);
+        }
+        if (Nwrite(test->ctrl_sck, results, ntohl(size), Ptcp) < 0) {
+            perror("Nwrite results");
+            return (-1);
+        }
+        free(results);
 
-    free(rbuf);
+    }
 
     return 0;
 }
 
+/*************************************************************/
 
+int
+parse_results(struct iperf_test *test, char *results)
+{
+    int sid;
+    char *word;
+    struct iperf_stream *sp;
+    iperf_size_t bytes_transferred;
+
+    for (word = strtok(results, "\n:"); word; word = strtok(NULL, "\n:")) {
+        sid = atoi(word);
+        bytes_transferred = atoll(strtok(NULL, "\n:"));
+        for (sp = test->streams; sp; sp = sp->next)
+            if (sp->id == sid) break;
+        if (sp == NULL) {
+            fprintf(stderr, "error: No stream with id %d\n", sid);
+            return (-1);
+        }
+        if ((test->role == 'c' && !test->reverse) || (test->role == 's' && test->reverse))
+            sp->result->bytes_received = bytes_transferred;
+        else
+            sp->result->bytes_sent = bytes_transferred;
+    }
+
+    return 0;
+}
 
 
 /*************************************************************/
@@ -627,6 +715,9 @@ iperf_handle_message_client(struct iperf_test *test)
             break;
         case TEST_END:
             break;
+        case EXCHANGE_RESULTS:
+            iperf_exchange_results(test);
+            break;
         case DISPLAY_RESULTS:
             iperf_client_end(test);
             break;
@@ -750,8 +841,6 @@ iperf_stats_callback(struct iperf_test * test)
 /**
  * iperf_reporter_callback -- handles the report printing
  *
- *returns report
- * XXX: This function needs to be updated to reflect the new code
  */
 
 void
@@ -761,7 +850,8 @@ iperf_reporter_callback(struct iperf_test * test)
     char ubuf[UNIT_LEN];
     char nbuf[UNIT_LEN];
     struct iperf_stream *sp = NULL;
-    iperf_size_t bytes = 0, total_bytes = 0;
+    iperf_size_t bytes = 0, bytes_sent = 0, bytes_received = 0;
+    iperf_size_t total_sent = 0, total_received = 0;
     double start_time, end_time;
     struct iperf_interval_results *ip = NULL;
 
@@ -800,24 +890,23 @@ iperf_reporter_callback(struct iperf_test * test)
         case DISPLAY_RESULTS:
             /* print final summary for all intervals */
 
-            iperf_exchange_results(test);
-
             start_time = 0.;
             sp = test->streams;
             end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
             for (sp = test->streams; sp != NULL; sp = sp->next) {
-                if (test->role == 'c')
-                    bytes = sp->result->bytes_sent;
-                else
-                    bytes = sp->result->bytes_received;
-                total_bytes += bytes;
+                bytes_sent = sp->result->bytes_sent;
+                bytes_received = sp->result->bytes_received;
+                total_sent += bytes_sent;
+                total_received += bytes_received;
+
                 if (test->protocol == Pudp) {
                     total_packets += sp->packet_count;
                     lost_packets += sp->cnt_error;
                 }
-                if (bytes > 0 ) {
-                    unit_snprintf(ubuf, UNIT_LEN, (double) (bytes), 'A');
-                    unit_snprintf(nbuf, UNIT_LEN, (double) (bytes / end_time), test->default_settings->unit_format);
+
+                if (bytes_sent > 0) {
+                    unit_snprintf(ubuf, UNIT_LEN, (double) (bytes_sent), 'A');
+                    unit_snprintf(nbuf, UNIT_LEN, (double) (bytes_sent / end_time), test->default_settings->unit_format);
                     if (test->protocol == Ptcp) { 
                         printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
 
@@ -838,13 +927,24 @@ iperf_reporter_callback(struct iperf_test * test)
                             printf(report_sum_outoforder, start_time, end_time, sp->cnt_error);
                     }
                 }
+                if (bytes_received > 0) {
+                    unit_snprintf(ubuf, UNIT_LEN, (double) bytes_received, 'A');
+                    unit_snprintf(nbuf, UNIT_LEN, (double) (bytes_received / end_time), test->default_settings->unit_format);
+                    if (test->protocol == Ptcp) {
+                        printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
+                    }
+                }
             }
 
-            unit_snprintf(ubuf, UNIT_LEN, (double) total_bytes, 'A');
-            unit_snprintf(nbuf, UNIT_LEN, (double) total_bytes / end_time, test->default_settings->unit_format);
-
             if (test->num_streams > 1) {
+                unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
+                unit_snprintf(nbuf, UNIT_LEN, (double) total_sent / end_time, test->default_settings->unit_format);
                 if (test->protocol == Ptcp) {
+                    printf("[MSG] Total sent\n");
+                    printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
+                    unit_snprintf(ubuf, UNIT_LEN, (double) total_received, 'A');
+                    unit_snprintf(nbuf, UNIT_LEN, (double) (total_received / end_time), test->default_settings->unit_format);
+                    printf("[MSG] Total received\n");
                     printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
                 } else {
                     printf(report_sum_bw_jitter_loss_format, start_time, end_time, ubuf, nbuf, sp->jitter,
@@ -989,16 +1089,17 @@ iperf_init_stream(struct iperf_stream * sp, struct iperf_test * testp)
 int
 iperf_add_stream(struct iperf_test * test, struct iperf_stream * sp)
 {
+    int i;
     struct iperf_stream *n;
 
     if (!test->streams) {
         test->streams = sp;
+        sp->id = 1;
         return 1;
     } else {
-        n = test->streams;
-        while (n->next)
-            n = n->next;
+        for (n = test->streams, i = 2; n->next; n = n->next, ++i);
         n->next = sp;
+        sp->id = i;
         return 1;
     }
 

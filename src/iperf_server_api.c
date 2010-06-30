@@ -70,7 +70,6 @@ iperf_server_listen(struct iperf_test *test)
     */
 
     // XXX: This code needs to be moved to after parameter exhange
-    // XXX: Last thing I was working on
     if (test->protocol == Ptcp) {
         if (test->default_settings->socket_bufsize > 0) {
             unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A');
@@ -172,6 +171,7 @@ iperf_handle_message_server(struct iperf_test *test)
                 perror("write DISPLAY_RESULTS");
                 exit(1);
             }
+            test->stats_callback(test);
             test->reporter_callback(test);
             break;
         case IPERF_DONE:
@@ -192,8 +192,6 @@ void
 iperf_test_reset(struct iperf_test *test)
 {
     struct iperf_stream *sp, *np;
-    struct iperf_settings *settings;
-    int listener;
 
     close(test->ctrl_sck);
 
@@ -203,19 +201,30 @@ iperf_test_reset(struct iperf_test *test)
         iperf_free_stream(sp);
     }
 
-    /* Clear memory and reset defaults */
-    memset(test->default_settings, 0, sizeof(struct iperf_settings));
-    settings = test->default_settings;
-    listener = test->listener;
-    memset(test, 0, sizeof(struct iperf_test));
+    test->streams = NULL;
+
     test->role = 's';
-    test->default_settings = settings;
-    iperf_defaults(test);
-    test->listener = listener;
+    test->protocol = Ptcp;
+    test->duration = DURATION;
+    test->state = 0;
+    test->server_hostname = NULL;
+
+    test->ctrl_sck = -1;
+    test->prot_listener = 0;
+
+    test->reverse = 0;
+    // test->no_delay = 0 (Do we need this reset between tests?)
+
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);
     FD_SET(test->listener, &test->read_set);
-    test->max_fd = (test->listener > test->max_fd) ? test->listener : test->max_fd;
+    test->max_fd = test->listener;
+    
+    test->num_streams = 1;
+    test->default_settings->socket_bufsize = 0;
+    test->default_settings->blksize = DEFAULT_TCP_BLKSIZE;
+    test->default_settings->rate = RATE;   /* UDP only */
+    memset(test->default_settings->cookie, 0, COOKIE_SIZE); 
 }
 
 int

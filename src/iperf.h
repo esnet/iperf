@@ -119,19 +119,19 @@ struct iperf_test
 
 
     /* boolen variables for Options */
-    int       reverse;                          /* -R option */
     int       daemon;                           /* -D option */
+    int	      debug;                            /* -d option - debug mode */
     int       no_delay;                         /* -N option */
-    int       print_mss;                        /* -m option */
-    int       v6domain;                         /* -6 option */
     int       output_format;                    /* -O option */
-    int	      verbose;                          /* -V (verbose) option */
-    int	      debug;                            /* debug mode */
+    int       print_mss;                        /* -m option */
+    int       reverse;                          /* -R option */
+    int       tcp_info;                         /* -T option - display getsockopt(TCP_INFO) results. */
+    int       v6domain;                         /* -6 option */
+    int	      verbose;                          /* -V option - verbose mode */
 
     /* Select related parameters */
     int       max_fd;
     fd_set    read_set;                         /* set of read sockets */
-    fd_set    temp_set;                         /* temp set for select */
     fd_set    write_set;                        /* set of write sockets */
 
     int       (*accept) (struct iperf_test *);
@@ -142,12 +142,7 @@ struct iperf_test
     void      (*stats_callback) (struct iperf_test *);
     void      (*reporter_callback) (struct iperf_test *);
 
-    /* result string */
-    char     *result_str;
-   
-    int       reporter_fd;                      /* file descriptor for reporter */
     int       num_streams;                      /* total streams in the test (-P) */
-    int       tcp_info;                         /* display getsockopt(TCP_INFO) results. Should this be moved to Options? */
 
     /* iperf error reporting
      * - errtype: (0,1,2)

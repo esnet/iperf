@@ -94,7 +94,7 @@ set_tcp_windowsize(int sock, int bufsize, int dir)
 	if (rc < 0)
 	    return rc;
     } else {
-        printf("Using default TCP buffer size and assuming OS will do autotuning \n");
+        printf("      Using default TCP buffer size and assuming OS will do autotuning\n");
     }
 
     return 0;

@@ -177,12 +177,12 @@ iperf_send(struct iperf_test *test)
                 free_timer(stats_interval);
                 free_timer(reporter_interval);
 
-                // Send TEST_DONE (ALL_STREAMS_END) message
                 test->state = TEST_END;
                 if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
                     perror("write TEST_END");
                     return -1;
                 }
+                test->stats_callback(test);
             }
         }
     } 
@@ -253,11 +253,6 @@ package_parameters(struct iperf_test *test)
         strcat(pstring, optbuf);
     }
 
-    if (test->default_settings->unit_format) {
-        sprintf(optbuf, "-f %c ", test->default_settings->unit_format);
-        strcat(pstring, optbuf);
-    }
-
     if (strcmp(test->default_settings->cookie, "") != 0) {
         sprintf(optbuf, "-C %s ", test->default_settings->cookie);
         strcat(pstring, optbuf);
@@ -324,9 +319,6 @@ parse_parameters(struct iperf_test *test)
                 break;
             case 'w':
                 test->default_settings->socket_bufsize = atoi(optarg);
-                break;
-            case 'f':
-                test->default_settings->unit_format = *optarg;
                 break;
             case 'C':
                 memcpy(test->default_settings->cookie, optarg, COOKIE_SIZE);
@@ -655,7 +647,6 @@ iperf_defaults(struct iperf_test * testp)
     testp->stats_interval = 0;
     testp->reporter_interval = 0;
     testp->num_streams = 1;
-    testp->result_str = NULL;
 
     testp->default_settings->unit_format = 'a';
     testp->default_settings->socket_bufsize = 0;	/* use autotuning */
@@ -885,6 +876,8 @@ iperf_reporter_callback(struct iperf_test * test)
         case DISPLAY_RESULTS:
             /* print final summary for all intervals */
 
+            printf(report_bw_header);
+
             start_time = 0.;
             sp = test->streams;
             end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
@@ -902,7 +895,8 @@ iperf_reporter_callback(struct iperf_test * test)
                 if (bytes_sent > 0) {
                     unit_snprintf(ubuf, UNIT_LEN, (double) (bytes_sent), 'A');
                     unit_snprintf(nbuf, UNIT_LEN, (double) (bytes_sent / end_time), test->default_settings->unit_format);
-                    if (test->protocol == Ptcp) { 
+                    if (test->protocol == Ptcp) {
+                        printf("      Sent\n");
                         printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
 
 #if defined(linux) || defined(__FreeBSD__)
@@ -926,6 +920,7 @@ iperf_reporter_callback(struct iperf_test * test)
                     unit_snprintf(ubuf, UNIT_LEN, (double) bytes_received, 'A');
                     unit_snprintf(nbuf, UNIT_LEN, (double) (bytes_received / end_time), test->default_settings->unit_format);
                     if (test->protocol == Ptcp) {
+                        printf("      Received\n");
                         printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
                     }
                 }
@@ -935,11 +930,11 @@ iperf_reporter_callback(struct iperf_test * test)
                 unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
                 unit_snprintf(nbuf, UNIT_LEN, (double) total_sent / end_time, test->default_settings->unit_format);
                 if (test->protocol == Ptcp) {
-                    printf("[MSG] Total sent\n");
+                    printf("      Total sent\n");
                     printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
                     unit_snprintf(ubuf, UNIT_LEN, (double) total_received, 'A');
                     unit_snprintf(nbuf, UNIT_LEN, (double) (total_received / end_time), test->default_settings->unit_format);
-                    printf("[MSG] Total received\n");
+                    printf("      Total received\n");
                     printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
                 } else {
                     printf(report_sum_bw_jitter_loss_format, start_time, end_time, ubuf, nbuf, sp->jitter,
@@ -1055,6 +1050,8 @@ iperf_new_stream(struct iperf_test *testp)
     sp->result->bytes_received_this_interval = 0;
     sp->result->bytes_sent_this_interval = 0;
 
+    // XXX: This sets the starting time of the test.
+    //      It needs to be set when the test starts, not when the stream is created.
     gettimeofday(&sp->result->start_time, NULL);
 
     sp->settings->state = STREAM_BEGIN;
@@ -1117,23 +1114,9 @@ iperf_client_end(struct iperf_test *test)
     printf("Test Complete. Summary Results:\n");
  
     /* show final summary */
-    test->stats_callback(test);
+    // XXX: Moved stats_callback to end of iperf_send to log correct stream end_time
+    // test->stats_callback(test);
     test->reporter_callback(test);
-
-    /* Requesting for result from Server
-     *
-     * This still needs to be implemented. It looks like the last
-     * intern worked on it, but it needs to be finished.
-     */
-
-    // XXX: Need to implement getting results from server
-    test->state = RESULT_REQUEST;
-    //receive_result_from_server(test);	/* XXX: currently broken! */
-    //result_string = test->reporter_callback(test);
-    //printf("Summary results as measured by the server: \n");
-    //puts(result_string);
-
-    //printf("Done getting/printing results. \n");
 
     /* Deleting all streams - CAN CHANGE FREE_STREAM FN */
     for (sp = test->streams; sp; sp = np) {

@@ -11,4 +11,6 @@ int iperf_acept(struct iperf_test *);
 
 int iperf_handle_message_server(struct iperf_test *);
 
+void iperf_test_reset(struct iperf_test *);
+
 #endif

@@ -98,7 +98,7 @@ netannounce(int proto, char *local, int port)
 /********************************************************************/
 
 int
-Nread(int fd, char *buf, int count, int prot)
+Nread(int fd, void *buf, int count, int prot)
 {
     struct sockaddr from;
     socklen_t len = sizeof(from);
@@ -135,7 +135,7 @@ Nread(int fd, char *buf, int count, int prot)
  */
 
 int
-Nwrite(int fd, char *buf, int count, int prot)
+Nwrite(int fd, void *buf, int count, int prot)
 {
     register int n;
     register int nleft = count;

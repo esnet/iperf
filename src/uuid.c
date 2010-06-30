@@ -15,10 +15,11 @@
 
 
 /* XXX: this code is not portable: not all versions of linux install libuuidgen
-	by default
- * if not installed, may need to do something like this:
- *   yum install libuuid-devel
- *   apt-get install apt-get install
+ *      by default
+ *
+ *   if not installed, may need to do something like this:
+ *     yum install libuuid-devel
+ *     apt-get install uuid-dev
 */
 
 
@@ -39,4 +40,8 @@ get_uuid(char *temp)
 #error No uuid function specified
 #endif
     memcpy(temp, s, 37);
+
+    // XXX: Freeing s only works if you HAVE_UUID_GENERATE
+    //      Otherwise use rpc_string_free (?)
+    free(s);
 }

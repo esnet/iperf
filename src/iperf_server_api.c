@@ -82,7 +82,7 @@ iperf_server_listen(struct iperf_test *test)
     printf("-----------------------------------------------------------\n");
 
     FD_ZERO(&test->read_set);
-    FD_ZERO(&test->temp_set);
+    FD_ZERO(&test->write_set);
     FD_SET(test->listener, &test->read_set);
     test->max_fd = (test->listener > test->max_fd) ? test->listener : test->max_fd;
 
@@ -140,6 +140,8 @@ iperf_accept(struct iperf_test *test)
 int
 iperf_handle_message_server(struct iperf_test *test)
 {
+    struct iperf_stream *sp;
+
     if (read(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
         // XXX: Needs to indicate read error
         return -1;
@@ -154,6 +156,11 @@ iperf_handle_message_server(struct iperf_test *test)
         case TEST_RUNNING:
             break;
         case TEST_END:
+            for (sp = test->streams; sp; sp = sp->next) {
+                FD_CLR(sp->socket, &test->read_set);
+                FD_CLR(sp->socket, &test->write_set);
+                close(sp->socket);
+            }
             test->state = EXCHANGE_RESULTS;
             if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
                 perror("write EXCHANGE_RESULTS");
@@ -181,11 +188,42 @@ iperf_handle_message_server(struct iperf_test *test)
     return 0;
 }
 
+void
+iperf_test_reset(struct iperf_test *test)
+{
+    struct iperf_stream *sp, *np;
+    struct iperf_settings *settings;
+    int listener;
+
+    close(test->ctrl_sck);
+
+    /* Free streams */
+    for (sp = test->streams; sp; sp = np) {
+        np = sp->next;
+        iperf_free_stream(sp);
+    }
+
+    /* Clear memory and reset defaults */
+    memset(test->default_settings, 0, sizeof(struct iperf_settings));
+    settings = test->default_settings;
+    listener = test->listener;
+    memset(test, 0, sizeof(struct iperf_test));
+    test->role = 's';
+    test->default_settings = settings;
+    iperf_defaults(test);
+    test->listener = listener;
+    FD_ZERO(&test->read_set);
+    FD_ZERO(&test->write_set);
+    FD_SET(test->listener, &test->read_set);
+    test->max_fd = (test->listener > test->max_fd) ? test->listener : test->max_fd;
+}
+
 int
 iperf_run_server(struct iperf_test *test)
 {
     int result;
-    int streams_accepted = 0;
+    int streams_accepted;
+    fd_set temp_read_set, temp_write_set;
     struct timeval tv;
 
     // Open socket and listen
@@ -207,43 +245,46 @@ iperf_run_server(struct iperf_test *test)
         exit(1);
     }
 
-    test->default_settings->state = TEST_RUNNING;
+    for (;;) {
 
+    test->state = IPERF_START;
+    streams_accepted = 0;
+    
     while (test->state != IPERF_DONE) {
 
-        // XXX: Move test->temp_set over to local fd_set
-        memcpy(&test->temp_set, &test->read_set, sizeof(fd_set));
+        memcpy(&temp_read_set, &test->read_set, sizeof(fd_set));
+        memcpy(&temp_write_set, &test->write_set, sizeof(fd_set));
         tv.tv_sec = 15;
         tv.tv_usec = 0;
 
-        result = select(test->max_fd + 1, &test->temp_set, NULL, NULL, &tv);
+        result = select(test->max_fd + 1, &temp_read_set, &temp_write_set, NULL, &tv);
         if (result < 0 && errno != EINTR) {
             // Change the way this handles errors
             perror("select");
             exit(1);
         } else if (result > 0) {
-            if (FD_ISSET(test->listener, &test->temp_set)) {
+            if (FD_ISSET(test->listener, &temp_read_set)) {
                 if (iperf_accept(test) < 0) {
                     fprintf(stderr, "iperf_accept: error accepting control socket. exiting...\n");
                     exit(1);
                 } 
-                FD_CLR(test->listener, &test->temp_set);
+                FD_CLR(test->listener, &temp_read_set);
             }
-            if (FD_ISSET(test->ctrl_sck, &test->temp_set)) {
+            if (FD_ISSET(test->ctrl_sck, &temp_read_set)) {
                 // Handle control messages
                 iperf_handle_message_server(test);
-                FD_CLR(test->ctrl_sck, &test->temp_set);                
+                FD_CLR(test->ctrl_sck, &temp_read_set);                
             }
             
             if (test->state == CREATE_STREAMS) {
-                if (FD_ISSET(test->prot_listener, &test->temp_set)) {
+                if (FD_ISSET(test->prot_listener, &temp_read_set)) {
                     // Spawn new streams
                     // XXX: This works, but should it check cookies for authenticity
                     //      Also, currently it uses 5202 for stream connections.
                     //      Should this be fixed to use 5201 instead?
                     iperf_tcp_accept(test);
                     ++streams_accepted;
-                    FD_CLR(test->prot_listener, &test->temp_set);
+                    FD_CLR(test->prot_listener, &temp_read_set);
                 }
                 if (streams_accepted == test->num_streams) {
                     FD_CLR(test->prot_listener, &test->read_set);
@@ -266,14 +307,15 @@ iperf_run_server(struct iperf_test *test)
         }
     }
 
+    /* Clean up the last test */
+    iperf_test_reset(test);
+    printf("\n");
+
+    }
+
     // XXX: Need to put the above while loop into another control structure
     //      that initiates a new test upon each connection rather than dying.
 
-    /* reset cookie when client is finished */
-    /* XXX: which cookie to reset, and why is it stored to 2 places? */
-    //memset(test->streams->settings->cookie, '\0', COOKIE_SIZE);
-    /* All memory for the previous run needs to be freed here */
-    memset(test->default_settings->cookie, '\0', COOKIE_SIZE);
     return 0;
 }
 

@@ -173,9 +173,9 @@ iperf_send(struct iperf_test *test)
                     update_timer(reporter_interval, test->reporter_interval, 0);
                 }
             } else {
-                free(timer);
-                free(stats_interval);
-                free(reporter_interval);
+                free_timer(timer);
+                free_timer(stats_interval);
+                free_timer(reporter_interval);
 
                 // Send TEST_DONE (ALL_STREAMS_END) message
                 test->state = TEST_END;
@@ -333,6 +333,9 @@ parse_parameters(struct iperf_test *test)
                 break;
         }
     }
+    // XXX: optreset is not needed on ubuntu
+    optreset = 1;
+    optind = 0;
 
     free(params);
 
@@ -363,7 +366,6 @@ iperf_exchange_parameters(struct iperf_test * test)
 
         test->prot_listener = netannounce(test->protocol, NULL, test->server_port + 1);
         FD_SET(test->prot_listener, &test->read_set);
-        FD_SET(test->prot_listener, &test->write_set);
         test->max_fd = (test->prot_listener > test->max_fd) ? test->prot_listener : test->max_fd;
 
         // Send the control message to create streams and start the test
@@ -628,13 +630,12 @@ iperf_new_test()
         perror("malloc");
         return (NULL);
     }
-    /* initialise everything to zero */
+    /* initialize everything to zero */
     memset(testp, 0, sizeof(struct iperf_test));
 
     testp->default_settings = (struct iperf_settings *) malloc(sizeof(struct iperf_settings));
     memset(testp->default_settings, 0, sizeof(struct iperf_settings));
 
-    /* return an empty iperf_test* with memory alloted. */
     return testp;
 }
 
@@ -776,12 +777,6 @@ void
 iperf_free_test(struct iperf_test * test)
 {
     free(test->default_settings);
-
-    // This funciton needs to be updated to free and close streams
-    // Currently it just sets the pointer to the streams list to NULL...
-
-    close(test->listener_sock_tcp);
-    close(test->listener_sock_udp);
 
     test->streams = NULL;
     test->accept = NULL;
@@ -997,9 +992,15 @@ print_interval_results(struct iperf_test * test, struct iperf_stream * sp)
 void
 iperf_free_stream(struct iperf_stream * sp)
 {
+    struct iperf_interval_results *ip, *np;
+
     /* XXX: need to free interval list too! */
     free(sp->buffer);
     free(sp->settings);
+    for (ip = sp->result->interval_results; ip; ip = np) {
+        np = ip->next;
+        free(ip);
+    }
     free(sp->result);
     free(sp->send_timer);
     free(sp);
@@ -1112,7 +1113,7 @@ iperf_add_stream(struct iperf_test * test, struct iperf_stream * sp)
 int
 iperf_client_end(struct iperf_test *test)
 {
-    struct iperf_stream *sp;
+    struct iperf_stream *sp, *np;
     printf("Test Complete. Summary Results:\n");
  
     /* show final summary */
@@ -1135,8 +1136,9 @@ iperf_client_end(struct iperf_test *test)
     //printf("Done getting/printing results. \n");
 
     /* Deleting all streams - CAN CHANGE FREE_STREAM FN */
-    for (sp = test->streams; sp != NULL; sp = sp->next) {
+    for (sp = test->streams; sp; sp = np) {
         close(sp->socket);
+        np = sp->next;
         iperf_free_stream(sp);
     }
 

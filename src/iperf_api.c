@@ -253,6 +253,21 @@ package_parameters(struct iperf_test *test)
         strcat(pstring, optbuf);
     }
 
+    if (test->default_settings->mss) {
+        sprintf(optbuf, "-m %d ", test->default_settings->mss);
+        strcat(pstring, optbuf);
+    }
+
+    if (test->default_settings->bytes) {
+        sprintf(optbuf, "-m %llu ", test->default_settings->bytes);
+        strcat(pstring, optbuf);
+    }
+
+    if (test->duration) {
+        sprintf(optbuf, "-t %d ", test->duration);
+        strcat(pstring, optbuf);
+    }
+
     *pstring = (char) (strlen(pstring) - 1);
 
     if (write(test->ctrl_sck, pstring, (size_t) strlen(pstring)) < 0) {
@@ -298,10 +313,19 @@ parse_parameters(struct iperf_test *test)
         n++;
     }
 
-    while ((ch = getopt(n, params, "puP:Rw:")) != -1) {
+    while ((ch = getopt(n, params, "pt:n:m:uP:Rw:")) != -1) {
         switch (ch) {
             case 'p':
                 test->protocol = Ptcp;
+                break;
+            case 't':
+                test->duration = atoi(optarg);
+                break;
+            case 'n':
+                test->default_settings->bytes = atoll(optarg);
+                break;
+            case 'm':
+                test->default_settings->mss = atoi(optarg);
                 break;
             case 'u':
                 test->protocol = Pudp;

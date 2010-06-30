@@ -114,7 +114,7 @@ struct iperf_test
 
     int       ctrl_sck;
     // Server is the only one that needs these
-    int       listener;
+    int       listener_tcp;
     int       prot_listener;
 
 

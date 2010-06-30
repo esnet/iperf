@@ -253,11 +253,6 @@ package_parameters(struct iperf_test *test)
         strcat(pstring, optbuf);
     }
 
-    if (strcmp(test->default_settings->cookie, "") != 0) {
-        sprintf(optbuf, "-C %s ", test->default_settings->cookie);
-        strcat(pstring, optbuf);
-    }
-
     *pstring = (char) (strlen(pstring) - 1);
 
     if (write(test->ctrl_sck, pstring, (size_t) strlen(pstring)) < 0) {
@@ -303,7 +298,7 @@ parse_parameters(struct iperf_test *test)
         n++;
     }
 
-    while ((ch = getopt(n, params, "puP:Rw:f:C:")) != -1) {
+    while ((ch = getopt(n, params, "puP:Rw:")) != -1) {
         switch (ch) {
             case 'p':
                 test->protocol = Ptcp;
@@ -319,9 +314,6 @@ parse_parameters(struct iperf_test *test)
                 break;
             case 'w':
                 test->default_settings->socket_bufsize = atoi(optarg);
-                break;
-            case 'C':
-                memcpy(test->default_settings->cookie, optarg, COOKIE_SIZE);
                 break;
         }
     }
@@ -344,10 +336,6 @@ iperf_exchange_parameters(struct iperf_test * test)
 {
     if (test->role == 'c') {
 
-        // XXX: Probably should get the cookie at the start of iperf client rather than
-        //      waiting till here
-        get_uuid(test->default_settings->cookie);
-
         package_parameters(test);
 
     } else {
@@ -356,9 +344,11 @@ iperf_exchange_parameters(struct iperf_test * test)
 
         printf("      cookie: %s\n", test->default_settings->cookie);
 
-        test->prot_listener = netannounce(test->protocol, NULL, test->server_port + 1);
-        FD_SET(test->prot_listener, &test->read_set);
-        test->max_fd = (test->prot_listener > test->max_fd) ? test->prot_listener : test->max_fd;
+        if (test->protocol == Pudp) {
+            test->prot_listener = netannounce(test->protocol, NULL, test->server_port);
+            FD_SET(test->prot_listener, &test->read_set);
+            test->max_fd = (test->prot_listener > test->max_fd) ? test->prot_listener : test->max_fd;
+        }
 
         // Send the control message to create streams and start the test
         test->state = CREATE_STREAMS;
@@ -667,12 +657,19 @@ iperf_create_streams(struct iperf_test *test)
     int i, s;
 
     for (i = 0; i < test->num_streams; ++i) {
-        s = netdial(test->protocol, test->server_hostname, test->server_port + 1);
+        s = netdial(test->protocol, test->server_hostname, test->server_port);
         if (s < 0) {
             perror("netdial stream");
             return -1;
         }
-        // printf("File descriptor for stream %d: %d\n", i, s);
+
+        if (test->protocol == Ptcp) {
+            if (Nwrite(s, test->default_settings->cookie, COOKIE_SIZE, Ptcp) < 0) {
+                perror("Nwrite COOKIE\n");
+                return -1;
+            }
+        }
+
         FD_SET(s, &test->read_set);
         FD_SET(s, &test->write_set);
         test->max_fd = (test->max_fd < s) ? s : test->max_fd;
@@ -707,6 +704,9 @@ iperf_handle_message_client(struct iperf_test *test)
             break;
         case TEST_END:
             break;
+        case PARAM_EXCHANGE:
+            iperf_exchange_parameters(test);
+            break;
         case EXCHANGE_RESULTS:
             iperf_exchange_results(test);
             break;
@@ -722,7 +722,7 @@ iperf_handle_message_client(struct iperf_test *test)
             fprintf(stderr, "The server is busy running a test. Try again later.\n");
             exit(0);
         default:
-            // XXX: This needs to be replaced
+            // XXX: This needs to be removed from the production version
             printf("How did you get here? test->state = %d\n", test->state);
             break;
     }
@@ -739,26 +739,22 @@ iperf_connect(struct iperf_test *test)
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);
 
+    get_uuid(test->default_settings->cookie);
+
     /* Create and connect the control channel */
     test->ctrl_sck = netdial(test->protocol, test->server_hostname, test->server_port);
     if (test->ctrl_sck < 0) {
         return -1;
     }
 
+    if (Nwrite(test->ctrl_sck, test->default_settings->cookie, COOKIE_SIZE, Ptcp) < 0) {
+        perror("Nwrite COOKIE\n");
+        return -1;
+    }
+
     FD_SET(test->ctrl_sck, &test->read_set);
     FD_SET(test->ctrl_sck, &test->write_set);
     test->max_fd = (test->ctrl_sck > test->max_fd) ? test->ctrl_sck : test->max_fd;
-
-    /* Exchange parameters */
-    test->state = PARAM_EXCHANGE;
-    if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
-        perror("write PARAM_EXCHANGE");
-        return -1;
-    }
-    if (iperf_exchange_parameters(test) < 0) {
-        fprintf(stderr, "iperf_exchange_parameters failed\n");
-        return -1;
-    }
 
     return 0;
 }

@@ -160,8 +160,8 @@ iperf_accept(struct iperf_test *test)
                 }
             }
         } else {
-            if (write(s, &rbuf, sizeof(int)) < 0) {
-                perror("write");
+            if (Nwrite(s, &rbuf, sizeof(int), Ptcp) < 0) {
+                perror("Nwrite ACCESS_DENIED");
                 return -1;
             }
             close(s);
@@ -183,9 +183,6 @@ iperf_handle_message_server(struct iperf_test *test)
     }
 
     switch(test->state) {
-        case PARAM_EXCHANGE:
-            iperf_exchange_parameters(test);
-            break;
         case TEST_START:
             break;
         case TEST_RUNNING:
@@ -197,14 +194,14 @@ iperf_handle_message_server(struct iperf_test *test)
                 close(sp->socket);
             }
             test->state = EXCHANGE_RESULTS;
-            if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
-                perror("write EXCHANGE_RESULTS");
+            if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
+                perror("Nwrite EXCHANGE_RESULTS");
                 exit(1);
             }
             iperf_exchange_results(test);
             test->state = DISPLAY_RESULTS;
-            if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
-                perror("write DISPLAY_RESULTS");
+            if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
+                perror("Nwrite DISPLAY_RESULTS");
                 exit(1);
             }
             test->stats_callback(test);
@@ -283,7 +280,7 @@ iperf_run_server(struct iperf_test *test)
         fprintf(stderr, "Interrupt received. Exiting...\n");
         test->state = SERVER_TERMINATE;
         if (test->ctrl_sck >= 0) {
-            if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
+            if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
                 fprintf(stderr, "Unable to send SERVER_TERMINATE message to client\n");
             }
         }

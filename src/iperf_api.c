@@ -136,8 +136,8 @@ iperf_send(struct iperf_test *test)
             reporter_interval = new_timer(test->reporter_interval, 0);
         
         test->state = TEST_RUNNING;
-        if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
-            perror("write TEST_RUNNING");
+        if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
+            perror("Nwrite TEST_RUNNING");
             exit(1);
         }
 
@@ -178,8 +178,8 @@ iperf_send(struct iperf_test *test)
                 free_timer(reporter_interval);
 
                 test->state = TEST_END;
-                if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
-                    perror("write TEST_END");
+                if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
+                    perror("Nwrite TEST_END");
                     return -1;
                 }
                 test->stats_callback(test);
@@ -270,8 +270,8 @@ package_parameters(struct iperf_test *test)
 
     *pstring = (char) (strlen(pstring) - 1);
 
-    if (write(test->ctrl_sck, pstring, (size_t) strlen(pstring)) < 0) {
-        perror("write pstring");
+    if (Nwrite(test->ctrl_sck, pstring, (size_t) strlen(pstring), Ptcp) < 0) {
+        perror("Nwrite pstring");
         return -1;
     }
 
@@ -363,7 +363,6 @@ iperf_exchange_parameters(struct iperf_test * test)
         package_parameters(test);
 
     } else {
-
         parse_parameters(test);
 
         printf("      cookie: %s\n", test->default_settings->cookie);
@@ -376,8 +375,8 @@ iperf_exchange_parameters(struct iperf_test * test)
 
         // Send the control message to create streams and start the test
         test->state = CREATE_STREAMS;
-        if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
-            perror("write CREATE_STREAMS");
+        if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
+            perror("Nwrite CREATE_STREAMS");
             return -1;
         }
 
@@ -719,6 +718,9 @@ iperf_handle_message_client(struct iperf_test *test)
     }
 
     switch (test->state) {
+        case PARAM_EXCHANGE:
+            iperf_exchange_parameters(test);
+            break;
         case CREATE_STREAMS:
             iperf_create_streams(test);
             break;
@@ -727,9 +729,11 @@ iperf_handle_message_client(struct iperf_test *test)
         case TEST_RUNNING:
             break;
         case TEST_END:
-            break;
-        case PARAM_EXCHANGE:
-            iperf_exchange_parameters(test);
+            if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
+                perror("Nwrite TEST_END\n");
+                return -1;
+            }
+            test->stats_callback(test);
             break;
         case EXCHANGE_RESULTS:
             iperf_exchange_results(test);
@@ -1146,8 +1150,8 @@ iperf_client_end(struct iperf_test *test)
     }
 
     test->state = IPERF_DONE;
-    if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
-        perror("write IPERF_DONE");
+    if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
+        perror("Nwrite IPERF_DONE");
         return -1;
     }
 
@@ -1172,12 +1176,12 @@ iperf_run_client(struct iperf_test * test)
         // set error and return
         return -1;
     }
-    
+
     signal(SIGINT, sig_handler);
     if (setjmp(env)) {
         fprintf(stderr, "Interrupt received. Exiting...\n");
         test->state = CLIENT_TERMINATE;
-        if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
+        if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
             fprintf(stderr, "Unable to send CLIENT_TERMINATE message to serer\n");
         }
         exit(1);

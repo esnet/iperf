@@ -284,10 +284,10 @@ iperf_run_server(struct iperf_test *test)
                 fprintf(stderr, "Unable to send SERVER_TERMINATE message to client\n");
             }
         }
-        exit(1);
+        return 0;
     }
 
-    for (;;) {
+    for ( ; ; ) {
 
         test->state = IPERF_START;
         streams_accepted = 0;

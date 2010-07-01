@@ -223,7 +223,9 @@ main(int argc, char **argv)
     }
 
     /* For subsequent calls to getopt */
+#ifdef __APPLE__
     optreset = 1;
+#endif
     optind = 0;
     
 

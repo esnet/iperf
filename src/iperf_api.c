@@ -341,8 +341,9 @@ parse_parameters(struct iperf_test *test)
                 break;
         }
     }
-    // XXX: optreset is not needed on ubuntu
+#ifdef __APPLE__
     optreset = 1;
+#endif
     optind = 0;
 
     free(params);

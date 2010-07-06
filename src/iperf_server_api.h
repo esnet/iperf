@@ -7,7 +7,11 @@ int iperf_run_server(struct iperf_test *);
 
 int iperf_server_listen(struct iperf_test *);
 
-int iperf_acept(struct iperf_test *);
+int iperf_accept(struct iperf_test *);
+
+int iperf_accept_tcp_stream(struct iperf_test *);
+
+int iperf_accept_udp_stream(struct iperf_test *);
 
 int iperf_handle_message_server(struct iperf_test *);
 

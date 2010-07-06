@@ -100,7 +100,8 @@ iperf_accept(struct iperf_test *test)
     struct sockaddr_in temp1, temp2;
     struct iperf_stream *sp;
     static int streams_accepted;
-        
+
+    len = sizeof(addr);
     if ((s = accept(test->listener_tcp, (struct sockaddr *) &addr, &len)) < 0) {
         perror("accept");
         return -1;
@@ -141,7 +142,6 @@ iperf_accept(struct iperf_test *test)
             return -1;
         }
         if ((strcmp(test->default_settings->cookie, cookie) == 0) && (test->state == CREATE_STREAMS)) {
-            // XXX: CANNOT USE iperf_tcp_accept since stream is alread accepted at this point. New model needed!
             sp = test->new_stream(test);
             sp->socket = s;
             iperf_init_stream(sp, test);
@@ -171,15 +171,73 @@ iperf_accept(struct iperf_test *test)
     return 0;
 }
 
+
+int
+iperf_accept_tcp_stream(struct iperf_test *test)
+{
+    int     s;
+    int     rbuf = ACCESS_DENIED;
+    char    cookie[COOKIE_SIZE];
+    socklen_t len;
+    struct sockaddr_in addr;
+    struct iperf_stream *sp;
+
+    len = sizeof(addr);
+    if ((s = accept(test->listener_tcp, (struct sockaddr *) &addr, &len)) < 0) {
+        perror("accept tcp stream");
+        return (-1);
+    }
+
+    if (Nread(s, cookie, COOKIE_SIZE, Ptcp) < 0) {
+        perror("Nread cookie");
+        return (-1);
+    }
+
+    if (strcmp(test->default_settings->cookie, cookie) == 0) {
+        // XXX: CANNOT USE iperf_tcp_accept since stream is alread accepted at this point. New model needed!
+        sp = test->new_stream(test);
+        sp->socket = s;
+        iperf_init_stream(sp, test);
+        iperf_add_stream(test, sp);
+        FD_SET(s, &test->read_set);
+        FD_SET(s, &test->write_set);
+        test->max_fd = (s > test->max_fd) ? s : test->max_fd;
+        test->streams_accepted++;
+        connect_msg(sp);
+    } else {
+        if (Nwrite(s, &rbuf, sizeof(char), Ptcp) < 0) {
+            perror("Nwrite ACCESS_DENIED");
+            return (-1);
+        }
+        close(s);
+    }
+    return (0);
+}
+
+
+int
+iperf_accept_udp_stream(struct iperf_test *test)
+{
+    // do nothing for now
+    return (0);
+}
+
 /**************************************************************************/
 int
 iperf_handle_message_server(struct iperf_test *test)
 {
+    int rval;
     struct iperf_stream *sp;
 
-    if (read(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
-        // XXX: Needs to indicate read error
-        return -1;
+    if ((rval = read(test->ctrl_sck, &test->state, sizeof(char))) <= 0) {
+        if (rval == 0) {
+            fprintf(stderr, "The client has unexpectedly closed the connection.\n");
+            test->state = IPERF_DONE;
+            return 0; 
+        } else {
+            perror("read ctrl_sck");
+            return -1;
+        }
     }
 
     switch(test->state) {
@@ -214,7 +272,7 @@ iperf_handle_message_server(struct iperf_test *test)
             exit(1);
         default:
             // XXX: This needs to be replaced by actual error handling
-            fprintf(stderr, "How did you get here? test->state = %d\n", test->state);
+            fprintf(stderr, "Unrecognized state: %d\n", test->state);
             return -1;
     }
 
@@ -246,7 +304,7 @@ iperf_test_reset(struct iperf_test *test)
     test->prot_listener = 0;
 
     test->reverse = 0;
-    // test->no_delay = 0 (Do we need this reset between tests?)
+    test->no_delay = 0;
 
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);
@@ -254,6 +312,7 @@ iperf_test_reset(struct iperf_test *test)
     test->max_fd = test->listener_tcp;
     
     test->num_streams = 1;
+    test->streams_accepted = 0;
     test->default_settings->socket_bufsize = 0;
     test->default_settings->blksize = DEFAULT_TCP_BLKSIZE;
     test->default_settings->rate = RATE;   /* UDP only */
@@ -270,7 +329,7 @@ iperf_run_server(struct iperf_test *test)
 
     // Open socket and listen
     if (iperf_server_listen(test) < 0) {
-        // This needs to be replaced by more formal error handling
+        // XXX: This needs to be replaced by more formal error handling
         fprintf(stderr, "An error occurred. Exiting.\n");
         exit(1);
     }
@@ -290,7 +349,6 @@ iperf_run_server(struct iperf_test *test)
     for ( ; ; ) {
 
         test->state = IPERF_START;
-        streams_accepted = 0;
 
         while (test->state != IPERF_DONE) {
 
@@ -306,39 +364,45 @@ iperf_run_server(struct iperf_test *test)
                 exit(1);
             } else if (result > 0) {
                 if (FD_ISSET(test->listener_tcp, &temp_read_set)) {
-                    if (iperf_accept(test) < 0) {
-                        fprintf(stderr, "iperf_accept: error accepting control socket. exiting...\n");
-                        exit(1);
+                    if (test->state != CREATE_STREAMS) {
+                        if (iperf_accept(test) < 0) {
+                            fprintf(stderr, "iperf_accept: error accepting control socket. exiting...\n");
+                            exit(1);
+                        }
+                        FD_CLR(test->listener_tcp, &temp_read_set);
                     }
-                    FD_CLR(test->listener_tcp, &temp_read_set);
                 }
                 if (FD_ISSET(test->ctrl_sck, &temp_read_set)) {
                     iperf_handle_message_server(test);
                     FD_CLR(test->ctrl_sck, &temp_read_set);                
                 }
 
-/*
                 if (test->state == CREATE_STREAMS) {
-                    if (FD_ISSET(test->prot_listener, &temp_read_set)) {
-                        // Spawn new streams
-                        // XXX: This works, but should it check cookies for authenticity
-                        //      Also, currently it uses 5202 for stream connections.
-                        //      Should this be fixed to use 5201 instead?
-                        iperf_tcp_accept(test);
-                        ++streams_accepted;
-                        FD_CLR(test->prot_listener, &temp_read_set);
+                    if (test->protocol == Ptcp) {
+                        if (FD_ISSET(test->listener_tcp, &temp_read_set)) {
+                            if (iperf_accept_tcp_stream(test) < 0) {
+                                fprintf(stderr, "iperf_accept_tcp_stream: an error occurred.\n");
+                                exit(1);
+                            }
+                            FD_CLR(test->listener_tcp, &temp_read_set);
+                        }
+                    } else {
+                        if (FD_ISSET(test->listener_udp, &temp_read_set)) {
+                            if (iperf_accept_udp_stream(test) < 0) {
+                                fprintf(stderr, "iperf_accept_udp_stream: an error occurred.\n");
+                                exit(1);
+                            }
+                            FD_CLR(test->listener_udp, &temp_read_set);
+                        }
                     }
-                    if (streams_accepted == test->num_streams) {
-                        FD_CLR(test->prot_listener, &test->read_set);
-                        close(test->prot_listener);
+                    if (test->streams_accepted == test->num_streams) {
                         test->state = TEST_START;
-                        if (write(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
-                            perror("write TEST_START");
+                        if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
+                            perror("Nwrite TEST_START");
                             return -1;
                         }
                     }
                 }
-*/
 
                 if (test->reverse) {
                     // Reverse mode. Server sends.
@@ -355,9 +419,6 @@ iperf_run_server(struct iperf_test *test)
         printf("\n");
 
     }
-
-    // XXX: Need to put the above while loop into another control structure
-    //      that initiates a new test upon each connection rather than dying.
 
     return 0;
 }

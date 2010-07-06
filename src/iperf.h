@@ -115,6 +115,7 @@ struct iperf_test
     int       ctrl_sck;
     // Server is the only one that needs these
     int       listener_tcp;
+    int       listener_udp;
     int       prot_listener;
 
 
@@ -143,6 +144,7 @@ struct iperf_test
     void      (*reporter_callback) (struct iperf_test *);
 
     int       num_streams;                      /* total streams in the test (-P) */
+    int       streams_accepted;                 /* total number of streams accepted (server only) */
 
     /* iperf error reporting
      * - errtype: (0,1,2)

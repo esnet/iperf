@@ -259,7 +259,7 @@ package_parameters(struct iperf_test *test)
     }
 
     if (test->default_settings->bytes) {
-        sprintf(optbuf, "-m %llu ", test->default_settings->bytes);
+        sprintf(optbuf, "-n %llu ", test->default_settings->bytes);
         strcat(pstring, optbuf);
     }
 
@@ -713,9 +713,16 @@ iperf_create_streams(struct iperf_test *test)
 int
 iperf_handle_message_client(struct iperf_test *test)
 {
-    if (read(test->ctrl_sck, &test->state, sizeof(char)) < 0) {
-        // indicate error on read
-        return -1;
+    int rval;
+
+    if ((rval = read(test->ctrl_sck, &test->state, sizeof(char))) <= 0) {
+        if (rval == 0) {
+            fprintf(stderr, "The server has unexpectedly closed the connection. Exiting...\n");
+            exit(1);
+        } else {
+            perror("read ctrl_sck");
+            return -1;
+        }
     }
 
     switch (test->state) {

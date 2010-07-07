@@ -24,4 +24,6 @@ int64_t timer_remaining(struct timer *tp);
 
 void free_timer(struct timer *tp);
 
+int timer_expired(struct timer *);
+
 #endif

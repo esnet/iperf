@@ -159,6 +159,7 @@ iperf_accept(struct iperf_test *test)
                     return -1;
                 }
             }
+            
         } else {
             if (Nwrite(s, &rbuf, sizeof(int), Ptcp) < 0) {
                 perror("Nwrite ACCESS_DENIED");
@@ -243,9 +244,8 @@ iperf_handle_message_server(struct iperf_test *test)
     switch(test->state) {
         case TEST_START:
             break;
-        case TEST_RUNNING:
-            break;
         case TEST_END:
+            test->stats_callback(test);
             for (sp = test->streams; sp; sp = sp->next) {
                 FD_CLR(sp->socket, &test->read_set);
                 FD_CLR(sp->socket, &test->write_set);
@@ -262,7 +262,6 @@ iperf_handle_message_server(struct iperf_test *test)
                 perror("Nwrite DISPLAY_RESULTS");
                 exit(1);
             }
-            test->stats_callback(test);
             test->reporter_callback(test);
             break;
         case IPERF_DONE:
@@ -291,6 +290,12 @@ iperf_test_reset(struct iperf_test *test)
         np = sp->next;
         iperf_free_stream(sp);
     }
+    free_timer(test->timer);
+    free_timer(test->stats_timer);
+    free_timer(test->reporter_timer);
+    test->timer = NULL;
+    test->stats_timer = NULL;
+    test->reporter_timer = NULL;
 
     test->streams = NULL;
 
@@ -302,6 +307,8 @@ iperf_test_reset(struct iperf_test *test)
 
     test->ctrl_sck = -1;
     test->prot_listener = 0;
+
+    test->bytes_sent = 0;
 
     test->reverse = 0;
     test->no_delay = 0;
@@ -401,15 +408,33 @@ iperf_run_server(struct iperf_test *test)
                             perror("Nwrite TEST_START");
                             return -1;
                         }
+                        iperf_init_test(test);
+                        test->state = TEST_RUNNING;
+                        if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
+                            perror("Nwrite TEST_RUNNING");
+                            return -1;
+                        }
                     }
                 }
 
-                if (test->reverse) {
-                    // Reverse mode. Server sends.
-                    iperf_send(test);
-                } else {
-                    // Regular mode. Server receives.
-                    iperf_recv(test);
+                if (test->state == TEST_RUNNING) {
+                    if (test->reverse) {
+                        // Reverse mode. Server sends.
+                        iperf_send(test);
+                    } else {
+                        // Regular mode. Server receives.
+                        iperf_recv(test);
+                    }
+
+                    /* Perform callbacks */
+                    if (timer_expired(test->stats_timer)) {
+                        test->stats_callback(test);
+                        update_timer(test->stats_timer, test->stats_interval, 0);
+                    }
+                    if (timer_expired(test->reporter_timer)) {
+                        test->reporter_callback(test);
+                        update_timer(test->reporter_timer, test->reporter_interval, 0);
+                    }
                 }
             }
         }

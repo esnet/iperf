@@ -77,7 +77,7 @@ iperf_tcp_recv(struct iperf_stream * sp)
     sp->result->bytes_received += result;
     sp->result->bytes_received_this_interval += result;
 
-    return 0;
+    return result;
 }
 
 /**************************************************************************/

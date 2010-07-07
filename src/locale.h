@@ -20,6 +20,8 @@ extern char tcp_window_size[] ;
 extern char udp_buffer_size[] ;
 extern char window_default[] ;
 extern char wait_server_threads[] ;
+extern char test_start_time[];
+extern char test_start_bytes[];
 
 extern char report_read_lengths[] ;
 extern char report_read_length_times[] ;

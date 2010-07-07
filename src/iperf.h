@@ -137,14 +137,21 @@ struct iperf_test
 
     int       (*accept) (struct iperf_test *);
     struct iperf_stream *(*new_stream) (struct iperf_test *);
-    
+
+    /* Interval related members */ 
     int       stats_interval;
     int       reporter_interval;
     void      (*stats_callback) (struct iperf_test *);
     void      (*reporter_callback) (struct iperf_test *);
+    struct timer *timer;
+    struct timer *stats_timer;
+    struct timer *reporter_timer;
+
 
     int       num_streams;                      /* total streams in the test (-P) */
     int       streams_accepted;                 /* total number of streams accepted (server only) */
+
+    iperf_size_t bytes_sent;
 
     /* iperf error reporting
      * - errtype: (0,1,2)

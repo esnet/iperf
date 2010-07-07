@@ -167,6 +167,13 @@ const char window_default[] =
 const char wait_server_threads[] =
 "Waiting for server threads to complete. Interrupt again to force quit.\n";
 
+const char test_start_time[] =
+"Starting Test: protocol: %s, %d streams, %d byte blocks, %d second test\n";
+
+const char test_start_bytes[] =
+"Starting Test: protocol: %s, %d streams, %d byte blocks, %llu bytes to send\n";
+
+
 /* -------------------------------------------------------------------
  * reports
  * ------------------------------------------------------------------- */

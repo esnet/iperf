@@ -56,136 +56,49 @@ usage_long()
     fprintf(stderr, usage_long2);
 }
 
-/*
- * XXX: should probably just compute this as we go and store it in the
- * iperf_test structure -blt
- */
 int
 all_data_sent(struct iperf_test * test)
 {
-    if (test->default_settings->bytes == 0) {
-        return 0;
-    } else {
-        uint64_t  total_bytes = 0;
-        struct iperf_stream *sp;
-
-        sp = test->streams;
-
-        while (sp) {
-            total_bytes += sp->result->bytes_sent;
-            sp = sp->next;
-        }
-
-        if (total_bytes >= (test->num_streams * test->default_settings->bytes)) {
+    if (test->default_settings->bytes > 0) {
+        if (test->bytes_sent >= (test->num_streams * test->default_settings->bytes)) {
             return 1;
-        } else {
-            return 0;
         }
     }
 
+    return 0;
 }
 
 int
 iperf_send(struct iperf_test *test)
 {
     int result;
-    char *prot;
+    iperf_size_t bytes_sent;
     fd_set temp_write_set;
     struct timeval tv;
-    int64_t delayus, adjustus, dtargus;
     struct iperf_stream *sp;
-    static struct timer *timer, *stats_interval, *reporter_interval;
 
-    if (test->state == TEST_START) {
-        timer = stats_interval = reporter_interval = NULL;
+    memcpy(&temp_write_set, &test->write_set, sizeof(fd_set));
+    tv.tv_sec = 15;
+    tv.tv_usec = 0;
 
-        // Not sure what the following code does yet. It's UDP, so I'll get to fixing it eventually
-        if (test->protocol == Pudp) {
-            prot = "UDP";
-            dtargus = (int64_t) (test->default_settings->blksize) * SEC_TO_US * 8;
-            dtargus /= test->default_settings->rate;
-
-            assert(dtargus != 0);
-
-            delayus = dtargus;
-            adjustus = 0;
-
-            printf("iperf_run_client: adjustus: %lld, delayus %lld \n", adjustus, delayus);
-
-            for (sp = test->streams; sp != NULL; sp = sp->next)
-                sp->send_timer = new_timer(0, dtargus);
-
-        } else {
-            prot = "TCP";
-        }
-
-        /* if -n specified, set zero timer */
-        // Set timers and print usage message
-        if (test->default_settings->bytes == 0) {
-            timer = new_timer(test->duration, 0);
-            printf("Starting Test: protocol: %s, %d streams, %d byte blocks, %d second test \n",
-                prot, test->num_streams, test->default_settings->blksize, test->duration);
-        } else {
-            timer = new_timer(0, 0);
-            printf("Starting Test: protocol: %s, %d streams, %d byte blocks, %d bytes to send\n",
-                prot, test->num_streams, test->default_settings->blksize, (int) test->default_settings->bytes);
-        }
-        if (test->stats_interval != 0)
-            stats_interval = new_timer(test->stats_interval, 0);
-        if (test->reporter_interval != 0)
-            reporter_interval = new_timer(test->reporter_interval, 0);
-        
-        test->state = TEST_RUNNING;
-        if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-            perror("Nwrite TEST_RUNNING");
-            exit(1);
-        }
-
-    } else if (test->state == TEST_RUNNING) {
-        memcpy(&temp_write_set, &test->write_set, sizeof(fd_set));
-        tv.tv_sec = 15;
-        tv.tv_usec = 0;
-
-        result = select(test->max_fd + 1, NULL, &temp_write_set, NULL, &tv);
-        if (result < 0 && errno != EINTR) {
-            perror("select iperf_send");
-            return -1;
-        }
-        if (result > 0) {
-            if (!all_data_sent(test) && !timer->expired(timer)) {
-                for (sp = test->streams; sp != NULL; sp = sp->next) {
-                    if (FD_ISSET(sp->socket, &temp_write_set)) {
-                        if (sp->snd(sp) < 0) {
-                            // XXX: Do better error handling
-                            perror("iperf_client_start: snd");
-                        }
-                        FD_CLR(sp->socket, &temp_write_set);
-                    }
-                }
-
-                // Perform callbacks
-                if ((test->stats_interval != 0) && stats_interval->expired(stats_interval)) {
-                    test->stats_callback(test);
-                    update_timer(stats_interval, test->stats_interval, 0);
-                }
-                if ((test->reporter_interval != 0) && reporter_interval->expired(reporter_interval)) {
-                    test->reporter_callback(test);
-                    update_timer(reporter_interval, test->reporter_interval, 0);
-                }
-            } else {
-                free_timer(timer);
-                free_timer(stats_interval);
-                free_timer(reporter_interval);
-
-                test->state = TEST_END;
-                if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-                    perror("Nwrite TEST_END");
+    result = select(test->max_fd + 1, NULL, &temp_write_set, NULL, &tv);
+    if (result < 0 && errno != EINTR) {
+        perror("select iperf_send");
+        return -1;
+    }
+    if (result > 0) {
+        for (sp = test->streams; sp != NULL; sp = sp->next) {
+            if (FD_ISSET(sp->socket, &temp_write_set)) {
+                if ((bytes_sent = sp->snd(sp)) < 0) {
+                    // XXX: Do better error handling
+                    perror("iperf stream->snd");
                     return -1;
                 }
-                test->stats_callback(test);
+                test->bytes_sent += bytes_sent;
+                FD_CLR(sp->socket, &temp_write_set);
             }
         }
-    } 
+    }
 
     return 0;
 }
@@ -194,34 +107,87 @@ int
 iperf_recv(struct iperf_test *test)
 {
     int result;
+    iperf_size_t bytes_sent;
     fd_set temp_read_set;
     struct timeval tv;
     struct iperf_stream *sp;
 
-    if (test->state == TEST_RUNNING) {
-        memcpy(&temp_read_set, &test->read_set, sizeof(fd_set));
-        tv.tv_sec = 15;
-        tv.tv_usec = 0;
+    memcpy(&temp_read_set, &test->read_set, sizeof(fd_set));
+    tv.tv_sec = 15;
+    tv.tv_usec = 0;
 
-        result = select(test->max_fd + 1, &temp_read_set, NULL, NULL, &tv);
-        if (result < 0) {
-            perror("select iperf_recv");
-            return -1;
-        }
-        if (result > 0) {
-            for (sp = test->streams; sp != NULL; sp = sp->next) {
-                if (FD_ISSET(sp->socket, &temp_read_set)) {
-                    if (sp->rcv(sp) < 0) {
-                        // XXX: Do better error handling
-                        perror("sp->rcv(sp)");
-                    }
-                    FD_CLR(sp->socket, &temp_read_set);
+    result = select(test->max_fd + 1, &temp_read_set, NULL, NULL, &tv);
+    if (result < 0) {
+        perror("select iperf_recv");
+        return -1;
+    }
+    if (result > 0) {
+        for (sp = test->streams; sp != NULL; sp = sp->next) {
+            if (FD_ISSET(sp->socket, &temp_read_set)) {
+                if ((bytes_sent = sp->rcv(sp)) < 0) {
+                    // XXX: Do better error handling
+                    perror("sp->rcv(sp)");
+                    return -1;
                 }
+                test->bytes_sent += bytes_sent;
+                FD_CLR(sp->socket, &temp_read_set);
             }
         }
     }
 
     return 0;
+}
+
+void
+iperf_init_test(struct iperf_test *test)
+{
+    char *prot;
+    struct iperf_stream *sp;
+
+/* XXX: These variables were used in the old UDP code
+    int64_t delayus, adjustus, dtargus;
+*/
+
+    if (test->protocol == Pudp) {
+        prot = "UDP";
+
+/* XXX: This code isn't currently used and will most likely be changed
+        dtargus = (int64_t) (test->default_settings->blksize) * SEC_TO_US * 8;
+        dtargus /= test->default_settings->rate;
+
+        assert(dtargus != 0);
+
+        delayus = dtargus;
+        adjustus = 0;
+
+        printf("iperf_run_client: adjustus: %lld, delayus %lld \n", adjustus, delayus);
+
+        for (sp = test->streams; sp != NULL; sp = sp->next)
+            sp->send_timer = new_timer(0, dtargus);
+*/
+
+    } else {
+        prot = "TCP";
+    }
+
+    /* Set timers */
+    if (test->default_settings->bytes == 0) {
+        test->timer = new_timer(test->duration, 0);
+        printf(test_start_time, prot, test->num_streams, test->default_settings->blksize,
+            test->duration);
+    } else {
+        printf(test_start_bytes, prot, test->num_streams, test->default_settings->blksize,
+            test->default_settings->bytes);
+    }
+
+    if (test->stats_interval != 0)
+        test->stats_timer = new_timer(test->stats_interval, 0);
+    if (test->reporter_interval != 0)
+        test->reporter_timer = new_timer(test->reporter_interval, 0);
+
+    /* Set start time */
+    for (sp = test->streams; sp; sp = sp->next)
+        gettimeofday(&sp->result->start_time, NULL);
 }
 
 
@@ -733,15 +699,9 @@ iperf_handle_message_client(struct iperf_test *test)
             iperf_create_streams(test);
             break;
         case TEST_START:
+            iperf_init_test(test);
             break;
         case TEST_RUNNING:
-            break;
-        case TEST_END:
-            if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-                perror("Nwrite TEST_END\n");
-                return -1;
-            }
-            test->stats_callback(test);
             break;
         case EXCHANGE_RESULTS:
             iperf_exchange_results(test);
@@ -800,6 +760,9 @@ void
 iperf_free_test(struct iperf_test * test)
 {
     free(test->default_settings);
+    free_timer(test->timer);
+    free_timer(test->stats_timer);
+    free_timer(test->reporter_timer);
 
     test->streams = NULL;
     test->accept = NULL;
@@ -904,7 +867,6 @@ iperf_reporter_callback(struct iperf_test * test)
 #endif
             }
             break;
-        case TEST_END:
         case DISPLAY_RESULTS:
             /* print final summary for all intervals */
 
@@ -1212,12 +1174,34 @@ iperf_run_client(struct iperf_test * test)
                 FD_CLR(test->ctrl_sck, &temp_read_set);
             }
 
-            if (test->reverse) {
-                // Reverse mode. Client receives.
-                iperf_recv(test);
-            } else {
-                // Regular mode. Client sends.
-                iperf_send(test);
+            if (test->state == TEST_RUNNING) {
+                if (test->reverse) {
+                    // Reverse mode. Client receives.
+                    iperf_recv(test);
+                } else {
+                    // Regular mode. Client sends.
+                    iperf_send(test);
+                }
+
+                /* Perform callbacks */
+                if (timer_expired(test->stats_timer)) {
+                    test->stats_callback(test);
+                    update_timer(test->stats_timer, test->stats_interval, 0);
+                }
+                if (timer_expired(test->reporter_timer)) {
+                    test->reporter_callback(test);
+                    update_timer(test->reporter_timer, test->reporter_interval, 0);
+                }
+               
+                /* Send TEST_END if all data has been sent or timer expired */ 
+                if (all_data_sent(test) || timer_expired(test->timer)) {
+                    test->stats_callback(test);
+                    test->state = TEST_END;
+                    if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
+                        perror("Nwrite TEST_END");
+                        return -1;
+                    }
+                }
             }
         }
     }

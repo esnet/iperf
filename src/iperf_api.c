@@ -203,35 +203,40 @@ package_parameters(struct iperf_test *test)
     *pstring = ' ';
 
     if (test->protocol == Ptcp) {
-        strcat(pstring, "-p ");
+        strncat(pstring, "-p ", sizeof(pstring));
     } else if (test->protocol == Pudp) {
-        strcat(pstring, "-u ");
+        strncat(pstring, "-u ", sizeof(pstring));
     }
 
-    sprintf(optbuf, "-P %d ", test->num_streams);
-    strcat(pstring, optbuf);
+    snprintf(optbuf, sizeof(optbuf), "-P %d ", test->num_streams);
+    strncat(pstring, optbuf, sizeof(pstring));
     
     if (test->reverse)
-        strcat(pstring, "-R ");
+        strncat(pstring, "-R ", sizeof(pstring));
     
     if (test->default_settings->socket_bufsize) {
-        sprintf(optbuf, "-w %d ", test->default_settings->socket_bufsize);
-        strcat(pstring, optbuf);
+        snprintf(optbuf, sizeof(optbuf), "-w %d ", test->default_settings->socket_bufsize);
+        strncat(pstring, optbuf, sizeof(pstring));
     }
 
     if (test->default_settings->mss) {
-        sprintf(optbuf, "-m %d ", test->default_settings->mss);
-        strcat(pstring, optbuf);
+        snprintf(optbuf, sizeof(optbuf), "-m %d ", test->default_settings->mss);
+        strncat(pstring, optbuf, sizeof(pstring));
     }
 
     if (test->default_settings->bytes) {
-        sprintf(optbuf, "-n %llu ", test->default_settings->bytes);
-        strcat(pstring, optbuf);
+        snprintf(optbuf, sizeof(optbuf), "-n %llu ", test->default_settings->bytes);
+        strncat(pstring, optbuf, sizeof(pstring));
     }
 
     if (test->duration) {
-        sprintf(optbuf, "-t %d ", test->duration);
-        strcat(pstring, optbuf);
+        snprintf(optbuf, sizeof(optbuf), "-t %d ", test->duration);
+        strncat(pstring, optbuf, sizeof(pstring));
+    }
+
+    if (test->default_settings->blksize) {
+        snprintf(optbuf, sizeof(optbuf), "-l %d ", test->default_settings->blksize);
+        strncat(pstring, optbuf, sizeof(pstring));
     }
 
     *pstring = (char) (strlen(pstring) - 1);
@@ -279,7 +284,7 @@ parse_parameters(struct iperf_test *test)
         n++;
     }
 
-    while ((ch = getopt(n, params, "pt:n:m:uP:Rw:")) != -1) {
+    while ((ch = getopt(n, params, "pt:n:m:uP:Rw:l:")) != -1) {
         switch (ch) {
             case 'p':
                 test->protocol = Ptcp;
@@ -304,6 +309,9 @@ parse_parameters(struct iperf_test *test)
                 break;
             case 'w':
                 test->default_settings->socket_bufsize = atoi(optarg);
+                break;
+            case 'l':
+                test->default_settings->blksize = atoi(optarg);
                 break;
         }
     }
@@ -1044,10 +1052,6 @@ iperf_new_stream(struct iperf_test *testp)
     sp->result->bytes_received_this_interval = 0;
     sp->result->bytes_sent_this_interval = 0;
 
-    // XXX: This sets the starting time of the test.
-    //      It needs to be set when the test starts, not when the stream is created.
-    gettimeofday(&sp->result->start_time, NULL);
-
     sp->settings->state = STREAM_BEGIN;
     return sp;
 }
@@ -1108,8 +1112,6 @@ iperf_client_end(struct iperf_test *test)
     printf("Test Complete. Summary Results:\n");
  
     /* show final summary */
-    // XXX: Moved stats_callback to end of iperf_send to log correct stream end_time
-    // test->stats_callback(test);
     test->reporter_callback(test);
 
     /* Deleting all streams - CAN CHANGE FREE_STREAM FN */

@@ -267,8 +267,14 @@ iperf_handle_message_server(struct iperf_test *test)
         case IPERF_DONE:
             break;
         case CLIENT_TERMINATE:
-            fprintf(stderr, "The client has terminated. Exiting...\n");
-            exit(1);
+            fprintf(stderr, "The client has terminated.\n");
+            for (sp = test->streams; sp; sp = sp->next) {
+                FD_CLR(sp->socket, &test->read_set);
+                FD_CLR(sp->socket, &test->write_set);
+                close(sp->socket);
+            }
+            test->state = IPERF_DONE;
+            break;
         default:
             // XXX: This needs to be replaced by actual error handling
             fprintf(stderr, "Unrecognized state: %d\n", test->state);
@@ -343,7 +349,7 @@ iperf_run_server(struct iperf_test *test)
 
     signal(SIGINT, sig_handler);
     if (setjmp(env)) {
-        fprintf(stderr, "Interrupt received. Exiting...\n");
+        fprintf(stderr, "Exiting...\n");
         test->state = SERVER_TERMINATE;
         if (test->ctrl_sck >= 0) {
             if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {

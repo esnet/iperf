@@ -1151,7 +1151,7 @@ iperf_run_client(struct iperf_test * test)
 
     signal(SIGINT, sig_handler);
     if (setjmp(env)) {
-        fprintf(stderr, "Interrupt received. Exiting...\n");
+        fprintf(stderr, "Exiting...\n");
         test->state = CLIENT_TERMINATE;
         if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
             fprintf(stderr, "Unable to send CLIENT_TERMINATE message to serer\n");

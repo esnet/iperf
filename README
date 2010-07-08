@@ -1,44 +1,29 @@
-Summary
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+= Summary =
 
-iperf3 is a tool for measuring Internet bandwidth performance.
-This is iperf3, a tool for measuring Internet bandwidth performance.
+iperf3 is a tool for measuring achievable bandwidth on IP networks.
+
+iperf3 is NOT backwards compatible with the original iperf.
 
 Supported platforms:
-   iperf3 should work on Linux, FreeBSD, and Mac OSX
+  * Linux
+  * FreeBSD 
+  * Mac OSX
 
+= Building iperf3 =
 
-Building iperf3
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+== Prerequisites: ==
+  * libuuid: this is not installed by default for Debian/Ubuntu Systems
+             to install: apt-get install uuid-dev
 
-Prerequisites:
-   libuuid: this is not installed by default for Debian/Ubuntu Systems
-   to install: apt-get install uuid-dev
+== Building ==
 
-To build, just type 'make'  (or 'gmake' on FreeBSD)
+Run:
 
+./configure
 
-Release Notes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+and 
 
-iperf - Version 3, beta 1
+make
 
-New in this version:
-  * TCP control socket now manages messages between client and server
-  * Dynamic server (gets test parameters from client)
-      - Server can now set test options dynamically without having to restart.
-             Currently supported options: -l, -t, -n, -P, -R
-             Future options: -u, -b, -w, -M, -N, -I, -T, -Z, -6
-  * Results exchange
-      - Client can now see server results (and vice versa)
-  * Reverse mode (-R)
-      - Server sends, client receives
-
-Note: iperf3 is NOT backwards compatible with iperf2. 
-
-
-Documentation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For more information see: http://code.google.com/p/iperf/
-

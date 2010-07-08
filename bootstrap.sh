@@ -39,9 +39,9 @@ case "$1" in
 esac
 
 set -x
-libtoolize --copy --force --automake
-aclocal -I config
+glibtoolize --copy --force --automake
+aclocal-17 -I config
 autoheader
-automake --foreign --add-missing --copy
+automake-17 --foreign --add-missing --copy
 autoconf
 rm -rf config.cache

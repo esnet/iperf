@@ -14,7 +14,7 @@ libiperf_a_SOURCES      = \
                         net.c \
                         tcp_window_size.c \
                         units.c \
-                        uuid.c \
+                        iperf_util.c \
                         tcp_info.c \
                         locale.c \
                         iperf_api.h \
@@ -27,7 +27,7 @@ libiperf_a_SOURCES      = \
                         tcp_window_size.h \
                         timer.h \
                         units.h \
-                        uuid.h \
+                        iperf_util.h \
                         version.h
 
 # Specify the sources and various flags for the iperf binary
@@ -53,7 +53,7 @@ iperf3_profile_SOURCES  = main.c \
                         net.c \
                         tcp_window_size.c \
                         units.c \
-                        uuid.c \
+                        iperf_util.c \
                         tcp_info.c \
                         locale.c \
                         iperf_api.h \
@@ -66,7 +66,7 @@ iperf3_profile_SOURCES  = main.c \
                         tcp_window_size.h \
                         timer.h \
                         units.h \
-                        uuid.h \
+                        iperf_util.h \
                         version.h
 iperf3_profile_CFLAGS   = -pg -Wall
 iperf3_profile_LDADD    = libiperf.a

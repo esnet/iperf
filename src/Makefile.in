@@ -155,7 +155,7 @@ libiperf_a_SOURCES = \
                         net.c \
                         tcp_window_size.c \
                         units.c \
-                        uuid.c \
+                        iperf_util.c \
                         tcp_info.c \
                         locale.c \
                         iperf_api.h \
@@ -168,7 +168,7 @@ libiperf_a_SOURCES = \
                         tcp_window_size.h \
                         timer.h \
                         units.h \
-                        uuid.h \
+                        iperf_util.h \
                         version.h
 
 
@@ -192,7 +192,7 @@ iperf3_profile_SOURCES = main.c \
                         net.c \
                         tcp_window_size.c \
                         units.c \
-                        uuid.c \
+                        iperf_util.c \
                         tcp_info.c \
                         locale.c \
                         iperf_api.h \
@@ -205,7 +205,7 @@ iperf3_profile_SOURCES = main.c \
                         tcp_window_size.h \
                         timer.h \
                         units.h \
-                        uuid.h \
+                        iperf_util.h \
                         version.h
 
 iperf3_profile_CFLAGS = -pg -Wall
@@ -251,7 +251,7 @@ libiperf_a_LIBADD =
 am_libiperf_a_OBJECTS = iperf_api.$(OBJEXT) iperf_server_api.$(OBJEXT) \
 	iperf_tcp.$(OBJEXT) iperf_udp.$(OBJEXT) timer.$(OBJEXT) \
 	net.$(OBJEXT) tcp_window_size.$(OBJEXT) units.$(OBJEXT) \
-	uuid.$(OBJEXT) tcp_info.$(OBJEXT) locale.$(OBJEXT)
+	iperf_util.$(OBJEXT) tcp_info.$(OBJEXT) locale.$(OBJEXT)
 libiperf_a_OBJECTS = $(am_libiperf_a_OBJECTS)
 bin_PROGRAMS = iperf3$(EXEEXT)
 noinst_PROGRAMS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT) \
@@ -268,7 +268,8 @@ am_iperf3_profile_OBJECTS = iperf3_profile-main.$(OBJEXT) \
 	iperf3_profile-iperf_udp.$(OBJEXT) \
 	iperf3_profile-timer.$(OBJEXT) iperf3_profile-net.$(OBJEXT) \
 	iperf3_profile-tcp_window_size.$(OBJEXT) \
-	iperf3_profile-units.$(OBJEXT) iperf3_profile-uuid.$(OBJEXT) \
+	iperf3_profile-units.$(OBJEXT) \
+	iperf3_profile-iperf_util.$(OBJEXT) \
 	iperf3_profile-tcp_info.$(OBJEXT) \
 	iperf3_profile-locale.$(OBJEXT)
 iperf3_profile_OBJECTS = $(am_iperf3_profile_OBJECTS)
@@ -291,6 +292,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/iperf3_profile-iperf_server_api.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/iperf3_profile-iperf_tcp.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/iperf3_profile-iperf_udp.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/iperf3_profile-iperf_util.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/iperf3_profile-locale.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/iperf3_profile-main.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/iperf3_profile-net.Po \
@@ -298,17 +300,16 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/iperf3_profile-tcp_window_size.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/iperf3_profile-timer.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/iperf3_profile-units.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/iperf3_profile-uuid.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/iperf_api.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/iperf_server_api.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/iperf_tcp.Po ./$(DEPDIR)/iperf_udp.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/locale.Po ./$(DEPDIR)/net.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/t_timer-t_timer.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/iperf_util.Po ./$(DEPDIR)/locale.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/net.Po ./$(DEPDIR)/t_timer-t_timer.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/t_units-t_units.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/t_uuid-t_uuid.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/tcp_info.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/tcp_window_size.Po ./$(DEPDIR)/timer.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/units.Po ./$(DEPDIR)/uuid.Po
+@AMDEP_TRUE@	./$(DEPDIR)/units.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) \
@@ -452,6 +453,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_server_api.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_tcp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_udp.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-locale.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-net.Po@am__quote@
@@ -459,11 +461,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-tcp_window_size.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-timer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-units.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-uuid.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_api.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_server_api.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_tcp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_udp.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/locale.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/net.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_timer-t_timer.Po@am__quote@
@@ -473,7 +475,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcp_window_size.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/units.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uuid.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" \
@@ -838,38 +839,38 @@ iperf3_profile-units.lo: units.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-units.lo `test -f 'units.c' || echo '$(srcdir)/'`units.c
 
-iperf3_profile-uuid.o: uuid.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-uuid.o -MD -MP -MF "$(DEPDIR)/iperf3_profile-uuid.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o iperf3_profile-uuid.o `test -f 'uuid.c' || echo '$(srcdir)/'`uuid.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/iperf3_profile-uuid.Tpo" "$(DEPDIR)/iperf3_profile-uuid.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/iperf3_profile-uuid.Tpo"; exit 1; \
+iperf3_profile-iperf_util.o: iperf_util.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-iperf_util.o -MD -MP -MF "$(DEPDIR)/iperf3_profile-iperf_util.Tpo" \
+@am__fastdepCC_TRUE@	  -c -o iperf3_profile-iperf_util.o `test -f 'iperf_util.c' || echo '$(srcdir)/'`iperf_util.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/iperf3_profile-iperf_util.Tpo" "$(DEPDIR)/iperf3_profile-iperf_util.Po"; \
+@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/iperf3_profile-iperf_util.Tpo"; exit 1; \
 @am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='uuid.c' object='iperf3_profile-uuid.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/iperf3_profile-uuid.Po' tmpdepfile='$(DEPDIR)/iperf3_profile-uuid.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='iperf_util.c' object='iperf3_profile-iperf_util.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/iperf3_profile-iperf_util.Po' tmpdepfile='$(DEPDIR)/iperf3_profile-iperf_util.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-uuid.o `test -f 'uuid.c' || echo '$(srcdir)/'`uuid.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-iperf_util.o `test -f 'iperf_util.c' || echo '$(srcdir)/'`iperf_util.c
 
-iperf3_profile-uuid.obj: uuid.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-uuid.obj -MD -MP -MF "$(DEPDIR)/iperf3_profile-uuid.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o iperf3_profile-uuid.obj `if test -f 'uuid.c'; then $(CYGPATH_W) 'uuid.c'; else $(CYGPATH_W) '$(srcdir)/uuid.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/iperf3_profile-uuid.Tpo" "$(DEPDIR)/iperf3_profile-uuid.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/iperf3_profile-uuid.Tpo"; exit 1; \
+iperf3_profile-iperf_util.obj: iperf_util.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-iperf_util.obj -MD -MP -MF "$(DEPDIR)/iperf3_profile-iperf_util.Tpo" \
+@am__fastdepCC_TRUE@	  -c -o iperf3_profile-iperf_util.obj `if test -f 'iperf_util.c'; then $(CYGPATH_W) 'iperf_util.c'; else $(CYGPATH_W) '$(srcdir)/iperf_util.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/iperf3_profile-iperf_util.Tpo" "$(DEPDIR)/iperf3_profile-iperf_util.Po"; \
+@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/iperf3_profile-iperf_util.Tpo"; exit 1; \
 @am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='uuid.c' object='iperf3_profile-uuid.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/iperf3_profile-uuid.Po' tmpdepfile='$(DEPDIR)/iperf3_profile-uuid.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='iperf_util.c' object='iperf3_profile-iperf_util.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/iperf3_profile-iperf_util.Po' tmpdepfile='$(DEPDIR)/iperf3_profile-iperf_util.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-uuid.obj `if test -f 'uuid.c'; then $(CYGPATH_W) 'uuid.c'; else $(CYGPATH_W) '$(srcdir)/uuid.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-iperf_util.obj `if test -f 'iperf_util.c'; then $(CYGPATH_W) 'iperf_util.c'; else $(CYGPATH_W) '$(srcdir)/iperf_util.c'; fi`
 
-iperf3_profile-uuid.lo: uuid.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-uuid.lo -MD -MP -MF "$(DEPDIR)/iperf3_profile-uuid.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o iperf3_profile-uuid.lo `test -f 'uuid.c' || echo '$(srcdir)/'`uuid.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/iperf3_profile-uuid.Tpo" "$(DEPDIR)/iperf3_profile-uuid.Plo"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/iperf3_profile-uuid.Tpo"; exit 1; \
+iperf3_profile-iperf_util.lo: iperf_util.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-iperf_util.lo -MD -MP -MF "$(DEPDIR)/iperf3_profile-iperf_util.Tpo" \
+@am__fastdepCC_TRUE@	  -c -o iperf3_profile-iperf_util.lo `test -f 'iperf_util.c' || echo '$(srcdir)/'`iperf_util.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/iperf3_profile-iperf_util.Tpo" "$(DEPDIR)/iperf3_profile-iperf_util.Plo"; \
+@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/iperf3_profile-iperf_util.Tpo"; exit 1; \
 @am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='uuid.c' object='iperf3_profile-uuid.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/iperf3_profile-uuid.Plo' tmpdepfile='$(DEPDIR)/iperf3_profile-uuid.TPlo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='iperf_util.c' object='iperf3_profile-iperf_util.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/iperf3_profile-iperf_util.Plo' tmpdepfile='$(DEPDIR)/iperf3_profile-iperf_util.TPlo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-uuid.lo `test -f 'uuid.c' || echo '$(srcdir)/'`uuid.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-iperf_util.lo `test -f 'iperf_util.c' || echo '$(srcdir)/'`iperf_util.c
 
 iperf3_profile-tcp_info.o: tcp_info.c
 @am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-tcp_info.o -MD -MP -MF "$(DEPDIR)/iperf3_profile-tcp_info.Tpo" \

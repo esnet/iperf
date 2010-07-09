@@ -35,7 +35,7 @@
 #include "timer.h"
 #include "net.h"
 #include "tcp_window_size.h"
-#include "uuid.h"
+#include "iperf_util.h"
 #include "locale.h"
 
 jmp_buf   env;			/* to handle longjmp on signal */

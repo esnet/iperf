@@ -171,10 +171,9 @@ libiperf_a_SOURCES = \
                         uuid.h \
                         version.h
 
-libiperf_a_CFLAGS = -I../include
 
 # Specify the sources and various flags for the iperf binary
-iperf3_SOURCES = main.c 
+iperf3_SOURCES = main.c
 iperf3_CFLAGS = -g -Wall
 iperf3_LDADD = libiperf.a
 @USE_UUID_LIBRARY_FALSE@iperf3_LDFLAGS = 
@@ -249,13 +248,10 @@ LIBRARIES = $(lib_LIBRARIES)
 
 libiperf_a_AR = $(AR) cru
 libiperf_a_LIBADD =
-am_libiperf_a_OBJECTS = libiperf_a-iperf_api.$(OBJEXT) \
-	libiperf_a-iperf_server_api.$(OBJEXT) \
-	libiperf_a-iperf_tcp.$(OBJEXT) libiperf_a-iperf_udp.$(OBJEXT) \
-	libiperf_a-timer.$(OBJEXT) libiperf_a-net.$(OBJEXT) \
-	libiperf_a-tcp_window_size.$(OBJEXT) libiperf_a-units.$(OBJEXT) \
-	libiperf_a-uuid.$(OBJEXT) libiperf_a-tcp_info.$(OBJEXT) \
-	libiperf_a-locale.$(OBJEXT)
+am_libiperf_a_OBJECTS = iperf_api.$(OBJEXT) iperf_server_api.$(OBJEXT) \
+	iperf_tcp.$(OBJEXT) iperf_udp.$(OBJEXT) timer.$(OBJEXT) \
+	net.$(OBJEXT) tcp_window_size.$(OBJEXT) units.$(OBJEXT) \
+	uuid.$(OBJEXT) tcp_info.$(OBJEXT) locale.$(OBJEXT)
 libiperf_a_OBJECTS = $(am_libiperf_a_OBJECTS)
 bin_PROGRAMS = iperf3$(EXEEXT)
 noinst_PROGRAMS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT) \
@@ -303,20 +299,16 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/iperf3_profile-timer.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/iperf3_profile-units.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/iperf3_profile-uuid.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/libiperf_a-iperf_api.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/libiperf_a-iperf_server_api.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/libiperf_a-iperf_tcp.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/libiperf_a-iperf_udp.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/libiperf_a-locale.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/libiperf_a-net.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/libiperf_a-tcp_info.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/libiperf_a-tcp_window_size.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/libiperf_a-timer.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/libiperf_a-units.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/libiperf_a-uuid.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/iperf_api.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/iperf_server_api.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/iperf_tcp.Po ./$(DEPDIR)/iperf_udp.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/locale.Po ./$(DEPDIR)/net.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/t_timer-t_timer.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/t_units-t_units.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/t_uuid-t_uuid.Po
+@AMDEP_TRUE@	./$(DEPDIR)/t_uuid-t_uuid.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/tcp_info.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/tcp_window_size.Po ./$(DEPDIR)/timer.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/units.Po ./$(DEPDIR)/uuid.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) \
@@ -468,20 +460,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-timer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-units.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-uuid.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_a-iperf_api.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_a-iperf_server_api.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_a-iperf_tcp.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_a-iperf_udp.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_a-locale.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_a-net.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_a-tcp_info.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_a-tcp_window_size.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_a-timer.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_a-units.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_a-uuid.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_api.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_server_api.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_tcp.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_udp.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/locale.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/net.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_timer-t_timer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_units-t_units.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_uuid-t_uuid.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcp_info.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcp_window_size.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/units.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uuid.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" \
@@ -515,369 +507,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/$*.Plo' tmpdepfile='$(DEPDIR)/$*.TPlo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ `test -f '$<' || echo '$(srcdir)/'`$<
-
-libiperf_a-iperf_api.o: iperf_api.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-iperf_api.o -MD -MP -MF "$(DEPDIR)/libiperf_a-iperf_api.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-iperf_api.o `test -f 'iperf_api.c' || echo '$(srcdir)/'`iperf_api.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-iperf_api.Tpo" "$(DEPDIR)/libiperf_a-iperf_api.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-iperf_api.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='iperf_api.c' object='libiperf_a-iperf_api.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-iperf_api.Po' tmpdepfile='$(DEPDIR)/libiperf_a-iperf_api.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-iperf_api.o `test -f 'iperf_api.c' || echo '$(srcdir)/'`iperf_api.c
-
-libiperf_a-iperf_api.obj: iperf_api.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-iperf_api.obj -MD -MP -MF "$(DEPDIR)/libiperf_a-iperf_api.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-iperf_api.obj `if test -f 'iperf_api.c'; then $(CYGPATH_W) 'iperf_api.c'; else $(CYGPATH_W) '$(srcdir)/iperf_api.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-iperf_api.Tpo" "$(DEPDIR)/libiperf_a-iperf_api.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-iperf_api.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='iperf_api.c' object='libiperf_a-iperf_api.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-iperf_api.Po' tmpdepfile='$(DEPDIR)/libiperf_a-iperf_api.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-iperf_api.obj `if test -f 'iperf_api.c'; then $(CYGPATH_W) 'iperf_api.c'; else $(CYGPATH_W) '$(srcdir)/iperf_api.c'; fi`
-
-libiperf_a-iperf_api.lo: iperf_api.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-iperf_api.lo -MD -MP -MF "$(DEPDIR)/libiperf_a-iperf_api.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-iperf_api.lo `test -f 'iperf_api.c' || echo '$(srcdir)/'`iperf_api.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-iperf_api.Tpo" "$(DEPDIR)/libiperf_a-iperf_api.Plo"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-iperf_api.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='iperf_api.c' object='libiperf_a-iperf_api.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-iperf_api.Plo' tmpdepfile='$(DEPDIR)/libiperf_a-iperf_api.TPlo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-iperf_api.lo `test -f 'iperf_api.c' || echo '$(srcdir)/'`iperf_api.c
-
-libiperf_a-iperf_server_api.o: iperf_server_api.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-iperf_server_api.o -MD -MP -MF "$(DEPDIR)/libiperf_a-iperf_server_api.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-iperf_server_api.o `test -f 'iperf_server_api.c' || echo '$(srcdir)/'`iperf_server_api.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-iperf_server_api.Tpo" "$(DEPDIR)/libiperf_a-iperf_server_api.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-iperf_server_api.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='iperf_server_api.c' object='libiperf_a-iperf_server_api.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-iperf_server_api.Po' tmpdepfile='$(DEPDIR)/libiperf_a-iperf_server_api.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-iperf_server_api.o `test -f 'iperf_server_api.c' || echo '$(srcdir)/'`iperf_server_api.c
-
-libiperf_a-iperf_server_api.obj: iperf_server_api.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-iperf_server_api.obj -MD -MP -MF "$(DEPDIR)/libiperf_a-iperf_server_api.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-iperf_server_api.obj `if test -f 'iperf_server_api.c'; then $(CYGPATH_W) 'iperf_server_api.c'; else $(CYGPATH_W) '$(srcdir)/iperf_server_api.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-iperf_server_api.Tpo" "$(DEPDIR)/libiperf_a-iperf_server_api.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-iperf_server_api.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='iperf_server_api.c' object='libiperf_a-iperf_server_api.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-iperf_server_api.Po' tmpdepfile='$(DEPDIR)/libiperf_a-iperf_server_api.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-iperf_server_api.obj `if test -f 'iperf_server_api.c'; then $(CYGPATH_W) 'iperf_server_api.c'; else $(CYGPATH_W) '$(srcdir)/iperf_server_api.c'; fi`
-
-libiperf_a-iperf_server_api.lo: iperf_server_api.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-iperf_server_api.lo -MD -MP -MF "$(DEPDIR)/libiperf_a-iperf_server_api.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-iperf_server_api.lo `test -f 'iperf_server_api.c' || echo '$(srcdir)/'`iperf_server_api.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-iperf_server_api.Tpo" "$(DEPDIR)/libiperf_a-iperf_server_api.Plo"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-iperf_server_api.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='iperf_server_api.c' object='libiperf_a-iperf_server_api.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-iperf_server_api.Plo' tmpdepfile='$(DEPDIR)/libiperf_a-iperf_server_api.TPlo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-iperf_server_api.lo `test -f 'iperf_server_api.c' || echo '$(srcdir)/'`iperf_server_api.c
-
-libiperf_a-iperf_tcp.o: iperf_tcp.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-iperf_tcp.o -MD -MP -MF "$(DEPDIR)/libiperf_a-iperf_tcp.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-iperf_tcp.o `test -f 'iperf_tcp.c' || echo '$(srcdir)/'`iperf_tcp.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-iperf_tcp.Tpo" "$(DEPDIR)/libiperf_a-iperf_tcp.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-iperf_tcp.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='iperf_tcp.c' object='libiperf_a-iperf_tcp.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-iperf_tcp.Po' tmpdepfile='$(DEPDIR)/libiperf_a-iperf_tcp.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-iperf_tcp.o `test -f 'iperf_tcp.c' || echo '$(srcdir)/'`iperf_tcp.c
-
-libiperf_a-iperf_tcp.obj: iperf_tcp.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-iperf_tcp.obj -MD -MP -MF "$(DEPDIR)/libiperf_a-iperf_tcp.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-iperf_tcp.obj `if test -f 'iperf_tcp.c'; then $(CYGPATH_W) 'iperf_tcp.c'; else $(CYGPATH_W) '$(srcdir)/iperf_tcp.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-iperf_tcp.Tpo" "$(DEPDIR)/libiperf_a-iperf_tcp.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-iperf_tcp.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='iperf_tcp.c' object='libiperf_a-iperf_tcp.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-iperf_tcp.Po' tmpdepfile='$(DEPDIR)/libiperf_a-iperf_tcp.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-iperf_tcp.obj `if test -f 'iperf_tcp.c'; then $(CYGPATH_W) 'iperf_tcp.c'; else $(CYGPATH_W) '$(srcdir)/iperf_tcp.c'; fi`
-
-libiperf_a-iperf_tcp.lo: iperf_tcp.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-iperf_tcp.lo -MD -MP -MF "$(DEPDIR)/libiperf_a-iperf_tcp.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-iperf_tcp.lo `test -f 'iperf_tcp.c' || echo '$(srcdir)/'`iperf_tcp.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-iperf_tcp.Tpo" "$(DEPDIR)/libiperf_a-iperf_tcp.Plo"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-iperf_tcp.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='iperf_tcp.c' object='libiperf_a-iperf_tcp.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-iperf_tcp.Plo' tmpdepfile='$(DEPDIR)/libiperf_a-iperf_tcp.TPlo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-iperf_tcp.lo `test -f 'iperf_tcp.c' || echo '$(srcdir)/'`iperf_tcp.c
-
-libiperf_a-iperf_udp.o: iperf_udp.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-iperf_udp.o -MD -MP -MF "$(DEPDIR)/libiperf_a-iperf_udp.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-iperf_udp.o `test -f 'iperf_udp.c' || echo '$(srcdir)/'`iperf_udp.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-iperf_udp.Tpo" "$(DEPDIR)/libiperf_a-iperf_udp.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-iperf_udp.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='iperf_udp.c' object='libiperf_a-iperf_udp.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-iperf_udp.Po' tmpdepfile='$(DEPDIR)/libiperf_a-iperf_udp.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-iperf_udp.o `test -f 'iperf_udp.c' || echo '$(srcdir)/'`iperf_udp.c
-
-libiperf_a-iperf_udp.obj: iperf_udp.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-iperf_udp.obj -MD -MP -MF "$(DEPDIR)/libiperf_a-iperf_udp.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-iperf_udp.obj `if test -f 'iperf_udp.c'; then $(CYGPATH_W) 'iperf_udp.c'; else $(CYGPATH_W) '$(srcdir)/iperf_udp.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-iperf_udp.Tpo" "$(DEPDIR)/libiperf_a-iperf_udp.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-iperf_udp.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='iperf_udp.c' object='libiperf_a-iperf_udp.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-iperf_udp.Po' tmpdepfile='$(DEPDIR)/libiperf_a-iperf_udp.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-iperf_udp.obj `if test -f 'iperf_udp.c'; then $(CYGPATH_W) 'iperf_udp.c'; else $(CYGPATH_W) '$(srcdir)/iperf_udp.c'; fi`
-
-libiperf_a-iperf_udp.lo: iperf_udp.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-iperf_udp.lo -MD -MP -MF "$(DEPDIR)/libiperf_a-iperf_udp.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-iperf_udp.lo `test -f 'iperf_udp.c' || echo '$(srcdir)/'`iperf_udp.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-iperf_udp.Tpo" "$(DEPDIR)/libiperf_a-iperf_udp.Plo"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-iperf_udp.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='iperf_udp.c' object='libiperf_a-iperf_udp.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-iperf_udp.Plo' tmpdepfile='$(DEPDIR)/libiperf_a-iperf_udp.TPlo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-iperf_udp.lo `test -f 'iperf_udp.c' || echo '$(srcdir)/'`iperf_udp.c
-
-libiperf_a-timer.o: timer.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-timer.o -MD -MP -MF "$(DEPDIR)/libiperf_a-timer.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-timer.o `test -f 'timer.c' || echo '$(srcdir)/'`timer.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-timer.Tpo" "$(DEPDIR)/libiperf_a-timer.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-timer.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='timer.c' object='libiperf_a-timer.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-timer.Po' tmpdepfile='$(DEPDIR)/libiperf_a-timer.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-timer.o `test -f 'timer.c' || echo '$(srcdir)/'`timer.c
-
-libiperf_a-timer.obj: timer.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-timer.obj -MD -MP -MF "$(DEPDIR)/libiperf_a-timer.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-timer.obj `if test -f 'timer.c'; then $(CYGPATH_W) 'timer.c'; else $(CYGPATH_W) '$(srcdir)/timer.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-timer.Tpo" "$(DEPDIR)/libiperf_a-timer.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-timer.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='timer.c' object='libiperf_a-timer.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-timer.Po' tmpdepfile='$(DEPDIR)/libiperf_a-timer.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-timer.obj `if test -f 'timer.c'; then $(CYGPATH_W) 'timer.c'; else $(CYGPATH_W) '$(srcdir)/timer.c'; fi`
-
-libiperf_a-timer.lo: timer.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-timer.lo -MD -MP -MF "$(DEPDIR)/libiperf_a-timer.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-timer.lo `test -f 'timer.c' || echo '$(srcdir)/'`timer.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-timer.Tpo" "$(DEPDIR)/libiperf_a-timer.Plo"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-timer.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='timer.c' object='libiperf_a-timer.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-timer.Plo' tmpdepfile='$(DEPDIR)/libiperf_a-timer.TPlo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-timer.lo `test -f 'timer.c' || echo '$(srcdir)/'`timer.c
-
-libiperf_a-net.o: net.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-net.o -MD -MP -MF "$(DEPDIR)/libiperf_a-net.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-net.o `test -f 'net.c' || echo '$(srcdir)/'`net.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-net.Tpo" "$(DEPDIR)/libiperf_a-net.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-net.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='net.c' object='libiperf_a-net.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-net.Po' tmpdepfile='$(DEPDIR)/libiperf_a-net.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-net.o `test -f 'net.c' || echo '$(srcdir)/'`net.c
-
-libiperf_a-net.obj: net.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-net.obj -MD -MP -MF "$(DEPDIR)/libiperf_a-net.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-net.obj `if test -f 'net.c'; then $(CYGPATH_W) 'net.c'; else $(CYGPATH_W) '$(srcdir)/net.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-net.Tpo" "$(DEPDIR)/libiperf_a-net.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-net.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='net.c' object='libiperf_a-net.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-net.Po' tmpdepfile='$(DEPDIR)/libiperf_a-net.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-net.obj `if test -f 'net.c'; then $(CYGPATH_W) 'net.c'; else $(CYGPATH_W) '$(srcdir)/net.c'; fi`
-
-libiperf_a-net.lo: net.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-net.lo -MD -MP -MF "$(DEPDIR)/libiperf_a-net.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-net.lo `test -f 'net.c' || echo '$(srcdir)/'`net.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-net.Tpo" "$(DEPDIR)/libiperf_a-net.Plo"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-net.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='net.c' object='libiperf_a-net.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-net.Plo' tmpdepfile='$(DEPDIR)/libiperf_a-net.TPlo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-net.lo `test -f 'net.c' || echo '$(srcdir)/'`net.c
-
-libiperf_a-tcp_window_size.o: tcp_window_size.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-tcp_window_size.o -MD -MP -MF "$(DEPDIR)/libiperf_a-tcp_window_size.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-tcp_window_size.o `test -f 'tcp_window_size.c' || echo '$(srcdir)/'`tcp_window_size.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-tcp_window_size.Tpo" "$(DEPDIR)/libiperf_a-tcp_window_size.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-tcp_window_size.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tcp_window_size.c' object='libiperf_a-tcp_window_size.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-tcp_window_size.Po' tmpdepfile='$(DEPDIR)/libiperf_a-tcp_window_size.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-tcp_window_size.o `test -f 'tcp_window_size.c' || echo '$(srcdir)/'`tcp_window_size.c
-
-libiperf_a-tcp_window_size.obj: tcp_window_size.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-tcp_window_size.obj -MD -MP -MF "$(DEPDIR)/libiperf_a-tcp_window_size.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-tcp_window_size.obj `if test -f 'tcp_window_size.c'; then $(CYGPATH_W) 'tcp_window_size.c'; else $(CYGPATH_W) '$(srcdir)/tcp_window_size.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-tcp_window_size.Tpo" "$(DEPDIR)/libiperf_a-tcp_window_size.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-tcp_window_size.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tcp_window_size.c' object='libiperf_a-tcp_window_size.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-tcp_window_size.Po' tmpdepfile='$(DEPDIR)/libiperf_a-tcp_window_size.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-tcp_window_size.obj `if test -f 'tcp_window_size.c'; then $(CYGPATH_W) 'tcp_window_size.c'; else $(CYGPATH_W) '$(srcdir)/tcp_window_size.c'; fi`
-
-libiperf_a-tcp_window_size.lo: tcp_window_size.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-tcp_window_size.lo -MD -MP -MF "$(DEPDIR)/libiperf_a-tcp_window_size.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-tcp_window_size.lo `test -f 'tcp_window_size.c' || echo '$(srcdir)/'`tcp_window_size.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-tcp_window_size.Tpo" "$(DEPDIR)/libiperf_a-tcp_window_size.Plo"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-tcp_window_size.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tcp_window_size.c' object='libiperf_a-tcp_window_size.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-tcp_window_size.Plo' tmpdepfile='$(DEPDIR)/libiperf_a-tcp_window_size.TPlo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-tcp_window_size.lo `test -f 'tcp_window_size.c' || echo '$(srcdir)/'`tcp_window_size.c
-
-libiperf_a-units.o: units.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-units.o -MD -MP -MF "$(DEPDIR)/libiperf_a-units.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-units.o `test -f 'units.c' || echo '$(srcdir)/'`units.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-units.Tpo" "$(DEPDIR)/libiperf_a-units.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-units.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='units.c' object='libiperf_a-units.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-units.Po' tmpdepfile='$(DEPDIR)/libiperf_a-units.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-units.o `test -f 'units.c' || echo '$(srcdir)/'`units.c
-
-libiperf_a-units.obj: units.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-units.obj -MD -MP -MF "$(DEPDIR)/libiperf_a-units.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-units.obj `if test -f 'units.c'; then $(CYGPATH_W) 'units.c'; else $(CYGPATH_W) '$(srcdir)/units.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-units.Tpo" "$(DEPDIR)/libiperf_a-units.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-units.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='units.c' object='libiperf_a-units.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-units.Po' tmpdepfile='$(DEPDIR)/libiperf_a-units.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-units.obj `if test -f 'units.c'; then $(CYGPATH_W) 'units.c'; else $(CYGPATH_W) '$(srcdir)/units.c'; fi`
-
-libiperf_a-units.lo: units.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-units.lo -MD -MP -MF "$(DEPDIR)/libiperf_a-units.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-units.lo `test -f 'units.c' || echo '$(srcdir)/'`units.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-units.Tpo" "$(DEPDIR)/libiperf_a-units.Plo"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-units.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='units.c' object='libiperf_a-units.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-units.Plo' tmpdepfile='$(DEPDIR)/libiperf_a-units.TPlo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-units.lo `test -f 'units.c' || echo '$(srcdir)/'`units.c
-
-libiperf_a-uuid.o: uuid.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-uuid.o -MD -MP -MF "$(DEPDIR)/libiperf_a-uuid.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-uuid.o `test -f 'uuid.c' || echo '$(srcdir)/'`uuid.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-uuid.Tpo" "$(DEPDIR)/libiperf_a-uuid.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-uuid.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='uuid.c' object='libiperf_a-uuid.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-uuid.Po' tmpdepfile='$(DEPDIR)/libiperf_a-uuid.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-uuid.o `test -f 'uuid.c' || echo '$(srcdir)/'`uuid.c
-
-libiperf_a-uuid.obj: uuid.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-uuid.obj -MD -MP -MF "$(DEPDIR)/libiperf_a-uuid.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-uuid.obj `if test -f 'uuid.c'; then $(CYGPATH_W) 'uuid.c'; else $(CYGPATH_W) '$(srcdir)/uuid.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-uuid.Tpo" "$(DEPDIR)/libiperf_a-uuid.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-uuid.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='uuid.c' object='libiperf_a-uuid.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-uuid.Po' tmpdepfile='$(DEPDIR)/libiperf_a-uuid.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-uuid.obj `if test -f 'uuid.c'; then $(CYGPATH_W) 'uuid.c'; else $(CYGPATH_W) '$(srcdir)/uuid.c'; fi`
-
-libiperf_a-uuid.lo: uuid.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-uuid.lo -MD -MP -MF "$(DEPDIR)/libiperf_a-uuid.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-uuid.lo `test -f 'uuid.c' || echo '$(srcdir)/'`uuid.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-uuid.Tpo" "$(DEPDIR)/libiperf_a-uuid.Plo"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-uuid.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='uuid.c' object='libiperf_a-uuid.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-uuid.Plo' tmpdepfile='$(DEPDIR)/libiperf_a-uuid.TPlo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-uuid.lo `test -f 'uuid.c' || echo '$(srcdir)/'`uuid.c
-
-libiperf_a-tcp_info.o: tcp_info.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-tcp_info.o -MD -MP -MF "$(DEPDIR)/libiperf_a-tcp_info.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-tcp_info.o `test -f 'tcp_info.c' || echo '$(srcdir)/'`tcp_info.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-tcp_info.Tpo" "$(DEPDIR)/libiperf_a-tcp_info.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-tcp_info.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tcp_info.c' object='libiperf_a-tcp_info.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-tcp_info.Po' tmpdepfile='$(DEPDIR)/libiperf_a-tcp_info.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-tcp_info.o `test -f 'tcp_info.c' || echo '$(srcdir)/'`tcp_info.c
-
-libiperf_a-tcp_info.obj: tcp_info.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-tcp_info.obj -MD -MP -MF "$(DEPDIR)/libiperf_a-tcp_info.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-tcp_info.obj `if test -f 'tcp_info.c'; then $(CYGPATH_W) 'tcp_info.c'; else $(CYGPATH_W) '$(srcdir)/tcp_info.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-tcp_info.Tpo" "$(DEPDIR)/libiperf_a-tcp_info.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-tcp_info.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tcp_info.c' object='libiperf_a-tcp_info.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-tcp_info.Po' tmpdepfile='$(DEPDIR)/libiperf_a-tcp_info.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-tcp_info.obj `if test -f 'tcp_info.c'; then $(CYGPATH_W) 'tcp_info.c'; else $(CYGPATH_W) '$(srcdir)/tcp_info.c'; fi`
-
-libiperf_a-tcp_info.lo: tcp_info.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-tcp_info.lo -MD -MP -MF "$(DEPDIR)/libiperf_a-tcp_info.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-tcp_info.lo `test -f 'tcp_info.c' || echo '$(srcdir)/'`tcp_info.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-tcp_info.Tpo" "$(DEPDIR)/libiperf_a-tcp_info.Plo"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-tcp_info.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tcp_info.c' object='libiperf_a-tcp_info.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-tcp_info.Plo' tmpdepfile='$(DEPDIR)/libiperf_a-tcp_info.TPlo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-tcp_info.lo `test -f 'tcp_info.c' || echo '$(srcdir)/'`tcp_info.c
-
-libiperf_a-locale.o: locale.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-locale.o -MD -MP -MF "$(DEPDIR)/libiperf_a-locale.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-locale.o `test -f 'locale.c' || echo '$(srcdir)/'`locale.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-locale.Tpo" "$(DEPDIR)/libiperf_a-locale.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-locale.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='locale.c' object='libiperf_a-locale.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-locale.Po' tmpdepfile='$(DEPDIR)/libiperf_a-locale.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-locale.o `test -f 'locale.c' || echo '$(srcdir)/'`locale.c
-
-libiperf_a-locale.obj: locale.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-locale.obj -MD -MP -MF "$(DEPDIR)/libiperf_a-locale.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-locale.obj `if test -f 'locale.c'; then $(CYGPATH_W) 'locale.c'; else $(CYGPATH_W) '$(srcdir)/locale.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-locale.Tpo" "$(DEPDIR)/libiperf_a-locale.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-locale.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='locale.c' object='libiperf_a-locale.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-locale.Po' tmpdepfile='$(DEPDIR)/libiperf_a-locale.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-locale.obj `if test -f 'locale.c'; then $(CYGPATH_W) 'locale.c'; else $(CYGPATH_W) '$(srcdir)/locale.c'; fi`
-
-libiperf_a-locale.lo: locale.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -MT libiperf_a-locale.lo -MD -MP -MF "$(DEPDIR)/libiperf_a-locale.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o libiperf_a-locale.lo `test -f 'locale.c' || echo '$(srcdir)/'`locale.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libiperf_a-locale.Tpo" "$(DEPDIR)/libiperf_a-locale.Plo"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/libiperf_a-locale.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='locale.c' object='libiperf_a-locale.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libiperf_a-locale.Plo' tmpdepfile='$(DEPDIR)/libiperf_a-locale.TPlo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_a_CFLAGS) $(CFLAGS) -c -o libiperf_a-locale.lo `test -f 'locale.c' || echo '$(srcdir)/'`locale.c
 
 iperf3-main.o: main.c
 @am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_CFLAGS) $(CFLAGS) -MT iperf3-main.o -MD -MP -MF "$(DEPDIR)/iperf3-main.Tpo" \

@@ -29,7 +29,6 @@ libiperf_a_SOURCES      = \
                         units.h \
                         uuid.h \
                         version.h
-libiperf_a_CFLAGS       = -I../include
 
 # Specify the sources and various flags for the iperf binary
 iperf3_SOURCES          = main.c

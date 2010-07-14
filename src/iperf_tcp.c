@@ -105,7 +105,7 @@ iperf_tcp_send(struct iperf_stream * sp)
     result = Nwrite(sp->socket, sp->buffer, size, Ptcp);
 #endif
     if (result < 0)
-        perror("Write error");
+        perror("Nwrite error");
 
     sp->result->bytes_sent += result;
     sp->result->bytes_sent_this_interval += result;
@@ -152,7 +152,7 @@ iperf_tcp_accept(struct iperf_test * test)
     struct iperf_stream *sp;
 
     len = sizeof(addr);
-    peersock = accept(test->prot_listener, (struct sockaddr *) & addr, &len);
+    peersock = accept(test->listener_tcp, (struct sockaddr *) & addr, &len);
     if (peersock < 0) {
         // XXX: Needs to implement better error handling
         printf("Error in accept(): %s\n", strerror(errno));

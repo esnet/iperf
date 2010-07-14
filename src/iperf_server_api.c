@@ -62,7 +62,7 @@ iperf_server_listen(struct iperf_test *test)
     // This needs to be changed to reflect if client has different window size
     // make sure we got what we asked for
     /* XXX: This needs to be moved to the stream listener
-    if ((x = get_tcp_windowsize(test->listener_sock_tcp, SO_RCVBUF)) < 0) {
+    if ((x = get_tcp_windowsize(test->listener_tcp, SO_RCVBUF)) < 0) {
         // Needs to set some sort of error number/message
         perror("SO_RCVBUF");
         return -1;
@@ -312,9 +312,9 @@ iperf_test_reset(struct iperf_test *test)
     test->server_hostname = NULL;
 
     test->ctrl_sck = -1;
-    test->prot_listener = 0;
 
     test->bytes_sent = 0;
+    test->new_stream = iperf_new_tcp_stream;
 
     test->reverse = 0;
     test->no_delay = 0;
@@ -336,7 +336,6 @@ int
 iperf_run_server(struct iperf_test *test)
 {
     int result;
-    int streams_accepted;
     fd_set temp_read_set, temp_write_set;
     struct timeval tv;
 
@@ -401,7 +400,7 @@ iperf_run_server(struct iperf_test *test)
                         }
                     } else {
                         if (FD_ISSET(test->listener_udp, &temp_read_set)) {
-                            if (iperf_accept_udp_stream(test) < 0) {
+                            if (iperf_udp_accept(test) < 0) {
                                 fprintf(stderr, "iperf_accept_udp_stream: an error occurred.\n");
                                 exit(1);
                             }
@@ -409,6 +408,11 @@ iperf_run_server(struct iperf_test *test)
                         }
                     }
                     if (test->streams_accepted == test->num_streams) {
+                        if (test->protocol == Pudp) {
+                            FD_CLR(test->listener_udp, &test->read_set);
+                            close(test->listener_udp);
+                            test->listener_udp = -1;
+                        }
                         test->state = TEST_START;
                         if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
                             perror("Nwrite TEST_START");

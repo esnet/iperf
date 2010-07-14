@@ -80,7 +80,6 @@ struct iperf_stream
      * stream can have a pointer to this
      */
     int       packet_count;
-    uint64_t  stream_id;	/* stream identity for UDP mode */
     double    jitter;
     double    prev_transit;
     int       outoforder_packets;
@@ -108,16 +107,9 @@ struct iperf_test
     int       server_port;
     int       duration;                         /* total duration of test (-t flag) */
 
-    /* The following two members should be replaced by a single TCP control socket */
-    int       listener_sock_tcp;
-    int       listener_sock_udp;
-
     int       ctrl_sck;
-    // Server is the only one that needs these
     int       listener_tcp;
     int       listener_udp;
-    int       prot_listener;
-
 
     /* boolen variables for Options */
     int       daemon;                           /* -D option */
@@ -164,14 +156,6 @@ struct iperf_test
 
     struct iperf_stream *streams;               /* pointer to list of struct stream */
     struct iperf_settings *default_settings;
-};
-
-struct udp_datagram
-{
-    int       state;
-    int       stream_id;
-    int       packet_count;
-    struct timeval sent_time;
 };
 
 struct param_exchange

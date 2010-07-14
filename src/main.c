@@ -229,13 +229,6 @@ main(int argc, char **argv)
     optind = 0;
     
 
-    /* exit until this is done.... */
-    if (test->protocol == Pudp) {
-        printf("UDP mode not yet supported. Exiting. \n");
-        iperf_free_test(test);
-        return 0;
-    }
-
     if (iperf_run(test) < 0) {
         fprintf(stderr, "An error occurred. Exiting...\n");
         return -1;

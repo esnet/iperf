@@ -18,6 +18,7 @@
 */
 
 /* make connection to server */
+// XXX: Change client to server?
 int
 netdial(int proto, char *client, int port)
 {
@@ -49,13 +50,14 @@ netdial(int proto, char *client, int port)
     }
     
     sn = sizeof sa;
-    
-    if (getpeername(s, (struct sockaddr *) & sa, &sn) >= 0) {
-        return (s);
+
+    // XXX: Is there a reason to call getpeername() if none of the return values are used?
+    if (getpeername(s, (struct sockaddr *) & sa, &sn) < 0) {
+        perror("getpeername error");
+        return (-1);
     }
 
-    perror("getpeername error");
-    return (-1);
+    return (s);
 }
 
 /***************************************************************/
@@ -100,28 +102,20 @@ netannounce(int proto, char *local, int port)
 int
 Nread(int fd, void *buf, int count, int prot)
 {
-    struct sockaddr from;
-    socklen_t len = sizeof(from);
     register int n;
     register int nleft = count;
 
-    if (prot == SOCK_DGRAM) {
-        // XXX: Does recvfrom guarantee all count bytes are sent at once?
-        fprintf(stderr, "READING UDP DATA IN Nread SOCK_DGRAM\n");
-        n = recvfrom(fd, buf, count, 0, &from, &len);
-    } else {
-        while (nleft > 0) {
-            if ((n = read(fd, buf, nleft)) < 0) {
-                if (errno == EINTR)
-                    n = 0;
-                else
-                    return (-1);
-            } else if (n == 0)
-                break;
-            
-            nleft -= n;
-            buf += n;
-        }
+    while (nleft > 0) {
+        if ((n = read(fd, buf, nleft)) < 0) {
+            if (errno == EINTR)
+                n = 0;
+            else
+                return (-1);
+        } else if (n == 0)
+            break;
+
+        nleft -= n;
+        buf += n;
     }
     return (count - nleft);
 }

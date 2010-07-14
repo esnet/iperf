@@ -51,177 +51,138 @@
  */
 
 int
-iperf_udp_recv(struct iperf_stream * sp)
+iperf_udp_recv(struct iperf_stream *sp)
 {
-    int       result, message;
+    int       result;
     int       size = sp->settings->blksize;
+    int       sec, usec, pcount;
     double    transit = 0, d = 0;
-    struct udp_datagram *udp = (struct udp_datagram *) sp->buffer;
-    struct timeval arrival_time;
+    struct timeval sent_time, arrival_time;
 
-    printf("in iperf_udp_recv: reading %d bytes \n", size);
-    if (!sp->buffer)
-    {
-	fprintf(stderr, "receive buffer not allocated \n");
-	exit(0);
+    // XXX: Is this necessary? We've already checked the buffer to see if it's allocated.
+    if (!sp->buffer) {
+        fprintf(stderr, "receive buffer not allocated \n");
+        exit(0);
     }
 #ifdef USE_SEND
-    do
-    {
-	result = recv(sp->socket, sp->buffer, size, 0);
-
+    do {
+        result = recv(sp->socket, sp->buffer, size, 0);
     } while (result == -1 && errno == EINTR);
 #else
     result = Nread(sp->socket, sp->buffer, size, Pudp);
 #endif
 
-    /* interprete the type of message in packet */
-    if (result > 0)
-    {
-	message = udp->state;
+    if (result < 0) {
+        perror("Nread udp result");
+        return (-1);
     }
-    if (message != 7)
-    {
-	//printf("result = %d state = %d, %d = error\n", result, sp->buffer[0], errno);
+    sp->result->bytes_received += result;
+    sp->result->bytes_received_this_interval += result;
+
+    memcpy(&sec, sp->buffer, sizeof(sec));
+    memcpy(&usec, sp->buffer+4, sizeof(usec));
+    memcpy(&pcount, sp->buffer+8, sizeof(pcount));
+    sec = ntohl(sec);
+    usec = ntohl(usec);
+    pcount = ntohl(pcount);
+    sent_time.tv_sec = sec;
+    sent_time.tv_usec = usec;
+
+    /* Out of order packets */
+    if (pcount >= sp->packet_count + 1) {
+        if (pcount > sp->packet_count + 1) {
+            sp->cnt_error += (pcount - 1) - sp->packet_count;
+        }
+        sp->packet_count = pcount;
+    } else {
+        sp->outoforder_packets++;
+        printf("OUT OF ORDER - incoming packet = %d and received packet = %d AND SP = %d\n", pcount, sp->packet_count, sp->socket);
     }
-    if (message == STREAM_RUNNING && (sp->stream_id == udp->stream_id))
-    {
-	sp->result->bytes_received += result;
-	if (udp->packet_count == sp->packet_count + 1)
-	    sp->packet_count++;
 
-	/* jitter measurement */
-	if (gettimeofday(&arrival_time, NULL) < 0)
-	{
-	    perror("gettimeofday");
-	}
-	transit = timeval_diff(&udp->sent_time, &arrival_time);
-	d = transit - sp->prev_transit;
-	if (d < 0)
-	    d = -d;
-	sp->prev_transit = transit;
-	sp->jitter += (d - sp->jitter) / 16.0;
-
-
-	/* OUT OF ORDER PACKETS */
-	if (udp->packet_count != sp->packet_count)
-	{
-	    if (udp->packet_count < sp->packet_count + 1)
-	    {
-		sp->outoforder_packets++;
-		printf("OUT OF ORDER - incoming packet = %d and received packet = %d AND SP = %d\n", udp->packet_count, sp->packet_count, sp->socket);
-	    } else
-		sp->cnt_error += udp->packet_count - sp->packet_count;
-	}
-	/* store the latest packet id */
-	if (udp->packet_count > sp->packet_count)
-	    sp->packet_count = udp->packet_count;
-
-	//printf("incoming packet = %d and received packet = %d AND SP = %d\n", udp->packet_count, sp->packet_count, sp->socket);
-
+    /* jitter measurement */
+    if (gettimeofday(&arrival_time, NULL) < 0) {
+        perror("gettimeofday");
     }
-    return message;
+    transit = timeval_diff(&sent_time, &arrival_time);
+    d = transit - sp->prev_transit;
+    if (d < 0)
+        d = -d;
+    sp->prev_transit = transit;
+    // XXX: This is NOT the way to calculate jitter
+    //      J = |(R1 - S1) - (R0 - S0)| [/ number of packets, for average]
+    sp->jitter += (d - sp->jitter) / 16.0;
 
+    return result;
 }
 
 
 /**************************************************************************/
 int
-iperf_udp_send(struct iperf_stream * sp)
+iperf_udp_send(struct iperf_stream *sp)
 {
-    int       result = 0;
-    struct timeval before, after;
+    ssize_t   result = 0;
     int64_t   dtargus;
     int64_t   adjustus = 0;
+    uint64_t  sec, usec, pcount;
+    int       size = sp->settings->blksize;
+    struct timeval before, after;
 
-    //printf("in iperf_udp_send \n");
     /*
      * the || part ensures that last packet is sent to server - the
      * STREAM_END MESSAGE
      */
-    if (sp->send_timer->expired(sp->send_timer) || sp->settings->state == STREAM_END)
-    {
-	int       size = sp->settings->blksize;
+//    if (sp->send_timer->expired(sp->send_timer) || sp->settings->state == STREAM_END) {
 
-	/* this is for udp packet/jitter/lost packet measurements */
-	struct udp_datagram *udp = (struct udp_datagram *) sp->buffer;
-	struct param_exchange *param = NULL;
+/*
+        dtargus = (int64_t) (sp->settings->blksize) * SEC_TO_US * 8;
+        dtargus /= sp->settings->rate;
 
-	dtargus = (int64_t) (sp->settings->blksize) * SEC_TO_US * 8;
-	dtargus /= sp->settings->rate;
+        assert(dtargus != 0);
+*/
+        if (gettimeofday(&before, 0) < 0)
+            perror("gettimeofday");
+        ++sp->packet_count;
+        sec = htonl(before.tv_sec);
+        usec = htonl(before.tv_usec);
+        pcount = htonl(sp->packet_count);
 
-	assert(dtargus != 0);
+        memcpy(sp->buffer, &sec, sizeof(sec));
+        memcpy(sp->buffer+4, &usec, sizeof(usec));
+        memcpy(sp->buffer+8, &pcount, sizeof(pcount));
 
-	switch (sp->settings->state)
-	{
-	case STREAM_BEGIN:
-	    udp->state = STREAM_BEGIN;
-	    udp->stream_id = (uint64_t) sp;
-	    /* udp->packet_count = ++sp->packet_count; */
-	    break;
-
-	case STREAM_END:
-	    udp->state = STREAM_END;
-	    udp->stream_id = (uint64_t) sp;
-	    break;
-
-	case RESULT_REQUEST:
-	    udp->state = RESULT_REQUEST;
-	    udp->stream_id = (uint64_t) sp;
-	    break;
-
-	case ALL_STREAMS_END:
-	    udp->state = ALL_STREAMS_END;
-	    break;
-
-	case STREAM_RUNNING:
-	    udp->state = STREAM_RUNNING;
-	    udp->stream_id = (uint64_t) sp;
-	    udp->packet_count = ++sp->packet_count;
-	    break;
-	}
-
-	if (sp->settings->state == STREAM_BEGIN)
-	{
-	    sp->settings->state = STREAM_RUNNING;
-	}
-	if (gettimeofday(&before, 0) < 0)
-	    perror("gettimeofday");
-
-	udp->sent_time = before;
-
-	printf("iperf_udp_send: writing %d bytes \n", size);
 #ifdef USE_SEND
-	result = send(sp->socket, sp->buffer, size, 0);
+        result = send(sp->socket, sp->buffer, size, 0);
 #else
-	result = Nwrite(sp->socket, sp->buffer, size, Pudp);
+        result = Nwrite(sp->socket, sp->buffer, size, Pudp);
 #endif
 
-	if (gettimeofday(&after, 0) < 0)
-	    perror("gettimeofday");
+        if (result < 0)
+            perror("Nwrite udp error");
 
-	/*
-	 * CHECK: Packet length and ID if(sp->settings->state ==
-	 * STREAM_RUNNING) printf("State = %d Outgoing packet = %d AND SP =
-	 * %d\n",sp->settings->state, sp->packet_count, sp->socket);
-	 */
+        sp->result->bytes_sent += result;
+        sp->result->bytes_sent_this_interval += result;
+/*
+        if (gettimeofday(&after, 0) < 0)
+            perror("gettimeofday");
 
-	if (sp->settings->state == STREAM_RUNNING)
-	    sp->result->bytes_sent += result;
+        //
+        // CHECK: Packet length and ID if(sp->settings->state ==
+        // STREAM_RUNNING) printf("State = %d Outgoing packet = %d AND SP =
+        // %d\n",sp->settings->state, sp->packet_count, sp->socket);
+        //
 
-	adjustus = dtargus;
-	adjustus += (before.tv_sec - after.tv_sec) * SEC_TO_US;
-	adjustus += (before.tv_usec - after.tv_usec);
 
-	if (adjustus > 0)
-	{
-	    dtargus = adjustus;
-	}
-	/* RESET THE TIMER  */
-	update_timer(sp->send_timer, 0, dtargus);
-	param = NULL;
+        adjustus = dtargus;
+        adjustus += (before.tv_sec - after.tv_sec) * SEC_TO_US;
+        adjustus += (before.tv_usec - after.tv_usec);
 
-    }				/* timer_expired_micro */
+        if (adjustus > 0) {
+            dtargus = adjustus;
+        }
+        // RESET THE TIMER
+        update_timer(sp->send_timer, 0, dtargus);
+//    } // timer_expired_micro
+*/
     return result;
 }
 
@@ -232,10 +193,9 @@ iperf_new_udp_stream(struct iperf_test * testp)
     struct iperf_stream *sp;
 
     sp = (struct iperf_stream *) iperf_new_stream(testp);
-    if (!sp)
-    {
-	perror("malloc");
-	return (NULL);
+    if (!sp) {
+        perror("malloc");
+        return (NULL);
     }
     sp->rcv = iperf_udp_recv;
     sp->snd = iperf_udp_send;
@@ -254,70 +214,53 @@ iperf_new_udp_stream(struct iperf_test * testp)
 
 
 int
-iperf_udp_accept(struct iperf_test * test)
+iperf_udp_accept(struct iperf_test *test)
 {
-
     struct iperf_stream *sp;
     struct sockaddr_in sa_peer;
-    char     *buf;
+    int       buf;
     socklen_t len;
-    int       sz;
+    int       sz, s;
 
-    buf = (char *) malloc(test->default_settings->blksize);
-    struct udp_datagram *udp = (struct udp_datagram *) buf;
+    s = test->listener_udp;
 
     len = sizeof sa_peer;
-
-    sz = recvfrom(test->listener_sock_udp, buf, test->default_settings->blksize, 0, (struct sockaddr *) & sa_peer, &len);
-
-    if (!sz)
-	return -1;
-
-    if (connect(test->listener_sock_udp, (struct sockaddr *) & sa_peer, len) < 0)
-    {
-	perror("iperf_udp_accept: connect error");
-	exit(-1);  /* XXX: for debugging */
-	return -1;
+    if ((sz = recvfrom(test->listener_udp, &buf, sizeof(buf), 0, (struct sockaddr *) &sa_peer, &len)) < 0) {
+        perror("recvfrom in udp accept");
+        return (-1);
     }
+
+    if (connect(s, (struct sockaddr *) &sa_peer, len) < 0) {
+        perror("iperf_udp_accept: connect error");
+        return -1;
+    }
+
     sp = test->new_stream(test);
-
-    sp->socket = test->listener_sock_udp;
-
-    setnonblocking(sp->socket);
-
+    if (!sp)
+        return (-1);
+    sp->socket = s;
     iperf_init_stream(sp, test);
     iperf_add_stream(test, sp);
+    FD_SET(s, &test->read_set);
+    FD_SET(s, &test->write_set);
+    test->max_fd = (s > test->max_fd) ? s : test->max_fd;
 
+    test->listener_udp = netannounce(Pudp, NULL, test->server_port);
+    if (test->listener_udp < 0)
+        return -1;
 
-    test->listener_sock_udp = netannounce(Pudp, NULL, test->server_port);
-    if (test->listener_sock_udp < 0)
-	return -1;
+    FD_SET(test->listener_udp, &test->read_set);
+    test->max_fd = (test->max_fd < test->listener_udp) ? test->listener_udp : test->max_fd;
 
-    FD_SET(test->listener_sock_udp, &test->read_set);
-    test->max_fd = (test->max_fd < test->listener_sock_udp) ? test->listener_sock_udp : test->max_fd;
-
-    if (test->default_settings->state != RESULT_REQUEST)
-	connect_msg(sp);
-
-    printf("iperf_udp_accept: 1st UDP data  packet for socket %d has arrived \n", sp->socket);
-    sp->stream_id = udp->stream_id;
-    sp->result->bytes_received += sz;
-
-    /* Count OUT OF ORDER PACKETS */
-    if (udp->packet_count != 0)
-    {
-	if (udp->packet_count < sp->packet_count + 1)
-	    sp->outoforder_packets++;
-	else
-	    sp->cnt_error += udp->packet_count - sp->packet_count;
+    /* Let the client know we're ready "accept" another UDP "stream" */
+    if (write(sp->socket, &buf, sizeof(buf)) < 0) {
+        perror("write listen message");
+        return -1;
     }
-    /* store the latest packet id */
-    if (udp->packet_count > sp->packet_count)
-	sp->packet_count = udp->packet_count;
 
-    //printf("incoming packet = %d and received packet = %d AND SP = %d\n", udp->packet_count, sp->packet_count, sp->socket);
+    connect_msg(sp);
+    test->streams_accepted++;
 
-    free(buf);
     return 0;
 }
 

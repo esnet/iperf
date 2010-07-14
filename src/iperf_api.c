@@ -300,6 +300,7 @@ parse_parameters(struct iperf_test *test)
                 break;
             case 'u':
                 test->protocol = Pudp;
+                test->new_stream = iperf_new_udp_stream;
                 break;
             case 'P':
                 test->num_streams = atoi(optarg);
@@ -343,9 +344,9 @@ iperf_exchange_parameters(struct iperf_test * test)
         printf("      cookie: %s\n", test->default_settings->cookie);
 
         if (test->protocol == Pudp) {
-            test->prot_listener = netannounce(test->protocol, NULL, test->server_port);
-            FD_SET(test->prot_listener, &test->read_set);
-            test->max_fd = (test->prot_listener > test->max_fd) ? test->prot_listener : test->max_fd;
+            test->listener_udp = netannounce(test->protocol, NULL, test->server_port);
+            FD_SET(test->listener_udp, &test->read_set);
+            test->max_fd = (test->listener_udp > test->max_fd) ? test->listener_udp : test->max_fd;
         }
 
         // Send the control message to create streams and start the test
@@ -652,7 +653,7 @@ int
 iperf_create_streams(struct iperf_test *test)
 {
     struct iperf_stream *sp;
-    int i, s;
+    int i, s, buf;
 
     for (i = 0; i < test->num_streams; ++i) {
         s = netdial(test->protocol, test->server_hostname, test->server_port);
@@ -664,6 +665,15 @@ iperf_create_streams(struct iperf_test *test)
         if (test->protocol == Ptcp) {
             if (Nwrite(s, test->default_settings->cookie, COOKIE_SIZE, Ptcp) < 0) {
                 perror("Nwrite COOKIE\n");
+                return -1;
+            }
+        } else {
+            if (write(s, &buf, sizeof(i)) < 0) {
+                perror("write data");
+                return -1;
+            }
+            if (read(s, &buf, sizeof(i)) < 0) {
+                perror("read data");
                 return -1;
             }
         }
@@ -746,7 +756,7 @@ iperf_connect(struct iperf_test *test)
     get_uuid(test->default_settings->cookie);
 
     /* Create and connect the control channel */
-    test->ctrl_sck = netdial(test->protocol, test->server_hostname, test->server_port);
+    test->ctrl_sck = netdial(Ptcp, test->server_hostname, test->server_port);
     if (test->ctrl_sck < 0) {
         return -1;
     }
@@ -841,7 +851,7 @@ iperf_reporter_callback(struct iperf_test * test)
     struct iperf_stream *sp = NULL;
     iperf_size_t bytes = 0, bytes_sent = 0, bytes_received = 0;
     iperf_size_t total_sent = 0, total_received = 0;
-    double start_time, end_time;
+    double start_time, end_time, avg_jitter;
     struct iperf_interval_results *ip = NULL;
 
     switch (test->state) {
@@ -892,6 +902,7 @@ iperf_reporter_callback(struct iperf_test * test)
                 if (test->protocol == Pudp) {
                     total_packets += sp->packet_count;
                     lost_packets += sp->cnt_error;
+                    avg_jitter += sp->jitter;
                 }
 
                 if (bytes_sent > 0) {
@@ -939,10 +950,12 @@ iperf_reporter_callback(struct iperf_test * test)
                     printf("      Total received\n");
                     printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
                 } else {
-                    printf(report_sum_bw_jitter_loss_format, start_time, end_time, ubuf, nbuf, sp->jitter,
+                    avg_jitter /= test->num_streams;
+                    printf(report_sum_bw_jitter_loss_format, start_time, end_time, ubuf, nbuf, avg_jitter,
                         lost_packets, total_packets, (double) (100.0 * lost_packets / total_packets));
                 }
 
+                // XXX: Why is this here?
                 if ((test->print_mss != 0) && (test->role == 'c')) {
                     printf("The TCP maximum segment size mss = %d\n", getsock_tcp_mss(sp->socket));
                 }
@@ -1020,6 +1033,19 @@ iperf_new_stream(struct iperf_test *testp)
     sp->buffer = (char *) malloc(testp->default_settings->blksize);
     sp->settings = (struct iperf_settings *) malloc(sizeof(struct iperf_settings));
     sp->result = (struct iperf_stream_result *) malloc(sizeof(struct iperf_stream_result));
+
+    if (!sp->buffer) {
+        perror("Malloc sp->buffer");
+        return NULL;
+    }
+    if (!sp->settings) {
+        perror("Malloc sp->settings");
+        return NULL;
+    }
+    if (!sp->result) {
+        perror("Malloc sp->result");
+        return NULL;
+    }
     
     /* Make a per stream copy of default_settings in each stream structure */
     // XXX: These settings need to be moved to the test struct
@@ -1031,9 +1057,6 @@ iperf_new_stream(struct iperf_test *testp)
         sp->buffer[i] = random();
 
     sp->socket = -1;
-
-    // XXX: Not entirely sure what this does
-    sp->stream_id = (uint64_t) sp;
 
     //  XXX: Some of this code is needed, even though everything is already zero.
     sp->packet_count = 0;
@@ -1154,7 +1177,7 @@ iperf_run_client(struct iperf_test * test)
         fprintf(stderr, "Exiting...\n");
         test->state = CLIENT_TERMINATE;
         if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-            fprintf(stderr, "Unable to send CLIENT_TERMINATE message to serer\n");
+            fprintf(stderr, "Unable to send CLIENT_TERMINATE message to server\n");
         }
         exit(1);
     }

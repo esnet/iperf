@@ -367,7 +367,7 @@ int
 iperf_exchange_results(struct iperf_test *test)
 {
     unsigned int size;
-    char buf[32];
+    char buf[128];
     char *results;
     struct iperf_stream *sp;
     iperf_size_t bytes_transferred;
@@ -378,7 +378,8 @@ iperf_exchange_results(struct iperf_test *test)
         size = 0;
         for (sp = test->streams; sp; sp = sp->next) {
             bytes_transferred = (test->reverse ? sp->result->bytes_received : sp->result->bytes_sent);
-            snprintf(buf, 32, "%d:%llu\n", sp->id, bytes_transferred);
+            snprintf(buf, 128, "%d:%llu,%lf,%d,%d\n", sp->id, bytes_transferred,sp->jitter,
+                sp->cnt_error, sp->packet_count);
             size += strlen(buf);
             if ((results = realloc(results, size+1)) == NULL) {
                 perror("realloc results");
@@ -446,7 +447,8 @@ iperf_exchange_results(struct iperf_test *test)
         size = 0;
         for (sp = test->streams; sp; sp = sp->next) {
             bytes_transferred = (test->reverse ? sp->result->bytes_sent : sp->result->bytes_received);
-            snprintf(buf, 32, "%d:%llu\n", sp->id, bytes_transferred);
+            snprintf(buf, 128, "%d:%llu,%lf,%d,%d\n", sp->id, bytes_transferred, sp->jitter,
+                sp->cnt_error, sp->packet_count);
             size += strlen(buf);
             if ((results = realloc(results, size+1)) == NULL) {
                 perror("realloc results");
@@ -478,23 +480,27 @@ iperf_exchange_results(struct iperf_test *test)
 int
 parse_results(struct iperf_test *test, char *results)
 {
-    int sid;
-    char *word;
-    struct iperf_stream *sp;
+    int sid, cerror, pcount;
+    double jitter;
+    char *strp;
     iperf_size_t bytes_transferred;
+    struct iperf_stream *sp;
 
-    for (word = strtok(results, "\n:"); word; word = strtok(NULL, "\n:")) {
-        sid = atoi(word);
-        bytes_transferred = atoll(strtok(NULL, "\n:"));
+    for (strp = results; *strp; strp = strchr(strp, '\n')+1) {
+        sscanf(strp, "%d:%llu,%lf,%d,%d\n", &sid, &bytes_transferred, &jitter,
+            &cerror, &pcount);
         for (sp = test->streams; sp; sp = sp->next)
             if (sp->id == sid) break;
         if (sp == NULL) {
             fprintf(stderr, "error: No stream with id %d\n", sid);
             return (-1);
         }
-        if ((test->role == 'c' && !test->reverse) || (test->role == 's' && test->reverse))
+        if ((test->role == 'c' && !test->reverse) || (test->role == 's' && test->reverse)) {
+            sp->jitter = jitter;
+            sp->cnt_error = cerror;
+            sp->packet_count = pcount;
             sp->result->bytes_received = bytes_transferred;
-        else
+        } else
             sp->result->bytes_sent = bytes_transferred;
     }
 

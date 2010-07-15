@@ -51,6 +51,12 @@ run in server mode
 .BR -c ", " --client " <host>"
 run in client mode, connecting to <host>
 .TP
+.BR -u ", " --udp
+use UDP rather than TCP
+.TP
+.BR -b ", " --bandwidth " \fIn\fR[KM]"
+set target bandwidth to \fIn\fR bits/sec (default 1 Mbit/sec). Requires UDP mode (-u)
+.TP
 .BR -t ", " --time " \fIn\fR"
 time in seconds to transmit for (default 10 secs)
 .TP

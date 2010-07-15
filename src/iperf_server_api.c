@@ -70,6 +70,7 @@ iperf_server_listen(struct iperf_test *test)
     */
 
     // XXX: This code needs to be moved to after parameter exhange
+    /*
     if (test->protocol == Ptcp) {
         if (test->default_settings->socket_bufsize > 0) {
             unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A');
@@ -78,6 +79,7 @@ iperf_server_listen(struct iperf_test *test)
             printf("Using TCP Autotuning\n");
         }
     }
+    */
     printf("-----------------------------------------------------------\n");
 
     FD_ZERO(&test->read_set);
@@ -329,13 +331,14 @@ iperf_test_reset(struct iperf_test *test)
     test->default_settings->socket_bufsize = 0;
     test->default_settings->blksize = DEFAULT_TCP_BLKSIZE;
     test->default_settings->rate = RATE;   /* UDP only */
+    test->default_settings->mss = 0;
     memset(test->default_settings->cookie, 0, COOKIE_SIZE); 
 }
 
 int
 iperf_run_server(struct iperf_test *test)
 {
-    int result;
+    int result, s;
     fd_set temp_read_set, temp_write_set;
     struct timeval tv;
 
@@ -412,6 +415,18 @@ iperf_run_server(struct iperf_test *test)
                             FD_CLR(test->listener_udp, &test->read_set);
                             close(test->listener_udp);
                             test->listener_udp = -1;
+                        } else if (test->protocol == Ptcp) {
+                            if (test->no_delay || test->default_settings->mss) {
+                                FD_CLR(test->listener_tcp, &test->read_set);
+                                close(test->listener_tcp);
+                                if ((s = netannounce(Ptcp, NULL, test->server_port)) < 0) {
+                                    perror("reconnect tcp listener");
+                                    return (-1);
+                                }
+                                test->listener_tcp = s;
+                                test->max_fd = (s > test->max_fd ? s : test->max_fd);
+                                FD_SET(test->listener_tcp, &test->read_set);
+                            }
                         }
                         test->state = TEST_START;
                         if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {

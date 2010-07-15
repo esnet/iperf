@@ -145,27 +145,8 @@ iperf_init_test(struct iperf_test *test)
     struct iperf_stream *sp;
     int64_t dtargus;
 
-
-/* XXX: These variables were used in the old UDP code
-    int64_t delayus, adjustus, dtargus;
-*/
-
     if (test->protocol == Pudp) {
         prot = "UDP";
-/* XXX: Trying my own implementation
-        dtargus = (int64_t) (test->default_settings->blksize) * SEC_TO_US * 8;
-        dtargus /= test->default_settings->rate;
-
-        assert(dtargus != 0);
-
-        delayus = dtargus;
-        adjustus = 0;
-
-        printf("iperf_run_client: adjustus: %lld, delayus %lld \n", adjustus, delayus);
-
-        for (sp = test->streams; sp != NULL; sp = sp->next)
-            sp->send_timer = new_timer(0, dtargus);
-*/
         dtargus = (int64_t) test->default_settings->blksize * SEC_TO_US * 8;
         dtargus /= test->default_settings->rate;
 
@@ -236,6 +217,11 @@ package_parameters(struct iperf_test *test)
         strncat(pstring, optbuf, sizeof(pstring));
     }
 
+    if (test->no_delay) {
+        snprintf(optbuf, sizeof(optbuf), "-N ");
+        strncat(pstring, optbuf, sizeof(pstring));
+    }
+
     if (test->default_settings->bytes) {
         snprintf(optbuf, sizeof(optbuf), "-n %llu ", test->default_settings->bytes);
         strncat(pstring, optbuf, sizeof(pstring));
@@ -296,7 +282,7 @@ parse_parameters(struct iperf_test *test)
         n++;
     }
 
-    while ((ch = getopt(n, params, "pt:n:m:uP:Rw:l:b:")) != -1) {
+    while ((ch = getopt(n, params, "pt:n:m:uNP:Rw:l:b:")) != -1) {
         switch (ch) {
             case 'p':
                 test->protocol = Ptcp;
@@ -313,6 +299,9 @@ parse_parameters(struct iperf_test *test)
             case 'u':
                 test->protocol = Pudp;
                 test->new_stream = iperf_new_udp_stream;
+                break;
+            case 'N':
+                test->no_delay = 1;
                 break;
             case 'P':
                 test->num_streams = atoi(optarg);
@@ -349,6 +338,9 @@ parse_parameters(struct iperf_test *test)
 int
 iperf_exchange_parameters(struct iperf_test * test)
 {
+    int s, opt, len;
+    struct sockaddr_in sa;
+
     if (test->role == 'c') {
 
         package_parameters(test);
@@ -362,6 +354,52 @@ iperf_exchange_parameters(struct iperf_test * test)
             test->listener_udp = netannounce(test->protocol, NULL, test->server_port);
             FD_SET(test->listener_udp, &test->read_set);
             test->max_fd = (test->listener_udp > test->max_fd) ? test->listener_udp : test->max_fd;
+        } else if (test->protocol == Ptcp) {
+            if (test->no_delay || test->default_settings->mss) {
+                FD_CLR(test->listener_tcp, &test->read_set);
+                close(test->listener_tcp);
+                if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+                    perror("socket tcp listener mss");
+                    return (-1);
+                }
+                if (test->no_delay) {
+                    opt = 1;
+                    if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0) {
+                        perror("setsockopt TCP_NODELAY");
+                        return (-1);
+                    }
+                    printf("      TCP NODELAY: on\n");
+                }
+                // XXX: Setting MSS is very buggy!
+                if (opt = test->default_settings->mss) {
+                    if (setsockopt(s, IPPROTO_TCP, TCP_MAXSEG, &opt, sizeof(opt)) < 0) {
+                        perror("setsockopt TCP_MAXSEG");
+                        return (-1);
+                    }
+                    printf("      TCP MSS: %d\n", opt);
+                }
+                opt = 1;
+                if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+                    perror("setsockopt SO_REUSEADDR");
+                    return (-1);
+                }
+                memset(&sa, 0, sizeof(sa));
+                sa.sin_family = AF_INET;
+                sa.sin_addr.s_addr = htonl(INADDR_ANY);
+                sa.sin_port = htons(test->server_port);
+                if (bind(s, (struct sockaddr *) &sa, sizeof(sa)) < 0) {
+                    close(s);
+                    perror("bind tcp mss/nodelay listener");
+                    return (-1);
+                }
+
+                listen(s, 5);
+
+                test->listener_tcp = s;
+                test->max_fd = (s > test->max_fd) ? s : test->max_fd;
+                FD_SET(test->listener_tcp, &test->read_set);
+            }
+
         }
 
         // Send the control message to create streams and start the test
@@ -674,13 +712,48 @@ int
 iperf_create_streams(struct iperf_test *test)
 {
     struct iperf_stream *sp;
-    int i, s, buf;
+    struct sockaddr_in sa;
+    struct hostent *hent;
+    int i, s, buf, opt;
 
     for (i = 0; i < test->num_streams; ++i) {
-        s = netdial(test->protocol, test->server_hostname, test->server_port);
-        if (s < 0) {
-            perror("netdial stream");
-            return -1;
+        if (test->protocol == Ptcp && (test->no_delay || test->default_settings->mss)) {
+            if ((hent = gethostbyname(test->server_hostname)) == 0) {
+                perror("gethostbyname");    
+                return (-1);
+            }
+            if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+                perror("socket");
+                return (-1);
+            }
+            memset(&sa, 0, sizeof(sa));
+            sa.sin_family = AF_INET;
+            memcpy(&sa.sin_addr.s_addr, hent->h_addr, sizeof(sa.sin_addr.s_addr));
+            sa.sin_port = htons(test->server_port);
+
+            if (test->no_delay) {
+                opt = 1;
+                if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0) {
+                    perror("setsockopt");
+                    return (-1);
+                }
+            }
+            if (opt = test->default_settings->mss) {
+                if (setsockopt(s, IPPROTO_TCP, TCP_MAXSEG, &opt, sizeof(opt)) < 0) {
+                    perror("setsockopt");
+                    return (-1);
+                }
+            }
+            if (connect(s, (struct sockaddr *) &sa, sizeof(sa)) < 0 && errno != EINPROGRESS) {
+                perror("connect tcp stream");
+                return (-1);
+            }
+        } else {
+            s = netdial(test->protocol, test->server_hostname, test->server_port);
+            if (s < 0) {
+                perror("netdial stream");
+                return -1;
+            }
         }
 
         if (test->protocol == Ptcp) {
@@ -693,6 +766,7 @@ iperf_create_streams(struct iperf_test *test)
                 perror("write data");
                 return -1;
             }
+            // XXX: Should this read be TCP instead?
             if (read(s, &buf, sizeof(i)) < 0) {
                 perror("read data");
                 return -1;

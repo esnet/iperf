@@ -59,11 +59,6 @@ iperf_udp_recv(struct iperf_stream *sp)
     double    transit = 0, d = 0;
     struct timeval sent_time, arrival_time;
 
-    // XXX: Is this necessary? We've already checked the buffer to see if it's allocated.
-    if (!sp->buffer) {
-        fprintf(stderr, "receive buffer not allocated \n");
-        exit(0);
-    }
 #ifdef USE_SEND
     do {
         result = recv(sp->socket, sp->buffer, size, 0);
@@ -127,18 +122,13 @@ iperf_udp_send(struct iperf_stream *sp)
     int       size = sp->settings->blksize;
     struct timeval before, after;
 
-    /*
-     * the || part ensures that last packet is sent to server - the
-     * STREAM_END MESSAGE
-     */
-//    if (sp->send_timer->expired(sp->send_timer) || sp->settings->state == STREAM_END) {
+    if (timer_expired(sp->send_timer)) {
 
-/*
         dtargus = (int64_t) (sp->settings->blksize) * SEC_TO_US * 8;
         dtargus /= sp->settings->rate;
 
         assert(dtargus != 0);
-*/
+
         if (gettimeofday(&before, 0) < 0)
             perror("gettimeofday");
         ++sp->packet_count;
@@ -161,16 +151,9 @@ iperf_udp_send(struct iperf_stream *sp)
 
         sp->result->bytes_sent += result;
         sp->result->bytes_sent_this_interval += result;
-/*
+
         if (gettimeofday(&after, 0) < 0)
             perror("gettimeofday");
-
-        //
-        // CHECK: Packet length and ID if(sp->settings->state ==
-        // STREAM_RUNNING) printf("State = %d Outgoing packet = %d AND SP =
-        // %d\n",sp->settings->state, sp->packet_count, sp->socket);
-        //
-
 
         adjustus = dtargus;
         adjustus += (before.tv_sec - after.tv_sec) * SEC_TO_US;
@@ -179,10 +162,10 @@ iperf_udp_send(struct iperf_stream *sp)
         if (adjustus > 0) {
             dtargus = adjustus;
         }
-        // RESET THE TIMER
+
         update_timer(sp->send_timer, 0, dtargus);
-//    } // timer_expired_micro
-*/
+    }
+
     return result;
 }
 

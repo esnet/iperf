@@ -143,6 +143,8 @@ iperf_init_test(struct iperf_test *test)
 {
     char *prot;
     struct iperf_stream *sp;
+    int64_t dtargus;
+
 
 /* XXX: These variables were used in the old UDP code
     int64_t delayus, adjustus, dtargus;
@@ -150,8 +152,7 @@ iperf_init_test(struct iperf_test *test)
 
     if (test->protocol == Pudp) {
         prot = "UDP";
-
-/* XXX: This code isn't currently used and will most likely be changed
+/* XXX: Trying my own implementation
         dtargus = (int64_t) (test->default_settings->blksize) * SEC_TO_US * 8;
         dtargus /= test->default_settings->rate;
 
@@ -165,7 +166,13 @@ iperf_init_test(struct iperf_test *test)
         for (sp = test->streams; sp != NULL; sp = sp->next)
             sp->send_timer = new_timer(0, dtargus);
 */
+        dtargus = (int64_t) test->default_settings->blksize * SEC_TO_US * 8;
+        dtargus /= test->default_settings->rate;
 
+        assert(dtargus != 0);
+
+        for (sp = test->streams; sp; sp = sp->next)
+            sp->send_timer = new_timer(dtargus / SEC_TO_US, dtargus % SEC_TO_US);
     } else {
         prot = "TCP";
     }
@@ -216,6 +223,11 @@ package_parameters(struct iperf_test *test)
     
     if (test->default_settings->socket_bufsize) {
         snprintf(optbuf, sizeof(optbuf), "-w %d ", test->default_settings->socket_bufsize);
+        strncat(pstring, optbuf, sizeof(pstring));
+    }
+
+    if (test->default_settings->rate) {
+        snprintf(optbuf, sizeof(optbuf), "-b %llu ", test->default_settings->rate);
         strncat(pstring, optbuf, sizeof(pstring));
     }
 
@@ -284,7 +296,7 @@ parse_parameters(struct iperf_test *test)
         n++;
     }
 
-    while ((ch = getopt(n, params, "pt:n:m:uP:Rw:l:")) != -1) {
+    while ((ch = getopt(n, params, "pt:n:m:uP:Rw:l:b:")) != -1) {
         switch (ch) {
             case 'p':
                 test->protocol = Ptcp;
@@ -313,6 +325,9 @@ parse_parameters(struct iperf_test *test)
                 break;
             case 'l':
                 test->default_settings->blksize = atoi(optarg);
+                break;
+            case 'b':
+                test->default_settings->rate = atoll(optarg);
                 break;
         }
     }

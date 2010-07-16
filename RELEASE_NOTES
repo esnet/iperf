@@ -8,3 +8,14 @@
   * Support for setting TCP MSS (-M)
       * Note: This feature is still in development. It is still very buggy.
 
+== iperf 3.0b1 2010-07-08 ==
+
+  * TCP control socket now manages messages between client and server
+  * Dynamic server (gets test parameters from client)
+      * Server can now set test options dynamically without having to restart.
+          * Currently supported options: -l, -t, -n, -P, -R
+          * Future options: -u, -b, -w, -M, -N, -I, -T, -Z, -6
+  * Results exchange
+      * Client can now see server results (and vice versa)
+  * Reverse mode (-R)
+      * Server sends, client receives

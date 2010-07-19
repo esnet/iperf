@@ -4,10 +4,12 @@
    approvals from the U.S. Dept. of Energy).  All rights reserved.
 */
 
-#ifndef        __IPERF_H
-#define        __IPERF_H
+#ifndef __IPERF_H
+#define __IPERF_H
 
 #include <sys/time.h>
+#include <sys/types.h>
+#include <stdint.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
 

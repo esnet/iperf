@@ -32,6 +32,7 @@
 #include "iperf_api.h"
 #include "iperf_udp.h"
 #include "iperf_tcp.h"
+#include "iperf_error.h"
 #include "timer.h"
 #include "net.h"
 #include "units.h"
@@ -54,6 +55,209 @@ usage_long()
 {
     fprintf(stderr, usage_long1);
     fprintf(stderr, usage_long2);
+}
+
+int
+iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
+{
+    static struct option longopts[] =
+    {
+        {"client", required_argument, NULL, 'c'},
+        {"server", no_argument, NULL, 's'},
+        {"time", required_argument, NULL, 't'},
+        {"port", required_argument, NULL, 'p'},
+        {"parallel", required_argument, NULL, 'P'},
+        {"udp", no_argument, NULL, 'u'},
+        {"tcpInfo", no_argument, NULL, 'T'},
+        {"bandwidth", required_argument, NULL, 'b'},
+        {"length", required_argument, NULL, 'l'},
+        {"window", required_argument, NULL, 'w'},
+        {"interval", required_argument, NULL, 'i'},
+        {"bytes", required_argument, NULL, 'n'},
+        {"NoDelay", no_argument, NULL, 'N'},
+        {"Print-mss", no_argument, NULL, 'm'},
+        {"Set-mss", required_argument, NULL, 'M'},
+        {"version", no_argument, NULL, 'v'},
+        {"verbose", no_argument, NULL, 'V'},
+        {"debug", no_argument, NULL, 'd'},
+        {"help", no_argument, NULL, 'h'},
+        {"daemon", no_argument, NULL, 'D'},
+        {"format", required_argument, NULL, 'f'},
+        {"reverse", no_argument, NULL, 'R'},
+
+    /*  XXX: The following ifdef needs to be split up. linux-congestion is not necessarily supported
+     *  by systems that support tos.
+     */
+#ifdef ADD_WHEN_SUPPORTED
+        {"tos",        required_argument, NULL, 'S'},
+        {"linux-congestion", required_argument, NULL, 'Z'},
+#endif
+        {NULL, 0, NULL, 0}
+    };
+    char ch;
+
+    while ((ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:n:mRNTvhVdM:f:", longopts, NULL)) != -1) {
+        switch (ch) {
+            case 'c':
+                if (test->role == 's') {
+                    ierrno = IESERVCLIENT;
+                    return (-1);
+                } else {
+                    test->role = 'c';
+                    test->server_hostname = (char *) malloc(strlen(optarg)+1);
+                    strncpy(test->server_hostname, optarg, strlen(optarg));
+                }
+                break;
+            case 'p':
+                test->server_port = atoi(optarg);
+                break;
+            case 's':
+                if (test->role == 'c') {
+                    ierrno = IESERVCLIENT;
+                    return (-1);
+                } else {
+                    test->role = 's';
+                }
+                break;
+            case 't':
+                if (test->role == 's') {
+                    ierrno = IECLIENTONLY;
+                    return (-1);
+                }
+                test->duration = atoi(optarg);
+                if (test->duration > MAX_TIME) {
+                    ierrno = IEDURATION;
+                    return (-1);
+                }
+                break;
+            case 'u':
+                if (test->role == 's') {
+                    ierrno = IECLIENTONLY;
+                    return (-1);
+                }
+                test->protocol = Pudp;
+                test->default_settings->blksize = DEFAULT_UDP_BLKSIZE;
+                test->new_stream = iperf_new_udp_stream;
+                break;
+            case 'P':
+                if (test->role == 's') {
+                    ierrno = IECLIENTONLY;
+                    return (-1);
+                }
+                test->num_streams = atoi(optarg);
+                if (test->num_streams > MAX_STREAMS) {
+                    ierrno = IENUMSTREAMS;
+                    return (-1);
+                }
+                break;
+            case 'b':
+                if (test->role == 's') {
+                    ierrno = IECLIENTONLY;
+                    return (-1);
+                }
+                test->default_settings->rate = unit_atof(optarg);
+                break;
+            case 'l':
+                if (test->role == 's') {
+                    ierrno = IECLIENTONLY;
+                    return (-1);
+                }
+                test->default_settings->blksize = unit_atoi(optarg);
+                if (test->default_settings->blksize > MAX_BLOCKSIZE) {
+                    ierrno = IEBLOCKSIZE;
+                    return (-1);
+                }
+                break;
+            case 'w':
+                // XXX: This is a socket buffer, not specific to TCP
+                if (test->role == 's') {
+                    ierrno = IECLIENTONLY;
+                    return (-1);
+                }
+                test->default_settings->socket_bufsize = unit_atof(optarg);
+                if (test->default_settings->socket_bufsize > MAX_TCP_BUFFER) {
+                    ierrno = IEBUFSIZE;
+                    return (-1);
+                }
+                break;
+            case 'i':
+                /* XXX: could potentially want separate stat collection and reporting intervals,
+                   but just set them to be the same for now */
+                test->stats_interval = atoi(optarg);
+                test->reporter_interval = atoi(optarg);
+                if (test->stats_interval > MAX_INTERVAL) {
+                    ierrno = IEINTERVAL;
+                    return (-1);
+                }
+                break;
+            case 'n':
+                if (test->role == 's') {
+                    ierrno = IECLIENTONLY;
+                    return (-1);
+                }
+                test->default_settings->bytes = unit_atoi(optarg);
+                break;
+            case 'm':
+                test->print_mss = 1;
+                break;
+            case 'N':
+                if (test->role == 's') {
+                    ierrno = IECLIENTONLY;
+                    return (-1);
+                }
+                test->no_delay = 1;
+                break;
+            case 'M':
+                if (test->role == 's') {
+                    ierrno = IECLIENTONLY;
+                    return (-1);
+                }
+                test->default_settings->mss = atoi(optarg);
+                if (test->default_settings->mss > MAX_MSS) {
+                    ierrno = IEMSS;
+                    return (-1);
+                }
+                break;
+            case 'f':
+                test->default_settings->unit_format = *optarg;
+                break;
+            case 'T':
+                test->tcp_info = 1;
+                break;
+            case 'V':
+                test->verbose = 1;
+                break;
+            case 'd':
+                test->debug = 1;
+                break;
+            case 'R':
+                if (test->role == 's') {
+                    ierrno = IECLIENTONLY;
+                    return (-1);
+                }
+                test->reverse = 1;
+                break;
+            case 'v':
+                printf(version);
+                exit(0);
+            case 'h':
+            default:
+                usage_long();
+                exit(1);
+        }
+    }
+    /* For subsequent calls to getopt */
+#ifdef __APPLE__
+    optreset = 1;
+#endif
+    optind = 0;
+
+    if ((test->role != 'c') && (test->role != 's')) {
+        ierrno = IENOROLE;
+        return (-1);
+    }
+
+    return (0);
 }
 
 int

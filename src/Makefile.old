@@ -1,5 +1,5 @@
 CFLAGS=-g -Wall
-OBJS=main.o iperf_api.o iperf_server_api.o iperf_tcp.o iperf_udp.o timer.o net.o tcp_window_size.o units.o iperf_util.o tcp_info.o locale.o
+OBJS=main.o iperf_api.o iperf_server_api.o iperf_tcp.o iperf_udp.o timer.o net.o tcp_window_size.o units.o iperf_util.o tcp_info.o locale.o iperf_error.o
 LDFLAGS=
 
 UNAME=$(shell uname)

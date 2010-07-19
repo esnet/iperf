@@ -133,6 +133,7 @@ int iperf_handle_message_client(struct iperf_test *);
 int iperf_exchange_results(struct iperf_test *);
 int parse_results(struct iperf_test *, char *);
 void iperf_init_test(struct iperf_test *);
+int iperf_parse_arguments(struct iperf_test *, int, char **);
 
 #endif
 

@@ -8,7 +8,7 @@
 
 void ierror(char *);
 
-extern int ierrno;
+extern int i_errno;
 
 enum {
     IESERVCLIENT = 1,       // Iperf cannot be both server and client
@@ -20,6 +20,9 @@ enum {
     IEBUFSIZE = 7,          // Socket buffer size too large. Maximum value = %dMAX_TCP_BUFFER
     IEINTERVAL = 8,         // Report interval too large. Maxumum value = %dMAX_INTERVAL
     IEMSS = 9,              // MSS too large. Maximum value = %dMAX_MSS
+    IECTRLWRITE = 10,        // Unable to write to the control socket (check perror)
+    IECTRLREAD = 11,         // Unable to read from the control socket (check perror)
+    IESOCKWRITE
 };
 
 #endif

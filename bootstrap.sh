@@ -40,8 +40,8 @@ esac
 
 set -x
 glibtoolize --copy --force --automake
-aclocal-17 -I config
+aclocal -I config
 autoheader
-automake-17 --foreign --add-missing --copy
+automake --foreign --add-missing --copy
 autoconf
 rm -rf config.cache

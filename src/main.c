@@ -76,6 +76,10 @@ main(int argc, char **argv)
 #endif
 
     test = iperf_new_test();
+    if (!test) {
+        ierror("create new test error");
+        exit(1);
+    }
     iperf_defaults(test);	/* sets defaults */
 
     if (iperf_parse_arguments(test, argc, argv) < 0) {

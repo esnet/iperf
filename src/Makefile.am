@@ -6,28 +6,30 @@ include_HEADERS         = iperf_api.h iperf_server_api.h                # Define
 
 # Specify the source files and flags for the iperf library
 libiperf_a_SOURCES      = \
-                        iperf_api.c \
-                        iperf_server_api.c \
-                        iperf_tcp.c \
-                        iperf_udp.c \
-                        timer.c \
-                        net.c \
-                        tcp_window_size.c \
-                        units.c \
-                        iperf_util.c \
-                        tcp_info.c \
-                        locale.c \
-                        iperf_api.h \
                         iperf.h \
+                        iperf_api.c \
+                        iperf_api.h \
+                        iperf_error.c \
+                        iperf_error.h \
+                        iperf_server_api.c \
                         iperf_server_api.h \
+                        iperf_tcp.c \
                         iperf_tcp.h \
+                        iperf_udp.c \
                         iperf_udp.h \
-                        locale.h \
-                        net.h \
-                        tcp_window_size.h \
-                        timer.h \
-                        units.h \
+                        iperf_util.c \
                         iperf_util.h \
+                        locale.c \
+                        locale.h \
+                        net.c \
+                        net.h \
+                        tcp_info.c \
+                        tcp_window_size.c \
+                        tcp_window_size.h \
+                        timer.c \
+                        timer.h \
+                        units.c \
+                        units.h \
                         version.h
 
 # Specify the sources and various flags for the iperf binary
@@ -45,29 +47,8 @@ endif
 # Specify the sources and various flags for the profiled iperf binary. This
 # binary recompiles all the source files to make sure they are all profiled.
 iperf3_profile_SOURCES  = main.c \
-                        iperf_api.c \
-                        iperf_server_api.c \
-                        iperf_tcp.c \
-                        iperf_udp.c \
-                        timer.c \
-                        net.c \
-                        tcp_window_size.c \
-                        units.c \
-                        iperf_util.c \
-                        tcp_info.c \
-                        locale.c \
-                        iperf_api.h \
-                        iperf.h \
-                        iperf_server_api.h \
-                        iperf_tcp.h \
-                        iperf_udp.h \
-                        locale.h \
-                        net.h \
-                        tcp_window_size.h \
-                        timer.h \
-                        units.h \
-                        iperf_util.h \
-                        version.h
+						  $(libiperf_a_SOURCES)
+
 iperf3_profile_CFLAGS   = -pg -Wall
 iperf3_profile_LDADD    = libiperf.a
 

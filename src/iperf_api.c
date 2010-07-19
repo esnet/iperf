@@ -34,7 +34,7 @@
 #include "iperf_tcp.h"
 #include "iperf_error.h"
 #include "timer.h"
-#include "net.h"
+
 #include "units.h"
 #include "tcp_window_size.h"
 #include "iperf_util.h"
@@ -100,7 +100,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         switch (ch) {
             case 'c':
                 if (test->role == 's') {
-                    ierrno = IESERVCLIENT;
+                    i_errno = IESERVCLIENT;
                     return (-1);
                 } else {
                     test->role = 'c';
@@ -113,7 +113,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 's':
                 if (test->role == 'c') {
-                    ierrno = IESERVCLIENT;
+                    i_errno = IESERVCLIENT;
                     return (-1);
                 } else {
                     test->role = 's';
@@ -121,18 +121,18 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 't':
                 if (test->role == 's') {
-                    ierrno = IECLIENTONLY;
+                    i_errno = IECLIENTONLY;
                     return (-1);
                 }
                 test->duration = atoi(optarg);
                 if (test->duration > MAX_TIME) {
-                    ierrno = IEDURATION;
+                    i_errno = IEDURATION;
                     return (-1);
                 }
                 break;
             case 'u':
                 if (test->role == 's') {
-                    ierrno = IECLIENTONLY;
+                    i_errno = IECLIENTONLY;
                     return (-1);
                 }
                 test->protocol = Pudp;
@@ -141,42 +141,42 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'P':
                 if (test->role == 's') {
-                    ierrno = IECLIENTONLY;
+                    i_errno = IECLIENTONLY;
                     return (-1);
                 }
                 test->num_streams = atoi(optarg);
                 if (test->num_streams > MAX_STREAMS) {
-                    ierrno = IENUMSTREAMS;
+                    i_errno = IENUMSTREAMS;
                     return (-1);
                 }
                 break;
             case 'b':
                 if (test->role == 's') {
-                    ierrno = IECLIENTONLY;
+                    i_errno = IECLIENTONLY;
                     return (-1);
                 }
                 test->default_settings->rate = unit_atof(optarg);
                 break;
             case 'l':
                 if (test->role == 's') {
-                    ierrno = IECLIENTONLY;
+                    i_errno = IECLIENTONLY;
                     return (-1);
                 }
                 test->default_settings->blksize = unit_atoi(optarg);
                 if (test->default_settings->blksize > MAX_BLOCKSIZE) {
-                    ierrno = IEBLOCKSIZE;
+                    i_errno = IEBLOCKSIZE;
                     return (-1);
                 }
                 break;
             case 'w':
                 // XXX: This is a socket buffer, not specific to TCP
                 if (test->role == 's') {
-                    ierrno = IECLIENTONLY;
+                    i_errno = IECLIENTONLY;
                     return (-1);
                 }
                 test->default_settings->socket_bufsize = unit_atof(optarg);
                 if (test->default_settings->socket_bufsize > MAX_TCP_BUFFER) {
-                    ierrno = IEBUFSIZE;
+                    i_errno = IEBUFSIZE;
                     return (-1);
                 }
                 break;
@@ -186,13 +186,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 test->stats_interval = atoi(optarg);
                 test->reporter_interval = atoi(optarg);
                 if (test->stats_interval > MAX_INTERVAL) {
-                    ierrno = IEINTERVAL;
+                    i_errno = IEINTERVAL;
                     return (-1);
                 }
                 break;
             case 'n':
                 if (test->role == 's') {
-                    ierrno = IECLIENTONLY;
+                    i_errno = IECLIENTONLY;
                     return (-1);
                 }
                 test->default_settings->bytes = unit_atoi(optarg);
@@ -202,19 +202,19 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'N':
                 if (test->role == 's') {
-                    ierrno = IECLIENTONLY;
+                    i_errno = IECLIENTONLY;
                     return (-1);
                 }
                 test->no_delay = 1;
                 break;
             case 'M':
                 if (test->role == 's') {
-                    ierrno = IECLIENTONLY;
+                    i_errno = IECLIENTONLY;
                     return (-1);
                 }
                 test->default_settings->mss = atoi(optarg);
                 if (test->default_settings->mss > MAX_MSS) {
-                    ierrno = IEMSS;
+                    i_errno = IEMSS;
                     return (-1);
                 }
                 break;
@@ -232,7 +232,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'R':
                 if (test->role == 's') {
-                    ierrno = IECLIENTONLY;
+                    i_errno = IECLIENTONLY;
                     return (-1);
                 }
                 test->reverse = 1;
@@ -253,7 +253,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     optind = 0;
 
     if ((test->role != 'c') && (test->role != 's')) {
-        ierrno = IENOROLE;
+        i_errno = IENOROLE;
         return (-1);
     }
 
@@ -1468,7 +1468,7 @@ iperf_run_client(struct iperf_test * test)
     /* Start the client and connect to the server */
     if (iperf_connect(test) < 0) {
         // set error and return
-        return -1;
+        return (-1);
     }
 
     signal(SIGINT, sig_handler);

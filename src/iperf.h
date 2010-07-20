@@ -147,31 +147,8 @@ struct iperf_test
 
     iperf_size_t bytes_sent;
 
-    /* iperf error reporting
-     * - errtype: (0,1,2)
-     *   0: use perror(errno)
-     *   1: use herror(errno)
-     *   2: use ierror(errno)
-     */
-    //int       errtype;
-    //int       errno;
-
     struct iperf_stream *streams;               /* pointer to list of struct stream */
     struct iperf_settings *default_settings;
-};
-
-struct param_exchange
-{
-    int       state;
-    int       protocol;
-    int       num_streams;
-    int       reverse;
-    int       blksize;
-    int       recv_window;
-    int       send_window;
-    int       mss;
-    char      format;
-    char      cookie[COOKIE_SIZE]; 
 };
 
 enum

@@ -29,13 +29,11 @@ netdial(int proto, char *client, int port)
 
     /* XXX: This is not working for non-fully qualified host names use getaddrinfo() instead? */
     if ((hent = gethostbyname(client)) == 0) {
-        // perror("gethostbyname");
         return (-1);
     }
 
     s = socket(AF_INET, proto, 0);
     if (s < 0) {
-        // perror("socket");
         return (-1);
     }
 
@@ -45,7 +43,6 @@ netdial(int proto, char *client, int port)
     sa.sin_family = AF_INET;
 
     if (connect(s, (struct sockaddr *) & sa, sizeof sa) < 0 && errno != EINPROGRESS) {
-        // perror("netdial: connect error");
         return (-1);
     }
     
@@ -53,7 +50,6 @@ netdial(int proto, char *client, int port)
 
     // XXX: Is there a reason to call getpeername() if none of the return values are used?
     if (getpeername(s, (struct sockaddr *) & sa, &sn) < 0) {
-        // perror("getpeername error");
         return (-1);
     }
 
@@ -73,7 +69,6 @@ netannounce(int proto, char *local, int port)
 
     s = socket(AF_INET, proto, 0);
     if (s < 0) {
-        perror("socket");
         return (-1);
     }
     int opt = 1;
@@ -84,12 +79,14 @@ netannounce(int proto, char *local, int port)
 
     if (bind(s, (struct sockaddr *) & sa, sizeof(struct sockaddr_in)) < 0) {
         close(s);
-        perror("bind");
         return (-1);
     }
     
-    if (proto == SOCK_STREAM)
-        listen(s, 5);
+    if (proto == SOCK_STREAM) {
+        if (listen(s, 5) < 0) {
+            return (-1);
+        }
+    }
 
     return s;
 }
@@ -195,6 +192,7 @@ getsock_tcp_mss(int inSock)
 /*************************************************************/
 
 /* sets TCP_NODELAY and TCP_MAXSEG if requested */
+// XXX: This function is not being used.
 
 int
 set_tcp_options(int sock, int no_delay, int mss)
@@ -244,6 +242,7 @@ set_tcp_options(int sock, int no_delay, int mss)
 
 /****************************************************************************/
 
+// XXX: This function is not being used.
 int
 setnonblocking(int sock)
 {

@@ -36,6 +36,7 @@
 #include "iperf.h"
 #include "iperf_api.h"
 #include "iperf_udp.h"
+#include "iperf_error.h"
 #include "timer.h"
 #include "net.h"
 #include "locale.h"
@@ -68,7 +69,6 @@ iperf_udp_recv(struct iperf_stream *sp)
 #endif
 
     if (result < 0) {
-        perror("Nread udp result");
         return (-1);
     }
     sp->result->bytes_received += result;
@@ -95,9 +95,8 @@ iperf_udp_recv(struct iperf_stream *sp)
     }
 
     /* jitter measurement */
-    if (gettimeofday(&arrival_time, NULL) < 0) {
-        perror("gettimeofday");
-    }
+    gettimeofday(&arrival_time, NULL);
+
     transit = timeval_diff(&sent_time, &arrival_time);
     d = transit - sp->prev_transit;
     if (d < 0)
@@ -129,8 +128,8 @@ iperf_udp_send(struct iperf_stream *sp)
 
         assert(dtargus != 0);
 
-        if (gettimeofday(&before, 0) < 0)
-            perror("gettimeofday");
+        gettimeofday(&before, 0);
+
         ++sp->packet_count;
         sec = htonl(before.tv_sec);
         usec = htonl(before.tv_usec);
@@ -147,13 +146,12 @@ iperf_udp_send(struct iperf_stream *sp)
 #endif
 
         if (result < 0)
-            perror("Nwrite udp error");
+            return (-1);
 
         sp->result->bytes_sent += result;
         sp->result->bytes_sent_this_interval += result;
 
-        if (gettimeofday(&after, 0) < 0)
-            perror("gettimeofday");
+        gettimeofday(&after, 0);
 
         adjustus = dtargus;
         adjustus += (before.tv_sec - after.tv_sec) * SEC_TO_US;
@@ -163,7 +161,8 @@ iperf_udp_send(struct iperf_stream *sp)
             dtargus = adjustus;
         }
 
-        update_timer(sp->send_timer, 0, dtargus);
+        if (update_timer(sp->send_timer, 0, dtargus) < 0)
+            return (-1);
     }
 
     return result;
@@ -177,7 +176,6 @@ iperf_new_udp_stream(struct iperf_test * testp)
 
     sp = (struct iperf_stream *) iperf_new_stream(testp);
     if (!sp) {
-        perror("malloc");
         return (NULL);
     }
     sp->rcv = iperf_udp_recv;
@@ -209,41 +207,44 @@ iperf_udp_accept(struct iperf_test *test)
 
     len = sizeof sa_peer;
     if ((sz = recvfrom(test->listener_udp, &buf, sizeof(buf), 0, (struct sockaddr *) &sa_peer, &len)) < 0) {
-        perror("recvfrom in udp accept");
+        i_errno = IESTREAMACCEPT;
         return (-1);
     }
 
     if (connect(s, (struct sockaddr *) &sa_peer, len) < 0) {
-        perror("iperf_udp_accept: connect error");
-        return -1;
+        i_errno = IESTREAMACCEPT;
+        return (-1);
     }
 
     sp = test->new_stream(test);
     if (!sp)
         return (-1);
     sp->socket = s;
-    iperf_init_stream(sp, test);
+    if (iperf_init_stream(sp, test) < 0)
+        return (-1);
     iperf_add_stream(test, sp);
     FD_SET(s, &test->read_set);
     FD_SET(s, &test->write_set);
     test->max_fd = (s > test->max_fd) ? s : test->max_fd;
 
     test->listener_udp = netannounce(Pudp, NULL, test->server_port);
-    if (test->listener_udp < 0)
-        return -1;
+    if (test->listener_udp < 0) {
+        i_errno = IELISTEN;
+        return (-1);
+    }
 
     FD_SET(test->listener_udp, &test->read_set);
     test->max_fd = (test->max_fd < test->listener_udp) ? test->listener_udp : test->max_fd;
 
     /* Let the client know we're ready "accept" another UDP "stream" */
     if (write(sp->socket, &buf, sizeof(buf)) < 0) {
-        perror("write listen message");
-        return -1;
+        i_errno = IESTREAMWRITE;
+        return (-1);
     }
 
     connect_msg(sp);
     test->streams_accepted++;
 
-    return 0;
+    return (0);
 }
 

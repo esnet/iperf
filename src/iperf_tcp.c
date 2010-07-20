@@ -55,10 +55,6 @@ iperf_tcp_recv(struct iperf_stream * sp)
     int result = 0;
     int size = sp->settings->blksize;
 
-    if (!sp->buffer) {
-        fprintf(stderr, "iperf_tcp_recv: receive buffer not allocated\n");
-        return -1;
-    }
 #ifdef USE_RECV
 	/*
 	 * NOTE: Nwrite/Nread seems to be 10-15% faster than send/recv for
@@ -70,9 +66,8 @@ iperf_tcp_recv(struct iperf_stream * sp)
 #else
     result = Nread(sp->socket, sp->buffer, size, Ptcp);
 #endif
-    if (result == -1) {
-        perror("Read error");
-        return -1;
+    if (result < 0) {
+        return (-1);
     }
     sp->result->bytes_received += result;
     sp->result->bytes_received_this_interval += result;
@@ -94,18 +89,14 @@ iperf_tcp_send(struct iperf_stream * sp)
     int result;
     int size = sp->settings->blksize;
 
-    if (!sp->buffer) {
-        fprintf(stderr, "iperf_tcp_send: transmit buffer not allocated\n");
-        return -1;
-    }
-
 #ifdef USE_SEND
     result = send(sp->socket, sp->buffer, size, 0);
 #else
     result = Nwrite(sp->socket, sp->buffer, size, Ptcp);
 #endif
-    if (result < 0)
-        perror("Nwrite error");
+    if (result < 0) {
+        return (-1);
+    }
 
     sp->result->bytes_sent += result;
     sp->result->bytes_sent_this_interval += result;
@@ -121,7 +112,6 @@ iperf_new_tcp_stream(struct iperf_test * testp)
 
     sp = (struct iperf_stream *) iperf_new_stream(testp);
     if (!sp) {
-        perror("malloc");
         return (NULL);
     }
     sp->rcv = iperf_tcp_recv;	/* pointer to receive function */
@@ -135,7 +125,7 @@ iperf_new_tcp_stream(struct iperf_test * testp)
 
 /**************************************************************************/
 
-/**
+/** XXX: This function is not currently in use!
  * iperf_tcp_accept -- accepts a new TCP connection
  * on tcp_listener_socket for TCP data and param/result
  * exchange messages
@@ -158,9 +148,6 @@ iperf_tcp_accept(struct iperf_test * test)
         printf("Error in accept(): %s\n", strerror(errno));
         return -1;
     }
-
-    // XXX: Nonblocking off. OKAY since we use select.
-    // setnonblocking(peersock);
 
     // XXX: This doesn't fit our API model!
     sp = test->new_stream(test);

@@ -77,20 +77,20 @@ main(int argc, char **argv)
 
     test = iperf_new_test();
     if (!test) {
-        ierror("create new test error");
+        iperf_error("create new test error");
         exit(1);
     }
     iperf_defaults(test);	/* sets defaults */
 
     if (iperf_parse_arguments(test, argc, argv) < 0) {
-        ierror("parameter error");
+        iperf_error("parameter error");
         fprintf(stderr, "\n");
         usage_long();
         exit(1);
     }
 
     if (iperf_run(test) < 0) {
-        ierror("error");
+        iperf_error("error");
         exit(1);
     }
 

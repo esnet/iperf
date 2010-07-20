@@ -8,6 +8,7 @@
 #include <time.h>
 
 #include "timer.h"
+#include "iperf_error.h"
 
 double
 timeval_to_double(struct timeval * tv)
@@ -34,10 +35,7 @@ timer_expired(struct timer * tp)
     struct timeval now;
     int64_t end = 0, current = 0;
 
-    if (gettimeofday(&now, NULL) < 0) {
-        perror("gettimeofday");
-        return -1;
-    }
+    gettimeofday(&now, NULL);
 
     end += tp->end.tv_sec * 1000000;
     end += tp->end.tv_usec;
@@ -48,17 +46,19 @@ timer_expired(struct timer * tp)
     return current > end;
 }
 
-void
+int
 update_timer(struct timer * tp, time_t sec, suseconds_t usec)
 {
     if (gettimeofday(&tp->begin, NULL) < 0) {
-        perror("gettimeofday");
+        i_errno = IEUPDATETIMER;
+        return (-1);
     }
 
     tp->end.tv_sec = tp->begin.tv_sec + (time_t) sec;
     tp->end.tv_usec = tp->begin.tv_usec + (time_t) usec;
 
     tp->expired = timer_expired;
+    return (0);
 }
 
 struct timer *
@@ -67,13 +67,13 @@ new_timer(time_t sec, suseconds_t usec)
     struct timer *tp = NULL;
     tp = (struct timer *) calloc(1, sizeof(struct timer));
     if (tp == NULL) {
-        perror("malloc");
-        return NULL;
+        i_errno = IENEWTIMER;
+        return (NULL);
     }
 
     if (gettimeofday(&tp->begin, NULL) < 0) {
-        perror("gettimeofday");
-        return NULL;
+        i_errno = IENEWTIMER;
+        return (NULL);
     }
 
     tp->end.tv_sec = tp->begin.tv_sec + (time_t) sec;
@@ -131,10 +131,7 @@ timer_remaining(struct timer * tp)
     struct timeval now;
     long int  end_time = 0, current_time = 0, diff = 0;
 
-    if (gettimeofday(&now, NULL) < 0) {
-        perror("gettimeofday");
-        return -1;
-    }
+    gettimeofday(&now, NULL);
 
     end_time += tp->end.tv_sec * 1000000;
     end_time += tp->end.tv_usec;

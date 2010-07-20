@@ -287,16 +287,17 @@ iperf_send(struct iperf_test *test)
 
     result = select(test->max_fd + 1, NULL, &temp_write_set, NULL, &tv);
     if (result < 0 && errno != EINTR) {
-        perror("select iperf_send");
-        return -1;
+        // perror("select iperf_send");
+        i_errno = IESELECT;
+        return (-1);
     }
     if (result > 0) {
         for (sp = test->streams; sp != NULL; sp = sp->next) {
             if (FD_ISSET(sp->socket, &temp_write_set)) {
                 if ((bytes_sent = sp->snd(sp)) < 0) {
-                    // XXX: Do better error handling
-                    perror("iperf stream->snd");
-                    return -1;
+                    // perror("iperf stream->snd");
+                    i_errno = IESTREAMWRITE;
+                    return (-1);
                 }
                 test->bytes_sent += bytes_sent;
                 FD_CLR(sp->socket, &temp_write_set);
@@ -322,16 +323,17 @@ iperf_recv(struct iperf_test *test)
 
     result = select(test->max_fd + 1, &temp_read_set, NULL, NULL, &tv);
     if (result < 0) {
-        perror("select iperf_recv");
-        return -1;
+        // perror("select iperf_recv");
+        i_errno = IESELECT;
+        return (-1);
     }
     if (result > 0) {
         for (sp = test->streams; sp != NULL; sp = sp->next) {
             if (FD_ISSET(sp->socket, &temp_read_set)) {
                 if ((bytes_sent = sp->rcv(sp)) < 0) {
-                    // XXX: Do better error handling
-                    perror("sp->rcv(sp)");
-                    return -1;
+                    // perror("sp->rcv(sp)");
+                    i_errno = IESTREAMREAD;
+                    return (-1);
                 }
                 test->bytes_sent += bytes_sent;
                 FD_CLR(sp->socket, &temp_read_set);
@@ -444,8 +446,8 @@ package_parameters(struct iperf_test *test)
     *pstring = (char) (strlen(pstring) - 1);
 
     if (Nwrite(test->ctrl_sck, pstring, (size_t) strlen(pstring), Ptcp) < 0) {
-        perror("Nwrite pstring");
-        return -1;
+        i_errno = IESENDPARAMS;
+        return (-1);
     }
 
     return 0;
@@ -547,7 +549,8 @@ iperf_exchange_parameters(struct iperf_test * test)
 
     if (test->role == 'c') {
 
-        package_parameters(test);
+        if (package_parameters(test) < 0)
+            return (-1);
 
     } else {
         parse_parameters(test);
@@ -639,8 +642,9 @@ iperf_exchange_results(struct iperf_test *test)
                 sp->cnt_error, sp->packet_count);
             size += strlen(buf);
             if ((results = realloc(results, size+1)) == NULL) {
-                perror("realloc results");
-                return -1;
+                // perror("realloc results");
+                i_errno = IEPACKAGERESULTS;
+                return (-1);
             }
             if (sp == test->streams)
                 *results = '\0';
@@ -649,32 +653,39 @@ iperf_exchange_results(struct iperf_test *test)
         size++;
         size = htonl(size);
         if (Nwrite(test->ctrl_sck, &size, sizeof(size), Ptcp) < 0) {
-            perror("Nwrite size");
+            // perror("Nwrite size");
+            i_errno = IESENDRESULTS;
             return (-1);
         }
         if (Nwrite(test->ctrl_sck, results, ntohl(size), Ptcp) < 0) {
-            perror("Nwrite results");
+            // perror("Nwrite results");
+            i_errno = IESENDRESULTS;
             return (-1);
         }
         free(results);
 
         /* Get server results string */
         if (Nread(test->ctrl_sck, &size, sizeof(size), Ptcp) < 0) {
-            perror("Nread size");
+            // perror("Nread size");
+            i_errno = IERECVRESULTS;
             return (-1);
         }
         size = ntohl(size);
         results = (char *) malloc(size * sizeof(char));
         if (results == NULL) {
-            perror("malloc results");
+            // perror("malloc results");
+            i_errno = IERECVRESULTS;
             return (-1);
         }
         if (Nread(test->ctrl_sck, results, size, Ptcp) < 0) {
-            perror("Nread results");
+            // perror("Nread results");
+            i_errno = IERECVRESULTS;
             return (-1);
         }
 
-        parse_results(test, results);
+        // XXX: The only error this sets is IESTREAMID, which may never be reached. Consider making void.
+        if (parse_results(test, results) < 0)
+            return (-1);
 
         free(results);
 
@@ -749,7 +760,8 @@ parse_results(struct iperf_test *test, char *results)
         for (sp = test->streams; sp; sp = sp->next)
             if (sp->id == sid) break;
         if (sp == NULL) {
-            fprintf(stderr, "error: No stream with id %d\n", sid);
+            // fprintf(stderr, "error: No stream with id %d\n", sid);
+            i_errno = IESTREAMID;
             return (-1);
         }
         if ((test->role == 'c' && !test->reverse) || (test->role == 's' && test->reverse)) {
@@ -871,7 +883,7 @@ iperf_new_test()
 
     testp = (struct iperf_test *) malloc(sizeof(struct iperf_test));
     if (!testp) {
-        perror("malloc");
+        i_errno = IENEWTEST;
         return (NULL);
     }
     /* initialize everything to zero */
@@ -923,11 +935,11 @@ iperf_create_streams(struct iperf_test *test)
     for (i = 0; i < test->num_streams; ++i) {
         if (test->protocol == Ptcp && (test->no_delay || test->default_settings->mss)) {
             if ((hent = gethostbyname(test->server_hostname)) == 0) {
-                perror("gethostbyname");    
+                i_errno = IECREATESTREAM;
                 return (-1);
             }
             if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-                perror("socket");
+                i_errno = IECREATESTREAM;
                 return (-1);
             }
             memset(&sa, 0, sizeof(sa));
@@ -938,42 +950,51 @@ iperf_create_streams(struct iperf_test *test)
             if (test->no_delay) {
                 opt = 1;
                 if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0) {
-                    perror("setsockopt");
+                    // perror("setsockopt");
+                    i_errno = IECREATESTREAM;
                     return (-1);
                 }
             }
             if (opt = test->default_settings->mss) {
                 if (setsockopt(s, IPPROTO_TCP, TCP_MAXSEG, &opt, sizeof(opt)) < 0) {
-                    perror("setsockopt");
+                    // perror("setsockopt");
+                    i_errno = IECREATESTREAM;
                     return (-1);
                 }
             }
             if (connect(s, (struct sockaddr *) &sa, sizeof(sa)) < 0 && errno != EINPROGRESS) {
-                perror("connect tcp stream");
+                // perror("connect tcp stream");
+                i_errno = IECREATESTREAM;
                 return (-1);
             }
         } else {
             s = netdial(test->protocol, test->server_hostname, test->server_port);
             if (s < 0) {
-                perror("netdial stream");
-                return -1;
+                // perror("netdial stream");
+                i_errno = IECREATESTREAM;
+                return (-1);
             }
         }
 
         if (test->protocol == Ptcp) {
             if (Nwrite(s, test->default_settings->cookie, COOKIE_SIZE, Ptcp) < 0) {
-                perror("Nwrite COOKIE\n");
-                return -1;
+                // perror("Nwrite COOKIE\n");
+                i_errno = IESTREAMWRITE;
+                return (-1);
             }
         } else {
+            /* Write to the UDP stream to give the server this stream's credentials */
             if (write(s, &buf, sizeof(i)) < 0) {
-                perror("write data");
-                return -1;
+                // perror("write data");
+                i_errno = IESTREAMWRITE;
+                return (-1);
             }
+            /* Wait until the server confirms the client UDP write */
             // XXX: Should this read be TCP instead?
             if (read(s, &buf, sizeof(i)) < 0) {
-                perror("read data");
-                return -1;
+                // perror("read data");
+                i_errno = IESTREAMREAD;
+                return (-1);
             }
         }
 
@@ -983,8 +1004,11 @@ iperf_create_streams(struct iperf_test *test)
 
         // XXX: This doesn't fit our API model!
         sp = test->new_stream(test);
+        if (!sp)
+            return (-1);
         sp->socket = s;
-        iperf_init_stream(sp, test);
+        if (iperf_init_stream(sp, test) < 0)
+            return (-1);
         iperf_add_stream(test, sp);
 
         connect_msg(sp);
@@ -1000,20 +1024,24 @@ iperf_handle_message_client(struct iperf_test *test)
 
     if ((rval = read(test->ctrl_sck, &test->state, sizeof(char))) <= 0) {
         if (rval == 0) {
-            fprintf(stderr, "The server has unexpectedly closed the connection. Exiting...\n");
-            exit(1);
+            // fprintf(stderr, "The server has unexpectedly closed the connection. Exiting...\n");
+            i_errno = IECTRLCLOSE;
+            return (-1);
         } else {
-            perror("read ctrl_sck");
-            return -1;
+            // perror("read ctrl_sck");
+            i_errno = IERECVMESSAGE;
+            return (-1);
         }
     }
 
     switch (test->state) {
         case PARAM_EXCHANGE:
-            iperf_exchange_parameters(test);
+            if (iperf_exchange_parameters(test) < 0)
+                return (-1);
             break;
         case CREATE_STREAMS:
-            iperf_create_streams(test);
+            if (iperf_create_streams(test) < 0)
+                return (-1);
             break;
         case TEST_START:
             iperf_init_test(test);
@@ -1021,7 +1049,8 @@ iperf_handle_message_client(struct iperf_test *test)
         case TEST_RUNNING:
             break;
         case EXCHANGE_RESULTS:
-            iperf_exchange_results(test);
+            if (iperf_exchange_results(test) < 0)
+                return (-1);
             break;
         case DISPLAY_RESULTS:
             iperf_client_end(test);
@@ -1029,15 +1058,18 @@ iperf_handle_message_client(struct iperf_test *test)
         case IPERF_DONE:
             break;
         case SERVER_TERMINATE:
-            fprintf(stderr, "The server has terminated. Exiting...\n");
-            exit(1);
+            // fprintf(stderr, "The server has terminated. Exiting...\n");
+            i_errno = IESERVERTERM;
+            return (-1);
         case ACCESS_DENIED:
-            fprintf(stderr, "The server is busy running a test. Try again later.\n");
-            exit(0);
+            // fprintf(stderr, "The server is busy running a test. Try again later.\n");
+            // exit(0);
+            i_errno = IEACCESSDENIED;
+            return (-1);
         default:
-            // XXX: This needs to be removed from the production version
-            printf("How did you get here? test->state = %d\n", test->state);
-            break;
+            // printf("How did you get here? test->state = %d\n", test->state);
+            i_errno = IEMESSAGE;
+            return (-1);
     }
 
     return 0;
@@ -1057,12 +1089,13 @@ iperf_connect(struct iperf_test *test)
     /* Create and connect the control channel */
     test->ctrl_sck = netdial(Ptcp, test->server_hostname, test->server_port);
     if (test->ctrl_sck < 0) {
-        return -1;
+        i_errno = IECONNECT;
+        return (-1);
     }
 
     if (Nwrite(test->ctrl_sck, test->default_settings->cookie, COOKIE_SIZE, Ptcp) < 0) {
-        perror("Nwrite COOKIE\n");
-        return -1;
+        i_errno = IECTRLWRITE; // XXX: should this set IECONNECT instead?
+        return (-1);
     }
 
     FD_SET(test->ctrl_sck, &test->read_set);
@@ -1324,7 +1357,8 @@ iperf_new_stream(struct iperf_test *testp)
 
     sp = (struct iperf_stream *) malloc(sizeof(struct iperf_stream));
     if (!sp) {
-        perror("malloc");
+        // perror("malloc");
+        i_errno = IECREATESTREAM;
         return (NULL);
     }
     memset(sp, 0, sizeof(struct iperf_stream));
@@ -1334,16 +1368,19 @@ iperf_new_stream(struct iperf_test *testp)
     sp->result = (struct iperf_stream_result *) malloc(sizeof(struct iperf_stream_result));
 
     if (!sp->buffer) {
-        perror("Malloc sp->buffer");
-        return NULL;
+        // perror("Malloc sp->buffer");
+        i_errno = IECREATESTREAM;
+        return (NULL);
     }
     if (!sp->settings) {
-        perror("Malloc sp->settings");
-        return NULL;
+        // perror("Malloc sp->settings");
+        i_errno = IECREATESTREAM;
+        return (NULL);
     }
     if (!sp->result) {
-        perror("Malloc sp->result");
-        return NULL;
+        // perror("Malloc sp->result");
+        i_errno = IECREATESTREAM;
+        return (NULL);
     }
     
     /* Make a per stream copy of default_settings in each stream structure */
@@ -1379,7 +1416,7 @@ iperf_new_stream(struct iperf_test *testp)
 }
 
 /**************************************************************************/
-void
+int
 iperf_init_stream(struct iperf_stream * sp, struct iperf_test * testp)
 {
     socklen_t len;
@@ -1387,24 +1424,30 @@ iperf_init_stream(struct iperf_stream * sp, struct iperf_test * testp)
     len = sizeof(struct sockaddr_in);
 
     if (getsockname(sp->socket, (struct sockaddr *) &sp->local_addr, &len) < 0) {
-        perror("getsockname");
+        i_errno = IEINITSTREAM;
+        return (-1);
     }
     if (getpeername(sp->socket, (struct sockaddr *) &sp->remote_addr, &len) < 0) {
-        perror("getpeername");
+        i_errno = IEINITSTREAM;
+        return (-1);
     }
     if (testp->protocol == Ptcp) {
+        // XXX: This property is for all sockets, not just TCP
         if (set_tcp_windowsize(sp->socket, testp->default_settings->socket_bufsize,
-                testp->role == 's' ? SO_RCVBUF : SO_SNDBUF) < 0)
-            fprintf(stderr, "unable to set window size\n");
+                testp->role == 's' ? SO_RCVBUF : SO_SNDBUF) < 0) {
+            i_errno = IESETWINDOWSIZE;
+            return (-1);
+        }
 
         /* set TCP_NODELAY and TCP_MAXSEG if requested */
-        set_tcp_options(sp->socket, testp->no_delay, testp->default_settings->mss);
+        // XXX: This has been moved
+        // set_tcp_options(sp->socket, testp->no_delay, testp->default_settings->mss);
     }
 
 }
 
 /**************************************************************************/
-int
+void
 iperf_add_stream(struct iperf_test * test, struct iperf_stream * sp)
 {
     int i;
@@ -1413,15 +1456,11 @@ iperf_add_stream(struct iperf_test * test, struct iperf_stream * sp)
     if (!test->streams) {
         test->streams = sp;
         sp->id = 1;
-        return 1;
     } else {
         for (n = test->streams, i = 2; n->next; n = n->next, ++i);
         n->next = sp;
         sp->id = i;
-        return 1;
     }
-
-    return 0;
 }
 
 
@@ -1471,12 +1510,15 @@ iperf_run_client(struct iperf_test * test)
         return (-1);
     }
 
+    // XXX: Do we need to check signal() for errors?
     signal(SIGINT, sig_handler);
     if (setjmp(env)) {
         fprintf(stderr, "Exiting...\n");
         test->state = CLIENT_TERMINATE;
         if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-            fprintf(stderr, "Unable to send CLIENT_TERMINATE message to server\n");
+            i_errno = IESENDMESSAGE;
+            return (-1);
+            // fprintf(stderr, "Unable to send CLIENT_TERMINATE message to server\n");
         }
         exit(1);
     }
@@ -1490,21 +1532,25 @@ iperf_run_client(struct iperf_test * test)
 
         result = select(test->max_fd + 1, &temp_read_set, &temp_write_set, NULL, &tv);
         if (result < 0 && errno != EINTR) {
-            perror("select");
-            exit(1);
+            // perror("select");
+            i_errno = IESELECT;
+            return (-1);
         } else if (result > 0) {
             if (FD_ISSET(test->ctrl_sck, &temp_read_set)) {
-                iperf_handle_message_client(test);
+                if (iperf_handle_message_client(test) < 0)
+                    return (-1);
                 FD_CLR(test->ctrl_sck, &temp_read_set);
             }
 
             if (test->state == TEST_RUNNING) {
                 if (test->reverse) {
                     // Reverse mode. Client receives.
-                    iperf_recv(test);
+                    if (iperf_recv(test) < 0)
+                        return (-1);
                 } else {
                     // Regular mode. Client sends.
-                    iperf_send(test);
+                    if (iperf_send(test) < 0)
+                        return (-1);
                 }
 
                 /* Perform callbacks */
@@ -1522,8 +1568,9 @@ iperf_run_client(struct iperf_test * test)
                     test->stats_callback(test);
                     test->state = TEST_END;
                     if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-                        perror("Nwrite TEST_END");
-                        return -1;
+                        // perror("Nwrite TEST_END");
+                        i_errno = IESENDMESSAGE;
+                        return (-1);
                     }
                 }
             }

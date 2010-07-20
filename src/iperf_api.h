@@ -98,15 +98,14 @@ struct iperf_stream *iperf_new_udp_stream(struct iperf_test * testp);
 /**
  * iperf_add_stream -- add a stream to a test
  *
- * returns 1 on success 0 on failure
  */
-int       iperf_add_stream(struct iperf_test * test, struct iperf_stream * stream);
+void      iperf_add_stream(struct iperf_test * test, struct iperf_stream * stream);
 
 /**
  * iperf_init_stream -- init resources associated with test
  *
  */
-void      iperf_init_stream(struct iperf_stream * sp, struct iperf_test * testp);
+int       iperf_init_stream(struct iperf_stream * sp, struct iperf_test * testp);
 
 /**
  * iperf_free_stream -- free resources associated with test

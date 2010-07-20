@@ -90,7 +90,7 @@ main(int argc, char **argv)
     }
 
     if (iperf_run(test) < 0) {
-        fprintf(stderr, "An error occurred. Exiting...\n");
+        ierror("error");
         exit(1);
     }
 

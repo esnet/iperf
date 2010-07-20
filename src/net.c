@@ -29,13 +29,13 @@ netdial(int proto, char *client, int port)
 
     /* XXX: This is not working for non-fully qualified host names use getaddrinfo() instead? */
     if ((hent = gethostbyname(client)) == 0) {
-        perror("gethostbyname");
+        // perror("gethostbyname");
         return (-1);
     }
 
     s = socket(AF_INET, proto, 0);
     if (s < 0) {
-        perror("socket");
+        // perror("socket");
         return (-1);
     }
 
@@ -45,7 +45,7 @@ netdial(int proto, char *client, int port)
     sa.sin_family = AF_INET;
 
     if (connect(s, (struct sockaddr *) & sa, sizeof sa) < 0 && errno != EINPROGRESS) {
-        perror("netdial: connect error");
+        // perror("netdial: connect error");
         return (-1);
     }
     
@@ -53,7 +53,7 @@ netdial(int proto, char *client, int port)
 
     // XXX: Is there a reason to call getpeername() if none of the return values are used?
     if (getpeername(s, (struct sockaddr *) & sa, &sn) < 0) {
-        perror("getpeername error");
+        // perror("getpeername error");
         return (-1);
     }
 

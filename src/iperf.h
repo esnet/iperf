@@ -118,15 +118,14 @@ struct protocol {
 struct iperf_test
 {
     char      role;                             /* c' lient or 's' erver */
-    int       protocol;
+    struct protocol *protocol;
     char      state;
     char     *server_hostname;                  /* -c option */
     int       server_port;
     int       duration;                         /* total duration of test (-t flag) */
 
     int       ctrl_sck;
-    int       listener_tcp;
-    int       listener_udp;
+    int       listener;
     int       prot_listener;
 
     /* boolen variables for Options */
@@ -146,7 +145,6 @@ struct iperf_test
     fd_set    write_set;                        /* set of write sockets */
 
     int       (*accept) (struct iperf_test *);
-    struct iperf_stream *(*new_stream) (struct iperf_test *);
 
     /* Interval related members */ 
     int       stats_interval;

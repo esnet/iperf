@@ -25,7 +25,6 @@ netdial(int proto, char *client, int port)
     int s;
     struct hostent *hent;
     struct sockaddr_in sa;
-    socklen_t sn;
 
     /* XXX: This is not working for non-fully qualified host names use getaddrinfo() instead? */
     if ((hent = gethostbyname(client)) == 0) {
@@ -45,15 +44,6 @@ netdial(int proto, char *client, int port)
     if (connect(s, (struct sockaddr *) & sa, sizeof sa) < 0 && errno != EINPROGRESS) {
         return (-1);
     }
-
-/* XXX: Consider deleting    
-    sn = sizeof sa;
-
-    // XXX: Is there a reason to call getpeername() if none of the return values are used?
-    if (getpeername(s, (struct sockaddr *) & sa, &sn) < 0) {
-        return (-1);
-    }
-*/
 
     return (s);
 }

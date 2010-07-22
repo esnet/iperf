@@ -8,6 +8,7 @@
 #ifndef        __IPERF_API_H
 #define        __IPERF_API_H
 
+#include <setjmp.h>
 #include "iperf.h"
 
 /**
@@ -23,28 +24,11 @@ int      iperf_exchange_parameters(struct iperf_test * test);
 void      add_to_interval_list(struct iperf_stream_result * rp, struct iperf_interval_results *temp);
 
 /**
- * Display -- Displays interval results for test
- * Mainly for DEBUG purpose
- *
- */
-void      display_interval_list(struct iperf_stream_result * rp, int tflag);
-
-/**
  * connect_msg -- displays connection message
  * denoting senfer/receiver details
  *
  */
 void      connect_msg(struct iperf_stream * sp);
-
-
-
-/**
- * Display -- Displays streams in a test
- * Mainly for DEBUG purpose
- *
- */
-void      Display(struct iperf_test * test);
-
 
 /**
  * iperf_stats_callback -- handles the statistic gathering
@@ -74,7 +58,7 @@ int      iperf_run_client(struct iperf_test * test);
  */
 struct iperf_test *iperf_new_test();
 
-void      iperf_defaults(struct iperf_test * testp);
+int      iperf_defaults(struct iperf_test * testp);
 
 
 /**
@@ -91,9 +75,7 @@ void      iperf_free_test(struct iperf_test * testp);
  * returns NULL on failure
  *
  */
-struct iperf_stream *iperf_new_stream(struct iperf_test * testp);
-
-struct iperf_stream *iperf_new_udp_stream(struct iperf_test * testp);
+struct iperf_stream *iperf_new_stream(struct iperf_test *, int);
 
 /**
  * iperf_add_stream -- add a stream to a test
@@ -116,6 +98,7 @@ void      iperf_free_stream(struct iperf_stream * sp);
 void get_tcpinfo(struct iperf_test *test, struct iperf_interval_results *rp);
 void print_tcpinfo(struct iperf_interval_results *);
 void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
+
 void print_interval_results(struct iperf_test * test, struct iperf_stream *sp);
 int iperf_connect(struct iperf_test *);
 int iperf_client_end(struct iperf_test *);
@@ -133,6 +116,11 @@ int iperf_exchange_results(struct iperf_test *);
 int parse_results(struct iperf_test *, char *);
 int iperf_init_test(struct iperf_test *);
 int iperf_parse_arguments(struct iperf_test *, int, char **);
+
+struct protocol *get_protocol(struct iperf_test *, int);
+int set_protocol(struct iperf_test *, int);
+
+extern jmp_buf env;
 
 #endif
 

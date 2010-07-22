@@ -45,7 +45,6 @@
 #include "iperf_util.h"
 #include "locale.h"
 
-jmp_buf env;
 
 int
 iperf_server_listen(struct iperf_test *test)
@@ -53,7 +52,7 @@ iperf_server_listen(struct iperf_test *test)
     char ubuf[UNIT_LEN];
     int x;
 
-    if((test->listener_tcp = netannounce(Ptcp, NULL, test->server_port)) < 0) {
+    if((test->listener = netannounce(Ptcp, NULL, test->server_port)) < 0) {
         i_errno = IELISTEN;
         return (-1);
     }
@@ -64,7 +63,7 @@ iperf_server_listen(struct iperf_test *test)
     // This needs to be changed to reflect if client has different window size
     // make sure we got what we asked for
     /* XXX: This needs to be moved to the stream listener
-    if ((x = get_tcp_windowsize(test->listener_tcp, SO_RCVBUF)) < 0) {
+    if ((x = get_tcp_windowsize(test->listener, SO_RCVBUF)) < 0) {
         // Needs to set some sort of error number/message
         perror("SO_RCVBUF");
         return -1;
@@ -73,7 +72,7 @@ iperf_server_listen(struct iperf_test *test)
 
     // XXX: This code needs to be moved to after parameter exhange
     /*
-    if (test->protocol == Ptcp) {
+    if (test->protocol->id == Ptcp) {
         if (test->default_settings->socket_bufsize > 0) {
             unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A');
             printf("TCP window size: %s\n", ubuf);
@@ -86,8 +85,8 @@ iperf_server_listen(struct iperf_test *test)
 
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);
-    FD_SET(test->listener_tcp, &test->read_set);
-    test->max_fd = (test->listener_tcp > test->max_fd) ? test->listener_tcp : test->max_fd;
+    FD_SET(test->listener, &test->read_set);
+    test->max_fd = (test->listener > test->max_fd) ? test->listener : test->max_fd;
 
     return 0;
 }
@@ -104,7 +103,7 @@ iperf_accept(struct iperf_test *test)
     struct sockaddr_in temp1, temp2;
 
     len = sizeof(addr);
-    if ((s = accept(test->listener_tcp, (struct sockaddr *) &addr, &len)) < 0) {
+    if ((s = accept(test->listener, (struct sockaddr *) &addr, &len)) < 0) {
         i_errno = IEACCEPT;
         return (-1);
     }
@@ -161,51 +160,6 @@ iperf_accept(struct iperf_test *test)
     return (0);
 }
 
-
-int
-iperf_accept_tcp_stream(struct iperf_test *test)
-{
-    int     s;
-    int     rbuf = ACCESS_DENIED;
-    char    cookie[COOKIE_SIZE];
-    socklen_t len;
-    struct sockaddr_in addr;
-    struct iperf_stream *sp;
-
-    len = sizeof(addr);
-    if ((s = accept(test->listener_tcp, (struct sockaddr *) &addr, &len)) < 0) {
-        i_errno = IESTREAMCONNECT;
-        return (-1);
-    }
-
-    if (Nread(s, cookie, COOKIE_SIZE, Ptcp) < 0) {
-        i_errno = IERECVCOOKIE;
-        return (-1);
-    }
-
-    if (strcmp(test->default_settings->cookie, cookie) == 0) {
-        // XXX: CANNOT USE iperf_tcp_accept since stream is already accepted at this point. New model needed!
-        sp = test->new_stream(test);
-        if (!sp)
-            return (-1);
-        sp->socket = s;
-        if (iperf_init_stream(sp, test) < 0)
-            return (-1);
-        iperf_add_stream(test, sp);
-        FD_SET(s, &test->read_set);
-        FD_SET(s, &test->write_set);
-        test->max_fd = (s > test->max_fd) ? s : test->max_fd;
-        test->streams_accepted++;
-        connect_msg(sp);
-    } else {
-        if (Nwrite(s, &rbuf, sizeof(char), Ptcp) < 0) {
-            i_errno = IESENDMESSAGE;
-            return (-1);
-        }
-        close(s);
-    }
-    return (0);
-}
 
 /**************************************************************************/
 int
@@ -292,23 +246,23 @@ iperf_test_reset(struct iperf_test *test)
     test->streams = NULL;
 
     test->role = 's';
-    test->protocol = Ptcp;
+    set_protocol(test, Ptcp);
     test->duration = DURATION;
     test->state = 0;
     test->server_hostname = NULL;
 
     test->ctrl_sck = -1;
+    test->prot_listener = -1;
 
     test->bytes_sent = 0;
-    test->new_stream = iperf_new_tcp_stream;
 
     test->reverse = 0;
     test->no_delay = 0;
 
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);
-    FD_SET(test->listener_tcp, &test->read_set);
-    test->max_fd = test->listener_tcp;
+    FD_SET(test->listener, &test->read_set);
+    test->max_fd = test->listener;
     
     test->num_streams = 1;
     test->streams_accepted = 0;
@@ -325,7 +279,6 @@ iperf_run_server(struct iperf_test *test)
     int result, s;
     fd_set temp_read_set, temp_write_set;
     struct iperf_stream *sp;
-    struct protocol *prot;
     struct timeval tv;
 
     // Open socket and listen
@@ -342,7 +295,7 @@ iperf_run_server(struct iperf_test *test)
                 return (-1);
             }
         }
-        return 0;
+        return (0);
     }
 
     for ( ; ; ) {
@@ -361,12 +314,12 @@ iperf_run_server(struct iperf_test *test)
                 i_errno = IESELECT;
                 return (-1);
             } else if (result > 0) {
-                if (FD_ISSET(test->listener_tcp, &temp_read_set)) {
+                if (FD_ISSET(test->listener, &temp_read_set)) {
                     if (test->state != CREATE_STREAMS) {
                         if (iperf_accept(test) < 0) {
                             return (-1);
                         }
-                        FD_CLR(test->listener_tcp, &temp_read_set);
+                        FD_CLR(test->listener, &temp_read_set);
                     }
                 }
                 if (FD_ISSET(test->ctrl_sck, &temp_read_set)) {
@@ -378,25 +331,18 @@ iperf_run_server(struct iperf_test *test)
                 if (test->state == CREATE_STREAMS) {
                     if (FD_ISSET(test->prot_listener, &temp_read_set)) {
         
-                        SLIST_FOREACH(prot, &test->protocols, protocols) {
-                            if (prot->id == test->protocol)
-                                break;
-                        }
-
-                        if ((s = prot->accept(test)) < 0)
+                        if ((s = test->protocol->accept(test)) < 0)
                             return (-1);
 
                         if (!is_closed(s)) {
-                            sp = test->new_stream(test);
+                            sp = iperf_new_stream(test, s);
                             if (!sp)
                                 return (-1);
-                            sp->socket = s;
-                            if (iperf_init_stream(sp, test) < 0)
-                                return (-1);
-                            iperf_add_stream(test, sp);
+
                             FD_SET(s, &test->read_set);
                             FD_SET(s, &test->write_set);
                             test->max_fd = (s > test->max_fd) ? s : test->max_fd;
+
                             test->streams_accepted++;
                             connect_msg(sp);
                         }
@@ -404,20 +350,20 @@ iperf_run_server(struct iperf_test *test)
                     }
 
                     if (test->streams_accepted == test->num_streams) {
-                        if (test->protocol != Ptcp) {
+                        if (test->protocol->id != Ptcp) {
                             FD_CLR(test->prot_listener, &test->read_set);
                             close(test->prot_listener);
-                        } else if (test->protocol == Ptcp) {
+                        } else { 
                             if (test->no_delay || test->default_settings->mss) {
-                                FD_CLR(test->listener_tcp, &test->read_set);
-                                close(test->listener_tcp);
+                                FD_CLR(test->listener, &test->read_set);
+                                close(test->listener);
                                 if ((s = netannounce(Ptcp, NULL, test->server_port)) < 0) {
                                     i_errno = IELISTEN;
                                     return (-1);
                                 }
-                                test->listener_tcp = s;
+                                test->listener = s;
                                 test->max_fd = (s > test->max_fd ? s : test->max_fd);
-                                FD_SET(test->listener_tcp, &test->read_set);
+                                FD_SET(test->listener, &test->read_set);
                             }
                         }
                         test->prot_listener = -1;

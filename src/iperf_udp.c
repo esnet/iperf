@@ -5,34 +5,19 @@
  * approvals from the U.S. Dept. of Energy).  All rights reserved.
  */
 
-/* iperf_udp.c:  UDP specific routines for iperf
- *
- * NOTE: not yet finished / working 
- */
 
-// XXX: Do we really need all these headers?
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <getopt.h>
 #include <errno.h>
-#include <signal.h>
 #include <unistd.h>
 #include <assert.h>
-#include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <pthread.h>
 #include <stdint.h>
-#include <netinet/tcp.h>
 #include <sys/time.h>
-#include <sys/resource.h>
-#include <sched.h>
-#include <signal.h>
-#include <setjmp.h>
+#include <sys/select.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -40,7 +25,6 @@
 #include "iperf_error.h"
 #include "timer.h"
 #include "net.h"
-#include "locale.h"
 
 
 /* iperf_udp_recv
@@ -158,22 +142,6 @@ iperf_udp_send(struct iperf_stream *sp)
     return (result);
 }
 
-/**************************************************************************/
-// XXX: This function is deprecated
-struct iperf_stream *
-iperf_new_udp_stream(struct iperf_test * testp)
-{
-    struct iperf_stream *sp;
-
-    sp = (struct iperf_stream *) iperf_new_stream(testp);
-    if (!sp) {
-        return (NULL);
-    }
-    sp->rcv = iperf_udp_recv;
-    sp->snd = iperf_udp_send;
-
-    return sp;
-}
 
 /**************************************************************************/
 
@@ -184,7 +152,6 @@ iperf_new_udp_stream(struct iperf_test * testp)
 int
 iperf_udp_accept(struct iperf_test *test)
 {
-    struct iperf_stream *sp;
     struct sockaddr_in sa_peer;
     int       buf;
     socklen_t len;
@@ -202,18 +169,6 @@ iperf_udp_accept(struct iperf_test *test)
         i_errno = IESTREAMACCEPT;
         return (-1);
     }
-/*
-    sp = test->new_stream(test);
-    if (!sp)
-        return (-1);
-    sp->socket = s;
-    if (iperf_init_stream(sp, test) < 0)
-        return (-1);
-    iperf_add_stream(test, sp);
-    FD_SET(s, &test->read_set);
-    FD_SET(s, &test->write_set);
-    test->max_fd = (s > test->max_fd) ? s : test->max_fd;
-*/
 
     test->prot_listener = netannounce(Pudp, NULL, test->server_port);
     if (test->prot_listener < 0) {

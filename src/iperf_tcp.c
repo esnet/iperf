@@ -5,43 +5,24 @@
  * approvals from the U.S. Dept. of Energy).  All rights reserved.
  */
 
-// XXX: Surely we do not need all these headers!
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <getopt.h>
 #include <errno.h>
-#include <signal.h>
 #include <unistd.h>
-#include <assert.h>
-#include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 #include <netdb.h>
-#include <pthread.h>
-#include <stdint.h>
 #include <netinet/tcp.h>
 #include <sys/time.h>
-#include <sys/resource.h>
-#include <sched.h>
-#include <signal.h>
-#include <setjmp.h>
+#include <sys/select.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
-#include "iperf_error.h"
-#include "iperf_server_api.h"
 #include "iperf_tcp.h"
-#include "timer.h"
+#include "iperf_error.h"
 #include "net.h"
-#include "tcp_window_size.h"
-#include "iperf_util.h"
-#include "locale.h"
-
-// XXX: Does this belong here? We should probably declare this in iperf_api.c then put an extern in the header
-jmp_buf   env;			/* to handle longjmp on signal */
 
 
 /* iperf_tcp_recv
@@ -49,7 +30,7 @@ jmp_buf   env;			/* to handle longjmp on signal */
  * receives the data for TCP
  */
 int
-iperf_tcp_recv(struct iperf_stream * sp)
+iperf_tcp_recv(struct iperf_stream *sp)
 {
     int result = 0;
     int size = sp->settings->blksize;
@@ -72,7 +53,7 @@ iperf_tcp_recv(struct iperf_stream * sp)
  * sends the data for TCP
  */
 int
-iperf_tcp_send(struct iperf_stream * sp)
+iperf_tcp_send(struct iperf_stream *sp)
 {
     int result;
     int size = sp->settings->blksize;
@@ -90,24 +71,6 @@ iperf_tcp_send(struct iperf_stream * sp)
 }
 
 
-// XXX: This function is now deprecated
-/**************************************************************************/
-struct iperf_stream *
-iperf_new_tcp_stream(struct iperf_test * testp)
-{
-    struct iperf_stream *sp;
-
-    sp = (struct iperf_stream *) iperf_new_stream(testp);
-    if (!sp) {
-        return (NULL);
-    }
-    sp->rcv = iperf_tcp_recv;	/* pointer to receive function */
-    sp->snd = iperf_tcp_send;	/* pointer to send function */
-
-    return sp;
-}
-
-
 /* iperf_tcp_accept
  *
  * accept a new TCP stream connection
@@ -122,7 +85,7 @@ iperf_tcp_accept(struct iperf_test * test)
     struct sockaddr_in addr;
 
     len = sizeof(addr);
-    if ((s = accept(test->listener_tcp, (struct sockaddr *) &addr, &len)) < 0) {
+    if ((s = accept(test->listener, (struct sockaddr *) &addr, &len)) < 0) {
         i_errno = IESTREAMCONNECT;
         return (-1);
     }
@@ -153,7 +116,7 @@ iperf_tcp_listen(struct iperf_test *test)
 {
     int s, opt;
     struct sockaddr_in sa;
-    s = test->listener_tcp;
+    s = test->listener;
 
     if (test->no_delay || test->default_settings->mss) {
         FD_CLR(s, &test->read_set);
@@ -200,11 +163,7 @@ iperf_tcp_listen(struct iperf_test *test)
             return (-1);
         }
 
-        test->listener_tcp = s;
-/*
-        test->max_fd = (s > test->max_fd) ? s : test->max_fd;
-        FD_SET(test->listener_tcp, &test->read_set);
-*/
+        test->listener = s;
     }
     
     return (s);
@@ -244,7 +203,7 @@ iperf_tcp_connect(struct iperf_test *test)
             return (-1);
         }
     }
-    if (opt = test->default_settings->mss) {
+    if ((opt = test->default_settings->mss)) {
         if (setsockopt(s, IPPROTO_TCP, TCP_MAXSEG, &opt, sizeof(opt)) < 0) {
             i_errno = IESETMSS;
             return (-1);

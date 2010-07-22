@@ -9,10 +9,6 @@ int iperf_server_listen(struct iperf_test *);
 
 int iperf_accept(struct iperf_test *);
 
-int iperf_accept_tcp_stream(struct iperf_test *);
-
-int iperf_accept_udp_stream(struct iperf_test *);
-
 int iperf_handle_message_server(struct iperf_test *);
 
 void iperf_test_reset(struct iperf_test *);

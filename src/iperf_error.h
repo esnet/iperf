@@ -52,21 +52,22 @@ enum {
     IEREUSEADDR = 33,       // Unable to set reuse address on socket (check perror)
     IENONBLOCKING = 34,     // Unable to set socket to non-blocking (check perror)
     IESETWINDOWSIZE = 35,   // Unable to set socket window size (check perror)
+    IEPROTOCOL = 36,        // Protocol does not exist
 
     /* Stream errors */
-    IECREATESTREAM = 36,    // Unable to create a new stream (check herror/perror)
-    IEINITSTREAM = 37,      // Unable to initialize stream (check herror/perror)
-    IESTREAMLISTEN = 38,    // Unable to start stream listener (check perror) 
-    IESTREAMCONNECT = 39,   // Unable to connect stream (check herror/perror)
-    IESTREAMACCEPT = 40,    // Unable to accepte stream connection (check perror)
-    IESTREAMWRITE = 41,     // Unable to write to stream socket (check perror)
-    IESTREAMREAD = 42,      // Unable to read from stream (check perror)
-    IESTREAMCLOSE = 43,     // Stream has closed unexpectedly
-    IESTREAMID = 44,        // Stream has invalid ID
+    IECREATESTREAM = 37,    // Unable to create a new stream (check herror/perror)
+    IEINITSTREAM = 38,      // Unable to initialize stream (check herror/perror)
+    IESTREAMLISTEN = 39,    // Unable to start stream listener (check perror) 
+    IESTREAMCONNECT = 40,   // Unable to connect stream (check herror/perror)
+    IESTREAMACCEPT = 41,    // Unable to accepte stream connection (check perror)
+    IESTREAMWRITE = 42,     // Unable to write to stream socket (check perror)
+    IESTREAMREAD = 43,      // Unable to read from stream (check perror)
+    IESTREAMCLOSE = 44,     // Stream has closed unexpectedly
+    IESTREAMID = 45,        // Stream has invalid ID
 
     /* Timer errors */
-    IENEWTIMER = 45,        // Unable to create new timer (check perror)
-    IEUPDATETIMER = 46,     // Unable to update timer (check perror)
+    IENEWTIMER = 46,        // Unable to create new timer (check perror)
+    IEUPDATETIMER = 47,     // Unable to update timer (check perror)
 };
 
 #endif

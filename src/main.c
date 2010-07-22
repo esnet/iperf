@@ -38,9 +38,7 @@ int iperf_run(struct iperf_test *);
 int
 main(int argc, char **argv)
 {
-    char ch, role;
     struct iperf_test *test;
-    int port = PORT;
 
     // XXX: Setting the process affinity requires root on most systems.
     //      Is this a feature we really need?

@@ -10,21 +10,12 @@
 
 
 /**
- * iperf_udp_accept -- accepts a new UDP connection
- * on udp_listener_socket
- *returns 0 on success
- *
- */
-int       iperf_udp_accept(struct iperf_test *);
-
-
-/**
  * iperf_udp_recv -- receives the client data for UDP
  *
  *returns state of packet received
  *
  */
-int       iperf_udp_recv(struct iperf_stream *);
+int iperf_udp_recv(struct iperf_stream *);
 
 /**
  * iperf_udp_send -- sends the client data for UDP
@@ -32,7 +23,7 @@ int       iperf_udp_recv(struct iperf_stream *);
  * returns: bytes sent
  *
  */
-int       iperf_udp_send(struct iperf_stream *);
+int iperf_udp_send(struct iperf_stream *);
 
 
 /**
@@ -41,7 +32,7 @@ int       iperf_udp_send(struct iperf_stream *);
  *returns 0 on success
  *
  */
-int       iperf_udp_accept(struct iperf_test *);
+int iperf_udp_accept(struct iperf_test *);
 
 
 int iperf_udp_listen(struct iperf_test *);
@@ -50,8 +41,6 @@ int iperf_udp_connect(struct iperf_test *);
 
 int iperf_udp_init(struct iperf_test *);
 
-struct iperf_stream *iperf_new_udp_stream(struct iperf_test * testp);
 
-
-#endif  /* IPERF_UDP_H */
+#endif
 

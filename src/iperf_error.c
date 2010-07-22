@@ -125,6 +125,9 @@ iperf_strerror(int i_errno)
         case IESETWINDOWSIZE:
             snprintf(errstr, len, "unable to set socket window size");
             break;
+        case IEPROTOCOL:
+            snprintf(errstr, len, "protocol does not exist");
+            break;
         case IECREATESTREAM:
             snprintf(errstr, len, "unable to create a new stream");
             break;

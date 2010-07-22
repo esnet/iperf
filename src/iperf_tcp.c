@@ -5,6 +5,7 @@
  * approvals from the U.S. Dept. of Energy).  All rights reserved.
  */
 
+// XXX: Surely we do not need all these headers!
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,6 +31,7 @@
 
 #include "iperf.h"
 #include "iperf_api.h"
+#include "iperf_error.h"
 #include "iperf_server_api.h"
 #include "iperf_tcp.h"
 #include "timer.h"
@@ -38,50 +40,36 @@
 #include "iperf_util.h"
 #include "locale.h"
 
+// XXX: Does this belong here? We should probably declare this in iperf_api.c then put an extern in the header
 jmp_buf   env;			/* to handle longjmp on signal */
 
-/**************************************************************************/
 
-/**
- * iperf_tcp_recv -- receives the data for TCP
- * and the Param/result message exchange
- *returns state of packet received
+/* iperf_tcp_recv
  *
+ * receives the data for TCP
  */
-
 int
 iperf_tcp_recv(struct iperf_stream * sp)
 {
     int result = 0;
     int size = sp->settings->blksize;
 
-#ifdef USE_RECV
-	/*
-	 * NOTE: Nwrite/Nread seems to be 10-15% faster than send/recv for
-	 * localhost on OSX. More testing needed on other OSes to be sure.
-	 */
-    do {
-        result = recv(sp->socket, sp->buffer, size, MSG_WAITALL);
-    } while (result == -1 && errno == EINTR);
-#else
     result = Nread(sp->socket, sp->buffer, size, Ptcp);
-#endif
+
     if (result < 0) {
         return (-1);
     }
+
     sp->result->bytes_received += result;
     sp->result->bytes_received_this_interval += result;
 
-    return result;
+    return (result);
 }
 
-/**************************************************************************/
 
-/**
- * iperf_tcp_send -- sends the client data for TCP
- * and the  Param/result message exchanges
- * returns: bytes sent
+/* iperf_tcp_send 
  *
+ * sends the data for TCP
  */
 int
 iperf_tcp_send(struct iperf_stream * sp)
@@ -89,11 +77,8 @@ iperf_tcp_send(struct iperf_stream * sp)
     int result;
     int size = sp->settings->blksize;
 
-#ifdef USE_SEND
-    result = send(sp->socket, sp->buffer, size, 0);
-#else
     result = Nwrite(sp->socket, sp->buffer, size, Ptcp);
-#endif
+
     if (result < 0) {
         return (-1);
     }
@@ -101,9 +86,11 @@ iperf_tcp_send(struct iperf_stream * sp)
     sp->result->bytes_sent += result;
     sp->result->bytes_sent_this_interval += result;
 
-    return result;
+    return (result);
 }
 
+
+// XXX: This function is now deprecated
 /**************************************************************************/
 struct iperf_stream *
 iperf_new_tcp_stream(struct iperf_test * testp)
@@ -117,51 +104,164 @@ iperf_new_tcp_stream(struct iperf_test * testp)
     sp->rcv = iperf_tcp_recv;	/* pointer to receive function */
     sp->snd = iperf_tcp_send;	/* pointer to send function */
 
-    /* XXX: not yet written...  (what is this supposed to do? ) */
-    //sp->update_stats = iperf_tcp_update_stats;
-
     return sp;
 }
 
-/**************************************************************************/
 
-/** XXX: This function is not currently in use!
- * iperf_tcp_accept -- accepts a new TCP connection
- * on tcp_listener_socket for TCP data and param/result
- * exchange messages
- * returns 0 on success
+/* iperf_tcp_accept
  *
+ * accept a new TCP stream connection
  */
-
 int
 iperf_tcp_accept(struct iperf_test * test)
 {
+    int     s;
+    int     rbuf = ACCESS_DENIED;
+    char    cookie[COOKIE_SIZE];
     socklen_t len;
     struct sockaddr_in addr;
-    int peersock;
-    struct iperf_stream *sp;
 
     len = sizeof(addr);
-    peersock = accept(test->listener_tcp, (struct sockaddr *) & addr, &len);
-    if (peersock < 0) {
-        // XXX: Needs to implement better error handling
-        printf("Error in accept(): %s\n", strerror(errno));
-        return -1;
+    if ((s = accept(test->listener_tcp, (struct sockaddr *) &addr, &len)) < 0) {
+        i_errno = IESTREAMCONNECT;
+        return (-1);
     }
 
-    // XXX: This doesn't fit our API model!
-    sp = test->new_stream(test);
-    sp->socket = peersock;
-    iperf_init_stream(sp, test);
-    iperf_add_stream(test, sp);
+    if (Nread(s, cookie, COOKIE_SIZE, Ptcp) < 0) {
+        i_errno = IERECVCOOKIE;
+        return (-1);
+    }
 
-    FD_SET(peersock, &test->read_set);  /* add new socket to master set */
-    FD_SET(peersock, &test->write_set);
-    test->max_fd = (test->max_fd < peersock) ? peersock : test->max_fd;
+    if (strcmp(test->default_settings->cookie, cookie) != 0) {
+        if (Nwrite(s, &rbuf, sizeof(char), Ptcp) < 0) {
+            i_errno = IESENDMESSAGE;
+            return (-1);
+        }
+        close(s);
+    }
 
-    connect_msg(sp);    /* print connect message */
-
-    return 0;
+    return (s);
 }
 
+
+/* iperf_tcp_listen
+ *
+ * start up a listener for TCP stream connections
+ */
+int
+iperf_tcp_listen(struct iperf_test *test)
+{
+    int s, opt;
+    struct sockaddr_in sa;
+    s = test->listener_tcp;
+
+    if (test->no_delay || test->default_settings->mss) {
+        FD_CLR(s, &test->read_set);
+        close(s);
+        if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+            i_errno = IESTREAMLISTEN;
+            return (-1);
+        }
+        if (test->no_delay) {
+            opt = 1;
+            if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0) {
+                i_errno = IESETNODELAY;
+                return (-1);
+            }
+            printf("      TCP NODELAY: on\n");
+        }
+        // XXX: Setting MSS is very buggy!
+        if ((opt = test->default_settings->mss)) {
+            if (setsockopt(s, IPPROTO_TCP, TCP_MAXSEG, &opt, sizeof(opt)) < 0) {
+                i_errno = IESETMSS;
+                return (-1);
+            }
+            printf("      TCP MSS: %d\n", opt);
+        }
+        opt = 1;
+        if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+            i_errno = IEREUSEADDR;
+            return (-1);
+        }
+
+        memset(&sa, 0, sizeof(sa));
+        sa.sin_family = AF_INET;
+        sa.sin_addr.s_addr = htonl(INADDR_ANY);
+        sa.sin_port = htons(test->server_port);
+
+        if (bind(s, (struct sockaddr *) &sa, sizeof(sa)) < 0) {
+            close(s);
+            i_errno = IESTREAMLISTEN;
+            return (-1);
+        }
+
+        if (listen(s, 5) < 0) {
+            i_errno = IESTREAMLISTEN;
+            return (-1);
+        }
+
+        test->listener_tcp = s;
+/*
+        test->max_fd = (s > test->max_fd) ? s : test->max_fd;
+        FD_SET(test->listener_tcp, &test->read_set);
+*/
+    }
+    
+    return (s);
+}
+
+
+/* iperf_tcp_connect
+ *
+ * connect to a TCP stream listener
+ */
+int
+iperf_tcp_connect(struct iperf_test *test)
+{
+    int s, opt;
+    struct sockaddr_in sa;
+    struct hostent *hent;
+
+    if ((hent = gethostbyname(test->server_hostname)) == 0) {
+        i_errno = IESTREAMCONNECT;
+        return (-1);
+    }
+    if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        i_errno = IESTREAMCONNECT;
+        return (-1);
+    }
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sin_family = AF_INET;
+    memcpy(&sa.sin_addr.s_addr, hent->h_addr, sizeof(sa.sin_addr.s_addr));
+    sa.sin_port = htons(test->server_port);
+
+    /* Set TCP options */
+    if (test->no_delay) {
+        opt = 1;
+        if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0) {
+            i_errno = IESETNODELAY;
+            return (-1);
+        }
+    }
+    if (opt = test->default_settings->mss) {
+        if (setsockopt(s, IPPROTO_TCP, TCP_MAXSEG, &opt, sizeof(opt)) < 0) {
+            i_errno = IESETMSS;
+            return (-1);
+        }
+    }
+
+    if (connect(s, (struct sockaddr *) &sa, sizeof(sa)) < 0 && errno != EINPROGRESS) {
+        i_errno = IESTREAMCONNECT;
+        return (-1);
+    }
+
+    /* Send cookie for verification */
+    if (Nwrite(s, test->default_settings->cookie, COOKIE_SIZE, Ptcp) < 0) {
+        i_errno = IESENDCOOKIE;
+        return (-1);
+    }
+
+    return (s);
+}
 

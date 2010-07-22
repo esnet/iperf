@@ -10,6 +10,7 @@
  * NOTE: not yet finished / working 
  */
 
+// XXX: Do we really need all these headers?
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,15 +43,10 @@
 #include "locale.h"
 
 
-/**************************************************************************/
-
-/**
- * iperf_udp_recv -- receives the client data for UDP
+/* iperf_udp_recv
  *
- *returns state of packet received
- *
+ * receives the data for UDP
  */
-
 int
 iperf_udp_recv(struct iperf_stream *sp)
 {
@@ -60,17 +56,12 @@ iperf_udp_recv(struct iperf_stream *sp)
     double    transit = 0, d = 0;
     struct timeval sent_time, arrival_time;
 
-#ifdef USE_SEND
-    do {
-        result = recv(sp->socket, sp->buffer, size, 0);
-    } while (result == -1 && errno == EINTR);
-#else
     result = Nread(sp->socket, sp->buffer, size, Pudp);
-#endif
 
     if (result < 0) {
         return (-1);
     }
+
     sp->result->bytes_received += result;
     sp->result->bytes_received_this_interval += result;
 
@@ -106,11 +97,14 @@ iperf_udp_recv(struct iperf_stream *sp)
     //      J = |(R1 - S1) - (R0 - S0)| [/ number of packets, for average]
     sp->jitter += (d - sp->jitter) / 16.0;
 
-    return result;
+    return (result);
 }
 
 
-/**************************************************************************/
+/* iperf_udp_send
+ *
+ * sends the data for UDP
+ */
 int
 iperf_udp_send(struct iperf_stream *sp)
 {
@@ -139,11 +133,7 @@ iperf_udp_send(struct iperf_stream *sp)
         memcpy(sp->buffer+4, &usec, sizeof(usec));
         memcpy(sp->buffer+8, &pcount, sizeof(pcount));
 
-#ifdef USE_SEND
-        result = send(sp->socket, sp->buffer, size, 0);
-#else
         result = Nwrite(sp->socket, sp->buffer, size, Pudp);
-#endif
 
         if (result < 0)
             return (-1);
@@ -165,10 +155,11 @@ iperf_udp_send(struct iperf_stream *sp)
             return (-1);
     }
 
-    return result;
+    return (result);
 }
 
 /**************************************************************************/
+// XXX: This function is deprecated
 struct iperf_stream *
 iperf_new_udp_stream(struct iperf_test * testp)
 {
@@ -186,14 +177,10 @@ iperf_new_udp_stream(struct iperf_test * testp)
 
 /**************************************************************************/
 
-/**
- * iperf_udp_accept -- accepts a new UDP connection
- * on udp_listener_socket
- *returns 0 on success
+/* iperf_udp_accept
  *
+ * accepts a new UDP connection
  */
-
-
 int
 iperf_udp_accept(struct iperf_test *test)
 {
@@ -203,10 +190,10 @@ iperf_udp_accept(struct iperf_test *test)
     socklen_t len;
     int       sz, s;
 
-    s = test->listener_udp;
+    s = test->prot_listener;
 
     len = sizeof sa_peer;
-    if ((sz = recvfrom(test->listener_udp, &buf, sizeof(buf), 0, (struct sockaddr *) &sa_peer, &len)) < 0) {
+    if ((sz = recvfrom(test->prot_listener, &buf, sizeof(buf), 0, (struct sockaddr *) &sa_peer, &len)) < 0) {
         i_errno = IESTREAMACCEPT;
         return (-1);
     }
@@ -215,7 +202,7 @@ iperf_udp_accept(struct iperf_test *test)
         i_errno = IESTREAMACCEPT;
         return (-1);
     }
-
+/*
     sp = test->new_stream(test);
     if (!sp)
         return (-1);
@@ -226,25 +213,97 @@ iperf_udp_accept(struct iperf_test *test)
     FD_SET(s, &test->read_set);
     FD_SET(s, &test->write_set);
     test->max_fd = (s > test->max_fd) ? s : test->max_fd;
+*/
 
-    test->listener_udp = netannounce(Pudp, NULL, test->server_port);
-    if (test->listener_udp < 0) {
-        i_errno = IELISTEN;
+    test->prot_listener = netannounce(Pudp, NULL, test->server_port);
+    if (test->prot_listener < 0) {
+        i_errno = IESTREAMLISTEN;
         return (-1);
     }
 
-    FD_SET(test->listener_udp, &test->read_set);
-    test->max_fd = (test->max_fd < test->listener_udp) ? test->listener_udp : test->max_fd;
+    FD_SET(test->prot_listener, &test->read_set);
+    test->max_fd = (test->max_fd < test->prot_listener) ? test->prot_listener : test->max_fd;
 
     /* Let the client know we're ready "accept" another UDP "stream" */
-    if (write(sp->socket, &buf, sizeof(buf)) < 0) {
+    if (write(s, &buf, sizeof(buf)) < 0) {
         i_errno = IESTREAMWRITE;
         return (-1);
     }
 
-    connect_msg(sp);
-    test->streams_accepted++;
+    return (s);
+}
+
+
+/* iperf_udp_listen
+ *
+ * start up a listener for UDP stream connections
+ */
+int
+iperf_udp_listen(struct iperf_test *test)
+{
+    int s;
+
+    if ((s = netannounce(Pudp, NULL, test->server_port)) < 0) {
+        i_errno = IESTREAMLISTEN;
+        return (-1);
+    }
+
+    return (s);
+}
+
+
+/* iperf_udp_connect
+ *
+ * connect to a TCP stream listener
+ */
+int
+iperf_udp_connect(struct iperf_test *test)
+{
+    int s, buf;
+
+    if ((s = netdial(Pudp, test->server_hostname, test->server_port)) < 0) {
+        i_errno = IESTREAMCONNECT;
+        return (-1);
+    }
+
+    /* Write to the UDP stream to give the server this stream's credentials */
+    if (write(s, &buf, sizeof(buf)) < 0) {
+        // XXX: Should this be changed to IESTREAMCONNECT? 
+        i_errno = IESTREAMWRITE;
+        return (-1);
+    }
+    /* Wait until the server confirms the client UDP write */
+    // XXX: Should this read be TCP instead?
+    if (read(s, &buf, sizeof(buf)) < 0) {
+        i_errno = IESTREAMREAD;
+        return (-1);
+    }
+
+    return (s);
+}
+
+
+/* iperf_udp_init
+ *
+ * initializer for UDP streams in TEST_START
+ */
+int
+iperf_udp_init(struct iperf_test *test)
+{
+    int64_t dtargus;
+    struct iperf_stream *sp;
+
+    /* Calculate the send delay needed to hit target bandwidth (-b) */
+    dtargus = (int64_t) test->default_settings->blksize * SEC_TO_US * 8;
+    dtargus /= test->default_settings->rate;
+
+    assert(dtargus != 0);
+
+    for (sp = test->streams; sp; sp = sp->next) {
+        sp->send_timer = new_timer(dtargus / SEC_TO_US, dtargus % SEC_TO_US);
+        if (sp->send_timer == NULL)
+            return (-1);
+    }
 
     return (0);
 }
-

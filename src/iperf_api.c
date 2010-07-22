@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <fcntl.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -344,24 +345,18 @@ iperf_recv(struct iperf_test *test)
 int
 iperf_init_test(struct iperf_test *test)
 {
-    char *prot;
     struct iperf_stream *sp;
+    struct protocol *prot;
     int64_t dtargus;
 
-    if (test->protocol == Pudp) {
-        prot = "UDP";
-        dtargus = (int64_t) test->default_settings->blksize * SEC_TO_US * 8;
-        dtargus /= test->default_settings->rate;
-
-        assert(dtargus != 0);
-
-        for (sp = test->streams; sp; sp = sp->next) {
-            sp->send_timer = new_timer(dtargus / SEC_TO_US, dtargus % SEC_TO_US);
-            if (sp->send_timer == NULL)
-                return (-1);
+    SLIST_FOREACH(prot, &test->protocols, protocols) {
+        if (test->protocol == prot->id) {
+            if (prot->init) {
+                if (prot->init(test) < 0)
+                    return (-1);
+            }
+            break;
         }
-    } else {
-        prot = "TCP";
     }
 
     /* Set timers */
@@ -369,10 +364,10 @@ iperf_init_test(struct iperf_test *test)
         test->timer = new_timer(test->duration, 0);
         if (test->timer == NULL)
             return (-1);
-        printf(test_start_time, prot, test->num_streams, test->default_settings->blksize,
+        printf(test_start_time, prot->name, test->num_streams, test->default_settings->blksize,
             test->duration);
     } else {
-        printf(test_start_bytes, prot, test->num_streams, test->default_settings->blksize,
+        printf(test_start_bytes, prot->name, test->num_streams, test->default_settings->blksize,
             test->default_settings->bytes);
     }
 
@@ -554,9 +549,12 @@ parse_parameters(struct iperf_test *test)
 int
 iperf_exchange_parameters(struct iperf_test * test)
 {
+    int s;
+    struct protocol *prot;
+/*
     int s, opt, len;
     struct sockaddr_in sa;
-
+*/
     if (test->role == 'c') {
 
         if (package_parameters(test) < 0)
@@ -568,63 +566,16 @@ iperf_exchange_parameters(struct iperf_test * test)
 
         printf("      cookie: %s\n", test->default_settings->cookie);
 
-        if (test->protocol == Pudp) {
-            if ((test->listener_udp = netannounce(test->protocol, NULL, test->server_port)) < 0) {
-                i_errno = IELISTEN;
-                return (-1);
-            }
-            FD_SET(test->listener_udp, &test->read_set);
-            test->max_fd = (test->listener_udp > test->max_fd) ? test->listener_udp : test->max_fd;
-        } else if (test->protocol == Ptcp) {
-            if (test->no_delay || test->default_settings->mss) {
-                FD_CLR(test->listener_tcp, &test->read_set);
-                close(test->listener_tcp);
-                if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-                    i_errno = IELISTEN;
-                    return (-1);
-                }
-                if (test->no_delay) {
-                    opt = 1;
-                    if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0) {
-                        i_errno = IESETNODELAY;
-                        return (-1);
-                    }
-                    printf("      TCP NODELAY: on\n");
-                }
-                // XXX: Setting MSS is very buggy!
-                if ((opt = test->default_settings->mss)) {
-                    if (setsockopt(s, IPPROTO_TCP, TCP_MAXSEG, &opt, sizeof(opt)) < 0) {
-                        i_errno = IESETMSS;
-                        return (-1);
-                    }
-                    printf("      TCP MSS: %d\n", opt);
-                }
-                opt = 1;
-                if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-                    i_errno = IEREUSEADDR;
-                    return (-1);
-                }
-                memset(&sa, 0, sizeof(sa));
-                sa.sin_family = AF_INET;
-                sa.sin_addr.s_addr = htonl(INADDR_ANY);
-                sa.sin_port = htons(test->server_port);
-                if (bind(s, (struct sockaddr *) &sa, sizeof(sa)) < 0) {
-                    close(s);
-                    i_errno = IELISTEN;
-                    return (-1);
-                }
-
-                if (listen(s, 5) < 0) {
-                    i_errno = IELISTEN;
-                    return (-1);
-                }
-
-                test->listener_tcp = s;
-                test->max_fd = (s > test->max_fd) ? s : test->max_fd;
-                FD_SET(test->listener_tcp, &test->read_set);
-            }
-
+        SLIST_FOREACH(prot, &test->protocols, protocols) {
+            if (prot->id == test->protocol)
+                break;
         }
+
+        if ((s = prot->listen(test)) < 0)
+            return (-1);
+        FD_SET(s, &test->read_set);
+        test->max_fd = (s > test->max_fd) ? s : test->max_fd;
+        test->prot_listener = s;
 
         // Send the control message to create streams and start the test
         test->state = CREATE_STREAMS;
@@ -916,6 +867,7 @@ iperf_defaults(struct iperf_test * testp)
     testp->duration = DURATION;
     testp->server_port = PORT;
     testp->ctrl_sck = -1;
+    testp->prot_listener = -1;
 
     testp->new_stream = iperf_new_tcp_stream;
     testp->stats_callback = iperf_stats_callback;
@@ -933,6 +885,39 @@ iperf_defaults(struct iperf_test * testp)
     testp->default_settings->mss = 0;
     testp->default_settings->bytes = 0;
     memset(testp->default_settings->cookie, 0, COOKIE_SIZE);
+
+    /* Set up protocol list */
+    SLIST_INIT(&testp->protocols);
+
+    struct protocol *tcp, *udp;
+    tcp = (struct protocol *) malloc(sizeof(struct protocol));
+    if (!tcp)
+        return (-1);
+    memset(tcp, 0, sizeof(struct protocol));
+    udp = (struct protocol *) malloc(sizeof(struct protocol));
+    if (!udp)
+        return (-1);
+    memset(udp, 0, sizeof(struct protocol));
+
+    tcp->id = Ptcp;
+    tcp->name = "TCP";
+    tcp->accept = iperf_tcp_accept;
+    tcp->listen = iperf_tcp_listen;
+    tcp->connect = iperf_tcp_connect;
+    tcp->send = iperf_tcp_send;
+    tcp->recv = iperf_tcp_recv;
+    tcp->init = NULL;
+    SLIST_INSERT_HEAD(&testp->protocols, tcp, protocols);
+
+    udp->id = Pudp;
+    udp->name = "UDP";
+    udp->accept = iperf_udp_accept;
+    udp->listen = iperf_udp_listen;
+    udp->connect = iperf_udp_connect;
+    udp->send = iperf_udp_send;
+    udp->recv = iperf_udp_recv;
+    udp->init = iperf_udp_init;
+    SLIST_INSERT_AFTER(tcp, udp, protocols);    
 }
 
 /**************************************************************************/
@@ -940,70 +925,19 @@ iperf_defaults(struct iperf_test * testp)
 int
 iperf_create_streams(struct iperf_test *test)
 {
+    int i, s;
+    struct protocol *prot;
     struct iperf_stream *sp;
-    struct sockaddr_in sa;
-    struct hostent *hent;
-    int i, s, buf, opt;
 
     for (i = 0; i < test->num_streams; ++i) {
-        if (test->protocol == Ptcp && (test->no_delay || test->default_settings->mss)) {
-            if ((hent = gethostbyname(test->server_hostname)) == 0) {
-                i_errno = IECREATESTREAM;
-                return (-1);
-            }
-            if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-                i_errno = IECREATESTREAM;
-                return (-1);
-            }
-            memset(&sa, 0, sizeof(sa));
-            sa.sin_family = AF_INET;
-            memcpy(&sa.sin_addr.s_addr, hent->h_addr, sizeof(sa.sin_addr.s_addr));
-            sa.sin_port = htons(test->server_port);
 
-            if (test->no_delay) {
-                opt = 1;
-                if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0) {
-                    i_errno = IECREATESTREAM;
-                    return (-1);
-                }
-            }
-            if (opt = test->default_settings->mss) {
-                if (setsockopt(s, IPPROTO_TCP, TCP_MAXSEG, &opt, sizeof(opt)) < 0) {
-                    i_errno = IECREATESTREAM;
-                    return (-1);
-                }
-            }
-            if (connect(s, (struct sockaddr *) &sa, sizeof(sa)) < 0 && errno != EINPROGRESS) {
-                i_errno = IESTREAMCONNECT;
-                return (-1);
-            }
-        } else {
-            s = netdial(test->protocol, test->server_hostname, test->server_port);
-            if (s < 0) {
-                i_errno = IESTREAMCONNECT;
-                return (-1);
-            }
+        SLIST_FOREACH(prot, &test->protocols, protocols) {
+            if (prot->id == test->protocol)
+                break;
         }
 
-        if (test->protocol == Ptcp) {
-            if (Nwrite(s, test->default_settings->cookie, COOKIE_SIZE, Ptcp) < 0) {
-                i_errno = IESENDCOOKIE;
-                return (-1);
-            }
-        } else {
-            /* Write to the UDP stream to give the server this stream's credentials */
-            if (write(s, &buf, sizeof(i)) < 0) {
-                // XXX: Should this be changed to IESTREAMCONNECT? 
-                i_errno = IESTREAMWRITE;
-                return (-1);
-            }
-            /* Wait until the server confirms the client UDP write */
-            // XXX: Should this read be TCP instead?
-            if (read(s, &buf, sizeof(i)) < 0) {
-                i_errno = IESTREAMREAD;
-                return (-1);
-            }
-        }
+        if ((s = prot->connect(test)) < 0)
+            return (-1);
 
         FD_SET(s, &test->read_set);
         FD_SET(s, &test->write_set);
@@ -1021,7 +955,7 @@ iperf_create_streams(struct iperf_test *test)
         connect_msg(sp);
     }
 
-    return 0;
+    return (0);
 }
 
 int
@@ -1112,11 +1046,21 @@ iperf_connect(struct iperf_test *test)
 void
 iperf_free_test(struct iperf_test * test)
 {
+    struct protocol *prot;
+
     free(test->default_settings);
     free_timer(test->timer);
     free_timer(test->stats_timer);
     free_timer(test->reporter_timer);
 
+    /* Free protocol list */
+    while (!SLIST_EMPTY(&test->protocols)) {
+        prot = SLIST_FIRST(&test->protocols);
+        SLIST_REMOVE_HEAD(&test->protocols, protocols);        
+        free(prot);
+    }
+
+    /* XXX: Why are we setting these values to NULL? */
     test->streams = NULL;
     test->accept = NULL;
     test->stats_callback = NULL;

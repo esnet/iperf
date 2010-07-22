@@ -56,16 +56,17 @@ enum {
     /* Stream errors */
     IECREATESTREAM = 36,    // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 37,      // Unable to initialize stream (check herror/perror)
-    IESTREAMCONNECT = 38,   // Unable to connect stream (check herror/perror)
-    IESTREAMACCEPT = 39,    // Unable to accepte stream connection (check perror)
-    IESTREAMWRITE = 40,     // Unable to write to stream socket (check perror)
-    IESTREAMREAD = 41,      // Unable to read from stream (check perror)
-    IESTREAMCLOSE = 42,     // Stream has closed unexpectedly
-    IESTREAMID = 43,        // Stream has invalid ID
+    IESTREAMLISTEN = 38,    // Unable to start stream listener (check perror) 
+    IESTREAMCONNECT = 39,   // Unable to connect stream (check herror/perror)
+    IESTREAMACCEPT = 40,    // Unable to accepte stream connection (check perror)
+    IESTREAMWRITE = 41,     // Unable to write to stream socket (check perror)
+    IESTREAMREAD = 42,      // Unable to read from stream (check perror)
+    IESTREAMCLOSE = 43,     // Stream has closed unexpectedly
+    IESTREAMID = 44,        // Stream has invalid ID
 
     /* Timer errors */
-    IENEWTIMER = 44,        // Unable to create new timer (check perror)
-    IEUPDATETIMER = 45,     // Unable to update timer (check perror)
+    IENEWTIMER = 45,        // Unable to create new timer (check perror)
+    IEUPDATETIMER = 46,     // Unable to update timer (check perror)
 };
 
 #endif

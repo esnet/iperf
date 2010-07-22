@@ -14,7 +14,7 @@
  *returns 0 on success
  *
  */
-int       iperf_tcp_accept(struct iperf_test * test);
+int       iperf_tcp_accept(struct iperf_test *);
 
 /**
  * iperf_tcp_recv -- receives the data for TCP
@@ -22,7 +22,7 @@ int       iperf_tcp_accept(struct iperf_test * test);
  *returns state of packet received
  *
  */
-int       iperf_tcp_recv(struct iperf_stream * sp);
+int       iperf_tcp_recv(struct iperf_stream *);
 
 
 /**
@@ -31,7 +31,13 @@ int       iperf_tcp_recv(struct iperf_stream * sp);
  * returns: bytes sent
  *
  */
-int       iperf_tcp_send(struct iperf_stream * sp);
+int       iperf_tcp_send(struct iperf_stream *);
+
+
+int iperf_tcp_listen(struct iperf_test *);
+
+int iperf_tcp_connect(struct iperf_test *);
+
 
 struct iperf_stream *iperf_new_tcp_stream(struct iperf_test * testp);
 

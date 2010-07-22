@@ -5,8 +5,8 @@
    approvals from the U.S. Dept. of Energy).  All rights reserved.
 */
 
-#ifndef        IPERF_UDP_H
-#define        IPERF_UDP_H
+#ifndef __IPERF_UDP_H
+#define __IPERF_UDP_H
 
 
 /**
@@ -15,7 +15,7 @@
  *returns 0 on success
  *
  */
-int       iperf_udp_accept(struct iperf_test * test);
+int       iperf_udp_accept(struct iperf_test *);
 
 
 /**
@@ -24,7 +24,7 @@ int       iperf_udp_accept(struct iperf_test * test);
  *returns state of packet received
  *
  */
-int       iperf_udp_recv(struct iperf_stream * sp);
+int       iperf_udp_recv(struct iperf_stream *);
 
 /**
  * iperf_udp_send -- sends the client data for UDP
@@ -32,7 +32,7 @@ int       iperf_udp_recv(struct iperf_stream * sp);
  * returns: bytes sent
  *
  */
-int       iperf_udp_send(struct iperf_stream * sp);
+int       iperf_udp_send(struct iperf_stream *);
 
 
 /**
@@ -41,7 +41,14 @@ int       iperf_udp_send(struct iperf_stream * sp);
  *returns 0 on success
  *
  */
-int       iperf_udp_accept(struct iperf_test * test);
+int       iperf_udp_accept(struct iperf_test *);
+
+
+int iperf_udp_listen(struct iperf_test *);
+
+int iperf_udp_connect(struct iperf_test *);
+
+int iperf_udp_init(struct iperf_test *);
 
 struct iperf_stream *iperf_new_udp_stream(struct iperf_test * testp);
 

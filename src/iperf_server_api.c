@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <fcntl.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -36,6 +37,7 @@
 #include "iperf_udp.h"
 #include "iperf_tcp.h"
 #include "iperf_error.h"
+#include "iperf_util.h"
 #include "timer.h"
 #include "net.h"
 #include "units.h"
@@ -322,6 +324,8 @@ iperf_run_server(struct iperf_test *test)
 {
     int result, s;
     fd_set temp_read_set, temp_write_set;
+    struct iperf_stream *sp;
+    struct protocol *prot;
     struct timeval tv;
 
     // Open socket and listen
@@ -372,26 +376,37 @@ iperf_run_server(struct iperf_test *test)
                 }
 
                 if (test->state == CREATE_STREAMS) {
-                    if (test->protocol == Ptcp) {
-                        if (FD_ISSET(test->listener_tcp, &temp_read_set)) {
-                            if (iperf_accept_tcp_stream(test) < 0) {
-                                return (-1);
-                            }
-                            FD_CLR(test->listener_tcp, &temp_read_set);
+                    if (FD_ISSET(test->prot_listener, &temp_read_set)) {
+        
+                        SLIST_FOREACH(prot, &test->protocols, protocols) {
+                            if (prot->id == test->protocol)
+                                break;
                         }
-                    } else {
-                        if (FD_ISSET(test->listener_udp, &temp_read_set)) {
-                            if (iperf_udp_accept(test) < 0) {
+
+                        if ((s = prot->accept(test)) < 0)
+                            return (-1);
+
+                        if (!is_closed(s)) {
+                            sp = test->new_stream(test);
+                            if (!sp)
                                 return (-1);
-                            }
-                            FD_CLR(test->listener_udp, &temp_read_set);
+                            sp->socket = s;
+                            if (iperf_init_stream(sp, test) < 0)
+                                return (-1);
+                            iperf_add_stream(test, sp);
+                            FD_SET(s, &test->read_set);
+                            FD_SET(s, &test->write_set);
+                            test->max_fd = (s > test->max_fd) ? s : test->max_fd;
+                            test->streams_accepted++;
+                            connect_msg(sp);
                         }
+                        FD_CLR(test->prot_listener, &temp_read_set);
                     }
+
                     if (test->streams_accepted == test->num_streams) {
-                        if (test->protocol == Pudp) {
-                            FD_CLR(test->listener_udp, &test->read_set);
-                            close(test->listener_udp);
-                            test->listener_udp = -1;
+                        if (test->protocol != Ptcp) {
+                            FD_CLR(test->prot_listener, &test->read_set);
+                            close(test->prot_listener);
                         } else if (test->protocol == Ptcp) {
                             if (test->no_delay || test->default_settings->mss) {
                                 FD_CLR(test->listener_tcp, &test->read_set);
@@ -405,6 +420,7 @@ iperf_run_server(struct iperf_test *test)
                                 FD_SET(test->listener_tcp, &test->read_set);
                             }
                         }
+                        test->prot_listener = -1;
                         test->state = TEST_START;
                         if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
                             i_errno = IESENDMESSAGE;

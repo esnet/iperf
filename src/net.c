@@ -45,13 +45,15 @@ netdial(int proto, char *client, int port)
     if (connect(s, (struct sockaddr *) & sa, sizeof sa) < 0 && errno != EINPROGRESS) {
         return (-1);
     }
-    
+
+/* XXX: Consider deleting    
     sn = sizeof sa;
 
     // XXX: Is there a reason to call getpeername() if none of the return values are used?
     if (getpeername(s, (struct sockaddr *) & sa, &sn) < 0) {
         return (-1);
     }
+*/
 
     return (s);
 }

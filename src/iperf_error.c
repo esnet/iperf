@@ -131,6 +131,9 @@ iperf_strerror(int i_errno)
         case IEINITSTREAM:
             snprintf(errstr, len, "unable to initialize stream");
             break;
+        case IESTREAMLISTEN:
+            snprintf(errstr, len, "unable to start stream listener");
+            break;
         case IESTREAMCONNECT:
             snprintf(errstr, len, "unable to connect stream");
             break;

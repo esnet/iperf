@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
+#include <sys/queue.h>
 
 typedef uint64_t iperf_size_t;
 
@@ -100,6 +101,20 @@ struct iperf_stream
     void     *data;
 };
 
+struct iperf_test;
+
+struct protocol {
+    int       id;
+    char      *name;
+    int       (*accept)(struct iperf_test *);
+    int       (*listen)(struct iperf_test *);
+    int       (*connect)(struct iperf_test *);
+    int       (*send)(struct iperf_stream *);
+    int       (*recv)(struct iperf_stream *);
+    int       (*init)(struct iperf_test *);
+    SLIST_ENTRY(protocol) protocols;
+};
+
 struct iperf_test
 {
     char      role;                             /* c' lient or 's' erver */
@@ -112,6 +127,7 @@ struct iperf_test
     int       ctrl_sck;
     int       listener_tcp;
     int       listener_udp;
+    int       prot_listener;
 
     /* boolen variables for Options */
     int       daemon;                           /* -D option */
@@ -149,6 +165,8 @@ struct iperf_test
 
     struct iperf_stream *streams;               /* pointer to list of struct stream */
     struct iperf_settings *default_settings;
+
+    SLIST_HEAD(slisthead, protocol) protocols;
 };
 
 enum

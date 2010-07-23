@@ -1,0 +1,45 @@
+#!/bin/sh
+
+proj="iperf"
+
+ver=`awk '/IPERF_VERSION / {
+  gsub(/"/, "", $3);
+  print $3 }' src/version.h`
+
+dirname=`echo $ver $proj | awk '{
+  gsub(/-ALPHA/, "a", $1);
+  gsub(/-BETA/, "b", $1);
+  gsub(/-RELEASE/, "", $1);
+  print $2"-"$1 }'`
+
+repo=`svn info | awk '/Repository Root/ { print $3 }'`
+
+echo repo $repo
+echo ver $ver
+echo dirname $dirname
+
+do_tag ()
+{
+    svn ls ${repo}/tags/${ver} >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo "tag $ver exists already"
+        exit 1
+    fi
+
+    svn copy -m "tagging $ver" ${repo}/trunk ${repo}/tags/${ver}
+}
+
+do_tar ()
+{
+    svn export ${repo}/tags/${ver} ${dirname}
+    tar zcvf ${dirname}.tar.gz ${dirname}
+    rm -rf ${dirname}
+}
+
+case $1 in
+    tag) do_tag ;;
+    tar) do_tar ;;
+    *) echo "unknown command: $1" ;;
+esac
+
+exit

@@ -174,7 +174,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     return (-1);
                 }
                 set_protocol(test, Pudp);
-                test->default_settings->blksize = DEFAULT_UDP_BLKSIZE;
+                test->settings->blksize = DEFAULT_UDP_BLKSIZE;
                 break;
             case 'P':
                 if (test->role == 's') {
@@ -192,15 +192,15 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     i_errno = IECLIENTONLY;
                     return (-1);
                 }
-                test->default_settings->rate = unit_atof(optarg);
+                test->settings->rate = unit_atof(optarg);
                 break;
             case 'l':
                 if (test->role == 's') {
                     i_errno = IECLIENTONLY;
                     return (-1);
                 }
-                test->default_settings->blksize = unit_atoi(optarg);
-                if (test->default_settings->blksize > MAX_BLOCKSIZE) {
+                test->settings->blksize = unit_atoi(optarg);
+                if (test->settings->blksize > MAX_BLOCKSIZE) {
                     i_errno = IEBLOCKSIZE;
                     return (-1);
                 }
@@ -211,8 +211,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     i_errno = IECLIENTONLY;
                     return (-1);
                 }
-                test->default_settings->socket_bufsize = unit_atof(optarg);
-                if (test->default_settings->socket_bufsize > MAX_TCP_BUFFER) {
+                test->settings->socket_bufsize = unit_atof(optarg);
+                if (test->settings->socket_bufsize > MAX_TCP_BUFFER) {
                     i_errno = IEBUFSIZE;
                     return (-1);
                 }
@@ -232,7 +232,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     i_errno = IECLIENTONLY;
                     return (-1);
                 }
-                test->default_settings->bytes = unit_atoi(optarg);
+                test->settings->bytes = unit_atoi(optarg);
                 break;
             case 'm':
                 test->print_mss = 1;
@@ -249,14 +249,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     i_errno = IECLIENTONLY;
                     return (-1);
                 }
-                test->default_settings->mss = atoi(optarg);
-                if (test->default_settings->mss > MAX_MSS) {
+                test->settings->mss = atoi(optarg);
+                if (test->settings->mss > MAX_MSS) {
                     i_errno = IEMSS;
                     return (-1);
                 }
                 break;
             case 'f':
-                test->default_settings->unit_format = *optarg;
+                test->settings->unit_format = *optarg;
                 break;
             case 'T':
                 test->tcp_info = 1;
@@ -300,8 +300,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 int
 all_data_sent(struct iperf_test * test)
 {
-    if (test->default_settings->bytes > 0) {
-        if (test->bytes_sent >= (test->num_streams * test->default_settings->bytes)) {
+    if (test->settings->bytes > 0) {
+        if (test->bytes_sent >= (test->num_streams * test->settings->bytes)) {
             return (1);
         }
     }
@@ -388,15 +388,15 @@ iperf_init_test(struct iperf_test *test)
     }
 
     /* Set timers */
-    if (test->default_settings->bytes == 0) {
+    if (test->settings->bytes == 0) {
         test->timer = new_timer(test->duration, 0);
         if (test->timer == NULL)
             return (-1);
-        printf(test_start_time, test->protocol->name, test->num_streams, test->default_settings->blksize,
+        printf(test_start_time, test->protocol->name, test->num_streams, test->settings->blksize,
             test->duration);
     } else {
-        printf(test_start_bytes, test->protocol->name, test->num_streams, test->default_settings->blksize,
-            test->default_settings->bytes);
+        printf(test_start_bytes, test->protocol->name, test->num_streams, test->settings->blksize,
+            test->settings->bytes);
     }
 
     if (test->stats_interval != 0) {
@@ -445,18 +445,18 @@ package_parameters(struct iperf_test *test)
     if (test->reverse)
         strncat(pstring, "-R ", sizeof(pstring));
     
-    if (test->default_settings->socket_bufsize) {
-        snprintf(optbuf, sizeof(optbuf), "-w %d ", test->default_settings->socket_bufsize);
+    if (test->settings->socket_bufsize) {
+        snprintf(optbuf, sizeof(optbuf), "-w %d ", test->settings->socket_bufsize);
         strncat(pstring, optbuf, sizeof(pstring));
     }
 
-    if (test->default_settings->rate) {
-        snprintf(optbuf, sizeof(optbuf), "-b %llu ", test->default_settings->rate);
+    if (test->settings->rate) {
+        snprintf(optbuf, sizeof(optbuf), "-b %llu ", test->settings->rate);
         strncat(pstring, optbuf, sizeof(pstring));
     }
 
-    if (test->default_settings->mss) {
-        snprintf(optbuf, sizeof(optbuf), "-m %d ", test->default_settings->mss);
+    if (test->settings->mss) {
+        snprintf(optbuf, sizeof(optbuf), "-m %d ", test->settings->mss);
         strncat(pstring, optbuf, sizeof(pstring));
     }
 
@@ -465,8 +465,8 @@ package_parameters(struct iperf_test *test)
         strncat(pstring, optbuf, sizeof(pstring));
     }
 
-    if (test->default_settings->bytes) {
-        snprintf(optbuf, sizeof(optbuf), "-n %llu ", test->default_settings->bytes);
+    if (test->settings->bytes) {
+        snprintf(optbuf, sizeof(optbuf), "-n %llu ", test->settings->bytes);
         strncat(pstring, optbuf, sizeof(pstring));
     }
 
@@ -475,8 +475,8 @@ package_parameters(struct iperf_test *test)
         strncat(pstring, optbuf, sizeof(pstring));
     }
 
-    if (test->default_settings->blksize) {
-        snprintf(optbuf, sizeof(optbuf), "-l %d ", test->default_settings->blksize);
+    if (test->settings->blksize) {
+        snprintf(optbuf, sizeof(optbuf), "-l %d ", test->settings->blksize);
         strncat(pstring, optbuf, sizeof(pstring));
     }
 
@@ -530,10 +530,10 @@ parse_parameters(struct iperf_test *test)
                 test->duration = atoi(optarg);
                 break;
             case 'n':
-                test->default_settings->bytes = atoll(optarg);
+                test->settings->bytes = atoll(optarg);
                 break;
             case 'm':
-                test->default_settings->mss = atoi(optarg);
+                test->settings->mss = atoi(optarg);
                 break;
             case 'u':
                 set_protocol(test, Pudp);
@@ -548,13 +548,13 @@ parse_parameters(struct iperf_test *test)
                 test->reverse = 1;
                 break;
             case 'w':
-                test->default_settings->socket_bufsize = atoi(optarg);
+                test->settings->socket_bufsize = atoi(optarg);
                 break;
             case 'l':
-                test->default_settings->blksize = atoi(optarg);
+                test->settings->blksize = atoi(optarg);
                 break;
             case 'b':
-                test->default_settings->rate = atoll(optarg);
+                test->settings->rate = atoll(optarg);
                 break;
         }
     }
@@ -588,7 +588,7 @@ iperf_exchange_parameters(struct iperf_test * test)
         if (parse_parameters(test) < 0)
             return (-1);
 
-        printf("      cookie: %s\n", test->default_settings->cookie);
+        printf("      cookie: %s\n", test->cookie);
 
         if ((s = test->protocol->listen(test)) < 0)
             return (-1);
@@ -813,20 +813,20 @@ connect_msg(struct iperf_stream * sp)
 struct iperf_test *
 iperf_new_test()
 {
-    struct iperf_test *testp;
+    struct iperf_test *test;
 
-    testp = (struct iperf_test *) malloc(sizeof(struct iperf_test));
-    if (!testp) {
+    test = (struct iperf_test *) malloc(sizeof(struct iperf_test));
+    if (!test) {
         i_errno = IENEWTEST;
         return (NULL);
     }
     /* initialize everything to zero */
-    memset(testp, 0, sizeof(struct iperf_test));
+    memset(test, 0, sizeof(struct iperf_test));
 
-    testp->default_settings = (struct iperf_settings *) malloc(sizeof(struct iperf_settings));
-    memset(testp->default_settings, 0, sizeof(struct iperf_settings));
+    test->settings = (struct iperf_settings *) malloc(sizeof(struct iperf_settings));
+    memset(test->settings, 0, sizeof(struct iperf_settings));
 
-    return testp;
+    return (test);
 }
 
 /**************************************************************************/
@@ -845,14 +845,13 @@ iperf_defaults(struct iperf_test * testp)
     testp->reporter_interval = 0;
     testp->num_streams = 1;
 
-    testp->default_settings->unit_format = 'a';
-    testp->default_settings->socket_bufsize = 0;	/* use autotuning */
-    testp->default_settings->blksize = DEFAULT_TCP_BLKSIZE;
-    testp->default_settings->rate = RATE;	/* UDP only */
-    testp->default_settings->state = TEST_START;
-    testp->default_settings->mss = 0;
-    testp->default_settings->bytes = 0;
-    memset(testp->default_settings->cookie, 0, COOKIE_SIZE);
+    testp->settings->unit_format = 'a';
+    testp->settings->socket_bufsize = 0;	/* use autotuning */
+    testp->settings->blksize = DEFAULT_TCP_BLKSIZE;
+    testp->settings->rate = RATE;	/* UDP only */
+    testp->settings->mss = 0;
+    testp->settings->bytes = 0;
+    memset(testp->cookie, 0, COOKIE_SIZE);
 
     /* Set up protocol list */
     SLIST_INIT(&testp->protocols);
@@ -983,7 +982,7 @@ iperf_connect(struct iperf_test *test)
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);
 
-    get_uuid(test->default_settings->cookie);
+    get_uuid(test->cookie);
 
     /* Create and connect the control channel */
     test->ctrl_sck = netdial(Ptcp, test->server_hostname, test->server_port);
@@ -992,7 +991,7 @@ iperf_connect(struct iperf_test *test)
         return (-1);
     }
 
-    if (Nwrite(test->ctrl_sck, test->default_settings->cookie, COOKIE_SIZE, Ptcp) < 0) {
+    if (Nwrite(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) < 0) {
         i_errno = IESENDCOOKIE;
         return (-1);
     }
@@ -1010,7 +1009,7 @@ iperf_free_test(struct iperf_test * test)
 {
     struct protocol *prot;
 
-    free(test->default_settings);
+    free(test->settings);
     free_timer(test->timer);
     free_timer(test->stats_timer);
     free_timer(test->reporter_timer);
@@ -1024,7 +1023,6 @@ iperf_free_test(struct iperf_test * test)
 
     /* XXX: Why are we setting these values to NULL? */
     test->streams = NULL;
-    test->accept = NULL;
     test->stats_callback = NULL;
     test->reporter_callback = NULL;
     free(test);
@@ -1113,7 +1111,7 @@ iperf_reporter_callback(struct iperf_test * test)
 
                 unit_snprintf(ubuf, UNIT_LEN, (double) (bytes), 'A');
                 unit_snprintf(nbuf, UNIT_LEN, (double) (bytes / ip->interval_duration),
-                        test->default_settings->unit_format);
+                        test->settings->unit_format);
 
                 start_time = timeval_diff(&sp->result->start_time,&ip->interval_start_time);
                 end_time = timeval_diff(&sp->result->start_time,&ip->interval_end_time);
@@ -1147,7 +1145,7 @@ iperf_reporter_callback(struct iperf_test * test)
 
                 if (bytes_sent > 0) {
                     unit_snprintf(ubuf, UNIT_LEN, (double) (bytes_sent), 'A');
-                    unit_snprintf(nbuf, UNIT_LEN, (double) (bytes_sent / end_time), test->default_settings->unit_format);
+                    unit_snprintf(nbuf, UNIT_LEN, (double) (bytes_sent / end_time), test->settings->unit_format);
                     if (test->protocol->id == Ptcp) {
                         printf("      Sent\n");
                         printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
@@ -1171,7 +1169,7 @@ iperf_reporter_callback(struct iperf_test * test)
                 }
                 if (bytes_received > 0) {
                     unit_snprintf(ubuf, UNIT_LEN, (double) bytes_received, 'A');
-                    unit_snprintf(nbuf, UNIT_LEN, (double) (bytes_received / end_time), test->default_settings->unit_format);
+                    unit_snprintf(nbuf, UNIT_LEN, (double) (bytes_received / end_time), test->settings->unit_format);
                     if (test->protocol->id == Ptcp) {
                         printf("      Received\n");
                         printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
@@ -1181,12 +1179,12 @@ iperf_reporter_callback(struct iperf_test * test)
 
             if (test->num_streams > 1) {
                 unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
-                unit_snprintf(nbuf, UNIT_LEN, (double) total_sent / end_time, test->default_settings->unit_format);
+                unit_snprintf(nbuf, UNIT_LEN, (double) total_sent / end_time, test->settings->unit_format);
                 if (test->protocol->id == Ptcp) {
                     printf("      Total sent\n");
                     printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
                     unit_snprintf(ubuf, UNIT_LEN, (double) total_received, 'A');
-                    unit_snprintf(nbuf, UNIT_LEN, (double) (total_received / end_time), test->default_settings->unit_format);
+                    unit_snprintf(nbuf, UNIT_LEN, (double) (total_received / end_time), test->settings->unit_format);
                     printf("      Total received\n");
                     printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
                 } else {
@@ -1225,7 +1223,7 @@ print_interval_results(struct iperf_test * test, struct iperf_stream * sp)
 
     unit_snprintf(ubuf, UNIT_LEN, (double) (ir->bytes_transferred), 'A');
     unit_snprintf(nbuf, UNIT_LEN, (double) (ir->bytes_transferred / ir->interval_duration),
-            test->default_settings->unit_format);
+            test->settings->unit_format);
     
     st = timeval_diff(&sp->result->start_time,&ir->interval_start_time);
     et = timeval_diff(&sp->result->start_time,&ir->interval_end_time);
@@ -1246,7 +1244,6 @@ iperf_free_stream(struct iperf_stream * sp)
 
     /* XXX: need to free interval list too! */
     free(sp->buffer);
-    free(sp->settings);
     for (ip = sp->result->interval_results; ip; ip = np) {
         np = ip->next;
         free(ip);
@@ -1271,16 +1268,11 @@ iperf_new_stream(struct iperf_test *test, int s)
 
     memset(sp, 0, sizeof(struct iperf_stream));
 
-    sp->buffer = (char *) malloc(test->default_settings->blksize);
-    sp->settings = (struct iperf_settings *) malloc(sizeof(struct iperf_settings));
+    sp->buffer = (char *) malloc(test->settings->blksize);
     sp->result = (struct iperf_stream_result *) malloc(sizeof(struct iperf_stream_result));
-
+    sp->settings = test->settings;
 
     if (!sp->buffer) {
-        i_errno = IECREATESTREAM;
-        return (NULL);
-    }
-    if (!sp->settings) {
         i_errno = IECREATESTREAM;
         return (NULL);
     }
@@ -1291,13 +1283,9 @@ iperf_new_stream(struct iperf_test *test, int s)
 
     memset(sp->result, 0, sizeof(struct iperf_stream_result));
     
-    /* Make a per stream copy of default_settings in each stream structure */
-    // XXX: These settings need to be moved to the test struct
-    memcpy(sp->settings, test->default_settings, sizeof(struct iperf_settings));
-
     /* Randomize the buffer */
     srandom(time(NULL));
-    for (i = 0; i < test->default_settings->blksize; ++i)
+    for (i = 0; i < test->settings->blksize; ++i)
         sp->buffer[i] = random();
 
     /* Set socket */
@@ -1332,7 +1320,7 @@ iperf_init_stream(struct iperf_stream * sp, struct iperf_test * testp)
     }
     if (testp->protocol->id == Ptcp) {
         // XXX: This property is for all sockets, not just TCP
-        if (set_tcp_windowsize(sp->socket, testp->default_settings->socket_bufsize,
+        if (set_tcp_windowsize(sp->socket, testp->settings->socket_bufsize,
                 testp->role == 's' ? SO_RCVBUF : SO_SNDBUF) < 0) {
             i_errno = IESETWINDOWSIZE;
             return (-1);

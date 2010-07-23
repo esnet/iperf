@@ -249,8 +249,8 @@ iperf_udp_init(struct iperf_test *test)
     struct iperf_stream *sp;
 
     /* Calculate the send delay needed to hit target bandwidth (-b) */
-    dtargus = (int64_t) test->default_settings->blksize * SEC_TO_US * 8;
-    dtargus /= test->default_settings->rate;
+    dtargus = (int64_t) test->settings->blksize * SEC_TO_US * 8;
+    dtargus /= test->settings->rate;
 
     assert(dtargus != 0);
 

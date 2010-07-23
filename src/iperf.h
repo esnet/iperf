@@ -24,7 +24,7 @@ struct iperf_interval_results
     float     interval_duration;
 #if defined(linux) || defined(__FreeBSD__)
     struct tcp_info tcpInfo;	/* getsockopt(TCP_INFO) results here for
-				 * Linux and FreeBSD stored here */
+                                 * Linux and FreeBSD stored here */
 #else
     char *tcpInfo;	/* just a placeholder */
 #endif
@@ -45,21 +45,17 @@ struct iperf_stream_result
     void     *data;
 };
 
-#define COOKIE_SIZE 37  /* size of an ascii uuid */
+#define COOKIE_SIZE 37              /* size of an ascii uuid */
 struct iperf_settings
 {
-    int       socket_bufsize; /* window size for TCP */
-    int       blksize;		/* size of read/writes (-l) */
-    uint64_t  rate;		/* target data rate, UDP only */
-    int       mss;		/* for TCP MSS */
-    int       ttl;
-    int       tos;
-    iperf_size_t bytes;		/* -n option */
-    char      unit_format;	/* -f */
-    /* XXX: not sure about this design: everything else is this struct is static state, 
-	but the last 2 are dynamic state. Should they be in iperf_stream instead? */
-    int       state;		/* This is state of a stream/test */
-    char      cookie[COOKIE_SIZE];	
+    int       socket_bufsize;       /* window size for TCP */
+    int       blksize;              /* size of read/writes (-l) */
+    uint64_t  rate;                 /* target data rate, UDP only */
+    int       mss;                  /* for TCP MSS */
+    int       ttl;                  /* IP TTL option */
+    int       tos;                  /* type of service bit */
+    iperf_size_t bytes;             /* number of bytes to send */
+    char      unit_format;          /* -f */
 };
 
 struct iperf_stream
@@ -76,7 +72,7 @@ struct iperf_stream
     /* non configurable members */
     struct iperf_stream_result *result;	/* structure pointer to result */
     struct timer *send_timer;
-    char     *buffer;		/* data to send */
+    char      *buffer;		/* data to send */
 
     /*
      * for udp measurements - This can be a structure outside stream, and
@@ -94,7 +90,6 @@ struct iperf_stream
 
     int       (*rcv) (struct iperf_stream * stream);
     int       (*snd) (struct iperf_stream * stream);
-    int       (*update_stats) (struct iperf_stream * stream);
 
     struct iperf_stream *next;
 
@@ -128,7 +123,7 @@ struct iperf_test
     int       listener;
     int       prot_listener;
 
-    /* boolen variables for Options */
+    /* boolean variables for Options */
     int       daemon;                           /* -D option */
     int	      debug;                            /* -d option - debug mode */
     int       no_delay;                         /* -N option */
@@ -144,8 +139,6 @@ struct iperf_test
     fd_set    read_set;                         /* set of read sockets */
     fd_set    write_set;                        /* set of write sockets */
 
-    int       (*accept) (struct iperf_test *);
-
     /* Interval related members */ 
     int       stats_interval;
     int       reporter_interval;
@@ -157,12 +150,11 @@ struct iperf_test
 
 
     int       num_streams;                      /* total streams in the test (-P) */
-    int       streams_accepted;                 /* total number of streams accepted (server only) */
 
     iperf_size_t bytes_sent;
-
+    char      cookie[COOKIE_SIZE];
     struct iperf_stream *streams;               /* pointer to list of struct stream */
-    struct iperf_settings *default_settings;
+    struct iperf_settings *settings;
 
     SLIST_HEAD(slisthead, protocol) protocols;
 };

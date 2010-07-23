@@ -95,7 +95,7 @@ iperf_tcp_accept(struct iperf_test * test)
         return (-1);
     }
 
-    if (strcmp(test->default_settings->cookie, cookie) != 0) {
+    if (strcmp(test->cookie, cookie) != 0) {
         if (Nwrite(s, &rbuf, sizeof(char), Ptcp) < 0) {
             i_errno = IESENDMESSAGE;
             return (-1);
@@ -118,7 +118,7 @@ iperf_tcp_listen(struct iperf_test *test)
     struct sockaddr_in sa;
     s = test->listener;
 
-    if (test->no_delay || test->default_settings->mss) {
+    if (test->no_delay || test->settings->mss) {
         FD_CLR(s, &test->read_set);
         close(s);
         if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -134,7 +134,7 @@ iperf_tcp_listen(struct iperf_test *test)
             printf("      TCP NODELAY: on\n");
         }
         // XXX: Setting MSS is very buggy!
-        if ((opt = test->default_settings->mss)) {
+        if ((opt = test->settings->mss)) {
             if (setsockopt(s, IPPROTO_TCP, TCP_MAXSEG, &opt, sizeof(opt)) < 0) {
                 i_errno = IESETMSS;
                 return (-1);
@@ -203,7 +203,7 @@ iperf_tcp_connect(struct iperf_test *test)
             return (-1);
         }
     }
-    if ((opt = test->default_settings->mss)) {
+    if ((opt = test->settings->mss)) {
         if (setsockopt(s, IPPROTO_TCP, TCP_MAXSEG, &opt, sizeof(opt)) < 0) {
             i_errno = IESETMSS;
             return (-1);
@@ -216,7 +216,7 @@ iperf_tcp_connect(struct iperf_test *test)
     }
 
     /* Send cookie for verification */
-    if (Nwrite(s, test->default_settings->cookie, COOKIE_SIZE, Ptcp) < 0) {
+    if (Nwrite(s, test->cookie, COOKIE_SIZE, Ptcp) < 0) {
         i_errno = IESENDCOOKIE;
         return (-1);
     }

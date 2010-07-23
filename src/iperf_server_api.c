@@ -73,7 +73,7 @@ iperf_server_listen(struct iperf_test *test)
     // XXX: This code needs to be moved to after parameter exhange
     /*
     if (test->protocol->id == Ptcp) {
-        if (test->default_settings->socket_bufsize > 0) {
+        if (test->settings->socket_bufsize > 0) {
             unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A');
             printf("TCP window size: %s\n", ubuf);
         } else {
@@ -110,7 +110,7 @@ iperf_accept(struct iperf_test *test)
 
     if (test->ctrl_sck == -1) {
         /* Server free, accept new client */
-        if (Nread(s, test->default_settings->cookie, COOKIE_SIZE, Ptcp) < 0) {
+        if (Nread(s, test->cookie, COOKIE_SIZE, Ptcp) < 0) {
             i_errno = IERECVCOOKIE;
             return (-1);
         }
@@ -265,18 +265,17 @@ iperf_test_reset(struct iperf_test *test)
     test->max_fd = test->listener;
     
     test->num_streams = 1;
-    test->streams_accepted = 0;
-    test->default_settings->socket_bufsize = 0;
-    test->default_settings->blksize = DEFAULT_TCP_BLKSIZE;
-    test->default_settings->rate = RATE;   /* UDP only */
-    test->default_settings->mss = 0;
-    memset(test->default_settings->cookie, 0, COOKIE_SIZE); 
+    test->settings->socket_bufsize = 0;
+    test->settings->blksize = DEFAULT_TCP_BLKSIZE;
+    test->settings->rate = RATE;   /* UDP only */
+    test->settings->mss = 0;
+    memset(test->cookie, 0, COOKIE_SIZE); 
 }
 
 int
 iperf_run_server(struct iperf_test *test)
 {
-    int result, s;
+    int result, s, streams_accepted;
     fd_set temp_read_set, temp_write_set;
     struct iperf_stream *sp;
     struct timeval tv;
@@ -301,6 +300,7 @@ iperf_run_server(struct iperf_test *test)
     for ( ; ; ) {
 
         test->state = IPERF_START;
+        streams_accepted = 0;
 
         while (test->state != IPERF_DONE) {
 
@@ -343,18 +343,18 @@ iperf_run_server(struct iperf_test *test)
                             FD_SET(s, &test->write_set);
                             test->max_fd = (s > test->max_fd) ? s : test->max_fd;
 
-                            test->streams_accepted++;
+                            streams_accepted++;
                             connect_msg(sp);
                         }
                         FD_CLR(test->prot_listener, &temp_read_set);
                     }
 
-                    if (test->streams_accepted == test->num_streams) {
+                    if (streams_accepted == test->num_streams) {
                         if (test->protocol->id != Ptcp) {
                             FD_CLR(test->prot_listener, &test->read_set);
                             close(test->prot_listener);
                         } else { 
-                            if (test->no_delay || test->default_settings->mss) {
+                            if (test->no_delay || test->settings->mss) {
                                 FD_CLR(test->listener, &test->read_set);
                                 close(test->listener);
                                 if ((s = netannounce(Ptcp, NULL, test->server_port)) < 0) {

@@ -25,6 +25,7 @@
 
 #include "iperf.h"
 #include "iperf_api.h"
+#include "iperf_client_api.h"
 #include "iperf_server_api.h"
 #include "units.h"
 #include "locale.h"

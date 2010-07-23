@@ -45,12 +45,6 @@ void     iperf_reporter_callback(struct iperf_test * test);
 
 
 /**
- * iperf_run_client -- Runs the client portion of a test
- *
- */
-int      iperf_run_client(struct iperf_test * test);
-
-/**
  * iperf_new_test -- return a new iperf_test with default values
  *
  * returns NULL on failure
@@ -100,8 +94,6 @@ void print_tcpinfo(struct iperf_interval_results *);
 void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 
 void print_interval_results(struct iperf_test * test, struct iperf_stream *sp);
-int iperf_connect(struct iperf_test *);
-int iperf_client_end(struct iperf_test *);
 int iperf_send(struct iperf_test *);
 int iperf_recv(struct iperf_test *);
 void sig_handler(int);
@@ -110,8 +102,6 @@ void usage_long();
 int all_data_sent(struct iperf_test *);
 int package_parameters(struct iperf_test *);
 int parse_parameters(struct iperf_test *);
-int iperf_create_streams(struct iperf_test *);
-int iperf_handle_message_client(struct iperf_test *);
 int iperf_exchange_results(struct iperf_test *);
 int parse_results(struct iperf_test *, char *);
 int iperf_init_test(struct iperf_test *);

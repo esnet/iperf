@@ -10,6 +10,7 @@
           * on_new_stream - executes after a new stream is created
           * on_test_start - executes right before the test begins
           * on_test_finish - executes after the test is finished
+  * Added early support for verbose mode (-V)
 
 == iperf 3.0b2 2010-07-15 ==
 

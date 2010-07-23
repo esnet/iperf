@@ -1,7 +1,7 @@
 lib_LIBRARIES           = libiperf.a                                    # Build and install a static iperf library
 bin_PROGRAMS            = iperf3                                        # Build and install an iperf binary
 noinst_PROGRAMS         = t_timer t_units t_uuid iperf3_profile         # Build, but don't install the test programs and a profiled version of iperf3
-include_HEADERS         = iperf_api.h iperf_server_api.h                # Defines the headers that get installed with the program
+include_HEADERS         = iperf_api.h iperf_error.h iperf_client_api.h iperf_server_api.h # Defines the headers that get installed with the program
 
 
 # Specify the source files and flags for the iperf library
@@ -11,6 +11,8 @@ libiperf_a_SOURCES      = \
                         iperf_api.h \
                         iperf_error.c \
                         iperf_error.h \
+						iperf_client_api.c \
+					    iperf_client_api.h \
                         iperf_server_api.c \
                         iperf_server_api.h \
                         iperf_tcp.c \
@@ -62,7 +64,7 @@ endif
 # Specify the sources and various flags for the test cases
 t_timer_SOURCES         = t_timer.c
 t_timer_CFLAGS          = -g -Wall
-t_timer_LDFLAGS         =
+t_timer_LDFLAGS         = iperf_error.o
 t_timer_LDADD           = libiperf.a
 
 t_units_SOURCES         = t_units.c

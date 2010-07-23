@@ -157,6 +157,12 @@ struct iperf_test
     struct iperf_settings *settings;
 
     SLIST_HEAD(slisthead, protocol) protocols;
+
+    /* callback functions */
+    void      (*on_new_stream)(struct iperf_stream *);
+    void      (*on_test_start)(struct iperf_test *);
+    void      (*on_connect)(struct iperf_test *);
+    void      (*on_test_finish)(struct iperf_test *);
 };
 
 enum

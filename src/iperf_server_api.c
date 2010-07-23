@@ -96,11 +96,9 @@ iperf_accept(struct iperf_test *test)
 {
     int s;
     int rbuf = ACCESS_DENIED;
-    char ipl[512], ipr[512];    // XXX: This is overkill. Max length of IPv6 address = 46 (INET6_ADDRSTRLEN)
     char cookie[COOKIE_SIZE];
     socklen_t len;
     struct sockaddr_in addr;
-    struct sockaddr_in temp1, temp2;
 
     len = sizeof(addr);
     if ((s = accept(test->listener, (struct sockaddr *) &addr, &len)) < 0) {
@@ -120,22 +118,6 @@ iperf_accept(struct iperf_test *test)
         test->max_fd = (s > test->max_fd) ? s : test->max_fd;
         test->ctrl_sck = s;
 
-        len = sizeof(struct sockaddr_in);
-        if (getsockname(s, (struct sockaddr *) &temp1, &len) < 0) {
-            i_errno = IEACCEPT;
-            return (-1);
-        }
-        if (getpeername(s, (struct sockaddr *) &temp2, &len) < 0) {
-            i_errno = IEACCEPT;
-            return (-1);
-        }
-
-        // XXX: Check inet_ntop for errors?
-        inet_ntop(AF_INET, (void *) &temp1.sin_addr, ipl, sizeof(ipl));
-        inet_ntop(AF_INET, (void *) &temp2.sin_addr, ipr, sizeof(ipr));
-
-        printf(report_peer, s, ipl, ntohs(temp1.sin_port), ipr, ntohs(temp2.sin_port));
-
         test->state = PARAM_EXCHANGE;
         if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
             i_errno = IESENDMESSAGE;
@@ -143,6 +125,9 @@ iperf_accept(struct iperf_test *test)
         }
         if (iperf_exchange_parameters(test) < 0) {
             return (-1);
+        }
+        if (test->on_connect) {
+            test->on_connect(test);
         }
     } else {
         // XXX: Do we even need to receive cookie if we're just going to deny anyways?
@@ -203,6 +188,8 @@ iperf_handle_message_server(struct iperf_test *test)
                 i_errno = IESENDMESSAGE;
                 return (-1);
             }
+            if (test->on_test_finish)
+                test->on_test_finish(test);
             test->reporter_callback(test);
             break;
         case IPERF_DONE:
@@ -344,7 +331,9 @@ iperf_run_server(struct iperf_test *test)
                             test->max_fd = (s > test->max_fd) ? s : test->max_fd;
 
                             streams_accepted++;
-                            connect_msg(sp);
+//                            connect_msg(sp);
+                            if (test->on_new_stream)
+                                test->on_new_stream(sp);
                         }
                         FD_CLR(test->prot_listener, &temp_read_set);
                     }

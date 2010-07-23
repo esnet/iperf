@@ -44,7 +44,7 @@
 
 jmp_buf env;			/* to handle longjmp on signal */
 
-/*************************************************************/
+/*************************** Print usage functions ****************************/
 
 void
 usage()
@@ -60,6 +60,8 @@ usage_long()
     fprintf(stderr, usage_long2);
 }
 
+
+/********************** Get/set test protocol structure ***********************/
 
 struct protocol *
 get_protocol(struct iperf_test *test, int prot_id)
@@ -77,7 +79,6 @@ get_protocol(struct iperf_test *test, int prot_id)
     return (prot);
 }
 
-
 int
 set_protocol(struct iperf_test *test, int prot_id)
 {
@@ -94,6 +95,63 @@ set_protocol(struct iperf_test *test, int prot_id)
 
     return (-1);
 }
+
+
+/************************** Iperf callback functions **************************/
+
+void
+iperf_on_new_stream(struct iperf_stream *sp)
+{
+    connect_msg(sp);
+}
+
+void
+iperf_on_test_start(struct iperf_test *test)
+{
+    if (test->verbose) {
+        if (test->settings->bytes) {
+            printf(test_start_bytes, test->protocol->name, test->num_streams,
+                test->settings->blksize, test->settings->bytes);
+        } else {
+            printf(test_start_time, test->protocol->name, test->num_streams,
+                test->settings->blksize, test->duration);
+        }
+    }
+}
+
+void
+iperf_on_connect(struct iperf_test *test)
+{
+    char ipl[INET6_ADDRSTRLEN], ipr[INET6_ADDRSTRLEN];
+    struct sockaddr_in temp;
+    socklen_t len;
+
+    if (test->role == 'c') {
+        printf("Connecting to host %s, port %d\n", test->server_hostname,
+            test->server_port);
+    } else {
+        len = sizeof(struct sockaddr_in);
+        getpeername(test->ctrl_sck, (struct sockaddr *) &temp, &len);
+        inet_ntop(AF_INET, (void *) &temp.sin_addr, ipr, sizeof(ipr));
+
+        printf("Accepted connection from %s, port %d\n", ipr, ntohs(temp.sin_port));
+    }
+    if (test->verbose) {
+        printf("      Cookie: %s\n", test->cookie);
+
+    }
+}
+
+void
+iperf_on_test_finish(struct iperf_test *test)
+{
+    if (test->verbose) {
+        printf("Test Complete. Summary Results:\n");
+    }
+}
+
+
+/******************************************************************************/
 
 int
 iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
@@ -392,11 +450,15 @@ iperf_init_test(struct iperf_test *test)
         test->timer = new_timer(test->duration, 0);
         if (test->timer == NULL)
             return (-1);
+/*
         printf(test_start_time, test->protocol->name, test->num_streams, test->settings->blksize,
             test->duration);
+*/
     } else {
+/*
         printf(test_start_bytes, test->protocol->name, test->num_streams, test->settings->blksize,
             test->settings->bytes);
+*/
     }
 
     if (test->stats_interval != 0) {
@@ -417,6 +479,9 @@ iperf_init_test(struct iperf_test *test)
             return (-1);
         }
     }
+
+    if (test->on_test_start)
+        test->on_test_start(test);
 
     return (0);
 }
@@ -588,8 +653,6 @@ iperf_exchange_parameters(struct iperf_test * test)
         if (parse_parameters(test) < 0)
             return (-1);
 
-        printf("      cookie: %s\n", test->cookie);
-
         if ((s = test->protocol->listen(test)) < 0)
             return (-1);
         FD_SET(s, &test->read_set);
@@ -756,7 +819,7 @@ parse_results(struct iperf_test *test, char *results)
             sp->result->bytes_sent = bytes_transferred;
     }
 
-    return 0;
+    return (0);
 }
 
 
@@ -888,6 +951,11 @@ iperf_defaults(struct iperf_test * testp)
 
     set_protocol(testp, Ptcp);
 
+    testp->on_new_stream = iperf_on_new_stream;
+    testp->on_test_start = iperf_on_test_start;
+    testp->on_connect = iperf_on_connect;
+    testp->on_test_finish = iperf_on_test_finish;
+
     return (0);
 }
 
@@ -908,12 +976,13 @@ iperf_create_streams(struct iperf_test *test)
         FD_SET(s, &test->write_set);
         test->max_fd = (test->max_fd < s) ? s : test->max_fd;
 
-        // XXX: This doesn't fit our API model!
         sp = iperf_new_stream(test, s);
         if (!sp)
             return (-1);
 
-        connect_msg(sp);
+        /* Perform the new stream callback */
+        if (test->on_new_stream)
+            test->on_new_stream(sp);
     }
 
     return (0);
@@ -926,7 +995,6 @@ iperf_handle_message_client(struct iperf_test *test)
 
     if ((rval = read(test->ctrl_sck, &test->state, sizeof(char))) <= 0) {
         if (rval == 0) {
-            // fprintf(stderr, "The server has unexpectedly closed the connection. Exiting...\n");
             i_errno = IECTRLCLOSE;
             return (-1);
         } else {
@@ -939,6 +1007,8 @@ iperf_handle_message_client(struct iperf_test *test)
         case PARAM_EXCHANGE:
             if (iperf_exchange_parameters(test) < 0)
                 return (-1);
+            if (test->on_connect)
+                test->on_connect(test);
             break;
         case CREATE_STREAMS:
             if (iperf_create_streams(test) < 0)
@@ -955,6 +1025,8 @@ iperf_handle_message_client(struct iperf_test *test)
                 return (-1);
             break;
         case DISPLAY_RESULTS:
+            if (test->on_test_finish)
+                test->on_test_finish(test);
             iperf_client_end(test);
             break;
         case IPERF_DONE:
@@ -977,7 +1049,7 @@ iperf_handle_message_client(struct iperf_test *test)
 int
 iperf_connect(struct iperf_test *test)
 {
-    printf("Connecting to host %s, port %d\n", test->server_hostname, test->server_port);
+//    printf("Connecting to host %s, port %d\n", test->server_hostname, test->server_port);
 
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);
@@ -1000,7 +1072,7 @@ iperf_connect(struct iperf_test *test)
     FD_SET(test->ctrl_sck, &test->write_set);
     test->max_fd = (test->ctrl_sck > test->max_fd) ? test->ctrl_sck : test->max_fd;
 
-    return 0;
+    return (0);
 }
 
 /**************************************************************************/
@@ -1065,7 +1137,6 @@ iperf_stats_callback(struct iperf_test * test)
         //temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
         if (test->tcp_info)
             get_tcpinfo(test, &temp);
-        //printf(" iperf_stats_callback: adding to interval list: \n");
         add_to_interval_list(rp, &temp);
         rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;
 
@@ -1354,7 +1425,6 @@ int
 iperf_client_end(struct iperf_test *test)
 {
     struct iperf_stream *sp, *np;
-    printf("Test Complete. Summary Results:\n");
  
     /* show final summary */
     test->reporter_callback(test);

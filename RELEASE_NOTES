@@ -1,3 +1,16 @@
+== iperf 3.0b3 2010-07-23 ==
+
+  * Better error handling
+      * All errors now handled with iperf_error()
+      * All functions that can return errors return NULL or -1 on error and set i_errno appropriately
+  * Iperf API intruduced
+      * Support for adding new protocols
+      * Added support for callback functions
+          * on_connect - executes after a connection is made to the server
+          * on_new_stream - executes after a new stream is created
+          * on_test_start - executes right before the test begins
+          * on_test_finish - executes after the test is finished
+
 == iperf 3.0b2 2010-07-15 ==
 
   * UDP mode now supported

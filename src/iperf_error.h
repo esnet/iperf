@@ -13,8 +13,9 @@ char *iperf_strerror(int);
 extern int i_errno;
 
 enum {
-    /* Parameter errors */
     IENONE = 0,             // No error
+
+    /* Parameter errors */
     IESERVCLIENT = 1,       // Iperf cannot be both server and client
     IENOROLE = 2,           // Iperf must either be a client (-c) or server (-s)
     IECLIENTONLY = 3,       // This option is client only

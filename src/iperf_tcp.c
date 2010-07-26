@@ -116,6 +116,7 @@ iperf_tcp_listen(struct iperf_test *test)
 {
     int s, opt;
     struct sockaddr_in sa;
+    struct hostent *hent;
     s = test->listener;
 
     if (test->no_delay || test->settings->mss) {
@@ -149,7 +150,15 @@ iperf_tcp_listen(struct iperf_test *test)
 
         memset(&sa, 0, sizeof(sa));
         sa.sin_family = AF_INET;
-        sa.sin_addr.s_addr = htonl(INADDR_ANY);
+        if (test->bind_address) {
+            if ((hent = gethostbyname(test->bind_address)) == NULL) {
+                i_errno = IESTREAMLISTEN;
+                return (-1);
+            }
+            memcpy(&sa.sin_addr, hent->h_addr_list[0], 4);
+        } else {
+            sa.sin_addr.s_addr = htonl(INADDR_ANY);
+        }
         sa.sin_port = htons(test->server_port);
 
         if (bind(s, (struct sockaddr *) &sa, sizeof(sa)) < 0) {
@@ -178,18 +187,34 @@ int
 iperf_tcp_connect(struct iperf_test *test)
 {
     int s, opt;
-    struct sockaddr_in sa;
+    struct sockaddr_in sa, local;
     struct hostent *hent;
 
-    if ((hent = gethostbyname(test->server_hostname)) == 0) {
-        i_errno = IESTREAMCONNECT;
-        return (-1);
-    }
     if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         i_errno = IESTREAMCONNECT;
         return (-1);
     }
 
+    if (test->bind_address) {
+        if ((hent = gethostbyname(test->bind_address)) == NULL) {
+            /* XXX: Make IESTREAMBIND? */
+            i_errno = IESTREAMCONNECT;
+            return (-1);
+        }
+        memset(&local, 0, sizeof(local));
+        memcpy(&local.sin_addr, hent->h_addr_list[0], 4);
+        local.sin_family = AF_INET;
+
+        if (bind(s, (struct sockaddr *) &local, sizeof(local)) < 0) {
+            i_errno = IESTREAMCONNECT;
+            return (-1);
+        }
+    }
+
+    if ((hent = gethostbyname(test->server_hostname)) == 0) {
+        i_errno = IESTREAMCONNECT;
+        return (-1);
+    }
     memset(&sa, 0, sizeof(sa));
     sa.sin_family = AF_INET;
     memcpy(&sa.sin_addr.s_addr, hent->h_addr, sizeof(sa.sin_addr.s_addr));

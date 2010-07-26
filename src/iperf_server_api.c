@@ -52,7 +52,7 @@ iperf_server_listen(struct iperf_test *test)
     char ubuf[UNIT_LEN];
     int x;
 
-    if((test->listener = netannounce(Ptcp, NULL, test->server_port)) < 0) {
+    if((test->listener = netannounce(Ptcp, test->bind_address, test->server_port)) < 0) {
         i_errno = IELISTEN;
         return (-1);
     }
@@ -331,7 +331,6 @@ iperf_run_server(struct iperf_test *test)
                             test->max_fd = (s > test->max_fd) ? s : test->max_fd;
 
                             streams_accepted++;
-//                            connect_msg(sp);
                             if (test->on_new_stream)
                                 test->on_new_stream(sp);
                         }
@@ -346,7 +345,7 @@ iperf_run_server(struct iperf_test *test)
                             if (test->no_delay || test->settings->mss) {
                                 FD_CLR(test->listener, &test->read_set);
                                 close(test->listener);
-                                if ((s = netannounce(Ptcp, NULL, test->server_port)) < 0) {
+                                if ((s = netannounce(Ptcp, test->bind_address, test->server_port)) < 0) {
                                     i_errno = IELISTEN;
                                     return (-1);
                                 }

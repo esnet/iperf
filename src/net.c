@@ -18,21 +18,32 @@
 */
 
 /* make connection to server */
-// XXX: Change client to server?
 int
-netdial(int proto, char *client, int port)
+netdial(int proto, char *local, char *server, int port)
 {
     int s;
     struct hostent *hent;
-    struct sockaddr_in sa;
-
-    /* XXX: This is not working for non-fully qualified host names use getaddrinfo() instead? */
-    if ((hent = gethostbyname(client)) == 0) {
-        return (-1);
-    }
+    struct sockaddr_in sa, lo;
 
     s = socket(AF_INET, proto, 0);
     if (s < 0) {
+        return (-1);
+    }
+
+    if (local) {
+        if ((hent = gethostbyname(local)) == 0)
+            return (-1);
+
+        memset(&lo, 0, sizeof(lo));
+        memmove(&lo.sin_addr, hent->h_addr_list[0], 4);
+        lo.sin_family = AF_INET;
+
+        if (bind(s, (struct sockaddr *) &lo, sizeof(lo)) < 0)
+            return (-1);
+    }
+
+    /* XXX: This is not working for non-fully qualified host names use getaddrinfo() instead? */
+    if ((hent = gethostbyname(server)) == 0) {
         return (-1);
     }
 
@@ -55,6 +66,7 @@ netannounce(int proto, char *local, int port)
 {
     int s;
     struct sockaddr_in sa;
+    struct hostent *hent;
     /* XXX: implement binding to a local address rather than * */
 
     memset((void *) &sa, 0, sizeof sa);
@@ -65,6 +77,14 @@ netannounce(int proto, char *local, int port)
     }
     int opt = 1;
     setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *) &opt, sizeof(opt));
+
+    if (local) {
+        if ((hent = gethostbyname(local)) == NULL)
+            return (-1);
+        memcpy(&sa.sin_addr, hent->h_addr_list[0], 4);
+    } else {
+        sa.sin_addr.s_addr = htonl(INADDR_ANY);
+    }
 
     sa.sin_port = htons(port);
     sa.sin_family = AF_INET;

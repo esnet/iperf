@@ -170,7 +170,7 @@ iperf_udp_accept(struct iperf_test *test)
         return (-1);
     }
 
-    test->prot_listener = netannounce(Pudp, NULL, test->server_port);
+    test->prot_listener = netannounce(Pudp, test->bind_address, test->server_port);
     if (test->prot_listener < 0) {
         i_errno = IESTREAMLISTEN;
         return (-1);
@@ -198,7 +198,7 @@ iperf_udp_listen(struct iperf_test *test)
 {
     int s;
 
-    if ((s = netannounce(Pudp, NULL, test->server_port)) < 0) {
+    if ((s = netannounce(Pudp, test->bind_address, test->server_port)) < 0) {
         i_errno = IESTREAMLISTEN;
         return (-1);
     }
@@ -216,7 +216,7 @@ iperf_udp_connect(struct iperf_test *test)
 {
     int s, buf;
 
-    if ((s = netdial(Pudp, test->server_hostname, test->server_port)) < 0) {
+    if ((s = netdial(Pudp, test->bind_address, test->server_hostname, test->server_port)) < 0) {
         i_errno = IESTREAMCONNECT;
         return (-1);
     }

@@ -116,6 +116,7 @@ struct iperf_test
     struct protocol *protocol;
     char      state;
     char     *server_hostname;                  /* -c option */
+    char     *bind_address;                     /* -B option */
     int       server_port;
     int       duration;                         /* total duration of test (-t flag) */
 

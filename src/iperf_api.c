@@ -164,6 +164,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"port", required_argument, NULL, 'p'},
         {"parallel", required_argument, NULL, 'P'},
         {"udp", no_argument, NULL, 'u'},
+        {"bind", required_argument, NULL, 'B'},
         {"tcpInfo", no_argument, NULL, 'T'},
         {"bandwidth", required_argument, NULL, 'b'},
         {"length", required_argument, NULL, 'l'},
@@ -192,7 +193,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     };
     char ch;
 
-    while ((ch = getopt_long(argc, argv, "c:p:st:uP:b:l:w:i:n:mRNTvhVdM:f:", longopts, NULL)) != -1) {
+    while ((ch = getopt_long(argc, argv, "c:p:st:uP:B:b:l:w:i:n:mRNTvhVdM:f:", longopts, NULL)) != -1) {
         switch (ch) {
             case 'c':
                 if (test->role == 's') {
@@ -201,7 +202,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 } else {
                     test->role = 'c';
                     test->server_hostname = (char *) malloc(strlen(optarg)+1);
-                    strncpy(test->server_hostname, optarg, strlen(optarg));
+                    strncpy(test->server_hostname, optarg, strlen(optarg)+1);
                 }
                 break;
             case 'p':
@@ -244,6 +245,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     i_errno = IENUMSTREAMS;
                     return (-1);
                 }
+                break;
+            case 'B':
+                test->bind_address = (char *) malloc(strlen(optarg)+1);
+                strncpy(test->bind_address, optarg, strlen(optarg)+1);
                 break;
             case 'b':
                 if (test->role == 's') {

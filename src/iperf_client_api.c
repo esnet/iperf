@@ -98,7 +98,7 @@ iperf_handle_message_client(struct iperf_test *test)
             return (-1);
     }
 
-    return 0;
+    return (0);
 }
 
 
@@ -107,15 +107,13 @@ iperf_handle_message_client(struct iperf_test *test)
 int
 iperf_connect(struct iperf_test *test)
 {
-//    printf("Connecting to host %s, port %d\n", test->server_hostname, test->server_port);
-
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);
 
     get_uuid(test->cookie);
 
     /* Create and connect the control channel */
-    test->ctrl_sck = netdial(Ptcp, test->server_hostname, test->server_port);
+    test->ctrl_sck = netdial(Ptcp, test->bind_address, test->server_hostname, test->server_port);
     if (test->ctrl_sck < 0) {
         i_errno = IECONNECT;
         return (-1);

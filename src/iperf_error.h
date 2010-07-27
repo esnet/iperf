@@ -46,29 +46,30 @@ enum {
     IESENDRESULTS = 26,     // Unable to send results to client/server (check perror)
     IERECVRESULTS = 27,     // Unable to receive results from client/server (check perror)
     IESELECT = 28,          // Select failed (check perror)
-    IESERVERTERM = 29,      // The server has terminated
-    IEACCESSDENIED = 30,    // The server is busy running a test. Try again later.
-    IESETNODELAY = 31,      // Unable to set TCP NODELAY (check perror)
-    IESETMSS = 32,          // Unable to set TCP MSS (check perror)
-    IEREUSEADDR = 33,       // Unable to set reuse address on socket (check perror)
-    IENONBLOCKING = 34,     // Unable to set socket to non-blocking (check perror)
-    IESETWINDOWSIZE = 35,   // Unable to set socket window size (check perror)
-    IEPROTOCOL = 36,        // Protocol does not exist
+    IECLIENTTERM = 29,      // The client has terminated
+    IESERVERTERM = 30,      // The server has terminated
+    IEACCESSDENIED = 31,    // The server is busy running a test. Try again later.
+    IESETNODELAY = 32,      // Unable to set TCP NODELAY (check perror)
+    IESETMSS = 33,          // Unable to set TCP MSS (check perror)
+    IEREUSEADDR = 34,       // Unable to set reuse address on socket (check perror)
+    IENONBLOCKING = 35,     // Unable to set socket to non-blocking (check perror)
+    IESETWINDOWSIZE = 36,   // Unable to set socket window size (check perror)
+    IEPROTOCOL = 37,        // Protocol does not exist
 
     /* Stream errors */
-    IECREATESTREAM = 37,    // Unable to create a new stream (check herror/perror)
-    IEINITSTREAM = 38,      // Unable to initialize stream (check herror/perror)
-    IESTREAMLISTEN = 39,    // Unable to start stream listener (check perror) 
-    IESTREAMCONNECT = 40,   // Unable to connect stream (check herror/perror)
-    IESTREAMACCEPT = 41,    // Unable to accepte stream connection (check perror)
-    IESTREAMWRITE = 42,     // Unable to write to stream socket (check perror)
-    IESTREAMREAD = 43,      // Unable to read from stream (check perror)
-    IESTREAMCLOSE = 44,     // Stream has closed unexpectedly
-    IESTREAMID = 45,        // Stream has invalid ID
+    IECREATESTREAM = 38,    // Unable to create a new stream (check herror/perror)
+    IEINITSTREAM = 39,      // Unable to initialize stream (check herror/perror)
+    IESTREAMLISTEN = 40,    // Unable to start stream listener (check perror) 
+    IESTREAMCONNECT = 41,   // Unable to connect stream (check herror/perror)
+    IESTREAMACCEPT = 42,    // Unable to accepte stream connection (check perror)
+    IESTREAMWRITE = 43,     // Unable to write to stream socket (check perror)
+    IESTREAMREAD = 44,      // Unable to read from stream (check perror)
+    IESTREAMCLOSE = 45,     // Stream has closed unexpectedly
+    IESTREAMID = 46,        // Stream has invalid ID
 
     /* Timer errors */
-    IENEWTIMER = 46,        // Unable to create new timer (check perror)
-    IEUPDATETIMER = 47,     // Unable to update timer (check perror)
+    IENEWTIMER = 47,        // Unable to create new timer (check perror)
+    IEUPDATETIMER = 48,     // Unable to update timer (check perror)
 };
 
 #endif

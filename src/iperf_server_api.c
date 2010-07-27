@@ -13,7 +13,6 @@
 #include <string.h>
 #include <getopt.h>
 #include <errno.h>
-#include <signal.h>
 #include <unistd.h>
 #include <assert.h>
 #include <fcntl.h>
@@ -195,6 +194,9 @@ iperf_handle_message_server(struct iperf_test *test)
         case IPERF_DONE:
             break;
         case CLIENT_TERMINATE:
+            i_errno = IECLIENTTERM;
+
+            // XXX: Remove this line below!
             fprintf(stderr, "The client has terminated.\n");
             for (sp = test->streams; sp; sp = sp->next) {
                 FD_CLR(sp->socket, &test->read_set);
@@ -270,18 +272,6 @@ iperf_run_server(struct iperf_test *test)
     // Open socket and listen
     if (iperf_server_listen(test) < 0) {
         return (-1);
-    }
-
-    signal(SIGINT, sig_handler);
-    if (setjmp(env)) {
-        test->state = SERVER_TERMINATE;
-        if (test->ctrl_sck >= 0) {
-            if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-                i_errno = IESENDMESSAGE;
-                return (-1);
-            }
-        }
-        return (0);
     }
 
     for ( ; ; ) {

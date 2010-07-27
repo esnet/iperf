@@ -82,6 +82,19 @@ main(int argc, char **argv)
     }
     iperf_defaults(test);	/* sets defaults */
 
+    // XXX: Check signal for errors?
+    signal(SIGINT, sig_handler);
+    if (setjmp(env)) {
+        if (test->ctrl_sck >= 0) {
+            test->state = (test->role == 'c') ? CLIENT_TERMINATE : SERVER_TERMINATE;
+            if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
+                i_errno = IESENDMESSAGE;
+                return (-1);
+            }
+        }
+        exit(1);
+    } 
+
     if (iperf_parse_arguments(test, argc, argv) < 0) {
         iperf_error("parameter error");
         fprintf(stderr, "\n");

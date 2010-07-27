@@ -1,6 +1,5 @@
 #include <errno.h>
 #include <setjmp.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -167,17 +166,6 @@ iperf_run_client(struct iperf_test * test)
     /* Start the client and connect to the server */
     if (iperf_connect(test) < 0) {
         return (-1);
-    }
-
-    // XXX: Do we need to check signal() for errors?
-    signal(SIGINT, sig_handler);
-    if (setjmp(env)) {
-        test->state = CLIENT_TERMINATE;
-        if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-            i_errno = IESENDMESSAGE;
-            return (-1);
-        }
-        exit(1);
     }
 
     while (test->state != IPERF_DONE) {

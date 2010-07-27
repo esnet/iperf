@@ -26,7 +26,6 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sched.h>
-#include <signal.h>
 #include <setjmp.h>
 
 #include "net.h"

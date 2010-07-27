@@ -22,8 +22,7 @@ int
 netdial(int proto, char *local, char *server, int port)
 {
     int s;
-    struct hostent *hent;
-    struct sockaddr_in sa, lo;
+    struct addrinfo hints, *res;
 
     s = socket(AF_INET, proto, 0);
     if (s < 0) {
@@ -31,30 +30,35 @@ netdial(int proto, char *local, char *server, int port)
     }
 
     if (local) {
-        if ((hent = gethostbyname(local)) == 0)
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = proto;
+
+        // XXX: Check getaddrinfo for errors!
+        if (getaddrinfo(local, NULL, &hints, &res) != 0)
             return (-1);
 
-        memset(&lo, 0, sizeof(lo));
-        memmove(&lo.sin_addr, hent->h_addr_list[0], 4);
-        lo.sin_family = AF_INET;
-
-        if (bind(s, (struct sockaddr *) &lo, sizeof(lo)) < 0)
+        if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0)
             return (-1);
+
+        freeaddrinfo(res);
     }
 
-    /* XXX: This is not working for non-fully qualified host names use getaddrinfo() instead? */
-    if ((hent = gethostbyname(server)) == 0) {
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = proto;
+
+    // XXX: Check getaddrinfo for errors!
+    if (getaddrinfo(server, NULL, &hints, &res) != 0)
+        return (-1);
+
+    ((struct sockaddr_in *) res->ai_addr)->sin_port = htons(port);
+
+    if (connect(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0 && errno != EINPROGRESS) {
         return (-1);
     }
 
-    memset(&sa, 0, sizeof sa);
-    memmove(&sa.sin_addr, hent->h_addr, 4);
-    sa.sin_port = htons(port);
-    sa.sin_family = AF_INET;
-
-    if (connect(s, (struct sockaddr *) & sa, sizeof sa) < 0 && errno != EINPROGRESS) {
-        return (-1);
-    }
+    freeaddrinfo(res);
 
     return (s);
 }
@@ -64,35 +68,32 @@ netdial(int proto, char *local, char *server, int port)
 int
 netannounce(int proto, char *local, int port)
 {
-    int s;
-    struct sockaddr_in sa;
-    struct hostent *hent;
-    /* XXX: implement binding to a local address rather than * */
-
-    memset((void *) &sa, 0, sizeof sa);
+    int s, opt;
+    struct addrinfo hints, *res;
+    char portstr[6];
 
     s = socket(AF_INET, proto, 0);
     if (s < 0) {
         return (-1);
     }
-    int opt = 1;
+    opt = 1;
     setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *) &opt, sizeof(opt));
 
-    if (local) {
-        if ((hent = gethostbyname(local)) == NULL)
-            return (-1);
-        memcpy(&sa.sin_addr, hent->h_addr_list[0], 4);
-    } else {
-        sa.sin_addr.s_addr = htonl(INADDR_ANY);
-    }
+    snprintf(portstr, 6, "%d", port);
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = proto;
+    hints.ai_flags = AI_PASSIVE;
+    // XXX: Check getaddrinfo for errors!
+    if (getaddrinfo(local, portstr, &hints, &res) != 0)
+        return (-1); 
 
-    sa.sin_port = htons(port);
-    sa.sin_family = AF_INET;
-
-    if (bind(s, (struct sockaddr *) & sa, sizeof(struct sockaddr_in)) < 0) {
+    if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0) {
         close(s);
         return (-1);
     }
+
+    freeaddrinfo(res);
     
     if (proto == SOCK_STREAM) {
         if (listen(s, 5) < 0) {
@@ -100,7 +101,7 @@ netannounce(int proto, char *local, int port)
         }
     }
 
-    return s;
+    return (s);
 }
 
 

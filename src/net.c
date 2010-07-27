@@ -19,19 +19,19 @@
 
 /* make connection to server */
 int
-netdial(int proto, char *local, char *server, int port)
+netdial(int domain, int proto, char *local, char *server, int port)
 {
     int s;
     struct addrinfo hints, *res;
 
-    s = socket(AF_INET, proto, 0);
+    s = socket(domain, proto, 0);
     if (s < 0) {
         return (-1);
     }
 
     if (local) {
         memset(&hints, 0, sizeof(hints));
-        hints.ai_family = AF_INET;
+        hints.ai_family = domain;
         hints.ai_socktype = proto;
 
         // XXX: Check getaddrinfo for errors!
@@ -45,7 +45,7 @@ netdial(int proto, char *local, char *server, int port)
     }
 
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
+    hints.ai_family = domain;
     hints.ai_socktype = proto;
 
     // XXX: Check getaddrinfo for errors!
@@ -66,13 +66,13 @@ netdial(int proto, char *local, char *server, int port)
 /***************************************************************/
 
 int
-netannounce(int proto, char *local, int port)
+netannounce(int domain, int proto, char *local, int port)
 {
     int s, opt;
     struct addrinfo hints, *res;
     char portstr[6];
 
-    s = socket(AF_INET, proto, 0);
+    s = socket(domain, proto, 0);
     if (s < 0) {
         return (-1);
     }
@@ -81,7 +81,7 @@ netannounce(int proto, char *local, int port)
 
     snprintf(portstr, 6, "%d", port);
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
+    hints.ai_family = domain;
     hints.ai_socktype = proto;
     hints.ai_flags = AI_PASSIVE;
     // XXX: Check getaddrinfo for errors!

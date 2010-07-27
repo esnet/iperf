@@ -1,8 +1,8 @@
 #ifndef __NET_H
 #define __NET_H
 
-int netdial(int, char *, char *, int);
-int netannounce(int, char *, int);
+int netdial(int, int, char *, char *, int);
+int netannounce(int, int, char *, int);
 int Nwrite(int, void *, int, int);
 int Nread(int, void *, int, int);
 int getsock_tcp_mss(int);

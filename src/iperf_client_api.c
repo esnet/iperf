@@ -113,7 +113,7 @@ iperf_connect(struct iperf_test *test)
     get_uuid(test->cookie);
 
     /* Create and connect the control channel */
-    test->ctrl_sck = netdial(Ptcp, test->bind_address, test->server_hostname, test->server_port);
+    test->ctrl_sck = netdial(test->settings->domain, Ptcp, test->bind_address, test->server_hostname, test->server_port);
     if (test->ctrl_sck < 0) {
         i_errno = IECONNECT;
         return (-1);

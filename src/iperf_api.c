@@ -122,19 +122,25 @@ iperf_on_test_start(struct iperf_test *test)
 void
 iperf_on_connect(struct iperf_test *test)
 {
-    char ipl[INET6_ADDRSTRLEN], ipr[INET6_ADDRSTRLEN];
-    struct sockaddr_in temp;
+    char ipr[INET6_ADDRSTRLEN];
+    struct sockaddr_storage temp;
     socklen_t len;
+    int domain;
 
     if (test->role == 'c') {
         printf("Connecting to host %s, port %d\n", test->server_hostname,
             test->server_port);
     } else {
-        len = sizeof(struct sockaddr_in);
+        domain = test->settings->domain;
+        len = sizeof(temp);
         getpeername(test->ctrl_sck, (struct sockaddr *) &temp, &len);
-        inet_ntop(AF_INET, (void *) &temp.sin_addr, ipr, sizeof(ipr));
-
-        printf("Accepted connection from %s, port %d\n", ipr, ntohs(temp.sin_port));
+        if (domain == AF_INET) {
+            inet_ntop(domain, &((struct sockaddr_in *) &temp)->sin_addr, ipr, sizeof(ipr));
+            printf("Accepted connection from %s, port %d\n", ipr, ntohs(((struct sockaddr_in *) &temp)->sin_port));
+        } else {
+            inet_ntop(domain, &((struct sockaddr_in6 *) &temp)->sin6_addr, ipr, sizeof(ipr));
+            printf("Accepted connection from %s, port %d\n", ipr, ntohs(((struct sockaddr_in6 *) &temp)->sin6_port));
+        }
     }
     if (test->verbose) {
         printf("      Cookie: %s\n", test->cookie);
@@ -181,6 +187,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"daemon", no_argument, NULL, 'D'},
         {"format", required_argument, NULL, 'f'},
         {"reverse", no_argument, NULL, 'R'},
+        {"version6", no_argument, NULL, '6'},
 
     /*  XXX: The following ifdef needs to be split up. linux-congestion is not necessarily supported
      *  by systems that support tos.
@@ -193,7 +200,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     };
     char ch;
 
-    while ((ch = getopt_long(argc, argv, "c:p:st:uP:B:b:l:w:i:n:mRNTvhVdM:f:", longopts, NULL)) != -1) {
+    while ((ch = getopt_long(argc, argv, "c:p:st:uP:B:b:l:w:i:n:mRNTvh6VdM:f:", longopts, NULL)) != -1) {
         switch (ch) {
             case 'c':
                 if (test->role == 's') {
@@ -323,6 +330,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'T':
                 test->tcp_info = 1;
+                break;
+            case '6':
+                test->settings->domain = AF_INET6;
                 break;
             case 'V':
                 test->verbose = 1;
@@ -852,17 +862,25 @@ add_to_interval_list(struct iperf_stream_result * rp, struct iperf_interval_resu
  */
 
 void
-connect_msg(struct iperf_stream * sp)
+connect_msg(struct iperf_stream *sp)
 {
-    char ipl[512], ipr[512];
+    char ipl[INET6_ADDRSTRLEN], ipr[INET6_ADDRSTRLEN];
+    int lport, rport, domain = sp->settings->domain;
 
-    inet_ntop(AF_INET, (void *) (&((struct sockaddr_in *) & sp->local_addr)->sin_addr), (void *) ipl, sizeof(ipl));
-    inet_ntop(AF_INET, (void *) (&((struct sockaddr_in *) & sp->remote_addr)->sin_addr), (void *) ipr, sizeof(ipr));
+    if (domain == AF_INET) {
+        inet_ntop(domain, (void *) &((struct sockaddr_in *) &sp->local_addr)->sin_addr, ipl, sizeof(ipl));
+        inet_ntop(domain, (void *) &((struct sockaddr_in *) &sp->remote_addr)->sin_addr, ipr, sizeof(ipr));
+        lport = ntohs(((struct sockaddr_in *) &sp->local_addr)->sin_port);
+        rport = ntohs(((struct sockaddr_in *) &sp->remote_addr)->sin_port);
+    } else {
+        inet_ntop(domain, (void *) &((struct sockaddr_in6 *) &sp->local_addr)->sin6_addr, ipl, sizeof(ipl));
+        inet_ntop(domain, (void *) &((struct sockaddr_in6 *) &sp->remote_addr)->sin6_addr, ipr, sizeof(ipr));
+        lport = ntohs(((struct sockaddr_in6 *) &sp->local_addr)->sin6_port);
+        rport = ntohs(((struct sockaddr_in6 *) &sp->remote_addr)->sin6_port);
+    }
 
     printf("[%3d] local %s port %d connected to %s port %d\n",
-        sp->socket,
-        ipl, ntohs(((struct sockaddr_in *) & sp->local_addr)->sin_port),
-        ipr, ntohs(((struct sockaddr_in *) & sp->remote_addr)->sin_port));
+        sp->socket, ipl, lport, ipr, rport);
 }
 
 
@@ -903,6 +921,7 @@ iperf_defaults(struct iperf_test * testp)
     testp->reporter_interval = 0;
     testp->num_streams = 1;
 
+    testp->settings->domain = AF_INET;
     testp->settings->unit_format = 'a';
     testp->settings->socket_bufsize = 0;	/* use autotuning */
     testp->settings->blksize = DEFAULT_TCP_BLKSIZE;
@@ -1259,12 +1278,12 @@ iperf_init_stream(struct iperf_stream * sp, struct iperf_test * testp)
 {
     socklen_t len;
 
-    len = sizeof(struct sockaddr_in);
-
+    len = sizeof(struct sockaddr_storage);
     if (getsockname(sp->socket, (struct sockaddr *) &sp->local_addr, &len) < 0) {
         i_errno = IEINITSTREAM;
         return (-1);
     }
+    len = sizeof(struct sockaddr_storage);
     if (getpeername(sp->socket, (struct sockaddr *) &sp->remote_addr, &len) < 0) {
         i_errno = IEINITSTREAM;
         return (-1);

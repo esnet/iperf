@@ -115,8 +115,6 @@ int
 iperf_tcp_listen(struct iperf_test *test)
 {
     int s, opt;
-    struct sockaddr_in sa;
-    struct hostent *hent;
     struct addrinfo hints, *res;
     char portstr[6];
     s = test->listener;
@@ -124,7 +122,7 @@ iperf_tcp_listen(struct iperf_test *test)
     if (test->no_delay || test->settings->mss) {
         FD_CLR(s, &test->read_set);
         close(s);
-        if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        if ((s = socket(test->settings->domain, SOCK_STREAM, 0)) < 0) {
             i_errno = IESTREAMLISTEN;
             return (-1);
         }
@@ -152,7 +150,7 @@ iperf_tcp_listen(struct iperf_test *test)
 
         snprintf(portstr, 6, "%d", test->server_port);
         memset(&hints, 0, sizeof(hints));
-        hints.ai_family = AF_INET;
+        hints.ai_family = test->settings->domain;
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_flags = AI_PASSIVE;
         // XXX: Check getaddrinfo for errors!
@@ -189,19 +187,17 @@ int
 iperf_tcp_connect(struct iperf_test *test)
 {
     int s, opt;
-    struct sockaddr_in sa, local;
-    struct hostent *hent;
     struct addrinfo hints, *res;
     char portstr[6];
 
-    if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    if ((s = socket(test->settings->domain, SOCK_STREAM, 0)) < 0) {
         i_errno = IESTREAMCONNECT;
         return (-1);
     }
 
     if (test->bind_address) {
         memset(&hints, 0, sizeof(hints));
-        hints.ai_family = AF_INET;
+        hints.ai_family = test->settings->domain;
         hints.ai_socktype = SOCK_STREAM;
         // XXX: Check getaddrinfo for errors!
         if (getaddrinfo(test->bind_address, NULL, &hints, &res) != 0) {
@@ -233,7 +229,7 @@ iperf_tcp_connect(struct iperf_test *test)
     }
 
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
+    hints.ai_family = test->settings->domain;
     hints.ai_socktype = SOCK_STREAM;
     snprintf(portstr, 6, "%d", test->server_port);
     // XXX: Check getaddrinfo for errors!

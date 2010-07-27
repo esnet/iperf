@@ -48,6 +48,7 @@ struct iperf_stream_result
 #define COOKIE_SIZE 37              /* size of an ascii uuid */
 struct iperf_settings
 {
+    int       domain;               /* AF_INET or AF_INET6 */
     int       socket_bufsize;       /* window size for TCP */
     int       blksize;              /* size of read/writes (-l) */
     uint64_t  rate;                 /* target data rate, UDP only */

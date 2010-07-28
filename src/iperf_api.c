@@ -400,7 +400,8 @@ iperf_send(struct iperf_test *test)
         return (-1);
     }
     if (result > 0) {
-        for (sp = test->streams; sp != NULL; sp = sp->next) {
+//        for (sp = test->streams; sp != NULL; sp = sp->next) {
+        SLIST_FOREACH(sp, &test->streams, streams) {
             if (FD_ISSET(sp->socket, &temp_write_set)) {
                 if ((bytes_sent = sp->snd(sp)) < 0) {
                     i_errno = IESTREAMWRITE;
@@ -434,7 +435,8 @@ iperf_recv(struct iperf_test *test)
         return (-1);
     }
     if (result > 0) {
-        for (sp = test->streams; sp != NULL; sp = sp->next) {
+//        for (sp = test->streams; sp != NULL; sp = sp->next) {
+        SLIST_FOREACH(sp, &test->streams, streams) {
             if (FD_ISSET(sp->socket, &temp_read_set)) {
                 if ((bytes_sent = sp->rcv(sp)) < 0) {
                     i_errno = IESTREAMREAD;
@@ -478,7 +480,8 @@ iperf_init_test(struct iperf_test *test)
     }
 
     /* Set start time */
-    for (sp = test->streams; sp; sp = sp->next) {
+//    for (sp = test->streams; sp; sp = sp->next) {
+    SLIST_FOREACH(sp, &test->streams, streams) {
         if (gettimeofday(&sp->result->start_time, NULL) < 0) {
             i_errno = IEINITTEST;
             return (-1);
@@ -691,7 +694,8 @@ iperf_exchange_results(struct iperf_test *test)
         /* Prepare results string and send to server */
         results = NULL;
         size = 0;
-        for (sp = test->streams; sp; sp = sp->next) {
+//        for (sp = test->streams; sp; sp = sp->next) {
+        SLIST_FOREACH(sp, &test->streams, streams) {
             bytes_transferred = (test->reverse ? sp->result->bytes_received : sp->result->bytes_sent);
             snprintf(buf, 128, "%d:%llu,%lf,%d,%d\n", sp->id, bytes_transferred,sp->jitter,
                 sp->cnt_error, sp->packet_count);
@@ -700,7 +704,7 @@ iperf_exchange_results(struct iperf_test *test)
                 i_errno = IEPACKAGERESULTS;
                 return (-1);
             }
-            if (sp == test->streams)
+            if (sp == SLIST_FIRST(&test->streams))
                 *results = '\0';
             strncat(results, buf, size+1);
         }
@@ -764,7 +768,8 @@ iperf_exchange_results(struct iperf_test *test)
         /* Prepare results string and send to client */
         results = NULL;
         size = 0;
-        for (sp = test->streams; sp; sp = sp->next) {
+//        for (sp = test->streams; sp; sp = sp->next) {
+        SLIST_FOREACH(sp, &test->streams, streams) {
             bytes_transferred = (test->reverse ? sp->result->bytes_sent : sp->result->bytes_received);
             snprintf(buf, 128, "%d:%llu,%lf,%d,%d\n", sp->id, bytes_transferred, sp->jitter,
                 sp->cnt_error, sp->packet_count);
@@ -773,7 +778,7 @@ iperf_exchange_results(struct iperf_test *test)
                 i_errno = IEPACKAGERESULTS;
                 return (-1);
             }
-            if (sp == test->streams)
+            if (sp == SLIST_FIRST(&test->streams))
                 *results = '\0';
             strncat(results, buf, size+1);
         }
@@ -808,7 +813,8 @@ parse_results(struct iperf_test *test, char *results)
     for (strp = results; *strp; strp = strchr(strp, '\n')+1) {
         sscanf(strp, "%d:%llu,%lf,%d,%d\n", &sid, &bytes_transferred, &jitter,
             &cerror, &pcount);
-        for (sp = test->streams; sp; sp = sp->next)
+//        for (sp = test->streams; sp; sp = sp->next)
+        SLIST_FOREACH(sp, &test->streams, streams)
             if (sp->id == sid) break;
         if (sp == NULL) {
             i_errno = IESTREAMID;
@@ -930,6 +936,7 @@ iperf_defaults(struct iperf_test * testp)
     memset(testp->cookie, 0, COOKIE_SIZE);
 
     /* Set up protocol list */
+    SLIST_INIT(&testp->streams);
     SLIST_INIT(&testp->protocols);
 
     struct protocol *tcp, *udp;
@@ -992,7 +999,7 @@ iperf_free_test(struct iperf_test * test)
     }
 
     /* XXX: Why are we setting these values to NULL? */
-    test->streams = NULL;
+    // test->streams = NULL;
     test->stats_callback = NULL;
     test->reporter_callback = NULL;
     free(test);
@@ -1014,7 +1021,8 @@ iperf_stats_callback(struct iperf_test * test)
     struct iperf_stream_result *rp = NULL;
     struct iperf_interval_results *ip = NULL, temp;
 
-    for (sp = test->streams; sp != NULL; sp = sp->next) {
+//    for (sp = test->streams; sp != NULL; sp = sp->next) {
+    SLIST_FOREACH(sp, &test->streams, streams) {
         rp = sp->result;
 
         if (test->role == 'c')
@@ -1065,7 +1073,8 @@ iperf_reporter_callback(struct iperf_test * test)
         case TEST_RUNNING:
         case STREAM_RUNNING:
             /* print interval results for each stream */
-            for (sp = test->streams; sp != NULL; sp = sp->next) {
+//            for (sp = test->streams; sp != NULL; sp = sp->next) {
+            SLIST_FOREACH(sp, &test->streams, streams) {
                 print_interval_results(test, sp);
                 bytes += sp->result->interval_results->bytes_transferred; /* sum up all streams */
             }
@@ -1075,8 +1084,8 @@ iperf_reporter_callback(struct iperf_test * test)
             }
             /* next build string with sum of all streams */
             if (test->num_streams > 1) {
-                sp = test->streams; /* reset back to 1st stream */
-                ip = test->streams->result->last_interval_results;	/* use 1st stream for timing info */
+                sp = SLIST_FIRST(&test->streams); /* reset back to 1st stream */
+                ip = sp->result->last_interval_results;	/* use 1st stream for timing info */
 
                 unit_snprintf(ubuf, UNIT_LEN, (double) (bytes), 'A');
                 unit_snprintf(nbuf, UNIT_LEN, (double) (bytes / ip->interval_duration),
@@ -1098,9 +1107,10 @@ iperf_reporter_callback(struct iperf_test * test)
             printf(report_bw_header);
 
             start_time = 0.;
-            sp = test->streams;
+            sp = SLIST_FIRST(&test->streams);
             end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
-            for (sp = test->streams; sp != NULL; sp = sp->next) {
+//            for (sp = test->streams; sp != NULL; sp = sp->next) {
+            SLIST_FOREACH(sp, &test->streams, streams) {
                 bytes_sent = sp->result->bytes_sent;
                 bytes_received = sp->result->bytes_received;
                 total_sent += bytes_sent;
@@ -1186,7 +1196,7 @@ print_interval_results(struct iperf_test * test, struct iperf_stream * sp)
         printf("print_interval_results Error: interval_results = NULL \n");
         return;
     }
-    if (sp == test->streams) {
+    if (sp == SLIST_FIRST(&test->streams)) {
         printf(report_bw_header);
     }
 
@@ -1304,14 +1314,19 @@ void
 iperf_add_stream(struct iperf_test * test, struct iperf_stream * sp)
 {
     int i;
-    struct iperf_stream *n;
+    struct iperf_stream *n, *prev;
 
-    if (!test->streams) {
-        test->streams = sp;
+    if (SLIST_EMPTY(&test->streams)) {
+        SLIST_INSERT_HEAD(&test->streams, sp, streams);
         sp->id = 1;
     } else {
-        for (n = test->streams, i = 2; n->next; n = n->next, ++i);
-        n->next = sp;
+        // for (n = test->streams, i = 2; n->next; n = n->next, ++i);
+        i = 2;
+        SLIST_FOREACH(n, &test->streams, streams) {
+            prev = n;
+            ++i;
+        }
+        SLIST_INSERT_AFTER(prev, sp, streams);
         sp->id = i;
     }
 }

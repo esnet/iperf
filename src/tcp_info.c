@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -34,7 +35,7 @@ get_tcpinfo(struct iperf_test *test, struct iperf_interval_results *rp)
 {
 #if defined(linux) || defined(__FreeBSD__)
     socklen_t	    tcp_info_length;
-    struct iperf_stream *sp = test->streams;
+    struct iperf_stream *sp = SLIST_FIRST(&test->streams);
 
     tcp_info_length = sizeof(struct tcp_info);
     //printf("getting TCP_INFO for socket %d \n", sp->socket);

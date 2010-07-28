@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/select.h>
 #include <sys/uio.h>
@@ -140,9 +141,17 @@ iperf_client_end(struct iperf_test *test)
     test->reporter_callback(test);
 
     /* Deleting all streams - CAN CHANGE FREE_STREAM FN */
+/*
     for (sp = test->streams; sp; sp = np) {
         close(sp->socket);
         np = sp->next;
+        iperf_free_stream(sp);
+    }
+*/
+   while (!SLIST_EMPTY(&test->streams)) {
+        sp = SLIST_FIRST(&test->streams);
+        SLIST_REMOVE_HEAD(&test->streams, streams);
+        close(sp->socket);
         iperf_free_stream(sp);
     }
 

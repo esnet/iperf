@@ -170,7 +170,8 @@ iperf_handle_message_server(struct iperf_test *test)
             break;
         case TEST_END:
             test->stats_callback(test);
-            for (sp = test->streams; sp; sp = sp->next) {
+//            for (sp = test->streams; sp; sp = sp->next) {
+            SLIST_FOREACH(sp, &test->streams, streams) {
                 FD_CLR(sp->socket, &test->read_set);
                 FD_CLR(sp->socket, &test->write_set);
                 close(sp->socket);
@@ -198,7 +199,8 @@ iperf_handle_message_server(struct iperf_test *test)
 
             // XXX: Remove this line below!
             fprintf(stderr, "The client has terminated.\n");
-            for (sp = test->streams; sp; sp = sp->next) {
+//            for (sp = test->streams; sp; sp = sp->next) {
+            SLIST_FOREACH(sp, &test->streams, streams) {
                 FD_CLR(sp->socket, &test->read_set);
                 FD_CLR(sp->socket, &test->write_set);
                 close(sp->socket);
@@ -221,8 +223,15 @@ iperf_test_reset(struct iperf_test *test)
     close(test->ctrl_sck);
 
     /* Free streams */
+/*
     for (sp = test->streams; sp; sp = np) {
         np = sp->next;
+        iperf_free_stream(sp);
+    }
+*/
+    while (!SLIST_EMPTY(&test->streams)) {
+        sp = SLIST_FIRST(&test->streams);
+        SLIST_REMOVE_HEAD(&test->streams, streams);
         iperf_free_stream(sp);
     }
     free_timer(test->timer);
@@ -232,7 +241,7 @@ iperf_test_reset(struct iperf_test *test)
     test->stats_timer = NULL;
     test->reporter_timer = NULL;
 
-    test->streams = NULL;
+    SLIST_INIT(&test->streams);
 
     test->role = 's';
     set_protocol(test, Ptcp);

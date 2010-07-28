@@ -40,8 +40,8 @@ struct iperf_stream_result
     iperf_size_t bytes_sent_this_interval;
     struct timeval start_time;
     struct timeval end_time;
-    struct iperf_interval_results *interval_results; /* head of list */
-    struct iperf_interval_results *last_interval_results; /* end of list */
+    struct iperf_interval_results *interval_results;      // head of list
+    struct iperf_interval_results *last_interval_results; // end of list
     void     *data;
 };
 
@@ -92,7 +92,8 @@ struct iperf_stream
     int       (*rcv) (struct iperf_stream * stream);
     int       (*snd) (struct iperf_stream * stream);
 
-    struct iperf_stream *next;
+//    struct iperf_stream *next;
+    SLIST_ENTRY(iperf_stream) streams;
 
     void     *data;
 };
@@ -155,10 +156,11 @@ struct iperf_test
 
     iperf_size_t bytes_sent;
     char      cookie[COOKIE_SIZE];
-    struct iperf_stream *streams;               /* pointer to list of struct stream */
+//    struct iperf_stream *streams;               /* pointer to list of struct stream */
+    SLIST_HEAD(slisthead, iperf_stream) streams;
     struct iperf_settings *settings;
 
-    SLIST_HEAD(slisthead, protocol) protocols;
+    SLIST_HEAD(plisthead, protocol) protocols;
 
     /* callback functions */
     void      (*on_new_stream)(struct iperf_stream *);

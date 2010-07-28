@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <assert.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -254,7 +255,8 @@ iperf_udp_init(struct iperf_test *test)
 
     assert(dtargus != 0);
 
-    for (sp = test->streams; sp; sp = sp->next) {
+//    for (sp = test->streams; sp; sp = sp->next) {
+    SLIST_FOREACH(sp, &test->streams, streams) {
         sp->send_timer = new_timer(dtargus / SEC_TO_US, dtargus % SEC_TO_US);
         if (sp->send_timer == NULL)
             return (-1);

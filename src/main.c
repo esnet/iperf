@@ -22,7 +22,6 @@
 #include <stdint.h>
 #include <netinet/tcp.h>
 
-
 #include "iperf.h"
 #include "iperf_api.h"
 #include "iperf_client_api.h"
@@ -30,6 +29,7 @@
 #include "units.h"
 #include "locale.h"
 #include "iperf_error.h"
+#include "net.h"
 
 
 int iperf_run(struct iperf_test *);

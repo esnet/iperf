@@ -997,6 +997,8 @@ iperf_free_test(struct iperf_test * test)
         iperf_free_stream(sp);
     }
 
+    free(test->server_hostname);
+    free(test->bind_address);
     free(test->settings);
     free_timer(test->timer);
     free_timer(test->stats_timer);

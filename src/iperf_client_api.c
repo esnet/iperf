@@ -135,25 +135,15 @@ iperf_connect(struct iperf_test *test)
 int
 iperf_client_end(struct iperf_test *test)
 {
-    struct iperf_stream *sp, *np;
+    struct iperf_stream *sp;
+
+    /* Close all stream sockets */
+    SLIST_FOREACH(sp, &test->streams, streams) {
+        close(sp->socket);
+    }
 
     /* show final summary */
     test->reporter_callback(test);
-
-    /* Deleting all streams - CAN CHANGE FREE_STREAM FN */
-/*
-    for (sp = test->streams; sp; sp = np) {
-        close(sp->socket);
-        np = sp->next;
-        iperf_free_stream(sp);
-    }
-*/
-   while (!SLIST_EMPTY(&test->streams)) {
-        sp = SLIST_FIRST(&test->streams);
-        SLIST_REMOVE_HEAD(&test->streams, streams);
-        close(sp->socket);
-        iperf_free_stream(sp);
-    }
 
     test->state = IPERF_DONE;
     if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
@@ -171,6 +161,7 @@ iperf_run_client(struct iperf_test * test)
     int result;
     fd_set temp_read_set, temp_write_set;
     struct timeval tv;
+    time_t sec, usec;
 
     /* Start the client and connect to the server */
     if (iperf_connect(test) < 0) {
@@ -209,12 +200,16 @@ iperf_run_client(struct iperf_test * test)
                 /* Perform callbacks */
                 if (timer_expired(test->stats_timer)) {
                     test->stats_callback(test);
-                    if (update_timer(test->stats_timer, test->stats_interval, 0) < 0)
+                    sec = (time_t) test->stats_interval;
+                    usec = (test->stats_interval - sec) * SEC_TO_US;
+                    if (update_timer(test->stats_timer, sec, usec) < 0)
                         return (-1);
                 }
                 if (timer_expired(test->reporter_timer)) {
                     test->reporter_callback(test);
-                    if (update_timer(test->reporter_timer, test->reporter_interval, 0) < 0)
+                    sec = (time_t) test->reporter_interval;
+                    usec = (test->reporter_interval - sec) * SEC_TO_US;
+                    if (update_timer(test->reporter_timer, sec, usec) < 0)
                         return (-1);
                 }
 

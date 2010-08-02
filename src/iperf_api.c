@@ -289,8 +289,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             case 'i':
                 /* XXX: could potentially want separate stat collection and reporting intervals,
                    but just set them to be the same for now */
-                test->stats_interval = atoi(optarg);
-                test->reporter_interval = atoi(optarg);
+                test->stats_interval = atof(optarg);
+                test->reporter_interval = atof(optarg);
                 if (test->stats_interval > MAX_INTERVAL) {
                     i_errno = IEINTERVAL;
                     return (-1);
@@ -400,7 +400,6 @@ iperf_send(struct iperf_test *test)
         return (-1);
     }
     if (result > 0) {
-//        for (sp = test->streams; sp != NULL; sp = sp->next) {
         SLIST_FOREACH(sp, &test->streams, streams) {
             if (FD_ISSET(sp->socket, &temp_write_set)) {
                 if ((bytes_sent = sp->snd(sp)) < 0) {
@@ -435,7 +434,6 @@ iperf_recv(struct iperf_test *test)
         return (-1);
     }
     if (result > 0) {
-//        for (sp = test->streams; sp != NULL; sp = sp->next) {
         SLIST_FOREACH(sp, &test->streams, streams) {
             if (FD_ISSET(sp->socket, &temp_read_set)) {
                 if ((bytes_sent = sp->rcv(sp)) < 0) {
@@ -455,6 +453,8 @@ int
 iperf_init_test(struct iperf_test *test)
 {
     struct iperf_stream *sp;
+    time_t sec;
+    time_t usec;
 
     if (test->protocol->init) {
         if (test->protocol->init(test) < 0)
@@ -469,18 +469,21 @@ iperf_init_test(struct iperf_test *test)
     } 
 
     if (test->stats_interval != 0) {
-        test->stats_timer = new_timer(test->stats_interval, 0);
+        sec = (time_t) test->stats_interval;
+        usec = (test->stats_interval - sec) * SEC_TO_US;
+        test->stats_timer = new_timer(sec, usec);
         if (test->stats_timer == NULL)
             return (-1);
     }
     if (test->reporter_interval != 0) {
-        test->reporter_timer = new_timer(test->reporter_interval, 0);
+        sec = (time_t) test->reporter_interval;
+        usec = (test->reporter_interval - sec) * SEC_TO_US;
+        test->reporter_timer = new_timer(sec, usec);
         if (test->reporter_timer == NULL)
             return (-1);
     }
 
     /* Set start time */
-//    for (sp = test->streams; sp; sp = sp->next) {
     SLIST_FOREACH(sp, &test->streams, streams) {
         if (gettimeofday(&sp->result->start_time, NULL) < 0) {
             i_errno = IEINITTEST;
@@ -985,6 +988,14 @@ void
 iperf_free_test(struct iperf_test * test)
 {
     struct protocol *prot;
+    struct iperf_stream *sp;
+
+    /* Free streams */
+    while (!SLIST_EMPTY(&test->streams)) {
+        sp = SLIST_FIRST(&test->streams);
+        SLIST_REMOVE_HEAD(&test->streams, streams);
+        iperf_free_stream(sp);
+    }
 
     free(test->settings);
     free_timer(test->timer);
@@ -1005,6 +1016,53 @@ iperf_free_test(struct iperf_test * test)
     free(test);
 }
 
+
+void
+iperf_reset_test(struct iperf_test *test)
+{
+    struct iperf_stream *sp;
+
+    /* Free streams */
+    while (!SLIST_EMPTY(&test->streams)) {
+        sp = SLIST_FIRST(&test->streams);
+        SLIST_REMOVE_HEAD(&test->streams, streams);
+        iperf_free_stream(sp);
+    }
+    free_timer(test->timer);
+    free_timer(test->stats_timer);
+    free_timer(test->reporter_timer);
+    test->timer = NULL;
+    test->stats_timer = NULL;
+    test->reporter_timer = NULL;
+
+    SLIST_INIT(&test->streams);
+
+    test->role = 's';
+    set_protocol(test, Ptcp);
+    test->duration = DURATION;
+    test->state = 0;
+    test->server_hostname = NULL;
+
+    test->ctrl_sck = -1;
+    test->prot_listener = -1;
+
+    test->bytes_sent = 0;
+
+    test->reverse = 0;
+    test->no_delay = 0;
+
+    FD_ZERO(&test->read_set);
+    FD_ZERO(&test->write_set);
+    
+    test->num_streams = 1;
+    test->settings->socket_bufsize = 0;
+    test->settings->blksize = DEFAULT_TCP_BLKSIZE;
+    test->settings->rate = RATE;   /* UDP only */
+    test->settings->mss = 0;
+    memset(test->cookie, 0, COOKIE_SIZE);
+}
+
+
 /**************************************************************************/
 
 /**
@@ -1021,11 +1079,10 @@ iperf_stats_callback(struct iperf_test * test)
     struct iperf_stream_result *rp = NULL;
     struct iperf_interval_results *ip = NULL, temp;
 
-//    for (sp = test->streams; sp != NULL; sp = sp->next) {
     SLIST_FOREACH(sp, &test->streams, streams) {
         rp = sp->result;
 
-        if (test->role == 'c')
+        if ((test->role == 'c' && !test->reverse) || (test->role == 's' && test->reverse))
             temp.bytes_transferred = rp->bytes_sent_this_interval;
         else
             temp.bytes_transferred = rp->bytes_received_this_interval;
@@ -1296,14 +1353,6 @@ iperf_init_stream(struct iperf_stream * sp, struct iperf_test * testp)
     if (getpeername(sp->socket, (struct sockaddr *) &sp->remote_addr, &len) < 0) {
         i_errno = IEINITSTREAM;
         return (-1);
-    }
-    if (testp->protocol->id == Ptcp) {
-        // XXX: This property is for all sockets, not just TCP
-        if (set_tcp_windowsize(sp->socket, testp->settings->socket_bufsize,
-                testp->role == 's' ? SO_RCVBUF : SO_SNDBUF) < 0) {
-            i_errno = IESETWINDOWSIZE;
-            return (-1);
-        }
     }
 
     return (0);

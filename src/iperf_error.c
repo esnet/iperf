@@ -141,6 +141,10 @@ iperf_strerror(int i_errno)
             snprintf(errstr, len, "Unable to set TCP MSS");
             perr = 1;
             break;
+        case IESETBUF:
+            snprintf(errstr, len, "Unable to set socket buffer size");
+            perr = 1;
+            break;
         case IEREUSEADDR:
             snprintf(errstr, len, "Unable to reuse address on socket");
             perr = 1;

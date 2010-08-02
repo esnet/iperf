@@ -143,8 +143,8 @@ struct iperf_test
     fd_set    write_set;                        /* set of write sockets */
 
     /* Interval related members */ 
-    int       stats_interval;
-    int       reporter_interval;
+    double    stats_interval;
+    double    reporter_interval;
     void      (*stats_callback) (struct iperf_test *);
     void      (*reporter_callback) (struct iperf_test *);
     struct timer *timer;

@@ -170,7 +170,6 @@ iperf_handle_message_server(struct iperf_test *test)
             break;
         case TEST_END:
             test->stats_callback(test);
-//            for (sp = test->streams; sp; sp = sp->next) {
             SLIST_FOREACH(sp, &test->streams, streams) {
                 FD_CLR(sp->socket, &test->read_set);
                 FD_CLR(sp->socket, &test->write_set);
@@ -199,7 +198,6 @@ iperf_handle_message_server(struct iperf_test *test)
 
             // XXX: Remove this line below!
             fprintf(stderr, "The client has terminated.\n");
-//            for (sp = test->streams; sp; sp = sp->next) {
             SLIST_FOREACH(sp, &test->streams, streams) {
                 FD_CLR(sp->socket, &test->read_set);
                 FD_CLR(sp->socket, &test->write_set);
@@ -215,20 +213,15 @@ iperf_handle_message_server(struct iperf_test *test)
     return (0);
 }
 
+/* XXX: This function is not used anymore */
 void
 iperf_test_reset(struct iperf_test *test)
 {
-    struct iperf_stream *sp, *np;
+    struct iperf_stream *sp;
 
     close(test->ctrl_sck);
 
     /* Free streams */
-/*
-    for (sp = test->streams; sp; sp = np) {
-        np = sp->next;
-        iperf_free_stream(sp);
-    }
-*/
     while (!SLIST_EMPTY(&test->streams)) {
         sp = SLIST_FIRST(&test->streams);
         SLIST_REMOVE_HEAD(&test->streams, streams);
@@ -277,129 +270,133 @@ iperf_run_server(struct iperf_test *test)
     fd_set temp_read_set, temp_write_set;
     struct iperf_stream *sp;
     struct timeval tv;
+    time_t sec, usec;
 
     // Open socket and listen
     if (iperf_server_listen(test) < 0) {
         return (-1);
     }
 
-    for ( ; ; ) {
+    test->state = IPERF_START;
+    streams_accepted = 0;
 
-        test->state = IPERF_START;
-        streams_accepted = 0;
+    while (test->state != IPERF_DONE) {
 
-        while (test->state != IPERF_DONE) {
+        memcpy(&temp_read_set, &test->read_set, sizeof(fd_set));
+        memcpy(&temp_write_set, &test->write_set, sizeof(fd_set));
+        tv.tv_sec = 15;
+        tv.tv_usec = 0;
 
-            memcpy(&temp_read_set, &test->read_set, sizeof(fd_set));
-            memcpy(&temp_write_set, &test->write_set, sizeof(fd_set));
-            tv.tv_sec = 15;
-            tv.tv_usec = 0;
-
-            result = select(test->max_fd + 1, &temp_read_set, &temp_write_set, NULL, &tv);
-            if (result < 0 && errno != EINTR) {
-                i_errno = IESELECT;
-                return (-1);
-            } else if (result > 0) {
-                if (FD_ISSET(test->listener, &temp_read_set)) {
-                    if (test->state != CREATE_STREAMS) {
-                        if (iperf_accept(test) < 0) {
-                            return (-1);
-                        }
-                        FD_CLR(test->listener, &temp_read_set);
-                    }
-                }
-                if (FD_ISSET(test->ctrl_sck, &temp_read_set)) {
-                    if (iperf_handle_message_server(test) < 0)
+        result = select(test->max_fd + 1, &temp_read_set, &temp_write_set, NULL, &tv);
+        if (result < 0 && errno != EINTR) {
+            i_errno = IESELECT;
+            return (-1);
+        } else if (result > 0) {
+            if (FD_ISSET(test->listener, &temp_read_set)) {
+                if (test->state != CREATE_STREAMS) {
+                    if (iperf_accept(test) < 0) {
                         return (-1);
-                    FD_CLR(test->ctrl_sck, &temp_read_set);                
+                    }
+                    FD_CLR(test->listener, &temp_read_set);
                 }
+            }
+            if (FD_ISSET(test->ctrl_sck, &temp_read_set)) {
+                if (iperf_handle_message_server(test) < 0)
+                    return (-1);
+                FD_CLR(test->ctrl_sck, &temp_read_set);                
+            }
 
-                if (test->state == CREATE_STREAMS) {
-                    if (FD_ISSET(test->prot_listener, &temp_read_set)) {
-        
-                        if ((s = test->protocol->accept(test)) < 0)
+            if (test->state == CREATE_STREAMS) {
+                if (FD_ISSET(test->prot_listener, &temp_read_set)) {
+    
+                    if ((s = test->protocol->accept(test)) < 0)
+                        return (-1);
+
+                    if (!is_closed(s)) {
+                        sp = iperf_new_stream(test, s);
+                        if (!sp)
                             return (-1);
 
-                        if (!is_closed(s)) {
-                            sp = iperf_new_stream(test, s);
-                            if (!sp)
+                        FD_SET(s, &test->read_set);
+                        FD_SET(s, &test->write_set);
+                        test->max_fd = (s > test->max_fd) ? s : test->max_fd;
+
+                        streams_accepted++;
+                        if (test->on_new_stream)
+                            test->on_new_stream(sp);
+                    }
+                    FD_CLR(test->prot_listener, &temp_read_set);
+                }
+
+                if (streams_accepted == test->num_streams) {
+                    if (test->protocol->id != Ptcp) {
+                        FD_CLR(test->prot_listener, &test->read_set);
+                        close(test->prot_listener);
+                    } else { 
+                        if (test->no_delay || test->settings->mss || test->settings->socket_bufsize) {
+                            FD_CLR(test->listener, &test->read_set);
+                            close(test->listener);
+                            if ((s = netannounce(test->settings->domain, Ptcp, test->bind_address, test->server_port)) < 0) {
+                                i_errno = IELISTEN;
                                 return (-1);
-
-                            FD_SET(s, &test->read_set);
-                            FD_SET(s, &test->write_set);
-                            test->max_fd = (s > test->max_fd) ? s : test->max_fd;
-
-                            streams_accepted++;
-                            if (test->on_new_stream)
-                                test->on_new_stream(sp);
-                        }
-                        FD_CLR(test->prot_listener, &temp_read_set);
-                    }
-
-                    if (streams_accepted == test->num_streams) {
-                        if (test->protocol->id != Ptcp) {
-                            FD_CLR(test->prot_listener, &test->read_set);
-                            close(test->prot_listener);
-                        } else { 
-                            if (test->no_delay || test->settings->mss) {
-                                FD_CLR(test->listener, &test->read_set);
-                                close(test->listener);
-                                if ((s = netannounce(test->settings->domain, Ptcp, test->bind_address, test->server_port)) < 0) {
-                                    i_errno = IELISTEN;
-                                    return (-1);
-                                }
-                                test->listener = s;
-                                test->max_fd = (s > test->max_fd ? s : test->max_fd);
-                                FD_SET(test->listener, &test->read_set);
                             }
-                        }
-                        test->prot_listener = -1;
-                        test->state = TEST_START;
-                        if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-                            i_errno = IESENDMESSAGE;
-                            return (-1);
-                        }
-                        if (iperf_init_test(test) < 0)
-                            return (-1);
-                        test->state = TEST_RUNNING;
-                        if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-                            i_errno = IESENDMESSAGE;
-                            return (-1);
+                            test->listener = s;
+                            test->max_fd = (s > test->max_fd ? s : test->max_fd);
+                            FD_SET(test->listener, &test->read_set);
                         }
                     }
-                }
-
-                if (test->state == TEST_RUNNING) {
-                    if (test->reverse) {
-                        // Reverse mode. Server sends.
-                        if (iperf_send(test) < 0)
-                            return (-1);
-                    } else {
-                        // Regular mode. Server receives.
-                        if (iperf_recv(test) < 0)
-                            return (-1);
+                    test->prot_listener = -1;
+                    test->state = TEST_START;
+                    if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
+                        i_errno = IESENDMESSAGE;
+                        return (-1);
                     }
-
-                    /* Perform callbacks */
-                    if (timer_expired(test->stats_timer)) {
-                        test->stats_callback(test);
-                        if (update_timer(test->stats_timer, test->stats_interval, 0) < 0)
-                            return (-1);
-                    }
-                    if (timer_expired(test->reporter_timer)) {
-                        test->reporter_callback(test);
-                        if (update_timer(test->reporter_timer, test->reporter_interval, 0) < 0)
-                            return (-1);
+                    if (iperf_init_test(test) < 0)
+                        return (-1);
+                    test->state = TEST_RUNNING;
+                    if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
+                        i_errno = IESENDMESSAGE;
+                        return (-1);
                     }
                 }
             }
+
+            if (test->state == TEST_RUNNING) {
+                if (test->reverse) {
+                    // Reverse mode. Server sends.
+                    if (iperf_send(test) < 0)
+                        return (-1);
+                } else {
+                    // Regular mode. Server receives.
+                    if (iperf_recv(test) < 0)
+                        return (-1);
+                }
+
+                /* Perform callbacks */
+                if (timer_expired(test->stats_timer)) {
+                    test->stats_callback(test);
+                    sec = (time_t) test->stats_interval;
+                    usec = (test->stats_interval - sec) * SEC_TO_US;
+                    if (update_timer(test->stats_timer, sec, usec) < 0)
+                        return (-1);
+                }
+                if (timer_expired(test->reporter_timer)) {
+                    test->reporter_callback(test);
+                    sec = (time_t) test->reporter_interval;
+                    usec = (test->reporter_interval - sec) * SEC_TO_US;
+                    if (update_timer(test->reporter_timer, sec, usec) < 0)
+                        return (-1);
+                }
+            }
         }
-
-        /* Clean up the last test */
-        iperf_test_reset(test);
-        printf("\n");
-
     }
+
+    /* Clean up the last test */
+    //iperf_test_reset(test);
+    //printf("\n");
+
+    close(test->ctrl_sck);
+    close(test->listener);
 
     return (0);
 }

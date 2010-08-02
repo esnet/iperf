@@ -119,7 +119,7 @@ iperf_tcp_listen(struct iperf_test *test)
     char portstr[6];
     s = test->listener;
 
-    if (test->no_delay || test->settings->mss) {
+    if (test->no_delay || test->settings->mss || test->settings->socket_bufsize) {
         FD_CLR(s, &test->read_set);
         close(s);
         if ((s = socket(test->settings->domain, SOCK_STREAM, 0)) < 0) {
@@ -141,6 +141,16 @@ iperf_tcp_listen(struct iperf_test *test)
                 return (-1);
             }
             printf("      TCP MSS: %d\n", opt);
+        }
+        if ((opt = test->settings->socket_bufsize)) {
+            if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) < 0) {
+                i_errno = IESETBUF;
+                return (-1);
+            }
+            if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) < 0) {
+                i_errno = IESETBUF;
+                return (-1);
+            }
         }
         opt = 1;
         if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
@@ -213,7 +223,7 @@ iperf_tcp_connect(struct iperf_test *test)
         freeaddrinfo(res);
     }
 
-    /* Set TCP options */
+    /* Set socket options */
     if (test->no_delay) {
         opt = 1;
         if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0) {
@@ -224,6 +234,16 @@ iperf_tcp_connect(struct iperf_test *test)
     if ((opt = test->settings->mss)) {
         if (setsockopt(s, IPPROTO_TCP, TCP_MAXSEG, &opt, sizeof(opt)) < 0) {
             i_errno = IESETMSS;
+            return (-1);
+        }
+    }
+    if ((opt = test->settings->socket_bufsize)) {
+        if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) < 0) {
+            i_errno = IESETBUF;
+            return (-1);
+        }
+        if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) < 0) {
+            i_errno = IESETBUF;
             return (-1);
         }
     }

@@ -106,6 +106,7 @@ int iperf_exchange_results(struct iperf_test *);
 int parse_results(struct iperf_test *, char *);
 int iperf_init_test(struct iperf_test *);
 int iperf_parse_arguments(struct iperf_test *, int, char **);
+void iperf_reset_test(struct iperf_test *);
 
 struct protocol *get_protocol(struct iperf_test *, int);
 int set_protocol(struct iperf_test *, int);

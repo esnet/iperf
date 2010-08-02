@@ -111,7 +111,7 @@ main(int argc, char **argv)
 
     printf("\niperf Done.\n");
 
-    return 0;
+    return (0);
 }
 
 /**************************************************************************/
@@ -120,12 +120,25 @@ iperf_run(struct iperf_test * test)
 {
     switch (test->role) {
         case 's':
-            return iperf_run_server(test);
+            for (;;) {
+                if (iperf_run_server(test) < 0) {
+                    iperf_error("error");
+                    printf("\n");
+                }
+                iperf_reset_test(test);
+            }
+            break;
         case 'c':
-            return iperf_run_client(test);
+            if (iperf_run_client(test) < 0) {
+                iperf_error("error");
+                exit(1);
+            }
+            break;
         default:
             usage();
-            return 0;
+            break;
     }
+
+    return (0);
 }
 

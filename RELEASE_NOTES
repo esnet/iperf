@@ -1,3 +1,17 @@
+== iperf 3.0b4 2010-08-02 ==
+
+  * Added support for binding to a specific interface (-B)
+  * Added support for IPv6 mode (-6)
+  * Setting TCP window size (-w) is now supported
+  * Updates to iperf_error
+      * Added new errors
+      * Should generate more relavent messages
+  * Stream list now managed by queue.h macros
+  * Test structures are now kept intact after a test is run (for API users)
+  * Improved interval timer granularity
+      * Support for decimal values
+  * Many bug fixes
+
 == iperf 3.0b3 2010-07-23 ==
 
   * Better error handling

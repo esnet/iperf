@@ -4,7 +4,6 @@ Current list of things to fix/add to iperf3
 -  readd -Z option (linux tcp congestion control algoritm)
 -  readd flag to set IP_TOS (-S)
 -  add debug options and extend verbose mode
--  separate iperf_api.c into iperf_client.c and iperf_utils.c
 -  add more iperf API support and documentation 
 -  look for 'XXX' in code and address
 -  better packaging/makefile, README, LICENCE, etc files
@@ -13,8 +12,7 @@ Current list of things to fix/add to iperf3
 -  add human readable vs machine readable output mode
      (my idea on this is that "human readable" = compatable with old iperf,
      and that "machine readable is all name=value pairs -blt )
--  add IPV6
--  lots more testing
+-  more testing
 -  add daemon mode (-D)
 -  see issue tracker for other wish list items
 	http://code.google.com/p/iperf/issues/list

@@ -131,7 +131,7 @@ iperf_strerror(int i_errno)
             snprintf(errstr, len, "The server has terminated");
             break;
         case IEACCESSDENIED:
-            snprintf(errstr, len, "The server is busy running a test. try again later.");
+            snprintf(errstr, len, "The server is busy running a test. try again later");
             break;
         case IESETNODELAY:
             snprintf(errstr, len, "Unable to set TCP NODELAY");
@@ -143,6 +143,14 @@ iperf_strerror(int i_errno)
             break;
         case IESETBUF:
             snprintf(errstr, len, "Unable to set socket buffer size");
+            perr = 1;
+            break;
+        case IESETTOS:
+            snprintf(errstr, len, "Unable to set IP TOS");
+            perr = 1;
+            break;
+        case IESETCOS:
+            snprintf(errstr, len, "Unable to set IPv6 traffic class");
             perr = 1;
             break;
         case IEREUSEADDR:

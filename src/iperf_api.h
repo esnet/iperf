@@ -81,7 +81,7 @@ void      iperf_add_stream(struct iperf_test * test, struct iperf_stream * strea
  * iperf_init_stream -- init resources associated with test
  *
  */
-int       iperf_init_stream(struct iperf_stream * sp, struct iperf_test * testp);
+int       iperf_init_stream(struct iperf_stream *, struct iperf_test *);
 
 /**
  * iperf_free_stream -- free resources associated with test

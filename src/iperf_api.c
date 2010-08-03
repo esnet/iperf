@@ -199,7 +199,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     };
     char ch;
 
-    while ((ch = getopt_long(argc, argv, "c:p:st:uP:B:b:l:w:i:n:mRNTvh6VdM:f:", longopts, NULL)) != -1) {
+    while ((ch = getopt_long(argc, argv, "c:p:st:uP:B:b:l:w:i:n:mRS:NTvh6VdM:f:", longopts, NULL)) != -1) {
         switch (ch) {
             case 'c':
                 if (test->role == 's') {
@@ -345,6 +345,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     return (-1);
                 }
                 test->reverse = 1;
+                break;
+            case 'S':
+                if (test->role == 's') {
+                    i_errno = IECLIENTONLY;
+                    return (-1);
+                }
+                // XXX: Checking for errors in strtol is not portable. Leave as is?
+                test->settings->tos = strtol(optarg, NULL, 0);
                 break;
             case 'v':
                 printf(version);
@@ -556,6 +564,11 @@ package_parameters(struct iperf_test *test)
         strncat(pstring, optbuf, sizeof(pstring));
     }
 
+    if (test->settings->tos) {
+        snprintf(optbuf, sizeof(optbuf), "-S %d ", test->settings->tos);
+        strncat(pstring, optbuf, sizeof(pstring));
+    }
+
     *pstring = (char) (strlen(pstring) - 1);
 
     if (Nwrite(test->ctrl_sck, pstring, strlen(pstring), Ptcp) < 0) {
@@ -597,7 +610,7 @@ parse_parameters(struct iperf_test *test)
     }
 
     // XXX: Should we check for parameters exceeding maximum values here?
-    while ((ch = getopt(n, params, "pt:n:m:uNP:Rw:l:b:")) != -1) {
+    while ((ch = getopt(n, params, "pt:n:m:uNP:Rw:l:b:S:")) != -1) {
         switch (ch) {
             case 'p':
                 set_protocol(test, Ptcp);
@@ -631,6 +644,9 @@ parse_parameters(struct iperf_test *test)
                 break;
             case 'b':
                 test->settings->rate = atoll(optarg);
+                break;
+            case 'S':
+                test->settings->tos = atoi(optarg);
                 break;
         }
     }
@@ -697,7 +713,6 @@ iperf_exchange_results(struct iperf_test *test)
         /* Prepare results string and send to server */
         results = NULL;
         size = 0;
-//        for (sp = test->streams; sp; sp = sp->next) {
         SLIST_FOREACH(sp, &test->streams, streams) {
             bytes_transferred = (test->reverse ? sp->result->bytes_received : sp->result->bytes_sent);
             snprintf(buf, 128, "%d:%llu,%lf,%d,%d\n", sp->id, bytes_transferred,sp->jitter,
@@ -771,7 +786,6 @@ iperf_exchange_results(struct iperf_test *test)
         /* Prepare results string and send to client */
         results = NULL;
         size = 0;
-//        for (sp = test->streams; sp; sp = sp->next) {
         SLIST_FOREACH(sp, &test->streams, streams) {
             bytes_transferred = (test->reverse ? sp->result->bytes_sent : sp->result->bytes_received);
             snprintf(buf, 128, "%d:%llu,%lf,%d,%d\n", sp->id, bytes_transferred, sp->jitter,
@@ -1342,9 +1356,10 @@ iperf_new_stream(struct iperf_test *test, int s)
 
 /**************************************************************************/
 int
-iperf_init_stream(struct iperf_stream * sp, struct iperf_test * testp)
+iperf_init_stream(struct iperf_stream *sp, struct iperf_test *test)
 {
     socklen_t len;
+    int opt;
 
     len = sizeof(struct sockaddr_storage);
     if (getsockname(sp->socket, (struct sockaddr *) &sp->local_addr, &len) < 0) {
@@ -1355,6 +1370,20 @@ iperf_init_stream(struct iperf_stream * sp, struct iperf_test * testp)
     if (getpeername(sp->socket, (struct sockaddr *) &sp->remote_addr, &len) < 0) {
         i_errno = IEINITSTREAM;
         return (-1);
+    }
+    /* Set IP TOS */
+    if ((opt = test->settings->tos)) {
+        if (test->settings->domain == AF_INET6) {
+            if (setsockopt(sp->socket, IPPROTO_IPV6, IPV6_TCLASS, &opt, sizeof(opt)) < 0) {
+                i_errno = IESETCOS;
+                return (-1);
+            }
+        } else {
+            if (setsockopt(sp->socket, IPPROTO_IP, IP_TOS, &opt, sizeof(opt)) < 0) {
+                i_errno = IESETTOS;
+                return (-1);
+            }
+        }
     }
 
     return (0);
@@ -1381,7 +1410,6 @@ iperf_add_stream(struct iperf_test * test, struct iperf_stream * sp)
         sp->id = i;
     }
 }
-
 
 void
 sig_handler(int sig)

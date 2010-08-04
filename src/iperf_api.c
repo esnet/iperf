@@ -124,7 +124,7 @@ iperf_on_connect(struct iperf_test *test)
     char ipr[INET6_ADDRSTRLEN];
     struct sockaddr_storage temp;
     socklen_t len;
-    int domain;
+    int domain, opt;
 
     if (test->role == 'c') {
         printf("Connecting to host %s, port %d\n", test->server_hostname,
@@ -143,6 +143,15 @@ iperf_on_connect(struct iperf_test *test)
     }
     if (test->verbose) {
         printf("      Cookie: %s\n", test->cookie);
+        if (test->protocol->id == SOCK_STREAM) {
+            if (test->settings->mss) {
+                printf("      TCP MSS: %d\n", test->settings->mss);
+            } else {
+                len = sizeof(opt);
+                getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_MAXSEG, &opt, &len);
+                printf("      TCP MSS: %d (default)\n", opt);
+            }
+        }
 
     }
 }
@@ -177,7 +186,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"interval", required_argument, NULL, 'i'},
         {"bytes", required_argument, NULL, 'n'},
         {"NoDelay", no_argument, NULL, 'N'},
-        {"Print-mss", no_argument, NULL, 'm'},
         {"Set-mss", required_argument, NULL, 'M'},
         {"version", no_argument, NULL, 'v'},
         {"verbose", no_argument, NULL, 'V'},
@@ -199,7 +207,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     };
     char ch;
 
-    while ((ch = getopt_long(argc, argv, "c:p:st:uP:B:b:l:w:i:n:mRS:NTvh6VdM:f:", longopts, NULL)) != -1) {
+    while ((ch = getopt_long(argc, argv, "c:p:st:uP:B:b:l:w:i:n:RS:NTvh6VdM:f:", longopts, NULL)) != -1) {
         switch (ch) {
             case 'c':
                 if (test->role == 's') {
@@ -302,9 +310,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     return (-1);
                 }
                 test->settings->bytes = unit_atoi(optarg);
-                break;
-            case 'm':
-                test->print_mss = 1;
                 break;
             case 'N':
                 if (test->role == 's') {
@@ -830,7 +835,6 @@ parse_results(struct iperf_test *test, char *results)
     for (strp = results; *strp; strp = strchr(strp, '\n')+1) {
         sscanf(strp, "%d:%llu,%lf,%d,%d\n", &sid, &bytes_transferred, &jitter,
             &cerror, &pcount);
-//        for (sp = test->streams; sp; sp = sp->next)
         SLIST_FOREACH(sp, &test->streams, streams)
             if (sp->id == sid) break;
         if (sp == NULL) {
@@ -1146,7 +1150,6 @@ iperf_reporter_callback(struct iperf_test * test)
         case TEST_RUNNING:
         case STREAM_RUNNING:
             /* print interval results for each stream */
-//            for (sp = test->streams; sp != NULL; sp = sp->next) {
             SLIST_FOREACH(sp, &test->streams, streams) {
                 print_interval_results(test, sp);
                 bytes += sp->result->interval_results->bytes_transferred; /* sum up all streams */
@@ -1182,7 +1185,6 @@ iperf_reporter_callback(struct iperf_test * test)
             start_time = 0.;
             sp = SLIST_FIRST(&test->streams);
             end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
-//            for (sp = test->streams; sp != NULL; sp = sp->next) {
             SLIST_FOREACH(sp, &test->streams, streams) {
                 bytes_sent = sp->result->bytes_sent;
                 bytes_received = sp->result->bytes_received;
@@ -1243,11 +1245,6 @@ iperf_reporter_callback(struct iperf_test * test)
                     avg_jitter /= test->num_streams;
                     printf(report_sum_bw_jitter_loss_format, start_time, end_time, ubuf, nbuf, avg_jitter,
                         lost_packets, total_packets, (double) (100.0 * lost_packets / total_packets));
-                }
-
-                // XXX: Why is this here?
-                if ((test->print_mss != 0) && (test->role == 'c')) {
-                    printf("The TCP maximum segment size mss = %d\n", getsock_tcp_mss(sp->socket));
                 }
             }
             break;

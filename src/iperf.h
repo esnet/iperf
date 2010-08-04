@@ -131,7 +131,6 @@ struct iperf_test
     int	      debug;                            /* -d option - debug mode */
     int       no_delay;                         /* -N option */
     int       output_format;                    /* -O option */
-    int       print_mss;                        /* -m option */
     int       reverse;                          /* -R option */
     int       tcp_info;                         /* -T option - display getsockopt(TCP_INFO) results. */
     int       v6domain;                         /* -6 option */

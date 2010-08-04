@@ -391,10 +391,7 @@ iperf_run_server(struct iperf_test *test)
         }
     }
 
-    /* Clean up the last test */
-    //iperf_test_reset(test);
-    //printf("\n");
-
+    /* Close open test sockets */
     close(test->ctrl_sck);
     close(test->listener);
 

@@ -132,7 +132,6 @@ iperf_tcp_listen(struct iperf_test *test)
                 i_errno = IESETNODELAY;
                 return (-1);
             }
-            printf("      TCP NODELAY: on\n");
         }
         // XXX: Setting MSS is very buggy!
         if ((opt = test->settings->mss)) {
@@ -140,7 +139,6 @@ iperf_tcp_listen(struct iperf_test *test)
                 i_errno = IESETMSS;
                 return (-1);
             }
-            printf("      TCP MSS: %d\n", opt);
         }
         if ((opt = test->settings->socket_bufsize)) {
             if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) < 0) {

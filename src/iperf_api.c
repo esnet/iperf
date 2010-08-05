@@ -673,7 +673,8 @@ parse_parameters(struct iperf_test *test)
 int
 iperf_exchange_parameters(struct iperf_test * test)
 {
-    int s;
+    int s, msg;
+    char state;
 
     if (test->role == 'c') {
 
@@ -685,8 +686,24 @@ iperf_exchange_parameters(struct iperf_test * test)
         if (parse_parameters(test) < 0)
             return (-1);
 
-        if ((s = test->protocol->listen(test)) < 0)
+        if ((s = test->protocol->listen(test)) < 0) {
+            state = SERVER_ERROR;
+            if (Nwrite(test->ctrl_sck, &state, sizeof(state), Ptcp) < 0) {
+                i_errno = IESENDMESSAGE;
+                return (-1);
+            }
+            msg = htonl(i_errno);
+            if (Nwrite(test->ctrl_sck, &msg, sizeof(msg), Ptcp) < 0) {
+                i_errno = IECTRLWRITE;
+                return (-1);
+            }
+            msg = htonl(errno);
+            if (Nwrite(test->ctrl_sck, &msg, sizeof(msg), Ptcp) < 0) {
+                i_errno = IECTRLWRITE;
+                return (-1);
+            }
             return (-1);
+        }
         FD_SET(s, &test->read_set);
         test->max_fd = (s > test->max_fd) ? s : test->max_fd;
         test->prot_listener = s;

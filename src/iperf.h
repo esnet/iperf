@@ -199,6 +199,7 @@ enum
     IPERF_START = 15,
     IPERF_DONE = 16,
     ACCESS_DENIED = -1,
+    SERVER_ERROR = -2,
 };
 
 #define SEC_TO_NS 1000000000	/* too big for enum on some platforms */

@@ -47,7 +47,7 @@ iperf_create_streams(struct iperf_test *test)
 int
 iperf_handle_message_client(struct iperf_test *test)
 {
-    int rval;
+    int rval, perr;
 
     if ((rval = read(test->ctrl_sck, &test->state, sizeof(char))) <= 0) {
         if (rval == 0) {
@@ -92,6 +92,18 @@ iperf_handle_message_client(struct iperf_test *test)
             return (-1);
         case ACCESS_DENIED:
             i_errno = IEACCESSDENIED;
+            return (-1);
+        case SERVER_ERROR:
+            if (Nread(test->ctrl_sck, &i_errno, sizeof(i_errno), Ptcp) < 0) {
+                i_errno = IECTRLREAD;
+                return (-1);
+            }
+            i_errno = ntohl(i_errno);
+            if (Nread(test->ctrl_sck, &perr, sizeof(perr), Ptcp) < 0) {
+                i_errno = IECTRLREAD;
+                return (-1);
+            }
+            errno = ntohl(perr);
             return (-1);
         default:
             i_errno = IEMESSAGE;

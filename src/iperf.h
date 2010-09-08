@@ -12,7 +12,7 @@
 #include <stdint.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
-#include <sys/queue.h>
+#include "queue.h"
 
 typedef uint64_t iperf_size_t;
 

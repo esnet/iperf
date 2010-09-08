@@ -14,7 +14,6 @@
 #include <unistd.h>
 #include <assert.h>
 #include <fcntl.h>
-#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -1394,8 +1393,8 @@ iperf_init_stream(struct iperf_stream *sp, struct iperf_test *test)
                 return (-1);
             }
 #else
-        i_errno = IESETCOS;
-        return (-1);
+            i_errno = IESETCOS;
+            return (-1);
 #endif
         } else {
             if (setsockopt(sp->socket, IPPROTO_IP, IP_TOS, &opt, sizeof(opt)) < 0) {

@@ -13,7 +13,6 @@
 #include <signal.h>
 #include <unistd.h>
 #include <stdint.h>
-#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>

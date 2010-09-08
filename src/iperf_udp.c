@@ -12,7 +12,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include <assert.h>
-#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>

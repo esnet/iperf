@@ -28,6 +28,21 @@ AM_CONDITIONAL(LINUX, [case $host_os in linux*) true;; *) false;; esac])
 # Checks for header files.
 AC_HEADER_STDC
 
+# Check for systems which need -lsocket and -lnsl
+AX_LIB_SOCKET_NSL
+
+# Solaris puts nanosleep in -lrt
+AC_SEARCH_LIBS(nanosleep, [rt], [], [
+echo "nanosleep() required for timing operations."
+exit 1
+])
+
+# Solaris puts hstrerror in -lresolv
+AC_SEARCH_LIBS(hstrerror, [resolv], [], [
+echo "nanosleep() required for timing operations."
+exit 1
+])
+
 # Check for uuid.h and a valid libuuid
 AC_CHECK_FUNC(uuid_create)
 if test "${ac_cv_func_uuid_create}" = yes ; then

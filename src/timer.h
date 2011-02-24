@@ -26,4 +26,6 @@ void free_timer(struct timer *tp);
 
 int timer_expired(struct timer *);
 
+void cpu_util(double *);
+
 #endif

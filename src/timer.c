@@ -154,3 +154,28 @@ timer_remaining(struct timer * tp)
     else
         return 0;
 }
+
+void
+cpu_util(double *pcpu)
+{
+    static struct timeval last;
+    static clock_t clast;
+    struct timeval temp;
+    clock_t ctemp;
+    double timediff;
+
+    if (pcpu == NULL) {
+        gettimeofday(&last, NULL);
+        clast = clock();
+        return;
+    }
+
+    gettimeofday(&temp, NULL);
+    ctemp = clock();
+
+    timediff = ((temp.tv_sec * 1000000.0 + temp.tv_usec) -
+            (last.tv_sec * 1000000.0 + last.tv_usec));
+
+    return ((ctemp - clast) / timediff);
+}
+

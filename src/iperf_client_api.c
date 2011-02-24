@@ -179,6 +179,9 @@ iperf_run_client(struct iperf_test * test)
         return (-1);
     }
 
+    // Begin calculating CPU utilization
+    cpu_util(NULL);
+
     while (test->state != IPERF_DONE) {
 
         memcpy(&temp_read_set, &test->read_set, sizeof(fd_set));
@@ -226,6 +229,7 @@ iperf_run_client(struct iperf_test * test)
 
                 /* Send TEST_END if all data has been sent or timer expired */
                 if (all_data_sent(test) || timer_expired(test->timer)) {
+                    cpu_util(&test->cpu_util);
                     test->stats_callback(test);
                     test->state = TEST_END;
                     if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {

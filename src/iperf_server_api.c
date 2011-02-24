@@ -168,6 +168,7 @@ iperf_handle_message_server(struct iperf_test *test)
         case TEST_START:
             break;
         case TEST_END:
+            cpu_util(&test->cpu_util);
             test->stats_callback(test);
             SLIST_FOREACH(sp, &test->streams, streams) {
                 FD_CLR(sp->socket, &test->read_set);
@@ -275,6 +276,9 @@ iperf_run_server(struct iperf_test *test)
     if (iperf_server_listen(test) < 0) {
         return (-1);
     }
+
+    // Begin calculating CPU utilization
+    cpu_util(NULL);
 
     test->state = IPERF_START;
     streams_accepted = 0;

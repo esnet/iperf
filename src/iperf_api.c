@@ -529,7 +529,7 @@ package_parameters(struct iperf_test *test)
 
     snprintf(optbuf, sizeof(optbuf), "-P %d ", test->num_streams);
     strncat(pstring, optbuf, sizeof(pstring));
-    
+
     if (test->reverse)
         strncat(pstring, "-R ", sizeof(pstring));
     
@@ -734,6 +734,16 @@ iperf_exchange_results(struct iperf_test *test)
         /* Prepare results string and send to server */
         results = NULL;
         size = 0;
+
+        snprintf(buf, 128, "-C %f\n", test->cpu_util);
+        size += strlen(buf);
+        if ((results = malloc(size+1)) == NULL) {
+            i_errno = IEPACKAGERESULTS;
+            return (-1);
+        }
+        *results = '\0';
+        strncat(results, buf, size+1);
+
         SLIST_FOREACH(sp, &test->streams, streams) {
             bytes_transferred = (test->reverse ? sp->result->bytes_received : sp->result->bytes_sent);
             snprintf(buf, 128, "%d:%llu,%lf,%d,%d\n", sp->id, bytes_transferred,sp->jitter,
@@ -743,8 +753,10 @@ iperf_exchange_results(struct iperf_test *test)
                 i_errno = IEPACKAGERESULTS;
                 return (-1);
             }
+/*
             if (sp == SLIST_FIRST(&test->streams))
                 *results = '\0';
+*/
             strncat(results, buf, size+1);
         }
         size++;
@@ -807,6 +819,16 @@ iperf_exchange_results(struct iperf_test *test)
         /* Prepare results string and send to client */
         results = NULL;
         size = 0;
+
+        snprintf(buf, 128, "-C %f\n", test->cpu_util);
+        size += strlen(buf);
+        if ((results = malloc(size+1)) == NULL) {
+            i_errno = IEPACKAGERESULTS;
+            return (-1);
+        }
+        *results = '\0';
+        strncat(results, buf, size+1);
+
         SLIST_FOREACH(sp, &test->streams, streams) {
             bytes_transferred = (test->reverse ? sp->result->bytes_sent : sp->result->bytes_received);
             snprintf(buf, 128, "%d:%llu,%lf,%d,%d\n", sp->id, bytes_transferred, sp->jitter,
@@ -816,8 +838,10 @@ iperf_exchange_results(struct iperf_test *test)
                 i_errno = IEPACKAGERESULTS;
                 return (-1);
             }
+/*
             if (sp == SLIST_FIRST(&test->streams))
                 *results = '\0';
+*/
             strncat(results, buf, size+1);
         }
         size++;
@@ -845,10 +869,22 @@ parse_results(struct iperf_test *test, char *results)
     int sid, cerror, pcount;
     double jitter;
     char *strp;
+    char *tok;
     iperf_size_t bytes_transferred;
     struct iperf_stream *sp;
 
-    for (strp = results; *strp; strp = strchr(strp, '\n')+1) {
+    /* Isolate the first line */
+    strp = strchr(results, '\n');
+    *strp = '\0';
+    strp++;
+
+    for (tok = strtok(results, " "); tok; tok = strtok(NULL, " ")) {
+        if (strcmp(tok, "-C") == 0) {
+            test->remote_cpu_util = atof(strtok(NULL, " "));
+        }
+    }
+
+    for (strp; *strp; strp = strchr(strp, '\n')+1) {
         sscanf(strp, "%d:%llu,%lf,%d,%d\n", &sid, &bytes_transferred, &jitter,
             &cerror, &pcount);
         SLIST_FOREACH(sp, &test->streams, streams)
@@ -1263,6 +1299,11 @@ iperf_reporter_callback(struct iperf_test * test)
                         lost_packets, total_packets, (double) (100.0 * lost_packets / total_packets));
                 }
             }
+            if (test->verbose) {
+                printf("Host CPU Utilization:   %.1f%%\n", test->cpu_util);
+                printf("Remote CPU Utilization: %.1f%%\n", test->remote_cpu_util);
+            }
+
             break;
     } 
 

@@ -176,6 +176,6 @@ cpu_util(double *pcpu)
     timediff = ((temp.tv_sec * 1000000.0 + temp.tv_usec) -
             (last.tv_sec * 1000000.0 + last.tv_usec));
 
-    return ((ctemp - clast) / timediff);
+    *pcpu = ((ctemp - clast) / timediff) * 100;
 }
 

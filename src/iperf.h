@@ -149,7 +149,9 @@ struct iperf_test
     struct timer *timer;
     struct timer *stats_timer;
     struct timer *reporter_timer;
+
     double cpu_util;                            /* cpu utilization of the test */
+    double remote_cpu_util;                     /* cpu utilization for the remote host/client */
 
     int       num_streams;                      /* total streams in the test (-P) */
 

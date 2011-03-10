@@ -99,6 +99,7 @@ int iperf_recv(struct iperf_test *);
 void sig_handler(int);
 void usage();
 void usage_long();
+void warning(char *);
 int all_data_sent(struct iperf_test *);
 int package_parameters(struct iperf_test *);
 int parse_parameters(struct iperf_test *);

@@ -59,6 +59,12 @@ usage_long()
 }
 
 
+void warning(char *str)
+{
+	fprintf(stderr, "warning: %s\n", str);
+}
+
+
 /********************** Get/set test protocol structure ***********************/
 
 struct protocol *
@@ -242,8 +248,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'u':
                 if (test->role == 's') {
+					warning("ignoring client only argument --udp (-u)");
+				/* XXX: made a warning
                     i_errno = IECLIENTONLY;
                     return (-1);
+				*/
                 }
                 set_protocol(test, Pudp);
                 test->settings->blksize = DEFAULT_UDP_BLKSIZE;

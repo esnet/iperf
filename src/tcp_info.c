@@ -67,7 +67,7 @@ print_tcpinfo(struct iperf_test *test)
     struct iperf_stream *sp;
 #if defined(linux)
     SLIST_FOREACH(sp, &test->streams, streams) {
-        retransmits += sp->result->last_interval_results.tcpInfo.tcpi_retransmits;
+        retransmits += sp->result->last_interval_results->tcpInfo.tcpi_retransmits;
     }
     printf("TCP Info\n");
     printf("  Retransmits: %ld\n", retransmits);

@@ -342,6 +342,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'T':
 #if !defined(linux) && !defined(__FreeBSD__)
+				// XXX: Should check to make sure UDP mode isn't set!
                 warning("TCP_INFO (-T) is not supported on your current platform");
 #else
                 test->tcp_info = 1;
@@ -1267,11 +1268,6 @@ iperf_reporter_callback(struct iperf_test * test)
                         printf("      Sent\n");
                         printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
 
-                        if (test->tcp_info) {
-//                            ip = sp->result->last_interval_results;	
-//                            print_tcpinfo(ip);
-                            print_tcpinfo(test);
-                        }
 
                     } else {
                         printf(report_bw_jitter_loss_format, sp->socket, start_time,
@@ -1310,6 +1306,13 @@ iperf_reporter_callback(struct iperf_test * test)
                         lost_packets, total_packets, (double) (100.0 * lost_packets / total_packets));
                 }
             }
+
+            if (test->tcp_info) {
+//                ip = sp->result->last_interval_results;	
+//                print_tcpinfo(ip);
+                print_tcpinfo(test);
+            }
+
             if (test->verbose) {
                 printf("Host CPU Utilization:   %.1f%%\n", test->cpu_util);
                 printf("Remote CPU Utilization: %.1f%%\n", test->remote_cpu_util);

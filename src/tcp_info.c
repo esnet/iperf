@@ -5,6 +5,7 @@
  * Brian Tierney, ESnet  (bltierney@es.net)
  * 
  * Note that this is only really useful on Linux.
+ * XXX: only standard on linux versions 2.4 and later
  #
  * FreeBSD has a limitted implementation that only includes the following:
  *   tcpi_snd_ssthresh, tcpi_snd_cwnd, tcpi_rcv_space, tcpi_rtt
@@ -15,7 +16,6 @@
  *
  * I think MS Windows does support TCP_INFO, but iperf3 does not currently support Windows.
  */
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,39 +31,59 @@
 
 /*************************************************************/
 void
-get_tcpinfo(struct iperf_test *test, struct iperf_interval_results *rp)
+get_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *rp)
 {
 #if defined(linux) || defined(__FreeBSD__)
-    socklen_t	    tcp_info_length;
-    struct iperf_stream *sp = SLIST_FIRST(&test->streams);
+    socklen_t tcp_info_length;
+//    struct tcp_info tempinfo;
+//    struct iperf_stream *sp = SLIST_FIRST(&test->streams);
 
     tcp_info_length = sizeof(struct tcp_info);
-    //printf("getting TCP_INFO for socket %d \n", sp->socket);
+
     if (getsockopt(sp->socket, IPPROTO_TCP, TCP_INFO, (void *)&rp->tcpInfo, &tcp_info_length) < 0) {
-	perror("getsockopt");
+        perror("getsockopt");
     }
-    /* for debugging */
-    //printf("   got TCP_INFO: %d, %d, %d, %d\n", rp->tcpInfo.tcpi_snd_cwnd,
-    //	   rp->tcpInfo.tcpi_snd_ssthresh, rp->tcpInfo.tcpi_rcv_space, rp->tcpInfo.tcpi_rtt);
-    return;
-#else
-    return;
+
+/*
+    for (sp = SLIST_NEXT(sp, streams); sp != SLIST_END(&test->streams);
+            sp = SLIST_NEXT(sp, streams)) {
+        tcp_info_length = sizeof(struct tcp_info);
+        if (getsockopt(sp->socket, IPPROTO_TCP, TCP_INFO, (void *) &tempinfo, &tcp_info_length) < 0) {
+            perror("getsockopt");
+        }
+        rp->tcpInfo.tcpi_retransmits += tempinfo.tcpi_retransmits;
+    }
+*/
 #endif
+    return;
 }
 
 /*************************************************************/
+//print_tcpinfo(struct iperf_interval_results *r)
 void
-print_tcpinfo(struct iperf_interval_results *r)
+print_tcpinfo(struct iperf_test *test)
 {
+    long int retransmits = 0;
+    struct iperf_stream *sp;
 #if defined(linux)
+    SLIST_FOREACH(sp, &test->streams, streams) {
+        retransmits += sp->result->last_interval_results.tcpInfo.tcpi_retransmits;
+    }
+    printf("TCP Info\n");
+    printf("  Retransmits: %ld\n", retransmits);
+
+/* old test print_tcpinfo code
     printf(report_tcpInfo, r->tcpInfo.tcpi_snd_cwnd, r->tcpInfo.tcpi_snd_ssthresh,
 	    r->tcpInfo.tcpi_rcv_ssthresh, r->tcpInfo.tcpi_unacked, r->tcpInfo.tcpi_sacked,
 	    r->tcpInfo.tcpi_lost, r->tcpInfo.tcpi_retrans, r->tcpInfo.tcpi_fackets, 
 	    r->tcpInfo.tcpi_rtt, r->tcpInfo.tcpi_reordering);
+*/
 #endif
 #if defined(__FreeBSD__)
+/*
     printf(report_tcpInfo, r->tcpInfo.tcpi_snd_cwnd, r->tcpInfo.tcpi_rcv_space,
 	   r->tcpInfo.tcpi_snd_ssthresh, r->tcpInfo.tcpi_rtt);
+*/
 #endif
 }
 
@@ -82,6 +102,5 @@ build_tcpinfo_message(struct iperf_interval_results *r, char *message)
     sprintf(message, report_tcpInfo, r->tcpInfo.tcpi_snd_cwnd,
 	    r->tcpInfo.tcpi_rcv_space, r->tcpInfo.tcpi_snd_ssthresh, r->tcpInfo.tcpi_rtt);
 #endif
-
 }
 

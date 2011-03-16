@@ -341,7 +341,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 test->settings->unit_format = *optarg;
                 break;
             case 'T':
+#if !defined(linux) && !defined(__FreeBSD__)
+                warning("TCP_INFO (-T) is not supported on your current platform");
+#else
                 test->tcp_info = 1;
+#endif
                 break;
             case '6':
                 test->settings->domain = AF_INET6;
@@ -918,7 +922,7 @@ parse_results(struct iperf_test *test, char *results)
 /*************************************************************/
 /**
  * add_to_interval_list -- adds new interval to the interval_list
- *
+ * XXX: Interval lists should use SLIST implementation fro queue
  */
 
 void
@@ -1180,7 +1184,7 @@ iperf_stats_callback(struct iperf_test * test)
         temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
         //temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
         if (test->tcp_info)
-            get_tcpinfo(test, &temp);
+            get_tcpinfo(sp, &temp);
         add_to_interval_list(rp, &temp);
         rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;
 
@@ -1231,12 +1235,10 @@ iperf_reporter_callback(struct iperf_test * test)
                 start_time = timeval_diff(&sp->result->start_time,&ip->interval_start_time);
                 end_time = timeval_diff(&sp->result->start_time,&ip->interval_end_time);
                 printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
-
-#if defined(linux) || defined(__FreeBSD__)			/* is it usful to figure out a way so sum * TCP_info acrross multiple streams? */
-                if (test->tcp_info)
-                    print_tcpinfo(ip);
-#endif
             }
+            if (test->tcp_info)
+                print_tcpinfo(test);
+//                print_tcpinfo(ip);
             break;
         case DISPLAY_RESULTS:
             /* print final summary for all intervals */
@@ -1265,12 +1267,12 @@ iperf_reporter_callback(struct iperf_test * test)
                         printf("      Sent\n");
                         printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
 
-#if defined(linux) || defined(__FreeBSD__)
                         if (test->tcp_info) {
-                            ip = sp->result->last_interval_results;	
-                            print_tcpinfo(ip);
+//                            ip = sp->result->last_interval_results;	
+//                            print_tcpinfo(ip);
+                            print_tcpinfo(test);
                         }
-#endif
+
                     } else {
                         printf(report_bw_jitter_loss_format, sp->socket, start_time,
                                 end_time, ubuf, nbuf, sp->jitter * 1000, sp->cnt_error, 
@@ -1345,10 +1347,11 @@ print_interval_results(struct iperf_test * test, struct iperf_stream * sp)
     
     printf(report_bw_format, sp->socket, st, et, ubuf, nbuf);
 
-#if defined(linux) || defined(__FreeBSD__)
+/* doing aggregate TCP_INFO reporting for now...
     if (test->tcp_info)
         print_tcpinfo(ir);
-#endif
+*/
+
 }
 
 /**************************************************************************/

@@ -42,7 +42,7 @@
 #include "iperf_util.h"
 #include "locale.h"
 
-jmp_buf env;			/* to handle longjmp on signal */
+jmp_buf env;            /* to handle longjmp on signal */
 
 /*************************** Print usage functions ****************************/
 
@@ -63,7 +63,7 @@ usage_long()
 
 void warning(char *str)
 {
-	fprintf(stderr, "warning: %s\n", str);
+    fprintf(stderr, "warning: %s\n", str);
 }
 
 
@@ -250,11 +250,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'u':
                 if (test->role == 's') {
-					warning("ignoring client only argument --udp (-u)");
-				/* XXX: made a warning
+                    warning("ignoring client only argument --udp (-u)");
+                /* XXX: made a warning
                     i_errno = IECLIENTONLY;
                     return (-1);
-				*/
+                */
                 }
                 set_protocol(test, Pudp);
                 test->settings->blksize = DEFAULT_UDP_BLKSIZE;
@@ -344,7 +344,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'T':
 #if !defined(linux) && !defined(__FreeBSD__)
-				// XXX: Should check to make sure UDP mode isn't set!
+                // XXX: Should check to make sure UDP mode isn't set!
                 warning("TCP_INFO (-T) is not supported on your current platform");
 #else
                 test->tcp_info = 1;
@@ -937,7 +937,7 @@ add_to_interval_list(struct iperf_stream_result * rp, struct iperf_interval_resu
     memcpy(ip, new, sizeof(struct iperf_interval_results));
     ip->next = NULL;
 
-    if (rp->interval_results == NULL) {	/* if 1st interval */
+    if (rp->interval_results == NULL) {    /* if 1st interval */
         rp->interval_results = ip;
         rp->last_interval_results = ip; /* pointer to last element in list */
     } else { /* add to end of list */
@@ -1017,9 +1017,9 @@ iperf_defaults(struct iperf_test * testp)
 
     testp->settings->domain = AF_INET;
     testp->settings->unit_format = 'a';
-    testp->settings->socket_bufsize = 0;	/* use autotuning */
+    testp->settings->socket_bufsize = 0;    /* use autotuning */
     testp->settings->blksize = DEFAULT_TCP_BLKSIZE;
-    testp->settings->rate = RATE;	/* UDP only */
+    testp->settings->rate = RATE;    /* UDP only */
     testp->settings->mss = 0;
     testp->settings->bytes = 0;
     memset(testp->cookie, 0, COOKIE_SIZE);
@@ -1195,6 +1195,127 @@ iperf_stats_callback(struct iperf_test * test)
 
 }
 
+static void
+iperf_print_intermediate(struct iperf_test *test)
+{
+    char ubuf[UNIT_LEN];
+    char nbuf[UNIT_LEN];
+    struct iperf_stream *sp = NULL;
+    iperf_size_t bytes = 0, bytes_sent = 0, bytes_received = 0;
+    double start_time, end_time, avg_jitter;
+    struct iperf_interval_results *ip = NULL;
+
+    SLIST_FOREACH(sp, &test->streams, streams) {
+        print_interval_results(test, sp);
+        bytes += sp->result->last_interval_results->bytes_transferred; /* sum up all streams */
+    }
+    if (bytes <=0 ) { /* this can happen if timer goes off just when client exits */
+        fprintf(stderr, "error: bytes <= 0!\n");
+        return;
+    }
+    /* next build string with sum of all streams */
+    if (test->num_streams > 1) {
+        sp = SLIST_FIRST(&test->streams); /* reset back to 1st stream */
+        ip = sp->result->last_interval_results;    /* use 1st stream for timing info */
+
+        unit_snprintf(ubuf, UNIT_LEN, (double) (bytes), 'A');
+        unit_snprintf(nbuf, UNIT_LEN, (double) (bytes / ip->interval_duration),
+            test->settings->unit_format);
+
+        start_time = timeval_diff(&sp->result->start_time,&ip->interval_start_time);
+        end_time = timeval_diff(&sp->result->start_time,&ip->interval_end_time);
+        printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
+    }
+    if (test->tcp_info) {
+        print_tcpinfo(test);
+    }
+}
+
+static void
+iperf_print_results (struct iperf_test *test)
+{
+
+    int total_packets = 0, lost_packets = 0;
+    char ubuf[UNIT_LEN];
+    char nbuf[UNIT_LEN];
+    struct iperf_stream *sp = NULL;
+    iperf_size_t bytes = 0, bytes_sent = 0, bytes_received = 0;
+    iperf_size_t total_sent = 0, total_received = 0;
+    double start_time, end_time, avg_jitter;
+    struct iperf_interval_results *ip = NULL;
+    /* print final summary for all intervals */
+
+    printf(report_bw_header);
+
+    start_time = 0.;
+    sp = SLIST_FIRST(&test->streams);
+    end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
+    SLIST_FOREACH(sp, &test->streams, streams) {
+        bytes_sent = sp->result->bytes_sent;
+        bytes_received = sp->result->bytes_received;
+        total_sent += bytes_sent;
+        total_received += bytes_received;
+
+        if (test->protocol->id == Pudp) {
+            total_packets += sp->packet_count;
+            lost_packets += sp->cnt_error;
+            avg_jitter += sp->jitter;
+        }
+
+        if (bytes_sent > 0) {
+            unit_snprintf(ubuf, UNIT_LEN, (double) (bytes_sent), 'A');
+            unit_snprintf(nbuf, UNIT_LEN, (double) (bytes_sent / end_time), test->settings->unit_format);
+            if (test->protocol->id == Ptcp) {
+                printf("      Sent\n");
+                printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
+            } else {
+                printf(report_bw_jitter_loss_format, sp->socket, start_time,
+                        end_time, ubuf, nbuf, sp->jitter * 1000, sp->cnt_error, 
+                        sp->packet_count, (double) (100.0 * sp->cnt_error / sp->packet_count));
+                if (test->role == 'c') {
+                    printf(report_datagrams, sp->socket, sp->packet_count);
+                }
+                if (sp->outoforder_packets > 0)
+                    printf(report_sum_outoforder, start_time, end_time, sp->cnt_error);
+            }
+        }
+        if (bytes_received > 0) {
+            unit_snprintf(ubuf, UNIT_LEN, (double) bytes_received, 'A');
+            unit_snprintf(nbuf, UNIT_LEN, (double) (bytes_received / end_time), test->settings->unit_format);
+            if (test->protocol->id == Ptcp) {
+                printf("      Received\n");
+                printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
+            }
+        }
+    }
+
+    if (test->num_streams > 1) {
+        unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
+        unit_snprintf(nbuf, UNIT_LEN, (double) total_sent / end_time, test->settings->unit_format);
+        if (test->protocol->id == Ptcp) {
+            printf("      Total sent\n");
+            printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
+            unit_snprintf(ubuf, UNIT_LEN, (double) total_received, 'A');
+            unit_snprintf(nbuf, UNIT_LEN, (double) (total_received / end_time), test->settings->unit_format);
+            printf("      Total received\n");
+            printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
+        } else {
+            avg_jitter /= test->num_streams;
+            printf(report_sum_bw_jitter_loss_format, start_time, end_time, ubuf, nbuf, avg_jitter,
+                lost_packets, total_packets, (double) (100.0 * lost_packets / total_packets));
+        }
+    }
+
+    if (test->tcp_info) {
+        print_tcpinfo(test);
+    }
+
+    if (test->verbose) {
+        printf("Host CPU Utilization:   %.1f%%\n", test->cpu_util);
+        printf("Remote CPU Utilization: %.1f%%\n", test->remote_cpu_util);
+    }
+}
+
 /**************************************************************************/
 
 /**
@@ -1218,108 +1339,11 @@ iperf_reporter_callback(struct iperf_test * test)
         case TEST_RUNNING:
         case STREAM_RUNNING:
             /* print interval results for each stream */
-            SLIST_FOREACH(sp, &test->streams, streams) {
-                print_interval_results(test, sp);
-                bytes += sp->result->interval_results->bytes_transferred; /* sum up all streams */
-            }
-            if (bytes <=0 ) { /* this can happen if timer goes off just when client exits */
-                fprintf(stderr, "error: bytes <= 0!\n");
-                break;
-            }
-            /* next build string with sum of all streams */
-            if (test->num_streams > 1) {
-                sp = SLIST_FIRST(&test->streams); /* reset back to 1st stream */
-                ip = sp->result->last_interval_results;	/* use 1st stream for timing info */
-
-                unit_snprintf(ubuf, UNIT_LEN, (double) (bytes), 'A');
-                unit_snprintf(nbuf, UNIT_LEN, (double) (bytes / ip->interval_duration),
-                        test->settings->unit_format);
-
-                start_time = timeval_diff(&sp->result->start_time,&ip->interval_start_time);
-                end_time = timeval_diff(&sp->result->start_time,&ip->interval_end_time);
-                printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
-            }
-            if (test->tcp_info)
-                print_tcpinfo(test);
-//                print_tcpinfo(ip);
+            iperf_print_intermediate(test);
             break;
         case DISPLAY_RESULTS:
-            /* print final summary for all intervals */
-
-            printf(report_bw_header);
-
-            start_time = 0.;
-            sp = SLIST_FIRST(&test->streams);
-            end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
-            SLIST_FOREACH(sp, &test->streams, streams) {
-                bytes_sent = sp->result->bytes_sent;
-                bytes_received = sp->result->bytes_received;
-                total_sent += bytes_sent;
-                total_received += bytes_received;
-
-                if (test->protocol->id == Pudp) {
-                    total_packets += sp->packet_count;
-                    lost_packets += sp->cnt_error;
-                    avg_jitter += sp->jitter;
-                }
-
-                if (bytes_sent > 0) {
-                    unit_snprintf(ubuf, UNIT_LEN, (double) (bytes_sent), 'A');
-                    unit_snprintf(nbuf, UNIT_LEN, (double) (bytes_sent / end_time), test->settings->unit_format);
-                    if (test->protocol->id == Ptcp) {
-                        printf("      Sent\n");
-                        printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
-
-
-                    } else {
-                        printf(report_bw_jitter_loss_format, sp->socket, start_time,
-                                end_time, ubuf, nbuf, sp->jitter * 1000, sp->cnt_error, 
-                                sp->packet_count, (double) (100.0 * sp->cnt_error / sp->packet_count));
-                        if (test->role == 'c') {
-                            printf(report_datagrams, sp->socket, sp->packet_count);
-                        }
-                        if (sp->outoforder_packets > 0)
-                            printf(report_sum_outoforder, start_time, end_time, sp->cnt_error);
-                    }
-                }
-                if (bytes_received > 0) {
-                    unit_snprintf(ubuf, UNIT_LEN, (double) bytes_received, 'A');
-                    unit_snprintf(nbuf, UNIT_LEN, (double) (bytes_received / end_time), test->settings->unit_format);
-                    if (test->protocol->id == Ptcp) {
-                        printf("      Received\n");
-                        printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
-                    }
-                }
-            }
-
-            if (test->num_streams > 1) {
-                unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
-                unit_snprintf(nbuf, UNIT_LEN, (double) total_sent / end_time, test->settings->unit_format);
-                if (test->protocol->id == Ptcp) {
-                    printf("      Total sent\n");
-                    printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
-                    unit_snprintf(ubuf, UNIT_LEN, (double) total_received, 'A');
-                    unit_snprintf(nbuf, UNIT_LEN, (double) (total_received / end_time), test->settings->unit_format);
-                    printf("      Total received\n");
-                    printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
-                } else {
-                    avg_jitter /= test->num_streams;
-                    printf(report_sum_bw_jitter_loss_format, start_time, end_time, ubuf, nbuf, avg_jitter,
-                        lost_packets, total_packets, (double) (100.0 * lost_packets / total_packets));
-                }
-            }
-
-            if (test->tcp_info) {
-//                ip = sp->result->last_interval_results;	
-//                print_tcpinfo(ip);
-                print_tcpinfo(test);
-            }
-
-            if (test->verbose) {
-                printf("Host CPU Utilization:   %.1f%%\n", test->cpu_util);
-                printf("Remote CPU Utilization: %.1f%%\n", test->remote_cpu_util);
-            }
-
+            iperf_print_intermediate(test);
+            iperf_print_results(test);
             break;
     } 
 

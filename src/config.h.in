@@ -6,9 +6,6 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if you have the `uuid' library (-luuid). */
-#undef HAVE_LIBUUID
-
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
@@ -32,18 +29,6 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
-
-/* "specifies if the uuid_create function defined" */
-#undef HAVE_UUID_CREATE
-
-/* "specifies if the uuid_generate function defined" */
-#undef HAVE_UUID_GENERATE
-
-/* "specifies if the uuid.h header exists" */
-#undef HAVE_UUID_H
-
-/* "specifies if the uuid/uuid.h header exists" */
-#undef HAVE_UUID_UUID_H
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */

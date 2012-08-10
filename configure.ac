@@ -43,36 +43,6 @@ echo "nanosleep() required for timing operations."
 exit 1
 ])
 
-# Check for uuid.h and a valid libuuid
-AC_CHECK_FUNC(uuid_create)
-if test "${ac_cv_func_uuid_create}" = yes ; then
-    AC_DEFINE(HAVE_UUID_CREATE, [], "specifies if the uuid_create function defined")
-    use_uuid_library="no"
-else
-    AC_CHECK_FUNC(uuid_generate)
-    if test "${ac_cv_func_uuid_generate}" = yes ; then
-        AC_DEFINE(HAVE_UUID_GENERATE, [], "specifies if the uuid_generate function defined")
-        use_uuid_library="no"
-    else
-        AC_CHECK_LIB(uuid, uuid_generate, ,
-                        AC_MSG_ERROR([libuuid is not available]))
-        AC_DEFINE(HAVE_UUID_GENERATE, [], "specifies if the uuid_generate function defined")
-        use_uuid_library="yes"
-    fi
-fi
-
-AM_CONDITIONAL(USE_UUID_LIBRARY, test "${use_uuid_library}" = yes)
-
-AC_CHECK_HEADER(uuid.h)
-if test "${ac_cv_header_uuid_h}" = yes ; then
-    AC_DEFINE(HAVE_UUID_H, [], "specifies if the uuid.h header exists")
-else
-    AC_CHECK_HEADER(uuid/uuid.h)
-    if test "${ac_cv_header_uuid_uuid_h}" = yes ; then
-        AC_DEFINE(HAVE_UUID_UUID_H, [], "specifies if the uuid/uuid.h header exists")
-    fi
-fi
-
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 

@@ -10,7 +10,7 @@
 #ifndef __IPERF_UTIL_H
 #define __IPERF_UTIL_H
 
-void get_uuid(char *);
+void make_cookie(char *);
 
 int is_closed(int);
 

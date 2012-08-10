@@ -21,28 +21,9 @@
 
 #include "config.h"
 
-/* XXX: this code is not portable: not all versions of linux install libuuidgen
- *      by default
+/* make_cookie
  *
- *   if not installed, may need to do something like this:
- *     yum install libuuid-devel
- *     apt-get install uuid-dev
- */
-
-#if defined(HAVE_UUID_H)
-#warning DOING SOMETHING
-#include <uuid.h>
-#elif defined(HAVE_UUID_UUID_H)
-#include <uuid/uuid.h>
-#else
-#error No uuid header file specified
-#endif
-
-
-
-/* get_uuid
- *
- * Generate and return a UUID string
+ * Generate and return a cookie string
  *
  * Iperf uses this function to create test "cookies" which
  * server as unique test identifiers. These cookies are also
@@ -50,26 +31,24 @@
  */
 
 void
-get_uuid(char *temp)
+make_cookie(char *cookie)
 {
-    char     *s;
-    uuid_t    uu;
+    static int randomized = 0;
+    char hostname[500];
+    struct timeval tv;
+    char temp[1000];
 
-#if defined(HAVE_UUID_CREATE)
-    uuid_create(&uu, NULL);
-    uuid_to_string(&uu, &s, 0);
-#elif defined(HAVE_UUID_GENERATE)
-    s = (char *) malloc(37);
-    uuid_generate(uu);
-    uuid_unparse(uu, s);
-#else
-#error No uuid function specified
-#endif
-    memcpy(temp, s, 37);
+    if ( ! randomized )
+        srandom((int) time(0) ^ getpid());
 
-    // XXX: Freeing s only works if you HAVE_UUID_GENERATE
-    //      Otherwise use rpc_string_free (?)
-    free(s);
+    /* Generate a string based on hostname, time, randomness, and filler. */
+    (void) gethostname(hostname, sizeof(hostname));
+    (void) gettimeofday(&tv, 0);
+    (void) snprintf(temp, sizeof(temp), "%s.%d.%06d.%08lx%08lx.%s", hostname, tv.tv_sec, tv.tv_usec, (unsigned long int) random(), (unsigned long int) random(), "1234567890123456789012345678901234567890");
+
+    /* Now truncate it to 36 bytes and terminate. */
+    memcpy(cookie, temp, 36);
+    cookie[36] = '\0';
 }
 
 

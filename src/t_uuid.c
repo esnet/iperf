@@ -16,11 +16,12 @@
 int
 main(int argc, char **argv)
 {
-    char     uuid[37];
-    get_uuid(uuid);
-    if (strlen(uuid) != 36)
+    char     cookie[37];
+    make_cookie(cookie);
+    printf("cookie: '%s'\n", cookie);
+    if (strlen(cookie) != 36)
     {
-	printf("uuid is not 37 characters long %s.\n", uuid);
+	printf("Not 36 characters long!\n");
 	exit(-1);
     }
     exit(0);

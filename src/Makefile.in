@@ -45,8 +45,7 @@ DIST_COMMON = $(dist_man1_MANS) $(include_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/config.h.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/config/ax_lib_socket_nsl.m4 \
-	$(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/mkinstalldirs
@@ -172,6 +171,7 @@ CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DLLTOOL = @DLLTOOL@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
@@ -195,6 +195,7 @@ LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
+MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
 NM = @NM@
 NMEDIT = @NMEDIT@
@@ -220,6 +221,7 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
@@ -305,10 +307,7 @@ libiperf_a_SOURCES = \
 iperf3_SOURCES = main.c
 iperf3_CFLAGS = -g -Wall
 iperf3_LDADD = libiperf.a
-@USE_UUID_LIBRARY_FALSE@iperf3_LDFLAGS = 
-
-# Linux installs require the uuid library explicitly linked in
-@USE_UUID_LIBRARY_TRUE@iperf3_LDFLAGS = -luuid
+iperf3_LDFLAGS = 
 
 # Specify the sources and various flags for the profiled iperf binary. This
 # binary recompiles all the source files to make sure they are all profiled.
@@ -317,10 +316,7 @@ iperf3_profile_SOURCES = main.c \
 
 iperf3_profile_CFLAGS = -pg -Wall
 iperf3_profile_LDADD = libiperf.a
-@USE_UUID_LIBRARY_FALSE@iperf3_profile_LDFLAGS = 
-
-# Linux installs require the uuid library explicitly linked in
-@USE_UUID_LIBRARY_TRUE@iperf3_profile_LDFLAGS = -luuid
+iperf3_profile_LDFLAGS = 
 
 # Specify the sources and various flags for the test cases
 t_timer_SOURCES = t_timer.c
@@ -350,9 +346,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign src/Makefile
+	  $(AUTOMAKE) --gnu src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

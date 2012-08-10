@@ -130,7 +130,7 @@ iperf_connect(struct iperf_test *test)
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);
 
-    get_uuid(test->cookie);
+    make_cookie(test->cookie);
 
     /* Create and connect the control channel */
     test->ctrl_sck = netdial(test->settings->domain, Ptcp, test->bind_address, test->server_hostname, test->server_port);

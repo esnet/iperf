@@ -38,13 +38,7 @@ libiperf_a_SOURCES      = \
 iperf3_SOURCES          = main.c
 iperf3_CFLAGS           = -g -Wall
 iperf3_LDADD            = libiperf.a
-
-# Linux installs require the uuid library explicitly linked in
-if USE_UUID_LIBRARY
-iperf3_LDFLAGS          = -luuid
-else
 iperf3_LDFLAGS          = 
-endif
 
 # Specify the sources and various flags for the profiled iperf binary. This
 # binary recompiles all the source files to make sure they are all profiled.
@@ -53,13 +47,7 @@ iperf3_profile_SOURCES  = main.c \
 
 iperf3_profile_CFLAGS   = -pg -Wall
 iperf3_profile_LDADD    = libiperf.a
-
-# Linux installs require the uuid library explicitly linked in
-if USE_UUID_LIBRARY
-iperf3_profile_LDFLAGS  = -luuid
-else
 iperf3_profile_LDFLAGS  =
-endif
 
 # Specify the sources and various flags for the test cases
 t_timer_SOURCES         = t_timer.c

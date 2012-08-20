@@ -29,7 +29,7 @@ AM_CONDITIONAL(LINUX, [case $host_os in linux*) true;; *) false;; esac])
 AC_HEADER_STDC
 
 # Check for systems which need -lsocket and -lnsl
-AX_LIB_SOCKET_NSL
+#AX_LIB_SOCKET_NSL
 
 # Solaris puts nanosleep in -lrt
 AC_SEARCH_LIBS(nanosleep, [rt], [], [

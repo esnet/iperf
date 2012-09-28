@@ -15,11 +15,10 @@
 #include <sys/types.h>
 #include <sys/select.h>
 #include <sys/uio.h>
+#include <arpa/inet.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
-#include "iperf_client_api.h"
-#include "iperf_error.h"
 #include "iperf_util.h"
 #include "net.h"
 #include "timer.h"
@@ -69,24 +68,28 @@ iperf_handle_message_client(struct iperf_test *test)
 
     switch (test->state) {
         case PARAM_EXCHANGE:
-            if (iperf_exchange_parameters(test) < 0)
+            if (iperf_exchange_parameters(test) < 0) {
                 return (-1);
+	    }
             if (test->on_connect)
                 test->on_connect(test);
             break;
         case CREATE_STREAMS:
-            if (iperf_create_streams(test) < 0)
+            if (iperf_create_streams(test) < 0) {
                 return (-1);
+	    }
             break;
         case TEST_START:
-            if (iperf_init_test(test) < 0)
+            if (iperf_init_test(test) < 0) {
                 return (-1);
+	    }
             break;
         case TEST_RUNNING:
             break;
         case EXCHANGE_RESULTS:
-            if (iperf_exchange_results(test) < 0)
+            if (iperf_exchange_results(test) < 0) {
                 return (-1);
+	    }
             break;
         case DISPLAY_RESULTS:
             if (test->on_test_finish)
@@ -204,20 +207,23 @@ iperf_run_client(struct iperf_test * test)
             return (-1);
         } else if (result > 0) {
             if (FD_ISSET(test->ctrl_sck, &temp_read_set)) {
-                if (iperf_handle_message_client(test) < 0)
+                if (iperf_handle_message_client(test) < 0) {
                     return (-1);
+		}
                 FD_CLR(test->ctrl_sck, &temp_read_set);
             }
 
             if (test->state == TEST_RUNNING) {
                 if (test->reverse) {
                     // Reverse mode. Client receives.
-                    if (iperf_recv(test) < 0)
+                    if (iperf_recv(test) < 0) {
                         return (-1);
+		    }
                 } else {
                     // Regular mode. Client sends.
-                    if (iperf_send(test) < 0)
+                    if (iperf_send(test) < 0) {
                         return (-1);
+		    }
                 }
 
                 /* Perform callbacks */
@@ -225,15 +231,17 @@ iperf_run_client(struct iperf_test * test)
                     test->stats_callback(test);
                     sec = (time_t) test->stats_interval;
                     usec = (test->stats_interval - sec) * SEC_TO_US;
-                    if (update_timer(test->stats_timer, sec, usec) < 0)
+                    if (update_timer(test->stats_timer, sec, usec) < 0) {
                         return (-1);
+		    }
                 }
                 if (timer_expired(test->reporter_timer)) {
                     test->reporter_callback(test);
                     sec = (time_t) test->reporter_interval;
                     usec = (test->reporter_interval - sec) * SEC_TO_US;
-                    if (update_timer(test->reporter_timer, sec, usec) < 0)
+                    if (update_timer(test->reporter_timer, sec, usec) < 0) {
                         return (-1);
+		    }
                 }
 
                 /* Send TEST_END if all data has been sent or timer expired */

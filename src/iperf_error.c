@@ -12,7 +12,7 @@
 #include <netdb.h>
 #include <string.h>
 #include "iperf.h"
-#include "iperf_error.h"
+#include "iperf_api.h"
 
 int i_errno;
 

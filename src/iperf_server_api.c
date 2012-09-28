@@ -32,11 +32,9 @@
 #include <setjmp.h>
 
 #include "iperf.h"
-#include "iperf_server_api.h"
 #include "iperf_api.h"
 #include "iperf_udp.h"
 #include "iperf_tcp.h"
-#include "iperf_error.h"
 #include "iperf_util.h"
 #include "timer.h"
 #include "net.h"
@@ -49,9 +47,6 @@
 int
 iperf_server_listen(struct iperf_test *test)
 {
-    char ubuf[UNIT_LEN];
-    int x;
-
     if((test->listener = netannounce(test->settings->domain, Ptcp, test->bind_address, test->server_port)) < 0) {
         i_errno = IELISTEN;
         return (-1);
@@ -72,6 +67,9 @@ iperf_server_listen(struct iperf_test *test)
 
     // XXX: This code needs to be moved to after parameter exhange
     /*
+    char ubuf[UNIT_LEN];
+    int x;
+
     if (test->protocol->id == Ptcp) {
         if (test->settings->socket_bufsize > 0) {
             unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A');
@@ -402,4 +400,3 @@ iperf_run_server(struct iperf_test *test)
 
     return (0);
 }
-

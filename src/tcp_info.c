@@ -34,6 +34,7 @@
 #include <string.h>
 #include <netinet/in.h>
 
+#include "iperf.h"
 #include "iperf_api.h"
 #include "locale.h"
 

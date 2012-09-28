@@ -23,7 +23,6 @@
 #include "iperf.h"
 #include "iperf_api.h"
 #include "iperf_udp.h"
-#include "iperf_error.h"
 #include "timer.h"
 #include "net.h"
 

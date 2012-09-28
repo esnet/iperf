@@ -15,8 +15,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <sys/select.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <time.h>
 #include <errno.h>
 
 #include "config.h"
@@ -44,7 +48,7 @@ make_cookie(char *cookie)
     /* Generate a string based on hostname, time, randomness, and filler. */
     (void) gethostname(hostname, sizeof(hostname));
     (void) gettimeofday(&tv, 0);
-    (void) snprintf(temp, sizeof(temp), "%s.%d.%06d.%08lx%08lx.%s", hostname, tv.tv_sec, tv.tv_usec, (unsigned long int) random(), (unsigned long int) random(), "1234567890123456789012345678901234567890");
+    (void) snprintf(temp, sizeof(temp), "%s.%ld.%06ld.%08lx%08lx.%s", hostname, tv.tv_sec, tv.tv_usec, (unsigned long int) random(), (unsigned long int) random(), "1234567890123456789012345678901234567890");
 
     /* Now truncate it to 36 bytes and terminate. */
     memcpy(cookie, temp, 36);

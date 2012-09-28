@@ -231,7 +231,7 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 lib_LIBRARIES = libiperf.a                                    # Build and install a static iperf library
-include_HEADERS = iperf_api.h iperf_error.h iperf_client_api.h iperf_server_api.h # Defines the headers that get installed with the program
+include_HEADERS = iperf_api.h # Defines the headers that get installed with the program
 
 # Specify the source files and flags for the iperf library
 libiperf_a_SOURCES = \
@@ -239,11 +239,8 @@ libiperf_a_SOURCES = \
                         iperf_api.c \
                         iperf_api.h \
                         iperf_error.c \
-                        iperf_error.h \
-						iperf_client_api.c \
-					    iperf_client_api.h \
+			iperf_client_api.c \
                         iperf_server_api.c \
-                        iperf_server_api.h \
                         iperf_tcp.c \
                         iperf_tcp.h \
                         iperf_udp.c \

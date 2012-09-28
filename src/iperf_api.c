@@ -34,7 +34,6 @@
 #include "iperf_api.h"
 #include "iperf_udp.h"
 #include "iperf_tcp.h"
-#include "iperf_error.h"
 #include "timer.h"
 
 #include "units.h"
@@ -66,6 +65,142 @@ void warning(char *str)
     fprintf(stderr, "warning: %s\n", str);
 }
 
+
+/************** Getter routines for some fields inside iperf_test *************/
+
+int
+iperf_get_test_duration( struct iperf_test* ipt )
+{
+    return ipt->duration;
+}
+
+uint64_t
+iperf_get_test_rate( struct iperf_test* ipt )
+{
+    return ipt->settings->rate;
+}
+
+char
+iperf_get_test_role( struct iperf_test* ipt )
+{
+    return ipt->role;
+}
+
+int
+iperf_get_test_blksize( struct iperf_test* ipt )
+{
+    return ipt->settings->blksize;
+}
+
+int
+iperf_get_test_socket_bufsize( struct iperf_test* ipt )
+{
+    return ipt->settings->socket_bufsize;
+}
+
+double
+iperf_get_test_reporter_interval( struct iperf_test* ipt )
+{
+    return ipt->reporter_interval;
+}
+
+double
+iperf_get_test_stats_interval( struct iperf_test* ipt )
+{
+    return ipt->stats_interval;
+}
+
+int
+iperf_get_test_num_streams( struct iperf_test* ipt )
+{
+    return ipt->num_streams;
+}
+
+int
+iperf_get_test_server_port( struct iperf_test* ipt )
+{
+    return ipt->server_port;
+}
+
+char*
+iperf_get_test_server_hostname( struct iperf_test* ipt )
+{
+    return ipt->server_hostname;
+}
+
+int
+iperf_get_test_protocol_id( struct iperf_test* ipt )
+{
+    return ipt->protocol->id;
+}
+
+/************** Setter routines for some fields inside iperf_test *************/
+
+void
+iperf_set_test_duration( struct iperf_test* ipt, int duration )
+{
+    ipt->duration = duration;
+}
+
+void
+iperf_set_test_reporter_interval( struct iperf_test* ipt, double reporter_interval )
+{
+    ipt->reporter_interval = reporter_interval;
+}
+
+void
+iperf_set_test_stats_interval( struct iperf_test* ipt, double stats_interval )
+{
+    ipt->stats_interval = stats_interval;
+}
+
+void
+iperf_set_test_state( struct iperf_test* ipt, char state )
+{
+    ipt->state = state;
+}
+
+void
+iperf_set_test_blksize( struct iperf_test* ipt, int blksize )
+{
+    ipt->settings->blksize = blksize;
+}
+
+void
+iperf_set_test_rate( struct iperf_test* ipt, uint64_t rate )
+{
+    ipt->settings->rate = rate;
+}
+
+void
+iperf_set_test_server_port( struct iperf_test* ipt, int server_port )
+{
+    ipt->server_port = server_port;
+}
+
+void
+iperf_set_test_socket_bufsize( struct iperf_test* ipt, int socket_bufsize )
+{
+    ipt->settings->socket_bufsize = socket_bufsize;
+}
+
+void
+iperf_set_test_num_streams( struct iperf_test* ipt, int num_streams )
+{
+    ipt->num_streams = num_streams;
+}
+
+void
+iperf_set_test_role( struct iperf_test* ipt, char role )
+{
+    ipt->role = role;
+}
+
+void
+iperf_set_test_server_hostname( struct iperf_test* ipt, char* server_hostname )
+{
+    ipt->server_hostname = server_hostname;
+}
 
 /********************** Get/set test protocol structure ***********************/
 
@@ -600,6 +735,14 @@ package_parameters(struct iperf_test *test)
 }
 
 
+/*!!! Forwards for debugging getopt version. */
+int	myopterr = 1;
+int	myoptind = 0;
+int	myoptopt;
+char	*myoptarg;
+int mygetopt(int argc, char **argv, char *opts);
+
+
 int
 parse_parameters(struct iperf_test *test)
 {
@@ -630,19 +773,19 @@ parse_parameters(struct iperf_test *test)
     }
 
     // XXX: Should we check for parameters exceeding maximum values here?
-    while ((ch = getopt(n, params, "pt:n:m:uNP:Rw:l:b:S:")) != -1) {
+    while ((ch = mygetopt(n, params, "pt:n:m:uNP:Rw:l:b:S:")) != -1) {
         switch (ch) {
             case 'p':
                 set_protocol(test, Ptcp);
                 break;
             case 't':
-                test->duration = atoi(optarg);
+                test->duration = atoi(myoptarg);
                 break;
             case 'n':
-                test->settings->bytes = atoll(optarg);
+                test->settings->bytes = atoll(myoptarg);
                 break;
             case 'm':
-                test->settings->mss = atoi(optarg);
+                test->settings->mss = atoi(myoptarg);
                 break;
             case 'u':
                 set_protocol(test, Pudp);
@@ -651,22 +794,22 @@ parse_parameters(struct iperf_test *test)
                 test->no_delay = 1;
                 break;
             case 'P':
-                test->num_streams = atoi(optarg);
+                test->num_streams = atoi(myoptarg);
                 break;
             case 'R':
                 test->reverse = 1;
                 break;
             case 'w':
-                test->settings->socket_bufsize = atoi(optarg);
+                test->settings->socket_bufsize = atoi(myoptarg);
                 break;
             case 'l':
-                test->settings->blksize = atoi(optarg);
+                test->settings->blksize = atoi(myoptarg);
                 break;
             case 'b':
-                test->settings->rate = atoll(optarg);
+                test->settings->rate = atoll(myoptarg);
                 break;
             case 'S':
-                test->settings->tos = atoi(optarg);
+                test->settings->tos = atoi(myoptarg);
                 break;
         }
     }
@@ -900,7 +1043,7 @@ parse_results(struct iperf_test *test, char *results)
         }
     }
 
-    for (strp; *strp; strp = strchr(strp, '\n')+1) {
+    for (; *strp; strp = strchr(strp, '\n')+1) {
         sscanf(strp, "%d:%llu,%lf,%d,%d\n", &sid, &bytes_transferred, &jitter,
             &cerror, &pcount);
         SLIST_FOREACH(sp, &test->streams, streams)
@@ -1201,8 +1344,8 @@ iperf_print_intermediate(struct iperf_test *test)
     char ubuf[UNIT_LEN];
     char nbuf[UNIT_LEN];
     struct iperf_stream *sp = NULL;
-    iperf_size_t bytes = 0, bytes_sent = 0, bytes_received = 0;
-    double start_time, end_time, avg_jitter;
+    iperf_size_t bytes = 0;
+    double start_time, end_time;
     struct iperf_interval_results *ip = NULL;
 
     SLIST_FOREACH(sp, &test->streams, streams) {
@@ -1239,10 +1382,10 @@ iperf_print_results (struct iperf_test *test)
     char ubuf[UNIT_LEN];
     char nbuf[UNIT_LEN];
     struct iperf_stream *sp = NULL;
-    iperf_size_t bytes = 0, bytes_sent = 0, bytes_received = 0;
+    iperf_size_t bytes_sent = 0, bytes_received = 0;
     iperf_size_t total_sent = 0, total_received = 0;
     double start_time, end_time, avg_jitter;
-    struct iperf_interval_results *ip = NULL;
+
     /* print final summary for all intervals */
 
     printf(report_bw_header);
@@ -1250,6 +1393,7 @@ iperf_print_results (struct iperf_test *test)
     start_time = 0.;
     sp = SLIST_FIRST(&test->streams);
     end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
+    avg_jitter = 0;
     SLIST_FOREACH(sp, &test->streams, streams) {
         bytes_sent = sp->result->bytes_sent;
         bytes_received = sp->result->bytes_received;
@@ -1326,15 +1470,6 @@ iperf_print_results (struct iperf_test *test)
 void
 iperf_reporter_callback(struct iperf_test * test)
 {
-    int total_packets = 0, lost_packets = 0;
-    char ubuf[UNIT_LEN];
-    char nbuf[UNIT_LEN];
-    struct iperf_stream *sp = NULL;
-    iperf_size_t bytes = 0, bytes_sent = 0, bytes_received = 0;
-    iperf_size_t total_sent = 0, total_received = 0;
-    double start_time, end_time, avg_jitter;
-    struct iperf_interval_results *ip = NULL;
-
     switch (test->state) {
         case TEST_RUNNING:
         case STREAM_RUNNING:
@@ -1517,3 +1652,63 @@ sig_handler(int sig)
    longjmp(env, 1); 
 }
 
+
+/*!!!*/
+/* This is an old tiny version of getopt from Usenet mod.std.unix back
+** in 1985.  I added it here to help debug a SEGV error that was occuring
+** inside the standard libc getopt().  However the SEGV does not occur
+** with this version.  I'm sure the underlying bug is still lurking in
+** the code somewhere, but for now it is not being triggered.
+*/
+
+#define ERR(s, c)	if(myopterr){\
+	char errbuf[2];\
+	errbuf[0] = c; errbuf[1] = '\n';\
+	(void) write(2, argv[0], (unsigned)strlen(argv[0]));\
+	(void) write(2, s, (unsigned)strlen(s));\
+	(void) write(2, errbuf, 2);}
+
+int
+mygetopt(int argc, char **argv, char *opts)
+{
+	static int sp = 1;
+	register int c;
+	register char *cp;
+
+	if(sp == 1) {
+		if(myoptind >= argc ||
+		   argv[myoptind][0] != '-' || argv[myoptind][1] == '\0')
+			return(EOF);
+		else if(strcmp(argv[myoptind], "--") == 0) {
+			myoptind++;
+			return(EOF);
+		}
+	}
+	myoptopt = c = argv[myoptind][sp];
+	if(c == ':' || (cp=strchr(opts, c)) == NULL) {
+		ERR(": illegal option -- ", c);
+		if(argv[myoptind][++sp] == '\0') {
+			myoptind++;
+			sp = 1;
+		}
+		return('?');
+	}
+	if(*++cp == ':') {
+		if(argv[myoptind][sp+1] != '\0')
+			myoptarg = &argv[myoptind++][sp+1];
+		else if(++myoptind >= argc) {
+			ERR(": option requires an argument -- ", c);
+			sp = 1;
+			return('?');
+		} else
+			myoptarg = argv[myoptind++];
+		sp = 1;
+	} else {
+		if(argv[myoptind][++sp] == '\0') {
+			sp = 1;
+			myoptind++;
+		}
+		myoptarg = NULL;
+	}
+	return(c);
+}

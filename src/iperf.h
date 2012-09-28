@@ -48,7 +48,7 @@ struct iperf_stream_result
     void     *data;
 };
 
-#define COOKIE_SIZE 37              /* size of an ascii uuid */
+#define COOKIE_SIZE 37		/* size of an ascii uuid */
 struct iperf_settings
 {
     int       domain;               /* AF_INET or AF_INET6 */
@@ -173,52 +173,23 @@ struct iperf_test
     void      (*on_test_finish)(struct iperf_test *);
 };
 
-enum
-{
-    /* default settings */
-    Ptcp = SOCK_STREAM,
-    Pudp = SOCK_DGRAM,
-    PORT = 5201,  /* default port to listen on (don't use the same port as iperf2) */
-    uS_TO_NS = 1000,
-    SEC_TO_US = 1000000,
-    RATE = 1024 * 1024, /* 1 Mbps */
-    DURATION = 5, /* seconds */
-    DEFAULT_UDP_BLKSIZE = 1450, /* 1 packet per ethernet frame, IPV6 too */
-    DEFAULT_TCP_BLKSIZE = 128 * 1024,  /* default read/write block size */
+/* default settings */
+#define PORT 5201  /* default port to listen on (don't use the same port as iperf2) */
+#define uS_TO_NS 1000
+#define SEC_TO_US 1000000
+#define RATE (1024 * 1024) /* 1 Mbps */
+#define DURATION 5 /* seconds */
 
-    /* other useful constants */
-    TEST_START = 1,
-    TEST_RUNNING = 2,
-    RESULT_REQUEST = 3,
-    TEST_END = 4,
-    STREAM_BEGIN = 5,
-    STREAM_RUNNING = 6,
-    STREAM_END = 7,
-    ALL_STREAMS_END = 8,
-    PARAM_EXCHANGE = 9,
-    CREATE_STREAMS = 10,
-    SERVER_TERMINATE = 11,
-    CLIENT_TERMINATE = 12,
-    EXCHANGE_RESULTS = 13,
-    DISPLAY_RESULTS = 14,
-    IPERF_START = 15,
-    IPERF_DONE = 16,
-    ACCESS_DENIED = -1,
-    SERVER_ERROR = -2,
-};
-
-#define SEC_TO_NS 1000000000	/* too big for enum on some platforms */
+#define SEC_TO_NS 1000000000	/* too big for enum/const on some platforms */
 #define MAX_RESULT_STRING 4096
 
-/* constants for command line arg sanity checks
-*/
-#define MB 1024 * 1024
-#define MAX_TCP_BUFFER 128 * MB
+/* constants for command line arg sanity checks */
+#define MB (1024 * 1024)
+#define MAX_TCP_BUFFER (128 * MB)
 #define MAX_BLOCKSIZE MB
 #define MAX_INTERVAL 60
 #define MAX_TIME 3600
-#define MAX_MSS 9 * 1024
+#define MAX_MSS (9 * 1024)
 #define MAX_STREAMS 128
 
-#endif
-
+#endif /* !__IPERF_H */

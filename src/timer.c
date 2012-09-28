@@ -18,7 +18,7 @@
 #include <time.h>
 
 #include "timer.h"
-#include "iperf_error.h"
+#include "iperf_api.h"
 
 double
 timeval_to_double(struct timeval * tv)

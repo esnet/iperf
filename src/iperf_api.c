@@ -1078,15 +1078,7 @@ add_to_interval_list(struct iperf_stream_result * rp, struct iperf_interval_resu
 
     ip = (struct iperf_interval_results *) malloc(sizeof(struct iperf_interval_results));
     memcpy(ip, new, sizeof(struct iperf_interval_results));
-    ip->next = NULL;
-
-    if (rp->interval_results == NULL) {    /* if 1st interval */
-        rp->interval_results = ip;
-        rp->last_interval_results = ip; /* pointer to last element in list */
-    } else { /* add to end of list */
-        rp->last_interval_results->next = ip;
-        rp->last_interval_results = ip;
-    }
+    TAILQ_INSERT_TAIL(&rp->interval_results, ip, irlistentries);
 }
 
 
@@ -1318,24 +1310,22 @@ iperf_stats_callback(struct iperf_test * test)
         else
             temp.bytes_transferred = rp->bytes_received_this_interval;
      
-        ip = sp->result->interval_results;
+        ip = TAILQ_FIRST(&rp->interval_results);
         /* result->end_time contains timestamp of previous interval */
         if ( ip != NULL ) /* not the 1st interval */
-            memcpy(&temp.interval_start_time, &sp->result->end_time, sizeof(struct timeval));
+            memcpy(&temp.interval_start_time, &rp->end_time, sizeof(struct timeval));
         else /* or use timestamp from beginning */
-            memcpy(&temp.interval_start_time, &sp->result->start_time, sizeof(struct timeval));
+            memcpy(&temp.interval_start_time, &rp->start_time, sizeof(struct timeval));
         /* now save time of end of this interval */
-        gettimeofday(&sp->result->end_time, NULL);
-        memcpy(&temp.interval_end_time, &sp->result->end_time, sizeof(struct timeval));
+        gettimeofday(&rp->end_time, NULL);
+        memcpy(&temp.interval_end_time, &rp->end_time, sizeof(struct timeval));
         temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
         //temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
         if (test->tcp_info)
             get_tcpinfo(sp, &temp);
         add_to_interval_list(rp, &temp);
         rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;
-
     }
-
 }
 
 static void
@@ -1350,7 +1340,7 @@ iperf_print_intermediate(struct iperf_test *test)
 
     SLIST_FOREACH(sp, &test->streams, streams) {
         print_interval_results(test, sp);
-        bytes += sp->result->last_interval_results->bytes_transferred; /* sum up all streams */
+        bytes += TAILQ_LAST(&sp->result->interval_results, irlisthead)->bytes_transferred; /* sum up all streams */
     }
     if (bytes <=0 ) { /* this can happen if timer goes off just when client exits */
         fprintf(stderr, "error: bytes <= 0!\n");
@@ -1359,7 +1349,7 @@ iperf_print_intermediate(struct iperf_test *test)
     /* next build string with sum of all streams */
     if (test->num_streams > 1) {
         sp = SLIST_FIRST(&test->streams); /* reset back to 1st stream */
-        ip = sp->result->last_interval_results;    /* use 1st stream for timing info */
+        ip = TAILQ_LAST(&sp->result->interval_results, irlisthead);    /* use 1st stream for timing info */
 
         unit_snprintf(ubuf, UNIT_LEN, (double) (bytes), 'A');
         unit_snprintf(nbuf, UNIT_LEN, (double) (bytes / ip->interval_duration),
@@ -1493,7 +1483,7 @@ print_interval_results(struct iperf_test * test, struct iperf_stream * sp)
     double st = 0., et = 0.;
     struct iperf_interval_results *ir = NULL;
 
-    ir = sp->result->last_interval_results; /* get last entry in linked list */
+    ir = TAILQ_LAST(&sp->result->interval_results, irlisthead); /* get last entry in linked list */
     if (ir == NULL) {
         printf("print_interval_results Error: interval_results = NULL \n");
         return;
@@ -1526,8 +1516,8 @@ iperf_free_stream(struct iperf_stream * sp)
 
     /* XXX: need to free interval list too! */
     free(sp->buffer);
-    for (ip = sp->result->interval_results; ip; ip = np) {
-        np = ip->next;
+    for (ip = TAILQ_FIRST(&sp->result->interval_results); ip != TAILQ_END(sp->result->interval_results); ip = np) {
+        np = TAILQ_NEXT(ip, irlistentries);
         free(ip);
     }
     free(sp->result);
@@ -1564,6 +1554,7 @@ iperf_new_stream(struct iperf_test *test, int s)
     }
 
     memset(sp->result, 0, sizeof(struct iperf_stream_result));
+    TAILQ_INIT(&sp->result->interval_results);
     
     /* Randomize the buffer */
     srandom(time(NULL));

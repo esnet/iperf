@@ -31,7 +31,7 @@ struct iperf_interval_results
 #else
     char *tcpInfo;	/* just a placeholder */
 #endif
-    struct iperf_interval_results *next;
+    TAILQ_ENTRY(iperf_interval_results) irlistentries;
     void     *custom_data;
 };
 
@@ -43,8 +43,7 @@ struct iperf_stream_result
     iperf_size_t bytes_sent_this_interval;
     struct timeval start_time;
     struct timeval end_time;
-    struct iperf_interval_results *interval_results;      // head of list
-    struct iperf_interval_results *last_interval_results; // end of list
+    TAILQ_HEAD(irlisthead, iperf_interval_results) interval_results;
     void     *data;
 };
 

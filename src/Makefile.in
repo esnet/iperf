@@ -65,18 +65,20 @@ LIBRARIES = $(lib_LIBRARIES)
 ARFLAGS = cru
 libiperf_a_AR = $(AR) $(ARFLAGS)
 libiperf_a_LIBADD =
-am_libiperf_a_OBJECTS = iperf_api.$(OBJEXT) iperf_error.$(OBJEXT) \
-	iperf_client_api.$(OBJEXT) iperf_server_api.$(OBJEXT) \
-	iperf_tcp.$(OBJEXT) iperf_udp.$(OBJEXT) iperf_util.$(OBJEXT) \
-	locale.$(OBJEXT) net.$(OBJEXT) tcp_info.$(OBJEXT) \
-	tcp_window_size.$(OBJEXT) timer.$(OBJEXT) units.$(OBJEXT)
+am_libiperf_a_OBJECTS = cjson.$(OBJEXT) iperf_api.$(OBJEXT) \
+	iperf_error.$(OBJEXT) iperf_client_api.$(OBJEXT) \
+	iperf_server_api.$(OBJEXT) iperf_tcp.$(OBJEXT) \
+	iperf_udp.$(OBJEXT) iperf_util.$(OBJEXT) locale.$(OBJEXT) \
+	net.$(OBJEXT) tcp_info.$(OBJEXT) tcp_window_size.$(OBJEXT) \
+	timer.$(OBJEXT) units.$(OBJEXT)
 libiperf_a_OBJECTS = $(am_libiperf_a_OBJECTS)
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
 am_iperf3_OBJECTS = iperf3-main.$(OBJEXT)
 iperf3_OBJECTS = $(am_iperf3_OBJECTS)
 iperf3_DEPENDENCIES = libiperf.a
-am__objects_1 = iperf3_profile-iperf_api.$(OBJEXT) \
+am__objects_1 = iperf3_profile-cjson.$(OBJEXT) \
+	iperf3_profile-iperf_api.$(OBJEXT) \
 	iperf3_profile-iperf_error.$(OBJEXT) \
 	iperf3_profile-iperf_client_api.$(OBJEXT) \
 	iperf3_profile-iperf_server_api.$(OBJEXT) \
@@ -235,6 +237,8 @@ include_HEADERS = iperf_api.h # Defines the headers that get installed with the 
 
 # Specify the source files and flags for the iperf library
 libiperf_a_SOURCES = \
+                        cjson.c \
+                        cjson.h \
                         iperf.h \
                         iperf_api.c \
                         iperf_api.h \
@@ -273,7 +277,7 @@ iperf3_profile_SOURCES = main.c \
 						  $(libiperf_a_SOURCES)
 
 iperf3_profile_CFLAGS = -pg -Wall
-iperf3_profile_LDADD = libiperf.a
+iperf3_profile_LDADD = libiperf.a -lm
 iperf3_profile_LDFLAGS = 
 
 # Specify the sources and various flags for the test cases
@@ -438,7 +442,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cjson.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3-main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-cjson.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_api.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_client_api.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_error.Po@am__quote@
@@ -518,6 +524,20 @@ iperf3_profile-main.obj: main.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='main.c' object='iperf3_profile-main.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-main.obj `if test -f 'main.c'; then $(CYGPATH_W) 'main.c'; else $(CYGPATH_W) '$(srcdir)/main.c'; fi`
+
+iperf3_profile-cjson.o: cjson.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-cjson.o -MD -MP -MF "$(DEPDIR)/iperf3_profile-cjson.Tpo" -c -o iperf3_profile-cjson.o `test -f 'cjson.c' || echo '$(srcdir)/'`cjson.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/iperf3_profile-cjson.Tpo" "$(DEPDIR)/iperf3_profile-cjson.Po"; else rm -f "$(DEPDIR)/iperf3_profile-cjson.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='cjson.c' object='iperf3_profile-cjson.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-cjson.o `test -f 'cjson.c' || echo '$(srcdir)/'`cjson.c
+
+iperf3_profile-cjson.obj: cjson.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-cjson.obj -MD -MP -MF "$(DEPDIR)/iperf3_profile-cjson.Tpo" -c -o iperf3_profile-cjson.obj `if test -f 'cjson.c'; then $(CYGPATH_W) 'cjson.c'; else $(CYGPATH_W) '$(srcdir)/cjson.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/iperf3_profile-cjson.Tpo" "$(DEPDIR)/iperf3_profile-cjson.Po"; else rm -f "$(DEPDIR)/iperf3_profile-cjson.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='cjson.c' object='iperf3_profile-cjson.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-cjson.obj `if test -f 'cjson.c'; then $(CYGPATH_W) 'cjson.c'; else $(CYGPATH_W) '$(srcdir)/cjson.c'; fi`
 
 iperf3_profile-iperf_api.o: iperf_api.c
 @am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-iperf_api.o -MD -MP -MF "$(DEPDIR)/iperf3_profile-iperf_api.Tpo" -c -o iperf3_profile-iperf_api.o `test -f 'iperf_api.c' || echo '$(srcdir)/'`iperf_api.c; \

@@ -6,6 +6,8 @@ include_HEADERS         = iperf_api.h # Defines the headers that get installed w
 
 # Specify the source files and flags for the iperf library
 libiperf_a_SOURCES      = \
+                        cjson.c \
+                        cjson.h \
                         iperf.h \
                         iperf_api.c \
                         iperf_api.h \
@@ -43,7 +45,7 @@ iperf3_profile_SOURCES  = main.c \
 						  $(libiperf_a_SOURCES)
 
 iperf3_profile_CFLAGS   = -pg -Wall
-iperf3_profile_LDADD    = libiperf.a
+iperf3_profile_LDADD    = libiperf.a -lm
 iperf3_profile_LDFLAGS  =
 
 # Specify the sources and various flags for the test cases

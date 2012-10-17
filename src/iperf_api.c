@@ -893,36 +893,36 @@ iperf_exchange_parameters(struct iperf_test * test)
 int
 iperf_exchange_results(struct iperf_test *test)
 {
-    unsigned int size;
+    unsigned int hsize, nsize;
     char *results;
 
     if (test->role == 'c') {
         /* Prepare results string and send to server */
-	if ( format_results(test, &results, &size) < 0)
+	if ( format_results(test, &results, &hsize) < 0)
             return (-1);
-        size = htonl(size);
-        if (Nwrite(test->ctrl_sck, &size, sizeof(size), Ptcp) < 0) {
+        nsize = htonl(hsize);
+        if (Nwrite(test->ctrl_sck, &nsize, sizeof(nsize), Ptcp) < 0) {
             i_errno = IESENDRESULTS;
             return (-1);
         }
-        if (Nwrite(test->ctrl_sck, results, ntohl(size), Ptcp) < 0) {
+        if (Nwrite(test->ctrl_sck, results, hsize, Ptcp) < 0) {
             i_errno = IESENDRESULTS;
             return (-1);
         }
         free(results);
 
         /* Get server results string */
-        if (Nread(test->ctrl_sck, &size, sizeof(size), Ptcp) < 0) {
+        if (Nread(test->ctrl_sck, &nsize, sizeof(nsize), Ptcp) < 0) {
             i_errno = IERECVRESULTS;
             return (-1);
         }
-        size = ntohl(size);
-        results = (char *) malloc(size * sizeof(char));
+        hsize = ntohl(nsize);
+        results = (char *) malloc(hsize * sizeof(char));
         if (results == NULL) {
             i_errno = IERECVRESULTS;
             return (-1);
         }
-        if (Nread(test->ctrl_sck, results, size, Ptcp) < 0) {
+        if (Nread(test->ctrl_sck, results, hsize, Ptcp) < 0) {
             i_errno = IERECVRESULTS;
             return (-1);
         }
@@ -935,17 +935,17 @@ iperf_exchange_results(struct iperf_test *test)
 
     } else {
         /* Get client results string */
-        if (Nread(test->ctrl_sck, &size, sizeof(size), Ptcp) < 0) {
+        if (Nread(test->ctrl_sck, &nsize, sizeof(nsize), Ptcp) < 0) {
             i_errno = IERECVRESULTS;
             return (-1);
         }
-        size = ntohl(size);
-        results = (char *) malloc(size * sizeof(char));
+        hsize = ntohl(nsize);
+        results = (char *) malloc(hsize * sizeof(char));
         if (results == NULL) {
             i_errno = IERECVRESULTS;
             return (-1);
         }
-        if (Nread(test->ctrl_sck, results, size, Ptcp) < 0) {
+        if (Nread(test->ctrl_sck, results, hsize, Ptcp) < 0) {
             i_errno = IERECVRESULTS;
             return (-1);
         }
@@ -957,14 +957,14 @@ iperf_exchange_results(struct iperf_test *test)
         free(results);
 
         /* Prepare results string and send to client */
-	if ( format_results(test, &results, &size) < 0)
+	if ( format_results(test, &results, &hsize) < 0)
             return (-1);
-        size = htonl(size);
-        if (Nwrite(test->ctrl_sck, &size, sizeof(size), Ptcp) < 0) {
+        nsize = htonl(hsize);
+        if (Nwrite(test->ctrl_sck, &nsize, sizeof(nsize), Ptcp) < 0) {
             i_errno = IESENDRESULTS;
             return (-1);
         }
-        if (Nwrite(test->ctrl_sck, results, ntohl(size), Ptcp) < 0) {
+        if (Nwrite(test->ctrl_sck, results, hsize, Ptcp) < 0) {
             i_errno = IESENDRESULTS;
             return (-1);
         }

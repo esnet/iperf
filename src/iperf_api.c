@@ -43,6 +43,16 @@
 
 jmp_buf env;            /* to handle longjmp on signal */
 
+
+/* Forwards. */
+static int format_results(struct iperf_test *test, char **resultsP, unsigned int *sizeP);
+/* XXX There are actually a whole bunch of routines declared in iperf_api.h
+** that should really be static and declared as forwards.  parse_results()
+** is just the first one I ran across.
+*/
+static int parse_results(struct iperf_test *test, char *results);
+
+
 /*************************** Print usage functions ****************************/
 
 void
@@ -884,41 +894,12 @@ int
 iperf_exchange_results(struct iperf_test *test)
 {
     unsigned int size;
-    char buf[128];
     char *results;
-    struct iperf_stream *sp;
-    iperf_size_t bytes_transferred;
 
     if (test->role == 'c') {
         /* Prepare results string and send to server */
-        results = NULL;
-        size = 0;
-
-        snprintf(buf, 128, "-C %f\n", test->cpu_util);
-        size += strlen(buf);
-        if ((results = malloc(size+1)) == NULL) {
-            i_errno = IEPACKAGERESULTS;
+	if ( format_results(test, &results, &size) < 0)
             return (-1);
-        }
-        *results = '\0';
-        strncat(results, buf, size+1);
-
-        SLIST_FOREACH(sp, &test->streams, streams) {
-            bytes_transferred = (test->reverse ? sp->result->bytes_received : sp->result->bytes_sent);
-            snprintf(buf, 128, "%d:%llu,%lf,%d,%d\n", sp->id, bytes_transferred,sp->jitter,
-                sp->cnt_error, sp->packet_count);
-            size += strlen(buf);
-            if ((results = realloc(results, size+1)) == NULL) {
-                i_errno = IEPACKAGERESULTS;
-                return (-1);
-            }
-/*
-            if (sp == SLIST_FIRST(&test->streams))
-                *results = '\0';
-*/
-            strncat(results, buf, size+1);
-        }
-        size++;
         size = htonl(size);
         if (Nwrite(test->ctrl_sck, &size, sizeof(size), Ptcp) < 0) {
             i_errno = IESENDRESULTS;
@@ -976,34 +957,8 @@ iperf_exchange_results(struct iperf_test *test)
         free(results);
 
         /* Prepare results string and send to client */
-        results = NULL;
-        size = 0;
-
-        snprintf(buf, 128, "-C %f\n", test->cpu_util);
-        size += strlen(buf);
-        if ((results = malloc(size+1)) == NULL) {
-            i_errno = IEPACKAGERESULTS;
+	if ( format_results(test, &results, &size) < 0)
             return (-1);
-        }
-        *results = '\0';
-        strncat(results, buf, size+1);
-
-        SLIST_FOREACH(sp, &test->streams, streams) {
-            bytes_transferred = (test->reverse ? sp->result->bytes_sent : sp->result->bytes_received);
-            snprintf(buf, 128, "%d:%llu,%lf,%d,%d\n", sp->id, bytes_transferred, sp->jitter,
-                sp->cnt_error, sp->packet_count);
-            size += strlen(buf);
-            if ((results = realloc(results, size+1)) == NULL) {
-                i_errno = IEPACKAGERESULTS;
-                return (-1);
-            }
-/*
-            if (sp == SLIST_FIRST(&test->streams))
-                *results = '\0';
-*/
-            strncat(results, buf, size+1);
-        }
-        size++;
         size = htonl(size);
         if (Nwrite(test->ctrl_sck, &size, sizeof(size), Ptcp) < 0) {
             i_errno = IESENDRESULTS;
@@ -1022,7 +977,50 @@ iperf_exchange_results(struct iperf_test *test)
 
 /*************************************************************/
 
-int
+static int
+format_results(struct iperf_test *test, char **resultsP, unsigned int *sizeP)
+{
+    char buf[128];
+    struct iperf_stream *sp;
+    iperf_size_t bytes_transferred;
+
+    *resultsP = NULL;
+    *sizeP = 0;
+
+    snprintf(buf, 128, "-C %f\n", test->cpu_util);
+    *sizeP += strlen(buf);
+    if ((*resultsP = malloc((*sizeP)+1)) == NULL) {
+	i_errno = IEPACKAGERESULTS;
+	return (-1);
+    }
+    **resultsP = '\0';
+    strncat(*resultsP, buf, (*sizeP)+1);
+
+    SLIST_FOREACH(sp, &test->streams, streams) {
+	if (test->role == 'c')
+	    bytes_transferred = (test->reverse ? sp->result->bytes_received : sp->result->bytes_sent);
+	else
+            bytes_transferred = (test->reverse ? sp->result->bytes_sent : sp->result->bytes_received);
+	snprintf(buf, 128, "%d:%llu,%lf,%d,%d\n", sp->id, bytes_transferred,sp->jitter,
+	    sp->cnt_error, sp->packet_count);
+	*sizeP += strlen(buf);
+	if ((*resultsP = realloc(*resultsP, (*sizeP)+1)) == NULL) {
+	    i_errno = IEPACKAGERESULTS;
+	    return (-1);
+	}
+/*
+	if (sp == SLIST_FIRST(&test->streams))
+	    **resultsP = '\0';
+*/
+	strncat(*resultsP, buf, (*sizeP)+1);
+    }
+    (*sizeP)++;
+    return (0);
+}
+
+/*************************************************************/
+
+static int
 parse_results(struct iperf_test *test, char *results)
 {
     int sid, cerror, pcount;

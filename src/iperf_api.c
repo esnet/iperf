@@ -46,6 +46,8 @@ jmp_buf env;            /* to handle longjmp on signal */
 
 
 /* Forwards. */
+static int send_parameters(struct iperf_test *test);
+static int get_parameters(struct iperf_test *test);
 static int send_results(struct iperf_test *test);
 static int get_results(struct iperf_test *test);
 static int JSON_write(int fd, cJSON *json);
@@ -669,169 +671,6 @@ iperf_init_test(struct iperf_test *test)
     return (0);
 }
 
-
-/*********************************************************/
-
-int
-package_parameters(struct iperf_test *test)
-{
-    char pstring[256];
-    char optbuf[128];
-    memset(pstring, 0, 256*sizeof(char));
-
-    *pstring = ' ';
-
-    if (test->protocol->id == Ptcp) {
-        strncat(pstring, "-p ", sizeof(pstring));
-    } else if (test->protocol->id == Pudp) {
-        strncat(pstring, "-u ", sizeof(pstring));
-    }
-
-    snprintf(optbuf, sizeof(optbuf), "-P %d ", test->num_streams);
-    strncat(pstring, optbuf, sizeof(pstring));
-
-    if (test->reverse)
-        strncat(pstring, "-R ", sizeof(pstring));
-    
-    if (test->settings->socket_bufsize) {
-        snprintf(optbuf, sizeof(optbuf), "-w %d ", test->settings->socket_bufsize);
-        strncat(pstring, optbuf, sizeof(pstring));
-    }
-
-    if (test->settings->rate) {
-        snprintf(optbuf, sizeof(optbuf), "-b %llu ", test->settings->rate);
-        strncat(pstring, optbuf, sizeof(pstring));
-    }
-
-    if (test->settings->mss) {
-        snprintf(optbuf, sizeof(optbuf), "-m %d ", test->settings->mss);
-        strncat(pstring, optbuf, sizeof(pstring));
-    }
-
-    if (test->no_delay) {
-        snprintf(optbuf, sizeof(optbuf), "-N ");
-        strncat(pstring, optbuf, sizeof(pstring));
-    }
-
-    if (test->settings->bytes) {
-        snprintf(optbuf, sizeof(optbuf), "-n %llu ", test->settings->bytes);
-        strncat(pstring, optbuf, sizeof(pstring));
-    }
-
-    if (test->duration) {
-        snprintf(optbuf, sizeof(optbuf), "-t %d ", test->duration);
-        strncat(pstring, optbuf, sizeof(pstring));
-    }
-
-    if (test->settings->blksize) {
-        snprintf(optbuf, sizeof(optbuf), "-l %d ", test->settings->blksize);
-        strncat(pstring, optbuf, sizeof(pstring));
-    }
-
-    if (test->settings->tos) {
-        snprintf(optbuf, sizeof(optbuf), "-S %d ", test->settings->tos);
-        strncat(pstring, optbuf, sizeof(pstring));
-    }
-
-    *pstring = (char) (strlen(pstring) - 1);
-
-    if (Nwrite(test->ctrl_sck, pstring, strlen(pstring), Ptcp) < 0) {
-        i_errno = IESENDPARAMS;
-        return (-1);
-    }
-
-    return 0;
-}
-
-
-/*!!! Forwards for debugging getopt version. */
-int	myopterr = 1;
-int	myoptind = 0;
-int	myoptopt;
-char	*myoptarg;
-int mygetopt(int argc, char **argv, char *opts);
-
-
-int
-parse_parameters(struct iperf_test *test)
-{
-    int n;
-    char *param, **params;
-    char len, ch;
-    char pstring[256];
-
-    memset(pstring, 0, 256 * sizeof(char));
-
-    if (Nread(test->ctrl_sck, &len, sizeof(char), Ptcp) < 0) {
-        i_errno = IERECVPARAMS;
-        return (-1);
-    }
-
-    if (Nread(test->ctrl_sck, pstring, len, Ptcp) < 0) {
-        i_errno = IERECVPARAMS;
-        return (-1);
-    }
-
-    for (param = strtok(pstring, " "), n = 0, params = NULL; param; param = strtok(NULL, " ")) {
-        if ((params = realloc(params, (n+1)*sizeof(char *))) == NULL) {
-            i_errno = IERECVPARAMS;
-            return (-1);
-        }
-        params[n] = param;
-        n++;
-    }
-
-    // XXX: Should we check for parameters exceeding maximum values here?
-    while ((ch = mygetopt(n, params, "pt:n:m:uNP:Rw:l:b:S:")) != -1) {
-        switch (ch) {
-            case 'p':
-                set_protocol(test, Ptcp);
-                break;
-            case 't':
-                test->duration = atoi(myoptarg);
-                break;
-            case 'n':
-                test->settings->bytes = atoll(myoptarg);
-                break;
-            case 'm':
-                test->settings->mss = atoi(myoptarg);
-                break;
-            case 'u':
-                set_protocol(test, Pudp);
-                break;
-            case 'N':
-                test->no_delay = 1;
-                break;
-            case 'P':
-                test->num_streams = atoi(myoptarg);
-                break;
-            case 'R':
-                test->reverse = 1;
-                break;
-            case 'w':
-                test->settings->socket_bufsize = atoi(myoptarg);
-                break;
-            case 'l':
-                test->settings->blksize = atoi(myoptarg);
-                break;
-            case 'b':
-                test->settings->rate = atoll(myoptarg);
-                break;
-            case 'S':
-                test->settings->tos = atoi(myoptarg);
-                break;
-        }
-    }
-#ifdef __APPLE__
-    optreset = 1;
-#endif
-    optind = 0;
-
-    free(params);
-
-    return (0);
-}
-
 /**
  * iperf_exchange_parameters - handles the param_Exchange part for client
  *
@@ -845,12 +684,12 @@ iperf_exchange_parameters(struct iperf_test * test)
 
     if (test->role == 'c') {
 
-        if (package_parameters(test) < 0)
+        if (send_parameters(test) < 0)
             return (-1);
 
     } else {
 
-        if (parse_parameters(test) < 0)
+        if (get_parameters(test) < 0)
             return (-1);
 
         if ((s = test->protocol->listen(test)) < 0) {
@@ -908,6 +747,94 @@ iperf_exchange_results(struct iperf_test *test)
             return -1;
     }
     return 0;
+}
+
+/*************************************************************/
+
+static int
+send_parameters(struct iperf_test *test)
+{
+    int r = 0;
+    cJSON *j;
+
+    j = cJSON_CreateObject();
+    if (j == NULL) {
+	i_errno = IESENDPARAMS;
+	r = -1;
+    } else {
+	if (test->protocol->id == Ptcp)
+	    cJSON_AddTrueToObject(j, "p");
+	else if (test->protocol->id == Pudp)
+	    cJSON_AddTrueToObject(j, "u");
+	if (test->duration)
+	    cJSON_AddIntToObject(j, "t", test->duration);
+	if (test->settings->bytes)
+	    cJSON_AddIntToObject(j, "n", test->settings->bytes);
+	if (test->settings->mss)
+	    cJSON_AddIntToObject(j, "m", test->settings->mss);
+	if (test->no_delay)
+	    cJSON_AddTrueToObject(j, "N");
+	cJSON_AddIntToObject(j, "P", test->num_streams);
+	if (test->reverse)
+	    cJSON_AddTrueToObject(j, "R");
+	if (test->settings->socket_bufsize)
+	    cJSON_AddIntToObject(j, "w", test->settings->socket_bufsize);
+	if (test->settings->blksize)
+	    cJSON_AddIntToObject(j, "l", test->settings->blksize);
+	if (test->settings->rate)
+	    cJSON_AddIntToObject(j, "b", test->settings->rate);
+	if (test->settings->tos)
+	    cJSON_AddIntToObject(j, "S", test->settings->tos);
+	if (JSON_write(test->ctrl_sck, j) < 0) {
+	    i_errno = IESENDPARAMS;
+	    r = -1;
+	}
+	cJSON_Delete(j);
+    }
+    return r;
+}
+
+/*************************************************************/
+
+static int
+get_parameters(struct iperf_test *test)
+{
+    int r = 0;
+    cJSON *j;
+    cJSON *j_p;
+
+    j = JSON_read(test->ctrl_sck);
+    if (j == NULL) {
+	i_errno = IERECVPARAMS;
+        r = -1;
+    } else {
+	if ((j_p = cJSON_GetObjectItem(j, "p")) != NULL)
+	    set_protocol(test, Ptcp);
+	if ((j_p = cJSON_GetObjectItem(j, "u")) != NULL)
+	    set_protocol(test, Pudp);
+	if ((j_p = cJSON_GetObjectItem(j, "t")) != NULL)
+	    test->duration = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "n")) != NULL)
+	    test->settings->bytes = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "m")) != NULL)
+	    test->settings->mss = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "N")) != NULL)
+	    test->no_delay = 1;
+	if ((j_p = cJSON_GetObjectItem(j, "P")) != NULL)
+	    test->num_streams = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "R")) != NULL)
+	    test->reverse = 1;
+	if ((j_p = cJSON_GetObjectItem(j, "w")) != NULL)
+	    test->settings->socket_bufsize = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "l")) != NULL)
+	    test->settings->blksize = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "b")) != NULL)
+	    test->settings->rate = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "S")) != NULL)
+	    test->settings->tos = j_p->valueint;
+	cJSON_Delete(j);
+    }
+    return r;
 }
 
 /*************************************************************/
@@ -1054,20 +981,16 @@ JSON_write(int fd, cJSON *json)
     int r = 0;
 
     str = cJSON_PrintUnformatted(json);
-    if (str == NULL) {
-	i_errno = IESENDRESULTS;
+    if (str == NULL)
 	r = -1;
-    } else {
+    else {
 	hsize = strlen(str);
 	nsize = htonl(hsize);
-	if (Nwrite(fd, &nsize, sizeof(nsize), Ptcp) < 0) {
-	    i_errno = IESENDRESULTS;
+	if (Nwrite(fd, &nsize, sizeof(nsize), Ptcp) < 0)
 	    r = -1;
-	} else {
-	    if (Nwrite(fd, str, hsize, Ptcp) < 0) {
-		i_errno = IESENDRESULTS;
+	else {
+	    if (Nwrite(fd, str, hsize, Ptcp) < 0)
 		r = -1;
-	    }
 	}
 	free(str);
     }
@@ -1083,22 +1006,13 @@ JSON_read(int fd)
     char *str;
     cJSON *json = NULL;
 
-    if (Nread(fd, &nsize, sizeof(nsize), Ptcp) < 0) {
-	i_errno = IERECVRESULTS;
-    } else {
+    if (Nread(fd, &nsize, sizeof(nsize), Ptcp) >= 0) {
 	hsize = ntohl(nsize);
 	str = (char *) malloc((hsize+1) * sizeof(char));	/* +1 for EOS */
-	if (str == NULL) {
-	    i_errno = IERECVRESULTS;
-	} else {
-	    if (Nread(fd, str, hsize, Ptcp) < 0) {
-		i_errno = IERECVRESULTS;
-	    } else {
+	if (str != NULL) {
+	    if (Nread(fd, str, hsize, Ptcp) >= 0) {
 		str[hsize] = '\0';	/* add the EOS */
 		json = cJSON_Parse(str);
-		if (json == NULL) {
-		    i_errno = IERECVRESULTS;
-		}
 	    }
 	}
 	free(str);
@@ -1682,65 +1596,4 @@ void
 sig_handler(int sig)
 {
    longjmp(env, 1); 
-}
-
-
-/*!!!*/
-/* This is an old tiny version of getopt from Usenet mod.std.unix back
-** in 1985.  I added it here to help debug a SEGV error that was occuring
-** inside the standard libc getopt().  However the SEGV does not occur
-** with this version.  I'm sure the underlying bug is still lurking in
-** the code somewhere, but for now it is not being triggered.
-*/
-
-#define ERR(s, c)	if(myopterr){\
-	char errbuf[2];\
-	errbuf[0] = c; errbuf[1] = '\n';\
-	(void) write(2, argv[0], (unsigned)strlen(argv[0]));\
-	(void) write(2, s, (unsigned)strlen(s));\
-	(void) write(2, errbuf, 2);}
-
-int
-mygetopt(int argc, char **argv, char *opts)
-{
-	static int sp = 1;
-	register int c;
-	register char *cp;
-
-	if(sp == 1) {
-		if(myoptind >= argc ||
-		   argv[myoptind][0] != '-' || argv[myoptind][1] == '\0')
-			return(EOF);
-		else if(strcmp(argv[myoptind], "--") == 0) {
-			myoptind++;
-			return(EOF);
-		}
-	}
-	myoptopt = c = argv[myoptind][sp];
-	if(c == ':' || (cp=strchr(opts, c)) == NULL) {
-		ERR(": illegal option -- ", c);
-		if(argv[myoptind][++sp] == '\0') {
-			myoptind++;
-			sp = 1;
-		}
-		return('?');
-	}
-	if(*++cp == ':') {
-		if(argv[myoptind][sp+1] != '\0')
-			myoptarg = &argv[myoptind++][sp+1];
-		else if(++myoptind >= argc) {
-			ERR(": option requires an argument -- ", c);
-			sp = 1;
-			return('?');
-		} else
-			myoptarg = argv[myoptind++];
-		sp = 1;
-	} else {
-		if(argv[myoptind][++sp] == '\0') {
-			sp = 1;
-			myoptind++;
-		}
-		myoptarg = NULL;
-	}
-	return(c);
 }

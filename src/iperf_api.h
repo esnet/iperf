@@ -159,8 +159,6 @@ void usage();
 void usage_long();
 void warning(char *);
 int all_data_sent(struct iperf_test *);
-int package_parameters(struct iperf_test *);
-int parse_parameters(struct iperf_test *);
 int iperf_exchange_results(struct iperf_test *);
 int iperf_init_test(struct iperf_test *);
 int iperf_parse_arguments(struct iperf_test *, int, char **);

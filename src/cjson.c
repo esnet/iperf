@@ -158,8 +158,8 @@ static const char *parse_number( cJSON *item, const char *num )
 	/* Put it together: number = +/- number.fraction * 10^+/- exponent */
 	n = sign * n * pow( 10.0, ( scale + subscale * signsubscale ) );
 	
-	item->valuedouble = n;
-	item->valueint = (int) n;
+	item->valuefloat = n;
+	item->valueint = n;
 	item->type = cJSON_Number;
 	return num;
 }
@@ -169,7 +169,7 @@ static const char *parse_number( cJSON *item, const char *num )
 static char *print_number( cJSON *item )
 {
 	char *str;
-	double d = item->valuedouble;
+	double d = item->valuefloat;
 	if ( fabs( ( (double) item->valueint ) - d ) <= DBL_EPSILON && d <= INT_MAX && d >= INT_MIN ) {
 		str = (char*) cJSON_malloc( 21 );	/* 2^64+1 can be represented in 21 chars. */
 		if ( str )
@@ -899,13 +899,24 @@ cJSON *cJSON_CreateBool( int b )
 	return item;
 }
 
-cJSON *cJSON_CreateNumber( double num )
+cJSON *cJSON_CreateInt( long long num )
 {
 	cJSON *item = cJSON_New_Item();
 	if ( item ) {
 		item->type = cJSON_Number;
-		item->valuedouble = num;
-		item->valueint = (int) num;
+		item->valuefloat = num;
+		item->valueint = num;
+	}
+	return item;
+}
+
+cJSON *cJSON_CreateFloat( double num )
+{
+	cJSON *item = cJSON_New_Item();
+	if ( item ) {
+		item->type = cJSON_Number;
+		item->valuefloat = num;
+		item->valueint = num;
 	}
 	return item;
 }
@@ -939,12 +950,12 @@ cJSON *cJSON_CreateObject( void )
 
 /* Create Arrays. */
 
-cJSON *cJSON_CreateIntArray( int *numbers,int count )
+cJSON *cJSON_CreateIntArray( long long *numbers, int count )
 {
 	int i;
 	cJSON *n = 0, *p = 0, *a = cJSON_CreateArray();
 	for ( i = 0; a && i < count; ++i ) {
-		n = cJSON_CreateNumber( numbers[i] );
+		n = cJSON_CreateInt( numbers[i] );
 		if ( ! i )
 			a->child = n;
 		else
@@ -954,27 +965,12 @@ cJSON *cJSON_CreateIntArray( int *numbers,int count )
 	return a;
 }
 
-cJSON *cJSON_CreateFloatArray( float *numbers, int count )
+cJSON *cJSON_CreateFloatArray( double *numbers, int count )
 {
 	int i;
 	cJSON *n = 0, *p = 0, *a = cJSON_CreateArray();
 	for ( i = 0; a && i < count; ++i ) {
-		n = cJSON_CreateNumber( numbers[i] );
-		if ( ! i )
-			a->child = n;
-		else
-			suffix_object( p, n );
-		p = n;
-	}
-	return a;
-}
-
-cJSON *cJSON_CreateDoubleArray( double *numbers, int count )
-{
-	int i;
-	cJSON *n = 0, *p = 0, *a = cJSON_CreateArray();
-	for ( i = 0; a && i < count; ++i ) {
-		n = cJSON_CreateNumber( numbers[i] );
+		n = cJSON_CreateFloat( numbers[i] );
 		if ( ! i )
 			a->child = n;
 		else

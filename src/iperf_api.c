@@ -36,6 +36,7 @@
 #include "iperf_tcp.h"
 #include "timer.h"
 
+#include "cjson.h"
 #include "units.h"
 #include "tcp_window_size.h"
 #include "iperf_util.h"
@@ -45,12 +46,10 @@ jmp_buf env;            /* to handle longjmp on signal */
 
 
 /* Forwards. */
-static int format_results(struct iperf_test *test, char **resultsP, unsigned int *sizeP);
-/* XXX There are actually a whole bunch of routines declared in iperf_api.h
-** that should really be static and declared as forwards.  parse_results()
-** is just the first one I ran across.
-*/
-static int parse_results(struct iperf_test *test, char *results);
+static int send_results(struct iperf_test *test);
+static int get_results(struct iperf_test *test);
+static int JSON_write(int fd, cJSON *json);
+static cJSON *JSON_read(int fd);
 
 
 /*************************** Print usage functions ****************************/
@@ -893,175 +892,219 @@ iperf_exchange_parameters(struct iperf_test * test)
 int
 iperf_exchange_results(struct iperf_test *test)
 {
-    unsigned int hsize, nsize;
-    char *results;
-
     if (test->role == 'c') {
-        /* Prepare results string and send to server */
-	if ( format_results(test, &results, &hsize) < 0)
-            return (-1);
-        nsize = htonl(hsize);
-        if (Nwrite(test->ctrl_sck, &nsize, sizeof(nsize), Ptcp) < 0) {
-            i_errno = IESENDRESULTS;
-            return (-1);
-        }
-        if (Nwrite(test->ctrl_sck, results, hsize, Ptcp) < 0) {
-            i_errno = IESENDRESULTS;
-            return (-1);
-        }
-        free(results);
-
-        /* Get server results string */
-        if (Nread(test->ctrl_sck, &nsize, sizeof(nsize), Ptcp) < 0) {
-            i_errno = IERECVRESULTS;
-            return (-1);
-        }
-        hsize = ntohl(nsize);
-        results = (char *) malloc(hsize * sizeof(char));
-        if (results == NULL) {
-            i_errno = IERECVRESULTS;
-            return (-1);
-        }
-        if (Nread(test->ctrl_sck, results, hsize, Ptcp) < 0) {
-            i_errno = IERECVRESULTS;
-            return (-1);
-        }
-
-        // XXX: The only error this sets is IESTREAMID, which may never be reached. Consider making void.
-        if (parse_results(test, results) < 0)
-            return (-1);
-
-        free(results);
-
+        /* Send results to server. */
+	if (send_results(test) < 0)
+            return -1;
+        /* Get server results. */
+        if (get_results(test) < 0)
+            return -1;
     } else {
-        /* Get client results string */
-        if (Nread(test->ctrl_sck, &nsize, sizeof(nsize), Ptcp) < 0) {
-            i_errno = IERECVRESULTS;
-            return (-1);
-        }
-        hsize = ntohl(nsize);
-        results = (char *) malloc(hsize * sizeof(char));
-        if (results == NULL) {
-            i_errno = IERECVRESULTS;
-            return (-1);
-        }
-        if (Nread(test->ctrl_sck, results, hsize, Ptcp) < 0) {
-            i_errno = IERECVRESULTS;
-            return (-1);
-        }
-
-        // XXX: Same issue as with client
-        if (parse_results(test, results) < 0)
-            return (-1);
-
-        free(results);
-
-        /* Prepare results string and send to client */
-	if ( format_results(test, &results, &hsize) < 0)
-            return (-1);
-        nsize = htonl(hsize);
-        if (Nwrite(test->ctrl_sck, &nsize, sizeof(nsize), Ptcp) < 0) {
-            i_errno = IESENDRESULTS;
-            return (-1);
-        }
-        if (Nwrite(test->ctrl_sck, results, hsize, Ptcp) < 0) {
-            i_errno = IESENDRESULTS;
-            return (-1);
-        }
-        free(results);
-
+        /* Get client results. */
+        if (get_results(test) < 0)
+            return -1;
+        /* Send results to client. */
+	if (send_results(test) < 0)
+            return -1;
     }
-
-    return (0);
+    return 0;
 }
 
 /*************************************************************/
 
 static int
-format_results(struct iperf_test *test, char **resultsP, unsigned int *sizeP)
+send_results(struct iperf_test *test)
 {
-    char buf[128];
+    int r = 0;
+    cJSON *j;
+    cJSON *j_streams;
     struct iperf_stream *sp;
+    cJSON *j_stream;
     iperf_size_t bytes_transferred;
 
-    *resultsP = NULL;
-    *sizeP = 0;
-
-    snprintf(buf, 128, "-C %f\n", test->cpu_util);
-    *sizeP += strlen(buf);
-    if ((*resultsP = malloc((*sizeP)+1)) == NULL) {
+    j = cJSON_CreateObject();
+    if (j == NULL) {
 	i_errno = IEPACKAGERESULTS;
-	return (-1);
-    }
-    **resultsP = '\0';
-    strncat(*resultsP, buf, (*sizeP)+1);
-
-    SLIST_FOREACH(sp, &test->streams, streams) {
-	if (test->role == 'c')
-	    bytes_transferred = (test->reverse ? sp->result->bytes_received : sp->result->bytes_sent);
-	else
-            bytes_transferred = (test->reverse ? sp->result->bytes_sent : sp->result->bytes_received);
-	snprintf(buf, 128, "%d:%llu,%lf,%d,%d\n", sp->id, bytes_transferred,sp->jitter,
-	    sp->cnt_error, sp->packet_count);
-	*sizeP += strlen(buf);
-	if ((*resultsP = realloc(*resultsP, (*sizeP)+1)) == NULL) {
+	r = -1;
+    } else {
+	cJSON_AddFloatToObject(j, "cpu_util", test->cpu_util);
+	j_streams = cJSON_CreateArray();
+	if (j_streams == NULL) {
 	    i_errno = IEPACKAGERESULTS;
-	    return (-1);
+	    r = -1;
+	} else {
+	    cJSON_AddItemToObject(j, "streams", j_streams);
+	    SLIST_FOREACH(sp, &test->streams, streams) {
+		j_stream = cJSON_CreateObject();
+		if (j_stream == NULL) {
+		    i_errno = IEPACKAGERESULTS;
+		    r = -1;
+		} else {
+		    cJSON_AddItemToArray(j_streams, j_stream);
+		    if (test->role == 'c')
+			bytes_transferred = (test->reverse ? sp->result->bytes_received : sp->result->bytes_sent);
+		    else
+			bytes_transferred = (test->reverse ? sp->result->bytes_sent : sp->result->bytes_received);
+		    cJSON_AddIntToObject(j_stream, "id", sp->id);
+		    cJSON_AddIntToObject(j_stream, "bytes", bytes_transferred);
+		    cJSON_AddFloatToObject(j_stream, "jitter", sp->jitter);
+		    cJSON_AddIntToObject(j_stream, "errors", sp->cnt_error);
+		    cJSON_AddIntToObject(j_stream, "packets", sp->packet_count);
+		}
+	    }
+	    if (r == 0 && JSON_write(test->ctrl_sck, j) < 0) {
+		i_errno = IESENDRESULTS;
+		r = -1;
+	    }
 	}
-/*
-	if (sp == SLIST_FIRST(&test->streams))
-	    **resultsP = '\0';
-*/
-	strncat(*resultsP, buf, (*sizeP)+1);
+	cJSON_Delete(j);
     }
-    (*sizeP)++;
-    return (0);
+    return r;
 }
 
 /*************************************************************/
 
 static int
-parse_results(struct iperf_test *test, char *results)
+get_results(struct iperf_test *test)
 {
+    int r = 0;
+    cJSON *j;
+    cJSON *j_cpu_util;
+    cJSON *j_streams;
+    int n, i;
+    cJSON *j_stream;
+    cJSON *j_id;
+    cJSON *j_bytes;
+    cJSON *j_jitter;
+    cJSON *j_errors;
+    cJSON *j_packets;
     int sid, cerror, pcount;
     double jitter;
-    char *strp;
-    char *tok;
     iperf_size_t bytes_transferred;
     struct iperf_stream *sp;
 
-    /* Isolate the first line */
-    strp = strchr(results, '\n');
-    *strp = '\0';
-    strp++;
-
-    for (tok = strtok(results, " "); tok; tok = strtok(NULL, " ")) {
-        if (strcmp(tok, "-C") == 0) {
-            test->remote_cpu_util = atof(strtok(NULL, " "));
-        }
+    j = JSON_read(test->ctrl_sck);
+    if (j == NULL) {
+	i_errno = IERECVRESULTS;
+        r = -1;
+    } else {
+	j_cpu_util = cJSON_GetObjectItem(j, "cpu_util");
+	if (j_cpu_util == NULL) {
+	    i_errno = IERECVRESULTS;
+	    r = -1;
+	} else {
+	    test->remote_cpu_util = j_cpu_util->valuefloat;
+	    j_streams = cJSON_GetObjectItem(j, "streams");
+	    if (j_streams == NULL) {
+		i_errno = IERECVRESULTS;
+		r = -1;
+	    } else {
+	        n = cJSON_GetArraySize(j_streams);
+		for (i=0; i<n; ++i) {
+		    j_stream = cJSON_GetArrayItem(j_streams, i);
+		    if (j_stream == NULL) {
+			i_errno = IERECVRESULTS;
+			r = -1;
+		    } else {
+			j_id = cJSON_GetObjectItem(j_stream, "id");
+			j_bytes = cJSON_GetObjectItem(j_stream, "bytes");
+			j_jitter = cJSON_GetObjectItem(j_stream, "jitter");
+			j_errors = cJSON_GetObjectItem(j_stream, "errors");
+			j_packets = cJSON_GetObjectItem(j_stream, "packets");
+			if (j_id == NULL || j_bytes == NULL || j_jitter == NULL || j_errors == NULL || j_packets == NULL) {
+			    i_errno = IERECVRESULTS;
+			    r = -1;
+			} else {
+			    sid = j_id->valueint;
+			    bytes_transferred = j_bytes->valueint;
+			    jitter = j_jitter->valuefloat;
+			    cerror = j_errors->valueint;
+			    pcount = j_packets->valueint;
+			    SLIST_FOREACH(sp, &test->streams, streams)
+				if (sp->id == sid) break;
+			    if (sp == NULL) {
+				i_errno = IESTREAMID;
+				r = -1;
+			    } else {
+				if ((test->role == 'c' && !test->reverse) || (test->role == 's' && test->reverse)) {
+				    sp->jitter = jitter;
+				    sp->cnt_error = cerror;
+				    sp->packet_count = pcount;
+				    sp->result->bytes_received = bytes_transferred;
+				} else
+				    sp->result->bytes_sent = bytes_transferred;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+	cJSON_Delete(j);
     }
-
-    for (; *strp; strp = strchr(strp, '\n')+1) {
-        sscanf(strp, "%d:%llu,%lf,%d,%d\n", &sid, &bytes_transferred, &jitter,
-            &cerror, &pcount);
-        SLIST_FOREACH(sp, &test->streams, streams)
-            if (sp->id == sid) break;
-        if (sp == NULL) {
-            i_errno = IESTREAMID;
-            return (-1);
-        }
-        if ((test->role == 'c' && !test->reverse) || (test->role == 's' && test->reverse)) {
-            sp->jitter = jitter;
-            sp->cnt_error = cerror;
-            sp->packet_count = pcount;
-            sp->result->bytes_received = bytes_transferred;
-        } else
-            sp->result->bytes_sent = bytes_transferred;
-    }
-
-    return (0);
+    return r;
 }
 
+/*************************************************************/
+
+static int
+JSON_write(int fd, cJSON *json)
+{
+    unsigned int hsize, nsize;
+    char *str;
+    int r = 0;
+
+    str = cJSON_PrintUnformatted(json);
+    if (str == NULL) {
+	i_errno = IESENDRESULTS;
+	r = -1;
+    } else {
+	hsize = strlen(str);
+	nsize = htonl(hsize);
+	if (Nwrite(fd, &nsize, sizeof(nsize), Ptcp) < 0) {
+	    i_errno = IESENDRESULTS;
+	    r = -1;
+	} else {
+	    if (Nwrite(fd, str, hsize, Ptcp) < 0) {
+		i_errno = IESENDRESULTS;
+		r = -1;
+	    }
+	}
+	free(str);
+    }
+    return r;
+}
+
+/*************************************************************/
+
+static cJSON *
+JSON_read(int fd)
+{
+    unsigned int hsize, nsize;
+    char *str;
+    cJSON *json = NULL;
+
+    if (Nread(fd, &nsize, sizeof(nsize), Ptcp) < 0) {
+	i_errno = IERECVRESULTS;
+    } else {
+	hsize = ntohl(nsize);
+	str = (char *) malloc((hsize+1) * sizeof(char));	/* +1 for EOS */
+	if (str == NULL) {
+	    i_errno = IERECVRESULTS;
+	} else {
+	    if (Nread(fd, str, hsize, Ptcp) < 0) {
+		i_errno = IERECVRESULTS;
+	    } else {
+		str[hsize] = '\0';	/* add the EOS */
+		json = cJSON_Parse(str);
+		if (json == NULL) {
+		    i_errno = IERECVRESULTS;
+		}
+	    }
+	}
+	free(str);
+    }
+    return json;
+}
 
 /*************************************************************/
 /**

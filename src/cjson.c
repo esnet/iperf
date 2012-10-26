@@ -112,16 +112,33 @@ void cJSON_Delete( cJSON *c )
 }
 
 
+static double ipow( double n, int exp )
+{
+	double r;
+
+	if ( exp < 0 )
+		return 1.0 / ipow( n, -exp );
+	r = 1;
+	while ( exp > 0 ) {
+		if ( exp & 1 )
+			r *= n;
+		exp >>= 1;
+		n *= n;
+	}
+	return r;
+}
+
+
 /* Parse the input text to generate a number, and populate the result into item. */
 static const char *parse_number( cJSON *item, const char *num )
 {
-	double n = 0, sign = 1, scale = 0;
-	int subscale = 0, signsubscale = 1;
+	double n = 0;
+	int sign = 1, scale = 0, subscale = 0, signsubscale = 1;
 
 	/* Could use sscanf for this? */
 	if ( *num == '-' ) {
 		/* Has sign. */
-		sign=-1;
+		sign = -1;
 		num++;
 	}
 	if ( *num == '0' )
@@ -156,7 +173,7 @@ static const char *parse_number( cJSON *item, const char *num )
 	}
 
 	/* Put it together: number = +/- number.fraction * 10^+/- exponent */
-	n = sign * n * pow( 10.0, ( scale + subscale * signsubscale ) );
+	n = sign * n * ipow( 10.0, scale + subscale * signsubscale );
 	
 	item->valuefloat = n;
 	item->valueint = n;
@@ -173,7 +190,7 @@ static char *print_number( cJSON *item )
 	if ( fabs( ( (double) item->valueint ) - d ) <= DBL_EPSILON && d <= INT_MAX && d >= INT_MIN ) {
 		str = (char*) cJSON_malloc( 21 );	/* 2^64+1 can be represented in 21 chars. */
 		if ( str )
-			sprintf( str, "%d", item->valueint );
+			sprintf( str, "%lld", item->valueint );
 	} else {
 		str = (char*) cJSON_malloc( 64 );	/* This is a nice tradeoff. */
 		if ( str ) {

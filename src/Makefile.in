@@ -268,7 +268,7 @@ libiperf_a_SOURCES = \
 # Specify the sources and various flags for the iperf binary
 iperf3_SOURCES = main.c
 iperf3_CFLAGS = -g -Wall
-iperf3_LDADD = libiperf.a
+iperf3_LDADD = libiperf.a -lm
 iperf3_LDFLAGS = 
 
 # Specify the sources and various flags for the profiled iperf binary. This
@@ -277,7 +277,7 @@ iperf3_profile_SOURCES = main.c \
 						  $(libiperf_a_SOURCES)
 
 iperf3_profile_CFLAGS = -pg -Wall
-iperf3_profile_LDADD = libiperf.a
+iperf3_profile_LDADD = libiperf.a -lm
 iperf3_profile_LDFLAGS = 
 
 # Specify the sources and various flags for the test cases

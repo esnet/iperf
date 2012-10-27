@@ -132,51 +132,65 @@ static double ipow( double n, int exp )
 /* Parse the input text to generate a number, and populate the result into item. */
 static const char *parse_number( cJSON *item, const char *num )
 {
-	double n = 0;
+	long long i = 0;
+	double f = 0;
+	int isint = 1;
 	int sign = 1, scale = 0, subscale = 0, signsubscale = 1;
 
 	/* Could use sscanf for this? */
 	if ( *num == '-' ) {
 		/* Has sign. */
 		sign = -1;
-		num++;
+		++num;
 	}
 	if ( *num == '0' )
 		/* Is zero. */
-		num++;
+		++num;
 	if ( *num >= '1' && *num<='9' ) {
 		/* Number. */
 		do {
-			n = ( n * 10.0 ) + ( *num++ - '0' );
+			i = ( i * 10 ) + ( *num - '0' );
+			f = ( f * 10.0 ) + ( *num - '0' );
+			++num;
 		} while ( *num >= '0' && *num <= '9' );
 	}
 	if ( *num == '.' && num[1] >= '0' && num[1] <= '9' ) {
 		/* Fractional part. */
-		num++;
+		isint = 0;
+		++num;
 		do {
-			n = ( n * 10.0 ) + ( *num++ - '0' );
+			f = ( f * 10.0 ) + ( *num++ - '0' );
 			scale--;
 		} while ( *num >= '0' && *num <= '9' );
 	}
 	if ( *num == 'e' || *num == 'E' ) {
 		/* Exponent. */
-		num++;
+		isint = 0;
+		++num;
 		if ( *num == '+' )
-			num++;
+			++num;
 		else if ( *num == '-' ) {
 			/* With sign. */
 			signsubscale = -1;
-			num++;
+			++num;
 		}
 		while ( *num >= '0' && *num <= '9' )
 			subscale = ( subscale * 10 ) + ( *num++ - '0' );
 	}
 
-	/* Put it together: number = +/- number.fraction * 10^+/- exponent */
-	n = sign * n * ipow( 10.0, scale + subscale * signsubscale );
-	
-	item->valuefloat = n;
-	item->valueint = n;
+	/* Put it together. */
+	if ( isint ) {
+	    /* Int: number = +/- number */
+	    i = sign * i;
+	    item->valueint = i;
+	    item->valuefloat = i;
+	} else {
+	    /* Float: number = +/- number.fraction * 10^+/- exponent */
+	    f = sign * f * ipow( 10.0, scale + subscale * signsubscale );
+	    item->valueint = f;
+	    item->valuefloat = f;
+	}
+
 	item->type = cJSON_Number;
 	return num;
 }

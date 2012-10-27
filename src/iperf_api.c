@@ -773,10 +773,10 @@ send_parameters(struct iperf_test *test)
 	if (test->settings->mss)
 	    cJSON_AddIntToObject(j, "m", test->settings->mss);
 	if (test->no_delay)
-	    cJSON_AddTrueToObject(j, "N");
-	cJSON_AddIntToObject(j, "P", test->num_streams);
+	    cJSON_AddTrueToObject(j, "capN");
+	cJSON_AddIntToObject(j, "capP", test->num_streams);
 	if (test->reverse)
-	    cJSON_AddTrueToObject(j, "R");
+	    cJSON_AddTrueToObject(j, "capR");
 	if (test->settings->socket_bufsize)
 	    cJSON_AddIntToObject(j, "w", test->settings->socket_bufsize);
 	if (test->settings->blksize)
@@ -784,7 +784,7 @@ send_parameters(struct iperf_test *test)
 	if (test->settings->rate)
 	    cJSON_AddIntToObject(j, "b", test->settings->rate);
 	if (test->settings->tos)
-	    cJSON_AddIntToObject(j, "S", test->settings->tos);
+	    cJSON_AddIntToObject(j, "capS", test->settings->tos);
 	if (JSON_write(test->ctrl_sck, j) < 0) {
 	    i_errno = IESENDPARAMS;
 	    r = -1;
@@ -818,11 +818,11 @@ get_parameters(struct iperf_test *test)
 	    test->settings->bytes = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "m")) != NULL)
 	    test->settings->mss = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "N")) != NULL)
+	if ((j_p = cJSON_GetObjectItem(j, "capN")) != NULL)
 	    test->no_delay = 1;
-	if ((j_p = cJSON_GetObjectItem(j, "P")) != NULL)
+	if ((j_p = cJSON_GetObjectItem(j, "capP")) != NULL)
 	    test->num_streams = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "R")) != NULL)
+	if ((j_p = cJSON_GetObjectItem(j, "capR")) != NULL)
 	    test->reverse = 1;
 	if ((j_p = cJSON_GetObjectItem(j, "w")) != NULL)
 	    test->settings->socket_bufsize = j_p->valueint;
@@ -830,7 +830,7 @@ get_parameters(struct iperf_test *test)
 	    test->settings->blksize = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "b")) != NULL)
 	    test->settings->rate = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "S")) != NULL)
+	if ((j_p = cJSON_GetObjectItem(j, "capS")) != NULL)
 	    test->settings->tos = j_p->valueint;
 	cJSON_Delete(j);
     }

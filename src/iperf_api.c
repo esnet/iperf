@@ -763,28 +763,28 @@ send_parameters(struct iperf_test *test)
 	r = -1;
     } else {
 	if (test->protocol->id == Ptcp)
-	    cJSON_AddTrueToObject(j, "p");
+	    cJSON_AddTrueToObject(j, "tcp");
 	else if (test->protocol->id == Pudp)
-	    cJSON_AddTrueToObject(j, "u");
+	    cJSON_AddTrueToObject(j, "udp");
 	if (test->duration)
-	    cJSON_AddIntToObject(j, "t", test->duration);
+	    cJSON_AddIntToObject(j, "time", test->duration);
 	if (test->settings->bytes)
-	    cJSON_AddIntToObject(j, "n", test->settings->bytes);
+	    cJSON_AddIntToObject(j, "num", test->settings->bytes);
 	if (test->settings->mss)
-	    cJSON_AddIntToObject(j, "m", test->settings->mss);
+	    cJSON_AddIntToObject(j, "MSS", test->settings->mss);
 	if (test->no_delay)
-	    cJSON_AddTrueToObject(j, "capN");
-	cJSON_AddIntToObject(j, "capP", test->num_streams);
+	    cJSON_AddTrueToObject(j, "nodelay");
+	cJSON_AddIntToObject(j, "parallel", test->num_streams);
 	if (test->reverse)
-	    cJSON_AddTrueToObject(j, "capR");
+	    cJSON_AddTrueToObject(j, "reverse");
 	if (test->settings->socket_bufsize)
-	    cJSON_AddIntToObject(j, "w", test->settings->socket_bufsize);
+	    cJSON_AddIntToObject(j, "window", test->settings->socket_bufsize);
 	if (test->settings->blksize)
-	    cJSON_AddIntToObject(j, "l", test->settings->blksize);
+	    cJSON_AddIntToObject(j, "len", test->settings->blksize);
 	if (test->settings->rate)
-	    cJSON_AddIntToObject(j, "b", test->settings->rate);
+	    cJSON_AddIntToObject(j, "bandwidth", test->settings->rate);
 	if (test->settings->tos)
-	    cJSON_AddIntToObject(j, "capS", test->settings->tos);
+	    cJSON_AddIntToObject(j, "TOS", test->settings->tos);
 	if (JSON_write(test->ctrl_sck, j) < 0) {
 	    i_errno = IESENDPARAMS;
 	    r = -1;
@@ -808,29 +808,29 @@ get_parameters(struct iperf_test *test)
 	i_errno = IERECVPARAMS;
         r = -1;
     } else {
-	if ((j_p = cJSON_GetObjectItem(j, "p")) != NULL)
+	if ((j_p = cJSON_GetObjectItem(j, "tcp")) != NULL)
 	    set_protocol(test, Ptcp);
-	if ((j_p = cJSON_GetObjectItem(j, "u")) != NULL)
+	if ((j_p = cJSON_GetObjectItem(j, "udp")) != NULL)
 	    set_protocol(test, Pudp);
-	if ((j_p = cJSON_GetObjectItem(j, "t")) != NULL)
+	if ((j_p = cJSON_GetObjectItem(j, "time")) != NULL)
 	    test->duration = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "n")) != NULL)
+	if ((j_p = cJSON_GetObjectItem(j, "num")) != NULL)
 	    test->settings->bytes = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "m")) != NULL)
+	if ((j_p = cJSON_GetObjectItem(j, "MSS")) != NULL)
 	    test->settings->mss = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "capN")) != NULL)
+	if ((j_p = cJSON_GetObjectItem(j, "nodelay")) != NULL)
 	    test->no_delay = 1;
-	if ((j_p = cJSON_GetObjectItem(j, "capP")) != NULL)
+	if ((j_p = cJSON_GetObjectItem(j, "parallel")) != NULL)
 	    test->num_streams = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "capR")) != NULL)
+	if ((j_p = cJSON_GetObjectItem(j, "reverse")) != NULL)
 	    test->reverse = 1;
-	if ((j_p = cJSON_GetObjectItem(j, "w")) != NULL)
+	if ((j_p = cJSON_GetObjectItem(j, "window")) != NULL)
 	    test->settings->socket_bufsize = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "l")) != NULL)
+	if ((j_p = cJSON_GetObjectItem(j, "len")) != NULL)
 	    test->settings->blksize = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "b")) != NULL)
+	if ((j_p = cJSON_GetObjectItem(j, "bandwidth")) != NULL)
 	    test->settings->rate = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "capS")) != NULL)
+	if ((j_p = cJSON_GetObjectItem(j, "TOS")) != NULL)
 	    test->settings->tos = j_p->valueint;
 	cJSON_Delete(j);
     }

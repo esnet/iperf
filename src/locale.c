@@ -186,6 +186,9 @@ const char report_read_length_times[] =
 const char report_bw_header[] =
 "[ ID] Interval       Transfer     Bandwidth\n";
 
+const char report_bw_separator[] =
+"- - - - - - - - - - - - - - - - - - - - - - - - -\n";
+
 const char report_bw_format[] =
 "[%3d] %4.2f-%4.2f sec  %ss  %ss/sec\n";
 

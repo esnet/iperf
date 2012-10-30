@@ -34,6 +34,7 @@ extern char test_start_bytes[];
 extern char report_read_lengths[] ;
 extern char report_read_length_times[] ;
 extern char report_bw_header[] ;
+extern char report_bw_separator[] ;
 extern char report_bw_format[] ;
 extern char report_sum_bw_format[] ;
 extern char report_bw_jitter_loss_header[] ;

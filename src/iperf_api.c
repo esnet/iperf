@@ -1443,8 +1443,17 @@ print_interval_results(struct iperf_test * test, struct iperf_stream * sp)
         printf("print_interval_results Error: interval_results = NULL \n");
         return;
     }
+    /* First stream? */
     if (sp == SLIST_FIRST(&test->streams)) {
-        printf(report_bw_header);
+	/* It it's the first interval, print the header;
+	** else if there's more than one stream, print the separator;
+	** else nothing.
+	*/
+	if (sp->result->start_time.tv_sec == ir->interval_start_time.tv_sec &&
+	    sp->result->start_time.tv_usec == ir->interval_start_time.tv_usec)
+	    printf(report_bw_header);
+	else if (test->num_streams > 1)
+	    printf(report_bw_separator);
     }
 
     unit_snprintf(ubuf, UNIT_LEN, (double) (ir->bytes_transferred), 'A');

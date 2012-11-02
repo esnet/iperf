@@ -1449,8 +1449,7 @@ print_interval_results(struct iperf_test * test, struct iperf_stream * sp)
 	** else if there's more than one stream, print the separator;
 	** else nothing.
 	*/
-	if (sp->result->start_time.tv_sec == ir->interval_start_time.tv_sec &&
-	    sp->result->start_time.tv_usec == ir->interval_start_time.tv_usec)
+	if (timeval_equals(&sp->result->start_time, &ir->interval_start_time))
 	    printf(report_bw_header);
 	else if (test->num_streams > 1)
 	    printf(report_bw_separator);

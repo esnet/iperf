@@ -26,10 +26,9 @@ struct iperf_interval_results
     struct timeval interval_end_time;
     float     interval_duration;
 #if defined(linux) || defined(__FreeBSD__)
-    struct tcp_info tcpInfo;	/* getsockopt(TCP_INFO) results here for
-                                 * Linux and FreeBSD stored here */
+    struct tcp_info tcpInfo;	/* getsockopt(TCP_INFO) for Linux and FreeBSD */
 #else
-    char *tcpInfo;	/* just a placeholder */
+    char *tcpInfo;		/* just a placeholder */
 #endif
     TAILQ_ENTRY(iperf_interval_results) irlistentries;
     void     *custom_data;
@@ -134,7 +133,6 @@ struct iperf_test
     int       no_delay;                         /* -N option */
     int       output_format;                    /* -O option */
     int       reverse;                          /* -R option */
-    int       tcp_info;                         /* -T option - display getsockopt(TCP_INFO) results. */
     int       v6domain;                         /* -6 option */
     int	      verbose;                          /* -V option - verbose mode */
 

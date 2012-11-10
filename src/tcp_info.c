@@ -39,32 +39,49 @@
 #include "locale.h"
 
 /*************************************************************/
-void
-get_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *rp)
+int
+has_tcpinfo(void)
 {
 #if defined(linux) || defined(__FreeBSD__)
-    socklen_t tcp_info_length;
-//    struct tcp_info tempinfo;
-//    struct iperf_stream *sp = SLIST_FIRST(&test->streams);
+    return 1;
+#else
+    return 0;
+#endif
+}
 
-    tcp_info_length = sizeof(struct tcp_info);
+/*************************************************************/
+int
+has_tcpinfo_retransmits(void)
+{
+#if defined(linux)
+    return 1;
+#else
+    return 0;
+#endif
+}
 
-    if (getsockopt(sp->socket, IPPROTO_TCP, TCP_INFO, (void *)&rp->tcpInfo, &tcp_info_length) < 0) {
+/*************************************************************/
+void
+save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp)
+{
+#if defined(linux) || defined(__FreeBSD__)
+    socklen_t tcp_info_length = sizeof(struct tcp_info);
+
+    if (getsockopt(sp->socket, IPPROTO_TCP, TCP_INFO, (void *)&irp->tcpInfo, &tcp_info_length) < 0)
         perror("getsockopt");
-    }
-
-/*
-    for (sp = SLIST_NEXT(sp, streams); sp != SLIST_END(&test->streams);
-            sp = SLIST_NEXT(sp, streams)) {
-        tcp_info_length = sizeof(struct tcp_info);
-        if (getsockopt(sp->socket, IPPROTO_TCP, TCP_INFO, (void *) &tempinfo, &tcp_info_length) < 0) {
-            perror("getsockopt");
-        }
-        rp->tcpInfo.tcpi_retransmits += tempinfo.tcpi_retransmits;
-    }
-*/
 #endif
     return;
+}
+
+/*************************************************************/
+long
+get_tcpinfo_retransmits(struct iperf_interval_results *irp)
+{
+#if defined(linux)
+    return irp->tcpInfo.tcpi_retransmits;
+#else
+    return -1;
+#endif
 }
 
 /*************************************************************/

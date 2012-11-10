@@ -186,24 +186,33 @@ const char report_read_length_times[] =
 const char report_bw_header[] =
 "[ ID] Interval       Transfer     Bandwidth\n";
 
-const char report_bw_separator[] =
-"- - - - - - - - - - - - - - - - - - - - - - - - -\n";
+const char report_bw_retrans_header[] =
+"[ ID] Interval       Transfer     Bandwidth       Retransmits\n";
+
+const char report_bw_udp_header[] =
+"[ ID] Interval       Transfer     Bandwidth       Jitter   Lost/Total \
+Datagrams\n";
 
 const char report_bw_format[] =
 "[%3d] %4.2f-%4.2f sec  %ss  %ss/sec\n";
 
+const char report_bw_retrans_format[] =
+"[%3d] %4.2f-%4.2f sec  %ss  %ss/sec  %4ld\n";
+
+const char report_bw_udp_format[] =
+"[%3d] %4.2f-%4.2f sec  %ss  %ss/sec  %5.3f ms %4d/%5d (%.2g%%)\n";
+
 const char report_sum_bw_format[] =
 "[SUM] %4.2f-%4.2f sec  %ss  %ss/sec\n";
 
-const char report_bw_jitter_loss_header[] =
-"[ ID] Interval       Transfer     Bandwidth       Jitter   Lost/Total \
-Datagrams\n";
+const char report_sum_bw_retrans_format[] =
+"[SUM] %4.2f-%4.2f sec  %ss  %ss/sec  %4ld\n";
 
-const char report_bw_jitter_loss_format[] =
-"[%3d] %4.2f-%4.2f sec  %ss  %ss/sec  %5.3f ms %4d/%5d (%.2g%%)\n";
-
-const char report_sum_bw_jitter_loss_format[] =
+const char report_sum_bw_udp_format[] =
 "[SUM] %4.2f-%4.2f sec  %ss  %ss/sec  %5.3f ms %4d/%5d (%.2g%%)\n";
+
+const char report_bw_separator[] =
+"- - - - - - - - - - - - - - - - - - - - - - - - -\n";
 
 const char report_outoforder[] =
 "[%3d] %4.1f-%4.1f sec  %d datagrams received out-of-order\n";
@@ -247,13 +256,13 @@ const char report_tcpInfo[] =
 const char reportCSV_bw_format[] =
 "%s,%s,%d,%.1f-%.1f,%qd,%qd\n";
 
-const char reportCSV_bw_jitter_loss_format[] =
+const char reportCSV_bw_udp_format[] =
 "%s,%s,%d,%.1f-%.1f,%qd,%qd,%.3f,%d,%d,%.3f,%d\n";
 #else // HAVE_PRINTF_QD
 const char reportCSV_bw_format[] =
 "%s,%s,%d,%.1f-%.1f,%lld,%lld\n";
 
-const char reportCSV_bw_jitter_loss_format[] =
+const char reportCSV_bw_udp_format[] =
 "%s,%s,%d,%.1f-%.1f,%lld,%lld,%.3f,%d,%d,%.3f,%d\n";
 #endif // HAVE_PRINTF_QD
 #else // HAVE_QUAD_SUPPORT
@@ -261,13 +270,13 @@ const char reportCSV_bw_jitter_loss_format[] =
 const char reportCSV_bw_format[] =
 "%s,%s,%d,%.1f-%.1f,%I64d,%I64d\n";
 
-const char reportCSV_bw_jitter_loss_format[] =
+const char reportCSV_bw_udp_format[] =
 "%s,%s,%d,%.1f-%.1f,%I64d,%I64d,%.3f,%d,%d,%.3f,%d\n";
 #else
 const char reportCSV_bw_format[] =
 "%s,%s,%d,%.1f-%.1f,%d,%d\n";
 
-const char reportCSV_bw_jitter_loss_format[] =
+const char reportCSV_bw_udp_format[] =
 "%s,%s,%d,%.1f-%.1f,%d,%d,%.3f,%d,%d,%.3f,%d\n";
 #endif //WIN32
 #endif //HAVE_QUAD_SUPPORT

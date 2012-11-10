@@ -332,7 +332,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"parallel", required_argument, NULL, 'P'},
         {"udp", no_argument, NULL, 'u'},
         {"bind", required_argument, NULL, 'B'},
-        {"tcpInfo", no_argument, NULL, 'T'},
         {"bandwidth", required_argument, NULL, 'b'},
         {"length", required_argument, NULL, 'l'},
         {"window", required_argument, NULL, 'w'},
@@ -360,7 +359,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     };
     char ch;
 
-    while ((ch = getopt_long(argc, argv, "c:p:st:uP:B:b:l:w:i:n:RS:NTvh6VdM:f:", longopts, NULL)) != -1) {
+    while ((ch = getopt_long(argc, argv, "c:p:st:uP:B:b:l:w:i:n:RS:Nvh6VdM:f:", longopts, NULL)) != -1) {
         switch (ch) {
             case 'c':
                 if (test->role == 's') {
@@ -487,14 +486,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'f':
                 test->settings->unit_format = *optarg;
-                break;
-            case 'T':
-#if !defined(linux) && !defined(__FreeBSD__)
-                // XXX: Should check to make sure UDP mode isn't set!
-                warning("TCP_INFO (-T) is not supported on your current platform");
-#else
-                test->tcp_info = 1;
-#endif
                 break;
             case '6':
                 test->settings->domain = AF_INET6;
@@ -1029,11 +1020,11 @@ JSON_read(int fd)
 void
 add_to_interval_list(struct iperf_stream_result * rp, struct iperf_interval_results * new)
 {
-    struct iperf_interval_results *ip = NULL;
+    struct iperf_interval_results *irp = NULL;
 
-    ip = (struct iperf_interval_results *) malloc(sizeof(struct iperf_interval_results));
-    memcpy(ip, new, sizeof(struct iperf_interval_results));
-    TAILQ_INSERT_TAIL(&rp->interval_results, ip, irlistentries);
+    irp = (struct iperf_interval_results *) malloc(sizeof(struct iperf_interval_results));
+    memcpy(irp, new, sizeof(struct iperf_interval_results));
+    TAILQ_INSERT_TAIL(&rp->interval_results, irp, irlistentries);
 }
 
 
@@ -1255,7 +1246,7 @@ iperf_stats_callback(struct iperf_test * test)
 {
     struct iperf_stream *sp;
     struct iperf_stream_result *rp = NULL;
-    struct iperf_interval_results *ip = NULL, temp;
+    struct iperf_interval_results *irp = NULL, temp;
 
     SLIST_FOREACH(sp, &test->streams, streams) {
         rp = sp->result;
@@ -1265,9 +1256,9 @@ iperf_stats_callback(struct iperf_test * test)
         else
             temp.bytes_transferred = rp->bytes_received_this_interval;
      
-        ip = TAILQ_FIRST(&rp->interval_results);
+        irp = TAILQ_FIRST(&rp->interval_results);
         /* result->end_time contains timestamp of previous interval */
-        if ( ip != NULL ) /* not the 1st interval */
+        if ( irp != NULL ) /* not the 1st interval */
             memcpy(&temp.interval_start_time, &rp->end_time, sizeof(struct timeval));
         else /* or use timestamp from beginning */
             memcpy(&temp.interval_start_time, &rp->start_time, sizeof(struct timeval));
@@ -1276,8 +1267,8 @@ iperf_stats_callback(struct iperf_test * test)
         memcpy(&temp.interval_end_time, &rp->end_time, sizeof(struct timeval));
         temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
         //temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
-        if (test->tcp_info)
-            get_tcpinfo(sp, &temp);
+        if (has_tcpinfo())
+            save_tcpinfo(sp, &temp);
         add_to_interval_list(rp, &temp);
         rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;
     }
@@ -1289,13 +1280,17 @@ iperf_print_intermediate(struct iperf_test *test)
     char ubuf[UNIT_LEN];
     char nbuf[UNIT_LEN];
     struct iperf_stream *sp = NULL;
+    struct iperf_interval_results *irp;
     iperf_size_t bytes = 0;
+    long retransmits = 0;
     double start_time, end_time;
-    struct iperf_interval_results *ip = NULL;
 
     SLIST_FOREACH(sp, &test->streams, streams) {
         print_interval_results(test, sp);
-        bytes += TAILQ_LAST(&sp->result->interval_results, irlisthead)->bytes_transferred; /* sum up all streams */
+	/* sum up all streams */
+	irp = TAILQ_LAST(&sp->result->interval_results, irlisthead);
+        bytes += irp->bytes_transferred;
+	retransmits += get_tcpinfo_retransmits(irp);
     }
     if (bytes <=0 ) { /* this can happen if timer goes off just when client exits */
         fprintf(stderr, "error: bytes <= 0!\n");
@@ -1304,18 +1299,18 @@ iperf_print_intermediate(struct iperf_test *test)
     /* next build string with sum of all streams */
     if (test->num_streams > 1) {
         sp = SLIST_FIRST(&test->streams); /* reset back to 1st stream */
-        ip = TAILQ_LAST(&sp->result->interval_results, irlisthead);    /* use 1st stream for timing info */
+        irp = TAILQ_LAST(&sp->result->interval_results, irlisthead);    /* use 1st stream for timing info */
 
         unit_snprintf(ubuf, UNIT_LEN, (double) (bytes), 'A');
-        unit_snprintf(nbuf, UNIT_LEN, (double) (bytes / ip->interval_duration),
+        unit_snprintf(nbuf, UNIT_LEN, (double) (bytes / irp->interval_duration),
             test->settings->unit_format);
 
-        start_time = timeval_diff(&sp->result->start_time,&ip->interval_start_time);
-        end_time = timeval_diff(&sp->result->start_time,&ip->interval_end_time);
-        printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
-    }
-    if (test->tcp_info) {
-        print_tcpinfo(test);
+        start_time = timeval_diff(&sp->result->start_time,&irp->interval_start_time);
+        end_time = timeval_diff(&sp->result->start_time,&irp->interval_end_time);
+	if (has_tcpinfo_retransmits())
+	    printf(report_sum_bw_retrans_format, start_time, end_time, ubuf, nbuf, retransmits);
+	else
+	    printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
     }
 }
 
@@ -1323,17 +1318,24 @@ static void
 iperf_print_results (struct iperf_test *test)
 {
 
+    long retransmits = 0, total_retransmits = 0;
     int total_packets = 0, lost_packets = 0;
     char ubuf[UNIT_LEN];
     char nbuf[UNIT_LEN];
     struct iperf_stream *sp = NULL;
-    iperf_size_t bytes_sent = 0, bytes_received = 0;
-    iperf_size_t total_sent = 0, total_received = 0;
+    iperf_size_t bytes_sent, total_sent = 0;
+    iperf_size_t bytes_received, total_received = 0;
     double start_time, end_time, avg_jitter;
 
     /* print final summary for all intervals */
 
-    printf(report_bw_header);
+    if (test->protocol->id == Ptcp)
+	if (has_tcpinfo_retransmits())
+	    printf(report_bw_retrans_header);
+	else
+	    printf(report_bw_header);
+    else
+	printf(report_bw_udp_header);
 
     start_time = 0.;
     sp = SLIST_FIRST(&test->streams);
@@ -1345,7 +1347,12 @@ iperf_print_results (struct iperf_test *test)
         total_sent += bytes_sent;
         total_received += bytes_received;
 
-        if (test->protocol->id == Pudp) {
+        if (test->protocol->id == Ptcp) {
+	    if (has_tcpinfo_retransmits()) {
+		retransmits = get_tcpinfo_retransmits(TAILQ_LAST(&sp->result->interval_results, irlisthead));
+		total_retransmits += retransmits;
+	    }
+	} else {
             total_packets += sp->packet_count;
             lost_packets += sp->cnt_error;
             avg_jitter += sp->jitter;
@@ -1356,9 +1363,12 @@ iperf_print_results (struct iperf_test *test)
             unit_snprintf(nbuf, UNIT_LEN, (double) (bytes_sent / end_time), test->settings->unit_format);
             if (test->protocol->id == Ptcp) {
                 printf("      Sent\n");
-                printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
+		if (has_tcpinfo_retransmits())
+		    printf(report_bw_retrans_format, sp->socket, start_time, end_time, ubuf, nbuf, retransmits);
+		else
+		    printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
             } else {
-                printf(report_bw_jitter_loss_format, sp->socket, start_time,
+                printf(report_bw_udp_format, sp->socket, start_time,
                         end_time, ubuf, nbuf, sp->jitter * 1000, sp->cnt_error, 
                         sp->packet_count, (double) (100.0 * sp->cnt_error / sp->packet_count));
                 if (test->role == 'c') {
@@ -1373,7 +1383,7 @@ iperf_print_results (struct iperf_test *test)
             unit_snprintf(nbuf, UNIT_LEN, (double) (bytes_received / end_time), test->settings->unit_format);
             if (test->protocol->id == Ptcp) {
                 printf("      Received\n");
-                printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
+		printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
             }
         }
     }
@@ -1383,20 +1393,19 @@ iperf_print_results (struct iperf_test *test)
         unit_snprintf(nbuf, UNIT_LEN, (double) total_sent / end_time, test->settings->unit_format);
         if (test->protocol->id == Ptcp) {
             printf("      Total sent\n");
-            printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
+	    if (has_tcpinfo_retransmits())
+		printf(report_sum_bw_retrans_format, start_time, end_time, ubuf, nbuf, total_retransmits);
+	    else
+		printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
             unit_snprintf(ubuf, UNIT_LEN, (double) total_received, 'A');
             unit_snprintf(nbuf, UNIT_LEN, (double) (total_received / end_time), test->settings->unit_format);
             printf("      Total received\n");
-            printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
+	    printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
         } else {
             avg_jitter /= test->num_streams;
-            printf(report_sum_bw_jitter_loss_format, start_time, end_time, ubuf, nbuf, avg_jitter,
+            printf(report_sum_bw_udp_format, start_time, end_time, ubuf, nbuf, avg_jitter,
                 lost_packets, total_packets, (double) (100.0 * lost_packets / total_packets));
         }
-    }
-
-    if (test->tcp_info) {
-        print_tcpinfo(test);
     }
 
     if (test->verbose) {
@@ -1436,10 +1445,10 @@ print_interval_results(struct iperf_test * test, struct iperf_stream * sp)
     char ubuf[UNIT_LEN];
     char nbuf[UNIT_LEN];
     double st = 0., et = 0.;
-    struct iperf_interval_results *ir = NULL;
+    struct iperf_interval_results *irp = NULL;
 
-    ir = TAILQ_LAST(&sp->result->interval_results, irlisthead); /* get last entry in linked list */
-    if (ir == NULL) {
+    irp = TAILQ_LAST(&sp->result->interval_results, irlisthead); /* get last entry in linked list */
+    if (irp == NULL) {
         printf("print_interval_results Error: interval_results = NULL \n");
         return;
     }
@@ -1449,39 +1458,39 @@ print_interval_results(struct iperf_test * test, struct iperf_stream * sp)
 	** else if there's more than one stream, print the separator;
 	** else nothing.
 	*/
-	if (timeval_equals(&sp->result->start_time, &ir->interval_start_time))
-	    printf(report_bw_header);
+	if (timeval_equals(&sp->result->start_time, &irp->interval_start_time))
+	    if (has_tcpinfo_retransmits())
+		printf(report_bw_retrans_header);
+	    else
+		printf(report_bw_header);
 	else if (test->num_streams > 1)
 	    printf(report_bw_separator);
     }
 
-    unit_snprintf(ubuf, UNIT_LEN, (double) (ir->bytes_transferred), 'A');
-    unit_snprintf(nbuf, UNIT_LEN, (double) (ir->bytes_transferred / ir->interval_duration),
+    unit_snprintf(ubuf, UNIT_LEN, (double) (irp->bytes_transferred), 'A');
+    unit_snprintf(nbuf, UNIT_LEN, (double) (irp->bytes_transferred / irp->interval_duration),
             test->settings->unit_format);
     
-    st = timeval_diff(&sp->result->start_time,&ir->interval_start_time);
-    et = timeval_diff(&sp->result->start_time,&ir->interval_end_time);
+    st = timeval_diff(&sp->result->start_time,&irp->interval_start_time);
+    et = timeval_diff(&sp->result->start_time,&irp->interval_end_time);
     
-    printf(report_bw_format, sp->socket, st, et, ubuf, nbuf);
-
-/* doing aggregate TCP_INFO reporting for now...
-    if (test->tcp_info)
-        print_tcpinfo(ir);
-*/
-
+    if (has_tcpinfo_retransmits())
+	printf(report_bw_retrans_format, sp->socket, st, et, ubuf, nbuf, get_tcpinfo_retransmits(irp));
+    else
+	printf(report_bw_format, sp->socket, st, et, ubuf, nbuf);
 }
 
 /**************************************************************************/
 void
 iperf_free_stream(struct iperf_stream * sp)
 {
-    struct iperf_interval_results *ip, *np;
+    struct iperf_interval_results *irp, *nirp;
 
     /* XXX: need to free interval list too! */
     free(sp->buffer);
-    for (ip = TAILQ_FIRST(&sp->result->interval_results); ip != TAILQ_END(sp->result->interval_results); ip = np) {
-        np = TAILQ_NEXT(ip, irlistentries);
-        free(ip);
+    for (irp = TAILQ_FIRST(&sp->result->interval_results); irp != TAILQ_END(sp->result->interval_results); irp = nirp) {
+        nirp = TAILQ_NEXT(irp, irlistentries);
+        free(irp);
     }
     free(sp->result);
     free(sp->send_timer);

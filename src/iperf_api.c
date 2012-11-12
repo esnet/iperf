@@ -513,6 +513,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'v':
                 printf(version);
+		system("uname -a");
                 exit(0);
             case 'h':
             default:
@@ -529,6 +530,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     if ((test->role != 'c') && (test->role != 's')) {
         i_errno = IENOROLE;
         return (-1);
+    }
+    if (test->verbose) {
+	printf(version);
+	system("uname -a");
     }
 
     return (0);

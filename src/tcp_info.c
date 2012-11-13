@@ -89,9 +89,9 @@ get_tcpinfo_retransmits(struct iperf_interval_results *irp)
 void
 print_tcpinfo(struct iperf_test *test)
 {
+#if defined(linux)
     long int retransmits = 0;
     struct iperf_stream *sp;
-#if defined(linux)
     SLIST_FOREACH(sp, &test->streams, streams) {
         retransmits += TAILQ_LAST(&sp->result->interval_results, irlisthead)->tcpInfo.tcpi_retransmits;
     }

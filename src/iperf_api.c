@@ -59,15 +59,15 @@ static cJSON *JSON_read(int fd);
 void
 usage()
 {
-    fprintf(stderr, usage_short);
+    fputs(usage_short, stderr);
 }
 
 
 void
 usage_long()
 {
-    fprintf(stderr, usage_long1);
-    fprintf(stderr, usage_long2);
+    fputs(usage_long1, stderr);
+    fputs(usage_long2, stderr);
 }
 
 
@@ -512,7 +512,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 test->settings->tos = strtol(optarg, NULL, 0);
                 break;
             case 'v':
-                printf(version);
+                fputs(version, stdout);
 		system("uname -a");
                 exit(0);
             case 'h':
@@ -532,7 +532,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         return (-1);
     }
     if (test->verbose) {
-	printf(version);
+	fputs(version, stdout);
 	system("uname -a");
     }
 
@@ -1336,11 +1336,11 @@ iperf_print_results (struct iperf_test *test)
 
     if (test->protocol->id == Ptcp)
 	if (has_tcpinfo_retransmits())
-	    printf(report_bw_retrans_header);
+	    fputs(report_bw_retrans_header, stdout);
 	else
-	    printf(report_bw_header);
+	    fputs(report_bw_header, stdout);
     else
-	printf(report_bw_udp_header);
+	fputs(report_bw_udp_header, stdout);
 
     start_time = 0.;
     sp = SLIST_FIRST(&test->streams);
@@ -1367,7 +1367,7 @@ iperf_print_results (struct iperf_test *test)
             unit_snprintf(ubuf, UNIT_LEN, (double) (bytes_sent), 'A');
             unit_snprintf(nbuf, UNIT_LEN, (double) (bytes_sent / end_time), test->settings->unit_format);
             if (test->protocol->id == Ptcp) {
-                printf("      Sent\n");
+                fputs("      Sent\n", stdout);
 		if (has_tcpinfo_retransmits())
 		    printf(report_bw_retrans_format, sp->socket, start_time, end_time, ubuf, nbuf, retransmits);
 		else
@@ -1465,11 +1465,11 @@ print_interval_results(struct iperf_test * test, struct iperf_stream * sp)
 	*/
 	if (timeval_equals(&sp->result->start_time, &irp->interval_start_time))
 	    if (has_tcpinfo_retransmits())
-		printf(report_bw_retrans_header);
+		fputs(report_bw_retrans_header, stdout);
 	    else
-		printf(report_bw_header);
+		fputs(report_bw_header, stdout);
 	else if (test->num_streams > 1)
-	    printf(report_bw_separator);
+	    fputs(report_bw_separator, stdout);
     }
 
     unit_snprintf(ubuf, UNIT_LEN, (double) (irp->bytes_transferred), 'A');

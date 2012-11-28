@@ -56,7 +56,11 @@ has_tcpinfo_retransmits(void)
 #if defined(linux)
     return 1;
 #else
+#if defined(__FreeBSD__) && __FreeBSD_version >= 600000
+    return 1;
+#else
     return 0;
+#endif
 #endif
 }
 
@@ -80,7 +84,11 @@ get_tcpinfo_retransmits(struct iperf_interval_results *irp)
 #if defined(linux)
     return irp->tcpInfo.tcpi_retransmits;
 #else
+#if defined(__FreeBSD__) && __FreeBSD_version >= 600000
+    return irp->tcpInfo.__tcpi_retransmits;
+#else
     return -1;
+#endif
 #endif
 }
 

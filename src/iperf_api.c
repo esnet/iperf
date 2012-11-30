@@ -1272,7 +1272,7 @@ iperf_stats_callback(struct iperf_test * test)
         memcpy(&temp.interval_end_time, &rp->end_time, sizeof(struct timeval));
         temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
         //temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
-        if (has_tcpinfo())
+	if (test->protocol->id == Ptcp && has_tcpinfo())
             save_tcpinfo(sp, &temp);
         add_to_interval_list(rp, &temp);
         rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;
@@ -1295,7 +1295,8 @@ iperf_print_intermediate(struct iperf_test *test)
 	/* sum up all streams */
 	irp = TAILQ_LAST(&sp->result->interval_results, irlisthead);
         bytes += irp->bytes_transferred;
-	retransmits += get_tcpinfo_retransmits(irp);
+	if (test->protocol->id == Ptcp && has_tcpinfo_retransmits())
+	    retransmits += get_tcpinfo_retransmits(irp);
     }
     if (bytes <=0 ) { /* this can happen if timer goes off just when client exits */
         fprintf(stderr, "error: bytes <= 0!\n");
@@ -1312,7 +1313,7 @@ iperf_print_intermediate(struct iperf_test *test)
 
         start_time = timeval_diff(&sp->result->start_time,&irp->interval_start_time);
         end_time = timeval_diff(&sp->result->start_time,&irp->interval_end_time);
-	if (has_tcpinfo_retransmits())
+    if (test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    printf(report_sum_bw_retrans_format, start_time, end_time, ubuf, nbuf, retransmits);
 	else
 	    printf(report_sum_bw_format, start_time, end_time, ubuf, nbuf);
@@ -1464,7 +1465,7 @@ print_interval_results(struct iperf_test * test, struct iperf_stream * sp)
 	** else nothing.
 	*/
 	if (timeval_equals(&sp->result->start_time, &irp->interval_start_time))
-	    if (has_tcpinfo_retransmits())
+	    if (test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 		fputs(report_bw_retrans_header, stdout);
 	    else
 		fputs(report_bw_header, stdout);
@@ -1479,7 +1480,7 @@ print_interval_results(struct iperf_test * test, struct iperf_stream * sp)
     st = timeval_diff(&sp->result->start_time,&irp->interval_start_time);
     et = timeval_diff(&sp->result->start_time,&irp->interval_end_time);
     
-    if (has_tcpinfo_retransmits())
+    if (test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	printf(report_bw_retrans_format, sp->socket, st, et, ubuf, nbuf, get_tcpinfo_retransmits(irp));
     else
 	printf(report_bw_format, sp->socket, st, et, ubuf, nbuf);

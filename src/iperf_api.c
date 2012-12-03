@@ -1019,13 +1019,12 @@ JSON_read(int fd)
 /*************************************************************/
 /**
  * add_to_interval_list -- adds new interval to the interval_list
- * XXX: Interval lists should use SLIST implementation fro queue
  */
 
 void
 add_to_interval_list(struct iperf_stream_result * rp, struct iperf_interval_results * new)
 {
-    struct iperf_interval_results *irp = NULL;
+    struct iperf_interval_results *irp;
 
     irp = (struct iperf_interval_results *) malloc(sizeof(struct iperf_interval_results));
     memcpy(irp, new, sizeof(struct iperf_interval_results));
@@ -1251,7 +1250,8 @@ iperf_stats_callback(struct iperf_test * test)
 {
     struct iperf_stream *sp;
     struct iperf_stream_result *rp = NULL;
-    struct iperf_interval_results *irp = NULL, temp;
+    struct iperf_interval_results *irp, temp;
+    int prev_total_retransmits;
 
     SLIST_FOREACH(sp, &test->streams, streams) {
         rp = sp->result;
@@ -1272,8 +1272,15 @@ iperf_stats_callback(struct iperf_test * test)
         memcpy(&temp.interval_end_time, &rp->end_time, sizeof(struct timeval));
         temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
         //temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
-	if (test->protocol->id == Ptcp && has_tcpinfo())
+	if (test->protocol->id == Ptcp && has_tcpinfo()) {
+	    irp = TAILQ_LAST(&rp->interval_results, irlisthead);
+	    if (irp == NULL)
+	        prev_total_retransmits = 0;
+	    else
+		prev_total_retransmits = get_tcpinfo_total_retransmits(irp);
             save_tcpinfo(sp, &temp);
+	    temp.this_retrans = get_tcpinfo_total_retransmits(&temp) - prev_total_retransmits;
+	}
         add_to_interval_list(rp, &temp);
         rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;
     }
@@ -1296,7 +1303,7 @@ iperf_print_intermediate(struct iperf_test *test)
 	irp = TAILQ_LAST(&sp->result->interval_results, irlisthead);
         bytes += irp->bytes_transferred;
 	if (test->protocol->id == Ptcp && has_tcpinfo_retransmits())
-	    retransmits += get_tcpinfo_retransmits(irp);
+	    retransmits += irp->this_retrans;
     }
     if (bytes <=0 ) { /* this can happen if timer goes off just when client exits */
         fprintf(stderr, "error: bytes <= 0!\n");
@@ -1355,7 +1362,7 @@ iperf_print_results (struct iperf_test *test)
 
         if (test->protocol->id == Ptcp) {
 	    if (has_tcpinfo_retransmits()) {
-		retransmits = get_tcpinfo_retransmits(TAILQ_LAST(&sp->result->interval_results, irlisthead));
+		retransmits = get_tcpinfo_total_retransmits(TAILQ_LAST(&sp->result->interval_results, irlisthead));
 		total_retransmits += retransmits;
 	    }
 	} else {
@@ -1481,7 +1488,7 @@ print_interval_results(struct iperf_test * test, struct iperf_stream * sp)
     et = timeval_diff(&sp->result->start_time,&irp->interval_end_time);
     
     if (test->protocol->id == Ptcp && has_tcpinfo_retransmits())
-	printf(report_bw_retrans_format, sp->socket, st, et, ubuf, nbuf, get_tcpinfo_retransmits(irp));
+	printf(report_bw_retrans_format, sp->socket, st, et, ubuf, nbuf, irp->this_retrans);
     else
 	printf(report_bw_format, sp->socket, st, et, ubuf, nbuf);
 }

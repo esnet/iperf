@@ -27,6 +27,7 @@ struct iperf_interval_results
     float     interval_duration;
 #if defined(linux) || defined(__FreeBSD__)
     struct tcp_info tcpInfo;	/* getsockopt(TCP_INFO) for Linux and FreeBSD */
+    int this_retrans;
 #else
     char *tcpInfo;		/* just a placeholder */
 #endif

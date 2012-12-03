@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -79,10 +80,10 @@ save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp)
 
 /*************************************************************/
 long
-get_tcpinfo_retransmits(struct iperf_interval_results *irp)
+get_tcpinfo_total_retransmits(struct iperf_interval_results *irp)
 {
 #if defined(linux)
-    return irp->tcpInfo.tcpi_retransmits;
+    return irp->tcpInfo.tcpi_total_retrans;
 #else
 #if defined(__FreeBSD__) && __FreeBSD_version >= 600000
     return irp->tcpInfo.__tcpi_retransmits;

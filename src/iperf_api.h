@@ -150,7 +150,7 @@ void      iperf_free_stream(struct iperf_stream * sp);
 int has_tcpinfo(void);
 int has_tcpinfo_retransmits(void);
 void save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp);
-long get_tcpinfo_retransmits(struct iperf_interval_results *irp);
+long get_tcpinfo_total_retransmits(struct iperf_interval_results *irp);
 void print_tcpinfo(struct iperf_test *test);
 void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 

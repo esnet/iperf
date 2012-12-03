@@ -58,7 +58,8 @@ has_tcpinfo_retransmits(void)
     return 1;
 #else
 #if defined(__FreeBSD__) && __FreeBSD_version >= 600000
-    return 1;
+    /* return 1; */
+    return 0;	/* FreeBSD retransmit reporting doesn't actually work yet */
 #else
     return 0;
 #endif

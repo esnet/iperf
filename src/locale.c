@@ -184,32 +184,32 @@ const char report_read_length_times[] =
 "[%3d] %5d bytes read %5d times (%.3g%%)\n";
 
 const char report_bw_header[] =
-"[ ID] Interval       Transfer     Bandwidth\n";
+"[ ID] Interval           Transfer     Bandwidth\n";
 
 const char report_bw_retrans_header[] =
-"[ ID] Interval       Transfer     Bandwidth       Retransmits\n";
+"[ ID] Interval           Transfer     Bandwidth       Retransmits\n";
 
 const char report_bw_udp_header[] =
-"[ ID] Interval       Transfer     Bandwidth       Jitter   Lost/Total \
+"[ ID] Interval           Transfer     Bandwidth       Jitter    Lost/Total \
 Datagrams\n";
 
 const char report_bw_format[] =
-"[%3d] %4.2f-%4.2f sec  %ss  %ss/sec\n";
+"[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec\n";
 
 const char report_bw_retrans_format[] =
-"[%3d] %4.2f-%4.2f sec  %ss  %ss/sec  %4ld\n";
+"[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec  %ld\n";
 
 const char report_bw_udp_format[] =
-"[%3d] %4.2f-%4.2f sec  %ss  %ss/sec  %5.3f ms %4d/%5d (%.2g%%)\n";
+"[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)\n";
 
 const char report_sum_bw_format[] =
-"[SUM] %4.2f-%4.2f sec  %ss  %ss/sec\n";
+"[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec\n";
 
 const char report_sum_bw_retrans_format[] =
-"[SUM] %4.2f-%4.2f sec  %ss  %ss/sec  %4ld\n";
+"[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec  %ld\n";
 
 const char report_sum_bw_udp_format[] =
-"[SUM] %4.2f-%4.2f sec  %ss  %ss/sec  %5.3f ms %4d/%5d (%.2g%%)\n";
+"[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)\n";
 
 const char report_bw_separator[] =
 "- - - - - - - - - - - - - - - - - - - - - - - - -\n";

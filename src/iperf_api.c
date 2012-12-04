@@ -1273,13 +1273,15 @@ iperf_stats_callback(struct iperf_test * test)
         temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
         //temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
 	if (test->protocol->id == Ptcp && has_tcpinfo()) {
-	    irp = TAILQ_LAST(&rp->interval_results, irlisthead);
-	    if (irp == NULL)
-	        prev_total_retransmits = 0;
-	    else
-		prev_total_retransmits = get_tcpinfo_total_retransmits(irp);
             save_tcpinfo(sp, &temp);
-	    temp.this_retrans = get_tcpinfo_total_retransmits(&temp) - prev_total_retransmits;
+	    if (has_tcpinfo_retransmits()) {
+		irp = TAILQ_LAST(&rp->interval_results, irlisthead);
+		if (irp == NULL)
+		    prev_total_retransmits = 0;
+		else
+		    prev_total_retransmits = get_tcpinfo_total_retransmits(irp);
+		temp.this_retrans = get_tcpinfo_total_retransmits(&temp) - prev_total_retransmits;
+	    }
 	}
         add_to_interval_list(rp, &temp);
         rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;

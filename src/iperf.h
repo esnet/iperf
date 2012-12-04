@@ -29,7 +29,9 @@ struct iperf_interval_results
     struct tcp_info tcpInfo;	/* getsockopt(TCP_INFO) for Linux and FreeBSD */
     int this_retrans;
 #else
-    char *tcpInfo;		/* just a placeholder */
+    /* Just placeholders, never accessed. */
+    char *tcpInfo;
+    int this_retrans;
 #endif
     TAILQ_ENTRY(iperf_interval_results) irlistentries;
     void     *custom_data;

@@ -54,7 +54,12 @@ has_tcpinfo(void)
 int
 has_tcpinfo_retransmits(void)
 {
-#if defined(linux)
+#if defined(linux) && defined(TCP_MD5SIG)
+    /* TCP_MD5SIG doesn't actually have anything to do with TCP
+    ** retransmits, it just showed up in the same rev of the header
+    ** file.  If it's present then struct tcp_info has the 
+    ** tcpi_total_retrans field that we need; if not, not.
+    */
     return 1;
 #else
 #if defined(__FreeBSD__) && __FreeBSD_version >= 600000
@@ -83,7 +88,7 @@ save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp)
 long
 get_tcpinfo_total_retransmits(struct iperf_interval_results *irp)
 {
-#if defined(linux)
+#if defined(linux) && defined(TCP_MD5SIG)
     return irp->tcpInfo.tcpi_total_retrans;
 #else
 #if defined(__FreeBSD__) && __FreeBSD_version >= 600000

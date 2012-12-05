@@ -14,4 +14,14 @@ void make_cookie(char *);
 
 int is_closed(int);
 
+double timeval_to_double(struct timeval *tv);
+
+int timeval_equals(struct timeval *tv0, struct timeval *tv1);
+
+double timeval_diff(struct timeval *tv0, struct timeval *tv1);
+
+int delay(int64_t ns);
+
+void cpu_util(double *);
+
 #endif

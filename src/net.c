@@ -20,6 +20,7 @@
 #include <string.h>
 #include <sys/fcntl.h>
 
+#include "iperf_util.h"
 #include "net.h"
 #include "timer.h"
 

@@ -22,6 +22,7 @@
 
 #include "iperf.h"
 #include "iperf_api.h"
+#include "iperf_util.h"
 #include "iperf_udp.h"
 #include "timer.h"
 #include "net.h"

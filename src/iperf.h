@@ -15,6 +15,7 @@
 #include <stdint.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
+#include "timer.h"
 #include "queue.h"
 
 typedef uint64_t iperf_size_t;
@@ -76,7 +77,8 @@ struct iperf_stream
 
     /* non configurable members */
     struct iperf_stream_result *result;	/* structure pointer to result */
-    struct timer *send_timer;
+    Timer     *send_timer;
+    int       udp_green_light;
     char      *buffer;		/* data to send */
 
     /*
@@ -149,9 +151,10 @@ struct iperf_test
     double    reporter_interval;
     void      (*stats_callback) (struct iperf_test *);
     void      (*reporter_callback) (struct iperf_test *);
-    struct timer *timer;
-    struct timer *stats_timer;
-    struct timer *reporter_timer;
+    Timer     *timer;
+    int        done;
+    Timer     *stats_timer;
+    Timer     *reporter_timer;
 
     double cpu_util;                            /* cpu utilization of the test */
     double remote_cpu_util;                     /* cpu utilization for the remote host/client */

@@ -37,7 +37,7 @@ netdial(int domain, int proto, char *local, char *server, int port)
 
     s = socket(domain, proto, 0);
     if (s < 0) {
-        return (-1);
+        return -1;
     }
 
     if (local) {
@@ -47,10 +47,10 @@ netdial(int domain, int proto, char *local, char *server, int port)
 
         // XXX: Check getaddrinfo for errors!
         if (getaddrinfo(local, NULL, &hints, &res) != 0)
-            return (-1);
+            return -1;
 
         if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0)
-            return (-1);
+            return -1;
 
         freeaddrinfo(res);
     }
@@ -61,17 +61,17 @@ netdial(int domain, int proto, char *local, char *server, int port)
 
     // XXX: Check getaddrinfo for errors!
     if (getaddrinfo(server, NULL, &hints, &res) != 0)
-        return (-1);
+        return -1;
 
     ((struct sockaddr_in *) res->ai_addr)->sin_port = htons(port);
 
     if (connect(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0 && errno != EINPROGRESS) {
-        return (-1);
+        return -1;
     }
 
     freeaddrinfo(res);
 
-    return (s);
+    return s;
 }
 
 /***************************************************************/
@@ -85,7 +85,7 @@ netannounce(int domain, int proto, char *local, int port)
 
     s = socket(domain, proto, 0);
     if (s < 0) {
-        return (-1);
+        return -1;
     }
     opt = 1;
     setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *) &opt, sizeof(opt));
@@ -97,22 +97,22 @@ netannounce(int domain, int proto, char *local, int port)
     hints.ai_flags = AI_PASSIVE;
     // XXX: Check getaddrinfo for errors!
     if (getaddrinfo(local, portstr, &hints, &res) != 0)
-        return (-1); 
+        return -1; 
 
     if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0) {
         close(s);
-        return (-1);
+        return -1;
     }
 
     freeaddrinfo(res);
     
     if (proto == SOCK_STREAM) {
         if (listen(s, 5) < 0) {
-            return (-1);
+            return -1;
         }
     }
 
-    return (s);
+    return s;
 }
 
 
@@ -131,14 +131,14 @@ Nread(int fd, void *buf, int count, int prot)
             if (errno == EINTR)
                 n = 0;
             else
-                return (-1);
+                return -1;
         } else if (n == 0)
             break;
 
         nleft -= n;
         buf += n;
     }
-    return (count - nleft);
+    return count - nleft;
 }
 
 
@@ -166,7 +166,7 @@ Nwrite(int fd, void *buf, int count, int prot)
                     delay(18000);   // XXX: Fixme!
                     n = 0;
                 } else {
-                    return (-1);
+                    return -1;
                 }
             }
             nleft -= n;
@@ -178,13 +178,13 @@ Nwrite(int fd, void *buf, int count, int prot)
                 if (errno == EINTR)
                     n = 0;
                 else
-                    return (-1);
+                    return -1;
             }
             nleft -= n;
             buf += n;
         }
     }
-    return (count);
+    return count;
 }
 
 /*************************************************************************/

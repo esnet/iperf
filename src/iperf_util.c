@@ -78,9 +78,9 @@ is_closed(int fd)
 
     if (select(fd+1, &readset, NULL, NULL, &tv) < 0) {
         if (errno == EBADF)
-            return (1);
+            return 1;
     }
-    return (0);
+    return 0;
 }
 
 
@@ -114,7 +114,7 @@ timeval_diff(struct timeval * tv0, struct timeval * tv1)
     time1 = time1 - time2;
     if (time1 < 0)
         time1 = -time1;
-    return (time1);
+    return time1;
 }
 
 
@@ -149,7 +149,7 @@ delay(int us)
     tv.tv_sec = 0;
     tv.tv_usec = us;
     (void) select(1, (fd_set *) 0, (fd_set *) 0, (fd_set *) 0, &tv);
-    return (1);
+    return 1;
 }
 #endif
 

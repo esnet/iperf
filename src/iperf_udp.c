@@ -44,7 +44,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     result = Nread(sp->socket, sp->buffer, size, Pudp);
 
     if (result < 0) {
-        return (-1);
+        return -1;
     }
 
     sp->result->bytes_received += result;
@@ -82,7 +82,21 @@ iperf_udp_recv(struct iperf_stream *sp)
     //      J = |(R1 - S1) - (R0 - S0)| [/ number of packets, for average]
     sp->jitter += (d - sp->jitter) / 16.0;
 
-    return (result);
+    return result;
+}
+
+
+static void
+send_timer_proc(TimerClientData client_data, struct timeval* nowP)
+{
+    struct iperf_stream *sp = client_data.p;
+
+    /* All we do here is set a flag saying that this UDP stream may be sent
+    ** to.  The actual sending gets done in iperf_udp_send(), which then
+    ** resets the flag and makes a new adjusted timer.
+    */
+    sp->send_timer = NULL;
+    sp->udp_green_light = 1;
 }
 
 
@@ -95,18 +109,13 @@ iperf_udp_send(struct iperf_stream *sp)
 {
     ssize_t   result = 0;
     int64_t   dtargus;
-    int64_t   adjustus = 0;
+    int64_t   adjustus;
     uint64_t  sec, usec, pcount;
     int       size = sp->settings->blksize;
     struct timeval before, after;
+    TimerClientData cd;
 
-    if (timer_expired(sp->send_timer)) {
-
-        dtargus = (int64_t) (sp->settings->blksize) * SEC_TO_US * 8;
-        dtargus /= sp->settings->rate;
-
-        assert(dtargus != 0);
-
+    if (sp->udp_green_light) {
         gettimeofday(&before, 0);
 
         ++sp->packet_count;
@@ -121,26 +130,31 @@ iperf_udp_send(struct iperf_stream *sp)
         result = Nwrite(sp->socket, sp->buffer, size, Pudp);
 
         if (result < 0)
-            return (-1);
+            return -1;
 
         sp->result->bytes_sent += result;
         sp->result->bytes_sent_this_interval += result;
 
-        gettimeofday(&after, 0);
-
-        adjustus = dtargus;
-        adjustus += (before.tv_sec - after.tv_sec) * SEC_TO_US;
-        adjustus += (before.tv_usec - after.tv_usec);
-
-        if (adjustus > 0) {
-            dtargus = adjustus;
-        }
-
-        if (update_timer(sp->send_timer, 0, dtargus) < 0)
-            return (-1);
+	if (sp->settings->rate != 0) {
+	    gettimeofday(&after, 0);
+	    dtargus = (int64_t) (sp->settings->blksize) * SEC_TO_US * 8;
+	    dtargus /= sp->settings->rate;
+	    assert(dtargus != 0);
+	    adjustus = dtargus;
+	    adjustus += (before.tv_sec - after.tv_sec) * SEC_TO_US;
+	    adjustus += (before.tv_usec - after.tv_usec);
+	    if (adjustus > 0) {
+		dtargus = adjustus;
+	    }
+	    cd.p = sp;
+	    sp->udp_green_light = 0;
+	    sp->send_timer = tmr_create((struct timeval*) 0, send_timer_proc, cd, dtargus, 0);
+	    if (sp->send_timer == NULL)
+		return -1;
+	}
     }
 
-    return (result);
+    return result;
 }
 
 
@@ -163,18 +177,18 @@ iperf_udp_accept(struct iperf_test *test)
     len = sizeof sa_peer;
     if ((sz = recvfrom(test->prot_listener, &buf, sizeof(buf), 0, (struct sockaddr *) &sa_peer, &len)) < 0) {
         i_errno = IESTREAMACCEPT;
-        return (-1);
+        return -1;
     }
 
     if (connect(s, (struct sockaddr *) &sa_peer, len) < 0) {
         i_errno = IESTREAMACCEPT;
-        return (-1);
+        return -1;
     }
 
     test->prot_listener = netannounce(test->settings->domain, Pudp, test->bind_address, test->server_port);
     if (test->prot_listener < 0) {
         i_errno = IESTREAMLISTEN;
-        return (-1);
+        return -1;
     }
 
     FD_SET(test->prot_listener, &test->read_set);
@@ -183,10 +197,10 @@ iperf_udp_accept(struct iperf_test *test)
     /* Let the client know we're ready "accept" another UDP "stream" */
     if (write(s, &buf, sizeof(buf)) < 0) {
         i_errno = IESTREAMWRITE;
-        return (-1);
+        return -1;
     }
 
-    return (s);
+    return s;
 }
 
 
@@ -201,10 +215,10 @@ iperf_udp_listen(struct iperf_test *test)
 
     if ((s = netannounce(test->settings->domain, Pudp, test->bind_address, test->server_port)) < 0) {
         i_errno = IESTREAMLISTEN;
-        return (-1);
+        return -1;
     }
 
-    return (s);
+    return s;
 }
 
 
@@ -219,23 +233,23 @@ iperf_udp_connect(struct iperf_test *test)
 
     if ((s = netdial(test->settings->domain, Pudp, test->bind_address, test->server_hostname, test->server_port)) < 0) {
         i_errno = IESTREAMCONNECT;
-        return (-1);
+        return -1;
     }
 
     /* Write to the UDP stream to give the server this stream's credentials */
     if (write(s, &buf, sizeof(buf)) < 0) {
         // XXX: Should this be changed to IESTREAMCONNECT? 
         i_errno = IESTREAMWRITE;
-        return (-1);
+        return -1;
     }
     /* Wait until the server confirms the client UDP write */
     // XXX: Should this read be TCP instead?
     if (read(s, &buf, sizeof(buf)) < 0) {
         i_errno = IESTREAMREAD;
-        return (-1);
+        return -1;
     }
 
-    return (s);
+    return s;
 }
 
 
@@ -248,19 +262,27 @@ iperf_udp_init(struct iperf_test *test)
 {
     int64_t dtargus;
     struct iperf_stream *sp;
+    TimerClientData cd;
 
-    /* Calculate the send delay needed to hit target bandwidth (-b) */
-    dtargus = (int64_t) test->settings->blksize * SEC_TO_US * 8;
-    dtargus /= test->settings->rate;
+    if (test->settings->rate == 0) {
+	SLIST_FOREACH(sp, &test->streams, streams) {
+	    sp->udp_green_light = 1;
+	}
+    } else {
+	/* Calculate the send delay needed to hit target bandwidth (-b) */
+	dtargus = (int64_t) test->settings->blksize * SEC_TO_US * 8;
+	dtargus /= test->settings->rate;
 
-    assert(dtargus != 0);
+	assert(dtargus != 0);
 
-//    for (sp = test->streams; sp; sp = sp->next) {
-    SLIST_FOREACH(sp, &test->streams, streams) {
-        sp->send_timer = new_timer(dtargus / SEC_TO_US, dtargus % SEC_TO_US);
-        if (sp->send_timer == NULL)
-            return (-1);
+	SLIST_FOREACH(sp, &test->streams, streams) {
+	    cd.p = sp;
+	    sp->udp_green_light = 0;
+	    sp->send_timer = tmr_create((struct timeval*) 0, send_timer_proc, cd, dtargus, 0);
+	    if (sp->send_timer == NULL)
+		return -1;
+	}
     }
 
-    return (0);
+    return 0;
 }

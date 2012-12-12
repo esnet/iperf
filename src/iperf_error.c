@@ -232,7 +232,7 @@ iperf_strerror(int i_errno)
         strncat(errstr, strerror(errno), len);
     }
 
-    return (errstr);
+    return errstr;
 }
 
 void

@@ -132,7 +132,7 @@ static double ipow( double n, int exp )
 /* Parse the input text to generate a number, and populate the result into item. */
 static const char *parse_number( cJSON *item, const char *num )
 {
-	long long i = 0;
+	int64_t i = 0;
 	double f = 0;
 	int isint = 1;
 	int sign = 1, scale = 0, subscale = 0, signsubscale = 1;
@@ -930,7 +930,7 @@ cJSON *cJSON_CreateBool( int b )
 	return item;
 }
 
-cJSON *cJSON_CreateInt( long long num )
+cJSON *cJSON_CreateInt( int64_t num )
 {
 	cJSON *item = cJSON_New_Item();
 	if ( item ) {
@@ -981,7 +981,7 @@ cJSON *cJSON_CreateObject( void )
 
 /* Create Arrays. */
 
-cJSON *cJSON_CreateIntArray( long long *numbers, int count )
+cJSON *cJSON_CreateIntArray( int64_t *numbers, int count )
 {
 	int i;
 	cJSON *n = 0, *p = 0, *a = cJSON_CreateArray();

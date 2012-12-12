@@ -5,104 +5,239 @@
  *
  * This code is distributed under a BSD style license, see the LICENSE file
  * for complete information.
+ *
+ * Based on timers.c by Jef Poskanzer. Used with permission.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <sys/time.h>
-#include <sys/errno.h>
 #include <sys/types.h>
-#include <stdint.h>
-#include <time.h>
+#include <stdlib.h>
 
 #include "timer.h"
-#include "iperf_api.h"
 
 
-int
-timer_expired(struct timer * tp)
+static Timer* timers = NULL;
+static Timer* free_timers = NULL;
+
+TimerClientData JunkClientData;
+
+
+
+/* This is an efficiency tweak.  All the routines that need to know the
+** current time get passed a pointer to a struct timeval.  If it's non-NULL
+** it gets used, otherwise we do our own gettimeofday() to fill it in.
+** This lets the caller avoid extraneous gettimeofday()s when efficiency
+** is needed, and not bother with the extra code when efficiency doesn't
+** matter too much.
+*/
+static void
+getnow( struct timeval* nowP, struct timeval* nowP2 )
 {
-    if (tp == NULL)
-        return 0;
+    if ( nowP != NULL )
+	*nowP2 = *nowP;
+    else
+	(void) gettimeofday( nowP2, NULL );
+}
 
+
+static void
+list_add( Timer* t )
+{
+    Timer* t2;
+    Timer* t2prev;
+
+    if ( timers == NULL ) {
+	/* The list is empty. */
+	timers = t;
+	t->prev = t->next = NULL;
+    } else {
+	if ( t->time.tv_sec < timers->time.tv_sec ||
+	     ( t->time.tv_sec == timers->time.tv_sec &&
+	       t->time.tv_usec < timers->time.tv_usec ) ) {
+	    /* The new timer goes at the head of the list. */
+	    t->prev = NULL;
+	    t->next = timers;
+	    timers->prev = t;
+	    timers = t;
+	} else {
+	    /* Walk the list to find the insertion point. */
+	    for ( t2prev = timers, t2 = timers->next; t2 != NULL;
+		  t2prev = t2, t2 = t2->next ) {
+		if ( t->time.tv_sec < t2->time.tv_sec ||
+		     ( t->time.tv_sec == t2->time.tv_sec &&
+		       t->time.tv_usec < t2->time.tv_usec ) ) {
+		    /* Found it. */
+		    t2prev->next = t;
+		    t->prev = t2prev;
+		    t->next = t2;
+		    t2->prev = t;
+		    return;
+		}
+	    }
+	    /* Oops, got to the end of the list.  Add to tail. */
+	    t2prev->next = t;
+	    t->prev = t2prev;
+	    t->next = NULL;
+	}
+    }
+}
+
+
+static void
+list_remove( Timer* t )
+{
+    if ( t->prev == NULL )
+	timers = t->next;
+    else
+	t->prev->next = t->next;
+    if ( t->next != NULL )
+	t->next->prev = t->prev;
+}
+
+
+static void
+list_resort( Timer* t )
+{
+    /* Remove the timer from the list. */
+    list_remove( t );
+    /* And add it back in, sorted correctly. */
+    list_add( t );
+}
+
+
+static void
+add_usecs( struct timeval* t, int64_t usecs )
+{
+    t->tv_sec += usecs / 1000000L;
+    t->tv_usec += usecs % 1000000L;
+    if ( t->tv_usec >= 1000000L ) {
+	t->tv_sec += t->tv_usec / 1000000L;
+	t->tv_usec %= 1000000L;
+    }
+}
+
+
+Timer*
+tmr_create(
+    struct timeval* nowP, TimerProc* timer_proc, TimerClientData client_data,
+    int64_t usecs, int periodic )
+{
     struct timeval now;
-    int64_t end = 0, current = 0;
+    Timer* t;
 
-    gettimeofday(&now, NULL);
+    getnow( nowP, &now );
 
-    end += tp->end.tv_sec * 1000000;
-    end += tp->end.tv_usec;
+    if ( free_timers != NULL ) {
+	t = free_timers;
+	free_timers = t->next;
+    } else {
+	t = (Timer*) malloc( sizeof(Timer) );
+	if ( t == NULL )
+	    return NULL;
+    }
 
-    current += now.tv_sec * 1000000;
-    current += now.tv_usec;
+    t->timer_proc = timer_proc;
+    t->client_data = client_data;
+    t->usecs = usecs;
+    t->periodic = periodic;
+    t->time = now;
+    add_usecs( &t->time, usecs );
+    /* Add the new timer to the active list. */
+    list_add( t );
 
-    return current > end;
+    return t;
 }
 
-int
-update_timer(struct timer * tp, time_t sec, suseconds_t usec)
+
+struct timeval*
+tmr_timeout( struct timeval* nowP )
 {
-    if (gettimeofday(&tp->begin, NULL) < 0) {
-        i_errno = IEUPDATETIMER;
-        return (-1);
-    }
+    struct timeval now;
+    int64_t usecs;
+    static struct timeval timeout;
 
-    tp->end.tv_sec = tp->begin.tv_sec + (time_t) sec;
-    tp->end.tv_usec = tp->begin.tv_usec + (time_t) usec;
-
-    tp->expired = timer_expired;
-    return (0);
+    getnow( nowP, &now );
+    /* Since the list is sorted, we only need to look at the first timer. */
+    if ( timers == NULL )
+	return NULL;
+    usecs = ( timers->time.tv_sec - now.tv_sec ) * 1000000L +
+	    ( timers->time.tv_usec - now.tv_usec );
+    if ( usecs <= 0 )
+	usecs = 0;
+    timeout.tv_sec = usecs / 1000000L;
+    timeout.tv_usec = usecs % 1000000L;
+    return &timeout;
 }
 
-struct timer *
-new_timer(time_t sec, suseconds_t usec)
-{
-    struct timer *tp = NULL;
-    tp = (struct timer *) calloc(1, sizeof(struct timer));
-    if (tp == NULL) {
-        i_errno = IENEWTIMER;
-        return (NULL);
-    }
-
-    if (gettimeofday(&tp->begin, NULL) < 0) {
-        i_errno = IENEWTIMER;
-        return (NULL);
-    }
-
-    tp->end.tv_sec = tp->begin.tv_sec + (time_t) sec;
-    tp->end.tv_usec = tp->begin.tv_usec + (time_t) usec;
-
-    tp->expired = timer_expired;
-
-    return tp;
-}
 
 void
-free_timer(struct timer * tp)
+tmr_run( struct timeval* nowP )
 {
-    free(tp);
+    struct timeval now;
+    Timer* t;
+    Timer* next;
+
+    getnow( nowP, &now );
+    for ( t = timers; t != NULL; t = next ) {
+	next = t->next;
+	/* Since the list is sorted, as soon as we find a timer
+	** that isn't ready yet, we are done.
+	*/
+	if ( t->time.tv_sec > now.tv_sec ||
+	     ( t->time.tv_sec == now.tv_sec &&
+	       t->time.tv_usec > now.tv_usec ) )
+	    break;
+	(t->timer_proc)( t->client_data, &now );
+	if ( t->periodic ) {
+	    /* Reschedule. */
+	    add_usecs( &t->time, t->usecs );
+	    list_resort( t );
+	} else
+	    tmr_cancel( t );
+    }
 }
 
 
-int64_t
-timer_remaining(struct timer * tp)
+void
+tmr_reset( struct timeval* nowP, Timer* t )
 {
     struct timeval now;
-    long int  end_time = 0, current_time = 0, diff = 0;
+    
+    getnow( nowP, &now );
+    t->time = now;
+    add_usecs( &t->time, t->usecs );
+    list_resort( t );
+}
 
-    gettimeofday(&now, NULL);
 
-    end_time += tp->end.tv_sec * 1000000;
-    end_time += tp->end.tv_usec;
+void
+tmr_cancel( Timer* t )
+{
+    /* Remove it from the active list. */
+    list_remove( t );
+    /* And put it on the free list. */
+    t->next = free_timers;
+    free_timers = t;
+    t->prev = NULL;
+}
 
-    current_time += now.tv_sec * 1000000;
-    current_time += now.tv_usec;
 
-    diff = end_time - current_time;
-    if (diff > 0)
-        return diff;
-    else
-        return 0;
+void
+tmr_cleanup( void )
+{
+    Timer* t;
+
+    while ( free_timers != NULL ) {
+	t = free_timers;
+	free_timers = t->next;
+	free( (void*) t );
+    }
+}
+
+
+void
+tmr_destroy( void )
+{
+    while ( timers != NULL )
+	tmr_cancel( timers );
+    tmr_cleanup();
 }

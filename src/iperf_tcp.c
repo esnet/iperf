@@ -39,13 +39,13 @@ iperf_tcp_recv(struct iperf_stream *sp)
     result = Nread(sp->socket, sp->buffer, size, Ptcp);
 
     if (result < 0) {
-        return (-1);
+        return -1;
     }
 
     sp->result->bytes_received += result;
     sp->result->bytes_received_this_interval += result;
 
-    return (result);
+    return result;
 }
 
 
@@ -62,13 +62,13 @@ iperf_tcp_send(struct iperf_stream *sp)
     result = Nwrite(sp->socket, sp->buffer, size, Ptcp);
 
     if (result < 0) {
-        return (-1);
+        return -1;
     }
 
     sp->result->bytes_sent += result;
     sp->result->bytes_sent_this_interval += result;
 
-    return (result);
+    return result;
 }
 
 
@@ -88,23 +88,23 @@ iperf_tcp_accept(struct iperf_test * test)
     len = sizeof(addr);
     if ((s = accept(test->listener, (struct sockaddr *) &addr, &len)) < 0) {
         i_errno = IESTREAMCONNECT;
-        return (-1);
+        return -1;
     }
 
     if (Nread(s, cookie, COOKIE_SIZE, Ptcp) < 0) {
         i_errno = IERECVCOOKIE;
-        return (-1);
+        return -1;
     }
 
     if (strcmp(test->cookie, cookie) != 0) {
         if (Nwrite(s, &rbuf, sizeof(char), Ptcp) < 0) {
             i_errno = IESENDMESSAGE;
-            return (-1);
+            return -1;
         }
         close(s);
     }
 
-    return (s);
+    return s;
 }
 
 
@@ -125,36 +125,36 @@ iperf_tcp_listen(struct iperf_test *test)
         close(s);
         if ((s = socket(test->settings->domain, SOCK_STREAM, 0)) < 0) {
             i_errno = IESTREAMLISTEN;
-            return (-1);
+            return -1;
         }
         if (test->no_delay) {
             opt = 1;
             if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0) {
                 i_errno = IESETNODELAY;
-                return (-1);
+                return -1;
             }
         }
         // XXX: Setting MSS is very buggy!
         if ((opt = test->settings->mss)) {
             if (setsockopt(s, IPPROTO_TCP, TCP_MAXSEG, &opt, sizeof(opt)) < 0) {
                 i_errno = IESETMSS;
-                return (-1);
+                return -1;
             }
         }
         if ((opt = test->settings->socket_bufsize)) {
             if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) < 0) {
                 i_errno = IESETBUF;
-                return (-1);
+                return -1;
             }
             if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) < 0) {
                 i_errno = IESETBUF;
-                return (-1);
+                return -1;
             }
         }
         opt = 1;
         if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
             i_errno = IEREUSEADDR;
-            return (-1);
+            return -1;
         }
 
         snprintf(portstr, 6, "%d", test->server_port);
@@ -165,26 +165,26 @@ iperf_tcp_listen(struct iperf_test *test)
         // XXX: Check getaddrinfo for errors!
         if (getaddrinfo(test->bind_address, portstr, &hints, &res) != 0) {
             i_errno = IESTREAMLISTEN;
-            return (-1);
+            return -1;
         }
 
         if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0) {
             close(s);
             i_errno = IESTREAMLISTEN;
-            return (-1);
+            return -1;
         }
 
         freeaddrinfo(res);
 
         if (listen(s, 5) < 0) {
             i_errno = IESTREAMLISTEN;
-            return (-1);
+            return -1;
         }
 
         test->listener = s;
     }
     
-    return (s);
+    return s;
 }
 
 
@@ -201,7 +201,7 @@ iperf_tcp_connect(struct iperf_test *test)
 
     if ((s = socket(test->settings->domain, SOCK_STREAM, 0)) < 0) {
         i_errno = IESTREAMCONNECT;
-        return (-1);
+        return -1;
     }
 
     if (test->bind_address) {
@@ -211,12 +211,12 @@ iperf_tcp_connect(struct iperf_test *test)
         // XXX: Check getaddrinfo for errors!
         if (getaddrinfo(test->bind_address, NULL, &hints, &res) != 0) {
             i_errno = IESTREAMCONNECT;
-            return (-1);
+            return -1;
         }
 
         if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0) {
             i_errno = IESTREAMCONNECT;
-            return (-1);
+            return -1;
         }
 
         freeaddrinfo(res);
@@ -227,23 +227,23 @@ iperf_tcp_connect(struct iperf_test *test)
         opt = 1;
         if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0) {
             i_errno = IESETNODELAY;
-            return (-1);
+            return -1;
         }
     }
     if ((opt = test->settings->mss)) {
         if (setsockopt(s, IPPROTO_TCP, TCP_MAXSEG, &opt, sizeof(opt)) < 0) {
             i_errno = IESETMSS;
-            return (-1);
+            return -1;
         }
     }
     if ((opt = test->settings->socket_bufsize)) {
         if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) < 0) {
             i_errno = IESETBUF;
-            return (-1);
+            return -1;
         }
         if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) < 0) {
             i_errno = IESETBUF;
-            return (-1);
+            return -1;
         }
     }
 
@@ -254,12 +254,12 @@ iperf_tcp_connect(struct iperf_test *test)
     // XXX: Check getaddrinfo for errors!
     if (getaddrinfo(test->server_hostname, portstr, &hints, &res) != 0) {
         i_errno = IESTREAMCONNECT;
-        return (-1);
+        return -1;
     }
 
     if (connect(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0 && errno != EINPROGRESS) {
         i_errno = IESTREAMCONNECT;
-        return (-1);
+        return -1;
     }
 
     freeaddrinfo(res);
@@ -267,9 +267,9 @@ iperf_tcp_connect(struct iperf_test *test)
     /* Send cookie for verification */
     if (Nwrite(s, test->cookie, COOKIE_SIZE, Ptcp) < 0) {
         i_errno = IESENDCOOKIE;
-        return (-1);
+        return -1;
     }
 
-    return (s);
+    return s;
 }
 

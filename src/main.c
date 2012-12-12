@@ -87,7 +87,7 @@ main(int argc, char **argv)
             test->state = (test->role == 'c') ? CLIENT_TERMINATE : SERVER_TERMINATE;
             if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
                 i_errno = IESENDMESSAGE;
-                return (-1);
+                return -1;
             }
         }
         exit(1);
@@ -109,7 +109,7 @@ main(int argc, char **argv)
 
     printf("\niperf Done.\n");
 
-    return (0);
+    return 0;
 }
 
 /**************************************************************************/
@@ -137,6 +137,6 @@ iperf_run(struct iperf_test * test)
             break;
     }
 
-    return (0);
+    return 0;
 }
 

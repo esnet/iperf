@@ -205,7 +205,7 @@ static char *print_number( cJSON *item )
 	if ( fabs( ( (double) item->valueint ) - d ) <= DBL_EPSILON && d <= INT_MAX && d >= INT_MIN ) {
 		str = (char*) cJSON_malloc( 21 );	/* 2^64+1 can be represented in 21 chars. */
 		if ( str )
-			sprintf( str, "%lld", item->valueint );
+			sprintf( str, "%lld", (long long int) item->valueint );
 	} else {
 		str = (char*) cJSON_malloc( 64 );	/* This is a nice tradeoff. */
 		if ( str ) {

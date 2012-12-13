@@ -49,4 +49,3 @@ unsigned long long ntohll(unsigned long long);
 #define ntohll(n) NTOHLL(n)
 
 #endif
-

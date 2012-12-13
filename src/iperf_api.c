@@ -80,6 +80,12 @@ void warning(char *str)
 /************** Getter routines for some fields inside iperf_test *************/
 
 int
+iperf_get_control_socket( struct iperf_test* ipt )
+{
+    return ipt->ctrl_sck;
+}
+
+int
 iperf_get_test_duration( struct iperf_test* ipt )
 {
     return ipt->duration;
@@ -146,6 +152,12 @@ iperf_get_test_protocol_id( struct iperf_test* ipt )
 }
 
 /************** Setter routines for some fields inside iperf_test *************/
+
+void
+iperf_set_control_socket( struct iperf_test* ipt, int ctrl_sck )
+{
+    ipt->ctrl_sck = ctrl_sck;
+}
 
 void
 iperf_set_test_duration( struct iperf_test* ipt, int duration )

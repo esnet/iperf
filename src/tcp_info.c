@@ -144,4 +144,3 @@ build_tcpinfo_message(struct iperf_interval_results *r, char *message)
 	    r->tcpInfo.tcpi_rcv_space, r->tcpInfo.tcpi_snd_ssthresh, r->tcpInfo.tcpi_rtt);
 #endif
 }
-

@@ -346,4 +346,3 @@ const char warn_invalid_report[] =
 #ifdef __cplusplus
 } /* end extern "C" */
 #endif
-

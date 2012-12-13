@@ -122,4 +122,3 @@ get_tcp_windowsize(int sock, int dir)
 
     return bufsize;
 }
-

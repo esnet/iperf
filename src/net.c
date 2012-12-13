@@ -280,4 +280,3 @@ setnonblocking(int sock)
     }
     return 0;
 }
-

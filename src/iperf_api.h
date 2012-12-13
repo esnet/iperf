@@ -44,6 +44,7 @@ struct iperf_stream;
 #define SERVER_ERROR (-2)
 
 /* Getter routines for some fields inside iperf_test. */
+int	iperf_get_control_socket( struct iperf_test* ipt );
 int	iperf_get_test_duration( struct iperf_test* ipt );
 char	iperf_get_test_role( struct iperf_test* ipt );
 int	iperf_get_test_blksize( struct iperf_test* ipt );
@@ -57,6 +58,7 @@ char*	iperf_get_test_server_hostname( struct iperf_test* ipt );
 int	iperf_get_test_protocol_id( struct iperf_test* ipt );
 
 /* Setter routines for some fields inside iperf_test. */
+void	iperf_set_control_socket( struct iperf_test* ipt, int ctrl_sck );
 void	iperf_set_test_duration( struct iperf_test* ipt, int duration );
 void	iperf_set_test_reporter_interval( struct iperf_test* ipt, double reporter_interval );
 void	iperf_set_test_stats_interval( struct iperf_test* ipt, double stats_interval );

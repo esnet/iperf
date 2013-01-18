@@ -183,7 +183,7 @@ int
 iperf_run_client(struct iperf_test * test)
 {
     int result;
-    fd_set temp_read_set, temp_write_set;
+    fd_set read_set, write_set;
     struct timeval now;
 
     /* Start the client and connect to the server */
@@ -197,31 +197,31 @@ iperf_run_client(struct iperf_test * test)
     (void) gettimeofday(&now, NULL);
     while (test->state != IPERF_DONE) {
 
-        memcpy(&temp_read_set, &test->read_set, sizeof(fd_set));
-        memcpy(&temp_write_set, &test->write_set, sizeof(fd_set));
+        memcpy(&read_set, &test->read_set, sizeof(fd_set));
+        memcpy(&write_set, &test->write_set, sizeof(fd_set));
 
-        result = select(test->max_fd + 1, &temp_read_set, &temp_write_set, NULL, tmr_timeout(&now));
+        result = select(test->max_fd + 1, &read_set, &write_set, NULL, tmr_timeout(&now));
         if (result < 0 && errno != EINTR) {
             i_errno = IESELECT;
             return -1;
         }
 	if (result > 0) {
-            if (FD_ISSET(test->ctrl_sck, &temp_read_set)) {
+            if (FD_ISSET(test->ctrl_sck, &read_set)) {
                 if (iperf_handle_message_client(test) < 0) {
                     return -1;
 		}
-                FD_CLR(test->ctrl_sck, &temp_read_set);
+                FD_CLR(test->ctrl_sck, &read_set);
             }
 
             if (test->state == TEST_RUNNING) {
                 if (test->reverse) {
                     // Reverse mode. Client receives.
-                    if (iperf_recv(test) < 0) {
+                    if (iperf_recv(test, &read_set) < 0) {
                         return -1;
 		    }
                 } else {
                     // Regular mode. Client sends.
-                    if (iperf_send(test) < 0) {
+                    if (iperf_send(test, &write_set) < 0) {
                         return -1;
 		    }
                 }

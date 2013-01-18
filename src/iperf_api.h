@@ -157,8 +157,8 @@ void print_tcpinfo(struct iperf_test *test);
 void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 
 void print_interval_results(struct iperf_test * test, struct iperf_stream *sp);
-int iperf_send(struct iperf_test *);
-int iperf_recv(struct iperf_test *);
+int iperf_send(struct iperf_test *, fd_set *);
+int iperf_recv(struct iperf_test *, fd_set *);
 void sig_handler(int);
 void usage();
 void usage_long();

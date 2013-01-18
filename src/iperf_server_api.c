@@ -273,7 +273,7 @@ int
 iperf_run_server(struct iperf_test *test)
 {
     int result, s, streams_accepted;
-    fd_set temp_read_set, temp_write_set;
+    fd_set read_set, write_set;
     struct iperf_stream *sp;
     struct timeval now;
 
@@ -291,31 +291,31 @@ iperf_run_server(struct iperf_test *test)
     (void) gettimeofday(&now, NULL);
     while (test->state != IPERF_DONE) {
 
-        memcpy(&temp_read_set, &test->read_set, sizeof(fd_set));
-        memcpy(&temp_write_set, &test->write_set, sizeof(fd_set));
+        memcpy(&read_set, &test->read_set, sizeof(fd_set));
+        memcpy(&write_set, &test->write_set, sizeof(fd_set));
 
-        result = select(test->max_fd + 1, &temp_read_set, &temp_write_set, NULL, tmr_timeout(&now));
+        result = select(test->max_fd + 1, &read_set, &write_set, NULL, tmr_timeout(&now));
         if (result < 0 && errno != EINTR) {
             i_errno = IESELECT;
             return -1;
         }
 	if (result > 0) {
-            if (FD_ISSET(test->listener, &temp_read_set)) {
+            if (FD_ISSET(test->listener, &read_set)) {
                 if (test->state != CREATE_STREAMS) {
                     if (iperf_accept(test) < 0) {
                         return -1;
                     }
-                    FD_CLR(test->listener, &temp_read_set);
+                    FD_CLR(test->listener, &read_set);
                 }
             }
-            if (FD_ISSET(test->ctrl_sck, &temp_read_set)) {
+            if (FD_ISSET(test->ctrl_sck, &read_set)) {
                 if (iperf_handle_message_server(test) < 0)
                     return -1;
-                FD_CLR(test->ctrl_sck, &temp_read_set);                
+                FD_CLR(test->ctrl_sck, &read_set);                
             }
 
             if (test->state == CREATE_STREAMS) {
-                if (FD_ISSET(test->prot_listener, &temp_read_set)) {
+                if (FD_ISSET(test->prot_listener, &read_set)) {
     
                     if ((s = test->protocol->accept(test)) < 0)
                         return -1;
@@ -333,7 +333,7 @@ iperf_run_server(struct iperf_test *test)
                         if (test->on_new_stream)
                             test->on_new_stream(sp);
                     }
-                    FD_CLR(test->prot_listener, &temp_read_set);
+                    FD_CLR(test->prot_listener, &read_set);
                 }
 
                 if (streams_accepted == test->num_streams) {
@@ -372,11 +372,11 @@ iperf_run_server(struct iperf_test *test)
             if (test->state == TEST_RUNNING) {
                 if (test->reverse) {
                     // Reverse mode. Server sends.
-                    if (iperf_send(test) < 0)
+                    if (iperf_send(test, &write_set) < 0)
                         return -1;
                 } else {
                     // Regular mode. Server receives.
-                    if (iperf_recv(test) < 0)
+                    if (iperf_recv(test, &read_set) < 0)
                         return -1;
                 }
 

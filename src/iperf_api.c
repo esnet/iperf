@@ -561,68 +561,40 @@ all_data_sent(struct iperf_test * test)
 }
 
 int
-iperf_send(struct iperf_test *test)
+iperf_send(struct iperf_test *test, fd_set *write_setP)
 {
-    int result;
     iperf_size_t bytes_sent;
-    fd_set temp_write_set;
-    struct timeval tv;
     struct iperf_stream *sp;
 
-    memcpy(&temp_write_set, &test->write_set, sizeof(fd_set));
-    tv.tv_sec = 15;
-    tv.tv_usec = 0;
-
-    result = select(test->max_fd + 1, NULL, &temp_write_set, NULL, &tv);
-    if (result < 0 && errno != EINTR) {
-        i_errno = IESELECT;
-        return -1;
-    }
-    if (result > 0) {
-        SLIST_FOREACH(sp, &test->streams, streams) {
-            if (FD_ISSET(sp->socket, &temp_write_set)) {
-                if ((bytes_sent = sp->snd(sp)) < 0) {
-                    i_errno = IESTREAMWRITE;
-                    return -1;
-                }
-                test->bytes_sent += bytes_sent;
-                FD_CLR(sp->socket, &temp_write_set);
-            }
-        }
+    SLIST_FOREACH(sp, &test->streams, streams) {
+	if (FD_ISSET(sp->socket, write_setP)) {
+	    if ((bytes_sent = sp->snd(sp)) < 0) {
+		i_errno = IESTREAMWRITE;
+		return -1;
+	    }
+	    test->bytes_sent += bytes_sent;
+	    FD_CLR(sp->socket, write_setP);
+	}
     }
 
     return 0;
 }
 
 int
-iperf_recv(struct iperf_test *test)
+iperf_recv(struct iperf_test *test, fd_set *read_setP)
 {
-    int result;
     iperf_size_t bytes_sent;
-    fd_set temp_read_set;
-    struct timeval tv;
     struct iperf_stream *sp;
 
-    memcpy(&temp_read_set, &test->read_set, sizeof(fd_set));
-    tv.tv_sec = 15;
-    tv.tv_usec = 0;
-
-    result = select(test->max_fd + 1, &temp_read_set, NULL, NULL, &tv);
-    if (result < 0) {
-        i_errno = IESELECT;
-        return -1;
-    }
-    if (result > 0) {
-        SLIST_FOREACH(sp, &test->streams, streams) {
-            if (FD_ISSET(sp->socket, &temp_read_set)) {
-                if ((bytes_sent = sp->rcv(sp)) < 0) {
-                    i_errno = IESTREAMREAD;
-                    return -1;
-                }
-                test->bytes_sent += bytes_sent;
-                FD_CLR(sp->socket, &temp_read_set);
-            }
-        }
+    SLIST_FOREACH(sp, &test->streams, streams) {
+	if (FD_ISSET(sp->socket, read_setP)) {
+	    if ((bytes_sent = sp->rcv(sp)) < 0) {
+		i_errno = IESTREAMREAD;
+		return -1;
+	    }
+	    test->bytes_sent += bytes_sent;
+	    FD_CLR(sp->socket, read_setP);
+	}
     }
 
     return 0;

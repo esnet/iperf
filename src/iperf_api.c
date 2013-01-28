@@ -411,7 +411,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 */
                 }
                 set_protocol(test, Pudp);
-                test->settings->blksize = DEFAULT_UDP_BLKSIZE;
+		if (test->settings->blksize == DEFAULT_TCP_BLKSIZE)
+		    test->settings->blksize = DEFAULT_UDP_BLKSIZE;
                 break;
             case 'P':
                 if (test->role == 's') {

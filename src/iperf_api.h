@@ -20,7 +20,7 @@ struct iperf_stream;
 /* default settings */
 #define Ptcp SOCK_STREAM
 #define Pudp SOCK_DGRAM
-#define DEFAULT_UDP_BLKSIZE 1450 /* 1 packet per ethernet frame, IPV6 too */
+#define DEFAULT_UDP_BLKSIZE 8192
 #define DEFAULT_TCP_BLKSIZE (128 * 1024)  /* default read/write block size */
 
 /* states */

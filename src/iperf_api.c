@@ -367,7 +367,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {NULL, 0, NULL, 0}
     };
     char ch;
+    int blksize;
 
+    blksize = 0;
     while ((ch = getopt_long(argc, argv, "c:p:st:uP:B:b:l:w:i:n:RS:Nvh6VdM:f:", longopts, NULL)) != -1) {
         switch (ch) {
             case 'c':
@@ -411,8 +413,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 */
                 }
                 set_protocol(test, Pudp);
-		if (test->settings->blksize == DEFAULT_TCP_BLKSIZE)
-		    test->settings->blksize = DEFAULT_UDP_BLKSIZE;
                 break;
             case 'P':
                 if (test->role == 's') {
@@ -441,11 +441,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     i_errno = IECLIENTONLY;
                     return -1;
                 }
-                test->settings->blksize = unit_atoi(optarg);
-                if (test->settings->blksize > MAX_BLOCKSIZE) {
-                    i_errno = IEBLOCKSIZE;
-                    return -1;
-                }
+                blksize = unit_atoi(optarg);
                 break;
             case 'w':
                 // XXX: This is a socket buffer, not specific to TCP
@@ -531,6 +527,19 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 exit(1);
         }
     }
+
+    if (blksize == 0) {
+	if (test->protocol->id == Pudp)
+	    blksize = DEFAULT_UDP_BLKSIZE;
+	else
+	    blksize = DEFAULT_TCP_BLKSIZE;
+    }
+    if (blksize <= 0 || blksize > MAX_BLOCKSIZE) {
+	i_errno = IEBLOCKSIZE;
+	return -1;
+    }
+    test->settings->blksize = blksize;
+
     /* For subsequent calls to getopt */
 #ifdef __APPLE__
     optreset = 1;

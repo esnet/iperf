@@ -59,15 +59,14 @@ static cJSON *JSON_read(int fd);
 void
 usage()
 {
-    fputs(usage_short, stderr);
+    fputs(usage_shortstr, stderr);
 }
 
 
 void
 usage_long()
 {
-    fputs(usage_long1, stderr);
-    fputs(usage_long2, stderr);
+    fputs(usage_longstr, stderr);
 }
 
 
@@ -334,28 +333,29 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 {
     static struct option longopts[] =
     {
-        {"client", required_argument, NULL, 'c'},
-        {"server", no_argument, NULL, 's'},
-        {"time", required_argument, NULL, 't'},
         {"port", required_argument, NULL, 'p'},
-        {"parallel", required_argument, NULL, 'P'},
-        {"udp", no_argument, NULL, 'u'},
-        {"bind", required_argument, NULL, 'B'},
-        {"bandwidth", required_argument, NULL, 'b'},
-        {"length", required_argument, NULL, 'l'},
-        {"window", required_argument, NULL, 'w'},
+        {"format", required_argument, NULL, 'f'},
         {"interval", required_argument, NULL, 'i'},
-        {"bytes", required_argument, NULL, 'n'},
-        {"NoDelay", no_argument, NULL, 'N'},
-        {"Set-mss", required_argument, NULL, 'M'},
-        {"version", no_argument, NULL, 'v'},
+        {"daemon", no_argument, NULL, 'D'},
         {"verbose", no_argument, NULL, 'V'},
         {"debug", no_argument, NULL, 'd'},
-        {"help", no_argument, NULL, 'h'},
-        {"daemon", no_argument, NULL, 'D'},
-        {"format", required_argument, NULL, 'f'},
+        {"version", no_argument, NULL, 'v'},
+        {"server", no_argument, NULL, 's'},
+        {"client", required_argument, NULL, 'c'},
+        {"udp", no_argument, NULL, 'u'},
+        {"bandwidth", required_argument, NULL, 'b'},
+        {"time", required_argument, NULL, 't'},
+        {"bytes", required_argument, NULL, 'n'},
+        {"length", required_argument, NULL, 'l'},
+        {"parallel", required_argument, NULL, 'P'},
         {"reverse", no_argument, NULL, 'R'},
+        {"window", required_argument, NULL, 'w'},
+        {"bind", required_argument, NULL, 'B'},
+        {"set-mss", required_argument, NULL, 'M'},
+        {"no-delay", no_argument, NULL, 'N'},
         {"version6", no_argument, NULL, '6'},
+        {"tos", required_argument, NULL, 'S'},
+        {"help", no_argument, NULL, 'h'},
 
     /*  XXX: The following ifdef needs to be split up. linux-congestion is not necessarily supported
      *  by systems that support tos.
@@ -370,28 +370,73 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     int blksize;
 
     blksize = 0;
-    while ((ch = getopt_long(argc, argv, "c:p:st:uP:B:b:l:w:i:n:RS:Nvh6VdM:f:", longopts, NULL)) != -1) {
+    while ((ch = getopt_long(argc, argv, "p:f:i:DVdvsc:ub:t:n:l:P:Rw:B:M:N6S:h", longopts, NULL)) != -1) {
         switch (ch) {
-            case 'c':
-                if (test->role == 's') {
-                    i_errno = IESERVCLIENT;
-                    return -1;
-                } else {
-                    test->role = 'c';
-                    test->server_hostname = (char *) malloc(strlen(optarg)+1);
-                    strncpy(test->server_hostname, optarg, strlen(optarg)+1);
-                }
-                break;
             case 'p':
                 test->server_port = atoi(optarg);
                 break;
+            case 'f':
+                test->settings->unit_format = *optarg;
+                break;
+            case 'i':
+                /* XXX: could potentially want separate stat collection and reporting intervals,
+                   but just set them to be the same for now */
+                test->stats_interval = atof(optarg);
+                test->reporter_interval = atof(optarg);
+                if (test->stats_interval > MAX_INTERVAL) {
+                    i_errno = IEINTERVAL;
+                    return -1;
+                }
+                break;
+            case 'D':
+                if (test->role == 'c') {
+                    i_errno = IESERVCLIENT;
+                    return -1;
+                }
+		test->daemon = 1;
+	        break;
+            case 'V':
+                test->verbose = 1;
+                break;
+            case 'd':
+                test->debug = 1;
+                break;
+            case 'v':
+                fputs(version, stdout);
+		system("uname -a");
+                exit(0);
             case 's':
                 if (test->role == 'c') {
                     i_errno = IESERVCLIENT;
                     return -1;
-                } else {
-                    test->role = 's';
                 }
+		test->role = 's';
+                break;
+            case 'c':
+                if (test->role == 's') {
+                    i_errno = IESERVCLIENT;
+                    return -1;
+                }
+		test->role = 'c';
+		test->server_hostname = (char *) malloc(strlen(optarg)+1);
+		strncpy(test->server_hostname, optarg, strlen(optarg)+1);
+                break;
+            case 'u':
+                if (test->role == 's') {
+                    warning("ignoring client only argument --udp (-u)");
+                /* XXX: made a warning
+                    i_errno = IECLIENTONLY;
+                    return -1;
+                */
+                }
+                set_protocol(test, Pudp);
+                break;
+            case 'b':
+                if (test->role == 's') {
+                    i_errno = IECLIENTONLY;
+                    return -1;
+                }
+                test->settings->rate = unit_atof(optarg);
                 break;
             case 't':
                 if (test->role == 's') {
@@ -404,15 +449,19 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     return -1;
                 }
                 break;
-            case 'u':
+            case 'n':
                 if (test->role == 's') {
-                    warning("ignoring client only argument --udp (-u)");
-                /* XXX: made a warning
                     i_errno = IECLIENTONLY;
                     return -1;
-                */
                 }
-                set_protocol(test, Pudp);
+                test->settings->bytes = unit_atoi(optarg);
+                break;
+            case 'l':
+                if (test->role == 's') {
+                    i_errno = IECLIENTONLY;
+                    return -1;
+                }
+                blksize = unit_atoi(optarg);
                 break;
             case 'P':
                 if (test->role == 's') {
@@ -425,23 +474,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     return -1;
                 }
                 break;
-            case 'B':
-                test->bind_address = (char *) malloc(strlen(optarg)+1);
-                strncpy(test->bind_address, optarg, strlen(optarg)+1);
-                break;
-            case 'b':
+            case 'R':
                 if (test->role == 's') {
                     i_errno = IECLIENTONLY;
                     return -1;
                 }
-                test->settings->rate = unit_atof(optarg);
-                break;
-            case 'l':
-                if (test->role == 's') {
-                    i_errno = IECLIENTONLY;
-                    return -1;
-                }
-                blksize = unit_atoi(optarg);
+                test->reverse = 1;
                 break;
             case 'w':
                 // XXX: This is a socket buffer, not specific to TCP
@@ -455,29 +493,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     return -1;
                 }
                 break;
-            case 'i':
-                /* XXX: could potentially want separate stat collection and reporting intervals,
-                   but just set them to be the same for now */
-                test->stats_interval = atof(optarg);
-                test->reporter_interval = atof(optarg);
-                if (test->stats_interval > MAX_INTERVAL) {
-                    i_errno = IEINTERVAL;
-                    return -1;
-                }
-                break;
-            case 'n':
-                if (test->role == 's') {
-                    i_errno = IECLIENTONLY;
-                    return -1;
-                }
-                test->settings->bytes = unit_atoi(optarg);
-                break;
-            case 'N':
-                if (test->role == 's') {
-                    i_errno = IECLIENTONLY;
-                    return -1;
-                }
-                test->no_delay = 1;
+            case 'B':
+                test->bind_address = (char *) malloc(strlen(optarg)+1);
+                strncpy(test->bind_address, optarg, strlen(optarg)+1);
                 break;
             case 'M':
                 if (test->role == 's') {
@@ -490,24 +508,15 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     return -1;
                 }
                 break;
-            case 'f':
-                test->settings->unit_format = *optarg;
-                break;
-            case '6':
-                test->settings->domain = AF_INET6;
-                break;
-            case 'V':
-                test->verbose = 1;
-                break;
-            case 'd':
-                test->debug = 1;
-                break;
-            case 'R':
+            case 'N':
                 if (test->role == 's') {
                     i_errno = IECLIENTONLY;
                     return -1;
                 }
-                test->reverse = 1;
+                test->no_delay = 1;
+                break;
+            case '6':
+                test->settings->domain = AF_INET6;
                 break;
             case 'S':
                 if (test->role == 's') {
@@ -517,10 +526,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 // XXX: Checking for errors in strtol is not portable. Leave as is?
                 test->settings->tos = strtol(optarg, NULL, 0);
                 break;
-            case 'v':
-                fputs(version, stdout);
-		system("uname -a");
-                exit(0);
             case 'h':
             default:
                 usage_long();

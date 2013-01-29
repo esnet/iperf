@@ -30,17 +30,24 @@ set server port to listen on/connect to to \fIn\fR (default 5201)
 .BR -i ", " --interval " \fIn\fR"
 pause \fIn\fR seconds between periodic bandwidth reports
 .TP
-.BR -h ", " --help " "
-print a help synopsis
+.BR -V ", " --verbose " "
+give more detailed output 
+.TP
+.BR -d ", " --debug " "
+debug mode
 .TP
 .BR -v ", " --version " "
-print version information and quit
+show version information and quit
+.TP
+.BR -h ", " --help " "
+show a help synopsis
 
 
 .SH "SERVER SPECIFIC OPTIONS"
 .TP
 .BR -s ", " --server " "
 run in server mode
+.TP
 
 
 .SH "CLIENT SPECIFIC OPTIONS"
@@ -57,10 +64,10 @@ set target bandwidth to \fIn\fR bits/sec (default 1 Mbit/sec). Requires UDP mode
 .BR -t ", " --time " \fIn\fR"
 time in seconds to transmit for (default 10 secs)
 .TP
-.BR -n ", " --num " \fIn\fR[KM]"
+.BR -n ", " --bytes " \fIn\fR[KM]"
 number of bytes to transmit (instead of -t)
 .TP
-.BR -l ", " --len " \fIn\fR[KM]"
+.BR -l ", " --length " \fIn\fR[KM]"
 set length read/write buffer to \fIn\fR (default 128 KB)
 .TP
 .BR -P ", " --parallel " \fIn\fR"
@@ -72,11 +79,20 @@ run in reverse mode (server sends, client receives)
 .BR -w ", " --window " \fIn\fR[KM]"
 TCP window size (socket buffer size)
 .TP
-.BR -M ", " --mss " \fIn\fR"
+.BR -B ", " --bind " \fIn\fR[KM]"
+bind to a specific interface or multicast address
+.TP
+.BR -M ", " --set-mss " \fIn\fR"
 set TCP maximum segment size (MTU - 40 bytes)
 .TP
-.BR -N ", " --nodelay " "
+.BR -N ", " --no-delay " "
 set TCP no delay, disabling Nagle's Algorithm
+.TP
+.BR -6 ", " --version6 " "
+use IPv6
+.TP
+.BR -S ", " --tos " \fIn\fR"
+set the IP 'type of service'
 
 
 .SH DIAGNOSTICS

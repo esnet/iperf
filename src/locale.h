@@ -10,9 +10,8 @@
 #ifndef        IPERF_LOCALE_H
 #define        IPERF_LOCALE_H
 
-extern const char usage_short[];
-extern const char usage_long1[];
-extern const char usage_long2[];
+extern const char usage_shortstr[];
+extern const char usage_longstr[];
 extern const char version[];
 
 extern const char seperator_line[];

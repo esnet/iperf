@@ -71,10 +71,6 @@ extern    "C"
     const long MEGA_UNIT = 1024 * 1024;
     const long GIGA_UNIT = 1024 * 1024 * 1024;
 
-    const long KILO_UNIT_SI = 1000;
-    const long MEGA_UNIT_SI = 1000 * 1000;
-    const long GIGA_UNIT_SI = 1000 * 1000 * 1000;
-
 /* -------------------------------------------------------------------
  * unit_atof
  *
@@ -96,23 +92,14 @@ extern    "C"
 	/* convert according to [Gg Mm Kk] */
 	switch    (suffix)
 	{
-	case 'G':
+	case 'g': case 'G':
 	    n *= GIGA_UNIT;
 	    break;
-	case 'M':
+	case 'm': case 'M':
 	    n *= MEGA_UNIT;
 	    break;
-	case 'K':
+	case 'k': case 'K':
 	    n *= KILO_UNIT;
-	    break;
-	case 'g':
-	    n *= GIGA_UNIT_SI;
-	    break;
-	case 'm':
-	    n *= MEGA_UNIT_SI;
-	    break;
-	case 'k':
-	    n *= KILO_UNIT_SI;
 	    break;
 	default:
 	    break;
@@ -141,23 +128,14 @@ extern    "C"
 	/* convert according to [Gg Mm Kk] */
 	switch    (suffix)
 	{
-	case 'G':
+	case 'g': case 'G':
 	    n *= GIGA_UNIT;
 	    break;
-	case 'M':
+	case 'm': case 'M':
 	    n *= MEGA_UNIT;
 	    break;
-	case 'K':
+	case 'k': case 'K':
 	    n *= KILO_UNIT;
-	    break;
-	case 'g':
-	    n *= GIGA_UNIT_SI;
-	    break;
-	case 'm':
-	    n *= MEGA_UNIT_SI;
-	    break;
-	case 'k':
-	    n *= KILO_UNIT_SI;
 	    break;
 	default:
 	    break;

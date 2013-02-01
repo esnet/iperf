@@ -67,10 +67,11 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -p, --port      #         server port to listen on/connect to\n"
                            "  -f, --format    [kmgKMG]  format to report: Kbits, Mbits, KBytes, MBytes\n"
                            "  -i, --interval  #         seconds between periodic bandwidth reports\n"
-                           "  -V, --verbose             more verbose output\n"
+                           "  -V, --verbose             more detailed output\n"
+                           "  -J, --json                output in JSON format\n"
                            "  -d, --debug               debug mode\n"
-                           "  -v, --version             print version information and quit\n"
-                           "  -h, --help                print this message and quit\n"
+                           "  -v, --version             show version information and quit\n"
+                           "  -h, --help                show this message and quit\n"
                            "Server specific:\n"
                            "  -s, --server              run in server mode\n"
                            "Client specific:\n"
@@ -110,7 +111,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
   -y, --reportstyle C      report as a Comma-Separated Values
 #endif
 
-const char version[] = "iperf version " IPERF_VERSION " (" IPERF_VERSION_DATE ") \n";
+const char version[] = "iperf version " IPERF_VERSION " (" IPERF_VERSION_DATE ")";
 
 /* -------------------------------------------------------------------
  * settings

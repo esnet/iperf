@@ -99,6 +99,7 @@ get_tcpinfo_total_retransmits(struct iperf_interval_results *irp)
 #endif
 }
 
+#ifdef notdef
 /*************************************************************/
 //print_tcpinfo(struct iperf_interval_results *r)
 void
@@ -127,6 +128,7 @@ print_tcpinfo(struct iperf_test *test)
 */
 #endif
 }
+#endif
 
 
 /*************************************************************/

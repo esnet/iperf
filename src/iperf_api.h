@@ -156,7 +156,6 @@ long get_tcpinfo_total_retransmits(struct iperf_interval_results *irp);
 void print_tcpinfo(struct iperf_test *test);
 void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 
-void print_interval_results(struct iperf_test * test, struct iperf_stream *sp);
 int iperf_send(struct iperf_test *, fd_set *);
 int iperf_recv(struct iperf_test *, fd_set *);
 void sig_handler(int);
@@ -192,6 +191,11 @@ int iperf_server_listen(struct iperf_test *);
 int iperf_accept(struct iperf_test *);
 int iperf_handle_message_server(struct iperf_test *);
 void iperf_test_reset(struct iperf_test *);
+
+/* JSON output routines. */
+int iperf_json_start(struct iperf_test *);
+int iperf_json_finish(struct iperf_test *);
+cJSON* iperf_json_printf(const char *format, ...);
 
 /* Error routines. */
 void iperf_error(char *);

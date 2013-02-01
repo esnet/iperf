@@ -17,6 +17,7 @@
 #include <netinet/tcp.h>
 #include "timer.h"
 #include "queue.h"
+#include "cjson.h"
 
 typedef uint64_t iperf_size_t;
 
@@ -64,8 +65,12 @@ struct iperf_settings
     char      unit_format;          /* -f */
 };
 
+struct iperf_test;
+
 struct iperf_stream
 {
+    struct iperf_test* test;
+
     /* configurable members */
     int       local_port;
     int       remote_port;
@@ -104,8 +109,6 @@ struct iperf_stream
     void     *data;
 };
 
-struct iperf_test;
-
 struct protocol {
     int       id;
     char      *name;
@@ -140,6 +143,7 @@ struct iperf_test
     int       reverse;                          /* -R option */
     int       v6domain;                         /* -6 option */
     int	      verbose;                          /* -V option - verbose mode */
+    int	      json_output;                      /* -J option - JSON output */
 
     /* Select related parameters */
     int       max_fd;
@@ -174,6 +178,12 @@ struct iperf_test
     void      (*on_test_start)(struct iperf_test *);
     void      (*on_connect)(struct iperf_test *);
     void      (*on_test_finish)(struct iperf_test *);
+
+    /* cJSON handles for use when in -J mode */\
+    cJSON *json_top;
+    cJSON *json_start;
+    cJSON *json_intervals;
+    cJSON *json_end;
 };
 
 /* default settings */

@@ -52,8 +52,10 @@ iperf_server_listen(struct iperf_test *test)
         return -1;
     }
 
-    printf("-----------------------------------------------------------\n");
-    printf("Server listening on %d\n", test->server_port);
+    if (!test->json_output) {
+	printf("-----------------------------------------------------------\n");
+	printf("Server listening on %d\n", test->server_port);
+    }
 
     // This needs to be changed to reflect if client has different window size
     // make sure we got what we asked for
@@ -73,13 +75,16 @@ iperf_server_listen(struct iperf_test *test)
     if (test->protocol->id == Ptcp) {
         if (test->settings->socket_bufsize > 0) {
             unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A');
-            printf("TCP window size: %s\n", ubuf);
+	    if (test->json_output) 
+		printf("TCP window size: %s\n", ubuf);
         } else {
-            printf("Using TCP Autotuning\n");
+	    if (test->json_output) 
+		printf("Using TCP Autotuning\n");
         }
     }
     */
-    printf("-----------------------------------------------------------\n");
+    if (!test->json_output)
+	printf("-----------------------------------------------------------\n");
 
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);

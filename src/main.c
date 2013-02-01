@@ -51,7 +51,7 @@ main(int argc, char **argv)
 
     if (rc < 0) {
         perror("setpriority:");
-        printf("setting priority to valid level\n");
+        fprintf(stderr, "setting priority to valid level\n");
         rc = setpriority(PRIO_PROCESS, 0, 0);
     }
     
@@ -107,21 +107,45 @@ main(int argc, char **argv)
 
     iperf_free_test(test);
 
-    printf("\niperf Done.\n");
-
     return 0;
+}
+
+static char*
+get_system_info(void)
+{
+    FILE* fp;
+    static char buf[1000];
+
+    fp = popen("uname -a", "r");
+    if (fp == NULL)
+        return NULL;
+    fgets(buf, sizeof(buf), fp);
+    pclose(fp);
+    return buf;
 }
 
 /**************************************************************************/
 int
 iperf_run(struct iperf_test * test)
 {
+    if (test->json_output)
+        if (iperf_json_start(test) < 0)
+	    return -1;
+
+    if (test->json_output) {
+	cJSON_AddItemToObject(test->json_start, "version", cJSON_CreateString(version));
+	cJSON_AddItemToObject(test->json_start, "system_info", cJSON_CreateString(get_system_info()));
+    } else if (test->verbose) {
+	printf("%s\n", version);
+	system("uname -a");
+    }
+
     switch (test->role) {
         case 's':
             for (;;) {
                 if (iperf_run_server(test) < 0) {
                     iperf_error("error");
-                    printf("\n");
+                    fprintf(stderr, "\n");
                 }
                 iperf_reset_test(test);
             }
@@ -136,6 +160,13 @@ iperf_run(struct iperf_test * test)
             usage();
             break;
     }
+
+    if (test->json_output) {
+        if (iperf_json_finish(test) < 0)
+	    return -1;
+    } else
+	printf("\niperf Done.\n");
+
 
     return 0;
 }

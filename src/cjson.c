@@ -181,15 +181,15 @@ static const char *parse_number( cJSON *item, const char *num )
 
 	/* Put it together. */
 	if ( isint ) {
-	    /* Int: number = +/- number */
-	    i = sign * i;
-	    item->valueint = i;
-	    item->valuefloat = i;
+		/* Int: number = +/- number */
+		i = sign * i;
+		item->valueint = i;
+		item->valuefloat = i;
 	} else {
-	    /* Float: number = +/- number.fraction * 10^+/- exponent */
-	    f = sign * f * ipow( 10.0, scale + subscale * signsubscale );
-	    item->valueint = f;
-	    item->valuefloat = f;
+		/* Float: number = +/- number.fraction * 10^+/- exponent */
+		f = sign * f * ipow( 10.0, scale + subscale * signsubscale );
+		item->valueint = f;
+		item->valuefloat = f;
 	}
 
 	item->type = cJSON_Number;
@@ -201,21 +201,18 @@ static const char *parse_number( cJSON *item, const char *num )
 static char *print_number( cJSON *item )
 {
 	char *str;
-	double d = item->valuefloat;
-	if ( fabs( ( (double) item->valueint ) - d ) <= DBL_EPSILON && d <= INT_MAX && d >= INT_MIN ) {
-		str = (char*) cJSON_malloc( 21 );	/* 2^64+1 can be represented in 21 chars. */
-		if ( str )
-			sprintf( str, "%lld", (long long int) item->valueint );
-	} else {
-		str = (char*) cJSON_malloc( 64 );	/* This is a nice tradeoff. */
-		if ( str ) {
-			if ( fabs( floor( d ) - d ) <= DBL_EPSILON )
-				sprintf( str, "%.0f", d );
-			else if ( fabs( d ) < 1.0e-6 || fabs( d ) > 1.0e9 )
-				sprintf( str, "%e", d );
-			else
-				sprintf( str, "%f", d );
-		}
+	double f, f2;
+	int64_t i;
+
+	str = (char*) cJSON_malloc( 64 );
+	if ( str ) {
+		f = item->valuefloat;
+		i = f;
+		f2 = i;
+		if ( f2 == f && item->valueint >= LLONG_MIN && item->valueint <= LLONG_MAX )
+			sprintf( str, "%lld", (long long) item->valueint );
+		else
+			sprintf( str, "%g", item->valuefloat );
 	}
 	return str;
 }
@@ -394,7 +391,7 @@ cJSON *cJSON_Parse( const char *value )
 	cJSON *c;
 	ep = 0;
 	if ( ! ( c = cJSON_New_Item() ) )
-		return 0;       /* memory fail */
+		return 0;	/* memory fail */
 
 	if ( ! parse_value( c, skip( value ) ) ) {
 		cJSON_Delete( c );

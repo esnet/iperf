@@ -195,10 +195,10 @@ void iperf_test_reset(struct iperf_test *);
 /* JSON output routines. */
 int iperf_json_start(struct iperf_test *);
 int iperf_json_finish(struct iperf_test *);
-cJSON* iperf_json_printf(const char *format, ...);
 
 /* Error routines. */
-void iperf_error(char *);
+void iperf_err(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3)));
+void iperf_errexit(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3),noreturn));
 char *iperf_strerror(int);
 extern int i_errno;
 enum {

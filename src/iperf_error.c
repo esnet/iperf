@@ -11,8 +11,46 @@
 #include <errno.h>
 #include <netdb.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdarg.h>
 #include "iperf.h"
 #include "iperf_api.h"
+
+static void
+iperf_verr(struct iperf_test *test, const char *format, va_list argp)
+{
+    char str[1000];
+
+    vsnprintf(str, sizeof(str), format, argp);
+    if (test != NULL && test->json_output && test->json_top != NULL) {
+	cJSON_AddStringToObject(test->json_top, "error", str);
+	iperf_json_finish(test);
+    } else
+	fprintf(stderr, "iperf3: %s\n", str);
+}
+
+/* Do a printf to stderr. */
+void
+iperf_err(struct iperf_test *test, const char *format, ...)
+{
+    va_list argp;
+
+    va_start(argp, format);
+    iperf_verr(test, format, argp);
+    va_end(argp);
+}
+
+/* Do a printf to stderr, then exit. */
+void
+iperf_errexit(struct iperf_test *test, const char *format, ...)
+{
+    va_list argp;
+
+    va_start(argp, format);
+    iperf_verr(test, format, argp);
+    va_end(argp);
+    exit(1);
+}
 
 int i_errno;
 
@@ -28,198 +66,198 @@ iperf_strerror(int i_errno)
 
     switch (i_errno) {
         case IENONE:
-            snprintf(errstr, len, "No error");
+            snprintf(errstr, len, "no error");
             break;
         case IESERVCLIENT:
-            snprintf(errstr, len, "Iperf cannot be both server and client");
+            snprintf(errstr, len, "cannot be both server and client");
             break;
         case IENOROLE:
-            snprintf(errstr, len, "Iperf instance must either be a client (-c) or server (-s)");
+            snprintf(errstr, len, "must either be a client (-c) or server (-s)");
             break;
         case IECLIENTONLY:
-            snprintf(errstr, len, "Some option you are trying to set is client only");
+            snprintf(errstr, len, "some option you are trying to set is client only");
             break;
         case IEDURATION:
-            snprintf(errstr, len, "Test duration too long (maximum = %d seconds)", MAX_TIME);
+            snprintf(errstr, len, "test duration too long (maximum = %d seconds)", MAX_TIME);
             break;
         case IENUMSTREAMS:
-            snprintf(errstr, len, "Number of parallel streams too large (maximum = %d)", MAX_STREAMS);
+            snprintf(errstr, len, "number of parallel streams too large (maximum = %d)", MAX_STREAMS);
             break;
         case IEBLOCKSIZE:
-            snprintf(errstr, len, "Block size too large (maximum = %d bytes)", MAX_BLOCKSIZE);
+            snprintf(errstr, len, "block size too large (maximum = %d bytes)", MAX_BLOCKSIZE);
             break;
         case IEBUFSIZE:
-            snprintf(errstr, len, "Socket buffer size too large (maximum = %d bytes)", MAX_TCP_BUFFER);
+            snprintf(errstr, len, "socket buffer size too large (maximum = %d bytes)", MAX_TCP_BUFFER);
             break;
         case IEINTERVAL:
-            snprintf(errstr, len, "Report interval too large (maximum = %d seconds)", MAX_INTERVAL);
+            snprintf(errstr, len, "report interval too large (maximum = %d seconds)", MAX_INTERVAL);
             break;
         case IEMSS:
             snprintf(errstr, len, "TCP MSS too large (maximum = %d bytes)", MAX_MSS);
             break;
         case IENEWTEST:
-            snprintf(errstr, len, "Unable to create a new test");
+            snprintf(errstr, len, "unable to create a new test");
             perr = 1;
             break;
         case IEINITTEST:
-            snprintf(errstr, len, "Test initialization failed");
+            snprintf(errstr, len, "test initialization failed");
             perr = 1;
             break;
         case IELISTEN:
-            snprintf(errstr, len, "Unable to start listener for connections");
+            snprintf(errstr, len, "unable to start listener for connections");
             perr = 1;
             break;
         case IECONNECT:
-            snprintf(errstr, len, "Unable to connect to server");
+            snprintf(errstr, len, "unable to connect to server");
             herr = 1;
             perr = 1;
             break;
         case IEACCEPT:
-            snprintf(errstr, len, "Unable to accept connection from client");
+            snprintf(errstr, len, "unable to accept connection from client");
             herr = 1;
             perr = 1;
             break;
         case IESENDCOOKIE:
-            snprintf(errstr, len, "Unable to send cookie to server");
+            snprintf(errstr, len, "unable to send cookie to server");
             perr = 1;
             break;
         case IERECVCOOKIE:
-            snprintf(errstr, len, "Unable to receive cookie to server");
+            snprintf(errstr, len, "unable to receive cookie to server");
             perr = 1;
             break;
         case IECTRLWRITE:
-            snprintf(errstr, len, "Unable to write to the control socket");
+            snprintf(errstr, len, "unable to write to the control socket");
             perr = 1;
             break;
         case IECTRLREAD:
-            snprintf(errstr, len, "Unable to read from the control socket");
+            snprintf(errstr, len, "unable to read from the control socket");
             perr = 1;
             break;
         case IECTRLCLOSE:
-            snprintf(errstr, len, "Control socket has closed unexpectedly");
+            snprintf(errstr, len, "control socket has closed unexpectedly");
             break;
         case IEMESSAGE:
-            snprintf(errstr, len, "Received an unknown control message");
+            snprintf(errstr, len, "received an unknown control message");
             break;
         case IESENDMESSAGE:
-            snprintf(errstr, len, "Unable to send control message");
+            snprintf(errstr, len, "unable to send control message");
             perr = 1;
             break;
         case IERECVMESSAGE:
-            snprintf(errstr, len, "Unable to receive control message");
+            snprintf(errstr, len, "unable to receive control message");
             perr = 1;
             break;
         case IESENDPARAMS:
-            snprintf(errstr, len, "Unable to send parameters to server");
+            snprintf(errstr, len, "unable to send parameters to server");
             perr = 1;
             break;
         case IERECVPARAMS:
-            snprintf(errstr, len, "Unable to receive parameters from client");
+            snprintf(errstr, len, "unable to receive parameters from client");
             perr = 1;
             break;
         case IEPACKAGERESULTS:
-            snprintf(errstr, len, "Unable to package results");
+            snprintf(errstr, len, "unable to package results");
             perr = 1;
             break;
         case IESENDRESULTS:
-            snprintf(errstr, len, "Unable to send results");
+            snprintf(errstr, len, "unable to send results");
             perr = 1;
             break;
         case IERECVRESULTS:
-            snprintf(errstr, len, "Unable to receive results");
+            snprintf(errstr, len, "unable to receive results");
             perr = 1;
             break;
         case IESELECT:
-            snprintf(errstr, len, "Select failed");
+            snprintf(errstr, len, "select failed");
             perr = 1;
             break;
         case IECLIENTTERM:
-            snprintf(errstr, len, "The client has terminated");
+            snprintf(errstr, len, "the client has terminated");
             break;
         case IESERVERTERM:
-            snprintf(errstr, len, "The server has terminated");
+            snprintf(errstr, len, "the server has terminated");
             break;
         case IEACCESSDENIED:
-            snprintf(errstr, len, "The server is busy running a test. try again later");
+            snprintf(errstr, len, "the server is busy running a test. try again later");
             break;
         case IESETNODELAY:
-            snprintf(errstr, len, "Unable to set TCP NODELAY");
+            snprintf(errstr, len, "unable to set TCP NODELAY");
             perr = 1;
             break;
         case IESETMSS:
-            snprintf(errstr, len, "Unable to set TCP MSS");
+            snprintf(errstr, len, "unable to set TCP MSS");
             perr = 1;
             break;
         case IESETBUF:
-            snprintf(errstr, len, "Unable to set socket buffer size");
+            snprintf(errstr, len, "unable to set socket buffer size");
             perr = 1;
             break;
         case IESETTOS:
-            snprintf(errstr, len, "Unable to set IP TOS");
+            snprintf(errstr, len, "unable to set IP TOS");
             perr = 1;
             break;
         case IESETCOS:
-            snprintf(errstr, len, "Unable to set IPv6 traffic class");
+            snprintf(errstr, len, "unable to set IPv6 traffic class");
             perr = 1;
             break;
         case IEREUSEADDR:
-            snprintf(errstr, len, "Unable to reuse address on socket");
+            snprintf(errstr, len, "unable to reuse address on socket");
             perr = 1;
             break;
         case IENONBLOCKING:
-            snprintf(errstr, len, "Unable to set socket to non-blocking");
+            snprintf(errstr, len, "unable to set socket to non-blocking");
             perr = 1;
             break;
         case IESETWINDOWSIZE:
-            snprintf(errstr, len, "Unable to set socket window size");
+            snprintf(errstr, len, "unable to set socket window size");
             perr = 1;
             break;
         case IEPROTOCOL:
-            snprintf(errstr, len, "Protocol does not exist");
+            snprintf(errstr, len, "protocol does not exist");
             break;
         case IECREATESTREAM:
-            snprintf(errstr, len, "Unable to create a new stream");
+            snprintf(errstr, len, "unable to create a new stream");
             herr = 1;
             perr = 1;
             break;
         case IEINITSTREAM:
-            snprintf(errstr, len, "Unable to initialize stream");
+            snprintf(errstr, len, "unable to initialize stream");
             herr = 1;
             perr = 1;
             break;
         case IESTREAMLISTEN:
-            snprintf(errstr, len, "Unable to start stream listener");
+            snprintf(errstr, len, "unable to start stream listener");
             perr = 1;
             break;
         case IESTREAMCONNECT:
-            snprintf(errstr, len, "Unable to connect stream");
+            snprintf(errstr, len, "unable to connect stream");
             herr = 1;
             perr = 1;
             break;
         case IESTREAMACCEPT:
-            snprintf(errstr, len, "Unable to accept stream connection");
+            snprintf(errstr, len, "unable to accept stream connection");
             perr = 1;
             break;
         case IESTREAMWRITE:
-            snprintf(errstr, len, "Unable to write to stream socket");
+            snprintf(errstr, len, "unable to write to stream socket");
             perr = 1;
             break;
         case IESTREAMREAD:
-            snprintf(errstr, len, "Unable to read from stream socket");
+            snprintf(errstr, len, "unable to read from stream socket");
             perr = 1;
             break;
         case IESTREAMCLOSE:
-            snprintf(errstr, len, "Stream socket has closed unexpectedly");
+            snprintf(errstr, len, "stream socket has closed unexpectedly");
             break;
         case IESTREAMID:
-            snprintf(errstr, len, "Stream has an invalid id");
+            snprintf(errstr, len, "stream has an invalid id");
             break;
         case IENEWTIMER:
-            snprintf(errstr, len, "Unable to create new timer");
+            snprintf(errstr, len, "unable to create new timer");
             perr = 1;
             break;
         case IEUPDATETIMER:
-            snprintf(errstr, len, "Unable to update timer");
+            snprintf(errstr, len, "unable to update timer");
             perr = 1;
             break;
     }
@@ -233,10 +271,4 @@ iperf_strerror(int i_errno)
     }
 
     return errstr;
-}
-
-void
-iperf_error(char *estr)
-{
-    fprintf(stderr, "%s: %s\n", estr, iperf_strerror(i_errno));
 }

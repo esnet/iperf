@@ -74,10 +74,8 @@ main(int argc, char **argv)
 #endif
 
     test = iperf_new_test();
-    if (!test) {
-        iperf_error("create new test error");
-        exit(1);
-    }
+    if (!test)
+        iperf_errexit(NULL, "create new test error - %s", iperf_strerror(i_errno));
     iperf_defaults(test);	/* sets defaults */
 
     // XXX: Check signal for errors?
@@ -94,16 +92,14 @@ main(int argc, char **argv)
     } 
 
     if (iperf_parse_arguments(test, argc, argv) < 0) {
-        iperf_error("parameter error");
+        iperf_err(test, "parameter error - %s", iperf_strerror(i_errno));
         fprintf(stderr, "\n");
         usage_long();
         exit(1);
     }
 
-    if (iperf_run(test) < 0) {
-        iperf_error("error");
-        exit(1);
-    }
+    if (iperf_run(test) < 0)
+        iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 
     iperf_free_test(test);
 
@@ -144,17 +140,15 @@ iperf_run(struct iperf_test * test)
         case 's':
             for (;;) {
                 if (iperf_run_server(test) < 0) {
-                    iperf_error("error");
+		    iperf_err(test, "error - %s", iperf_strerror(i_errno));
                     fprintf(stderr, "\n");
                 }
                 iperf_reset_test(test);
             }
             break;
         case 'c':
-            if (iperf_run_client(test) < 0) {
-                iperf_error("error");
-                exit(1);
-            }
+            if (iperf_run_client(test) < 0)
+		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
             break;
         default:
             usage();

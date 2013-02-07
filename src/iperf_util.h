@@ -10,6 +10,8 @@
 #ifndef __IPERF_UTIL_H
 #define __IPERF_UTIL_H
 
+#include "cjson.h"
+
 void make_cookie(char *);
 
 int is_closed(int);
@@ -23,5 +25,7 @@ double timeval_diff(struct timeval *tv0, struct timeval *tv1);
 int delay(int64_t ns);
 
 void cpu_util(double *);
+
+cJSON* iperf_json_printf(const char *format, ...);
 
 #endif

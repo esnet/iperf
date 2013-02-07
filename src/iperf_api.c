@@ -14,7 +14,6 @@
 #include <errno.h>
 #include <signal.h>
 #include <unistd.h>
-#include <stdarg.h>
 #include <assert.h>
 #include <fcntl.h>
 #include <sys/socket.h>
@@ -1387,15 +1386,15 @@ iperf_print_intermediate(struct iperf_test *test)
 	/* sum up all streams */
 	irp = TAILQ_LAST(&sp->result->interval_results, irlisthead);
 	if (irp == NULL) {
-	    fprintf(stderr, "iperf_print_intermediate Error: interval_results is NULL\n");
+	    iperf_err(test, "iperf_print_intermediate error: interval_results is NULL");
 	    return;
 	}
         bytes += irp->bytes_transferred;
 	if (test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    retransmits += irp->this_retrans;
     }
-    if (bytes <=0 ) { /* this can happen if timer goes off just when client exits */
-        fprintf(stderr, "error: bytes <= 0!\n");
+    if (bytes <=0) { /* this can happen if timer goes off just when client exits */
+	iperf_err(test, "error: bytes <= 0!");
         return;
     }
     /* next build string with sum of all streams */
@@ -1613,7 +1612,7 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 
     irp = TAILQ_LAST(&sp->result->interval_results, irlisthead); /* get last entry in linked list */
     if (irp == NULL) {
-        fprintf(stderr, "print_interval_results Error: interval_results is NULL \n");
+	iperf_err(test, "print_interval_results error: interval_results is NULL");
         return;
     }
     if (!test->json_output) {
@@ -1825,81 +1824,4 @@ iperf_json_finish(struct iperf_test *test)
     cJSON_Delete(test->json_top);
     test->json_top = test->json_start = test->json_intervals = test->json_end = NULL;
     return 0;
-}
-
-/* Helper routine for building cJSON objects in a printf-like manner.
-**
-** Sample call:
-**   j = iperf_json_printf("foo: %b  bar: %d  bletch: %f  eep: %s", b, i, f, s);
-**
-** The four formatting characters and the types they expect are:
-**   %b  boolean           int
-**   %d  integer           int64_t
-**   %f  floating point    double
-**   %s  string            char *
-** If the values you're passing in are not these exact types, you must
-** cast them, there is no automatic type coercion/widening here.
-**
-** The colons mark the end of field names, and blanks are ignored.
-**
-** This routine is not particularly robust, but it's not part of the API,
-** it's just for internal iperf3 use.
-**
-** It currently lives in iperf_api.c, rather than iperf_util.c, because
-** putting it in iperf_util.c would mean adding -lm to more executables,
-** because the cJSON package uses libm/floor().  If I get around to fixing
-** that, then this routine can move.
-*/
-cJSON*
-iperf_json_printf(const char *format, ...)
-{
-    cJSON* o;
-    va_list argp;
-    const char *cp;
-    char name[100];
-    char* np;
-    cJSON* j;
-
-    o = cJSON_CreateObject();
-    if (o == NULL)
-        return NULL;
-    va_start(argp, format);
-    np = name;
-    for (cp = format; *cp != '\0'; ++cp) {
-	switch (*cp) {
-	    case ' ':
-	    break;
-	    case ':':
-	    *np = '\0';
-	    break;
-	    case '%':
-	    ++cp;
-	    switch (*cp) {
-		case 'b':
-		j = cJSON_CreateBool(va_arg(argp, int));
-		break;
-		case 'd':
-		j = cJSON_CreateInt(va_arg(argp, int64_t));
-		break;
-		case 'f':
-		j = cJSON_CreateFloat(va_arg(argp, double));
-		break;
-		case 's':
-		j = cJSON_CreateString(va_arg(argp, char *));
-		break;
-		default:
-		return NULL;
-	    }
-	    if (j == NULL)
-		return NULL;
-	    cJSON_AddItemToObject(o, name, j);
-	    np = name;
-	    break;
-	    default:
-	    *np++ = *cp;
-	    break;
-	}
-    }
-    va_end(argp);
-    return o;
 }

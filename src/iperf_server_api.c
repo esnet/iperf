@@ -159,7 +159,7 @@ iperf_handle_message_server(struct iperf_test *test)
     // XXX: Need to rethink how this behaves to fit API
     if ((rval = Nread(test->ctrl_sck, &test->state, sizeof(char), Ptcp)) <= 0) {
         if (rval == 0) {
-            fprintf(stderr, "The client has unexpectedly closed the connection.\n");
+	    iperf_err(test, "the client has unexpectedly closed the connection");
             i_errno = IECTRLCLOSE;
             test->state = IPERF_DONE;
             return 0;
@@ -202,7 +202,7 @@ iperf_handle_message_server(struct iperf_test *test)
             i_errno = IECLIENTTERM;
 
             // XXX: Remove this line below!
-            fprintf(stderr, "The client has terminated.\n");
+	    iperf_err(test, "the client has terminated");
             SLIST_FOREACH(sp, &test->streams, streams) {
                 FD_CLR(sp->socket, &test->read_set);
                 FD_CLR(sp->socket, &test->write_set);

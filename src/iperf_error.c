@@ -16,27 +16,18 @@
 #include "iperf.h"
 #include "iperf_api.h"
 
-static void
-iperf_verr(struct iperf_test *test, const char *format, va_list argp)
-{
-    char str[1000];
-
-    vsnprintf(str, sizeof(str), format, argp);
-    if (test != NULL && test->json_output && test->json_top != NULL) {
-	cJSON_AddStringToObject(test->json_top, "error", str);
-	iperf_json_finish(test);
-    } else
-	fprintf(stderr, "iperf3: %s\n", str);
-}
-
 /* Do a printf to stderr. */
 void
 iperf_err(struct iperf_test *test, const char *format, ...)
 {
     va_list argp;
+    char str[1000];
 
     va_start(argp, format);
-    iperf_verr(test, format, argp);
+    if (test != NULL && test->json_output && test->json_top != NULL)
+	cJSON_AddStringToObject(test->json_top, "error", str);
+    else
+	fprintf(stderr, "iperf3: %s\n", str);
     va_end(argp);
 }
 
@@ -45,9 +36,14 @@ void
 iperf_errexit(struct iperf_test *test, const char *format, ...)
 {
     va_list argp;
+    char str[1000];
 
     va_start(argp, format);
-    iperf_verr(test, format, argp);
+    if (test != NULL && test->json_output && test->json_top != NULL) {
+	cJSON_AddStringToObject(test->json_top, "error", str);
+	iperf_json_finish(test);
+    } else
+	fprintf(stderr, "iperf3: %s\n", str);
     va_end(argp);
     exit(1);
 }

@@ -34,6 +34,7 @@
 #include <netinet/tcp.h>
 #include <string.h>
 #include <netinet/in.h>
+#include <errno.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -79,9 +80,8 @@ save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp)
     socklen_t tcp_info_length = sizeof(struct tcp_info);
 
     if (getsockopt(sp->socket, IPPROTO_TCP, TCP_INFO, (void *)&irp->tcpInfo, &tcp_info_length) < 0)
-        perror("getsockopt");
+	iperf_err(sp->test, "getsockopt - %s", strerror(errno));
 #endif
-    return;
 }
 
 /*************************************************************/

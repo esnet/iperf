@@ -1820,6 +1820,7 @@ iperf_json_finish(struct iperf_test *test)
         return -1;
     fputs(str, stdout);
     putchar('\n');
+    fflush(stdout);
     free(str);
     cJSON_Delete(test->json_top);
     test->json_top = test->json_start = test->json_intervals = test->json_end = NULL;

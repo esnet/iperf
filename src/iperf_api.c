@@ -1426,8 +1426,8 @@ static void
 iperf_print_results(struct iperf_test *test)
 {
 
-    cJSON *json_summary_streams;
-    cJSON *json_summary_stream;
+    cJSON *json_summary_streams = NULL;
+    cJSON *json_summary_stream = NULL;
     long retransmits = 0, total_retransmits = 0;
     int total_packets = 0, lost_packets = 0;
     char ubuf[UNIT_LEN];

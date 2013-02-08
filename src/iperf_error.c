@@ -24,6 +24,7 @@ iperf_err(struct iperf_test *test, const char *format, ...)
     char str[1000];
 
     va_start(argp, format);
+    vsnprintf(str, sizeof(str), format, argp);
     if (test != NULL && test->json_output && test->json_top != NULL)
 	cJSON_AddStringToObject(test->json_top, "error", str);
     else
@@ -39,6 +40,7 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
     char str[1000];
 
     va_start(argp, format);
+    vsnprintf(str, sizeof(str), format, argp);
     if (test != NULL && test->json_output && test->json_top != NULL) {
 	cJSON_AddStringToObject(test->json_top, "error", str);
 	iperf_json_finish(test);

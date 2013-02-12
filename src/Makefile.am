@@ -37,7 +37,7 @@ libiperf_a_SOURCES      = \
 iperf3_SOURCES          = main.c
 iperf3_CFLAGS           = -g -Wall
 iperf3_LDADD            = libiperf.a
-iperf3_LDFLAGS          = 
+iperf3_LDFLAGS          = -g
 
 # Specify the sources and various flags for the profiled iperf binary. This
 # binary recompiles all the source files to make sure they are all profiled.
@@ -46,7 +46,7 @@ iperf3_profile_SOURCES  = main.c \
 
 iperf3_profile_CFLAGS   = -pg -g -Wall
 iperf3_profile_LDADD    = libiperf.a
-iperf3_profile_LDFLAGS  =
+iperf3_profile_LDFLAGS  = -pg -g
 
 # Specify the sources and various flags for the test cases
 t_timer_SOURCES         = t_timer.c

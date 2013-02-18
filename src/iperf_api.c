@@ -681,20 +681,20 @@ iperf_init_test(struct iperf_test *test)
     if (test->settings->bytes == 0) {
 	test->done = 0;
 	cd.p = test;
-        test->timer = tmr_create(&now, test_timer_proc, cd, test->duration * SEC_TO_US, 0);
+        test->timer = tmr_create(&now, test_timer_proc, cd, (int64_t) test->duration * SEC_TO_US, 0);
         if (test->timer == NULL)
             return -1;
     } 
 
     if (test->stats_interval != 0) {
 	cd.p = test;
-        test->stats_timer = tmr_create(&now, stats_timer_proc, cd, test->stats_interval * SEC_TO_US, 1);
+        test->stats_timer = tmr_create(&now, stats_timer_proc, cd, (int64_t) test->stats_interval * SEC_TO_US, 1);
         if (test->stats_timer == NULL)
             return -1;
     }
     if (test->reporter_interval != 0) {
 	cd.p = test;
-        test->reporter_timer = tmr_create(&now, reporter_timer_proc, cd, test->reporter_interval * SEC_TO_US, 1);
+        test->reporter_timer = tmr_create(&now, reporter_timer_proc, cd, (int64_t) test->reporter_interval * SEC_TO_US, 1);
         if (test->reporter_timer == NULL)
             return -1;
     }

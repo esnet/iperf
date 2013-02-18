@@ -593,18 +593,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 }
 
 int
-all_data_sent(struct iperf_test *test)
-{
-    if (test->settings->bytes > 0) {
-        if (test->bytes_sent >= (test->num_streams * test->settings->bytes)) {
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
-int
 iperf_send(struct iperf_test *test, fd_set *write_setP)
 {
     iperf_size_t bytes_sent;

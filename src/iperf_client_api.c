@@ -230,16 +230,22 @@ iperf_run_client(struct iperf_test * test)
 		(void) gettimeofday(&now, NULL);
 		tmr_run(&now);
 
-                /* Send TEST_END if all data has been sent or timer expired */
-                if (all_data_sent(test) || test->done) {
-                    cpu_util(&test->cpu_util);
-                    test->stats_callback(test);
-                    test->state = TEST_END;
-                    if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-                        i_errno = IESENDMESSAGE;
-                        return -1;
-                    }
-                }
+		/* Is the test done yet? */
+		if (test->settings->bytes == 0) {
+		    if (!test->done)
+			continue;	/* not done */
+		} else {
+		    if (test->bytes_sent < test->settings->bytes)
+			continue;	/* not done */
+		}
+		/* Yes, done!  Send TEST_END. */
+		cpu_util(&test->cpu_util);
+		test->stats_callback(test);
+		test->state = TEST_END;
+		if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
+		    i_errno = IESENDMESSAGE;
+		    return -1;
+		}
             }
         }
     }

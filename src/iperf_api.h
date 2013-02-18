@@ -156,7 +156,7 @@ long get_tcpinfo_total_retransmits(struct iperf_interval_results *irp);
 void print_tcpinfo(struct iperf_test *test);
 void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 
-int iperf_send(struct iperf_test *, fd_set *);
+int iperf_send(struct iperf_test *, fd_set *) __attribute__((hot));
 int iperf_recv(struct iperf_test *, fd_set *);
 void sig_handler(int);
 void usage();

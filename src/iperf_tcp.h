@@ -35,7 +35,7 @@ int iperf_tcp_recv(struct iperf_stream *);
  * returns: bytes sent
  *
  */
-int iperf_tcp_send(struct iperf_stream *);
+int iperf_tcp_send(struct iperf_stream *) __attribute__((hot));
 
 
 int iperf_tcp_listen(struct iperf_test *);

@@ -25,7 +25,7 @@ int iperf_udp_recv(struct iperf_stream *);
  * returns: bytes sent
  *
  */
-int iperf_udp_send(struct iperf_stream *);
+int iperf_udp_send(struct iperf_stream *) __attribute__((hot));
 
 
 /**

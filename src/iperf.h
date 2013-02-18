@@ -189,11 +189,11 @@ struct iperf_test
 /* default settings */
 #define PORT 5201  /* default port to listen on (don't use the same port as iperf2) */
 #define uS_TO_NS 1000
-#define SEC_TO_US 1000000
+#define SEC_TO_US 1000000LL
 #define RATE (1024 * 1024) /* 1 Mbps */
 #define DURATION 5 /* seconds */
 
-#define SEC_TO_NS 1000000000	/* too big for enum/const on some platforms */
+#define SEC_TO_NS 1000000000LL	/* too big for enum/const on some platforms */
 #define MAX_RESULT_STRING 4096
 
 /* constants for command line arg sanity checks */

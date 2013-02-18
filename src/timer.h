@@ -55,12 +55,12 @@ extern Timer* tmr_create(
 ** can just put the call to this routine right in your select().  Returns
 ** (struct timeval*) 0 if no timers are pending.
 */
-extern struct timeval* tmr_timeout( struct timeval* nowP ) __attribute__((hot));
+extern struct timeval* tmr_timeout( struct timeval* nowP ) /* __attribute__((hot)) */;
 
 /* Run the list of timers. Your main program needs to call this every so often,
 ** or as indicated by tmr_timeout().
 */
-extern void tmr_run( struct timeval* nowP ) __attribute__((hot));
+extern void tmr_run( struct timeval* nowP ) /* __attribute__((hot)) */;
 
 /* Reset the clock on a timer, to current time plus the original timeout. */
 extern void tmr_reset( struct timeval* nowP, Timer* timer );

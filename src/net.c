@@ -131,7 +131,7 @@ Nread(int fd, void *buf, int count, int prot)
             if (errno == EINTR)
                 n = 0;
             else
-                return -1;
+                return NET_HARDERROR;
         } else if (n == 0)
             break;
 
@@ -144,9 +144,6 @@ Nread(int fd, void *buf, int count, int prot)
 
 /*
  *                      N W R I T E
- *
- * XXX: After updating this function to use read/write, the only difference between
- *      TCP and UDP is that udp handles ENOBUFS. Should we merge the two?
  */
 
 int
@@ -155,34 +152,22 @@ Nwrite(int fd, void *buf, int count, int prot)
     register int n;
     register int nleft = count;
 
-    if (prot == SOCK_DGRAM) { /* UDP mode */
-        while (nleft > 0) {
-            if ((n = write(fd, buf, nleft)) < 0) {
-                if (errno == EINTR) {
-                    n = 0;
-                } else if (errno == ENOBUFS) {
-                    /* wait if run out of buffers */
-                    /* XXX: but how long to wait? Start shorter and increase delay each time?? */
-                    delay(18000);   // XXX: Fixme!
-                    n = 0;
-                } else {
-                    return -1;
-                }
-            }
-            nleft -= n;
-            buf += n;
-        }
-    } else {
-        while (nleft > 0) {
-            if ((n = write(fd, buf, nleft)) < 0) {
-                if (errno == EINTR)
-                    n = 0;
-                else
-                    return -1;
-            }
-            nleft -= n;
-            buf += n;
-        }
+    while (nleft > 0) {
+	if ((n = write(fd, buf, nleft)) < 0) {
+	    switch (errno) {
+		case EINTR:
+		return count - nleft;
+
+		case EAGAIN:
+		case ENOBUFS:
+		return NET_SOFTERROR;
+
+		default:
+		return NET_HARDERROR;
+	    }
+	}
+	nleft -= n;
+	buf += n;
     }
     return count;
 }

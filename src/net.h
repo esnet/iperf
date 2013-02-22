@@ -18,6 +18,9 @@ int getsock_tcp_mss(int);
 int set_tcp_options(int, int, int);
 int setnonblocking(int);
 
+#define NET_SOFTERROR -1
+#define NET_HARDERROR -2
+
 unsigned long long htonll(unsigned long long);
 unsigned long long ntohll(unsigned long long);
 

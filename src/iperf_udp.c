@@ -35,20 +35,19 @@
 int
 iperf_udp_recv(struct iperf_stream *sp)
 {
-    int       result;
+    int       r;
     int       size = sp->settings->blksize;
     int       sec, usec, pcount;
     double    transit = 0, d = 0;
     struct timeval sent_time, arrival_time;
 
-    result = Nread(sp->socket, sp->buffer, size, Pudp);
+    r = Nread(sp->socket, sp->buffer, size, Pudp);
 
-    if (result < 0) {
-        return -1;
-    }
+    if (r < 0)
+        return r;
 
-    sp->result->bytes_received += result;
-    sp->result->bytes_received_this_interval += result;
+    sp->result->bytes_received += r;
+    sp->result->bytes_received_this_interval += r;
 
     memcpy(&sec, sp->buffer, sizeof(sec));
     memcpy(&usec, sp->buffer+4, sizeof(usec));
@@ -82,7 +81,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     //      J = |(R1 - S1) - (R0 - S0)| [/ number of packets, for average]
     sp->jitter += (d - sp->jitter) / 16.0;
 
-    return result;
+    return r;
 }
 
 
@@ -107,7 +106,7 @@ send_timer_proc(TimerClientData client_data, struct timeval* nowP)
 int
 iperf_udp_send(struct iperf_stream *sp)
 {
-    ssize_t   result = 0;
+    int r;
     int64_t   dtargus;
     int64_t   adjustus;
     uint64_t  sec, usec, pcount;
@@ -115,46 +114,47 @@ iperf_udp_send(struct iperf_stream *sp)
     struct timeval before, after;
     TimerClientData cd;
 
-    if (sp->udp_green_light) {
-        gettimeofday(&before, 0);
+    if (! sp->udp_green_light)
+        return 0;
 
-        ++sp->packet_count;
-        sec = htonl(before.tv_sec);
-        usec = htonl(before.tv_usec);
-        pcount = htonl(sp->packet_count);
+    gettimeofday(&before, 0);
 
-        memcpy(sp->buffer, &sec, sizeof(sec));
-        memcpy(sp->buffer+4, &usec, sizeof(usec));
-        memcpy(sp->buffer+8, &pcount, sizeof(pcount));
+    ++sp->packet_count;
+    sec = htonl(before.tv_sec);
+    usec = htonl(before.tv_usec);
+    pcount = htonl(sp->packet_count);
 
-        result = Nwrite(sp->socket, sp->buffer, size, Pudp);
+    memcpy(sp->buffer, &sec, sizeof(sec));
+    memcpy(sp->buffer+4, &usec, sizeof(usec));
+    memcpy(sp->buffer+8, &pcount, sizeof(pcount));
 
-        if (result < 0)
-            return -1;
+    r = Nwrite(sp->socket, sp->buffer, size, Pudp);
 
-        sp->result->bytes_sent += result;
-        sp->result->bytes_sent_this_interval += result;
+    if (r < 0)
+	return r;
 
-	if (sp->settings->rate != 0) {
-	    gettimeofday(&after, 0);
-	    dtargus = (int64_t) (sp->settings->blksize) * SEC_TO_US * 8;
-	    dtargus /= sp->settings->rate;
-	    assert(dtargus != 0);
-	    adjustus = dtargus;
-	    adjustus += (before.tv_sec - after.tv_sec) * SEC_TO_US;
-	    adjustus += (before.tv_usec - after.tv_usec);
-	    if (adjustus > 0) {
-		dtargus = adjustus;
-	    }
-	    cd.p = sp;
-	    sp->udp_green_light = 0;
-	    sp->send_timer = tmr_create((struct timeval*) 0, send_timer_proc, cd, dtargus, 0);
-	    if (sp->send_timer == NULL)
-		return -1;
+    sp->result->bytes_sent += r;
+    sp->result->bytes_sent_this_interval += r;
+
+    if (sp->settings->rate != 0) {
+	gettimeofday(&after, 0);
+	dtargus = (int64_t) (sp->settings->blksize) * SEC_TO_US * 8;
+	dtargus /= sp->settings->rate;
+	assert(dtargus != 0);
+	adjustus = dtargus;
+	adjustus += (before.tv_sec - after.tv_sec) * SEC_TO_US;
+	adjustus += (before.tv_usec - after.tv_usec);
+	if (adjustus > 0) {
+	    dtargus = adjustus;
 	}
+	cd.p = sp;
+	sp->udp_green_light = 0;
+	sp->send_timer = tmr_create((struct timeval*) 0, send_timer_proc, cd, dtargus, 0);
+	if (sp->send_timer == NULL)
+	    return -1;
     }
 
-    return result;
+    return r;
 }
 
 

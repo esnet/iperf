@@ -33,19 +33,17 @@
 int
 iperf_tcp_recv(struct iperf_stream *sp)
 {
-    int result = 0;
-    int size = sp->settings->blksize;
+    int r;
 
-    result = Nread(sp->socket, sp->buffer, size, Ptcp);
+    r = Nread(sp->socket, sp->buffer, sp->settings->blksize, Ptcp);
 
-    if (result < 0) {
-        return -1;
-    }
+    if (r < 0)
+        return r;
 
-    sp->result->bytes_received += result;
-    sp->result->bytes_received_this_interval += result;
+    sp->result->bytes_received += r;
+    sp->result->bytes_received_this_interval += r;
 
-    return result;
+    return r;
 }
 
 
@@ -56,19 +54,17 @@ iperf_tcp_recv(struct iperf_stream *sp)
 int
 iperf_tcp_send(struct iperf_stream *sp)
 {
-    int result;
-    int size = sp->settings->blksize;
+    int r;
 
-    result = Nwrite(sp->socket, sp->buffer, size, Ptcp);
+    r = Nwrite(sp->socket, sp->buffer, sp->settings->blksize, Ptcp);
 
-    if (result < 0) {
-        return -1;
-    }
+    if (r < 0)
+        return r;
 
-    sp->result->bytes_sent += result;
-    sp->result->bytes_sent_this_interval += result;
+    sp->result->bytes_sent += r;
+    sp->result->bytes_sent_this_interval += r;
 
-    return result;
+    return r;
 }
 
 

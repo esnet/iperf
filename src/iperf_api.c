@@ -595,19 +595,33 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 int
 iperf_send(struct iperf_test *test, fd_set *write_setP)
 {
-    iperf_size_t bytes_sent;
-    struct iperf_stream *sp;
+    int burst, r;
+    register struct iperf_stream *sp;
 
-    SLIST_FOREACH(sp, &test->streams, streams) {
-	if (FD_ISSET(sp->socket, write_setP)) {
-	    if ((bytes_sent = sp->snd(sp)) < 0) {
-		i_errno = IESTREAMWRITE;
-		return -1;
+    /* Can we do burst mode? */
+    if (test->protocol->id == Pudp && test->settings->rate != 0)
+        burst = 1;	/* nope */
+    else
+        burst = 20;	/* arbitrary */
+
+    for (; burst > 0; --burst) {
+	SLIST_FOREACH(sp, &test->streams, streams) {
+	    if (FD_ISSET(sp->socket, write_setP)) {
+		if ((r = sp->snd(sp)) < 0) {
+		    if (r == NET_SOFTERROR)
+			break;
+		    i_errno = IESTREAMWRITE;
+		    return r;
+		}
+		test->bytes_sent += r;
+		if (burst > 1 && test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes)
+		    break;
 	    }
-	    test->bytes_sent += bytes_sent;
-	    FD_CLR(sp->socket, write_setP);
 	}
     }
+    SLIST_FOREACH(sp, &test->streams, streams)
+	if (FD_ISSET(sp->socket, write_setP))
+	    FD_CLR(sp->socket, write_setP);
 
     return 0;
 }
@@ -615,16 +629,16 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 int
 iperf_recv(struct iperf_test *test, fd_set *read_setP)
 {
-    iperf_size_t bytes_sent;
+    int r;
     struct iperf_stream *sp;
 
     SLIST_FOREACH(sp, &test->streams, streams) {
 	if (FD_ISSET(sp->socket, read_setP)) {
-	    if ((bytes_sent = sp->rcv(sp)) < 0) {
+	    if ((r = sp->rcv(sp)) < 0) {
 		i_errno = IESTREAMREAD;
-		return -1;
+		return r;
 	    }
-	    test->bytes_sent += bytes_sent;
+	    test->bytes_sent += r;
 	    FD_CLR(sp->socket, read_setP);
 	}
     }

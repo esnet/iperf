@@ -151,6 +151,12 @@ iperf_get_test_protocol_id(struct iperf_test *ipt)
     return ipt->protocol->id;
 }
 
+int
+iperf_get_test_json_output(struct iperf_test *ipt)
+{
+    return ipt->json_output;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -223,6 +229,12 @@ void
 iperf_set_test_server_hostname(struct iperf_test *ipt, char *server_hostname)
 {
     ipt->server_hostname = server_hostname;
+}
+
+void
+iperf_set_test_json_output(struct iperf_test *ipt, int json_output)
+{
+    ipt->json_output = json_output;
 }
 
 /********************** Get/set test protocol structure ***********************/

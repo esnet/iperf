@@ -67,7 +67,7 @@ usage()
 void
 usage_long()
 {
-    fputs(usage_longstr, stderr);
+    fprintf(stderr, usage_longstr, RATE / (1024*1024), DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE / 1024);
 }
 
 

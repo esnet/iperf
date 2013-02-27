@@ -107,7 +107,6 @@ iperf_strerror(int i_errno)
             break;
         case IECONNECT:
             snprintf(errstr, len, "unable to connect to server");
-            herr = 1;
             perr = 1;
             break;
         case IEACCEPT:

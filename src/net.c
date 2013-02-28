@@ -251,17 +251,21 @@ set_tcp_options(int sock, int no_delay, int mss)
 
 /****************************************************************************/
 
-// XXX: This function is not being used.
 int
-setnonblocking(int sock)
+setnonblocking(int fd)
 {
-    int       opts = 0;
+    int flags, newflags;
 
-    opts = (opts | O_NONBLOCK);
-    if (fcntl(sock, F_SETFL, opts) < 0)
-    {
-        perror("fcntl(F_SETFL)");
+    flags = fcntl(fd, F_GETFL, 0);
+    if (flags < 0) {
+        perror("fcntl(F_GETFL)");
         return -1;
     }
+    newflags = flags | (int) O_NONBLOCK;
+    if (newflags != flags)
+	if (fcntl(fd, F_SETFL, newflags) < 0) {
+	    perror("fcntl(F_SETFL)");
+	    return -1;
+	}
     return 0;
 }

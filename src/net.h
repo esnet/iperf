@@ -16,7 +16,7 @@ int Nwrite(int, void *, int, int) /* __attribute__((hot)) */;
 int Nread(int, void *, int, int);
 int getsock_tcp_mss(int);
 int set_tcp_options(int, int, int);
-int setnonblocking(int);
+int setnonblocking(int fd);
 
 #define NET_SOFTERROR -1
 #define NET_HARDERROR -2

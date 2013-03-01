@@ -1673,7 +1673,7 @@ iperf_free_stream(struct iperf_stream *sp)
     struct iperf_interval_results *irp, *nirp;
 
     /* XXX: need to free interval list too! */
-    free(sp->buffer);
+    free(sp->buffer_malloc);
     for (irp = TAILQ_FIRST(&sp->result->interval_results); irp != TAILQ_END(sp->result->interval_results); irp = nirp) {
         nirp = TAILQ_NEXT(irp, irlistentries);
         free(irp);
@@ -1683,6 +1683,11 @@ iperf_free_stream(struct iperf_stream *sp)
 	tmr_cancel(sp->send_timer);
     free(sp);
 }
+
+#define PAGE 65536
+/* A guess - we should actually detect real page size.  But as long as
+** this is a multiple of the real one, it works for alignment purposes.
+*/
 
 /**************************************************************************/
 struct iperf_stream *
@@ -1700,11 +1705,11 @@ iperf_new_stream(struct iperf_test *test, int s)
     memset(sp, 0, sizeof(struct iperf_stream));
 
     sp->test = test;
-    sp->buffer = (char *) malloc(test->settings->blksize);
+    sp->buffer_malloc = (char *) malloc(test->settings->blksize + PAGE);
     sp->result = (struct iperf_stream_result *) malloc(sizeof(struct iperf_stream_result));
     sp->settings = test->settings;
 
-    if (!sp->buffer) {
+    if (!sp->buffer_malloc) {
         i_errno = IECREATESTREAM;
         return NULL;
     }
@@ -1717,6 +1722,7 @@ iperf_new_stream(struct iperf_test *test, int s)
     TAILQ_INIT(&sp->result->interval_results);
     
     /* Randomize the buffer */
+    sp->buffer = (char*) (((uint64_t) sp->buffer_malloc / PAGE + 1 ) * PAGE);
     srandom(time(NULL));
     for (i = 0; i < test->settings->blksize; ++i)
         sp->buffer[i] = random();

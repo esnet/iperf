@@ -84,7 +84,8 @@ struct iperf_stream
     struct iperf_stream_result *result;	/* structure pointer to result */
     Timer     *send_timer;
     int       udp_green_light;
-    char      *buffer;		/* data to send */
+    char      *buffer_malloc;	/* data to send, malloced */
+    char      *buffer;		/* data to send, page-aligned */
 
     /*
      * for udp measurements - This can be a structure outside stream, and

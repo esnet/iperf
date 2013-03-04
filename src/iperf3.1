@@ -96,6 +96,10 @@ use IPv6
 .TP
 .BR -S ", " --tos " \fIn\fR"
 set the IP 'type of service'
+.TP
+.BR -Z ", " --zerocopy " "
+Use a "zero copy" method of sending data, such as sendfile(2),
+instead of the usual write(2).
 
 
 .SH DIAGNOSTICS

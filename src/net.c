@@ -20,6 +20,18 @@
 #include <string.h>
 #include <sys/fcntl.h>
 
+#ifdef linux
+#include <sys/sendfile.h>
+#else
+#ifdef __FreeBSD__
+#include <sys/uio.h>
+#else
+#if defined(__APPLE__) && defined(__MACH__)	/* OS X */
+#include <sys/uio.h>
+#endif
+#endif
+#endif
+
 #include "iperf_util.h"
 #include "net.h"
 #include "timer.h"
@@ -117,26 +129,26 @@ netannounce(int domain, int proto, char *local, int port)
 
 
 /*******************************************************************/
-/* reads 'count' byptes from a socket  */
+/* reads 'count' bytes from a socket  */
 /********************************************************************/
 
 int
-Nread(int fd, void *buf, int count, int prot)
+Nread(int fd, char *buf, size_t count, int prot)
 {
-    register int n;
-    register int nleft = count;
+    register ssize_t r;
+    register size_t nleft = count;
 
     while (nleft > 0) {
-        if ((n = read(fd, buf, nleft)) < 0) {
+        if ((r = read(fd, buf, nleft)) < 0) {
             if (errno == EINTR)
-                n = 0;
+                r = 0;
             else
                 return NET_HARDERROR;
-        } else if (n == 0)
+        } else if (r == 0)
             break;
 
-        nleft -= n;
-        buf += n;
+        nleft -= r;
+        buf += r;
     }
     return count - nleft;
 }
@@ -147,13 +159,13 @@ Nread(int fd, void *buf, int count, int prot)
  */
 
 int
-Nwrite(int fd, void *buf, int count, int prot)
+Nwrite(int fd, const char *buf, size_t count, int prot)
 {
-    register int n;
-    register int nleft = count;
+    register ssize_t r;
+    register size_t nleft = count;
 
     while (nleft > 0) {
-	if ((n = write(fd, buf, nleft)) < 0) {
+	if ((r = write(fd, buf, nleft)) < 0) {
 	    switch (errno) {
 		case EINTR:
 		return count - nleft;
@@ -166,8 +178,84 @@ Nwrite(int fd, void *buf, int count, int prot)
 		return NET_HARDERROR;
 	    }
 	}
-	nleft -= n;
-	buf += n;
+	nleft -= r;
+	buf += r;
+    }
+    return count;
+}
+
+
+int
+has_sendfile(void)
+{
+#ifdef linux
+    return 1;
+#else
+#ifdef __FreeBSD__
+    return 1;
+#else
+#if defined(__APPLE__) && defined(__MACH__)	/* OS X */
+    return 1;
+#else
+    return 0;
+#endif
+#endif
+#endif
+}
+
+
+/*
+ *                      N S E N D F I L E
+ */
+
+int
+Nsendfile(int fromfd, int tofd, const char *buf, size_t count)
+{
+    off_t offset;
+#if defined(__FreeBSD__) || (defined(__APPLE__) && defined(__MACH__))
+    off_t sent;
+#endif
+    register size_t nleft;
+    register ssize_t r;
+
+    nleft = count;
+    while (nleft > 0) {
+	offset = count - nleft;
+#ifdef linux
+	r = sendfile(tofd, fromfd, &offset, nleft);
+#else
+#ifdef __FreeBSD__
+	r = sendfile(fromfd, tofd, offset, nleft, NULL, &sent, 0);
+	if (r == 0)
+	    r = sent;
+#else
+#if defined(__APPLE__) && defined(__MACH__)	/* OS X */
+	sent = nleft;
+	r = sendfile(fromfd, tofd, offset, &sent, NULL, 0);
+	if (r == 0)
+	    r = sent;
+#else
+	/* Shouldn't happen. */
+	r = -1;
+	errno = ENOSYS;
+#endif
+#endif
+#endif
+	if (r < 0) {
+	    switch (errno) {
+		case EINTR:
+		return count - nleft;
+
+		case EAGAIN:
+		case ENOBUFS:
+		case ENOMEM:
+		return NET_SOFTERROR;
+
+		default:
+		return NET_HARDERROR;
+	    }
+	}
+	nleft -= r;
     }
     return count;
 }
@@ -206,16 +294,13 @@ getsock_tcp_mss(int inSock)
 int
 set_tcp_options(int sock, int no_delay, int mss)
 {
-
-    socklen_t       len;
+    socklen_t len;
+    int rc;
+    int new_mss;
 
     if (no_delay == 1) {
-        int             no_delay = 1;
-
         len = sizeof(no_delay);
-        int             rc = setsockopt(sock, IPPROTO_TCP, TCP_NODELAY,
-                             (char *)&no_delay, len);
-
+        rc = setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&no_delay, len);
         if (rc == -1) {
             perror("TCP_NODELAY");
             return -1;
@@ -223,11 +308,7 @@ set_tcp_options(int sock, int no_delay, int mss)
     }
 #ifdef TCP_MAXSEG
     if (mss > 0) {
-        int             rc;
-        int             new_mss;
-
         len = sizeof(new_mss);
-
         assert(sock != -1);
 
         /* set */

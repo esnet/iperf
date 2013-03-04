@@ -84,8 +84,8 @@ struct iperf_stream
     struct iperf_stream_result *result;	/* structure pointer to result */
     Timer     *send_timer;
     int       udp_green_light;
-    char      *buffer_malloc;	/* data to send, malloced */
-    char      *buffer;		/* data to send, page-aligned */
+    int       buffer_fd;	/* data to send, file descriptor */
+    char      *buffer;		/* data to send, mmapped */
 
     /*
      * for udp measurements - This can be a structure outside stream, and
@@ -145,6 +145,7 @@ struct iperf_test
     int       v6domain;                         /* -6 option */
     int	      verbose;                          /* -V option - verbose mode */
     int	      json_output;                      /* -J option - JSON output */
+    int	      zerocopy;                         /* -Z option - use sendfile */
 
     /* Select related parameters */
     int       max_fd;

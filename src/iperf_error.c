@@ -72,6 +72,9 @@ iperf_strerror(int i_errno)
         case IENOROLE:
             snprintf(errstr, len, "must either be a client (-c) or server (-s)");
             break;
+        case IESERVERONLY:
+            snprintf(errstr, len, "some option you are trying to set is server only");
+            break;
         case IECLIENTONLY:
             snprintf(errstr, len, "some option you are trying to set is client only");
             break;
@@ -92,6 +95,9 @@ iperf_strerror(int i_errno)
             break;
         case IEMSS:
             snprintf(errstr, len, "TCP MSS too large (maximum = %d bytes)", MAX_MSS);
+            break;
+        case IENOSENDFILE:
+            snprintf(errstr, len, "this OS does not support sendfile");
             break;
         case IENEWTEST:
             snprintf(errstr, len, "unable to create a new test");

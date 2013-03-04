@@ -26,6 +26,7 @@
 #include <netinet/tcp.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/mman.h>
 #include <sched.h>
 #include <setjmp.h>
 
@@ -397,6 +398,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"no-delay", no_argument, NULL, 'N'},
         {"version6", no_argument, NULL, '6'},
         {"tos", required_argument, NULL, 'S'},
+        {"zerocopy", no_argument, NULL, 'Z'},
         {"help", no_argument, NULL, 'h'},
 
     /*  XXX: The following ifdef needs to be split up. linux-congestion is not necessarily supported
@@ -404,15 +406,17 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
      */
 #ifdef ADD_WHEN_SUPPORTED
         {"tos",        required_argument, NULL, 'S'},
-        {"linux-congestion", required_argument, NULL, 'Z'},
+        {"linux-congestion", required_argument, NULL, 'L'},
 #endif
         {NULL, 0, NULL, 0}
     };
     char ch;
     int blksize;
+    int server_flag, client_flag;
 
     blksize = 0;
-    while ((ch = getopt_long(argc, argv, "p:f:i:DVJdvsc:ub:t:n:l:P:Rw:B:M:N6S:h", longopts, NULL)) != -1) {
+    server_flag = client_flag = 0;
+    while ((ch = getopt_long(argc, argv, "p:f:i:DVJdvsc:ub:t:n:l:P:Rw:B:M:N6S:Zh", longopts, NULL)) != -1) {
         switch (ch) {
             case 'p':
                 test->server_port = atoi(optarg);
@@ -431,11 +435,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 }
                 break;
             case 'D':
-                if (test->role == 'c') {
-                    i_errno = IESERVCLIENT;
-                    return -1;
-                }
 		test->daemon = 1;
+		server_flag = 1;
 	        break;
             case 'V':
                 test->verbose = 1;
@@ -467,115 +468,97 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		strncpy(test->server_hostname, optarg, strlen(optarg)+1);
                 break;
             case 'u':
-                if (test->role == 's') {
-                    warning("ignoring client only argument --udp (-u)");
-                /* XXX: made a warning
-                    i_errno = IECLIENTONLY;
-                    return -1;
-                */
-                }
                 set_protocol(test, Pudp);
+		client_flag = 1;
                 break;
             case 'b':
-                if (test->role == 's') {
-                    i_errno = IECLIENTONLY;
-                    return -1;
-                }
                 test->settings->rate = unit_atof(optarg);
+		client_flag = 1;
                 break;
             case 't':
-                if (test->role == 's') {
-                    i_errno = IECLIENTONLY;
-                    return -1;
-                }
                 test->duration = atoi(optarg);
                 if (test->duration > MAX_TIME) {
                     i_errno = IEDURATION;
                     return -1;
                 }
+		client_flag = 1;
                 break;
             case 'n':
-                if (test->role == 's') {
-                    i_errno = IECLIENTONLY;
-                    return -1;
-                }
                 test->settings->bytes = unit_atoi(optarg);
+		client_flag = 1;
                 break;
             case 'l':
-                if (test->role == 's') {
-                    i_errno = IECLIENTONLY;
-                    return -1;
-                }
                 blksize = unit_atoi(optarg);
+		client_flag = 1;
                 break;
             case 'P':
-                if (test->role == 's') {
-                    i_errno = IECLIENTONLY;
-                    return -1;
-                }
                 test->num_streams = atoi(optarg);
                 if (test->num_streams > MAX_STREAMS) {
                     i_errno = IENUMSTREAMS;
                     return -1;
                 }
+		client_flag = 1;
                 break;
             case 'R':
-                if (test->role == 's') {
-                    i_errno = IECLIENTONLY;
-                    return -1;
-                }
                 test->reverse = 1;
+		client_flag = 1;
                 break;
             case 'w':
                 // XXX: This is a socket buffer, not specific to TCP
-                if (test->role == 's') {
-                    i_errno = IECLIENTONLY;
-                    return -1;
-                }
                 test->settings->socket_bufsize = unit_atof(optarg);
                 if (test->settings->socket_bufsize > MAX_TCP_BUFFER) {
                     i_errno = IEBUFSIZE;
                     return -1;
                 }
+		client_flag = 1;
                 break;
             case 'B':
                 test->bind_address = (char *) malloc(strlen(optarg)+1);
                 strncpy(test->bind_address, optarg, strlen(optarg)+1);
                 break;
             case 'M':
-                if (test->role == 's') {
-                    i_errno = IECLIENTONLY;
-                    return -1;
-                }
                 test->settings->mss = atoi(optarg);
                 if (test->settings->mss > MAX_MSS) {
                     i_errno = IEMSS;
                     return -1;
                 }
+		client_flag = 1;
                 break;
             case 'N':
-                if (test->role == 's') {
-                    i_errno = IECLIENTONLY;
-                    return -1;
-                }
                 test->no_delay = 1;
+		client_flag = 1;
                 break;
             case '6':
                 test->settings->domain = AF_INET6;
                 break;
             case 'S':
-                if (test->role == 's') {
-                    i_errno = IECLIENTONLY;
-                    return -1;
-                }
                 // XXX: Checking for errors in strtol is not portable. Leave as is?
                 test->settings->tos = strtol(optarg, NULL, 0);
+		client_flag = 1;
+                break;
+            case 'Z':
+                if (!has_sendfile()) {
+                    i_errno = IENOSENDFILE;
+                    return -1;
+                }
+                test->zerocopy = 1;
+		client_flag = 1;
                 break;
             case 'h':
             default:
                 usage_long();
                 exit(1);
         }
+    }
+
+    /* Check flag / role compatibility. */
+    if (test->role == 'c' && server_flag) {
+	i_errno = IESERVERONLY;
+	return -1;
+    }
+    if (test->role == 's' && client_flag) {
+	i_errno = IECLIENTONLY;
+	return -1;
     }
 
     if (blksize == 0) {
@@ -763,12 +746,12 @@ iperf_exchange_parameters(struct iperf_test *test)
                 return -1;
             }
             msg = htonl(i_errno);
-            if (Nwrite(test->ctrl_sck, &msg, sizeof(msg), Ptcp) < 0) {
+            if (Nwrite(test->ctrl_sck, (char*) &msg, sizeof(msg), Ptcp) < 0) {
                 i_errno = IECTRLWRITE;
                 return -1;
             }
             msg = htonl(errno);
-            if (Nwrite(test->ctrl_sck, &msg, sizeof(msg), Ptcp) < 0) {
+            if (Nwrite(test->ctrl_sck, (char*) &msg, sizeof(msg), Ptcp) < 0) {
                 i_errno = IECTRLWRITE;
                 return -1;
             }
@@ -1050,7 +1033,7 @@ JSON_write(int fd, cJSON *json)
     else {
 	hsize = strlen(str);
 	nsize = htonl(hsize);
-	if (Nwrite(fd, &nsize, sizeof(nsize), Ptcp) < 0)
+	if (Nwrite(fd, (char*) &nsize, sizeof(nsize), Ptcp) < 0)
 	    r = -1;
 	else {
 	    if (Nwrite(fd, str, hsize, Ptcp) < 0)
@@ -1070,7 +1053,7 @@ JSON_read(int fd)
     char *str;
     cJSON *json = NULL;
 
-    if (Nread(fd, &nsize, sizeof(nsize), Ptcp) >= 0) {
+    if (Nread(fd, (char*) &nsize, sizeof(nsize), Ptcp) >= 0) {
 	hsize = ntohl(nsize);
 	str = (char *) malloc((hsize+1) * sizeof(char));	/* +1 for EOS */
 	if (str != NULL) {
@@ -1673,7 +1656,8 @@ iperf_free_stream(struct iperf_stream *sp)
     struct iperf_interval_results *irp, *nirp;
 
     /* XXX: need to free interval list too! */
-    free(sp->buffer_malloc);
+    munmap(sp->buffer, sp->test->settings->blksize);
+    close(sp->buffer_fd);
     for (irp = TAILQ_FIRST(&sp->result->interval_results); irp != TAILQ_END(sp->result->interval_results); irp = nirp) {
         nirp = TAILQ_NEXT(irp, irlistentries);
         free(irp);
@@ -1684,17 +1668,15 @@ iperf_free_stream(struct iperf_stream *sp)
     free(sp);
 }
 
-#define PAGE 65536
-/* A guess - we should actually detect real page size.  But as long as
-** this is a multiple of the real one, it works for alignment purposes.
-*/
-
 /**************************************************************************/
 struct iperf_stream *
 iperf_new_stream(struct iperf_test *test, int s)
 {
     int i;
     struct iperf_stream *sp;
+    char template[] = "/tmp/iperf3.XXXXXX";
+
+    h_errno = 0;
 
     sp = (struct iperf_stream *) malloc(sizeof(struct iperf_stream));
     if (!sp) {
@@ -1705,14 +1687,9 @@ iperf_new_stream(struct iperf_test *test, int s)
     memset(sp, 0, sizeof(struct iperf_stream));
 
     sp->test = test;
-    sp->buffer_malloc = (char *) malloc(test->settings->blksize + PAGE);
     sp->result = (struct iperf_stream_result *) malloc(sizeof(struct iperf_stream_result));
     sp->settings = test->settings;
 
-    if (!sp->buffer_malloc) {
-        i_errno = IECREATESTREAM;
-        return NULL;
-    }
     if (!sp->result) {
         i_errno = IECREATESTREAM;
         return NULL;
@@ -1721,8 +1698,21 @@ iperf_new_stream(struct iperf_test *test, int s)
     memset(sp->result, 0, sizeof(struct iperf_stream_result));
     TAILQ_INIT(&sp->result->interval_results);
     
-    /* Randomize the buffer */
-    sp->buffer = (char*) (((uint64_t) sp->buffer_malloc / PAGE + 1 ) * PAGE);
+    /* Create and randomize the buffer */
+    sp->buffer_fd = mkstemp(template);
+    if (sp->buffer_fd == -1) {
+        i_errno = IECREATESTREAM;
+        return NULL;
+    }
+    if (ftruncate(sp->buffer_fd, test->settings->blksize) < 0) {
+        i_errno = IECREATESTREAM;
+        return NULL;
+    }
+    sp->buffer = (char *) mmap(NULL, test->settings->blksize, PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
+    if (sp->buffer == MAP_FAILED) {
+        i_errno = IECREATESTREAM;
+        return NULL;
+    }
     srandom(time(NULL));
     for (i = 0; i < test->settings->blksize; ++i)
         sp->buffer[i] = random();

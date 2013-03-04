@@ -10,12 +10,14 @@
 #ifndef __NET_H
 #define __NET_H
 
-int netdial(int, int, char *, char *, int);
-int netannounce(int, int, char *, int);
-int Nwrite(int, void *, int, int) /* __attribute__((hot)) */;
-int Nread(int, void *, int, int);
-int getsock_tcp_mss(int);
-int set_tcp_options(int, int, int);
+int netdial(int domain, int proto, char *local, char *server, int port);
+int netannounce(int domain, int proto, char *local, int port);
+int Nread(int fd, char *buf, size_t count, int prot);
+int Nwrite(int fd, const char *buf, size_t count, int prot) /* __attribute__((hot)) */;
+int has_sendfile(void);
+int Nsendfile(int fromfd, int tofd, const char *buf, size_t count) /* __attribute__((hot)) */;
+int getsock_tcp_mss(int inSock);
+int set_tcp_options(int sock, int no_delay, int mss);
 int setnonblocking(int fd);
 
 #define NET_SOFTERROR -1

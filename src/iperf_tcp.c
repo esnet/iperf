@@ -56,7 +56,10 @@ iperf_tcp_send(struct iperf_stream *sp)
 {
     int r;
 
-    r = Nwrite(sp->socket, sp->buffer, sp->settings->blksize, Ptcp);
+    if (sp->test->zerocopy)
+	r = Nsendfile(sp->buffer_fd, sp->socket, sp->buffer, sp->settings->blksize);
+    else
+	r = Nwrite(sp->socket, sp->buffer, sp->settings->blksize, Ptcp);
 
     if (r < 0)
         return r;
@@ -93,7 +96,7 @@ iperf_tcp_accept(struct iperf_test * test)
     }
 
     if (strcmp(test->cookie, cookie) != 0) {
-        if (Nwrite(s, &rbuf, sizeof(char), Ptcp) < 0) {
+        if (Nwrite(s, (char*) &rbuf, sizeof(char), Ptcp) < 0) {
             i_errno = IESENDMESSAGE;
             return -1;
         }

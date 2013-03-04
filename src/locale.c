@@ -96,6 +96,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -N, --nodelay             set TCP no delay, disabling Nagle's Algorithm\n"
                            "  -6, --version6            use IPv6\n"
                            "  -S, --tos N               set the IP 'type of service'\n"
+                           "  -Z, --zerocopy            use a 'zero copy' method of sending data\n"
 
 #ifdef NOT_YET_SUPPORTED /* still working on these */
                            "  -D, --daemon              run the server as a daemon\n"

@@ -138,7 +138,7 @@ iperf_accept(struct iperf_test *test)
             i_errno = IERECVCOOKIE;
             return -1;
         }
-        if (Nwrite(s, &rbuf, sizeof(int), Ptcp) < 0) {
+        if (Nwrite(s, (char*) &rbuf, sizeof(int), Ptcp) < 0) {
             i_errno = IESENDMESSAGE;
             return -1;
         }

@@ -139,7 +139,8 @@ Nread(int fd, char *buf, size_t count, int prot)
     register size_t nleft = count;
 
     while (nleft > 0) {
-        if ((r = read(fd, buf, nleft)) < 0) {
+        r = read(fd, buf, nleft);
+        if (r < 0) {
             if (errno == EINTR)
                 r = 0;
             else
@@ -165,7 +166,8 @@ Nwrite(int fd, const char *buf, size_t count, int prot)
     register size_t nleft = count;
 
     while (nleft > 0) {
-	if ((r = write(fd, buf, nleft)) < 0) {
+	r = write(fd, buf, nleft);
+	if (r < 0) {
 	    switch (errno) {
 		case EINTR:
 		return count - nleft;
@@ -177,7 +179,8 @@ Nwrite(int fd, const char *buf, size_t count, int prot)
 		default:
 		return NET_HARDERROR;
 	    }
-	}
+	} else if (r == 0)
+	    return NET_SOFTERROR;
 	nleft -= r;
 	buf += r;
     }
@@ -254,7 +257,8 @@ Nsendfile(int fromfd, int tofd, const char *buf, size_t count)
 		default:
 		return NET_HARDERROR;
 	    }
-	}
+	} else if (r == 0)
+	    return NET_SOFTERROR;
 	nleft -= r;
     }
     return count;

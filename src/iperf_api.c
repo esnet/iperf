@@ -158,6 +158,12 @@ iperf_get_test_json_output(struct iperf_test *ipt)
     return ipt->json_output;
 }
 
+int
+iperf_get_test_zerocopy(struct iperf_test *ipt)
+{
+    return ipt->zerocopy;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -236,6 +242,18 @@ void
 iperf_set_test_json_output(struct iperf_test *ipt, int json_output)
 {
     ipt->json_output = json_output;
+}
+
+int
+iperf_has_zerocopy( void )
+{
+    return has_sendfile();
+}
+
+void
+iperf_set_test_zerocopy(struct iperf_test *ipt, int zerocopy)
+{
+    ipt->zerocopy = zerocopy;
 }
 
 /********************** Get/set test protocol structure ***********************/

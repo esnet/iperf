@@ -57,6 +57,7 @@ int	iperf_get_test_server_port( struct iperf_test* ipt );
 char*	iperf_get_test_server_hostname( struct iperf_test* ipt );
 int	iperf_get_test_protocol_id( struct iperf_test* ipt );
 int	iperf_get_test_json_output( struct iperf_test* ipt );
+int	iperf_get_test_zerocopy( struct iperf_test* ipt );
 
 /* Setter routines for some fields inside iperf_test. */
 void	iperf_set_control_socket( struct iperf_test* ipt, int ctrl_sck );
@@ -72,6 +73,8 @@ void	iperf_set_test_num_streams( struct iperf_test* ipt, int num_streams );
 void	iperf_set_test_role( struct iperf_test* ipt, char role );
 void	iperf_set_test_server_hostname( struct iperf_test* ipt, char* server_hostname );
 void	iperf_set_test_json_output( struct iperf_test* ipt, int json_output );
+int	iperf_has_zerocopy( void );
+void	iperf_set_test_zerocopy( struct iperf_test* ipt, int zerocopy );
 
 /**
  * exchange_parameters - handles the param_Exchange part for client

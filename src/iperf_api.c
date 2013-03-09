@@ -235,7 +235,7 @@ iperf_set_test_role(struct iperf_test *ipt, char role)
 void
 iperf_set_test_server_hostname(struct iperf_test *ipt, char *server_hostname)
 {
-    ipt->server_hostname = server_hostname;
+    ipt->server_hostname = strdup( server_hostname );
 }
 
 void

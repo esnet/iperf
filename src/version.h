@@ -8,4 +8,4 @@
  */
 
 #define IPERF_VERSION "3.0-BETA5"
-#define IPERF_VERSION_DATE "01 Feb 2013"
+#define IPERF_VERSION_DATE "01 March 2013"

@@ -282,6 +282,18 @@ iperf_run_server(struct iperf_test *test)
     struct iperf_stream *sp;
     struct timeval now;
 
+    if (test->json_output)
+	if (iperf_json_start(test) < 0)
+	    return -1;
+
+    if (test->json_output) {
+	cJSON_AddItemToObject(test->json_start, "version", cJSON_CreateString(version));
+	cJSON_AddItemToObject(test->json_start, "system_info", cJSON_CreateString(get_system_info()));
+    } else if (test->verbose) {
+	printf("%s\n", version);
+	system("uname -a");
+    }
+
     // Open socket and listen
     if (iperf_server_listen(test) < 0) {
         return -1;
@@ -395,6 +407,11 @@ iperf_run_server(struct iperf_test *test)
     /* Close open test sockets */
     close(test->ctrl_sck);
     close(test->listener);
+
+    if (test->json_output) {
+	if (iperf_json_finish(test) < 0)
+	    return -1;
+    } 
 
     return 0;
 }

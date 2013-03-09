@@ -9,6 +9,7 @@
 
 #include <errno.h>
 #include <setjmp.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -20,6 +21,7 @@
 #include "iperf.h"
 #include "iperf_api.h"
 #include "iperf_util.h"
+#include "locale.h"
 #include "net.h"
 #include "timer.h"
 
@@ -186,6 +188,18 @@ iperf_run_client(struct iperf_test * test)
     fd_set read_set, write_set;
     struct timeval now;
 
+    if (test->json_output)
+	if (iperf_json_start(test) < 0)
+	    return -1;
+
+    if (test->json_output) {
+	cJSON_AddItemToObject(test->json_start, "version", cJSON_CreateString(version));
+	cJSON_AddItemToObject(test->json_start, "system_info", cJSON_CreateString(get_system_info()));
+    } else if (test->verbose) {
+	printf("%s\n", version);
+	system("uname -a");
+    }
+
     /* Start the client and connect to the server */
     if (iperf_connect(test) < 0) {
         return -1;
@@ -249,6 +263,12 @@ iperf_run_client(struct iperf_test * test)
             }
         }
     }
+
+    if (test->json_output) {
+	if (iperf_json_finish(test) < 0)
+	    return -1;
+    } else
+	printf("\niperf Done.\n");
 
     return 0;
 }

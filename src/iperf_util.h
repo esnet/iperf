@@ -26,6 +26,8 @@ int delay(int64_t ns);
 
 void cpu_util(double *);
 
+char* get_system_info(void);
+
 cJSON* iperf_json_printf(const char *format, ...);
 
 #endif

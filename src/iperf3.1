@@ -5,19 +5,17 @@ iperf3 \- perform network throughput tests
 .B iperf3 -s [
 .I options
 .B ]
-
+.br
 .B iperf3 -c 
 .I server
 .B [
 .I options
 .B ]
 
-
 .SH DESCRIPTION
 iperf3 is a tool for performing network throughput measurements.  It can test
 either TCP or UDP throughput.  To perform an iperf3 test the user must
 establish both a server and a client.
-
 
 .SH "GENERAL OPTIONS"
 .TP
@@ -45,18 +43,15 @@ show version information and quit
 .BR -h ", " --help " "
 show a help synopsis
 
-
 .SH "SERVER SPECIFIC OPTIONS"
 .TP
 .BR -s ", " --server " "
 run in server mode
-.TP
-
 
 .SH "CLIENT SPECIFIC OPTIONS"
 .TP
-.BR -c ", " --client " <host>"
-run in client mode, connecting to <host>
+.BR -c ", " --client " \fIhost\fR"
+run in client mode, connecting to the specified server
 .TP
 .BR -u ", " --udp
 use UDP rather than TCP
@@ -101,16 +96,6 @@ set the IP 'type of service'
 Use a "zero copy" method of sending data, such as sendfile(2),
 instead of the usual write(2).
 
-
-.SH DIAGNOSTICS
-This section needs to be filled in.
-
-
-.SH BUGS
-Exit statuses are inconsistent.
-Could possibly block indefinitely under some circumstances.
-
-
 .SH AUTHORS
 Iperf was originally written by Mark Gates and Alex Warshavsky.
 Man page and maintence by Jon Dugan <jdugan at x1024 dot net>.
@@ -121,6 +106,6 @@ John Estabrook <jestabro at ncsa.uiuc.edu>,
 Andrew Gallatin <gallatin at gmail.com>,
 Stephen Hemminger <shemminger at linux-foundation.org>
 
-
 .SH "SEE ALSO"
+libiperf(3),
 http://code.google.com/p/iperf/

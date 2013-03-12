@@ -73,4 +73,4 @@ TESTS                   = \
                         t_units \
                         t_uuid
 
-dist_man1_MANS          = iperf3.1
+dist_man_MANS          = iperf3.1 libiperf.3

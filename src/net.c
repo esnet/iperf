@@ -337,7 +337,7 @@ set_tcp_options(int sock, int no_delay, int mss)
 /****************************************************************************/
 
 int
-setnonblocking(int fd)
+setnonblocking(int fd, int nonblocking)
 {
     int flags, newflags;
 
@@ -346,7 +346,10 @@ setnonblocking(int fd)
         perror("fcntl(F_GETFL)");
         return -1;
     }
-    newflags = flags | (int) O_NONBLOCK;
+    if (nonblocking)
+	newflags = flags | (int) O_NONBLOCK;
+    else
+	newflags = flags & ~((int) O_NONBLOCK);
     if (newflags != flags)
 	if (fcntl(fd, F_SETFL, newflags) < 0) {
 	    perror("fcntl(F_SETFL)");

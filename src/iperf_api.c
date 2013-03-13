@@ -608,16 +608,16 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 int
 iperf_send(struct iperf_test *test, fd_set *write_setP)
 {
-    int burst, r;
+    int multisend, r;
     register struct iperf_stream *sp;
 
-    /* Can we do burst mode? */
+    /* Can we do multisend mode? */
     if (test->protocol->id == Pudp && test->settings->rate != 0)
-        burst = 1;	/* nope */
+        multisend = 1;	/* nope */
     else
-        burst = 20;	/* arbitrary */
+        multisend = 20;	/* arbitrary */
 
-    for (; burst > 0; --burst) {
+    for (; multisend > 0; --multisend) {
 	SLIST_FOREACH(sp, &test->streams, streams) {
 	    if (FD_ISSET(sp->socket, write_setP)) {
 		if ((r = sp->snd(sp)) < 0) {
@@ -627,7 +627,7 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 		    return r;
 		}
 		test->bytes_sent += r;
-		if (burst > 1 && test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes)
+		if (multisend > 1 && test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes)
 		    break;
 	    }
 	}

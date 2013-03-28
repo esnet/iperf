@@ -12,7 +12,6 @@ dirname=`echo $tag $proj | awk '{
   gsub(/-RELEASE/, "", $1);
   print $2"-"$1 }'`
 
-echo repo $repo
 echo tag $tag
 echo dirname $dirname
 
@@ -23,13 +22,29 @@ do_tag ()
 
 do_tar ()
 {
-    hg archive -t tgz -p ${dirname} -r ${tag} ${dirname}
+    tarball=${dirname}.tar.gz
+    hg archive -t tgz -p ${dirname} -X make_release -X .hgtags -r ${tag} ${tarball}
+}
+
+usage ()
+{
+    cat <<EOF
+$0: tag|tar
+
+   tag  -- create a tag using the contents of src/version.h
+   tar  -- create a tarball of the current tag
+
+General use is to do:
+
+./$0 tag
+./$0 tar
+EOF
 }
 
 case $1 in
     tag) do_tag ;;
     tar) do_tar ;;
-    *) echo "unknown command: $1" ;;
+    *) echo "unknown command: $1"; usage ;;
 esac
 
 exit

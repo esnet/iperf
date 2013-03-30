@@ -142,7 +142,6 @@ struct iperf_test
     int       no_delay;                         /* -N option */
     int       output_format;                    /* -O option */
     int       reverse;                          /* -R option */
-    int       v6domain;                         /* -6 option */
     int	      verbose;                          /* -V option - verbose mode */
     int	      json_output;                      /* -J option - JSON output */
     int	      zerocopy;                         /* -Z option - use sendfile */

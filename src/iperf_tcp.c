@@ -114,18 +114,31 @@ iperf_tcp_accept(struct iperf_test * test)
 int
 iperf_tcp_listen(struct iperf_test *test)
 {
-    int s, opt;
     struct addrinfo hints, *res;
     char portstr[6];
+    int s, opt;
+
     s = test->listener;
 
     if (test->no_delay || test->settings->mss || test->settings->socket_bufsize) {
         FD_CLR(s, &test->read_set);
         close(s);
-        if ((s = socket(test->settings->domain, SOCK_STREAM, 0)) < 0) {
+
+        snprintf(portstr, 6, "%d", test->server_port);
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = (test->settings->domain == AF_UNSPEC ? AF_INET6 : test->settings->domain);
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_flags = AI_PASSIVE;
+        if (getaddrinfo(test->bind_address, portstr, &hints, &res) != 0) {
             i_errno = IESTREAMLISTEN;
             return -1;
         }
+
+        if ((s = socket(res->ai_family, SOCK_STREAM, 0)) < 0) {
+            i_errno = IESTREAMLISTEN;
+            return -1;
+        }
+
         if (test->no_delay) {
             opt = 1;
             if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0) {
@@ -155,17 +168,13 @@ iperf_tcp_listen(struct iperf_test *test)
             i_errno = IEREUSEADDR;
             return -1;
         }
-
-        snprintf(portstr, 6, "%d", test->server_port);
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_family = test->settings->domain;
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_flags = AI_PASSIVE;
-        // XXX: Check getaddrinfo for errors!
-        if (getaddrinfo(test->bind_address, portstr, &hints, &res) != 0) {
-            i_errno = IESTREAMLISTEN;
-            return -1;
-        }
+	if (test->settings->domain == AF_UNSPEC || test->settings->domain == AF_INET6) {
+	    if (test->settings->domain == AF_UNSPEC)
+		opt = 0;
+	    else if (test->settings->domain == AF_INET6)
+		opt = 1;
+	    setsockopt(s, SOL_SOCKET, IPV6_V6ONLY, (char *) &opt, sizeof(opt));
+	}
 
         if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0) {
             close(s);
@@ -194,31 +203,40 @@ iperf_tcp_listen(struct iperf_test *test)
 int
 iperf_tcp_connect(struct iperf_test *test)
 {
-    int s, opt;
-    struct addrinfo hints, *res;
+    struct addrinfo hints, *local_res, *server_res;
     char portstr[6];
-
-    if ((s = socket(test->settings->domain, SOCK_STREAM, 0)) < 0) {
-        i_errno = IESTREAMCONNECT;
-        return -1;
-    }
+    int s, opt;
 
     if (test->bind_address) {
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = test->settings->domain;
         hints.ai_socktype = SOCK_STREAM;
-        // XXX: Check getaddrinfo for errors!
-        if (getaddrinfo(test->bind_address, NULL, &hints, &res) != 0) {
+        if (getaddrinfo(test->bind_address, NULL, &hints, &local_res) != 0) {
             i_errno = IESTREAMCONNECT;
             return -1;
         }
+    }
 
-        if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0) {
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = test->settings->domain;
+    hints.ai_socktype = SOCK_STREAM;
+    snprintf(portstr, sizeof(portstr), "%d", test->server_port);
+    if (getaddrinfo(test->server_hostname, portstr, &hints, &server_res) != 0) {
+        i_errno = IESTREAMCONNECT;
+        return -1;
+    }
+
+    if ((s = socket(server_res->ai_family, SOCK_STREAM, 0)) < 0) {
+        i_errno = IESTREAMCONNECT;
+        return -1;
+    }
+
+    if (test->bind_address) {
+        if (bind(s, (struct sockaddr *) local_res->ai_addr, local_res->ai_addrlen) < 0) {
             i_errno = IESTREAMCONNECT;
             return -1;
         }
-
-        freeaddrinfo(res);
+        freeaddrinfo(local_res);
     }
 
     /* Set socket options */
@@ -246,22 +264,12 @@ iperf_tcp_connect(struct iperf_test *test)
         }
     }
 
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = test->settings->domain;
-    hints.ai_socktype = SOCK_STREAM;
-    snprintf(portstr, 6, "%d", test->server_port);
-    // XXX: Check getaddrinfo for errors!
-    if (getaddrinfo(test->server_hostname, portstr, &hints, &res) != 0) {
+    if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS) {
         i_errno = IESTREAMCONNECT;
         return -1;
     }
 
-    if (connect(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0 && errno != EINPROGRESS) {
-        i_errno = IESTREAMCONNECT;
-        return -1;
-    }
-
-    freeaddrinfo(res);
+    freeaddrinfo(server_res);
 
     /* Send cookie for verification */
     if (Nwrite(s, test->cookie, COOKIE_SIZE, Ptcp) < 0) {

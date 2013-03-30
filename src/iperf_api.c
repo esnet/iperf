@@ -327,7 +327,7 @@ iperf_on_connect(struct iperf_test *test)
     struct sockaddr_in *sa_inP;
     struct sockaddr_in6 *sa_in6P;
     socklen_t len;
-    int domain, opt;
+    int opt;
 
     if (test->role == 'c') {
 	if (test->json_output)
@@ -335,12 +335,11 @@ iperf_on_connect(struct iperf_test *test)
 	else
 	    printf("Connecting to host %s, port %d\n", test->server_hostname, test->server_port);
     } else {
-        domain = test->settings->domain;
         len = sizeof(sa);
         getpeername(test->ctrl_sck, (struct sockaddr *) &sa, &len);
-        if (domain == AF_INET) {
+        if (getsockdomain(test->ctrl_sck) == AF_INET) {
 	    sa_inP = (struct sockaddr_in *) &sa;
-            inet_ntop(domain, &sa_inP->sin_addr, ipr, sizeof(ipr));
+            inet_ntop(AF_INET, &sa_inP->sin_addr, ipr, sizeof(ipr));
 	    port = ntohs(sa_inP->sin_port);
 	    if (test->json_output)
 		cJSON_AddItemToObject(test->json_start, "accepted_connection", iperf_json_printf("host: %s  port: %d", ipr, (int64_t) port));
@@ -348,7 +347,7 @@ iperf_on_connect(struct iperf_test *test)
 		printf("Accepted connection from %s, port %d\n", ipr, port);
         } else {
 	    sa_in6P = (struct sockaddr_in6 *) &sa;
-            inet_ntop(domain, &sa_in6P->sin6_addr, ipr, sizeof(ipr));
+            inet_ntop(AF_INET6, &sa_in6P->sin6_addr, ipr, sizeof(ipr));
 	    port = ntohs(sa_in6P->sin6_port);
 	    if (test->json_output)
 		cJSON_AddItemToObject(test->json_start, "accepted_connection", iperf_json_printf("host: %s  port: %d", ipr, (int64_t) port));
@@ -434,7 +433,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     blksize = 0;
     server_flag = client_flag = 0;
-    while ((ch = getopt_long(argc, argv, "p:f:i:DVJdvsc:ub:t:n:l:P:Rw:B:M:N6S:Zh", longopts, NULL)) != -1) {
+    while ((ch = getopt_long(argc, argv, "p:f:i:DVJdvsc:ub:t:n:l:P:Rw:B:M:N46S:Zh", longopts, NULL)) != -1) {
         switch (ch) {
             case 'p':
                 test->server_port = atoi(optarg);
@@ -545,6 +544,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             case 'N':
                 test->no_delay = 1;
 		client_flag = 1;
+                break;
+            case '4':
+                test->settings->domain = AF_INET;
                 break;
             case '6':
                 test->settings->domain = AF_INET6;
@@ -1113,16 +1115,16 @@ void
 connect_msg(struct iperf_stream *sp)
 {
     char ipl[INET6_ADDRSTRLEN], ipr[INET6_ADDRSTRLEN];
-    int lport, rport, domain = sp->settings->domain;
+    int lport, rport;
 
-    if (domain == AF_INET) {
-        inet_ntop(domain, (void *) &((struct sockaddr_in *) &sp->local_addr)->sin_addr, ipl, sizeof(ipl));
-        inet_ntop(domain, (void *) &((struct sockaddr_in *) &sp->remote_addr)->sin_addr, ipr, sizeof(ipr));
+    if (getsockdomain(sp->socket) == AF_INET) {
+        inet_ntop(AF_INET, (void *) &((struct sockaddr_in *) &sp->local_addr)->sin_addr, ipl, sizeof(ipl));
+        inet_ntop(AF_INET, (void *) &((struct sockaddr_in *) &sp->remote_addr)->sin_addr, ipr, sizeof(ipr));
         lport = ntohs(((struct sockaddr_in *) &sp->local_addr)->sin_port);
         rport = ntohs(((struct sockaddr_in *) &sp->remote_addr)->sin_port);
     } else {
-        inet_ntop(domain, (void *) &((struct sockaddr_in6 *) &sp->local_addr)->sin6_addr, ipl, sizeof(ipl));
-        inet_ntop(domain, (void *) &((struct sockaddr_in6 *) &sp->remote_addr)->sin6_addr, ipr, sizeof(ipr));
+        inet_ntop(AF_INET6, (void *) &((struct sockaddr_in6 *) &sp->local_addr)->sin6_addr, ipl, sizeof(ipl));
+        inet_ntop(AF_INET6, (void *) &((struct sockaddr_in6 *) &sp->remote_addr)->sin6_addr, ipr, sizeof(ipr));
         lport = ntohs(((struct sockaddr_in6 *) &sp->local_addr)->sin6_port);
         rport = ntohs(((struct sockaddr_in6 *) &sp->remote_addr)->sin6_port);
     }
@@ -1171,7 +1173,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->reporter_interval = 0;
     testp->num_streams = 1;
 
-    testp->settings->domain = AF_INET;
+    testp->settings->domain = AF_UNSPEC;
     testp->settings->unit_format = 'a';
     testp->settings->socket_bufsize = 0;    /* use autotuning */
     testp->settings->blksize = DEFAULT_TCP_BLKSIZE;
@@ -1768,7 +1770,7 @@ iperf_init_stream(struct iperf_stream *sp, struct iperf_test *test)
     }
     /* Set IP TOS */
     if ((opt = test->settings->tos)) {
-        if (test->settings->domain == AF_INET6) {
+        if (getsockdomain(sp->socket) == AF_INET6) {
 #ifdef IPV6_TCLASS
             if (setsockopt(sp->socket, IPPROTO_IPV6, IPV6_TCLASS, &opt, sizeof(opt)) < 0) {
                 i_errno = IESETCOS;

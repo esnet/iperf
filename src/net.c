@@ -44,45 +44,38 @@
 int
 netdial(int domain, int proto, char *local, char *server, int port)
 {
+    struct addrinfo hints, *local_res, *server_res;
     int s;
-    struct addrinfo hints, *res;
-
-    s = socket(domain, proto, 0);
-    if (s < 0) {
-        return -1;
-    }
 
     if (local) {
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = domain;
         hints.ai_socktype = proto;
-
-        // XXX: Check getaddrinfo for errors!
-        if (getaddrinfo(local, NULL, &hints, &res) != 0)
+        if (getaddrinfo(local, NULL, &hints, &local_res) != 0)
             return -1;
-
-        if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0)
-            return -1;
-
-        freeaddrinfo(res);
     }
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = domain;
     hints.ai_socktype = proto;
-
-    // XXX: Check getaddrinfo for errors!
-    if (getaddrinfo(server, NULL, &hints, &res) != 0)
+    if (getaddrinfo(server, NULL, &hints, &server_res) != 0)
         return -1;
 
-    ((struct sockaddr_in *) res->ai_addr)->sin_port = htons(port);
-
-    if (connect(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0 && errno != EINPROGRESS) {
+    s = socket(server_res->ai_family, proto, 0);
+    if (s < 0)
         return -1;
+
+    if (local) {
+        if (bind(s, (struct sockaddr *) local_res->ai_addr, local_res->ai_addrlen) < 0)
+            return -1;
+        freeaddrinfo(local_res);
     }
 
-    freeaddrinfo(res);
+    ((struct sockaddr_in *) server_res->ai_addr)->sin_port = htons(port);
+    if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS)
+        return -1;
 
+    freeaddrinfo(server_res);
     return s;
 }
 
@@ -91,25 +84,31 @@ netdial(int domain, int proto, char *local, char *server, int port)
 int
 netannounce(int domain, int proto, char *local, int port)
 {
-    int s, opt;
     struct addrinfo hints, *res;
     char portstr[6];
-
-    s = socket(domain, proto, 0);
-    if (s < 0) {
-        return -1;
-    }
-    opt = 1;
-    setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *) &opt, sizeof(opt));
+    int s, opt;
 
     snprintf(portstr, 6, "%d", port);
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = domain;
+    hints.ai_family = (domain == AF_UNSPEC ? AF_INET6 : domain);
     hints.ai_socktype = proto;
     hints.ai_flags = AI_PASSIVE;
-    // XXX: Check getaddrinfo for errors!
     if (getaddrinfo(local, portstr, &hints, &res) != 0)
         return -1; 
+
+    s = socket(res->ai_family, proto, 0);
+    if (s < 0)
+        return -1;
+
+    opt = 1;
+    setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *) &opt, sizeof(opt));
+    if (domain == AF_UNSPEC || domain == AF_INET6) {
+	if (domain == AF_UNSPEC)
+	    opt = 0;
+	else if (domain == AF_INET6)
+	    opt = 1;
+	setsockopt(s, SOL_SOCKET, IPV6_V6ONLY, (char *) &opt, sizeof(opt));
+    }
 
     if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0) {
         close(s);
@@ -356,4 +355,17 @@ setnonblocking(int fd, int nonblocking)
 	    return -1;
 	}
     return 0;
+}
+
+/****************************************************************************/
+
+int
+getsockdomain(int sock)
+{
+    struct sockaddr sa;
+    socklen_t len;
+
+    if (getsockname(sock, &sa, &len) < 0)
+	return -1;
+    return sa.sa_family;
 }

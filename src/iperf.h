@@ -146,6 +146,9 @@ struct iperf_test
     int	      json_output;                      /* -J option - JSON output */
     int	      zerocopy;                         /* -Z option - use sendfile */
 
+    int	      multisend;
+    int	      may_use_sigalrm;
+
     /* Select related parameters */
     int       max_fd;
     fd_set    read_set;                         /* set of read sockets */

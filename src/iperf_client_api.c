@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/select.h>
 #include <sys/uio.h>
@@ -181,9 +182,22 @@ iperf_client_end(struct iperf_test *test)
 }
 
 
+static int sigalrm_triggered;
+
+static void
+sigalrm_handler(int sig)
+{
+    sigalrm_triggered = 1;
+}
+
+
 int
 iperf_run_client(struct iperf_test * test)
 {
+    int concurrency_model;
+    int startup;
+#define CM_SELECT 1
+#define CM_SIGALRM 2
     int result;
     fd_set read_set, write_set;
     struct timeval now;
@@ -205,63 +219,95 @@ iperf_run_client(struct iperf_test * test)
         return -1;
     }
 
-    // Begin calculating CPU utilization
+    /* Begin calculating CPU utilization */
     cpu_util(NULL);
 
+    startup = 1;
+    concurrency_model = CM_SELECT;	/* always start in select mode */
     (void) gettimeofday(&now, NULL);
     while (test->state != IPERF_DONE) {
 
-        memcpy(&read_set, &test->read_set, sizeof(fd_set));
-        memcpy(&write_set, &test->write_set, sizeof(fd_set));
-
-        result = select(test->max_fd + 1, &read_set, &write_set, NULL, tmr_timeout(&now));
-        if (result < 0 && errno != EINTR) {
-            i_errno = IESELECT;
-            return -1;
-        }
-	if (result > 0) {
-            if (FD_ISSET(test->ctrl_sck, &read_set)) {
-                if (iperf_handle_message_client(test) < 0) {
-                    return -1;
-		}
-                FD_CLR(test->ctrl_sck, &read_set);
-            }
-
-            if (test->state == TEST_RUNNING) {
-                if (test->reverse) {
-                    // Reverse mode. Client receives.
-                    if (iperf_recv(test, &read_set) < 0) {
-                        return -1;
+	if (concurrency_model == CM_SELECT) {
+	    memcpy(&read_set, &test->read_set, sizeof(fd_set));
+	    memcpy(&write_set, &test->write_set, sizeof(fd_set));
+	    result = select(test->max_fd + 1, &read_set, &write_set, NULL, tmr_timeout(&now));
+	    if (result < 0 && errno != EINTR) {
+		i_errno = IESELECT;
+		return -1;
+	    }
+	    if (result > 0) {
+		if (FD_ISSET(test->ctrl_sck, &read_set)) {
+		    if (iperf_handle_message_client(test) < 0) {
+			return -1;
 		    }
-                } else {
-                    // Regular mode. Client sends.
-                    if (iperf_send(test, &write_set) < 0) {
-                        return -1;
-		    }
-                }
-
-                /* Run the timers. */
-		(void) gettimeofday(&now, NULL);
-		tmr_run(&now);
-
-		/* Is the test done yet? */
-		if (test->settings->bytes == 0) {
-		    if (!test->done)
-			continue;	/* not done */
-		} else {
-		    if (test->bytes_sent < test->settings->bytes)
-			continue;	/* not done */
+		    FD_CLR(test->ctrl_sck, &read_set);
 		}
-		/* Yes, done!  Send TEST_END. */
-		cpu_util(&test->cpu_util);
-		test->stats_callback(test);
-		test->state = TEST_END;
-		if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-		    i_errno = IESENDMESSAGE;
+	    }
+	}
+
+	if (test->state == TEST_RUNNING) {
+
+	    /* Is this our first time in TEST_RUNNING mode? */
+	    if (startup) {
+	        startup = 0;
+		/* Can we switch to SIGALRM mode?  There are a bunch of
+		** cases where either it won't work or it's ill-advised.
+		*/
+		if (test->may_use_sigalrm &&
+		    (test->protocol->id != Pudp || test->settings->rate == 0) &&
+		    (test->stats_interval == 0 || test->stats_interval > 1) &&
+		    (test->reporter_interval == 0 || test->reporter_interval > 1) &&
+		    ! test->reverse) {
+		    concurrency_model = CM_SIGALRM;
+		    test->multisend = 1;
+		    signal(SIGALRM, sigalrm_handler);
+		    sigalrm_triggered = 0;
+		    alarm(1);
+		}
+	    }
+
+	    if (test->reverse) {
+		// Reverse mode. Client receives.
+		if (iperf_recv(test, &read_set) < 0) {
 		    return -1;
 		}
-            }
-        }
+	    } else {
+		// Regular mode. Client sends.
+		if (iperf_send(test, concurrency_model == CM_SIGALRM ? NULL : &write_set) < 0) {
+		    return -1;
+		}
+	    }
+
+	    if (concurrency_model == CM_SELECT ||
+	        (concurrency_model == CM_SIGALRM && sigalrm_triggered)) {
+		/* Run the timers. */
+		(void) gettimeofday(&now, NULL);
+		tmr_run(&now);
+	        if (concurrency_model == CM_SIGALRM) {
+		    sigalrm_triggered = 0;
+		    alarm(1);
+		}
+	    }
+
+	    /* Is the test done yet? */
+	    if (test->settings->bytes == 0) {
+		if (!test->done)
+		    continue;	/* not done */
+	    } else {
+		if (test->bytes_sent < test->settings->bytes)
+		    continue;	/* not done */
+	    }
+	    /* Yes, done!  Send TEST_END. */
+	    cpu_util(&test->cpu_util);
+	    test->stats_callback(test);
+	    test->state = TEST_END;
+	    if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
+		i_errno = IESENDMESSAGE;
+		return -1;
+	    }
+	    /* And if we were doing SIGALRM, go back to select for the end. */
+	    concurrency_model = CM_SELECT;
+	}
     }
 
     if (test->json_output) {

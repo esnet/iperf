@@ -78,6 +78,9 @@ main(int argc, char **argv)
         iperf_errexit(NULL, "create new test error - %s", iperf_strerror(i_errno));
     iperf_defaults(test);	/* sets defaults */
 
+    /* This main program doesn't use SIGALRM, so the iperf API may use it. */
+    iperf_set_test_may_use_sigalrm(test, 1);
+
     // XXX: Check signal for errors?
     signal(SIGINT, sig_handler);
     if (setjmp(env)) {

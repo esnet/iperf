@@ -164,6 +164,12 @@ iperf_get_test_zerocopy(struct iperf_test *ipt)
     return ipt->zerocopy;
 }
 
+int
+iperf_get_test_may_use_sigalrm(struct iperf_test *ipt)
+{
+    return ipt->may_use_sigalrm;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -254,6 +260,12 @@ void
 iperf_set_test_zerocopy(struct iperf_test *ipt, int zerocopy)
 {
     ipt->zerocopy = zerocopy;
+}
+
+void
+iperf_set_test_may_use_sigalrm(struct iperf_test *ipt, int may_use_sigalrm)
+{
+    ipt->may_use_sigalrm = may_use_sigalrm;
 }
 
 /********************** Get/set test protocol structure ***********************/
@@ -610,18 +622,18 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 int
 iperf_send(struct iperf_test *test, fd_set *write_setP)
 {
-    int multisend, r;
+    register int multisend, r;
     register struct iperf_stream *sp;
 
     /* Can we do multisend mode? */
     if (test->protocol->id == Pudp && test->settings->rate != 0)
         multisend = 1;	/* nope */
     else
-        multisend = 20;	/* arbitrary */
+        multisend = test->multisend;
 
     for (; multisend > 0; --multisend) {
 	SLIST_FOREACH(sp, &test->streams, streams) {
-	    if (FD_ISSET(sp->socket, write_setP)) {
+	    if (write_setP == NULL || FD_ISSET(sp->socket, write_setP)) {
 		if ((r = sp->snd(sp)) < 0) {
 		    if (r == NET_SOFTERROR)
 			break;
@@ -634,9 +646,10 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 	    }
 	}
     }
-    SLIST_FOREACH(sp, &test->streams, streams)
-	if (FD_ISSET(sp->socket, write_setP))
-	    FD_CLR(sp->socket, write_setP);
+    if (write_setP != NULL)
+	SLIST_FOREACH(sp, &test->streams, streams)
+	    if (FD_ISSET(sp->socket, write_setP))
+		FD_CLR(sp->socket, write_setP);
 
     return 0;
 }
@@ -1182,6 +1195,9 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->bytes = 0;
     memset(testp->cookie, 0, COOKIE_SIZE);
 
+    testp->multisend = 10;	/* arbitrary */
+    testp->may_use_sigalrm = 0;
+
     /* Set up protocol list */
     SLIST_INIT(&testp->streams);
     SLIST_INIT(&testp->protocols);
@@ -1315,6 +1331,7 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->rate = RATE;   /* UDP only */
     test->settings->mss = 0;
     memset(test->cookie, 0, COOKIE_SIZE);
+    test->multisend = 10;	/* arbitrary */
 }
 
 

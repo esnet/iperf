@@ -101,7 +101,7 @@ iperf_accept(struct iperf_test *test)
     int rbuf = ACCESS_DENIED;
     char cookie[COOKIE_SIZE];
     socklen_t len;
-    struct sockaddr_in addr;
+    struct sockaddr_storage addr;
 
     len = sizeof(addr);
     if ((s = accept(test->listener, (struct sockaddr *) &addr, &len)) < 0) {

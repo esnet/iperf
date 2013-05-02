@@ -133,7 +133,7 @@ iperf_accept(struct iperf_test *test)
             test->on_connect(test);
         }
     } else {
-        // XXX: Do we even need to receive cookie if we're just going to deny anyways?
+        /* XXX: Do we even need to receive cookie if we're just going to deny anyways? */
         if (Nread(s, cookie, COOKIE_SIZE, Ptcp) < 0) {
             i_errno = IERECVCOOKIE;
             return -1;

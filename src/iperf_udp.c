@@ -167,14 +167,14 @@ iperf_udp_send(struct iperf_stream *sp)
 int
 iperf_udp_accept(struct iperf_test *test)
 {
-    struct sockaddr_in sa_peer;
+    struct sockaddr_storage sa_peer;
     int       buf;
     socklen_t len;
     int       sz, s;
 
     s = test->prot_listener;
 
-    len = sizeof sa_peer;
+    len = sizeof(sa_peer);
     if ((sz = recvfrom(test->prot_listener, &buf, sizeof(buf), 0, (struct sockaddr *) &sa_peer, &len)) < 0) {
         i_errno = IESTREAMACCEPT;
         return -1;
@@ -195,6 +195,7 @@ iperf_udp_accept(struct iperf_test *test)
     test->max_fd = (test->max_fd < test->prot_listener) ? test->prot_listener : test->max_fd;
 
     /* Let the client know we're ready "accept" another UDP "stream" */
+    buf = 987654321;
     if (write(s, &buf, sizeof(buf)) < 0) {
         i_errno = IESTREAMWRITE;
         return -1;
@@ -229,22 +230,24 @@ iperf_udp_listen(struct iperf_test *test)
 int
 iperf_udp_connect(struct iperf_test *test)
 {
-    int s, buf;
+    int s, buf, sz;
 
     if ((s = netdial(test->settings->domain, Pudp, test->bind_address, test->server_hostname, test->server_port)) < 0) {
         i_errno = IESTREAMCONNECT;
         return -1;
     }
 
-    /* Write to the UDP stream to give the server this stream's credentials */
+    /* Write to the UDP stream to let the server know we're here. */
+    buf = 123456789;
     if (write(s, &buf, sizeof(buf)) < 0) {
         // XXX: Should this be changed to IESTREAMCONNECT? 
         i_errno = IESTREAMWRITE;
         return -1;
     }
+
     /* Wait until the server confirms the client UDP write */
     // XXX: Should this read be TCP instead?
-    if (read(s, &buf, sizeof(buf)) < 0) {
+    if ((sz = recv(s, &buf, sizeof(buf), 0)) < 0) {
         i_errno = IESTREAMREAD;
         return -1;
     }

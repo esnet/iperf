@@ -71,28 +71,24 @@ iperf_handle_message_client(struct iperf_test *test)
 
     switch (test->state) {
         case PARAM_EXCHANGE:
-            if (iperf_exchange_parameters(test) < 0) {
+            if (iperf_exchange_parameters(test) < 0)
                 return -1;
-	    }
             if (test->on_connect)
                 test->on_connect(test);
             break;
         case CREATE_STREAMS:
-            if (iperf_create_streams(test) < 0) {
+            if (iperf_create_streams(test) < 0)
                 return -1;
-	    }
             break;
         case TEST_START:
-            if (iperf_init_test(test) < 0) {
+            if (iperf_init_test(test) < 0)
                 return -1;
-	    }
             break;
         case TEST_RUNNING:
             break;
         case EXCHANGE_RESULTS:
-            if (iperf_exchange_results(test) < 0) {
+            if (iperf_exchange_results(test) < 0)
                 return -1;
-	    }
             break;
         case DISPLAY_RESULTS:
             if (test->on_test_finish)

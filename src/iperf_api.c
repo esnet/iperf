@@ -439,14 +439,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif
         {NULL, 0, NULL, 0}
     };
-    char ch;
+    int flag;
     int blksize;
     int server_flag, client_flag;
 
     blksize = 0;
     server_flag = client_flag = 0;
-    while ((ch = getopt_long(argc, argv, "p:f:i:DVJdvsc:ub:t:n:l:P:Rw:B:M:N46S:Zh", longopts, NULL)) != -1) {
-        switch (ch) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:DVJdvsc:ub:t:n:l:P:Rw:B:M:N46S:Zh", longopts, NULL)) != -1) {
+        switch (flag) {
             case 'p':
                 test->server_port = atoi(optarg);
                 break;

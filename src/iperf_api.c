@@ -1427,8 +1427,8 @@ iperf_print_intermediate(struct iperf_test *test)
 	if (test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    retransmits += irp->this_retrans;
     }
-    if (bytes <=0) { /* this can happen if timer goes off just when client exits */
-	iperf_err(test, "error: bytes <= 0!");
+    if (bytes < 0) { /* this can happen if timer goes off just when client exits */
+	iperf_err(test, "error: bytes < 0!");
         return;
     }
     /* next build string with sum of all streams */

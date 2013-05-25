@@ -1741,6 +1741,10 @@ iperf_new_stream(struct iperf_test *test, int s)
         i_errno = IECREATESTREAM;
         return NULL;
     }
+    if (unlink(template) < 0) {
+        i_errno = IECREATESTREAM;
+        return NULL;
+    }
     if (ftruncate(sp->buffer_fd, test->settings->blksize) < 0) {
         i_errno = IECREATESTREAM;
         return NULL;

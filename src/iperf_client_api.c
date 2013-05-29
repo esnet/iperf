@@ -87,6 +87,8 @@ iperf_handle_message_client(struct iperf_test *test)
         case TEST_RUNNING:
             break;
         case EXCHANGE_RESULTS:
+            if (iperf_sum_results(test) < 0)
+                return -1;
             if (iperf_exchange_results(test) < 0)
                 return -1;
             break;

@@ -45,6 +45,7 @@ struct iperf_stream_result
     iperf_size_t bytes_sent;
     iperf_size_t bytes_received_this_interval;
     iperf_size_t bytes_sent_this_interval;
+    int retransmits;
     struct timeval start_time;
     struct timeval end_time;
     TAILQ_HEAD(irlisthead, iperf_interval_results) interval_results;
@@ -126,6 +127,7 @@ struct iperf_test
 {
     char      role;                             /* 'c' lient or 's' erver */
     int       sender;                           /* client & !reverse or server & reverse */
+    int       sender_has_retransmits;
     struct protocol *protocol;
     char      state;
     char     *server_hostname;                  /* -c option */

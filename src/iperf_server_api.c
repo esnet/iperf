@@ -185,6 +185,8 @@ iperf_handle_message_server(struct iperf_test *test)
                 i_errno = IESENDMESSAGE;
                 return -1;
             }
+            if (iperf_sum_results(test) < 0)
+                return -1;
             if (iperf_exchange_results(test) < 0)
                 return -1;
             test->state = DISPLAY_RESULTS;
@@ -260,6 +262,7 @@ iperf_test_reset(struct iperf_test *test)
 
     test->reverse = 0;
     test->sender = 0;
+    test->sender_has_retransmits = 0;
     test->no_delay = 0;
 
     FD_ZERO(&test->read_set);

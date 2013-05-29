@@ -124,7 +124,8 @@ struct protocol {
 
 struct iperf_test
 {
-    char      role;                             /* c' lient or 's' erver */
+    char      role;                             /* 'c' lient or 's' erver */
+    int       sender;                           /* client & !reverse or server & reverse */
     struct protocol *protocol;
     char      state;
     char     *server_hostname;                  /* -c option */

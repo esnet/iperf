@@ -486,6 +486,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     return -1;
                 }
 		test->role = 's';
+		test->sender = 0;
                 break;
             case 'c':
                 if (test->role == 's') {
@@ -493,6 +494,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     return -1;
                 }
 		test->role = 'c';
+		test->sender = 1;
 		test->server_hostname = (char *) malloc(strlen(optarg)+1);
 		strncpy(test->server_hostname, optarg, strlen(optarg)+1);
                 break;
@@ -615,6 +617,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         i_errno = IENOROLE;
         return -1;
     }
+    if (test->reverse)
+        test->sender = ! test->sender;
 
     return 0;
 }
@@ -902,8 +906,10 @@ get_parameters(struct iperf_test *test)
 	    test->no_delay = 1;
 	if ((j_p = cJSON_GetObjectItem(j, "parallel")) != NULL)
 	    test->num_streams = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "reverse")) != NULL)
+	if ((j_p = cJSON_GetObjectItem(j, "reverse")) != NULL) {
 	    test->reverse = 1;
+	    test->sender = ! test->sender;
+	}
 	if ((j_p = cJSON_GetObjectItem(j, "window")) != NULL)
 	    test->settings->socket_bufsize = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "len")) != NULL)
@@ -948,10 +954,7 @@ send_results(struct iperf_test *test)
 		    r = -1;
 		} else {
 		    cJSON_AddItemToArray(j_streams, j_stream);
-		    if (test->role == 'c')
-			bytes_transferred = (test->reverse ? sp->result->bytes_received : sp->result->bytes_sent);
-		    else
-			bytes_transferred = (test->reverse ? sp->result->bytes_sent : sp->result->bytes_received);
+		    bytes_transferred = test->sender ? sp->result->bytes_sent : sp->result->bytes_received;
 		    cJSON_AddIntToObject(j_stream, "id", sp->id);
 		    cJSON_AddIntToObject(j_stream, "bytes", bytes_transferred);
 		    cJSON_AddFloatToObject(j_stream, "jitter", sp->jitter);
@@ -1033,7 +1036,7 @@ get_results(struct iperf_test *test)
 				i_errno = IESTREAMID;
 				r = -1;
 			    } else {
-				if ((test->role == 'c' && !test->reverse) || (test->role == 's' && test->reverse)) {
+				if (test->sender) {
 				    sp->jitter = jitter;
 				    sp->cnt_error = cerror;
 				    sp->packet_count = pcount;
@@ -1309,6 +1312,7 @@ iperf_reset_test(struct iperf_test *test)
     SLIST_INIT(&test->streams);
 
     test->role = 's';
+    test->sender = 0;
     set_protocol(test, Ptcp);
     test->duration = DURATION;
     test->state = 0;
@@ -1355,10 +1359,7 @@ iperf_stats_callback(struct iperf_test *test)
     SLIST_FOREACH(sp, &test->streams, streams) {
         rp = sp->result;
 
-        if ((test->role == 'c' && !test->reverse) || (test->role == 's' && test->reverse))
-            temp.bytes_transferred = rp->bytes_sent_this_interval;
-        else
-            temp.bytes_transferred = rp->bytes_received_this_interval;
+	temp.bytes_transferred = test->sender ? rp->bytes_sent_this_interval : rp->bytes_received_this_interval;
      
         irp = TAILQ_FIRST(&rp->interval_results);
         /* result->end_time contains timestamp of previous interval */

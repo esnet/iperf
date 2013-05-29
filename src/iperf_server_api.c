@@ -259,6 +259,7 @@ iperf_test_reset(struct iperf_test *test)
     test->bytes_sent = 0;
 
     test->reverse = 0;
+    test->sender = 0;
     test->no_delay = 0;
 
     FD_ZERO(&test->read_set);

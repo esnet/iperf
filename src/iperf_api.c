@@ -344,8 +344,11 @@ iperf_on_connect(struct iperf_test *test)
     if (test->role == 'c') {
 	if (test->json_output)
 	    cJSON_AddItemToObject(test->json_start, "connecting_to", iperf_json_printf("host: %s  port: %d", test->server_hostname, (int64_t) test->server_port));
-	else
+	else {
 	    printf("Connecting to host %s, port %d\n", test->server_hostname, test->server_port);
+	    if (test->reverse)
+		printf("Reverse mode, remote host %s is sending\n", test->server_hostname);
+	}
     } else {
         len = sizeof(sa);
         getpeername(test->ctrl_sck, (struct sockaddr *) &sa, &len);

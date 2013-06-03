@@ -99,6 +99,9 @@ iperf_strerror(int i_errno)
         case IENOSENDFILE:
             snprintf(errstr, len, "this OS does not support sendfile");
             break;
+        case IEUNIMP:
+            snprintf(errstr, len, "an option you are trying to set is not implemented yet");
+            break;
         case IENEWTEST:
             snprintf(errstr, len, "unable to create a new test");
             perr = 1;
@@ -202,6 +205,9 @@ iperf_strerror(int i_errno)
         case IESETCOS:
             snprintf(errstr, len, "unable to set IPv6 traffic class");
             perr = 1;
+            break;
+        case IESETFLOW:
+            snprintf(errstr, len, "unable to set IPv6 flow label");
             break;
         case IEREUSEADDR:
             snprintf(errstr, len, "unable to reuse address on socket");

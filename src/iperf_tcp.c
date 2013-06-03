@@ -263,6 +263,15 @@ iperf_tcp_connect(struct iperf_test *test)
             return -1;
         }
     }
+    if (test->settings->flowlabel) {
+        if (server_res->ai_addr->sa_family != AF_INET6) {
+            i_errno = IESETFLOW;
+            return -1;
+	} else {
+	    struct sockaddr_in6* sa6P = (struct sockaddr_in6*) server_res->ai_addr;
+	    sa6P->sin6_flowinfo = htonl(test->settings->flowlabel);
+	}
+    }
 
     if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS) {
         i_errno = IESTREAMCONNECT;

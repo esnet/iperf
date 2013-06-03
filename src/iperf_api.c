@@ -430,14 +430,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"no-delay", no_argument, NULL, 'N'},
         {"version6", no_argument, NULL, '6'},
         {"tos", required_argument, NULL, 'S'},
+        {"flowlabel", required_argument, NULL, 'L'},
         {"zerocopy", no_argument, NULL, 'Z'},
         {"help", no_argument, NULL, 'h'},
 
-    /*  XXX: The following ifdef needs to be split up. linux-congestion is not necessarily supported
-     *  by systems that support tos.
+    /*  XXX: The following ifdef needs to be split up. linux-congestion is not
+     * necessarily supported by systems that support tos.
      */
 #ifdef ADD_WHEN_SUPPORTED
-        {"tos",        required_argument, NULL, 'S'},
         {"linux-congestion", required_argument, NULL, 'L'},
 #endif
         {NULL, 0, NULL, 0}
@@ -448,7 +448,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     blksize = 0;
     server_flag = client_flag = 0;
-    while ((flag = getopt_long(argc, argv, "p:f:i:DVJdvsc:ub:t:n:l:P:Rw:B:M:N46S:Zh", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:DVJdvsc:ub:t:n:l:P:Rw:B:M:N46S:L:Zh", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
                 test->server_port = atoi(optarg);
@@ -569,9 +569,21 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 test->settings->domain = AF_INET6;
                 break;
             case 'S':
-                // XXX: Checking for errors in strtol is not portable. Leave as is?
                 test->settings->tos = strtol(optarg, NULL, 0);
 		client_flag = 1;
+                break;
+            case 'L':
+#ifdef notdef
+                test->settings->flowlabel = strtol(optarg, NULL, 0);
+		if (test->settings->flowlabel < 1 || test->settings->flowlabel > 0xfffff) {
+                    i_errno = IESETFLOW;
+                    return -1;
+		}
+		client_flag = 1;
+#else /* notdef */
+		i_errno = IEUNIMP;
+		return -1;
+#endif /* notdef */
                 break;
             case 'Z':
                 if (!has_sendfile()) {
@@ -889,6 +901,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddIntToObject(j, "bandwidth", test->settings->rate);
 	if (test->settings->tos)
 	    cJSON_AddIntToObject(j, "TOS", test->settings->tos);
+	if (test->settings->flowlabel)
+	    cJSON_AddIntToObject(j, "flowlabel", test->settings->flowlabel);
 	if (JSON_write(test->ctrl_sck, j) < 0) {
 	    i_errno = IESENDPARAMS;
 	    r = -1;
@@ -938,6 +952,8 @@ get_parameters(struct iperf_test *test)
 	    test->settings->rate = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "TOS")) != NULL)
 	    test->settings->tos = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "flowlabel")) != NULL)
+	    test->settings->flowlabel = j_p->valueint;
 	if (test->sender && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    test->sender_has_retransmits = 1;
 	cJSON_Delete(j);
@@ -1832,6 +1848,7 @@ iperf_init_stream(struct iperf_stream *sp, struct iperf_test *test)
         i_errno = IEINITSTREAM;
         return -1;
     }
+
     /* Set IP TOS */
     if ((opt = test->settings->tos)) {
         if (getsockdomain(sp->socket) == AF_INET6) {

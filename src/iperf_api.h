@@ -222,6 +222,7 @@ enum {
     IEINTERVAL = 9,         // Report interval too large. Maxumum value = %dMAX_INTERVAL
     IEMSS = 10,             // MSS too large. Maximum value = %dMAX_MSS
     IENOSENDFILE = 11,      // This OS does not support sendfile
+    IEUNIMP = 12,           // Not implemented yet
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)
@@ -250,10 +251,11 @@ enum {
     IESETBUF = 124,         // Unable to set socket buffer size (check perror)
     IESETTOS = 125,         // Unable to set IP TOS (check perror)
     IESETCOS = 126,         // Unable to set IPv6 traffic class (check perror)
-    IEREUSEADDR = 127,      // Unable to set reuse address on socket (check perror)
-    IENONBLOCKING = 128,    // Unable to set socket to non-blocking (check perror)
-    IESETWINDOWSIZE = 129,  // Unable to set socket window size (check perror)
-    IEPROTOCOL = 130,       // Protocol does not exist
+    IESETFLOW = 127,        // Unable to set IPv6 flow label
+    IEREUSEADDR = 128,      // Unable to set reuse address on socket (check perror)
+    IENONBLOCKING = 129,    // Unable to set socket to non-blocking (check perror)
+    IESETWINDOWSIZE = 130,  // Unable to set socket window size (check perror)
+    IEPROTOCOL = 131,       // Protocol does not exist
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

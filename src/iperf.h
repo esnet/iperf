@@ -206,7 +206,7 @@ struct iperf_test
 
 /* constants for command line arg sanity checks */
 #define MB (1024 * 1024)
-#define MAX_TCP_BUFFER (128 * MB)
+#define MAX_TCP_BUFFER (512 * MB)
 #define MAX_BLOCKSIZE MB
 #define MAX_INTERVAL 60
 #define MAX_TIME 3600

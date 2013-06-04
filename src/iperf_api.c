@@ -330,6 +330,22 @@ iperf_on_test_start(struct iperf_test *test)
     }
 }
 
+/* This converts an IPv6 string address from IPv4-mapped format into regular
+** old IPv4 format, which is easier on the eyes of network veterans.
+**
+** If the v6 address is not v4-mapped it is left alone.
+*/
+static void
+mapped_v4_to_regular_v4(char *str)
+{
+    char *prefix = "::ffff:";
+    int prefix_len;
+
+    prefix_len = strlen(prefix);
+    if (strncmp(str, prefix, prefix_len) == 0)
+        strcpy(str, str+prefix_len);
+}
+
 void
 iperf_on_connect(struct iperf_test *test)
 {
@@ -355,6 +371,7 @@ iperf_on_connect(struct iperf_test *test)
         if (getsockdomain(test->ctrl_sck) == AF_INET) {
 	    sa_inP = (struct sockaddr_in *) &sa;
             inet_ntop(AF_INET, &sa_inP->sin_addr, ipr, sizeof(ipr));
+	    mapped_v4_to_regular_v4(ipr);
 	    port = ntohs(sa_inP->sin_port);
 	    if (test->json_output)
 		cJSON_AddItemToObject(test->json_start, "accepted_connection", iperf_json_printf("host: %s  port: %d", ipr, (int64_t) port));
@@ -363,6 +380,7 @@ iperf_on_connect(struct iperf_test *test)
         } else {
 	    sa_in6P = (struct sockaddr_in6 *) &sa;
             inet_ntop(AF_INET6, &sa_in6P->sin6_addr, ipr, sizeof(ipr));
+	    mapped_v4_to_regular_v4(ipr);
 	    port = ntohs(sa_in6P->sin6_port);
 	    if (test->json_output)
 		cJSON_AddItemToObject(test->json_start, "accepted_connection", iperf_json_printf("host: %s  port: %d", ipr, (int64_t) port));
@@ -1194,12 +1212,16 @@ connect_msg(struct iperf_stream *sp)
 
     if (getsockdomain(sp->socket) == AF_INET) {
         inet_ntop(AF_INET, (void *) &((struct sockaddr_in *) &sp->local_addr)->sin_addr, ipl, sizeof(ipl));
+	mapped_v4_to_regular_v4(ipl);
         inet_ntop(AF_INET, (void *) &((struct sockaddr_in *) &sp->remote_addr)->sin_addr, ipr, sizeof(ipr));
+	mapped_v4_to_regular_v4(ipr);
         lport = ntohs(((struct sockaddr_in *) &sp->local_addr)->sin_port);
         rport = ntohs(((struct sockaddr_in *) &sp->remote_addr)->sin_port);
     } else {
         inet_ntop(AF_INET6, (void *) &((struct sockaddr_in6 *) &sp->local_addr)->sin6_addr, ipl, sizeof(ipl));
+	mapped_v4_to_regular_v4(ipl);
         inet_ntop(AF_INET6, (void *) &((struct sockaddr_in6 *) &sp->remote_addr)->sin6_addr, ipr, sizeof(ipr));
+	mapped_v4_to_regular_v4(ipr);
         lport = ntohs(((struct sockaddr_in6 *) &sp->local_addr)->sin6_port);
         rport = ntohs(((struct sockaddr_in6 *) &sp->remote_addr)->sin6_port);
     }

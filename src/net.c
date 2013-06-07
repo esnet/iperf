@@ -26,7 +26,7 @@
 #ifdef __FreeBSD__
 #include <sys/uio.h>
 #else
-#if defined(__APPLE__) && defined(__MACH__)	/* OS X */
+#if defined(__APPLE__) && defined(__MACH__) && defined(MAC_OS_X_VERSION_10_6)	/* OS X */
 #include <sys/uio.h>
 #endif
 #endif
@@ -196,7 +196,7 @@ has_sendfile(void)
 #ifdef __FreeBSD__
     return 1;
 #else
-#if defined(__APPLE__) && defined(__MACH__)	/* OS X */
+#if defined(__APPLE__) && defined(__MACH__) && defined(MAC_OS_X_VERSION_10_6)	/* OS X */
     return 1;
 #else
     return 0;
@@ -214,7 +214,7 @@ int
 Nsendfile(int fromfd, int tofd, const char *buf, size_t count)
 {
     off_t offset;
-#if defined(__FreeBSD__) || (defined(__APPLE__) && defined(__MACH__))
+#if defined(__FreeBSD__) || (defined(__APPLE__) && defined(__MACH__) && defined(MAC_OS_X_VERSION_10_6))
     off_t sent;
 #endif
     register size_t nleft;
@@ -231,7 +231,7 @@ Nsendfile(int fromfd, int tofd, const char *buf, size_t count)
 	if (r == 0)
 	    r = sent;
 #else
-#if defined(__APPLE__) && defined(__MACH__)	/* OS X */
+#if defined(__APPLE__) && defined(__MACH__) && defined(MAC_OS_X_VERSION_10_6)	/* OS X */
 	sent = nleft;
 	r = sendfile(fromfd, tofd, offset, &sent, NULL, 0);
 	if (r == 0)

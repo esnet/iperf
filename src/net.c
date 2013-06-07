@@ -26,8 +26,11 @@
 #ifdef __FreeBSD__
 #include <sys/uio.h>
 #else
-#if defined(__APPLE__) && defined(__MACH__) && defined(MAC_OS_X_VERSION_10_6)	/* OS X */
+#if defined(__APPLE__) && defined(__MACH__)	/* OS X */
+#include <AvailabilityMacros.h>
+#if defined(MAC_OS_X_VERSION_10_6)
 #include <sys/uio.h>
+#endif
 #endif
 #endif
 #endif

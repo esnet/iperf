@@ -113,13 +113,22 @@ main(int argc, char **argv)
 int
 iperf_run(struct iperf_test * test)
 {
+    int consecutive_errors;
+
     switch (test->role) {
         case 's':
+	    consecutive_errors = 0;
             for (;;) {
                 if (iperf_run_server(test) < 0) {
 		    iperf_err(test, "error - %s", iperf_strerror(i_errno));
                     fprintf(stderr, "\n");
-                }
+		    ++consecutive_errors;
+		    if (consecutive_errors >= 5) {
+		        fprintf(stderr, "too many errors, exitting\n");
+			break;
+		    }
+                } else
+		    consecutive_errors = 0;
                 iperf_reset_test(test);
             }
             break;

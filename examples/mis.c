@@ -13,6 +13,7 @@ main( int argc, char** argv )
     char* argv0;
     int port;
     struct iperf_test *test;
+    int consecutive_errors;
 
     argv0 = strrchr( argv[0], '/' );
     if ( argv0 != (char*) 0 )
@@ -35,9 +36,17 @@ main( int argc, char** argv )
     iperf_set_test_role( test, 's' );
     iperf_set_test_server_port( test, port );
 
+    consecutive_errors = 0;
     for (;;) {
-	if ( iperf_run_server( test ) < 0 )
+	if ( iperf_run_server( test ) < 0 ) {
 	    fprintf( stderr, "%s: error - %s\n\n", argv0, iperf_strerror( i_errno ) );
+	    ++consecutive_errors;
+	    if (consecutive_errors >= 5) {
+	        fprintf(stderr, "%s: too many errors, exitting\n", argv0);
+		break;
+	    }
+	} else
+	    consecutive_errors = 0;
 	iperf_reset_test( test );
     }
 

@@ -85,7 +85,7 @@ struct iperf_stream
     /* non configurable members */
     struct iperf_stream_result *result;	/* structure pointer to result */
     Timer     *send_timer;
-    int       udp_green_light;
+    int       green_light;
     int       buffer_fd;	/* data to send, file descriptor */
     char      *buffer;		/* data to send, mmapped */
 
@@ -198,7 +198,7 @@ struct iperf_test
 #define PORT 5201  /* default port to listen on (don't use the same port as iperf2) */
 #define uS_TO_NS 1000
 #define SEC_TO_US 1000000LL
-#define RATE (1024 * 1024) /* 1 Mbps */
+#define UDP_RATE (1024 * 1024) /* 1 Mbps */
 #define DURATION 10 /* seconds */
 
 #define SEC_TO_NS 1000000000LL	/* too big for enum/const on some platforms */

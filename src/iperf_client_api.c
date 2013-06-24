@@ -251,8 +251,7 @@ iperf_run_client(struct iperf_test * test)
 		/* Can we switch to SIGALRM mode?  There are a bunch of
 		** cases where either it won't work or it's ill-advised.
 		*/
-		if (test->may_use_sigalrm &&
-		    (test->protocol->id != Pudp || test->settings->rate == 0) &&
+		if (test->may_use_sigalrm && test->settings->rate == 0 &&
 		    (test->stats_interval == 0 || test->stats_interval > 1) &&
 		    (test->reporter_interval == 0 || test->reporter_interval > 1) &&
 		    ! test->reverse) {

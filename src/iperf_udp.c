@@ -85,20 +85,6 @@ iperf_udp_recv(struct iperf_stream *sp)
 }
 
 
-static void
-send_timer_proc(TimerClientData client_data, struct timeval* nowP)
-{
-    struct iperf_stream *sp = client_data.p;
-
-    /* All we do here is set a flag saying that this UDP stream may be sent
-    ** to.  The actual sending gets done in iperf_udp_send(), which then
-    ** resets the flag and makes a new adjusted timer.
-    */
-    sp->send_timer = NULL;
-    sp->udp_green_light = 1;
-}
-
-
 /* iperf_udp_send
  *
  * sends the data for UDP
@@ -107,15 +93,9 @@ int
 iperf_udp_send(struct iperf_stream *sp)
 {
     int r;
-    int64_t   dtargus;
-    int64_t   adjustus;
     uint64_t  sec, usec, pcount;
     int       size = sp->settings->blksize;
-    struct timeval before, after;
-    TimerClientData cd;
-
-    if (! sp->udp_green_light)
-        return 0;
+    struct timeval before;
 
     gettimeofday(&before, 0);
 
@@ -135,24 +115,6 @@ iperf_udp_send(struct iperf_stream *sp)
 
     sp->result->bytes_sent += r;
     sp->result->bytes_sent_this_interval += r;
-
-    if (sp->settings->rate != 0) {
-	gettimeofday(&after, 0);
-	dtargus = (int64_t) (sp->settings->blksize) * SEC_TO_US * 8;
-	dtargus /= sp->settings->rate;
-	assert(dtargus != 0);
-	adjustus = dtargus;
-	adjustus += (before.tv_sec - after.tv_sec) * SEC_TO_US;
-	adjustus += (before.tv_usec - after.tv_usec);
-	if (adjustus > 0) {
-	    dtargus = adjustus;
-	}
-	cd.p = sp;
-	sp->udp_green_light = 0;
-	sp->send_timer = tmr_create((struct timeval*) 0, send_timer_proc, cd, dtargus, 0);
-	if (sp->send_timer == NULL)
-	    return -1;
-    }
 
     return r;
 }
@@ -263,29 +225,5 @@ iperf_udp_connect(struct iperf_test *test)
 int
 iperf_udp_init(struct iperf_test *test)
 {
-    int64_t dtargus;
-    struct iperf_stream *sp;
-    TimerClientData cd;
-
-    if (test->settings->rate == 0) {
-	SLIST_FOREACH(sp, &test->streams, streams) {
-	    sp->udp_green_light = 1;
-	}
-    } else {
-	/* Calculate the send delay needed to hit target bandwidth (-b) */
-	dtargus = (int64_t) test->settings->blksize * SEC_TO_US * 8;
-	dtargus /= test->settings->rate;
-
-	assert(dtargus != 0);
-
-	SLIST_FOREACH(sp, &test->streams, streams) {
-	    cd.p = sp;
-	    sp->udp_green_light = 0;
-	    sp->send_timer = tmr_create((struct timeval*) 0, send_timer_proc, cd, dtargus, 0);
-	    if (sp->send_timer == NULL)
-		return -1;
-	}
-    }
-
     return 0;
 }

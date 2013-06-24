@@ -273,7 +273,7 @@ iperf_test_reset(struct iperf_test *test)
     test->num_streams = 1;
     test->settings->socket_bufsize = 0;
     test->settings->blksize = DEFAULT_TCP_BLKSIZE;
-    test->settings->rate = RATE;   /* UDP only */
+    test->settings->rate = UDP_RATE;
     test->settings->mss = 0;
     memset(test->cookie, 0, COOKIE_SIZE); 
 }

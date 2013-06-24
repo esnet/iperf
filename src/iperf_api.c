@@ -68,7 +68,7 @@ usage()
 void
 usage_long()
 {
-    fprintf(stderr, usage_longstr, RATE / (1024*1024), DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE / 1024);
+    fprintf(stderr, usage_longstr, UDP_RATE / (1024*1024), DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE / 1024);
 }
 
 
@@ -462,10 +462,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     };
     int flag;
     int blksize;
-    int server_flag, client_flag;
+    int server_flag, client_flag, rate_flag;
 
     blksize = 0;
-    server_flag = client_flag = 0;
+    server_flag = client_flag = rate_flag = 0;
     while ((flag = getopt_long(argc, argv, "p:f:i:DVJdvsc:ub:t:n:l:P:Rw:B:M:N46S:L:Zh", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
@@ -525,6 +525,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'b':
                 test->settings->rate = unit_atof(optarg);
+		rate_flag = 1;
 		client_flag = 1;
                 break;
             case 't':
@@ -640,6 +641,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     }
     test->settings->blksize = blksize;
 
+    if (!rate_flag)
+	test->settings->rate = test->protocol->id == Pudp ? UDP_RATE : 0;
+
     /* For subsequent calls to getopt */
 #ifdef __APPLE__
     optreset = 1;
@@ -658,21 +662,39 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     return 0;
 }
 
+static void
+check_throttle(struct iperf_stream *sp, struct timeval *nowP)
+{
+    double elapsed;
+    uint64_t rate;
+
+    elapsed = timeval_diff(&sp->result->start_time, nowP);
+    rate = sp->result->bytes_sent * 8 / elapsed;	/* bits/second */
+    if (rate < sp->test->settings->rate)
+        sp->green_light = 1;
+    else
+        sp->green_light = 0;
+}
+
 int
 iperf_send(struct iperf_test *test, fd_set *write_setP)
 {
     register int multisend, r;
     register struct iperf_stream *sp;
+    struct timeval now;
 
     /* Can we do multisend mode? */
-    if (test->protocol->id == Pudp && test->settings->rate != 0)
+    if (test->settings->rate != 0)
         multisend = 1;	/* nope */
     else
         multisend = test->multisend;
 
     for (; multisend > 0; --multisend) {
+	if (test->settings->rate != 0)
+	    gettimeofday(&now, NULL);
 	SLIST_FOREACH(sp, &test->streams, streams) {
-	    if (write_setP == NULL || FD_ISSET(sp->socket, write_setP)) {
+	    if (sp->green_light &&
+	        (write_setP == NULL || FD_ISSET(sp->socket, write_setP))) {
 		if ((r = sp->snd(sp)) < 0) {
 		    if (r == NET_SOFTERROR)
 			break;
@@ -680,6 +702,8 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 		    return r;
 		}
 		test->bytes_sent += r;
+		if (test->settings->rate != 0)
+		    check_throttle(sp, &now);
 		if (multisend > 1 && test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes)
 		    break;
 	    }
@@ -742,6 +766,18 @@ reporter_timer_proc(TimerClientData client_data, struct timeval *nowP)
     test->reporter_callback(test);
 }
 
+static void
+send_timer_proc(TimerClientData client_data, struct timeval *nowP)
+{
+    struct iperf_stream *sp = client_data.p;
+
+    /* All we do here is set or clear the flag saying that this stream may
+    ** be sent to.  The actual sending gets done in the send proc, after
+    ** checking the flag.
+    */
+    check_throttle(sp, nowP);
+}
+
 int
 iperf_init_test(struct iperf_test *test)
 {
@@ -763,26 +799,43 @@ iperf_init_test(struct iperf_test *test)
 	test->done = 0;
 	cd.p = test;
         test->timer = tmr_create(&now, test_timer_proc, cd, test->duration * SEC_TO_US, 0);
-        if (test->timer == NULL)
+        if (test->timer == NULL) {
+            i_errno = IEINITTEST;
             return -1;
+	}
     } 
 
     if (test->stats_interval != 0) {
 	cd.p = test;
         test->stats_timer = tmr_create(&now, stats_timer_proc, cd, test->stats_interval * SEC_TO_US, 1);
-        if (test->stats_timer == NULL)
+        if (test->stats_timer == NULL) {
+            i_errno = IEINITTEST;
             return -1;
+	}
     }
     if (test->reporter_interval != 0) {
 	cd.p = test;
         test->reporter_timer = tmr_create(&now, reporter_timer_proc, cd, test->reporter_interval * SEC_TO_US, 1);
-        if (test->reporter_timer == NULL)
+        if (test->reporter_timer == NULL) {
+            i_errno = IEINITTEST;
             return -1;
+	}
     }
 
-    /* Set start time */
-    SLIST_FOREACH(sp, &test->streams, streams)
+    /* Init each stream. */
+    SLIST_FOREACH(sp, &test->streams, streams) {
 	sp->result->start_time = now;
+	sp->green_light = 1;
+	if (test->settings->rate != 0) {
+	    cd.p = sp;
+	    sp->send_timer = tmr_create((struct timeval*) 0, send_timer_proc, cd, 100000L, 1);
+	    /* (Repeat every tenth second - arbitrary often value.) */
+	    if (sp->send_timer == NULL) {
+		i_errno = IEINITTEST;
+		return -1;
+	    }
+	}
+    }
 
     if (test->on_test_start)
         test->on_test_start(test);
@@ -1258,6 +1311,8 @@ iperf_new_test()
 int
 iperf_defaults(struct iperf_test *testp)
 {
+    struct protocol *tcp, *udp;
+
     testp->duration = DURATION;
     testp->server_port = PORT;
     testp->ctrl_sck = -1;
@@ -1274,7 +1329,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->unit_format = 'a';
     testp->settings->socket_bufsize = 0;    /* use autotuning */
     testp->settings->blksize = DEFAULT_TCP_BLKSIZE;
-    testp->settings->rate = RATE;    /* UDP only */
+    testp->settings->rate = UDP_RATE;
     testp->settings->mss = 0;
     testp->settings->bytes = 0;
     memset(testp->cookie, 0, COOKIE_SIZE);
@@ -1286,7 +1341,6 @@ iperf_defaults(struct iperf_test *testp)
     SLIST_INIT(&testp->streams);
     SLIST_INIT(&testp->protocols);
 
-    struct protocol *tcp, *udp;
     tcp = (struct protocol *) malloc(sizeof(struct protocol));
     if (!tcp)
         return -1;
@@ -1414,7 +1468,7 @@ iperf_reset_test(struct iperf_test *test)
     test->num_streams = 1;
     test->settings->socket_bufsize = 0;
     test->settings->blksize = DEFAULT_TCP_BLKSIZE;
-    test->settings->rate = RATE;   /* UDP only */
+    test->settings->rate = UDP_RATE;
     test->settings->mss = 0;
     memset(test->cookie, 0, COOKIE_SIZE);
     test->multisend = 10;	/* arbitrary */

@@ -665,12 +665,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 static void
 check_throttle(struct iperf_stream *sp, struct timeval *nowP)
 {
-    double elapsed;
-    uint64_t rate;
+    double seconds;
+    uint64_t bits_per_second;
 
-    elapsed = timeval_diff(&sp->result->start_time, nowP);
-    rate = sp->result->bytes_sent * 8 / elapsed;	/* bits/second */
-    if (rate < sp->test->settings->rate)
+    seconds = timeval_diff(&sp->result->start_time, nowP);
+    bits_per_second = sp->result->bytes_sent * 8 / seconds;
+    if (bits_per_second < sp->test->settings->rate)
         sp->green_light = 1;
     else
         sp->green_light = 0;

@@ -45,6 +45,7 @@ struct iperf_stream;
 
 /* Getter routines for some fields inside iperf_test. */
 int	iperf_get_control_socket( struct iperf_test* ipt );
+int	iperf_get_test_ignore( struct iperf_test* ipt );
 int	iperf_get_test_duration( struct iperf_test* ipt );
 char	iperf_get_test_role( struct iperf_test* ipt );
 int	iperf_get_test_blksize( struct iperf_test* ipt );
@@ -62,6 +63,7 @@ int	iperf_get_test_may_use_sigalrm( struct iperf_test* ipt );
 
 /* Setter routines for some fields inside iperf_test. */
 void	iperf_set_control_socket( struct iperf_test* ipt, int ctrl_sck );
+void	iperf_set_test_ignore( struct iperf_test* ipt, int ignore );
 void	iperf_set_test_duration( struct iperf_test* ipt, int duration );
 void	iperf_set_test_reporter_interval( struct iperf_test* ipt, double reporter_interval );
 void	iperf_set_test_stats_interval( struct iperf_test* ipt, double stats_interval );
@@ -103,13 +105,11 @@ void      connect_msg(struct iperf_stream * sp);
  */
 void     iperf_stats_callback(struct iperf_test * test);
 
-
 /**
  * iperf_reporter_callback -- handles the report printing
  *
  */
 void     iperf_reporter_callback(struct iperf_test * test);
-
 
 /**
  * iperf_new_test -- return a new iperf_test with default values
@@ -121,14 +121,12 @@ struct iperf_test *iperf_new_test();
 
 int      iperf_defaults(struct iperf_test * testp);
 
-
 /**
  * iperf_free_test -- free resources used by test, calls iperf_free_stream to
  * free streams
  *
  */
 void      iperf_free_test(struct iperf_test * testp);
-
 
 /**
  * iperf_new_stream -- return a net iperf_stream with default values
@@ -163,6 +161,8 @@ long get_tcpinfo_total_retransmits(struct iperf_interval_results *irp);
 void print_tcpinfo(struct iperf_test *test);
 void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 
+int iperf_set_send_state(struct iperf_test *test, char state);
+void iperf_check_throttle(struct iperf_stream *sp, struct timeval *nowP);
 int iperf_send(struct iperf_test *, fd_set *) /* __attribute__((hot)) */;
 int iperf_recv(struct iperf_test *, fd_set *);
 void sig_handler(int);
@@ -174,6 +174,7 @@ int iperf_exchange_results(struct iperf_test *);
 int iperf_init_test(struct iperf_test *);
 int iperf_parse_arguments(struct iperf_test *, int, char **);
 void iperf_reset_test(struct iperf_test *);
+void iperf_reset_stats(struct iperf_test * test);
 
 struct protocol *get_protocol(struct iperf_test *, int);
 int set_protocol(struct iperf_test *, int);
@@ -222,7 +223,8 @@ enum {
     IEINTERVAL = 9,         // Report interval too large. Maxumum value = %dMAX_INTERVAL
     IEMSS = 10,             // MSS too large. Maximum value = %dMAX_MSS
     IENOSENDFILE = 11,      // This OS does not support sendfile
-    IEUNIMP = 12,           // Not implemented yet
+    IEIGNORE = 12,          // Bogus value for --ignore
+    IEUNIMP = 13,           // Not implemented yet
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

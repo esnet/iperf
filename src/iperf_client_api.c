@@ -54,6 +54,133 @@ iperf_create_streams(struct iperf_test *test)
     return 0;
 }
 
+static void
+test_timer_proc(TimerClientData client_data, struct timeval *nowP)
+{
+    struct iperf_test *test = client_data.p;
+
+    test->timer = NULL;
+    test->done = 1;
+}
+
+static void
+stats_timer_proc(TimerClientData client_data, struct timeval *nowP)
+{
+    struct iperf_test *test = client_data.p;
+
+    if (test->done)
+        return;
+    test->stats_callback(test);
+}
+
+static void
+reporter_timer_proc(TimerClientData client_data, struct timeval *nowP)
+{
+    struct iperf_test *test = client_data.p;
+
+    if (test->done)
+        return;
+    test->reporter_callback(test);
+}
+
+static void
+client_ignore_timer_proc(TimerClientData client_data, struct timeval *nowP)
+{
+    struct iperf_test *test = client_data.p;
+    TimerClientData cd;
+
+    test->ignore_timer = NULL;
+    test->ignoring = 0;
+    iperf_reset_stats(test);
+    if (test->verbose && !test->json_output)
+        printf("Finished ignore period, starting real test\n");
+
+    /* Create timers. */
+    if (test->settings->bytes == 0) {
+	test->done = 0;
+	cd.p = test;
+        test->timer = tmr_create(nowP, test_timer_proc, cd, test->duration * SEC_TO_US, 0);
+        if (test->timer == NULL) {
+            i_errno = IEINITTEST;
+            return;
+	}
+    } 
+    if (test->stats_interval != 0) {
+	cd.p = test;
+        test->stats_timer = tmr_create(nowP, stats_timer_proc, cd, test->stats_interval * SEC_TO_US, 1);
+        if (test->stats_timer == NULL) {
+            i_errno = IEINITTEST;
+            return;
+	}
+    }
+    if (test->reporter_interval != 0) {
+	cd.p = test;
+        test->reporter_timer = tmr_create(nowP, reporter_timer_proc, cd, test->reporter_interval * SEC_TO_US, 1);
+        if (test->reporter_timer == NULL) {
+            i_errno = IEINITTEST;
+            return;
+	}
+    }
+}
+
+static int
+create_client_ignore_timer(struct iperf_test * test)
+{
+    struct timeval now;
+    TimerClientData cd;
+
+    if (gettimeofday(&now, NULL) < 0) {
+	i_errno = IEINITTEST;
+	return -1;
+    }
+    test->ignoring = 1;
+    cd.p = test;
+    test->ignore_timer = tmr_create(&now, client_ignore_timer_proc, cd, test->ignore * SEC_TO_US, 0);
+    if (test->ignore_timer == NULL) {
+	i_errno = IEINITTEST;
+	return -1;
+    }
+    return 0;
+}
+
+static void
+send_timer_proc(TimerClientData client_data, struct timeval *nowP)
+{
+    struct iperf_stream *sp = client_data.p;
+
+    /* All we do here is set or clear the flag saying that this stream may
+    ** be sent to.  The actual sending gets done in the send proc, after
+    ** checking the flag.
+    */
+    iperf_check_throttle(sp, nowP);
+}
+
+static int
+create_send_timers(struct iperf_test * test)
+{
+    struct timeval now;
+    struct iperf_stream *sp;
+    TimerClientData cd;
+
+    if (gettimeofday(&now, NULL) < 0) {
+	i_errno = IEINITTEST;
+	return -1;
+    }
+    SLIST_FOREACH(sp, &test->streams, streams) {
+        sp->green_light = 1;
+	if (test->settings->rate != 0) {
+	    cd.p = sp;
+	    sp->send_timer = tmr_create((struct timeval*) 0, send_timer_proc, cd, 100000L, 1);
+	    /* (Repeat every tenth second - arbitrary often value.) */
+	    if (sp->send_timer == NULL) {
+		i_errno = IEINITTEST;
+		return -1;
+	    }
+	}
+    }
+    return 0;
+}
+
 int
 iperf_handle_message_client(struct iperf_test *test)
 {
@@ -82,6 +209,10 @@ iperf_handle_message_client(struct iperf_test *test)
             break;
         case TEST_START:
             if (iperf_init_test(test) < 0)
+                return -1;
+            if (create_client_ignore_timer(test) < 0)
+                return -1;
+            if (create_send_timers(test) < 0)
                 return -1;
             break;
         case TEST_RUNNING:
@@ -170,11 +301,8 @@ iperf_client_end(struct iperf_test *test)
     /* show final summary */
     test->reporter_callback(test);
 
-    test->state = IPERF_DONE;
-    if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-        i_errno = IESENDMESSAGE;
+    if (iperf_set_send_state(test, IPERF_DONE) != 0)
         return -1;
-    }
 
     return 0;
 }
@@ -245,8 +373,8 @@ iperf_run_client(struct iperf_test * test)
 
 	if (test->state == TEST_RUNNING) {
 
-	    /* Is this our first time in TEST_RUNNING mode? */
-	    if (startup) {
+	    /* Is this our first time really running? */
+	    if (startup && ! test->ignoring) {
 	        startup = 0;
 		/* Can we switch to SIGALRM mode?  There are a bunch of
 		** cases where either it won't work or it's ill-advised.
@@ -287,6 +415,8 @@ iperf_run_client(struct iperf_test * test)
 	    }
 
 	    /* Is the test done yet? */
+	    if (test->ignoring)
+	        continue;	/* not done */
 	    if (test->settings->bytes == 0) {
 		if (!test->done)
 		    continue;	/* not done */
@@ -297,11 +427,8 @@ iperf_run_client(struct iperf_test * test)
 	    /* Yes, done!  Send TEST_END. */
 	    cpu_util(&test->cpu_util);
 	    test->stats_callback(test);
-	    test->state = TEST_END;
-	    if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-		i_errno = IESENDMESSAGE;
+	    if (iperf_set_send_state(test, TEST_END) != 0)
 		return -1;
-	    }
 	    /* And if we were doing SIGALRM, go back to select for the end. */
 	    concurrency_model = CM_SELECT;
 	}

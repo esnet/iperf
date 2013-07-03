@@ -121,11 +121,8 @@ iperf_accept(struct iperf_test *test)
         test->max_fd = (s > test->max_fd) ? s : test->max_fd;
         test->ctrl_sck = s;
 
-        test->state = PARAM_EXCHANGE;
-        if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-            i_errno = IESENDMESSAGE;
+	if (iperf_set_send_state(test, PARAM_EXCHANGE) != 0)
             return -1;
-        }
         if (iperf_exchange_parameters(test) < 0) {
             return -1;
         }
@@ -180,20 +177,14 @@ iperf_handle_message_server(struct iperf_test *test)
                 FD_CLR(sp->socket, &test->write_set);
                 close(sp->socket);
             }
-            test->state = EXCHANGE_RESULTS;
-            if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-                i_errno = IESENDMESSAGE;
+	    if (iperf_set_send_state(test, EXCHANGE_RESULTS) != 0)
                 return -1;
-            }
             if (iperf_sum_results(test) < 0)
                 return -1;
             if (iperf_exchange_results(test) < 0)
                 return -1;
-            test->state = DISPLAY_RESULTS;
-            if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-                i_errno = IESENDMESSAGE;
+	    if (iperf_set_send_state(test, DISPLAY_RESULTS) != 0)
                 return -1;
-            }
             if (test->on_test_finish)
                 test->on_test_finish(test);
             test->reporter_callback(test);
@@ -251,6 +242,7 @@ iperf_test_reset(struct iperf_test *test)
 
     test->role = 's';
     set_protocol(test, Ptcp);
+    test->ignore = IGNORE;
     test->duration = DURATION;
     test->state = 0;
     test->server_hostname = NULL;
@@ -276,6 +268,46 @@ iperf_test_reset(struct iperf_test *test)
     test->settings->rate = UDP_RATE;
     test->settings->mss = 0;
     memset(test->cookie, 0, COOKIE_SIZE); 
+}
+
+static void
+server_ignore_timer_proc(TimerClientData client_data, struct timeval *nowP)
+{   
+    struct iperf_test *test = client_data.p;
+
+    test->ignore_timer = NULL;
+    test->ignoring = 0;
+    iperf_reset_stats(test);
+    if (test->verbose && !test->json_output)
+	printf("Finished ignore period, starting real test\n");
+}
+
+static int
+create_server_ignore_timer(struct iperf_test * test)
+{
+    struct timeval now;
+    TimerClientData cd; 
+
+    if (gettimeofday(&now, NULL) < 0) {
+	i_errno = IEINITTEST;
+	return -1; 
+    }
+    test->ignoring = 1;
+    cd.p = test;
+    test->ignore_timer = tmr_create(&now, server_ignore_timer_proc, cd, test->ignore * SEC_TO_US, 0); 
+    if (test->ignore_timer == NULL) {
+	i_errno = IEINITTEST;
+	return -1;
+    }
+    return 0;
+}
+
+static void
+cleanup_server(struct iperf_test *test)
+{
+    /* Close open test sockets */
+    close(test->ctrl_sck);
+    close(test->listener);
 }
 
 int
@@ -317,6 +349,7 @@ iperf_run_server(struct iperf_test *test)
 
         result = select(test->max_fd + 1, &read_set, &write_set, NULL, tmr_timeout(&now));
         if (result < 0 && errno != EINTR) {
+	    cleanup_server(test);
             i_errno = IESELECT;
             return -1;
         }
@@ -324,27 +357,34 @@ iperf_run_server(struct iperf_test *test)
             if (FD_ISSET(test->listener, &read_set)) {
                 if (test->state != CREATE_STREAMS) {
                     if (iperf_accept(test) < 0) {
+			cleanup_server(test);
                         return -1;
                     }
                     FD_CLR(test->listener, &read_set);
                 }
             }
             if (FD_ISSET(test->ctrl_sck, &read_set)) {
-                if (iperf_handle_message_server(test) < 0)
+                if (iperf_handle_message_server(test) < 0) {
+		    cleanup_server(test);
                     return -1;
+		}
                 FD_CLR(test->ctrl_sck, &read_set);                
             }
 
             if (test->state == CREATE_STREAMS) {
                 if (FD_ISSET(test->prot_listener, &read_set)) {
     
-                    if ((s = test->protocol->accept(test)) < 0)
+                    if ((s = test->protocol->accept(test)) < 0) {
+			cleanup_server(test);
                         return -1;
+		    }
 
                     if (!is_closed(s)) {
                         sp = iperf_new_stream(test, s);
-                        if (!sp)
+                        if (!sp) {
+			    cleanup_server(test);
                             return -1;
+			}
 
                         FD_SET(s, &test->read_set);
                         FD_SET(s, &test->write_set);
@@ -366,6 +406,7 @@ iperf_run_server(struct iperf_test *test)
                             FD_CLR(test->listener, &test->read_set);
                             close(test->listener);
                             if ((s = netannounce(test->settings->domain, Ptcp, test->bind_address, test->server_port)) < 0) {
+				cleanup_server(test);
                                 i_errno = IELISTEN;
                                 return -1;
                             }
@@ -375,30 +416,38 @@ iperf_run_server(struct iperf_test *test)
                         }
                     }
                     test->prot_listener = -1;
-                    test->state = TEST_START;
-                    if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-                        i_errno = IESENDMESSAGE;
+		    if (iperf_set_send_state(test, TEST_START) != 0) {
+			cleanup_server(test);
                         return -1;
-                    }
-                    if (iperf_init_test(test) < 0)
+		    }
+                    if (iperf_init_test(test) < 0) {
+			cleanup_server(test);
                         return -1;
-                    test->state = TEST_RUNNING;
-                    if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-                        i_errno = IESENDMESSAGE;
+		    }
+		    if (create_server_ignore_timer(test) < 0) {
+			cleanup_server(test);
                         return -1;
-                    }
+		    }
+		    if (iperf_set_send_state(test, TEST_RUNNING) != 0) {
+			cleanup_server(test);
+                        return -1;
+		    }
                 }
             }
 
             if (test->state == TEST_RUNNING) {
                 if (test->reverse) {
                     // Reverse mode. Server sends.
-                    if (iperf_send(test, &write_set) < 0)
+                    if (iperf_send(test, &write_set) < 0) {
+			cleanup_server(test);
                         return -1;
+		    }
                 } else {
                     // Regular mode. Server receives.
-                    if (iperf_recv(test, &read_set) < 0)
+                    if (iperf_recv(test, &read_set) < 0) {
+			cleanup_server(test);
                         return -1;
+		    }
                 }
 
 		/* Run the timers. */
@@ -408,9 +457,7 @@ iperf_run_server(struct iperf_test *test)
         }
     }
 
-    /* Close open test sockets */
-    close(test->ctrl_sck);
-    close(test->listener);
+    cleanup_server(test);
 
     if (test->json_output) {
 	if (iperf_json_finish(test) < 0)

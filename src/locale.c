@@ -99,6 +99,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -S, --tos N               set the IP 'type of service'\n"
                            /* "  -L, --flowlabel N         set the IPv6 'flow label'\n" */
                            "  -Z, --zerocopy            use a 'zero copy' method of sending data\n"
+                           "  -I, --ignore N            ignore the first n seconds\n"
 
 #ifdef NOT_YET_SUPPORTED /* still working on these */
                            "  -D, --daemon              run the server as a daemon\n"
@@ -163,10 +164,10 @@ const char wait_server_threads[] =
 "Waiting for server threads to complete. Interrupt again to force quit.\n";
 
 const char test_start_time[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, %d second test\n";
+"Starting Test: protocol: %s, %d streams, %d byte blocks, ignoring %d seconds, %d second test\n";
 
 const char test_start_bytes[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, %llu bytes to send\n";
+"Starting Test: protocol: %s, %d streams, %d byte blocks, ignoring %d seconds, %llu bytes to send\n";
 
 
 /* -------------------------------------------------------------------

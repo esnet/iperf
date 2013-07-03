@@ -87,6 +87,12 @@ iperf_get_control_socket(struct iperf_test *ipt)
 }
 
 int
+iperf_get_test_ignore(struct iperf_test *ipt)
+{
+    return ipt->ignore;
+}
+
+int
 iperf_get_test_duration(struct iperf_test *ipt)
 {
     return ipt->duration;
@@ -176,6 +182,12 @@ void
 iperf_set_control_socket(struct iperf_test *ipt, int ctrl_sck)
 {
     ipt->ctrl_sck = ctrl_sck;
+}
+
+void
+iperf_set_test_ignore(struct iperf_test *ipt, int ignore)
+{
+    ipt->ignore = ignore;
 }
 
 void
@@ -317,15 +329,15 @@ iperf_on_test_start(struct iperf_test *test)
 {
     if (test->json_output) {
 	if (test->settings->bytes)
-	    cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d  bytes: %d", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->settings->bytes));
+	    cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d  ignore: %d  bytes: %d", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->ignore, (int64_t) test->settings->bytes));
 	else
-	    cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d  duration: %d", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->duration));
+	    cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d  ignore: %d  duration: %d", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->ignore, (int64_t) test->duration));
     } else {
 	if (test->verbose) {
 	    if (test->settings->bytes)
-		printf(test_start_bytes, test->protocol->name, test->num_streams, test->settings->blksize, test->settings->bytes);
+		printf(test_start_bytes, test->protocol->name, test->num_streams, test->settings->blksize, test->ignore, test->settings->bytes);
 	    else
-		printf(test_start_time, test->protocol->name, test->num_streams, test->settings->blksize, test->duration);
+		printf(test_start_time, test->protocol->name, test->num_streams, test->settings->blksize, test->ignore, test->duration);
 	}
     }
 }
@@ -450,6 +462,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"tos", required_argument, NULL, 'S'},
         {"flowlabel", required_argument, NULL, 'L'},
         {"zerocopy", no_argument, NULL, 'Z'},
+        {"ignore", required_argument, NULL, 'I'},
         {"help", no_argument, NULL, 'h'},
 
     /*  XXX: The following ifdef needs to be split up. linux-congestion is not
@@ -466,7 +479,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     blksize = 0;
     server_flag = client_flag = rate_flag = 0;
-    while ((flag = getopt_long(argc, argv, "p:f:i:DVJdvsc:ub:t:n:l:P:Rw:B:M:N46S:L:Zh", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:DVJdvsc:ub:t:n:l:P:Rw:B:M:N46S:L:ZI:h", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
                 test->server_port = atoi(optarg);
@@ -498,7 +511,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 test->debug = 1;
                 break;
             case 'v':
-                fputs(version, stdout);
+                printf("%s\n", version);
 		system("uname -a");
                 exit(0);
             case 's':
@@ -612,6 +625,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 test->zerocopy = 1;
 		client_flag = 1;
                 break;
+            case 'I':
+                test->ignore = atoi(optarg);
+                if (test->ignore < 0 || test->ignore > 60) {
+                    i_errno = IEIGNORE;
+                    return -1;
+                }
+		client_flag = 1;
+                break;
             case 'h':
             default:
                 usage_long();
@@ -662,8 +683,19 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     return 0;
 }
 
-static void
-check_throttle(struct iperf_stream *sp, struct timeval *nowP)
+int
+iperf_set_send_state(struct iperf_test *test, char state)
+{
+    test->state = state;
+    if (Nwrite(test->ctrl_sck, &state, sizeof(state), Ptcp) < 0) {
+	i_errno = IESENDMESSAGE;
+	return -1;
+    }
+    return 0;
+}
+
+void
+iperf_check_throttle(struct iperf_stream *sp, struct timeval *nowP)
 {
     double seconds;
     uint64_t bits_per_second;
@@ -703,7 +735,7 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 		}
 		test->bytes_sent += r;
 		if (test->settings->rate != 0)
-		    check_throttle(sp, &now);
+		    iperf_check_throttle(sp, &now);
 		if (multisend > 1 && test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes)
 		    break;
 	    }
@@ -737,104 +769,24 @@ iperf_recv(struct iperf_test *test, fd_set *read_setP)
     return 0;
 }
 
-static void
-test_timer_proc(TimerClientData client_data, struct timeval *nowP)
-{
-    struct iperf_test *test = client_data.p;
-
-    test->done = 1;
-    test->timer = NULL;
-}
-
-static void
-stats_timer_proc(TimerClientData client_data, struct timeval *nowP)
-{
-    struct iperf_test *test = client_data.p;
-
-    if (test->done)
-        return;
-    test->stats_callback(test);
-}
-
-static void
-reporter_timer_proc(TimerClientData client_data, struct timeval *nowP)
-{
-    struct iperf_test *test = client_data.p;
-
-    if (test->done)
-        return;
-    test->reporter_callback(test);
-}
-
-static void
-send_timer_proc(TimerClientData client_data, struct timeval *nowP)
-{
-    struct iperf_stream *sp = client_data.p;
-
-    /* All we do here is set or clear the flag saying that this stream may
-    ** be sent to.  The actual sending gets done in the send proc, after
-    ** checking the flag.
-    */
-    check_throttle(sp, nowP);
-}
-
 int
 iperf_init_test(struct iperf_test *test)
 {
-    struct iperf_stream *sp;
     struct timeval now;
-    TimerClientData cd;
+    struct iperf_stream *sp;
 
     if (test->protocol->init) {
         if (test->protocol->init(test) < 0)
             return -1;
     }
 
-    /* Create timers. */
-    if (gettimeofday(&now, NULL) < 0) {
-            i_errno = IEINITTEST;
-            return -1;
-    }
-    if (test->settings->bytes == 0) {
-	test->done = 0;
-	cd.p = test;
-        test->timer = tmr_create(&now, test_timer_proc, cd, test->duration * SEC_TO_US, 0);
-        if (test->timer == NULL) {
-            i_errno = IEINITTEST;
-            return -1;
-	}
-    } 
-
-    if (test->stats_interval != 0) {
-	cd.p = test;
-        test->stats_timer = tmr_create(&now, stats_timer_proc, cd, test->stats_interval * SEC_TO_US, 1);
-        if (test->stats_timer == NULL) {
-            i_errno = IEINITTEST;
-            return -1;
-	}
-    }
-    if (test->reporter_interval != 0) {
-	cd.p = test;
-        test->reporter_timer = tmr_create(&now, reporter_timer_proc, cd, test->reporter_interval * SEC_TO_US, 1);
-        if (test->reporter_timer == NULL) {
-            i_errno = IEINITTEST;
-            return -1;
-	}
-    }
-
     /* Init each stream. */
+    if (gettimeofday(&now, NULL) < 0) {
+	i_errno = IEINITTEST;
+	return -1;
+    }
     SLIST_FOREACH(sp, &test->streams, streams) {
 	sp->result->start_time = now;
-	sp->green_light = 1;
-	if (test->settings->rate != 0) {
-	    cd.p = sp;
-	    sp->send_timer = tmr_create((struct timeval*) 0, send_timer_proc, cd, 100000L, 1);
-	    /* (Repeat every tenth second - arbitrary often value.) */
-	    if (sp->send_timer == NULL) {
-		i_errno = IEINITTEST;
-		return -1;
-	    }
-	}
     }
 
     if (test->on_test_start)
@@ -852,7 +804,6 @@ int
 iperf_exchange_parameters(struct iperf_test *test)
 {
     int s, msg;
-    char state;
 
     if (test->role == 'c') {
 
@@ -865,11 +816,8 @@ iperf_exchange_parameters(struct iperf_test *test)
             return -1;
 
         if ((s = test->protocol->listen(test)) < 0) {
-            state = SERVER_ERROR;
-            if (Nwrite(test->ctrl_sck, &state, sizeof(state), Ptcp) < 0) {
-                i_errno = IESENDMESSAGE;
+	    if (iperf_set_send_state(test, SERVER_ERROR) != 0)
                 return -1;
-            }
             msg = htonl(i_errno);
             if (Nwrite(test->ctrl_sck, (char*) &msg, sizeof(msg), Ptcp) < 0) {
                 i_errno = IECTRLWRITE;
@@ -887,11 +835,8 @@ iperf_exchange_parameters(struct iperf_test *test)
         test->prot_listener = s;
 
         // Send the control message to create streams and start the test
-        test->state = CREATE_STREAMS;
-        if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
-            i_errno = IESENDMESSAGE;
+	if (iperf_set_send_state(test, CREATE_STREAMS) != 0)
             return -1;
-        }
 
     }
 
@@ -953,6 +898,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddTrueToObject(j, "tcp");
 	else if (test->protocol->id == Pudp)
 	    cJSON_AddTrueToObject(j, "udp");
+	if (test->ignore)
+	    cJSON_AddIntToObject(j, "ignore", test->ignore);
 	if (test->duration)
 	    cJSON_AddIntToObject(j, "time", test->duration);
 	if (test->settings->bytes)
@@ -1001,6 +948,8 @@ get_parameters(struct iperf_test *test)
 	    set_protocol(test, Ptcp);
 	if ((j_p = cJSON_GetObjectItem(j, "udp")) != NULL)
 	    set_protocol(test, Pudp);
+	if ((j_p = cJSON_GetObjectItem(j, "ignore")) != NULL)
+	    test->ignore = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "time")) != NULL)
 	    test->duration = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "num")) != NULL)
@@ -1313,6 +1262,7 @@ iperf_defaults(struct iperf_test *testp)
 {
     struct protocol *tcp, *udp;
 
+    testp->ignore = IGNORE;
     testp->duration = DURATION;
     testp->server_port = PORT;
     testp->ctrl_sck = -1;
@@ -1398,6 +1348,8 @@ iperf_free_test(struct iperf_test *test)
     free(test->server_hostname);
     free(test->bind_address);
     free(test->settings);
+    if (test->ignore_timer != NULL)
+	tmr_cancel(test->ignore_timer);
     if (test->timer != NULL)
 	tmr_cancel(test->timer);
     if (test->stats_timer != NULL)
@@ -1431,6 +1383,10 @@ iperf_reset_test(struct iperf_test *test)
         SLIST_REMOVE_HEAD(&test->streams, streams);
         iperf_free_stream(sp);
     }
+    if (test->ignore_timer != NULL) {
+	tmr_cancel(test->ignore_timer);
+	test->ignore_timer = NULL;
+    }
     if (test->timer != NULL) {
 	tmr_cancel(test->timer);
 	test->timer = NULL;
@@ -1450,6 +1406,7 @@ iperf_reset_test(struct iperf_test *test)
     test->sender = 0;
     test->sender_has_retransmits = 0;
     set_protocol(test, Ptcp);
+    test->ignore = IGNORE;
     test->duration = DURATION;
     test->state = 0;
     test->server_hostname = NULL;
@@ -1472,6 +1429,32 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->mss = 0;
     memset(test->cookie, 0, COOKIE_SIZE);
     test->multisend = 10;	/* arbitrary */
+}
+
+
+/* Reset all of a test's stats back to zero.  Called when the ignoring
+** period is over.
+*/
+void
+iperf_reset_stats(struct iperf_test *test)
+{
+    struct timeval now;
+    struct iperf_stream *sp;
+    struct iperf_stream_result *rp;
+
+    test->bytes_sent = 0;
+    gettimeofday(&now, NULL);
+    SLIST_FOREACH(sp, &test->streams, streams) {
+	sp->ignored_packet_count = sp->packet_count;
+	sp->jitter = 0;
+	sp->outoforder_packets = 0;
+	sp->cnt_error = 0;
+	rp = sp->result;
+        rp->bytes_sent = rp->bytes_received = 0;
+        rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;
+	rp->retransmits = 0;
+	rp->start_time = now;
+    }
 }
 
 
@@ -1649,7 +1632,7 @@ iperf_print_results(struct iperf_test *test)
 	    if (test->sender_has_retransmits)
 		total_retransmits += sp->result->retransmits;
 	} else {
-            total_packets += sp->packet_count;
+            total_packets += (sp->packet_count - sp->ignored_packet_count);
             lost_packets += sp->cnt_error;
             avg_jitter += sp->jitter;
         }
@@ -1673,13 +1656,13 @@ iperf_print_results(struct iperf_test *test)
 			printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
 		}
             } else {
-		out_of_order_percent = 100.0 * sp->cnt_error / sp->packet_count;
+		out_of_order_percent = 100.0 * sp->cnt_error / (sp->packet_count - sp->ignored_packet_count);
 		if (test->json_output)
-		    cJSON_AddItemToObject(json_summary_stream, "udp", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  outoforder: %d  packets: %d  percent: %f", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8, (double) sp->jitter * 1000.0, (int64_t) sp->cnt_error, (int64_t) sp->packet_count, out_of_order_percent));
+		    cJSON_AddItemToObject(json_summary_stream, "udp", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  outoforder: %d  packets: %d  percent: %f", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8, (double) sp->jitter * 1000.0, (int64_t) sp->cnt_error, (int64_t) (sp->packet_count - sp->ignored_packet_count), out_of_order_percent));
 		else {
-		    printf(report_bw_udp_format, sp->socket, start_time, end_time, ubuf, nbuf, sp->jitter * 1000.0, sp->cnt_error, sp->packet_count, out_of_order_percent);
+		    printf(report_bw_udp_format, sp->socket, start_time, end_time, ubuf, nbuf, sp->jitter * 1000.0, sp->cnt_error, (sp->packet_count - sp->ignored_packet_count), out_of_order_percent);
 		    if (test->role == 'c')
-			printf(report_datagrams, sp->socket, sp->packet_count);
+			printf(report_datagrams, sp->socket, (sp->packet_count - sp->ignored_packet_count));
 		    if (sp->outoforder_packets > 0)
 			printf(report_sum_outoforder, start_time, end_time, sp->cnt_error);
 		}

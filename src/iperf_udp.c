@@ -37,7 +37,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 {
     int       r;
     int       size = sp->settings->blksize;
-    int       sec, usec, pcount;
+    uint32_t  sec, usec, pcount;
     double    transit = 0, d = 0;
     struct timeval sent_time, arrival_time;
 
@@ -93,7 +93,7 @@ int
 iperf_udp_send(struct iperf_stream *sp)
 {
     int r;
-    uint64_t  sec, usec, pcount;
+    uint32_t  sec, usec, pcount;
     int       size = sp->settings->blksize;
     struct timeval before;
 

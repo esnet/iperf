@@ -458,6 +458,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"bind", required_argument, NULL, 'B'},
         {"set-mss", required_argument, NULL, 'M'},
         {"no-delay", no_argument, NULL, 'N'},
+        {"version4", no_argument, NULL, '4'},
         {"version6", no_argument, NULL, '6'},
         {"tos", required_argument, NULL, 'S'},
         {"flowlabel", required_argument, NULL, 'L'},

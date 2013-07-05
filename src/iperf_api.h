@@ -45,7 +45,7 @@ struct iperf_stream;
 
 /* Getter routines for some fields inside iperf_test. */
 int	iperf_get_control_socket( struct iperf_test* ipt );
-int	iperf_get_test_ignore( struct iperf_test* ipt );
+int	iperf_get_test_omit( struct iperf_test* ipt );
 int	iperf_get_test_duration( struct iperf_test* ipt );
 char	iperf_get_test_role( struct iperf_test* ipt );
 int	iperf_get_test_blksize( struct iperf_test* ipt );
@@ -63,7 +63,7 @@ int	iperf_get_test_may_use_sigalrm( struct iperf_test* ipt );
 
 /* Setter routines for some fields inside iperf_test. */
 void	iperf_set_control_socket( struct iperf_test* ipt, int ctrl_sck );
-void	iperf_set_test_ignore( struct iperf_test* ipt, int ignore );
+void	iperf_set_test_omit( struct iperf_test* ipt, int omit );
 void	iperf_set_test_duration( struct iperf_test* ipt, int duration );
 void	iperf_set_test_reporter_interval( struct iperf_test* ipt, double reporter_interval );
 void	iperf_set_test_stats_interval( struct iperf_test* ipt, double stats_interval );
@@ -223,7 +223,7 @@ enum {
     IEINTERVAL = 9,         // Report interval too large. Maxumum value = %dMAX_INTERVAL
     IEMSS = 10,             // MSS too large. Maximum value = %dMAX_MSS
     IENOSENDFILE = 11,      // This OS does not support sendfile
-    IEIGNORE = 12,          // Bogus value for --ignore
+    IEOMIT = 12,            // Bogus value for --omit
     IEUNIMP = 13,           // Not implemented yet
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)

@@ -99,8 +99,8 @@ iperf_strerror(int i_errno)
         case IENOSENDFILE:
             snprintf(errstr, len, "this OS does not support sendfile");
             break;
-        case IEIGNORE:
-            snprintf(errstr, len, "bogus value for --ignore");
+        case IEOMIT:
+            snprintf(errstr, len, "bogus value for --omit");
             break;
         case IEUNIMP:
             snprintf(errstr, len, "an option you are trying to set is not implemented yet");

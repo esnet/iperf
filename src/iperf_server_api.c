@@ -242,7 +242,7 @@ iperf_test_reset(struct iperf_test *test)
 
     test->role = 's';
     set_protocol(test, Ptcp);
-    test->ignore = IGNORE;
+    test->omit = OMIT;
     test->duration = DURATION;
     test->state = 0;
     test->server_hostname = NULL;
@@ -271,19 +271,19 @@ iperf_test_reset(struct iperf_test *test)
 }
 
 static void
-server_ignore_timer_proc(TimerClientData client_data, struct timeval *nowP)
+server_omit_timer_proc(TimerClientData client_data, struct timeval *nowP)
 {   
     struct iperf_test *test = client_data.p;
 
-    test->ignore_timer = NULL;
-    test->ignoring = 0;
+    test->omit_timer = NULL;
+    test->omitting = 0;
     iperf_reset_stats(test);
     if (test->verbose && !test->json_output)
-	printf("Finished ignore period, starting real test\n");
+	printf("Finished omit period, starting real test\n");
 }
 
 static int
-create_server_ignore_timer(struct iperf_test * test)
+create_server_omit_timer(struct iperf_test * test)
 {
     struct timeval now;
     TimerClientData cd; 
@@ -292,10 +292,10 @@ create_server_ignore_timer(struct iperf_test * test)
 	i_errno = IEINITTEST;
 	return -1; 
     }
-    test->ignoring = 1;
+    test->omitting = 1;
     cd.p = test;
-    test->ignore_timer = tmr_create(&now, server_ignore_timer_proc, cd, test->ignore * SEC_TO_US, 0); 
-    if (test->ignore_timer == NULL) {
+    test->omit_timer = tmr_create(&now, server_omit_timer_proc, cd, test->omit * SEC_TO_US, 0); 
+    if (test->omit_timer == NULL) {
 	i_errno = IEINITTEST;
 	return -1;
     }
@@ -424,7 +424,7 @@ iperf_run_server(struct iperf_test *test)
 			cleanup_server(test);
                         return -1;
 		    }
-		    if (create_server_ignore_timer(test) < 0) {
+		    if (create_server_omit_timer(test) < 0) {
 			cleanup_server(test);
                         return -1;
 		    }

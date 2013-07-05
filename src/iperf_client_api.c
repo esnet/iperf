@@ -84,16 +84,16 @@ reporter_timer_proc(TimerClientData client_data, struct timeval *nowP)
 }
 
 static void
-client_ignore_timer_proc(TimerClientData client_data, struct timeval *nowP)
+client_omit_timer_proc(TimerClientData client_data, struct timeval *nowP)
 {
     struct iperf_test *test = client_data.p;
     TimerClientData cd;
 
-    test->ignore_timer = NULL;
-    test->ignoring = 0;
+    test->omit_timer = NULL;
+    test->omitting = 0;
     iperf_reset_stats(test);
     if (test->verbose && !test->json_output)
-        printf("Finished ignore period, starting real test\n");
+        printf("Finished omit period, starting real test\n");
 
     /* Create timers. */
     if (test->settings->bytes == 0) {
@@ -124,7 +124,7 @@ client_ignore_timer_proc(TimerClientData client_data, struct timeval *nowP)
 }
 
 static int
-create_client_ignore_timer(struct iperf_test * test)
+create_client_omit_timer(struct iperf_test * test)
 {
     struct timeval now;
     TimerClientData cd;
@@ -133,10 +133,10 @@ create_client_ignore_timer(struct iperf_test * test)
 	i_errno = IEINITTEST;
 	return -1;
     }
-    test->ignoring = 1;
+    test->omitting = 1;
     cd.p = test;
-    test->ignore_timer = tmr_create(&now, client_ignore_timer_proc, cd, test->ignore * SEC_TO_US, 0);
-    if (test->ignore_timer == NULL) {
+    test->omit_timer = tmr_create(&now, client_omit_timer_proc, cd, test->omit * SEC_TO_US, 0);
+    if (test->omit_timer == NULL) {
 	i_errno = IEINITTEST;
 	return -1;
     }
@@ -210,7 +210,7 @@ iperf_handle_message_client(struct iperf_test *test)
         case TEST_START:
             if (iperf_init_test(test) < 0)
                 return -1;
-            if (create_client_ignore_timer(test) < 0)
+            if (create_client_omit_timer(test) < 0)
                 return -1;
             if (create_send_timers(test) < 0)
                 return -1;
@@ -374,7 +374,7 @@ iperf_run_client(struct iperf_test * test)
 	if (test->state == TEST_RUNNING) {
 
 	    /* Is this our first time really running? */
-	    if (startup && ! test->ignoring) {
+	    if (startup && ! test->omitting) {
 	        startup = 0;
 		/* Can we switch to SIGALRM mode?  There are a bunch of
 		** cases where either it won't work or it's ill-advised.
@@ -415,7 +415,7 @@ iperf_run_client(struct iperf_test * test)
 	    }
 
 	    /* Is the test done yet? */
-	    if (test->ignoring)
+	    if (test->omitting)
 	        continue;	/* not done */
 	    if (test->settings->bytes == 0) {
 		if (!test->done)

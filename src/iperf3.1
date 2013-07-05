@@ -104,10 +104,10 @@ set the IP 'type of service'
 Use a "zero copy" method of sending data, such as sendfile(2),
 instead of the usual write(2).
 .TP
-.BR -I ", " --ignore " \fIn\fR"
-Ignore the first n seconds of the test, to skip past the TCP slow-start
+.BR -O ", " --omit " \fIn\fR"
+Omit the first n seconds of the test, to skip past the TCP slow-start
 period.
-The default is 1 second; to not ignore anything, use "-I 0".
+The default is 1 second; to not omit anything, use "-O 0".
 
 .SH AUTHORS
 Iperf was originally written by Mark Gates and Alex Warshavsky.

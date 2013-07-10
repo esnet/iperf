@@ -44,6 +44,7 @@ struct iperf_stream;
 #define SERVER_ERROR (-2)
 
 /* Getter routines for some fields inside iperf_test. */
+int	iperf_get_verbose( struct iperf_test* ipt );
 int	iperf_get_control_socket( struct iperf_test* ipt );
 int	iperf_get_test_omit( struct iperf_test* ipt );
 int	iperf_get_test_duration( struct iperf_test* ipt );
@@ -62,6 +63,7 @@ int	iperf_get_test_zerocopy( struct iperf_test* ipt );
 int	iperf_get_test_may_use_sigalrm( struct iperf_test* ipt );
 
 /* Setter routines for some fields inside iperf_test. */
+void	iperf_set_verbose( struct iperf_test* ipt, int verbose );
 void	iperf_set_control_socket( struct iperf_test* ipt, int ctrl_sck );
 void	iperf_set_test_omit( struct iperf_test* ipt, int omit );
 void	iperf_set_test_duration( struct iperf_test* ipt, int duration );

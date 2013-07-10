@@ -146,7 +146,6 @@ struct iperf_test
     int       daemon;                           /* -D option */
     int	      debug;                            /* -d option - debug mode */
     int       no_delay;                         /* -N option */
-    int       output_format;                    /* -O option */
     int       reverse;                          /* -R option */
     int	      verbose;                          /* -V option - verbose mode */
     int	      json_output;                      /* -J option - JSON output */

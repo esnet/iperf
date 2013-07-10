@@ -81,6 +81,12 @@ void warning(char *str)
 /************** Getter routines for some fields inside iperf_test *************/
 
 int
+iperf_get_verbose(struct iperf_test *ipt)
+{
+    return ipt->verbose;
+}
+
+int
 iperf_get_control_socket(struct iperf_test *ipt)
 {
     return ipt->ctrl_sck;
@@ -177,6 +183,12 @@ iperf_get_test_may_use_sigalrm(struct iperf_test *ipt)
 }
 
 /************** Setter routines for some fields inside iperf_test *************/
+
+void
+iperf_set_verbose(struct iperf_test *ipt, int verbose)
+{
+    ipt->verbose = verbose;
+}
 
 void
 iperf_set_control_socket(struct iperf_test *ipt, int ctrl_sck)

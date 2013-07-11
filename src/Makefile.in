@@ -257,6 +257,7 @@ libiperf_a_SOURCES = \
                         locale.h \
                         net.c \
                         net.h \
+                        queue.h \
                         tcp_info.c \
                         tcp_window_size.c \
                         tcp_window_size.h \

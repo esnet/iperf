@@ -1292,7 +1292,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->unit_format = 'a';
     testp->settings->socket_bufsize = 0;    /* use autotuning */
     testp->settings->blksize = DEFAULT_TCP_BLKSIZE;
-    testp->settings->rate = UDP_RATE;
+    testp->settings->rate = 0;
     testp->settings->mss = 0;
     testp->settings->bytes = 0;
     memset(testp->cookie, 0, COOKIE_SIZE);
@@ -1438,7 +1438,7 @@ iperf_reset_test(struct iperf_test *test)
     test->num_streams = 1;
     test->settings->socket_bufsize = 0;
     test->settings->blksize = DEFAULT_TCP_BLKSIZE;
-    test->settings->rate = UDP_RATE;
+    test->settings->rate = 0;
     test->settings->mss = 0;
     memset(test->cookie, 0, COOKIE_SIZE);
     test->multisend = 10;	/* arbitrary */

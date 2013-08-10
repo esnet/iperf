@@ -117,6 +117,12 @@ iperf_get_test_role(struct iperf_test *ipt)
 }
 
 int
+iperf_get_test_reverse(struct iperf_test *ipt)
+{
+    return ipt->reverse;
+}
+
+int
 iperf_get_test_blksize(struct iperf_test *ipt)
 {
     return ipt->settings->blksize;
@@ -256,16 +262,41 @@ iperf_set_test_num_streams(struct iperf_test *ipt, int num_streams)
     ipt->num_streams = num_streams;
 }
 
+static void
+check_sender_has_retransmits(struct iperf_test *ipt)
+{
+    if (ipt->sender && ipt->protocol->id == Ptcp && has_tcpinfo_retransmits())
+	ipt->sender_has_retransmits = 1;
+    else
+	ipt->sender_has_retransmits = 0;
+}
+
 void
 iperf_set_test_role(struct iperf_test *ipt, char role)
 {
     ipt->role = role;
+    if (role == 'c')
+	ipt->sender = 1;
+    else if (role == 's')
+	ipt->sender = 0;
+    if (ipt->reverse)
+        ipt->sender = ! ipt->sender;
+    check_sender_has_retransmits(ipt);
 }
 
 void
 iperf_set_test_server_hostname(struct iperf_test *ipt, char *server_hostname)
 {
-    ipt->server_hostname = strdup( server_hostname );
+    ipt->server_hostname = strdup(server_hostname);
+}
+
+void
+iperf_set_test_reverse(struct iperf_test *ipt, int reverse)
+{
+    ipt->reverse = reverse;
+    if (ipt->reverse)
+        ipt->sender = ! ipt->sender;
+    check_sender_has_retransmits(ipt);
 }
 
 void
@@ -318,12 +349,12 @@ set_protocol(struct iperf_test *test, int prot_id)
     SLIST_FOREACH(prot, &test->protocols, protocols) {
         if (prot->id == prot_id) {
             test->protocol = prot;
+	    check_sender_has_retransmits(test);
             return 0;
         }
     }
 
     i_errno = IEPROTOCOL;
-
     return -1;
 }
 
@@ -532,18 +563,15 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     i_errno = IESERVCLIENT;
                     return -1;
                 }
-		test->role = 's';
-		test->sender = 0;
+		iperf_set_test_role(test, 's');
                 break;
             case 'c':
                 if (test->role == 's') {
                     i_errno = IESERVCLIENT;
                     return -1;
                 }
-		test->role = 'c';
-		test->sender = 1;
-		test->server_hostname = (char *) malloc(strlen(optarg)+1);
-		strncpy(test->server_hostname, optarg, strlen(optarg)+1);
+		iperf_set_test_role(test, 'c');
+		iperf_set_test_server_hostname(test, optarg);
                 break;
             case 'u':
                 set_protocol(test, Pudp);
@@ -579,7 +607,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
             case 'R':
-                test->reverse = 1;
+		iperf_set_test_reverse(test, 1);
 		client_flag = 1;
                 break;
             case 'w':
@@ -688,10 +716,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         i_errno = IENOROLE;
         return -1;
     }
-    if (test->reverse)
-        test->sender = ! test->sender;
-    if (test->sender && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
-	test->sender_has_retransmits = 1;
 
     return 0;
 }
@@ -864,8 +888,9 @@ iperf_sum_results(struct iperf_test *test)
     struct iperf_stream *sp;
 
     SLIST_FOREACH(sp, &test->streams, streams) {
-	if (test->sender && test->sender_has_retransmits)
+	if (test->sender && test->sender_has_retransmits) {
 	    sp->result->retransmits = get_tcpinfo_total_retransmits(TAILQ_LAST(&sp->result->interval_results, irlisthead));
+	}
     }
     return 0;
 }
@@ -973,10 +998,8 @@ get_parameters(struct iperf_test *test)
 	    test->no_delay = 1;
 	if ((j_p = cJSON_GetObjectItem(j, "parallel")) != NULL)
 	    test->num_streams = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "reverse")) != NULL) {
-	    test->reverse = 1;
-	    test->sender = ! test->sender;
-	}
+	if ((j_p = cJSON_GetObjectItem(j, "reverse")) != NULL)
+	    iperf_set_test_reverse(test, 1);
 	if ((j_p = cJSON_GetObjectItem(j, "window")) != NULL)
 	    test->settings->socket_bufsize = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "len")) != NULL)
@@ -1529,7 +1552,7 @@ iperf_print_intermediate(struct iperf_test *test)
     struct iperf_interval_results *irp;
     iperf_size_t bytes = 0;
     double bandwidth;
-    long retransmits = 0;
+    int retransmits = 0;
     double start_time, end_time;
     cJSON *json_interval;
     cJSON *json_interval_streams;

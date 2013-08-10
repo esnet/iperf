@@ -194,7 +194,7 @@ const char report_bw_format[] =
 "[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec\n";
 
 const char report_bw_retrans_format[] =
-"[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec  %ld\n";
+"[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec  %d\n";
 
 const char report_bw_udp_format[] =
 "[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)\n";
@@ -203,7 +203,7 @@ const char report_sum_bw_format[] =
 "[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec\n";
 
 const char report_sum_bw_retrans_format[] =
-"[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec  %ld\n";
+"[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec  %d\n";
 
 const char report_sum_bw_udp_format[] =
 "[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)\n";

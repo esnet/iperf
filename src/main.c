@@ -86,7 +86,7 @@ main(int argc, char **argv)
     if (setjmp(env)) {
         if (test->ctrl_sck >= 0) {
             test->state = (test->role == 'c') ? CLIENT_TERMINATE : SERVER_TERMINATE;
-            if (Nwrite(test->ctrl_sck, &test->state, sizeof(char), Ptcp) < 0) {
+            if (Nwrite(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp) < 0) {
                 i_errno = IESENDMESSAGE;
                 return -1;
             }

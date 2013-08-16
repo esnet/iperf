@@ -186,7 +186,7 @@ iperf_handle_message_client(struct iperf_test *test)
 {
     int rval, perr;
 
-    if ((rval = read(test->ctrl_sck, &test->state, sizeof(char))) <= 0) {
+    if ((rval = read(test->ctrl_sck, (char*) &test->state, sizeof(signed char))) <= 0) {
         if (rval == 0) {
             i_errno = IECTRLCLOSE;
             return -1;

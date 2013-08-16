@@ -79,7 +79,7 @@ int
 iperf_tcp_accept(struct iperf_test * test)
 {
     int     s;
-    int     rbuf = ACCESS_DENIED;
+    signed char rbuf = ACCESS_DENIED;
     char    cookie[COOKIE_SIZE];
     socklen_t len;
     struct sockaddr_storage addr;
@@ -96,7 +96,7 @@ iperf_tcp_accept(struct iperf_test * test)
     }
 
     if (strcmp(test->cookie, cookie) != 0) {
-        if (Nwrite(s, (char*) &rbuf, sizeof(char), Ptcp) < 0) {
+        if (Nwrite(s, (char*) &rbuf, sizeof(signed char), Ptcp) < 0) {
             i_errno = IESENDMESSAGE;
             return -1;
         }

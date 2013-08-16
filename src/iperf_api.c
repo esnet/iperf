@@ -1206,7 +1206,7 @@ JSON_read(int fd)
 
     if (Nread(fd, (char*) &nsize, sizeof(nsize), Ptcp) >= 0) {
 	hsize = ntohl(nsize);
-	str = (char *) malloc((hsize+1) * sizeof(char));	/* +1 for EOS */
+	str = (char *) malloc(hsize+1);	/* +1 for EOS */
 	if (str != NULL) {
 	    if (Nread(fd, str, hsize, Ptcp) >= 0) {
 		str[hsize] = '\0';	/* add the EOS */

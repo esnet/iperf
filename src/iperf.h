@@ -131,7 +131,7 @@ struct iperf_test
     int       sender;                           /* client & !reverse or server & reverse */
     int       sender_has_retransmits;
     struct protocol *protocol;
-    char      state;
+    signed char state;
     char     *server_hostname;                  /* -c option */
     char     *bind_address;                     /* -B option */
     int       server_port;

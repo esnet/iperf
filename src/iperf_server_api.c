@@ -47,9 +47,21 @@
 int
 iperf_server_listen(struct iperf_test *test)
 {
+    retry:
     if((test->listener = netannounce(test->settings->domain, Ptcp, test->bind_address, test->server_port)) < 0) {
-        i_errno = IELISTEN;
-        return -1;
+	if (errno == EAFNOSUPPORT && (test->settings->domain == AF_INET6 || test->settings->domain == AF_UNSPEC)) {
+	    /* If we get "Address family not supported by protocol", that
+	    ** probably means we were compiled with IPv6 but the running
+	    ** kernel does not actually do IPv6.  This is not too unusual,
+	    ** v6 support is and perhaps always will be spotty.
+	    */
+	    warning("this system does not seem to support IPv6 - trying IPv4");
+	    test->settings->domain = AF_INET;
+	    goto retry;
+	} else {
+	    i_errno = IELISTEN;
+	    return -1;
+	}
     }
 
     if (!test->json_output) {

@@ -366,7 +366,7 @@ int
 getsockdomain(int sock)
 {
     struct sockaddr sa;
-    socklen_t len;
+    socklen_t len = sizeof(sa);
 
     if (getsockname(sock, &sa, &len) < 0)
 	return -1;

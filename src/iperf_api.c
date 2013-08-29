@@ -832,6 +832,44 @@ iperf_init_test(struct iperf_test *test)
     return 0;
 }
 
+static void
+send_timer_proc(TimerClientData client_data, struct timeval *nowP)
+{
+    struct iperf_stream *sp = client_data.p;
+
+    /* All we do here is set or clear the flag saying that this stream may
+    ** be sent to.  The actual sending gets done in the send proc, after
+    ** checking the flag.
+    */
+    iperf_check_throttle(sp, nowP);
+}
+
+int
+iperf_create_send_timers(struct iperf_test * test)
+{
+    struct timeval now;
+    struct iperf_stream *sp;
+    TimerClientData cd;
+
+    if (gettimeofday(&now, NULL) < 0) {
+	i_errno = IEINITTEST;
+	return -1;
+    }
+    SLIST_FOREACH(sp, &test->streams, streams) {
+        sp->green_light = 1;
+	if (test->settings->rate != 0) {
+	    cd.p = sp;
+	    sp->send_timer = tmr_create((struct timeval*) 0, send_timer_proc, cd, 100000L, 1);
+	    /* (Repeat every tenth second - arbitrary often value.) */
+	    if (sp->send_timer == NULL) {
+		i_errno = IEINITTEST;
+		return -1;
+	    }
+	}
+    }
+    return 0;
+}
+
 /**
  * iperf_exchange_parameters - handles the param_Exchange part for client
  *
@@ -1673,50 +1711,46 @@ iperf_print_results(struct iperf_test *test)
             avg_jitter += sp->jitter;
         }
 
-        if (bytes_sent > 0) {
-            unit_snprintf(ubuf, UNIT_LEN, (double) bytes_sent, 'A');
-	    bandwidth = (double) bytes_sent / (double) end_time;
-            unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
-            if (test->protocol->id == Ptcp) {
-		if (!test->json_output)
-		    fputs("      Sent\n", stdout);
-		if (test->sender_has_retransmits) {
-		    if (test->json_output)
-			cJSON_AddItemToObject(json_summary_stream, "sent", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8, (int64_t) sp->result->retransmits));
-		    else
-			printf(report_bw_retrans_format, sp->socket, start_time, end_time, ubuf, nbuf, sp->result->retransmits);
-		} else {
-		    if (test->json_output)
-			cJSON_AddItemToObject(json_summary_stream, "sent", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8));
-		    else
-			printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
-		}
-            } else {
-		out_of_order_percent = 100.0 * sp->cnt_error / (sp->packet_count - sp->omitted_packet_count);
+	unit_snprintf(ubuf, UNIT_LEN, (double) bytes_sent, 'A');
+	bandwidth = (double) bytes_sent / (double) end_time;
+	unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
+	if (test->protocol->id == Ptcp) {
+	    if (!test->json_output)
+		fputs("      Sent\n", stdout);
+	    if (test->sender_has_retransmits) {
 		if (test->json_output)
-		    cJSON_AddItemToObject(json_summary_stream, "udp", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  outoforder: %d  packets: %d  percent: %f", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8, (double) sp->jitter * 1000.0, (int64_t) sp->cnt_error, (int64_t) (sp->packet_count - sp->omitted_packet_count), out_of_order_percent));
-		else {
-		    printf(report_bw_udp_format, sp->socket, start_time, end_time, ubuf, nbuf, sp->jitter * 1000.0, sp->cnt_error, (sp->packet_count - sp->omitted_packet_count), out_of_order_percent);
-		    if (test->role == 'c')
-			printf(report_datagrams, sp->socket, (sp->packet_count - sp->omitted_packet_count));
-		    if (sp->outoforder_packets > 0)
-			printf(report_sum_outoforder, start_time, end_time, sp->cnt_error);
-		}
-            }
-        }
-        if (bytes_received > 0) {
-            unit_snprintf(ubuf, UNIT_LEN, (double) bytes_received, 'A');
-	    bandwidth = (double) bytes_received / (double) end_time;
-            unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
-            if (test->protocol->id == Ptcp) {
-		if (!test->json_output)
-		    printf("      Received\n");
+		    cJSON_AddItemToObject(json_summary_stream, "sent", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8, (int64_t) sp->result->retransmits));
+		else
+		    printf(report_bw_retrans_format, sp->socket, start_time, end_time, ubuf, nbuf, sp->result->retransmits);
+	    } else {
 		if (test->json_output)
-		    cJSON_AddItemToObject(json_summary_stream, "received", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_received, bandwidth * 8));
+		    cJSON_AddItemToObject(json_summary_stream, "sent", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8));
 		else
 		    printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
-            }
-        }
+	    }
+	} else {
+	    out_of_order_percent = 100.0 * sp->cnt_error / (sp->packet_count - sp->omitted_packet_count);
+	    if (test->json_output)
+		cJSON_AddItemToObject(json_summary_stream, "udp", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  outoforder: %d  packets: %d  percent: %f", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8, (double) sp->jitter * 1000.0, (int64_t) sp->cnt_error, (int64_t) (sp->packet_count - sp->omitted_packet_count), out_of_order_percent));
+	    else {
+		printf(report_bw_udp_format, sp->socket, start_time, end_time, ubuf, nbuf, sp->jitter * 1000.0, sp->cnt_error, (sp->packet_count - sp->omitted_packet_count), out_of_order_percent);
+		if (test->role == 'c')
+		    printf(report_datagrams, sp->socket, (sp->packet_count - sp->omitted_packet_count));
+		if (sp->outoforder_packets > 0)
+		    printf(report_sum_outoforder, start_time, end_time, sp->cnt_error);
+	    }
+	}
+	unit_snprintf(ubuf, UNIT_LEN, (double) bytes_received, 'A');
+	bandwidth = (double) bytes_received / (double) end_time;
+	unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
+	if (test->protocol->id == Ptcp) {
+	    if (!test->json_output)
+		printf("      Received\n");
+	    if (test->json_output)
+		cJSON_AddItemToObject(json_summary_stream, "received", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_received, bandwidth * 8));
+	    else
+		printf(report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf);
+	}
     }
 
     if (test->num_streams > 1) {

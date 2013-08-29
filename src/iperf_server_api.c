@@ -135,12 +135,10 @@ iperf_accept(struct iperf_test *test)
 
 	if (iperf_set_send_state(test, PARAM_EXCHANGE) != 0)
             return -1;
-        if (iperf_exchange_parameters(test) < 0) {
+        if (iperf_exchange_parameters(test) < 0)
             return -1;
-        }
-        if (test->on_connect) {
+        if (test->on_connect)
             test->on_connect(test);
-        }
     } else {
         /* XXX: Do we even need to receive cookie if we're just going to deny anyways? */
         if (Nread(s, cookie, COOKIE_SIZE, Ptcp) < 0) {
@@ -440,6 +438,11 @@ iperf_run_server(struct iperf_test *test)
 			cleanup_server(test);
                         return -1;
 		    }
+		    if (test->reverse)
+			if (iperf_create_send_timers(test) < 0) {
+			    cleanup_server(test);
+			    return -1;
+			}
 		    if (iperf_set_send_state(test, TEST_RUNNING) != 0) {
 			cleanup_server(test);
                         return -1;

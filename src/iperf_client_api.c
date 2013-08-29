@@ -143,44 +143,6 @@ create_client_omit_timer(struct iperf_test * test)
     return 0;
 }
 
-static void
-send_timer_proc(TimerClientData client_data, struct timeval *nowP)
-{
-    struct iperf_stream *sp = client_data.p;
-
-    /* All we do here is set or clear the flag saying that this stream may
-    ** be sent to.  The actual sending gets done in the send proc, after
-    ** checking the flag.
-    */
-    iperf_check_throttle(sp, nowP);
-}
-
-static int
-create_send_timers(struct iperf_test * test)
-{
-    struct timeval now;
-    struct iperf_stream *sp;
-    TimerClientData cd;
-
-    if (gettimeofday(&now, NULL) < 0) {
-	i_errno = IEINITTEST;
-	return -1;
-    }
-    SLIST_FOREACH(sp, &test->streams, streams) {
-        sp->green_light = 1;
-	if (test->settings->rate != 0) {
-	    cd.p = sp;
-	    sp->send_timer = tmr_create((struct timeval*) 0, send_timer_proc, cd, 100000L, 1);
-	    /* (Repeat every tenth second - arbitrary often value.) */
-	    if (sp->send_timer == NULL) {
-		i_errno = IEINITTEST;
-		return -1;
-	    }
-	}
-    }
-    return 0;
-}
-
 int
 iperf_handle_message_client(struct iperf_test *test)
 {
@@ -212,8 +174,9 @@ iperf_handle_message_client(struct iperf_test *test)
                 return -1;
             if (create_client_omit_timer(test) < 0)
                 return -1;
-            if (create_send_timers(test) < 0)
-                return -1;
+	    if (!test->reverse)
+		if (iperf_create_send_timers(test) < 0)
+		    return -1;
             break;
         case TEST_RUNNING:
             break;

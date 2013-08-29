@@ -33,6 +33,7 @@ main( int argc, char** argv )
 	exit( EXIT_FAILURE );
     }
     iperf_defaults( test );
+    iperf_set_verbose( test, 1 );
     iperf_set_test_role( test, 's' );
     iperf_set_test_server_port( test, port );
 

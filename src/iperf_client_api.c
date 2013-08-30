@@ -344,7 +344,9 @@ iperf_run_client(struct iperf_test * test)
 		*/
 		if (test->may_use_sigalrm && test->settings->rate == 0 &&
 		    (test->stats_interval == 0 || test->stats_interval > 1) &&
+		    test->stats_interval == (int) test->stats_interval &&
 		    (test->reporter_interval == 0 || test->reporter_interval > 1) &&
+		    test->reporter_interval == (int) test->reporter_interval &&
 		    ! test->reverse) {
 		    concurrency_model = CM_SIGALRM;
 		    test->multisend = 1;

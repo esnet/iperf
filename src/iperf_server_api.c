@@ -87,10 +87,10 @@ iperf_server_listen(struct iperf_test *test)
     if (test->protocol->id == Ptcp) {
         if (test->settings->socket_bufsize > 0) {
             unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A');
-	    if (test->json_output) 
+	    if (!test->json_output) 
 		printf("TCP window size: %s\n", ubuf);
         } else {
-	    if (test->json_output) 
+	    if (!test->json_output) 
 		printf("Using TCP Autotuning\n");
         }
     }

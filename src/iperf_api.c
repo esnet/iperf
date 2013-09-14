@@ -486,7 +486,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"daemon", no_argument, NULL, 'D'},
         {"verbose", no_argument, NULL, 'V'},
         {"json", no_argument, NULL, 'J'},
-        {"debug", no_argument, NULL, 'd'},
         {"version", no_argument, NULL, 'v'},
         {"server", no_argument, NULL, 's'},
         {"client", required_argument, NULL, 'c'},
@@ -550,9 +549,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'J':
                 test->json_output = 1;
-                break;
-            case 'd':
-                test->debug = 1;
                 break;
             case 'v':
                 printf("%s\n", version);

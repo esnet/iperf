@@ -404,6 +404,9 @@ mapped_v4_to_regular_v4(char *str)
 void
 iperf_on_connect(struct iperf_test *test)
 {
+    time_t now_secs;
+    const char* rfc1123_fmt = "%a, %d %b %Y %H:%M:%S GMT";
+    char now_str[100];
     char ipr[INET6_ADDRSTRLEN];
     int port;
     struct sockaddr_storage sa;
@@ -411,6 +414,13 @@ iperf_on_connect(struct iperf_test *test)
     struct sockaddr_in6 *sa_in6P;
     socklen_t len;
     int opt;
+
+    now_secs = time((time_t*) 0);
+    (void) strftime(now_str, sizeof(now_str), rfc1123_fmt, gmtime(&now_secs));
+    if (test->json_output)
+	cJSON_AddItemToObject(test->json_start, "timestamp", iperf_json_printf("time: %s  timesecs: %d", now_str, (int64_t) now_secs));
+    else if (test->verbose)
+	printf("Time: %s\n", now_str);
 
     if (test->role == 'c') {
 	if (test->json_output)

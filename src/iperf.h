@@ -88,6 +88,7 @@ struct iperf_stream
     int       green_light;
     int       buffer_fd;	/* data to send, file descriptor */
     char      *buffer;		/* data to send, mmapped */
+    int       diskfile_fd;	/* file to send, file descriptor */
 
     /*
      * for udp measurements - This can be a structure outside stream, and
@@ -106,6 +107,10 @@ struct iperf_stream
 
     int       (*rcv) (struct iperf_stream * stream);
     int       (*snd) (struct iperf_stream * stream);
+
+    /* chained send/receive routines for -F mode */
+    int       (*rcv2) (struct iperf_stream * stream);
+    int       (*snd2) (struct iperf_stream * stream);
 
 //    struct iperf_stream *next;
     SLIST_ENTRY(iperf_stream) streams;
@@ -137,6 +142,7 @@ struct iperf_test
     int       server_port;
     int       omit;                             /* duration of omit period (-O flag) */
     int       duration;                         /* total duration of test (-t flag) */
+    char     *diskfile_name;			/* -F option */
 
     int       ctrl_sck;
     int       listener;

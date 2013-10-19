@@ -254,6 +254,7 @@ iperf_test_reset(struct iperf_test *test)
     set_protocol(test, Ptcp);
     test->omit = OMIT;
     test->duration = DURATION;
+    test->diskfile_name = (char*) 0;
     test->state = 0;
     test->server_hostname = NULL;
 

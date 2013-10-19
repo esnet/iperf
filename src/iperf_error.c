@@ -105,6 +105,10 @@ iperf_strerror(int i_errno)
         case IEUNIMP:
             snprintf(errstr, len, "an option you are trying to set is not implemented yet");
             break;
+        case IEFILE:
+            snprintf(errstr, len, "unable to open -F file");
+            perr = 1;
+            break;
         case IENEWTEST:
             snprintf(errstr, len, "unable to create a new test");
             perr = 1;

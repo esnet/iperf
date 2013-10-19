@@ -51,6 +51,8 @@ static int send_parameters(struct iperf_test *test);
 static int get_parameters(struct iperf_test *test);
 static int send_results(struct iperf_test *test);
 static int get_results(struct iperf_test *test);
+static int diskfile_send(struct iperf_stream *sp);
+static int diskfile_recv(struct iperf_stream *sp);
 static int JSON_write(int fd, cJSON *json);
 static void print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *json_interval_streams);
 static cJSON *JSON_read(int fd);
@@ -516,6 +518,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"flowlabel", required_argument, NULL, 'L'},
         {"zerocopy", no_argument, NULL, 'Z'},
         {"omit", required_argument, NULL, 'O'},
+        {"file", required_argument, NULL, 'F'},
         {"help", no_argument, NULL, 'h'},
 
     /*  XXX: The following ifdef needs to be split up. linux-congestion is not
@@ -532,7 +535,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     blksize = 0;
     server_flag = client_flag = rate_flag = 0;
-    while ((flag = getopt_long(argc, argv, "p:f:i:DVJdvsc:ub:t:n:l:P:Rw:B:M:N46S:L:ZO:h", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:DVJdvsc:ub:t:n:l:P:Rw:B:M:N46S:L:ZO:F:h", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
                 test->server_port = atoi(optarg);
@@ -679,6 +682,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     return -1;
                 }
 		client_flag = 1;
+                break;
+            case 'F':
+                test->diskfile_name = optarg;
                 break;
             case 'h':
             default:
@@ -1344,6 +1350,7 @@ iperf_defaults(struct iperf_test *testp)
 
     testp->omit = OMIT;
     testp->duration = DURATION;
+    testp->diskfile_name = (char*) 0;
     testp->server_port = PORT;
     testp->ctrl_sck = -1;
     testp->prot_listener = -1;
@@ -1488,6 +1495,7 @@ iperf_reset_test(struct iperf_test *test)
     set_protocol(test, Ptcp);
     test->omit = OMIT;
     test->duration = DURATION;
+    test->diskfile_name = (char*) 0;
     test->state = 0;
     test->server_hostname = NULL;
 
@@ -1889,6 +1897,8 @@ iperf_free_stream(struct iperf_stream *sp)
     /* XXX: need to free interval list too! */
     munmap(sp->buffer, sp->test->settings->blksize);
     close(sp->buffer_fd);
+    if (sp->diskfile_fd >= 0)
+	close(sp->diskfile_fd);
     for (irp = TAILQ_FIRST(&sp->result->interval_results); irp != TAILQ_END(sp->result->interval_results); irp = nirp) {
         nirp = TAILQ_NEXT(irp, irlistentries);
         free(irp);
@@ -1957,6 +1967,19 @@ iperf_new_stream(struct iperf_test *test, int s)
 
     sp->snd = test->protocol->send;
     sp->rcv = test->protocol->recv;
+
+    if (test->diskfile_name != (char*) 0) {
+	sp->diskfile_fd = open(test->diskfile_name, test->sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC));
+	if (sp->diskfile_fd == -1) {
+	    i_errno = IEFILE;
+	    return NULL;
+	}
+        sp->snd2 = sp->snd;
+	sp->snd = diskfile_send;
+	sp->rcv2 = sp->rcv;
+	sp->rcv = diskfile_recv;
+    } else
+        sp->diskfile_fd = -1;
 
     /* Initialize stream */
     if (iperf_init_stream(sp, test) < 0)
@@ -2027,6 +2050,38 @@ iperf_add_stream(struct iperf_test *test, struct iperf_stream *sp)
         SLIST_INSERT_AFTER(prev, sp, streams);
         sp->id = i;
     }
+}
+
+/* This pair of routines gets inserted into the snd/rcv function pointers
+** when there's a -F flag. They handle the file stuff and call the real
+** snd/rcv functions, which have been saved in snd2/rcv2.
+**
+** The advantage of doing it this way is that in the much more common
+** case of no -F flag, there is zero extra overhead.
+*/
+
+static int
+diskfile_send(struct iperf_stream *sp)
+{
+    int r;
+
+    r = read(sp->diskfile_fd, sp->buffer, sp->test->settings->blksize);
+    if (r == 0)
+        sp->test->done = 1;
+    else
+	r = sp->snd2(sp);
+    return r;
+}
+
+static int
+diskfile_recv(struct iperf_stream *sp)
+{
+    int r;
+
+    r = sp->rcv2(sp);
+    if (r > 0)
+	(void) write(sp->diskfile_fd, sp->buffer, r);
+    return r;
 }
 
 void

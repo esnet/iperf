@@ -99,6 +99,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            /* "  -L, --flowlabel N         set the IPv6 'flow label'\n" */
                            "  -Z, --zerocopy            use a 'zero copy' method of sending data\n"
                            "  -O, --omit N              omit the first n seconds\n"
+                           "  -F, --file name           xmit/recv the specified file\n"
 
 #ifdef NOT_YET_SUPPORTED /* still working on these */
                            "  -D, --daemon              run the server as a daemon\n"

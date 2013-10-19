@@ -230,6 +230,7 @@ enum {
     IENOSENDFILE = 11,      // This OS does not support sendfile
     IEOMIT = 12,            // Bogus value for --omit
     IEUNIMP = 13,           // Not implemented yet
+    IEFILE = 14,            // -F file couldn't be opened
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

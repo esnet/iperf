@@ -27,6 +27,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <sched.h>
 #include <setjmp.h>
 
@@ -1674,6 +1675,8 @@ iperf_print_results(struct iperf_test *test)
     int total_packets = 0, lost_packets = 0;
     char ubuf[UNIT_LEN];
     char nbuf[UNIT_LEN];
+    struct stat sb;
+    char sbuf[UNIT_LEN];
     struct iperf_stream *sp = NULL;
     iperf_size_t bytes_sent, total_sent = 0;
     iperf_size_t bytes_received, total_received = 0;
@@ -1754,6 +1757,18 @@ iperf_print_results(struct iperf_test *test)
 		    printf(report_sum_outoforder, start_time, end_time, sp->cnt_error);
 	    }
 	}
+
+	if (sp->diskfile_fd >= 0) {
+	    if (fstat(sp->diskfile_fd, &sb) == 0) {
+		int percent = (int) ( ( (double) bytes_sent / (double) sb.st_size ) * 100.0 );
+		unit_snprintf(sbuf, UNIT_LEN, (double) sb.st_size, 'A');
+		if (test->json_output)
+		    cJSON_AddItemToObject(json_summary_stream, "diskfile", iperf_json_printf("sent: %d  size: %d  percent: %d  filename: %s", (int64_t) bytes_sent, (int64_t) sb.st_size, (int64_t) percent, test->diskfile_name));
+		else
+		    printf("        Sent %s / %s (%d%%) of %s\n", ubuf, sbuf, percent, test->diskfile_name);
+	    }
+	}
+
 	unit_snprintf(ubuf, UNIT_LEN, (double) bytes_received, 'A');
 	bandwidth = (double) bytes_received / (double) end_time;
 	unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);

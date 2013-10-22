@@ -987,8 +987,7 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddTrueToObject(j, "tcp");
 	else if (test->protocol->id == Pudp)
 	    cJSON_AddTrueToObject(j, "udp");
-	if (test->omit)
-	    cJSON_AddIntToObject(j, "omit", test->omit);
+	cJSON_AddIntToObject(j, "omit", test->omit);
 	if (test->duration)
 	    cJSON_AddIntToObject(j, "time", test->duration);
 	if (test->settings->bytes)

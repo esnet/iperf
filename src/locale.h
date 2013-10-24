@@ -41,6 +41,7 @@ extern const char report_bw_udp_format[] ;
 extern const char report_sum_bw_format[] ;
 extern const char report_sum_bw_retrans_format[] ;
 extern const char report_sum_bw_udp_format[] ;
+extern const char report_omitted[] ;
 extern const char report_bw_separator[] ;
 extern const char report_outoforder[] ;
 extern const char report_sum_outoforder[] ;

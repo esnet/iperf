@@ -289,7 +289,7 @@ server_omit_timer_proc(TimerClientData client_data, struct timeval *nowP)
     test->omit_timer = NULL;
     test->omitting = 0;
     iperf_reset_stats(test);
-    if (test->verbose && !test->json_output)
+    if (test->verbose && !test->json_output && test->reporter_interval == 0)
 	printf("Finished omit period, starting real test\n");
 }
 
@@ -299,17 +299,23 @@ create_server_omit_timer(struct iperf_test * test)
     struct timeval now;
     TimerClientData cd; 
 
-    if (gettimeofday(&now, NULL) < 0) {
-	i_errno = IEINITTEST;
-	return -1; 
+    if (test->omit == 0) {
+	test->omit_timer = NULL;
+	test->omitting = 0;
+    } else {
+	if (gettimeofday(&now, NULL) < 0) {
+	    i_errno = IEINITTEST;
+	    return -1; 
+	}
+	test->omitting = 1;
+	cd.p = test;
+	test->omit_timer = tmr_create(&now, server_omit_timer_proc, cd, test->omit * SEC_TO_US, 0); 
+	if (test->omit_timer == NULL) {
+	    i_errno = IEINITTEST;
+	    return -1;
+	}
     }
-    test->omitting = 1;
-    cd.p = test;
-    test->omit_timer = tmr_create(&now, server_omit_timer_proc, cd, test->omit * SEC_TO_US, 0); 
-    if (test->omit_timer == NULL) {
-	i_errno = IEINITTEST;
-	return -1;
-    }
+
     return 0;
 }
 

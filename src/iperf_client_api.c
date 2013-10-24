@@ -83,48 +83,8 @@ reporter_timer_proc(TimerClientData client_data, struct timeval *nowP)
     test->reporter_callback(test);
 }
 
-static void
-client_omit_timer_proc(TimerClientData client_data, struct timeval *nowP)
-{
-    struct iperf_test *test = client_data.p;
-    TimerClientData cd;
-
-    test->omit_timer = NULL;
-    test->omitting = 0;
-    iperf_reset_stats(test);
-    if (test->verbose && !test->json_output)
-        printf("Finished omit period, starting real test\n");
-
-    /* Create timers. */
-    if (test->settings->bytes == 0) {
-	test->done = 0;
-	cd.p = test;
-        test->timer = tmr_create(nowP, test_timer_proc, cd, test->duration * SEC_TO_US, 0);
-        if (test->timer == NULL) {
-            i_errno = IEINITTEST;
-            return;
-	}
-    } 
-    if (test->stats_interval != 0) {
-	cd.p = test;
-        test->stats_timer = tmr_create(nowP, stats_timer_proc, cd, test->stats_interval * SEC_TO_US, 1);
-        if (test->stats_timer == NULL) {
-            i_errno = IEINITTEST;
-            return;
-	}
-    }
-    if (test->reporter_interval != 0) {
-	cd.p = test;
-        test->reporter_timer = tmr_create(nowP, reporter_timer_proc, cd, test->reporter_interval * SEC_TO_US, 1);
-        if (test->reporter_timer == NULL) {
-            i_errno = IEINITTEST;
-            return;
-	}
-    }
-}
-
 static int
-create_client_omit_timer(struct iperf_test * test)
+create_client_timers(struct iperf_test * test)
 {
     struct timeval now;
     TimerClientData cd;
@@ -133,12 +93,72 @@ create_client_omit_timer(struct iperf_test * test)
 	i_errno = IEINITTEST;
 	return -1;
     }
-    test->omitting = 1;
     cd.p = test;
-    test->omit_timer = tmr_create(&now, client_omit_timer_proc, cd, test->omit * SEC_TO_US, 0);
-    if (test->omit_timer == NULL) {
-	i_errno = IEINITTEST;
-	return -1;
+    test->timer = test->stats_timer = test->reporter_timer = NULL;
+    if (test->settings->bytes == 0) {
+	test->done = 0;
+        test->timer = tmr_create(&now, test_timer_proc, cd, ( test->duration + test->omit ) * SEC_TO_US, 0);
+        if (test->timer == NULL) {
+            i_errno = IEINITTEST;
+            return -1;
+	}
+    } 
+    if (test->stats_interval != 0) {
+        test->stats_timer = tmr_create(&now, stats_timer_proc, cd, test->stats_interval * SEC_TO_US, 1);
+        if (test->stats_timer == NULL) {
+            i_errno = IEINITTEST;
+            return -1;
+	}
+    }
+    if (test->reporter_interval != 0) {
+        test->reporter_timer = tmr_create(&now, reporter_timer_proc, cd, test->reporter_interval * SEC_TO_US, 1);
+        if (test->reporter_timer == NULL) {
+            i_errno = IEINITTEST;
+            return -1;
+	}
+    }
+    return 0;
+}
+
+static void
+client_omit_timer_proc(TimerClientData client_data, struct timeval *nowP)
+{
+    struct iperf_test *test = client_data.p;
+
+    test->omit_timer = NULL;
+    test->omitting = 0;
+    iperf_reset_stats(test);
+    if (test->verbose && !test->json_output && test->reporter_interval == 0)
+        printf("Finished omit period, starting real test\n");
+
+    /* Reset the timers. */
+    if (test->stats_timer != NULL)
+        tmr_reset(nowP, test->stats_timer);
+    if (test->reporter_timer != NULL)
+        tmr_reset(nowP, test->reporter_timer);
+}
+
+static int
+create_client_omit_timer(struct iperf_test * test)
+{
+    struct timeval now;
+    TimerClientData cd;
+
+    if (test->omit == 0) {
+	test->omit_timer = NULL;
+        test->omitting = 0;
+    } else {
+	if (gettimeofday(&now, NULL) < 0) {
+	    i_errno = IEINITTEST;
+	    return -1;
+	}
+	test->omitting = 1;
+	cd.p = test;
+	test->omit_timer = tmr_create(&now, client_omit_timer_proc, cd, test->omit * SEC_TO_US, 0);
+	if (test->omit_timer == NULL) {
+	    i_errno = IEINITTEST;
+	    return -1;
+	}
     }
     return 0;
 }
@@ -171,6 +191,8 @@ iperf_handle_message_client(struct iperf_test *test)
             break;
         case TEST_START:
             if (iperf_init_test(test) < 0)
+                return -1;
+            if (create_client_timers(test) < 0)
                 return -1;
             if (create_client_omit_timer(test) < 0)
                 return -1;
@@ -337,16 +359,18 @@ iperf_run_client(struct iperf_test * test)
 	if (test->state == TEST_RUNNING) {
 
 	    /* Is this our first time really running? */
-	    if (startup && ! test->omitting) {
+	    if (startup) {
 	        startup = 0;
-		/* Can we switch to SIGALRM mode?  There are a bunch of
-		** cases where either it won't work or it's ill-advised.
+		/* Decide which concurrency model to use for the real test.
+		** SIGALRM is less overhead but there are a bunch of cases
+		** where it either won't work or is ill-advised.
 		*/
 		if (test->may_use_sigalrm && test->settings->rate == 0 &&
 		    (test->stats_interval == 0 || test->stats_interval > 1) &&
 		    test->stats_interval == (int) test->stats_interval &&
 		    (test->reporter_interval == 0 || test->reporter_interval > 1) &&
 		    test->reporter_interval == (int) test->reporter_interval &&
+		    (test->omit == 0 || test->omit > 1) &&
 		    ! test->reverse) {
 		    concurrency_model = CM_SIGALRM;
 		    test->multisend = 1;

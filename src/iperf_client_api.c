@@ -313,6 +313,10 @@ iperf_run_client(struct iperf_test * test)
     fd_set read_set, write_set;
     struct timeval now;
 
+    if (test->affinity != -1)
+	if (iperf_setaffinity(test->affinity) != 0)
+	    return -1;
+
     if (test->json_output)
 	if (iperf_json_start(test) < 0)
 	    return -1;
@@ -326,9 +330,8 @@ iperf_run_client(struct iperf_test * test)
     }
 
     /* Start the client and connect to the server */
-    if (iperf_connect(test) < 0) {
+    if (iperf_connect(test) < 0)
         return -1;
-    }
 
     /* Begin calculating CPU utilization */
     cpu_util(NULL);

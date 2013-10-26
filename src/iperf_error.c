@@ -231,6 +231,10 @@ iperf_strerror(int i_errno)
         case IEPROTOCOL:
             snprintf(errstr, len, "protocol does not exist");
             break;
+        case IEAFFINITY:
+            snprintf(errstr, len, "unable to set CPU affinity");
+            perr = 1;
+            break;
         case IECREATESTREAM:
             snprintf(errstr, len, "unable to create a new stream");
             herr = 1;

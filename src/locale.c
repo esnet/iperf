@@ -72,6 +72,8 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -p, --port      #         server port to listen on/connect to\n"
                            "  -f, --format    [kmgKMG]  format to report: Kbits, Mbits, KBytes, MBytes\n"
                            "  -i, --interval  #         seconds between periodic bandwidth reports\n"
+                           "  -F, --file name           xmit/recv the specified file\n"
+                           "  -A, --affinity n/n,m      set CPU affinity\n"
                            "  -V, --verbose             more detailed output\n"
                            "  -J, --json                output in JSON format\n"
                            "  -v, --version             show version information and quit\n"
@@ -99,7 +101,6 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            /* "  -L, --flowlabel N         set the IPv6 'flow label'\n" */
                            "  -Z, --zerocopy            use a 'zero copy' method of sending data\n"
                            "  -O, --omit N              omit the first n seconds\n"
-                           "  -F, --file name           xmit/recv the specified file\n"
 
 #ifdef NOT_YET_SUPPORTED /* still working on these */
                            "  -D, --daemon              run the server as a daemon\n"

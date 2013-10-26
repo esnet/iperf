@@ -144,6 +144,7 @@ struct iperf_test
     int       omit;                             /* duration of omit period (-O flag) */
     int       duration;                         /* total duration of test (-t flag) */
     char     *diskfile_name;			/* -F option */
+    int       affinity, server_affinity;	/* -A option */
 
     int       ctrl_sck;
     int       listener;

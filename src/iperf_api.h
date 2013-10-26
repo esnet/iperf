@@ -209,6 +209,10 @@ void iperf_test_reset(struct iperf_test *);
 int iperf_json_start(struct iperf_test *);
 int iperf_json_finish(struct iperf_test *);
 
+/* CPU affinity routines */
+int iperf_setaffinity(int affinity);
+int iperf_clearaffinity(void);
+
 /* Error routines. */
 void iperf_err(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3)));
 void iperf_errexit(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3),noreturn));
@@ -264,6 +268,7 @@ enum {
     IENONBLOCKING = 129,    // Unable to set socket to non-blocking (check perror)
     IESETWINDOWSIZE = 130,  // Unable to set socket window size (check perror)
     IEPROTOCOL = 131,       // Protocol does not exist
+    IEAFFINITY = 132,       // Unable to set CPU affinity (check perror)
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

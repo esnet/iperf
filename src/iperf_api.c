@@ -7,6 +7,9 @@
  * for complete information.
  */
 
+#define _GNU_SOURCE
+#define __USE_GNU
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -520,6 +523,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"zerocopy", no_argument, NULL, 'Z'},
         {"omit", required_argument, NULL, 'O'},
         {"file", required_argument, NULL, 'F'},
+        {"affinity", required_argument, NULL, 'A'},
         {"help", no_argument, NULL, 'h'},
 
     /*  XXX: The following ifdef needs to be split up. linux-congestion is not
@@ -533,10 +537,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     int flag;
     int blksize;
     int server_flag, client_flag, rate_flag;
+    char* comma;
 
     blksize = 0;
     server_flag = client_flag = rate_flag = 0;
-    while ((flag = getopt_long(argc, argv, "p:f:i:DVJdvsc:ub:t:n:l:P:Rw:B:M:N46S:L:ZO:F:h", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:DVJdvsc:ub:t:n:l:P:Rw:B:M:N46S:L:ZO:F:A:h", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
                 test->server_port = atoi(optarg);
@@ -686,6 +691,22 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'F':
                 test->diskfile_name = optarg;
+                break;
+            case 'A':
+                test->affinity = atoi(optarg);
+                if (test->affinity < 0 || test->affinity > 1024) {
+                    i_errno = IEAFFINITY;
+                    return -1;
+                }
+		comma = strchr(optarg, ',');
+		if (comma != NULL) {
+		    test->server_affinity = atoi(comma+1);
+		    if (test->server_affinity < 0 || test->server_affinity > 1024) {
+			i_errno = IEAFFINITY;
+			return -1;
+		    }
+		    client_flag = 1;
+		}
                 break;
             case 'h':
             default:
@@ -988,6 +1009,8 @@ send_parameters(struct iperf_test *test)
 	else if (test->protocol->id == Pudp)
 	    cJSON_AddTrueToObject(j, "udp");
 	cJSON_AddIntToObject(j, "omit", test->omit);
+	if (test->server_affinity != -1)
+	    cJSON_AddIntToObject(j, "server_affinity", test->server_affinity);
 	if (test->duration)
 	    cJSON_AddIntToObject(j, "time", test->duration);
 	if (test->settings->bytes)
@@ -1038,6 +1061,8 @@ get_parameters(struct iperf_test *test)
 	    set_protocol(test, Pudp);
 	if ((j_p = cJSON_GetObjectItem(j, "omit")) != NULL)
 	    test->omit = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "server_affinity")) != NULL)
+	    test->server_affinity = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "time")) != NULL)
 	    test->duration = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "num")) != NULL)
@@ -1351,6 +1376,8 @@ iperf_defaults(struct iperf_test *testp)
     testp->omit = OMIT;
     testp->duration = DURATION;
     testp->diskfile_name = (char*) 0;
+    testp->affinity = -1;
+    testp->server_affinity = -1;
     testp->server_port = PORT;
     testp->ctrl_sck = -1;
     testp->prot_listener = -1;
@@ -1495,7 +1522,7 @@ iperf_reset_test(struct iperf_test *test)
     set_protocol(test, Ptcp);
     test->omit = OMIT;
     test->duration = DURATION;
-    test->diskfile_name = (char*) 0;
+    test->server_affinity = -1;
     test->state = 0;
     test->server_hostname = NULL;
 
@@ -2142,3 +2169,47 @@ iperf_json_finish(struct iperf_test *test)
     test->json_top = test->json_start = test->json_intervals = test->json_end = NULL;
     return 0;
 }
+
+
+/* CPU affinity stuff - linux only. */
+
+int
+iperf_setaffinity(int affinity)
+{
+#ifdef linux
+    cpu_set_t cpu_set;
+
+    CPU_ZERO(&cpu_set);
+    CPU_SET(affinity, &cpu_set);
+    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0) {
+	i_errno = IEAFFINITY;
+        return -1;
+    }
+    return 0;
+#else /*linux*/
+    i_errno = IEAFFINITY;
+    return -1;
+#endif /*linux*/
+}
+
+int
+iperf_clearaffinity(void)
+{
+#ifdef linux
+    cpu_set_t cpu_set;
+    int i;
+
+    CPU_ZERO(&cpu_set);
+    for (i = 0; i < CPU_SETSIZE; ++i)
+	CPU_SET(i, &cpu_set);
+    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0) {
+	i_errno = IEAFFINITY;
+        return -1;
+    }
+    return 0;
+#else /*linux*/
+    i_errno = IEAFFINITY;
+    return -1;
+#endif /*linux*/
+}
+

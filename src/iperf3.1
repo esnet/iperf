@@ -34,6 +34,12 @@ of using random data;
 server-side: read from the network and write to the file, instead
 of throwing the data away
 .TP
+.BR -A ", " --affinity " \fIn/n,m\fR"
+Set the CPU affinity, if possible (linux only).
+On both the client and server you can set the local affinity;
+in addition, on the client side you can override the server's
+affinity for just that one test, using the n,m form.
+.TP
 .BR -V ", " --verbose " "
 give more detailed output 
 .TP

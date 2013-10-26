@@ -137,6 +137,9 @@ iperf_accept(struct iperf_test *test)
             return -1;
         if (iperf_exchange_parameters(test) < 0)
             return -1;
+	if (test->server_affinity != -1) 
+	    if (iperf_setaffinity(test->server_affinity) != 0)
+		return -1;
         if (test->on_connect)
             test->on_connect(test);
     } else {
@@ -255,6 +258,8 @@ iperf_test_reset(struct iperf_test *test)
     test->omit = OMIT;
     test->duration = DURATION;
     test->diskfile_name = (char*) 0;
+    test->affinity = -1;
+    test->server_affinity = -1;
     test->state = 0;
     test->server_hostname = NULL;
 
@@ -334,6 +339,10 @@ iperf_run_server(struct iperf_test *test)
     fd_set read_set, write_set;
     struct iperf_stream *sp;
     struct timeval now;
+
+    if (test->affinity != -1) 
+	if (iperf_setaffinity(test->affinity) != 0)
+	    return -1;
 
     if (test->json_output)
 	if (iperf_json_start(test) < 0)
@@ -485,6 +494,10 @@ iperf_run_server(struct iperf_test *test)
 	if (iperf_json_finish(test) < 0)
 	    return -1;
     } 
+
+    if (test->server_affinity != -1) 
+	if (iperf_clearaffinity() != 0)
+	    return -1;
 
     return 0;
 }

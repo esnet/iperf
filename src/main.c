@@ -30,10 +30,10 @@
 #include "net.h"
 
 
-int iperf_run(struct iperf_test *);
+static int run(struct iperf_test *test);
+
 
 /**************************************************************************/
-
 int
 main(int argc, char **argv)
 {
@@ -81,19 +81,6 @@ main(int argc, char **argv)
     /* This main program doesn't use SIGALRM, so the iperf API may use it. */
     iperf_set_test_may_use_sigalrm(test, 1);
 
-    // XXX: Check signal for errors?
-    signal(SIGINT, sig_handler);
-    if (setjmp(env)) {
-        if (test->ctrl_sck >= 0) {
-            test->state = (test->role == 'c') ? CLIENT_TERMINATE : SERVER_TERMINATE;
-            if (Nwrite(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp) < 0) {
-                i_errno = IESENDMESSAGE;
-                return -1;
-            }
-        }
-        exit(1);
-    } 
-
     if (iperf_parse_arguments(test, argc, argv) < 0) {
         iperf_err(test, "parameter error - %s", iperf_strerror(i_errno));
         fprintf(stderr, "\n");
@@ -101,7 +88,7 @@ main(int argc, char **argv)
         exit(1);
     }
 
-    if (iperf_run(test) < 0)
+    if (run(test) < 0)
         iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 
     iperf_free_test(test);
@@ -110,8 +97,8 @@ main(int argc, char **argv)
 }
 
 /**************************************************************************/
-int
-iperf_run(struct iperf_test * test)
+static int
+run(struct iperf_test *test)
 {
     int consecutive_errors;
 

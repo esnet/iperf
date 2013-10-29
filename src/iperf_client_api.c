@@ -300,6 +300,15 @@ sigalrm_handler(int sig)
 }
 
 
+static jmp_buf sigend_jmp_buf;
+
+static void
+sigend_handler(int sig)
+{
+    longjmp(sigend_jmp_buf, 1);
+}
+
+
 int
 iperf_run_client(struct iperf_test * test)
 {
@@ -310,6 +319,11 @@ iperf_run_client(struct iperf_test * test)
     int result;
     fd_set read_set, write_set;
     struct timeval now;
+
+    /* Termination signals. */
+    iperf_catch_sigend(sigend_handler);
+    if (setjmp(sigend_jmp_buf))
+	iperf_got_sigend(test);
 
     if (test->affinity != -1)
 	if (iperf_setaffinity(test->affinity) != 0)

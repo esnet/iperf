@@ -47,8 +47,6 @@
 #include "iperf_util.h"
 #include "locale.h"
 
-jmp_buf env;            /* to handle longjmp on signal */
-
 
 /* Forwards. */
 static int send_parameters(struct iperf_test *test);
@@ -2109,11 +2107,26 @@ diskfile_recv(struct iperf_stream *sp)
     return r;
 }
 
+
 void
-sig_handler(int sig)
+iperf_catch_sigend(void (*handler)(int))
 {
-   longjmp(env, 1); 
+    signal(SIGINT, handler);
+    signal(SIGTERM, handler);
+    signal(SIGHUP, handler);
 }
+
+void
+iperf_got_sigend(struct iperf_test *test)
+{
+    if (test->ctrl_sck >= 0) {
+	test->state = (test->role == 'c') ? CLIENT_TERMINATE : SERVER_TERMINATE;
+	(void) Nwrite(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp);
+    }
+    i_errno = (test->role == 'c') ? IECLIENTTERM : IESERVERTERM;
+    iperf_errexit(test, "interrupt - %s", iperf_strerror(i_errno));
+}
+
 
 int
 iperf_json_start(struct iperf_test *test)

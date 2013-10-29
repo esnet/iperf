@@ -30,12 +30,11 @@ struct iperf_interval_results
     int omitted;
 #if defined(linux) || defined(__FreeBSD__)
     struct tcp_info tcpInfo;	/* getsockopt(TCP_INFO) for Linux and FreeBSD */
-    int this_retrans;
 #else
     /* Just placeholders, never accessed. */
     char *tcpInfo;
-    int this_retrans;
 #endif
+    int interval_retrans;
     TAILQ_ENTRY(iperf_interval_results) irlistentries;
     void     *custom_data;
 };
@@ -46,7 +45,8 @@ struct iperf_stream_result
     iperf_size_t bytes_sent;
     iperf_size_t bytes_received_this_interval;
     iperf_size_t bytes_sent_this_interval;
-    int retransmits;
+    int stream_prev_total_retrans;
+    int stream_retrans;
     struct timeval start_time;
     struct timeval end_time;
     TAILQ_HEAD(irlisthead, iperf_interval_results) interval_results;

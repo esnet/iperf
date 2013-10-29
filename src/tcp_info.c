@@ -86,16 +86,27 @@ save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp)
 
 /*************************************************************/
 long
-get_tcpinfo_total_retransmits(struct iperf_interval_results *irp)
+get_total_retransmits(int socket)
 {
+#if defined(linux) || defined(__FreeBSD__)
+    struct tcp_info ti;
+    socklen_t l = sizeof(ti);
+
+    if (getsockopt(socket, IPPROTO_TCP, TCP_INFO, (void *)&ti, &l) < 0)
+	return -1;
+
 #if defined(linux) && defined(TCP_MD5SIG)
-    return irp->tcpInfo.tcpi_total_retrans;
+    return ti.tcpi_total_retrans;
 #else
 #if defined(__FreeBSD__) && __FreeBSD_version >= 600000
-    return irp->tcpInfo.__tcpi_retransmits;
+    return ti.__tcpi_retransmits;
 #else
     return -1;
 #endif
+#endif
+
+#else
+    return -1;
 #endif
 }
 

@@ -161,7 +161,7 @@ void      iperf_free_stream(struct iperf_stream * sp);
 int has_tcpinfo(void);
 int has_tcpinfo_retransmits(void);
 void save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp);
-long get_tcpinfo_total_retransmits(struct iperf_interval_results *irp);
+long get_total_retransmits(int socket);
 void print_tcpinfo(struct iperf_test *test);
 void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 
@@ -173,7 +173,6 @@ void sig_handler(int);
 void usage();
 void usage_long();
 void warning(char *);
-int iperf_sum_results(struct iperf_test *);
 int iperf_exchange_results(struct iperf_test *);
 int iperf_init_test(struct iperf_test *);
 int iperf_create_send_timers(struct iperf_test *);

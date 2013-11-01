@@ -285,6 +285,57 @@ iperf_test_reset(struct iperf_test *test)
 }
 
 static void
+server_stats_timer_proc(TimerClientData client_data, struct timeval *nowP)
+{
+    struct iperf_test *test = client_data.p;
+
+    if (test->done)
+        return;
+    if (test->stats_callback)
+	test->stats_callback(test);
+}
+
+static void
+server_reporter_timer_proc(TimerClientData client_data, struct timeval *nowP)
+{
+    struct iperf_test *test = client_data.p;
+
+    if (test->done)
+        return;
+    if (test->reporter_callback)
+	test->reporter_callback(test);
+}
+
+static int
+create_server_timers(struct iperf_test * test)
+{
+    struct timeval now;
+    TimerClientData cd;
+
+    if (gettimeofday(&now, NULL) < 0) {
+	i_errno = IEINITTEST;
+	return -1;
+    }
+    cd.p = test;
+    test->stats_timer = test->reporter_timer = NULL;
+    if (test->stats_interval != 0) {
+        test->stats_timer = tmr_create(&now, server_stats_timer_proc, cd, test->stats_interval * SEC_TO_US, 1);
+        if (test->stats_timer == NULL) {
+            i_errno = IEINITTEST;
+            return -1;
+	}
+    }
+    if (test->reporter_interval != 0) {
+        test->reporter_timer = tmr_create(&now, server_reporter_timer_proc, cd, test->reporter_interval * SEC_TO_US, 1);
+        if (test->reporter_timer == NULL) {
+            i_errno = IEINITTEST;
+            return -1;
+	}
+    }
+    return 0;
+}
+
+static void
 server_omit_timer_proc(TimerClientData client_data, struct timeval *nowP)
 {   
     struct iperf_test *test = client_data.p;
@@ -294,6 +345,12 @@ server_omit_timer_proc(TimerClientData client_data, struct timeval *nowP)
     iperf_reset_stats(test);
     if (test->verbose && !test->json_output && test->reporter_interval == 0)
 	printf("Finished omit period, starting real test\n");
+
+    /* Reset the timers. */
+    if (test->stats_timer != NULL)
+	tmr_reset(nowP, test->stats_timer);
+    if (test->reporter_timer != NULL)
+	tmr_reset(nowP, test->reporter_timer);
 }
 
 static int
@@ -328,6 +385,20 @@ cleanup_server(struct iperf_test *test)
     /* Close open test sockets */
     close(test->ctrl_sck);
     close(test->listener);
+
+    /* Cancel any remaining timers. */
+    if (test->stats_timer != NULL) {
+	tmr_cancel(test->stats_timer);
+	test->stats_timer = NULL;
+    }
+    if (test->reporter_timer != NULL) {
+	tmr_cancel(test->reporter_timer);
+	test->reporter_timer = NULL;
+    }
+    if (test->omit_timer != NULL) {
+	tmr_cancel(test->omit_timer);
+	test->omit_timer = NULL;
+    }
 }
 
 
@@ -460,6 +531,10 @@ iperf_run_server(struct iperf_test *test)
                         return -1;
 		    }
                     if (iperf_init_test(test) < 0) {
+			cleanup_server(test);
+                        return -1;
+		    }
+		    if (create_server_timers(test) < 0) {
 			cleanup_server(test);
                         return -1;
 		    }

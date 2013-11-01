@@ -550,8 +550,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             case 'i':
                 /* XXX: could potentially want separate stat collection and reporting intervals,
                    but just set them to be the same for now */
-                test->stats_interval = atof(optarg);
-                test->reporter_interval = atof(optarg);
+                test->stats_interval = test->reporter_interval = atof(optarg);
                 if (test->stats_interval > MAX_INTERVAL) {
                     i_errno = IEINTERVAL;
                     return -1;

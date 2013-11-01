@@ -64,23 +64,25 @@ test_timer_proc(TimerClientData client_data, struct timeval *nowP)
 }
 
 static void
-stats_timer_proc(TimerClientData client_data, struct timeval *nowP)
+client_stats_timer_proc(TimerClientData client_data, struct timeval *nowP)
 {
     struct iperf_test *test = client_data.p;
 
     if (test->done)
         return;
-    test->stats_callback(test);
+    if (test->stats_callback)
+	test->stats_callback(test);
 }
 
 static void
-reporter_timer_proc(TimerClientData client_data, struct timeval *nowP)
+client_reporter_timer_proc(TimerClientData client_data, struct timeval *nowP)
 {
     struct iperf_test *test = client_data.p;
 
     if (test->done)
         return;
-    test->reporter_callback(test);
+    if (test->reporter_callback)
+	test->reporter_callback(test);
 }
 
 static int
@@ -104,14 +106,14 @@ create_client_timers(struct iperf_test * test)
 	}
     } 
     if (test->stats_interval != 0) {
-        test->stats_timer = tmr_create(&now, stats_timer_proc, cd, test->stats_interval * SEC_TO_US, 1);
+        test->stats_timer = tmr_create(&now, client_stats_timer_proc, cd, test->stats_interval * SEC_TO_US, 1);
         if (test->stats_timer == NULL) {
             i_errno = IEINITTEST;
             return -1;
 	}
     }
     if (test->reporter_interval != 0) {
-        test->reporter_timer = tmr_create(&now, reporter_timer_proc, cd, test->reporter_interval * SEC_TO_US, 1);
+        test->reporter_timer = tmr_create(&now, client_reporter_timer_proc, cd, test->reporter_interval * SEC_TO_US, 1);
         if (test->reporter_timer == NULL) {
             i_errno = IEINITTEST;
             return -1;

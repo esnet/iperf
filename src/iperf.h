@@ -209,7 +209,7 @@ struct iperf_test
 #define uS_TO_NS 1000
 #define SEC_TO_US 1000000LL
 #define UDP_RATE (1024 * 1024) /* 1 Mbps */
-#define OMIT 1 /* seconds */
+#define OMIT 0 /* seconds */
 #define DURATION 10 /* seconds */
 
 #define SEC_TO_NS 1000000000LL	/* too big for enum/const on some platforms */

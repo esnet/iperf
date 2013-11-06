@@ -231,7 +231,7 @@ iperf_set_test_stats_interval(struct iperf_test *ipt, double stats_interval)
 }
 
 void
-iperf_set_test_state(struct iperf_test *ipt, char state)
+iperf_set_test_state(struct iperf_test *ipt, signed char state)
 {
     ipt->state = state;
 }
@@ -752,7 +752,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 }
 
 int
-iperf_set_send_state(struct iperf_test *test, char state)
+iperf_set_send_state(struct iperf_test *test, signed char state)
 {
     test->state = state;
     if (Nwrite(test->ctrl_sck, &state, sizeof(state), Ptcp) < 0) {

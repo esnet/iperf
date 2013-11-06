@@ -70,7 +70,7 @@ void	iperf_set_test_omit( struct iperf_test* ipt, int omit );
 void	iperf_set_test_duration( struct iperf_test* ipt, int duration );
 void	iperf_set_test_reporter_interval( struct iperf_test* ipt, double reporter_interval );
 void	iperf_set_test_stats_interval( struct iperf_test* ipt, double stats_interval );
-void	iperf_set_test_state( struct iperf_test* ipt, char state );
+void	iperf_set_test_state( struct iperf_test* ipt, signed char state );
 void	iperf_set_test_blksize( struct iperf_test* ipt, int blksize );
 void	iperf_set_test_rate( struct iperf_test* ipt, uint64_t rate );
 void	iperf_set_test_server_port( struct iperf_test* ipt, int server_port );
@@ -165,7 +165,7 @@ long get_total_retransmits(int socket);
 void print_tcpinfo(struct iperf_test *test);
 void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 
-int iperf_set_send_state(struct iperf_test *test, char state);
+int iperf_set_send_state(struct iperf_test *test, signed char state);
 void iperf_check_throttle(struct iperf_stream *sp, struct timeval *nowP);
 int iperf_send(struct iperf_test *, fd_set *) /* __attribute__((hot)) */;
 int iperf_recv(struct iperf_test *, fd_set *);

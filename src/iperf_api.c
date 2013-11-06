@@ -1230,7 +1230,7 @@ get_results(struct iperf_test *test)
 static int
 JSON_write(int fd, cJSON *json)
 {
-    unsigned int hsize, nsize;
+    uint32_t hsize, nsize;
     char *str;
     int r = 0;
 
@@ -1256,7 +1256,7 @@ JSON_write(int fd, cJSON *json)
 static cJSON *
 JSON_read(int fd)
 {
-    unsigned int hsize, nsize;
+    uint32_t hsize, nsize;
     char *str;
     cJSON *json = NULL;
 

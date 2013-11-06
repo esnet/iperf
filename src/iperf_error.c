@@ -135,7 +135,7 @@ iperf_strerror(int i_errno)
             perr = 1;
             break;
         case IERECVCOOKIE:
-            snprintf(errstr, len, "unable to receive cookie to server");
+            snprintf(errstr, len, "unable to receive cookie at server");
             perr = 1;
             break;
         case IECTRLWRITE:

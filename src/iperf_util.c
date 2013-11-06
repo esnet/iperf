@@ -136,7 +136,7 @@ delay(int64_t ns)
 
     while (nanosleep(&req, &rem) == -1)
         if (EINTR == errno)
-            memcpy(&req, &rem, sizeof rem);
+            memcpy(&req, &rem, sizeof(rem));
         else
             return -1;
     return 0;

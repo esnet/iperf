@@ -110,7 +110,7 @@ int
 iperf_accept(struct iperf_test *test)
 {
     int s;
-    int rbuf = ACCESS_DENIED;
+    signed char rbuf = ACCESS_DENIED;
     char cookie[COOKIE_SIZE];
     socklen_t len;
     struct sockaddr_storage addr;
@@ -148,7 +148,7 @@ iperf_accept(struct iperf_test *test)
             i_errno = IERECVCOOKIE;
             return -1;
         }
-        if (Nwrite(s, (char*) &rbuf, sizeof(int), Ptcp) < 0) {
+        if (Nwrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp) < 0) {
             i_errno = IESENDMESSAGE;
             return -1;
         }

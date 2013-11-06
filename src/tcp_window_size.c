@@ -90,7 +90,7 @@ set_tcp_windowsize(int sock, int bufsize, int dir)
          */
 //        printf("Setting TCP buffer to size: %d\n", bufsize);
 	newbufsize = bufsize;
-	rc = setsockopt(sock, SOL_SOCKET, dir, (char *) &newbufsize, sizeof newbufsize);
+	rc = setsockopt(sock, SOL_SOCKET, dir, (char *) &newbufsize, sizeof(newbufsize));
 	if (rc < 0)
 	    return rc;
     } else {

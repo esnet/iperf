@@ -171,6 +171,7 @@ iperf_handle_message_client(struct iperf_test *test)
     int rval;
     int32_t err;
 
+    /*!!! Why is this read() and not Nread()? */
     if ((rval = read(test->ctrl_sck, (char*) &test->state, sizeof(signed char))) <= 0) {
         if (rval == 0) {
             i_errno = IECTRLCLOSE;

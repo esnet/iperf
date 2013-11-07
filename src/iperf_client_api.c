@@ -168,7 +168,8 @@ create_client_omit_timer(struct iperf_test * test)
 int
 iperf_handle_message_client(struct iperf_test *test)
 {
-    int rval, perr;
+    int rval;
+    int32_t err;
 
     if ((rval = read(test->ctrl_sck, (char*) &test->state, sizeof(signed char))) <= 0) {
         if (rval == 0) {
@@ -222,16 +223,16 @@ iperf_handle_message_client(struct iperf_test *test)
             i_errno = IEACCESSDENIED;
             return -1;
         case SERVER_ERROR:
-            if (Nread(test->ctrl_sck, (char*) &i_errno, sizeof(i_errno), Ptcp) < 0) {
+            if (Nread(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
                 i_errno = IECTRLREAD;
                 return -1;
             }
-            i_errno = ntohl(i_errno);
-            if (Nread(test->ctrl_sck, (char*) &perr, sizeof(perr), Ptcp) < 0) {
+	    i_errno = ntohl(err);
+            if (Nread(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
                 i_errno = IECTRLREAD;
                 return -1;
             }
-            errno = ntohl(perr);
+            errno = ntohl(err);
             return -1;
         default:
             i_errno = IEMESSAGE;

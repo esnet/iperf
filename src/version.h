@@ -7,5 +7,5 @@
  * for complete information.
  */
 
-#define IPERF_VERSION "3.0-RC4"
-#define IPERF_VERSION_DATE "06 November 2013"
+#define IPERF_VERSION "3.0-RC5"
+#define IPERF_VERSION_DATE "07 November 2013"

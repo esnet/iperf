@@ -40,7 +40,7 @@ iperf_create_streams(struct iperf_test *test)
 
         FD_SET(s, &test->read_set);
         FD_SET(s, &test->write_set);
-        test->max_fd = (test->max_fd < s) ? s : test->max_fd;
+	if (s > test->max_fd) test->max_fd = s;
 
         sp = iperf_new_stream(test, s);
         if (!sp)
@@ -268,8 +268,7 @@ iperf_connect(struct iperf_test *test)
     }
 
     FD_SET(test->ctrl_sck, &test->read_set);
-    FD_SET(test->ctrl_sck, &test->write_set);
-    test->max_fd = (test->ctrl_sck > test->max_fd) ? test->ctrl_sck : test->max_fd;
+    if (test->ctrl_sck > test->max_fd) test->max_fd = test->ctrl_sck;
 
     return 0;
 }

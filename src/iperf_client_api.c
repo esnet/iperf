@@ -341,7 +341,7 @@ iperf_run_client(struct iperf_test * test)
 	cJSON_AddItemToObject(test->json_start, "system_info", cJSON_CreateString(get_system_info()));
     } else if (test->verbose) {
 	iprintf(test, "%s\n", version);
-	iprintf(test, " ");
+	iprintf(test, "%s", "");
 	fflush(stdout);
 	system("uname -a");
     }

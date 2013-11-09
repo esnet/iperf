@@ -1717,11 +1717,11 @@ iperf_print_results(struct iperf_test *test)
 	    iprintf(test, "Test Complete. Summary Results:\n");
 	if (test->protocol->id == Ptcp)
 	    if (test->sender_has_retransmits)
-		iprintf(test, report_bw_retrans_header);
+		iprintf(test, "%s", report_bw_retrans_header);
 	    else
-		iprintf(test, report_bw_header);
+		iprintf(test, "%s", report_bw_header);
 	else
-	    iprintf(test, report_bw_udp_header);
+	    iprintf(test, "%s", report_bw_udp_header);
     }
 
     start_time = 0.;
@@ -1897,11 +1897,11 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 	    */
 	    if (timeval_equals(&sp->result->start_time, &irp->interval_start_time))
 		if (test->sender && test->sender_has_retransmits)
-		    iprintf(test, report_bw_retrans_header);
+		    iprintf(test, "%s", report_bw_retrans_header);
 		else
-		    iprintf(test, report_bw_header);
+		    iprintf(test, "%s", report_bw_header);
 	    else if (test->num_streams > 1)
-		iprintf(test, report_bw_separator);
+		iprintf(test, "%s", report_bw_separator);
 	}
     }
 

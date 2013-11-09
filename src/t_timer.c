@@ -28,7 +28,7 @@ timer_proc( TimerClientData client_data, struct timeval* nowP )
 int 
 main(int argc, char **argv)
 {
-    struct Timer *tp;
+    Timer *tp;
 
     flag = 0;
     tp = tmr_create((struct timeval*) 0, timer_proc, JunkClientData, 3000000, 0);

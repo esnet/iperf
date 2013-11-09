@@ -65,18 +65,29 @@ netdial(int domain, int proto, char *local, char *server, int port)
         return -1;
 
     s = socket(server_res->ai_family, proto, 0);
-    if (s < 0)
+    if (s < 0) {
+	if (local)
+	    freeaddrinfo(local_res);
+	freeaddrinfo(server_res);
         return -1;
+    }
 
     if (local) {
-        if (bind(s, (struct sockaddr *) local_res->ai_addr, local_res->ai_addrlen) < 0)
+        if (bind(s, (struct sockaddr *) local_res->ai_addr, local_res->ai_addrlen) < 0) {
+	    close(s);
+	    freeaddrinfo(local_res);
+	    freeaddrinfo(server_res);
             return -1;
+	}
         freeaddrinfo(local_res);
     }
 
     ((struct sockaddr_in *) server_res->ai_addr)->sin_port = htons(port);
-    if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS)
+    if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS) {
+	close(s);
+	freeaddrinfo(server_res);
         return -1;
+    }
 
     freeaddrinfo(server_res);
     return s;
@@ -100,8 +111,10 @@ netannounce(int domain, int proto, char *local, int port)
         return -1; 
 
     s = socket(res->ai_family, proto, 0);
-    if (s < 0)
+    if (s < 0) {
+	freeaddrinfo(res);
         return -1;
+    }
 
     opt = 1;
     setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *) &opt, sizeof(opt));
@@ -115,6 +128,7 @@ netannounce(int domain, int proto, char *local, int port)
 
     if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0) {
         close(s);
+	freeaddrinfo(res);
         return -1;
     }
 
@@ -122,6 +136,7 @@ netannounce(int domain, int proto, char *local, int port)
     
     if (proto == SOCK_STREAM) {
         if (listen(s, 5) < 0) {
+	    close(s);
             return -1;
         }
     }

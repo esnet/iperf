@@ -135,6 +135,7 @@ iperf_tcp_listen(struct iperf_test *test)
         }
 
         if ((s = socket(res->ai_family, SOCK_STREAM, 0)) < 0) {
+	    freeaddrinfo(res);
             i_errno = IESTREAMLISTEN;
             return -1;
         }
@@ -142,6 +143,8 @@ iperf_tcp_listen(struct iperf_test *test)
         if (test->no_delay) {
             opt = 1;
             if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0) {
+		close(s);
+		freeaddrinfo(res);
                 i_errno = IESETNODELAY;
                 return -1;
             }
@@ -149,22 +152,30 @@ iperf_tcp_listen(struct iperf_test *test)
         // XXX: Setting MSS is very buggy!
         if ((opt = test->settings->mss)) {
             if (setsockopt(s, IPPROTO_TCP, TCP_MAXSEG, &opt, sizeof(opt)) < 0) {
+		close(s);
+		freeaddrinfo(res);
                 i_errno = IESETMSS;
                 return -1;
             }
         }
         if ((opt = test->settings->socket_bufsize)) {
             if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) < 0) {
+		close(s);
+		freeaddrinfo(res);
                 i_errno = IESETBUF;
                 return -1;
             }
             if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) < 0) {
+		close(s);
+		freeaddrinfo(res);
                 i_errno = IESETBUF;
                 return -1;
             }
         }
         opt = 1;
         if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+            close(s);
+	    freeaddrinfo(res);
             i_errno = IEREUSEADDR;
             return -1;
         }
@@ -178,6 +189,7 @@ iperf_tcp_listen(struct iperf_test *test)
 
         if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0) {
             close(s);
+	    freeaddrinfo(res);
             i_errno = IESTREAMLISTEN;
             return -1;
         }
@@ -222,17 +234,25 @@ iperf_tcp_connect(struct iperf_test *test)
     hints.ai_socktype = SOCK_STREAM;
     snprintf(portstr, sizeof(portstr), "%d", test->server_port);
     if (getaddrinfo(test->server_hostname, portstr, &hints, &server_res) != 0) {
+	if (test->bind_address)
+	    freeaddrinfo(local_res);
         i_errno = IESTREAMCONNECT;
         return -1;
     }
 
     if ((s = socket(server_res->ai_family, SOCK_STREAM, 0)) < 0) {
+	if (test->bind_address)
+	    freeaddrinfo(local_res);
+	freeaddrinfo(server_res);
         i_errno = IESTREAMCONNECT;
         return -1;
     }
 
     if (test->bind_address) {
         if (bind(s, (struct sockaddr *) local_res->ai_addr, local_res->ai_addrlen) < 0) {
+	    close(s);
+	    freeaddrinfo(local_res);
+	    freeaddrinfo(server_res);
             i_errno = IESTREAMCONNECT;
             return -1;
         }
@@ -243,28 +263,38 @@ iperf_tcp_connect(struct iperf_test *test)
     if (test->no_delay) {
         opt = 1;
         if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0) {
+	    close(s);
+	    freeaddrinfo(server_res);
             i_errno = IESETNODELAY;
             return -1;
         }
     }
     if ((opt = test->settings->mss)) {
         if (setsockopt(s, IPPROTO_TCP, TCP_MAXSEG, &opt, sizeof(opt)) < 0) {
+	    close(s);
+	    freeaddrinfo(server_res);
             i_errno = IESETMSS;
             return -1;
         }
     }
     if ((opt = test->settings->socket_bufsize)) {
         if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) < 0) {
+	    close(s);
+	    freeaddrinfo(server_res);
             i_errno = IESETBUF;
             return -1;
         }
         if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) < 0) {
+	    close(s);
+	    freeaddrinfo(server_res);
             i_errno = IESETBUF;
             return -1;
         }
     }
     if (test->settings->flowlabel) {
         if (server_res->ai_addr->sa_family != AF_INET6) {
+	    close(s);
+	    freeaddrinfo(server_res);
             i_errno = IESETFLOW;
             return -1;
 	} else {
@@ -274,6 +304,8 @@ iperf_tcp_connect(struct iperf_test *test)
     }
 
     if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS) {
+	close(s);
+	freeaddrinfo(server_res);
         i_errno = IESTREAMCONNECT;
         return -1;
     }
@@ -282,6 +314,7 @@ iperf_tcp_connect(struct iperf_test *test)
 
     /* Send cookie for verification */
     if (Nwrite(s, test->cookie, COOKIE_SIZE, Ptcp) < 0) {
+	close(s);
         i_errno = IESENDCOOKIE;
         return -1;
     }

@@ -229,7 +229,7 @@ enum {
     IENUMSTREAMS = 6,       // Number of parallel streams too large. Maximum value = %dMAX_STREAMS
     IEBLOCKSIZE = 7,        // Block size too large. Maximum value = %dMAX_BLOCKSIZE
     IEBUFSIZE = 8,          // Socket buffer size too large. Maximum value = %dMAX_TCP_BUFFER
-    IEINTERVAL = 9,         // Report interval too large. Maxumum value = %dMAX_INTERVAL
+    IEINTERVAL = 9,         // Invalid report interval (min = %gMIN_INTERVAL, max = %gMAX_INTERVAL seconds)
     IEMSS = 10,             // MSS too large. Maximum value = %dMAX_MSS
     IENOSENDFILE = 11,      // This OS does not support sendfile
     IEOMIT = 12,            // Bogus value for --omit

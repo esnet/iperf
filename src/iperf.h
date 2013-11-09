@@ -219,7 +219,8 @@ struct iperf_test
 #define MB (1024 * 1024)
 #define MAX_TCP_BUFFER (512 * MB)
 #define MAX_BLOCKSIZE MB
-#define MAX_INTERVAL 60
+#define MIN_INTERVAL 0.1
+#define MAX_INTERVAL 60.0
 #define MAX_TIME 3600
 #define MAX_MSS (9 * 1024)
 #define MAX_STREAMS 128

@@ -551,7 +551,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 /* XXX: could potentially want separate stat collection and reporting intervals,
                    but just set them to be the same for now */
                 test->stats_interval = test->reporter_interval = atof(optarg);
-                if (test->stats_interval > MAX_INTERVAL) {
+                if ((test->stats_interval < MIN_INTERVAL || test->stats_interval > MAX_INTERVAL) && test->stats_interval != 0) {
                     i_errno = IEINTERVAL;
                     return -1;
                 }
@@ -1367,8 +1367,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->stats_callback = iperf_stats_callback;
     testp->reporter_callback = iperf_reporter_callback;
 
-    testp->stats_interval = 0;
-    testp->reporter_interval = 0;
+    testp->stats_interval = testp->reporter_interval = 1;
     testp->num_streams = 1;
 
     testp->settings->domain = AF_UNSPEC;

@@ -91,7 +91,7 @@ iperf_strerror(int i_errno)
             snprintf(errstr, len, "socket buffer size too large (maximum = %d bytes)", MAX_TCP_BUFFER);
             break;
         case IEINTERVAL:
-            snprintf(errstr, len, "report interval too large (maximum = %d seconds)", MAX_INTERVAL);
+            snprintf(errstr, len, "invalid report interval (min = %g, max = %g seconds)", MIN_INTERVAL, MAX_INTERVAL);
             break;
         case IEMSS:
             snprintf(errstr, len, "TCP MSS too large (maximum = %d bytes)", MAX_MSS);

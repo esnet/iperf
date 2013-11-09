@@ -213,6 +213,10 @@ int iperf_json_finish(struct iperf_test *);
 int iperf_setaffinity(int affinity);
 int iperf_clearaffinity(void);
 
+/* Custom printf routine. */
+int iprintf(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3)));
+
+
 /* Error routines. */
 void iperf_err(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3)));
 void iperf_errexit(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3),noreturn));

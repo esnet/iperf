@@ -88,15 +88,15 @@ iperf_server_listen(struct iperf_test *test)
         if (test->settings->socket_bufsize > 0) {
             unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A');
 	    if (!test->json_output) 
-		printf("TCP window size: %s\n", ubuf);
+		iprintf(test, "TCP window size: %s\n", ubuf);
         } else {
 	    if (!test->json_output) 
-		printf("Using TCP Autotuning\n");
+		iprintf(test, "Using TCP Autotuning\n");
         }
     }
     */
     if (!test->json_output)
-	printf("-----------------------------------------------------------\n");
+	iprintf(test, "-----------------------------------------------------------\n");
 
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);
@@ -256,6 +256,7 @@ iperf_test_reset(struct iperf_test *test)
     test->diskfile_name = (char*) 0;
     test->affinity = -1;
     test->server_affinity = -1;
+    test->title = NULL;
     test->state = 0;
     test->server_hostname = NULL;
 
@@ -342,7 +343,7 @@ server_omit_timer_proc(TimerClientData client_data, struct timeval *nowP)
     test->omitting = 0;
     iperf_reset_stats(test);
     if (test->verbose && !test->json_output && test->reporter_interval == 0)
-	printf("Finished omit period, starting real test\n");
+	iprintf(test, "Finished omit period, starting real test\n");
 
     /* Reset the timers. */
     if (test->stats_timer != NULL)
@@ -434,7 +435,9 @@ iperf_run_server(struct iperf_test *test)
 	cJSON_AddItemToObject(test->json_start, "version", cJSON_CreateString(version));
 	cJSON_AddItemToObject(test->json_start, "system_info", cJSON_CreateString(get_system_info()));
     } else if (test->verbose) {
-	printf("%s\n", version);
+	iprintf(test, "%s\n", version);
+	iprintf(test, " ");
+	fflush(stdout);
 	system("uname -a");
     }
 

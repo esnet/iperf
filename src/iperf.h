@@ -145,6 +145,7 @@ struct iperf_test
     int       duration;                         /* total duration of test (-t flag) */
     char     *diskfile_name;			/* -F option */
     int       affinity, server_affinity;	/* -A option */
+    char     *title;				/* -T option */
 
     int       ctrl_sck;
     int       listener;

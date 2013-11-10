@@ -17,13 +17,51 @@ Supported platforms:
 
 == Building ==
 
-Run:
+./configure; make; make install
 
-./configure
 
-and 
+== Latest version ==
 
-make
+To check out the most recent code, do:  hg clone http://code.google.com/p/iperf/
 
+
+== Bug Reports ==
+
+Before submitting a bug report, try checking out the latest version of the code, and confirm that its not
+already fixed. Then submit to: https://code.google.com/p/iperf/issues/list
 
 For more information see: http://code.google.com/p/iperf/
+
+== Changes from iperf 2.x ==
+
+New options:
+  -V, --verbose             more detailed output than before
+  -J, --json                output in JSON format
+  -Z, --zerocopy            use a 'zero copy' sendfile() method of sending data
+  -O, --omit N              omit the first n seconds (to ignore slowstart)
+  -T, --title str           prefix every output line with this string
+  -F, --file name           xmit/recv the specified file
+  -A, --affinity n/n,m      set CPU affinity
+
+Depricated options:
+
+Plan to add for the next release:
+  -D, --daemon             run the server as a daemon
+
+Not planning to support. If you really miss these options, please submit a request in the issue tracker
+  -d, --dualtest           Do a bidirectional test simultaneously
+  -r, --tradeoff           Do a bidirectional test individually
+  -N, --nodelay            set TCP no delay, disabling Nagle's Algorithm
+  -T, --ttl                time-to-live, for multicast (default 1)
+  -Z, --linux-congestion <algo>  set TCP congestion control algorithm (Linux only)
+  -x, --reportexclude [CDMSV]   exclude C(connection) D(data) M(multicast) S(settings) V(server) reports
+  -y, --reportstyle C      report as a Comma-Separated Values
+
+Also depricated is the ability to set the options via environment variables.
+
+For sample command line usage, see: 
+	http://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf-and-iperf3/
+
+
+
+

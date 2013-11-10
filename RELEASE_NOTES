@@ -1,3 +1,15 @@
+== iperf 3.0.0 2013-11-15 ==
+  * Added the following new flags
+     -F, --file name           xmit/recv the specified file
+     -A, --affinity n/n,m      set CPU affinity
+     -J, --json                output in JSON format
+     -Z, --zerocopy            use a 'zero copy' method of sending data
+     -O, --omit N              omit the first n seconds
+     -T, --title str           prefix every output line with this string
+  * more useful information in 'vebose' mode
+  * Many bug fixes
+
+
 == iperf 3.0b4 2010-08-02 ==
 
   * Added support for binding to a specific interface (-B)

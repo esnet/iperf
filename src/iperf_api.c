@@ -1709,7 +1709,7 @@ iperf_print_results(struct iperf_test *test)
 	cJSON_AddItemToObject(test->json_end, "streams", json_summary_streams);
     } else {
 	if (test->verbose)
-	    iprintf(test, report_summary);
+	    iprintf(test, "%s", report_summary);
 	if (test->protocol->id == Ptcp)
 	    if (test->sender_has_retransmits)
 		iprintf(test, "%s", report_bw_retrans_header);

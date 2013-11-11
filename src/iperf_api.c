@@ -425,15 +425,15 @@ iperf_on_connect(struct iperf_test *test)
     if (test->json_output)
 	cJSON_AddItemToObject(test->json_start, "timestamp", iperf_json_printf("time: %s  timesecs: %d", now_str, (int64_t) now_secs));
     else if (test->verbose)
-	iprintf(test, "Time: %s\n", now_str);
+	iprintf(test, report_time, now_str);
 
     if (test->role == 'c') {
 	if (test->json_output)
 	    cJSON_AddItemToObject(test->json_start, "connecting_to", iperf_json_printf("host: %s  port: %d", test->server_hostname, (int64_t) test->server_port));
 	else {
-	    iprintf(test, "Connecting to host %s, port %d\n", test->server_hostname, test->server_port);
+	    iprintf(test, report_connecting, test->server_hostname, test->server_port);
 	    if (test->reverse)
-		iprintf(test, "Reverse mode, remote host %s is sending\n", test->server_hostname);
+		iprintf(test, report_reverse, test->server_hostname);
 	}
     } else {
         len = sizeof(sa);
@@ -441,22 +441,17 @@ iperf_on_connect(struct iperf_test *test)
         if (getsockdomain(test->ctrl_sck) == AF_INET) {
 	    sa_inP = (struct sockaddr_in *) &sa;
             inet_ntop(AF_INET, &sa_inP->sin_addr, ipr, sizeof(ipr));
-	    mapped_v4_to_regular_v4(ipr);
 	    port = ntohs(sa_inP->sin_port);
-	    if (test->json_output)
-		cJSON_AddItemToObject(test->json_start, "accepted_connection", iperf_json_printf("host: %s  port: %d", ipr, (int64_t) port));
-	    else
-		iprintf(test, "Accepted connection from %s, port %d\n", ipr, port);
         } else {
 	    sa_in6P = (struct sockaddr_in6 *) &sa;
             inet_ntop(AF_INET6, &sa_in6P->sin6_addr, ipr, sizeof(ipr));
-	    mapped_v4_to_regular_v4(ipr);
 	    port = ntohs(sa_in6P->sin6_port);
-	    if (test->json_output)
-		cJSON_AddItemToObject(test->json_start, "accepted_connection", iperf_json_printf("host: %s  port: %d", ipr, (int64_t) port));
-	    else
-		iprintf(test, "Accepted connection from %s, port %d\n", ipr, port);
         }
+	mapped_v4_to_regular_v4(ipr);
+	if (test->json_output)
+	    cJSON_AddItemToObject(test->json_start, "accepted_connection", iperf_json_printf("host: %s  port: %d", ipr, (int64_t) port));
+	else
+	    iprintf(test, report_accepted, ipr, port);
     }
     if (test->json_output) {
 	cJSON_AddStringToObject(test->json_start, "cookie", test->cookie);
@@ -468,7 +463,7 @@ iperf_on_connect(struct iperf_test *test)
 	    cJSON_AddIntToObject(test->json_start, "tcp_mss_default", opt);
 	}
     } else if (test->verbose) {
-        iprintf(test, "      Cookie: %s\n", test->cookie);
+        iprintf(test, report_cookie, test->cookie);
         if (test->protocol->id == SOCK_STREAM) {
             if (test->settings->mss)
                 iprintf(test, "      TCP MSS: %d\n", test->settings->mss);
@@ -1335,7 +1330,7 @@ connect_msg(struct iperf_stream *sp)
     if (sp->test->json_output)
         cJSON_AddItemToObject(sp->test->json_start, "connected", iperf_json_printf("socket: %d  local_host: %s  local_port: %d  remote_host: %s  remote_port: %d", (int64_t) sp->socket, ipl, (int64_t) lport, ipr, (int64_t) rport));
     else
-	iprintf(sp->test, "[%3d] local %s port %d connected to %s port %d\n", sp->socket, ipl, lport, ipr, rport);
+	iprintf(sp->test, report_connected, sp->socket, ipl, lport, ipr, rport);
 }
 
 
@@ -1714,7 +1709,7 @@ iperf_print_results(struct iperf_test *test)
 	cJSON_AddItemToObject(test->json_end, "streams", json_summary_streams);
     } else {
 	if (test->verbose)
-	    iprintf(test, "Test Complete. Summary Results:\n");
+	    iprintf(test, report_summary);
 	if (test->protocol->id == Ptcp)
 	    if (test->sender_has_retransmits)
 		iprintf(test, "%s", report_bw_retrans_header);
@@ -1787,7 +1782,7 @@ iperf_print_results(struct iperf_test *test)
 		if (test->json_output)
 		    cJSON_AddItemToObject(json_summary_stream, "diskfile", iperf_json_printf("sent: %d  size: %d  percent: %d  filename: %s", (int64_t) bytes_sent, (int64_t) sb.st_size, (int64_t) percent, test->diskfile_name));
 		else
-		    iprintf(test, "        Sent %s / %s (%d%%) of %s\n", ubuf, sbuf, percent, test->diskfile_name);
+		    iprintf(test, report_diskfile, ubuf, sbuf, percent, test->diskfile_name);
 	    }
 	}
 

@@ -176,6 +176,39 @@ const char test_start_bytes[] =
  * reports
  * ------------------------------------------------------------------- */
 
+const char report_time[] =
+"Time: %s\n";
+
+const char report_connecting[] =
+"Connecting to host %s, port %d\n";
+
+const char report_reverse[] =
+"Reverse mode, remote host %s is sending\n";
+
+const char report_accepted[] =
+"Accepted connection from %s, port %d\n";
+
+const char report_cookie[] =
+"      Cookie: %s\n";
+
+const char report_connected[] =
+"[%3d] local %s port %d connected to %s port %d\n";
+
+const char report_window[] =
+"TCP window size: %s\n";
+
+const char report_autotune[] =
+"Using TCP Autotuning\n";
+
+const char report_omit_done[] =
+"Finished omit period, starting real test\n";
+
+const char report_diskfile[] =
+"        Sent %s / %s (%d%%) of %s\n";
+
+const char report_done[] =
+"iperf Done.\n";
+
 const char report_read_lengths[] =
 "[%3d] Read lengths occurring in more than 5%% of reads:\n";
 
@@ -200,6 +233,9 @@ const char report_bw_retrans_format[] =
 
 const char report_bw_udp_format[] =
 "[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)\n";
+
+const char report_summary[] =
+"Test Complete. Summary Results:\n";
 
 const char report_sum_bw_format[] =
 "[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec%s\n";

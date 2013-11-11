@@ -88,10 +88,10 @@ iperf_server_listen(struct iperf_test *test)
         if (test->settings->socket_bufsize > 0) {
             unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A');
 	    if (!test->json_output) 
-		iprintf(test, "TCP window size: %s\n", ubuf);
+		iprintf(test, report_window, ubuf);
         } else {
 	    if (!test->json_output) 
-		iprintf(test, "Using TCP Autotuning\n");
+		iprintf(test, "%s", report_autotune);
         }
     }
     */
@@ -343,7 +343,7 @@ server_omit_timer_proc(TimerClientData client_data, struct timeval *nowP)
     test->omitting = 0;
     iperf_reset_stats(test);
     if (test->verbose && !test->json_output && test->reporter_interval == 0)
-	iprintf(test, "Finished omit period, starting real test\n");
+	iprintf(test, "%s", report_omit_done);
 
     /* Reset the timers. */
     if (test->stats_timer != NULL)

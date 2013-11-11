@@ -1838,10 +1838,8 @@ iperf_print_results(struct iperf_test *test)
 
     if (test->json_output)
 	cJSON_AddItemToObject(test->json_end, "cpu_utilization_percent", iperf_json_printf("host: %f  remote: %f", (double) test->cpu_util, (double) test->remote_cpu_util));
-    else if (test->verbose) {
-        iprintf(test, "Host CPU Utilization:   %.1f%%\n", test->cpu_util);
-        iprintf(test, "Remote CPU Utilization: %.1f%%\n", test->remote_cpu_util);
-    }
+    else if (test->verbose)
+        iprintf(test, report_cpu, report_local, test->sender ? report_sender : report_receiver, test->cpu_util, report_remote, test->sender ? report_receiver: report_sender, test->remote_cpu_util);
 }
 
 /**************************************************************************/

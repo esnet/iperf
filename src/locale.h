@@ -65,6 +65,12 @@ extern const char report_sum_datagrams[] ;
 extern const char server_reporting[] ;
 extern const char reportCSV_peer[] ;
 
+extern const char report_cpu[] ;
+extern const char report_local[] ;
+extern const char report_remote[] ;
+extern const char report_sender[] ;
+extern const char report_receiver[] ;
+
 extern const char report_tcpInfo[] ;
 extern const char report_tcpInfo[] ;
 

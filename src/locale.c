@@ -278,6 +278,14 @@ const char server_reporting[] =
 const char reportCSV_peer[] =
 "%s,%u,%s,%u";
 
+const char report_cpu[] =
+"CPU Utilization: %s/%s %.1f%%, %s/%s %.1f%%\n";
+
+const char report_local[] = "local";
+const char report_remote[] = "remote";
+const char report_sender[] = "sender";
+const char report_receiver[] = "receiver";
+
 #if defined(linux)
 const char report_tcpInfo[] =
 "event=TCP_Info CWND=%u SND_SSTHRESH=%u RCV_SSTHRESH=%u UNACKED=%u SACK=%u LOST=%u RETRANS=%u FACK=%u RTT=%u REORDERING=%u\n";

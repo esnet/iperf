@@ -417,6 +417,7 @@ iperf_run_server(struct iperf_test *test)
     fd_set read_set, write_set;
     struct iperf_stream *sp;
     struct timeval now;
+    struct timeval* timeout;
 
     /* Termination signals. */
     iperf_catch_sigend(sigend_handler);
@@ -452,13 +453,14 @@ iperf_run_server(struct iperf_test *test)
     test->state = IPERF_START;
     streams_accepted = 0;
 
-    (void) gettimeofday(&now, NULL);
     while (test->state != IPERF_DONE) {
 
         memcpy(&read_set, &test->read_set, sizeof(fd_set));
         memcpy(&write_set, &test->write_set, sizeof(fd_set));
 
-        result = select(test->max_fd + 1, &read_set, &write_set, NULL, tmr_timeout(&now));
+	(void) gettimeofday(&now, NULL);
+	timeout = tmr_timeout(&now);
+        result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
         if (result < 0 && errno != EINTR) {
 	    cleanup_server(test);
             i_errno = IESELECT;
@@ -570,9 +572,12 @@ iperf_run_server(struct iperf_test *test)
 		    }
                 }
 
-		/* Run the timers. */
-		(void) gettimeofday(&now, NULL);
-		tmr_run(&now);
+		if (result == 0 ||
+		    (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0)) {
+		    /* Run the timers. */
+		    (void) gettimeofday(&now, NULL);
+		    tmr_run(&now);
+		}
             }
         }
     }

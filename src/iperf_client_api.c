@@ -319,9 +319,10 @@ iperf_run_client(struct iperf_test * test)
     int startup;
 #define CM_SELECT 1
 #define CM_SIGALRM 2
-    int result;
+    int result = 0;
     fd_set read_set, write_set;
     struct timeval now;
+    struct timeval* timeout = NULL;
 
     /* Termination signals. */
     iperf_catch_sigend(sigend_handler);
@@ -355,13 +356,14 @@ iperf_run_client(struct iperf_test * test)
 
     startup = 1;
     concurrency_model = CM_SELECT;	/* always start in select mode */
-    (void) gettimeofday(&now, NULL);
     while (test->state != IPERF_DONE) {
 
 	if (concurrency_model == CM_SELECT) {
 	    memcpy(&read_set, &test->read_set, sizeof(fd_set));
 	    memcpy(&write_set, &test->write_set, sizeof(fd_set));
-	    result = select(test->max_fd + 1, &read_set, &write_set, NULL, tmr_timeout(&now));
+	    (void) gettimeofday(&now, NULL);
+	    timeout = tmr_timeout(&now);
+	    result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
 	    if (result < 0 && errno != EINTR) {
 		i_errno = IESELECT;
 		return -1;
@@ -402,17 +404,17 @@ iperf_run_client(struct iperf_test * test)
 
 	    if (test->reverse) {
 		// Reverse mode. Client receives.
-		if (iperf_recv(test, &read_set) < 0) {
+		if (iperf_recv(test, &read_set) < 0)
 		    return -1;
-		}
 	    } else {
 		// Regular mode. Client sends.
-		if (iperf_send(test, concurrency_model == CM_SIGALRM ? NULL : &write_set) < 0) {
+		if (iperf_send(test, concurrency_model == CM_SIGALRM ? NULL : &write_set) < 0)
 		    return -1;
-		}
 	    }
 
-	    if (concurrency_model == CM_SELECT ||
+	    if ((concurrency_model == CM_SELECT &&
+	         (result == 0 ||
+		  (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0))) ||
 	        (concurrency_model == CM_SIGALRM && sigalrm_triggered)) {
 		/* Run the timers. */
 		(void) gettimeofday(&now, NULL);

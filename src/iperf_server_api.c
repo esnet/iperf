@@ -499,8 +499,10 @@ iperf_run_server(struct iperf_test *test)
                             return -1;
 			}
 
-                        FD_SET(s, &test->read_set);
-                        FD_SET(s, &test->write_set);
+			if (test->sender)
+			    FD_SET(s, &test->write_set);
+			else
+			    FD_SET(s, &test->read_set);
 			if (s > test->max_fd) test->max_fd = s;
 
                         streams_accepted++;

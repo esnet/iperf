@@ -38,8 +38,10 @@ iperf_create_streams(struct iperf_test *test)
         if ((s = test->protocol->connect(test)) < 0)
             return -1;
 
-        FD_SET(s, &test->read_set);
-        FD_SET(s, &test->write_set);
+	if (test->sender)
+	    FD_SET(s, &test->write_set);
+	else
+	    FD_SET(s, &test->read_set);
 	if (s > test->max_fd) test->max_fd = s;
 
         sp = iperf_new_stream(test, s);

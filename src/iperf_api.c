@@ -1102,7 +1102,9 @@ send_results(struct iperf_test *test)
 	i_errno = IEPACKAGERESULTS;
 	r = -1;
     } else {
-	cJSON_AddFloatToObject(j, "cpu_util", test->cpu_util);
+	cJSON_AddFloatToObject(j, "cpu_util_total", test->cpu_util[0]);
+	cJSON_AddFloatToObject(j, "cpu_util_user", test->cpu_util[1]);
+	cJSON_AddFloatToObject(j, "cpu_util_system", test->cpu_util[2]);
 	if ( ! test->sender )
 	    sender_has_retransmits = -1;
 	else
@@ -1148,7 +1150,9 @@ get_results(struct iperf_test *test)
 {
     int r = 0;
     cJSON *j;
-    cJSON *j_cpu_util;
+    cJSON *j_cpu_util_total;
+    cJSON *j_cpu_util_user;
+    cJSON *j_cpu_util_system;
     cJSON *j_sender_has_retransmits;
     int result_has_retransmits;
     cJSON *j_streams;
@@ -1171,13 +1175,17 @@ get_results(struct iperf_test *test)
 	i_errno = IERECVRESULTS;
         r = -1;
     } else {
-	j_cpu_util = cJSON_GetObjectItem(j, "cpu_util");
+	j_cpu_util_total = cJSON_GetObjectItem(j, "cpu_util_total");
+	j_cpu_util_user = cJSON_GetObjectItem(j, "cpu_util_user");
+	j_cpu_util_system = cJSON_GetObjectItem(j, "cpu_util_system");
 	j_sender_has_retransmits = cJSON_GetObjectItem(j, "sender_has_retransmits");
-	if (j_cpu_util == NULL || j_sender_has_retransmits == NULL) {
+	if (j_cpu_util_total == NULL || j_cpu_util_user == NULL || j_cpu_util_system == NULL || j_sender_has_retransmits == NULL) {
 	    i_errno = IERECVRESULTS;
 	    r = -1;
 	} else {
-	    test->remote_cpu_util = j_cpu_util->valuefloat;
+	    test->remote_cpu_util[0] = j_cpu_util_total->valuefloat;
+	    test->remote_cpu_util[1] = j_cpu_util_user->valuefloat;
+	    test->remote_cpu_util[2] = j_cpu_util_system->valuefloat;
 	    result_has_retransmits = j_sender_has_retransmits->valueint;
 	    if (! test->sender)
 		test->sender_has_retransmits = result_has_retransmits;
@@ -1833,9 +1841,9 @@ iperf_print_results(struct iperf_test *test)
     }
 
     if (test->json_output)
-	cJSON_AddItemToObject(test->json_end, "cpu_utilization_percent", iperf_json_printf("host: %f  remote: %f", (double) test->cpu_util, (double) test->remote_cpu_util));
+	cJSON_AddItemToObject(test->json_end, "cpu_utilization_percent", iperf_json_printf("host_total: %f  host_user: %f  host_system: %f  remote_total: %f  remote_user: %f  remote_system: %f", (double) test->cpu_util[0], (double) test->cpu_util[1], (double) test->cpu_util[2], (double) test->remote_cpu_util[0], (double) test->remote_cpu_util[1], (double) test->remote_cpu_util[2]));
     else if (test->verbose)
-        iprintf(test, report_cpu, report_local, test->sender?report_sender:report_receiver, test->cpu_util, report_remote, test->sender?report_receiver:report_sender, test->remote_cpu_util);
+        iprintf(test, report_cpu, report_local, test->sender?report_sender:report_receiver, test->cpu_util[0], test->cpu_util[1], test->cpu_util[2], report_remote, test->sender?report_receiver:report_sender, test->remote_cpu_util[0], test->remote_cpu_util[1], test->remote_cpu_util[2]);
 }
 
 /**************************************************************************/

@@ -24,7 +24,7 @@ double timeval_diff(struct timeval *tv0, struct timeval *tv1);
 
 int delay(int64_t ns);
 
-void cpu_util(double *);
+void cpu_util(double pcpu[3]);
 
 char* get_system_info(void);
 

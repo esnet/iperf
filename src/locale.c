@@ -279,7 +279,7 @@ const char reportCSV_peer[] =
 "%s,%u,%s,%u";
 
 const char report_cpu[] =
-"CPU Utilization: %s/%s %.1f%%, %s/%s %.1f%%\n";
+"CPU Utilization: %s/%s %.1f%% (%.1f%%u/%.1f%%s), %s/%s %.1f%% (%.1f%%u/%.1f%%s)\n";
 
 const char report_local[] = "local";
 const char report_remote[] = "remote";

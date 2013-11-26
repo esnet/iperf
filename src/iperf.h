@@ -179,8 +179,8 @@ struct iperf_test
     Timer     *stats_timer;
     Timer     *reporter_timer;
 
-    double cpu_util;                            /* cpu utilization of the test */
-    double remote_cpu_util;                     /* cpu utilization for the remote host/client */
+    double cpu_util[3];                            /* cpu utilization of the test - total, user, system */
+    double remote_cpu_util[3];                     /* cpu utilization for the remote host/client - total, user, system */
 
     int       num_streams;                      /* total streams in the test (-P) */
 

@@ -573,15 +573,15 @@ iperf_run_server(struct iperf_test *test)
                         return -1;
 		    }
                 }
-
-		if (result == 0 ||
-		    (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0)) {
-		    /* Run the timers. */
-		    (void) gettimeofday(&now, NULL);
-		    tmr_run(&now);
-		}
             }
         }
+
+	if (result == 0 ||
+	    (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0)) {
+	    /* Run the timers. */
+	    (void) gettimeofday(&now, NULL);
+	    tmr_run(&now);
+	}
     }
 
     cleanup_server(test);

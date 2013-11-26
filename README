@@ -57,7 +57,7 @@ Not planning to support. If you really miss these options, please submit a reque
   -x, --reportexclude [CDMSV]   exclude C(connection) D(data) M(multicast) S(settings) V(server) reports
   -y, --reportstyle C      report as a Comma-Separated Values
 
-Also depricated is the ability to set the options via environment variables.
+Also deprecated is the ability to set the options via environment variables.
 
 For sample command line usage, see: 
 	http://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf-and-iperf3/

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011, The Regents of the University of California,
+ * Copyright (c) 2009-2013, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
@@ -235,6 +235,10 @@ iperf_strerror(int i_errno)
             snprintf(errstr, len, "unable to set CPU affinity");
             perr = 1;
             break;
+	case IEDAEMON:
+	    snprintf(errstr, len, "unable to become a daemon");
+	    perr = 1;
+	    break;
         case IECREATESTREAM:
             snprintf(errstr, len, "unable to create a new stream");
             herr = 1;

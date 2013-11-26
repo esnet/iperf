@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011, The Regents of the University of California,
+ * Copyright (c) 2009-2013, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
@@ -104,6 +104,13 @@ run(struct iperf_test *test)
 
     switch (test->role) {
         case 's':
+	    if (test->daemon) {
+		int rc = daemon(0, 0);
+		if (rc < 0) {
+		    i_errno = IEDAEMON;
+		    iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
+		}
+	    }
 	    consecutive_errors = 0;
             for (;;) {
                 if (iperf_run_server(test) < 0) {

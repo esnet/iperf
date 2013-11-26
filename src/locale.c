@@ -80,6 +80,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -h, --help                show this message and quit\n"
                            "Server specific:\n"
                            "  -s, --server              run in server mode\n"
+                           "  -D, --daemon              run the server as a daemon\n"
                            "Client specific:\n"
                            "  -c, --client    <host>    run in client mode, connecting to <host>\n"
                            "  -u, --udp                 use UDP rather than TCP\n"
@@ -104,7 +105,6 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -T, --title str           prefix every output line with this string\n"
 
 #ifdef NOT_YET_SUPPORTED /* still working on these */
-                           "  -D, --daemon              run the server as a daemon\n"
 #endif
 
 			   "\n"

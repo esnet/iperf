@@ -296,15 +296,6 @@ iperf_client_end(struct iperf_test *test)
 }
 
 
-static int sigalrm_triggered;
-
-static void
-sigalrm_handler(int sig)
-{
-    sigalrm_triggered = 1;
-}
-
-
 static jmp_buf sigend_jmp_buf;
 
 static void
@@ -314,17 +305,26 @@ sigend_handler(int sig)
 }
 
 
+typedef enum { cm_select, cm_itimer } cm_t;
+
+static int sigalrm_triggered;
+
+static void
+sigalrm_handler(int sig)
+{
+    sigalrm_triggered = 1;
+}
+
 int
 iperf_run_client(struct iperf_test * test)
 {
-    int concurrency_model;
+    cm_t concurrency_model;
     int startup;
-#define CM_SELECT 1
-#define CM_SIGALRM 2
     int result = 0;
     fd_set read_set, write_set;
     struct timeval now;
     struct timeval* timeout = NULL;
+    struct itimerval itv;
 
     /* Termination signals. */
     iperf_catch_sigend(sigend_handler);
@@ -357,10 +357,10 @@ iperf_run_client(struct iperf_test * test)
     cpu_util(NULL);
 
     startup = 1;
-    concurrency_model = CM_SELECT;	/* always start in select mode */
+    concurrency_model = cm_select;	/* always start in select mode */
     while (test->state != IPERF_DONE) {
 
-	if (concurrency_model == CM_SELECT) {
+	if (concurrency_model == cm_select) {
 	    memcpy(&read_set, &test->read_set, sizeof(fd_set));
 	    memcpy(&write_set, &test->write_set, sizeof(fd_set));
 	    (void) gettimeofday(&now, NULL);
@@ -390,18 +390,21 @@ iperf_run_client(struct iperf_test * test)
 		** where it either won't work or is ill-advised.
 		*/
 		if (test->may_use_sigalrm && test->settings->rate == 0 &&
-		    (test->stats_interval == 0 || test->stats_interval > 1) &&
-		    test->stats_interval == (int) test->stats_interval &&
-		    (test->reporter_interval == 0 || test->reporter_interval > 1) &&
-		    test->reporter_interval == (int) test->reporter_interval &&
-		    (test->omit == 0 || test->omit > 1) &&
+		    (test->stats_interval == 0 || test->stats_interval > 0.2) &&
+		    (test->reporter_interval == 0 || test->reporter_interval > 0.2) &&
+		    (test->omit == 0 || test->omit > 0.2) &&
 		    ! test->reverse) {
-		    concurrency_model = CM_SIGALRM;
+		    concurrency_model = cm_itimer;
 		    test->multisend = 1;
 		    signal(SIGALRM, sigalrm_handler);
 		    sigalrm_triggered = 0;
-		    alarm(1);
+		    itv.it_interval.tv_sec = 0;
+		    itv.it_interval.tv_usec = 100000;
+		    itv.it_value.tv_sec = 0;
+		    itv.it_value.tv_usec = 100000;
+		    (void) setitimer(ITIMER_REAL, &itv, NULL);
 		}
+
 	    }
 
 	    if (test->reverse) {
@@ -410,21 +413,19 @@ iperf_run_client(struct iperf_test * test)
 		    return -1;
 	    } else {
 		// Regular mode. Client sends.
-		if (iperf_send(test, concurrency_model == CM_SIGALRM ? NULL : &write_set) < 0)
+		if (iperf_send(test, concurrency_model == cm_itimer ? NULL : &write_set) < 0)
 		    return -1;
 	    }
 
-	    if ((concurrency_model == CM_SELECT &&
+	    if ((concurrency_model == cm_select &&
 	         (result == 0 ||
 		  (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0))) ||
-	        (concurrency_model == CM_SIGALRM && sigalrm_triggered)) {
+	        (concurrency_model == cm_itimer && sigalrm_triggered)) {
 		/* Run the timers. */
 		(void) gettimeofday(&now, NULL);
 		tmr_run(&now);
-	        if (concurrency_model == CM_SIGALRM) {
+	        if (concurrency_model == cm_itimer)
 		    sigalrm_triggered = 0;
-		    alarm(1);
-		}
 	    }
 
 	    /* Is the test done yet? */
@@ -442,8 +443,15 @@ iperf_run_client(struct iperf_test * test)
 	    test->stats_callback(test);
 	    if (iperf_set_send_state(test, TEST_END) != 0)
 		return -1;
-	    /* And if we were doing SIGALRM, go back to select for the end. */
-	    concurrency_model = CM_SELECT;
+	    /* If we were doing setitimer(), go back to select() for the end. */
+	    if (concurrency_model == cm_itimer) {
+		itv.it_interval.tv_sec = 0;
+		itv.it_interval.tv_usec = 0;
+		itv.it_value.tv_sec = 0;
+		itv.it_value.tv_usec = 0;
+		(void) setitimer(ITIMER_REAL, &itv, NULL);
+		concurrency_model = cm_select;
+	    }
 	}
     }
 

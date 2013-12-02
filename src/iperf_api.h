@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011, The Regents of the University of California,
+ * Copyright (c) 2009-2013, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
@@ -273,6 +273,7 @@ enum {
     IESETWINDOWSIZE = 130,  // Unable to set socket window size (check perror)
     IEPROTOCOL = 131,       // Protocol does not exist
     IEAFFINITY = 132,       // Unable to set CPU affinity (check perror)
+    IEDAEMON = 133,	    // Unable to become a daemon process
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

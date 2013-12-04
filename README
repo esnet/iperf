@@ -63,5 +63,14 @@ For sample command line usage, see:
 	http://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf-and-iperf3/
 
 
+Using the default options, iperf is meant to show typical well designed application performance.
+'Typical well designed application' means avoiding artificial enhancements that work only for testing
+(such as splice()'ing the data to /dev/null).  iperf does also have flags for 'extreme best case'
+optimizations but they must be explicitly activated.
+
+These flags include:
+  -Z, --zerocopy            use a 'zero copy' sendfile() method of sending data
+  -A, --affinity n/n,m      set CPU affinity
+
 
 

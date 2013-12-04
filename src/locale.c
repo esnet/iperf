@@ -222,8 +222,10 @@ const char report_bw_retrans_header[] =
 "[ ID] Interval           Transfer     Bandwidth       Retransmits\n";
 
 const char report_bw_udp_header[] =
-"[ ID] Interval           Transfer     Bandwidth       Jitter    Lost/Total \
-Datagrams\n";
+"[ ID] Interval           Transfer     Bandwidth       Jitter    Lost/Total Datagrams\n";
+
+const char report_bw_udp_sender_header[] =
+"[ ID] Interval           Transfer     Bandwidth       Total Datagrams\n";
 
 const char report_bw_format[] =
 "[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec              %s\n";
@@ -232,7 +234,10 @@ const char report_bw_retrans_format[] =
 "[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec  %3d         %s\n";
 
 const char report_bw_udp_format[] =
-"[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)\n";
+"[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)  %s\n";
+
+const char report_bw_udp_sender_format[] =
+"[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec  %d  %s\n";
 
 const char report_summary[] =
 "Test Complete. Summary Results:\n";
@@ -244,7 +249,10 @@ const char report_sum_bw_retrans_format[] =
 "[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec  %3d         %s\n";
 
 const char report_sum_bw_udp_format[] =
-"[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)\n";
+"[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)  %s\n";
+
+const char report_sum_bw_udp_sender_format[] =
+"[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec  %d  %s\n";
 
 const char report_omitted[] = "(omitted)";
 
@@ -332,8 +340,8 @@ const char reportCSV_bw_udp_format[] =
 const char warn_window_requested[] =
 " (WARNING: requested %s)";
 
-const char warn_window_small[] = "\
-WARNING: TCP window size set to %d bytes. A small window size\n\
+const char warn_window_small[] =
+"WARNING: TCP window size set to %d bytes. A small window size\n\
 will give poor performance. See the Iperf documentation.\n";
 
 const char warn_delay_large[] =

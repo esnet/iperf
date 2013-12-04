@@ -27,6 +27,16 @@ struct iperf_interval_results
     struct timeval interval_start_time;
     struct timeval interval_end_time;
     float     interval_duration;
+
+    /* for UDP */
+    int       interval_packet_count;
+    int       interval_outoforder_packets;
+    int       interval_cnt_error;
+    int       packet_count;
+    double    jitter;
+    int       outoforder_packets;
+    int       cnt_error;
+
     int omitted;
 #if defined(linux) || defined(__FreeBSD__)
     struct tcp_info tcpInfo;	/* getsockopt(TCP_INFO) for Linux and FreeBSD */

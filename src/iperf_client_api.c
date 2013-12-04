@@ -439,6 +439,7 @@ iperf_run_client(struct iperf_test * test)
 		    continue;	/* not done */
 	    }
 	    /* Yes, done!  Send TEST_END. */
+	    test->done = 1;
 	    cpu_util(test->cpu_util);
 	    test->stats_callback(test);
 	    if (iperf_set_send_state(test, TEST_END) != 0)

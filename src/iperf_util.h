@@ -30,4 +30,6 @@ char* get_system_info(void);
 
 cJSON* iperf_json_printf(const char *format, ...);
 
+void iperf_dump_fdset(FILE *fp, char *str, int nfds, fd_set *fds);
+
 #endif

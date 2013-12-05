@@ -181,6 +181,7 @@ iperf_handle_message_server(struct iperf_test *test)
         case TEST_START:
             break;
         case TEST_END:
+	    test->done = 1;
             cpu_util(test->cpu_util);
             test->stats_callback(test);
             SLIST_FOREACH(sp, &test->streams, streams) {

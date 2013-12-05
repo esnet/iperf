@@ -279,3 +279,23 @@ iperf_json_printf(const char *format, ...)
     va_end(argp);
     return o;
 }
+
+/* Debugging routine to dump out an fd_set. */
+void
+iperf_dump_fdset(FILE *fp, char *str, int nfds, fd_set *fds)
+{
+    int fd;
+    int comma;
+
+    fprintf(fp, "%s: [", str);
+    comma = 0;
+    for (fd = 0; fd < nfds; ++fd) {
+        if (FD_ISSET(fd, fds)) {
+	    if (comma)
+		fprintf(fp, ", ");
+	    fprintf(fp, "%d", fd);
+	    comma = 1;
+	}
+    }
+    fprintf(fp, "]\n");
+}

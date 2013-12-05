@@ -247,6 +247,7 @@ iperf_test_reset(struct iperf_test *test)
 	tmr_cancel(test->reporter_timer);
 	test->reporter_timer = NULL;
     }
+    test->done = 0;
 
     SLIST_INIT(&test->streams);
 

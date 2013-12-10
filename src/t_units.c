@@ -27,11 +27,19 @@ main(int argc, char **argv)
     assert(1024.0 * 1024.0 == unit_atof("1M"));
     assert(4.0 * 1024.0 * 1024.0 * 1024.0 == unit_atof("4G"));
 
+#ifdef notdef
+    /* Obsolete - we no longer make a distinction between upper and lower
+    ** case.
+    */
     assert(1000.0 * 0.5 == unit_atof("0.5k"));
     assert(1000.0 == unit_atof("1k"));
     assert(1000.0 * 1000.0 == unit_atof("1m"));
     assert(4.0 * 1000.0 * 1000.0 * 1000.0 == unit_atof("4g"));
-
+#endif
+    assert(1024.0 * 0.5 == unit_atof("0.5k"));
+    assert(1024.0 == unit_atof("1k"));
+    assert(1024.0 * 1024.0 == unit_atof("1m"));
+    assert(4.0 * 1024.0 * 1024.0 * 1024.0 == unit_atof("4g"));
 
     assert(1024 * 0.5 == unit_atoi("0.5K"));
     assert(1024 == unit_atoi("1K"));
@@ -40,10 +48,19 @@ main(int argc, char **argv)
     llu = (iperf_size_t) d;
     assert(llu == unit_atoi("4G"));
 
+#ifdef notdef
+    /* Also obsolete. */
     assert(1000 * 0.5 == unit_atoi("0.5k"));
     assert(1000 == unit_atoi("1k"));
     assert(1000 * 1000 == unit_atoi("1m"));
     d = 4.0 * 1000 * 1000 * 1000;
+    llu = (iperf_size_t) d;
+    assert(llu == unit_atoi("4g"));
+#endif
+    assert(1024 * 0.5 == unit_atoi("0.5k"));
+    assert(1024 == unit_atoi("1k"));
+    assert(1024 * 1024 == unit_atoi("1m"));
+    d = 4.0 * 1024 * 1024 * 1024;
     llu = (iperf_size_t) d;
     assert(llu == unit_atoi("4g"));
 

@@ -301,6 +301,10 @@ getsock_tcp_mss(int inSock)
     /* query for mss */
     len = sizeof(mss);
     rc = getsockopt(inSock, IPPROTO_TCP, TCP_MAXSEG, (char *)&mss, &len);
+    if (rc == -1) {
+	perror("getsockopt TCP_MAXSEG");
+	return -1;
+    }
 
     return mss;
 }
@@ -323,7 +327,7 @@ set_tcp_options(int sock, int no_delay, int mss)
         len = sizeof(no_delay);
         rc = setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&no_delay, len);
         if (rc == -1) {
-            perror("TCP_NODELAY");
+            perror("setsockopt TCP_NODELAY");
             return -1;
         }
     }
@@ -337,11 +341,15 @@ set_tcp_options(int sock, int no_delay, int mss)
         len = sizeof(new_mss);
         rc = setsockopt(sock, IPPROTO_TCP, TCP_MAXSEG, (char *)&new_mss, len);
         if (rc == -1) {
-            perror("setsockopt");
+            perror("setsockopt TCP_MAXSEG");
             return -1;
         }
         /* verify results */
         rc = getsockopt(sock, IPPROTO_TCP, TCP_MAXSEG, (char *)&new_mss, &len);
+        if (rc == -1) {
+            perror("getsockopt TCP_MAXSEG");
+            return -1;
+        }
         if (new_mss != mss) {
             perror("setsockopt value mismatch");
             return -1;

@@ -32,6 +32,11 @@ main(int argc, char **argv)
 
     flag = 0;
     tp = tmr_create((struct timeval*) 0, timer_proc, JunkClientData, 3000000, 0);
+    if (!tp)
+    {
+	printf("failed to create timer\n");
+	exit(-1);
+    }
 
     sleep(2);
 

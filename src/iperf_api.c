@@ -655,17 +655,17 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
             case 'L':
-#ifdef notdef
+#if defined(linux)
                 test->settings->flowlabel = strtol(optarg, NULL, 0);
 		if (test->settings->flowlabel < 1 || test->settings->flowlabel > 0xfffff) {
                     i_errno = IESETFLOW;
                     return -1;
 		}
 		client_flag = 1;
-#else /* notdef */
-		i_errno = IEUNIMP;
-		return -1;
-#endif /* notdef */
+#else /* linux */
+                i_errno = IEUNIMP;
+                return -1;
+#endif /* linux */
                 break;
             case 'Z':
                 if (!has_sendfile()) {

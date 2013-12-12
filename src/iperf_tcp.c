@@ -25,6 +25,9 @@
 #include "iperf_tcp.h"
 #include "net.h"
 
+#if defined(linux)
+#include "flowlabel.h"
+#endif
 
 /* iperf_tcp_recv
  *
@@ -291,6 +294,7 @@ iperf_tcp_connect(struct iperf_test *test)
             return -1;
         }
     }
+#if defined(linux)
     if (test->settings->flowlabel) {
         if (server_res->ai_addr->sa_family != AF_INET6) {
 	    close(s);
@@ -299,9 +303,35 @@ iperf_tcp_connect(struct iperf_test *test)
             return -1;
 	} else {
 	    struct sockaddr_in6* sa6P = (struct sockaddr_in6*) server_res->ai_addr;
-	    sa6P->sin6_flowinfo = htonl(test->settings->flowlabel);
+            char freq_buf[sizeof(struct in6_flowlabel_req)];
+            struct in6_flowlabel_req *freq = (struct in6_flowlabel_req *)freq_buf;
+            int freq_len = sizeof(*freq);
+
+            memset(freq, 0, sizeof(*freq));
+            freq->flr_label = htonl(test->settings->flowlabel & IPV6_FLOWINFO_FLOWLABEL);
+            freq->flr_action = IPV6_FL_A_GET;
+            freq->flr_flags = IPV6_FL_F_CREATE;
+            freq->flr_share = IPV6_FL_F_CREATE | IPV6_FL_S_EXCL;
+            memcpy(&freq->flr_dst, &sa6P->sin6_addr, 16);
+
+            if (setsockopt(s, IPPROTO_IPV6, IPV6_FLOWLABEL_MGR, freq, freq_len) < 0) {
+                close(s);
+                freeaddrinfo(server_res);
+                i_errno = IESETFLOW;
+                return -1;
+            }
+            sa6P->sin6_flowinfo = freq->flr_label;
+
+            opt = 1;
+            if (setsockopt(s, IPPROTO_IPV6, IPV6_FLOWINFO_SEND, &opt, sizeof(opt)) < 0) {
+                close(s);
+                freeaddrinfo(server_res);
+                i_errno = IESETFLOW;
+                return -1;
+            } 
 	}
     }
+#endif
 
     if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS) {
 	close(s);

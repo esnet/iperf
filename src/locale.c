@@ -99,7 +99,9 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -4, --version4            only use IPv4\n"
                            "  -6, --version6            only use IPv6\n"
                            "  -S, --tos N               set the IP 'type of service'\n"
-                           /* "  -L, --flowlabel N         set the IPv6 'flow label'\n" */
+#if defined(linux)
+                           "  -L, --flowlabel N         set the IPv6 flow label (only supported on Linux)\n"
+#endif
                            "  -Z, --zerocopy            use a 'zero copy' method of sending data\n"
                            "  -O, --omit N              omit the first n seconds\n"
                            "  -T, --title str           prefix every output line with this string\n"

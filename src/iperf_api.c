@@ -2040,9 +2040,8 @@ iperf_new_stream(struct iperf_test *test, int s)
     memset(sp, 0, sizeof(struct iperf_stream));
 
     sp->test = test;
-    sp->result = (struct iperf_stream_result *) malloc(sizeof(struct iperf_stream_result));
     sp->settings = test->settings;
-
+    sp->result = (struct iperf_stream_result *) malloc(sizeof(struct iperf_stream_result));
     if (!sp->result) {
         i_errno = IECREATESTREAM;
         return NULL;

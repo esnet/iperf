@@ -519,14 +519,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"file", required_argument, NULL, 'F'},
         {"affinity", required_argument, NULL, 'A'},
         {"title", required_argument, NULL, 'T'},
-        {"help", no_argument, NULL, 'h'},
-
-    /*  XXX: The following ifdef needs to be split up. linux-congestion is not
-     * necessarily supported by systems that support tos.
-     */
-#ifdef ADD_WHEN_SUPPORTED
-        {"linux-congestion", required_argument, NULL, 'L'},
+#if defined(linux)
+        {"linux-congestion", required_argument, NULL, 'C'},
 #endif
+        {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
     };
     int flag;
@@ -536,7 +532,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     blksize = 0;
     server_flag = client_flag = rate_flag = 0;
-    while ((flag = getopt_long(argc, argv, "p:f:i:DVJvsc:ub:t:n:l:P:Rw:B:M:N46S:L:ZO:F:A:T:h", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:DVJvsc:ub:t:n:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:h", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
                 test->server_port = atoi(optarg);
@@ -629,8 +625,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
             case 'B':
-                test->bind_address = (char *) malloc(strlen(optarg)+1);
-                strncpy(test->bind_address, optarg, strlen(optarg)+1);
+                test->bind_address = strdup(optarg);
                 break;
             case 'M':
                 test->settings->mss = atoi(optarg);
@@ -707,6 +702,15 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		sprintf(test->title, "%s:  ", optarg);
 		client_flag = 1;
                 break;
+	    case 'C':
+#if defined(linux)
+		test->congestion = strdup(optarg);
+		client_flag = 1;
+#else /* linux */
+		i_errno = IEUNIMP;
+		return -1;
+#endif /* linux */
+		break;
             case 'h':
             default:
                 usage_long();
@@ -1023,6 +1027,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddIntToObject(j, "flowlabel", test->settings->flowlabel);
 	if (test->title)
 	    cJSON_AddStringToObject(j, "title", test->title);
+	if (test->congestion)
+	    cJSON_AddStringToObject(j, "congestion", test->congestion);
 	if (JSON_write(test->ctrl_sck, j) < 0) {
 	    i_errno = IESENDPARAMS;
 	    r = -1;
@@ -1078,6 +1084,8 @@ get_parameters(struct iperf_test *test)
 	    test->settings->flowlabel = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "title")) != NULL)
 	    test->title = strdup(j_p->valuestring);
+	if ((j_p = cJSON_GetObjectItem(j, "congestion")) != NULL)
+	    test->congestion = strdup(j_p->valuestring);
 	if (test->sender && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    test->sender_has_retransmits = 1;
 	cJSON_Delete(j);
@@ -1385,6 +1393,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->affinity = -1;
     testp->server_affinity = -1;
     testp->title = NULL;
+    testp->congestion = NULL;
     testp->server_port = PORT;
     testp->ctrl_sck = -1;
     testp->prot_listener = -1;
@@ -1465,11 +1474,15 @@ iperf_free_test(struct iperf_test *test)
         iperf_free_stream(sp);
     }
 
-    free(test->server_hostname);
-    free(test->bind_address);
+    if (test->server_hostname)
+	free(test->server_hostname);
+    if (test->bind_address)
+	free(test->bind_address);
     free(test->settings);
     if (test->title)
 	free(test->title);
+    if (test->congestion)
+	free(test->congestion);
     if (test->omit_timer != NULL)
 	tmr_cancel(test->omit_timer);
     if (test->timer != NULL)
@@ -1533,8 +1546,10 @@ iperf_reset_test(struct iperf_test *test)
     test->duration = DURATION;
     test->server_affinity = -1;
     test->title = NULL;
+    test->congestion = NULL;
     test->state = 0;
     test->server_hostname = NULL;
+    test->bind_address = NULL;
 
     test->ctrl_sck = -1;
     test->prot_listener = -1;

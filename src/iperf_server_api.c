@@ -259,6 +259,7 @@ iperf_test_reset(struct iperf_test *test)
     test->affinity = -1;
     test->server_affinity = -1;
     test->title = NULL;
+    test->congestion = NULL;
     test->state = 0;
     test->server_hostname = NULL;
 

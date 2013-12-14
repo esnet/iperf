@@ -156,6 +156,7 @@ struct iperf_test
     char     *diskfile_name;			/* -F option */
     int       affinity, server_affinity;	/* -A option */
     char     *title;				/* -T option */
+    char     *congestion;			/* -C option */
 
     int       ctrl_sck;
     int       listener;

@@ -284,6 +284,10 @@ iperf_strerror(int i_errno)
             snprintf(errstr, len, "unable to update timer");
             perr = 1;
             break;
+        case IESETCONGESTION:
+            snprintf(errstr, len, "unable to set TCP_CONGESTION");
+            perr = 1;
+            break;
     }
 
     if (herr || perr)

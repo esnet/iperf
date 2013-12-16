@@ -1,3 +1,10 @@
+== iperf 3.0.0 ????-??-?? ==
+  * Added the following new flags
+     -D, --daemon	       run server as a daemon
+     -L, --flowlabel           set IPv6 flow label (Linux only)
+     -C, --linux-congestion    set congestion control algorithm (Linux only)
+  * Bug fixes
+
 == iperf 3.0.0 2013-11-15 ==
   * Added the following new flags
      -F, --file name           xmit/recv the specified file
@@ -6,7 +13,7 @@
      -Z, --zerocopy            use a 'zero copy' method of sending data
      -O, --omit N              omit the first n seconds
      -T, --title str           prefix every output line with this string
-  * more useful information in 'vebose' mode
+  * more useful information in 'verbose' mode
   * Many bug fixes
 
 

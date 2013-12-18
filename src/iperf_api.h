@@ -52,6 +52,7 @@ char	iperf_get_test_role( struct iperf_test* ipt );
 int	iperf_get_test_reverse( struct iperf_test* ipt );
 int	iperf_get_test_blksize( struct iperf_test* ipt );
 uint64_t iperf_get_test_rate( struct iperf_test* ipt );
+int     iperf_get_test_burst( struct iperf_test* ipt );
 int	iperf_get_test_socket_bufsize( struct iperf_test* ipt );
 double	iperf_get_test_reporter_interval( struct iperf_test* ipt );
 double	iperf_get_test_stats_interval( struct iperf_test* ipt );
@@ -73,6 +74,7 @@ void	iperf_set_test_stats_interval( struct iperf_test* ipt, double stats_interva
 void	iperf_set_test_state( struct iperf_test* ipt, signed char state );
 void	iperf_set_test_blksize( struct iperf_test* ipt, int blksize );
 void	iperf_set_test_rate( struct iperf_test* ipt, uint64_t rate );
+void	iperf_set_test_burst( struct iperf_test* ipt, int burst );
 void	iperf_set_test_server_port( struct iperf_test* ipt, int server_port );
 void	iperf_set_test_socket_bufsize( struct iperf_test* ipt, int socket_bufsize );
 void	iperf_set_test_num_streams( struct iperf_test* ipt, int num_streams );
@@ -241,6 +243,7 @@ enum {
     IEOMIT = 12,            // Bogus value for --omit
     IEUNIMP = 13,           // Not implemented yet
     IEFILE = 14,            // -F file couldn't be opened
+    IEBURST = 15,           // Invalid burst count. Maximum value = %dMAX_BURST
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

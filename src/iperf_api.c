@@ -115,6 +115,12 @@ iperf_get_test_rate(struct iperf_test *ipt)
     return ipt->settings->rate;
 }
 
+int
+iperf_get_test_burst(struct iperf_test *ipt)
+{
+    return ipt->settings->burst;
+}
+
 char
 iperf_get_test_role(struct iperf_test *ipt)
 {
@@ -247,6 +253,12 @@ void
 iperf_set_test_rate(struct iperf_test *ipt, uint64_t rate)
 {
     ipt->settings->rate = rate;
+}
+
+void
+iperf_set_test_burst(struct iperf_test *ipt, int burst)
+{
+    ipt->settings->burst = burst;
 }
 
 void
@@ -529,6 +541,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     int blksize;
     int server_flag, client_flag, rate_flag;
     char* comma;
+    char* slash;
 
     blksize = 0;
     server_flag = client_flag = rate_flag = 0;
@@ -583,6 +596,17 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
             case 'b':
+		slash = strchr(optarg, '/');
+		if (slash) {
+		    *slash = '\0';
+		    ++slash;
+		    test->settings->burst = atoi(slash);
+		    if (test->settings->burst <= 0 ||
+		        test->settings->burst > MAX_BURST) {
+			i_errno = IEBURST;
+			return -1;
+		    }
+		}
                 test->settings->rate = unit_atof(optarg);
 		rate_flag = 1;
 		client_flag = 1;
@@ -795,13 +819,15 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
     struct timeval now;
 
     /* Can we do multisend mode? */
-    if (test->settings->rate != 0)
-        multisend = 1;	/* nope */
-    else
+    if (test->settings->burst != 0)
+        multisend = test->settings->burst;
+    else if (test->settings->rate == 0)
         multisend = test->multisend;
+    else
+        multisend = 1;	/* nope */
 
     for (; multisend > 0; --multisend) {
-	if (test->settings->rate != 0)
+	if (test->settings->rate != 0 && test->settings->burst == 0)
 	    gettimeofday(&now, NULL);
 	SLIST_FOREACH(sp, &test->streams, streams) {
 	    if (sp->green_light &&
@@ -813,12 +839,17 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 		    return r;
 		}
 		test->bytes_sent += r;
-		if (test->settings->rate != 0)
+		if (test->settings->rate != 0 && test->settings->burst == 0)
 		    iperf_check_throttle(sp, &now);
 		if (multisend > 1 && test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes)
 		    break;
 	    }
 	}
+    }
+    if (test->settings->burst != 0) {
+	gettimeofday(&now, NULL);
+	SLIST_FOREACH(sp, &test->streams, streams)
+	    iperf_check_throttle(sp, &now);
     }
     if (write_setP != NULL)
 	SLIST_FOREACH(sp, &test->streams, streams)
@@ -1021,6 +1052,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddIntToObject(j, "len", test->settings->blksize);
 	if (test->settings->rate)
 	    cJSON_AddIntToObject(j, "bandwidth", test->settings->rate);
+	if (test->settings->burst)
+	    cJSON_AddIntToObject(j, "burst", test->settings->burst);
 	if (test->settings->tos)
 	    cJSON_AddIntToObject(j, "TOS", test->settings->tos);
 	if (test->settings->flowlabel)
@@ -1078,6 +1111,8 @@ get_parameters(struct iperf_test *test)
 	    test->settings->blksize = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "bandwidth")) != NULL)
 	    test->settings->rate = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "burst")) != NULL)
+	    test->settings->burst = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "TOS")) != NULL)
 	    test->settings->tos = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "flowlabel")) != NULL)
@@ -1409,6 +1444,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->socket_bufsize = 0;    /* use autotuning */
     testp->settings->blksize = DEFAULT_TCP_BLKSIZE;
     testp->settings->rate = 0;
+    testp->settings->burst = 0;
     testp->settings->mss = 0;
     testp->settings->bytes = 0;
     memset(testp->cookie, 0, COOKIE_SIZE);
@@ -1566,6 +1602,7 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->socket_bufsize = 0;
     test->settings->blksize = DEFAULT_TCP_BLKSIZE;
     test->settings->rate = 0;
+    test->settings->burst = 0;
     test->settings->mss = 0;
     memset(test->cookie, 0, COOKIE_SIZE);
     test->multisend = 10;	/* arbitrary */

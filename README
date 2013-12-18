@@ -19,6 +19,7 @@ Supported platforms:
 
 ./configure; make; make install
 
+(Note: If configure fails, try running ./bootstrap.sh first)
 
 == Latest version ==
 

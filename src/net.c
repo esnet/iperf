@@ -117,13 +117,23 @@ netannounce(int domain, int proto, char *local, int port)
     }
 
     opt = 1;
-    setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *) &opt, sizeof(opt));
+    if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, 
+		   (char *) &opt, sizeof(opt)) < 0) {
+	close(s);
+	freeaddrinfo(res);
+	return -1;
+    }
     if (domain == AF_UNSPEC || domain == AF_INET6) {
 	if (domain == AF_UNSPEC)
 	    opt = 0;
 	else if (domain == AF_INET6)
 	    opt = 1;
-	setsockopt(s, SOL_SOCKET, IPV6_V6ONLY, (char *) &opt, sizeof(opt));
+	if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, 
+		       (char *) &opt, sizeof(opt)) < 0) {
+	    close(s);
+	    freeaddrinfo(res);
+	    return -1;
+	}
     }
 
     if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0) {

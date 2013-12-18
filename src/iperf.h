@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011, The Regents of the University of California,
+ * Copyright (c) 2009-2013, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
@@ -45,6 +45,8 @@ struct iperf_interval_results
     char *tcpInfo;
 #endif
     int interval_retrans;
+    int interval_sacks;
+    int snd_cwnd;
     TAILQ_ENTRY(iperf_interval_results) irlistentries;
     void     *custom_data;
 };
@@ -57,6 +59,8 @@ struct iperf_stream_result
     iperf_size_t bytes_sent_this_interval;
     int stream_prev_total_retrans;
     int stream_retrans;
+    int stream_prev_total_sacks;
+    int stream_sacks;
     struct timeval start_time;
     struct timeval end_time;
     TAILQ_HEAD(irlisthead, iperf_interval_results) interval_results;

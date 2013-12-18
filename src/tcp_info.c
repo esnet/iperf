@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011, The Regents of the University of California,
+ * Copyright (c) 2009-2013, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
@@ -96,10 +96,67 @@ get_total_retransmits(int socket)
 	return -1;
 
 #if defined(linux) && defined(TCP_MD5SIG)
+#if 0
+    printf("tcpi_sacked %d\n", ti.tcpi_sacked);
+    printf("tcpi_snd_cwnd %d\n", ti.tcpi_snd_cwnd);
+    printf("tcpi_total_retrans %d\n", ti.tcpi_total_retrans);
+#endif
     return ti.tcpi_total_retrans;
 #else
 #if defined(__FreeBSD__) && __FreeBSD_version >= 600000
     return ti.__tcpi_retransmits;
+#else
+    return -1;
+#endif
+#endif
+
+#else
+    return -1;
+#endif
+}
+
+/*************************************************************/
+long
+get_sacks(int socket)
+{
+#if defined(linux) || defined(__FreeBSD__)
+    struct tcp_info ti;
+    socklen_t l = sizeof(ti);
+
+    if (getsockopt(socket, IPPROTO_TCP, TCP_INFO, (void *)&ti, &l) < 0)
+	return -1;
+
+#if defined(linux) && defined(TCP_MD5SIG)
+    return ti.tcpi_sacked;
+#else
+#if defined(__FreeBSD__) && __FreeBSD_version >= 600000
+    return ti.__tcpi_sacked;
+#else
+    return -1;
+#endif
+#endif
+
+#else
+    return -1;
+#endif
+}
+
+/*************************************************************/
+long
+get_snd_cwnd(int socket)
+{
+#if defined(linux) || defined(__FreeBSD__)
+    struct tcp_info ti;
+    socklen_t l = sizeof(ti);
+
+    if (getsockopt(socket, IPPROTO_TCP, TCP_INFO, (void *)&ti, &l) < 0)
+	return -1;
+
+#if defined(linux) && defined(TCP_MD5SIG)
+    return ti.tcpi_snd_cwnd;
+#else
+#if defined(__FreeBSD__) && __FreeBSD_version >= 600000
+    return ti.tcpi_snd_cwnd;
 #else
     return -1;
 #endif

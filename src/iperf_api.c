@@ -1920,7 +1920,7 @@ iperf_print_results(struct iperf_test *test)
 		if (test->json_output)
 		    cJSON_AddItemToObject(json_summary_stream, "sender", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8));
 		else
-		    iprintf(test, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf, test->sender?report_sender:report_receiver);
+		    iprintf(test, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf, report_sender);
 	    }
 	} else {
 	    /* Summary, UDP. */

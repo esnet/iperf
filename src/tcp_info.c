@@ -86,79 +86,34 @@ save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp)
 
 /*************************************************************/
 long
-get_total_retransmits(int socket)
+get_total_retransmits(struct iperf_interval_results *irp)
 {
-#if defined(linux) || defined(__FreeBSD__)
-    struct tcp_info ti;
-    socklen_t l = sizeof(ti);
-
-    if (getsockopt(socket, IPPROTO_TCP, TCP_INFO, (void *)&ti, &l) < 0)
-	return -1;
-
 #if defined(linux) && defined(TCP_MD5SIG)
-    return ti.tcpi_total_retrans;
+    return irp->tcpInfo.tcpi_total_retrans;
 #else
 #if defined(__FreeBSD__) && __FreeBSD_version >= 600000
-    return ti.__tcpi_retransmits;
+    return irp->tcpInfo.__tcpi_retransmits;
 #else
     return -1;
 #endif
-#endif
-
-#else
-    return -1;
 #endif
 }
 
 /*************************************************************/
+/*
+ * Return snd_cwnd in octets.
+ */
 long
-get_sacks(int socket)
+get_snd_cwnd(struct iperf_interval_results *irp)
 {
-#if defined(linux) || defined(__FreeBSD__)
-    struct tcp_info ti;
-    socklen_t l = sizeof(ti);
-
-    if (getsockopt(socket, IPPROTO_TCP, TCP_INFO, (void *)&ti, &l) < 0)
-	return -1;
-
 #if defined(linux) && defined(TCP_MD5SIG)
-    return ti.tcpi_sacked;
+    return irp->tcpInfo.tcpi_snd_cwnd * irp->tcpInfo.tcpi_snd_mss;
 #else
 #if defined(__FreeBSD__) && __FreeBSD_version >= 600000
-    return ti.__tcpi_sacked;
+    return irp->tcpInfo.tcpi_snd_cwnd * irp->tcpInfo.tcpi_snd_mss;
 #else
     return -1;
 #endif
-#endif
-
-#else
-    return -1;
-#endif
-}
-
-/*************************************************************/
-long
-get_snd_cwnd(int socket)
-{
-#if defined(linux) || defined(__FreeBSD__)
-    struct tcp_info ti;
-    socklen_t l = sizeof(ti);
-
-    if (getsockopt(socket, IPPROTO_TCP, TCP_INFO, (void *)&ti, &l) < 0)
-	return -1;
-
-#if defined(linux) && defined(TCP_MD5SIG)
-    return ti.tcpi_snd_cwnd;
-#else
-#if defined(__FreeBSD__) && __FreeBSD_version >= 600000
-    return ti.tcpi_snd_cwnd;
-#else
-    return -1;
-#endif
-#endif
-
-#else
-    return -1;
 #endif
 }
 

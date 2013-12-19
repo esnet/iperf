@@ -466,12 +466,14 @@ iperf_on_connect(struct iperf_test *test)
     }
     if (test->json_output) {
 	cJSON_AddStringToObject(test->json_start, "cookie", test->cookie);
-        if (test->protocol->id == SOCK_STREAM)
-	    cJSON_AddIntToObject(test->json_start, "tcp_mss", test->settings->mss);
-	else {
-	    len = sizeof(opt);
-	    getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_MAXSEG, &opt, &len);
-	    cJSON_AddIntToObject(test->json_start, "tcp_mss_default", opt);
+        if (test->protocol->id == SOCK_STREAM) {
+	    if (test->settings->mss)
+		cJSON_AddIntToObject(test->json_start, "tcp_mss", test->settings->mss);
+	    else {
+		len = sizeof(opt);
+		getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_MAXSEG, &opt, &len);
+		cJSON_AddIntToObject(test->json_start, "tcp_mss_default", opt);
+	    }
 	}
     } else if (test->verbose) {
         iprintf(test, report_cookie, test->cookie);

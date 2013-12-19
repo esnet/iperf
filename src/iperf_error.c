@@ -112,6 +112,9 @@ iperf_strerror(int i_errno)
         case IEBURST:
             snprintf(errstr, len, "invalid burst count (maximum = %d)", MAX_BURST);
             break;
+        case IEENDCONDITIONS:
+            snprintf(errstr, len, "only one test end condition (-t, -n, -k) may be specified");
+            break;
         case IENEWTEST:
             snprintf(errstr, len, "unable to create a new test");
             perr = 1;

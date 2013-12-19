@@ -80,6 +80,7 @@ struct iperf_settings
     int       tos;                  /* type of service bit */
     int       flowlabel;            /* IPv6 flow label */
     iperf_size_t bytes;             /* number of bytes to send */
+    int       blocks;               /* number of blocks (packets) to send */
     char      unit_format;          /* -f */
 };
 
@@ -201,6 +202,7 @@ struct iperf_test
     int       num_streams;                      /* total streams in the test (-P) */
 
     iperf_size_t bytes_sent;
+    int       blocks_sent;
     char      cookie[COOKIE_SIZE];
 //    struct iperf_stream *streams;               /* pointer to list of struct stream */
     SLIST_HEAD(slisthead, iperf_stream) streams;

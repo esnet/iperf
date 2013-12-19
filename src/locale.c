@@ -89,6 +89,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "                            (optional slash and packet count for burst mode)\n"
                            "  -t, --time      #         time in seconds to transmit for (default %d secs)\n"
                            "  -n, --num       #[KMG]    number of bytes to transmit (instead of -t)\n"
+                           "  -k, --blockcount #[KMG]   number of blocks (packets) to transmit (instead of -t or -n)\n"
                            "  -l, --len       #[KMG]    length of buffer to read or write\n"
 			   "                            (default %d KB for TCP, %d KB for UDP)\n"
                            "  -P, --parallel  #         number of parallel client streams to run\n"
@@ -176,6 +177,9 @@ const char test_start_time[] =
 
 const char test_start_bytes[] =
 "Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %llu bytes to send\n";
+
+const char test_start_blocks[] =
+"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %d blocks to send\n";
 
 
 /* -------------------------------------------------------------------

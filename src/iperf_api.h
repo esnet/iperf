@@ -244,6 +244,7 @@ enum {
     IEUNIMP = 13,           // Not implemented yet
     IEFILE = 14,            // -F file couldn't be opened
     IEBURST = 15,           // Invalid burst count. Maximum value = %dMAX_BURST
+    IEENDCONDITIONS = 16,   // Only one test end condition (-t, -n, -k) may be specified
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

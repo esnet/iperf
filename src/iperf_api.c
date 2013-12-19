@@ -388,14 +388,13 @@ void
 iperf_on_test_start(struct iperf_test *test)
 {
     if (test->json_output) {
-	if (test->settings->bytes)
-	    cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d  omit: %d  bytes: %d", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->omit, (int64_t) test->settings->bytes));
-	else
-	    cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d  omit: %d  duration: %d", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->omit, (int64_t) test->duration));
+	cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d  omit: %d  duration: %d  bytes: %d  blocks: %d", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->omit, (int64_t) test->duration, (int64_t) test->settings->bytes, (int64_t) test->settings->blocks));
     } else {
 	if (test->verbose) {
 	    if (test->settings->bytes)
 		iprintf(test, test_start_bytes, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->settings->bytes);
+	    else if (test->settings->blocks)
+		iprintf(test, test_start_blocks, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->settings->blocks);
 	    else
 		iprintf(test, test_start_time, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->duration);
 	}
@@ -515,6 +514,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"bandwidth", required_argument, NULL, 'b'},
         {"time", required_argument, NULL, 't'},
         {"bytes", required_argument, NULL, 'n'},
+        {"blockcount", required_argument, NULL, 'k'},
         {"length", required_argument, NULL, 'l'},
         {"parallel", required_argument, NULL, 'P'},
         {"reverse", no_argument, NULL, 'R'},
@@ -539,13 +539,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     };
     int flag;
     int blksize;
-    int server_flag, client_flag, rate_flag;
+    int server_flag, client_flag, rate_flag, duration_flag;
     char* comma;
     char* slash;
 
     blksize = 0;
-    server_flag = client_flag = rate_flag = 0;
-    while ((flag = getopt_long(argc, argv, "p:f:i:DVJvsc:ub:t:n:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:h", longopts, NULL)) != -1) {
+    server_flag = client_flag = rate_flag = duration_flag = 0;
+    while ((flag = getopt_long(argc, argv, "p:f:i:DVJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:h", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
                 test->server_port = atoi(optarg);
@@ -617,10 +617,15 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     i_errno = IEDURATION;
                     return -1;
                 }
+		duration_flag = 1;
 		client_flag = 1;
                 break;
             case 'n':
                 test->settings->bytes = unit_atoi(optarg);
+		client_flag = 1;
+                break;
+            case 'k':
+                test->settings->blocks = unit_atoi(optarg);
 		client_flag = 1;
                 break;
             case 'l':
@@ -767,6 +772,21 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     if (!rate_flag)
 	test->settings->rate = test->protocol->id == Pudp ? UDP_RATE : 0;
 
+    if ((test->settings->bytes != 0 || test->settings->blocks != 0) && ! duration_flag)
+        test->duration = 0;
+
+    /* Disallow specifying multiple test end conditions. The code actually
+    ** works just fine without this prohibition. As soon as any one of the
+    ** three possible end conditions is met, the test ends. So this check
+    ** could be removed if desired.
+    */
+    if ((duration_flag && test->settings->bytes != 0) ||
+        (duration_flag && test->settings->blocks != 0) ||
+	(test->settings->bytes != 0 && test->settings->blocks != 0)) {
+        i_errno = IEENDCONDITIONS;
+        return -1;
+    }
+
     /* For subsequent calls to getopt */
 #ifdef __APPLE__
     optreset = 1;
@@ -839,9 +859,12 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 		    return r;
 		}
 		test->bytes_sent += r;
+		++test->blocks_sent;
 		if (test->settings->rate != 0 && test->settings->burst == 0)
 		    iperf_check_throttle(sp, &now);
 		if (multisend > 1 && test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes)
+		    break;
+		if (multisend > 1 && test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks)
 		    break;
 	    }
 	}
@@ -872,6 +895,7 @@ iperf_recv(struct iperf_test *test, fd_set *read_setP)
 		return r;
 	    }
 	    test->bytes_sent += r;
+	    ++test->blocks_sent;
 	    FD_CLR(sp->socket, read_setP);
 	}
     }
@@ -1039,6 +1063,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddIntToObject(j, "time", test->duration);
 	if (test->settings->bytes)
 	    cJSON_AddIntToObject(j, "num", test->settings->bytes);
+	if (test->settings->blocks)
+	    cJSON_AddIntToObject(j, "blockcount", test->settings->blocks);
 	if (test->settings->mss)
 	    cJSON_AddIntToObject(j, "MSS", test->settings->mss);
 	if (test->no_delay)
@@ -1097,6 +1123,8 @@ get_parameters(struct iperf_test *test)
 	    test->duration = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "num")) != NULL)
 	    test->settings->bytes = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "blockcount")) != NULL)
+	    test->settings->blocks = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "MSS")) != NULL)
 	    test->settings->mss = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "nodelay")) != NULL)
@@ -1447,6 +1475,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->burst = 0;
     testp->settings->mss = 0;
     testp->settings->bytes = 0;
+    testp->settings->blocks = 0;
     memset(testp->cookie, 0, COOKIE_SIZE);
 
     testp->multisend = 10;	/* arbitrary */
@@ -1591,6 +1620,7 @@ iperf_reset_test(struct iperf_test *test)
     test->prot_listener = -1;
 
     test->bytes_sent = 0;
+    test->blocks_sent = 0;
 
     test->reverse = 0;
     test->no_delay = 0;
@@ -1620,6 +1650,7 @@ iperf_reset_stats(struct iperf_test *test)
     struct iperf_stream_result *rp;
 
     test->bytes_sent = 0;
+    test->blocks_sent = 0;
     gettimeofday(&now, NULL);
     SLIST_FOREACH(sp, &test->streams, streams) {
 	sp->omitted_packet_count = sp->packet_count;

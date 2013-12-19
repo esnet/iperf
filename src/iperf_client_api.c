@@ -99,7 +99,7 @@ create_client_timers(struct iperf_test * test)
     }
     cd.p = test;
     test->timer = test->stats_timer = test->reporter_timer = NULL;
-    if (test->settings->bytes == 0) {
+    if (test->duration != 0) {
 	test->done = 0;
         test->timer = tmr_create(&now, test_timer_proc, cd, ( test->duration + test->omit ) * SEC_TO_US, 0);
         if (test->timer == NULL) {
@@ -429,29 +429,25 @@ iperf_run_client(struct iperf_test * test)
 	    }
 
 	    /* Is the test done yet? */
-	    if (test->omitting)
-	        continue;	/* not done */
-	    if (test->settings->bytes == 0) {
-		if (!test->done)
-		    continue;	/* not done */
-	    } else {
-		if (test->bytes_sent < test->settings->bytes)
-		    continue;	/* not done */
-	    }
-	    /* Yes, done!  Send TEST_END. */
-	    test->done = 1;
-	    cpu_util(test->cpu_util);
-	    test->stats_callback(test);
-	    if (iperf_set_send_state(test, TEST_END) != 0)
-		return -1;
-	    /* If we were doing setitimer(), go back to select() for the end. */
-	    if (concurrency_model == cm_itimer) {
-		itv.it_interval.tv_sec = 0;
-		itv.it_interval.tv_usec = 0;
-		itv.it_value.tv_sec = 0;
-		itv.it_value.tv_usec = 0;
-		(void) setitimer(ITIMER_REAL, &itv, NULL);
-		concurrency_model = cm_select;
+	    if ((!test->omitting) &&
+	        ((test->duration != 0 && test->done) ||
+	         (test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes) ||
+	         (test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks))) {
+		/* Yes, done!  Send TEST_END. */
+		test->done = 1;
+		cpu_util(test->cpu_util);
+		test->stats_callback(test);
+		if (iperf_set_send_state(test, TEST_END) != 0)
+		    return -1;
+		/* If we were doing setitimer(), go back to select() for the end. */
+		if (concurrency_model == cm_itimer) {
+		    itv.it_interval.tv_sec = 0;
+		    itv.it_interval.tv_usec = 0;
+		    itv.it_value.tv_sec = 0;
+		    itv.it_value.tv_usec = 0;
+		    (void) setitimer(ITIMER_REAL, &itv, NULL);
+		    concurrency_model = cm_select;
+		}
 	    }
 	}
     }

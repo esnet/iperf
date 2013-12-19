@@ -96,11 +96,6 @@ get_total_retransmits(int socket)
 	return -1;
 
 #if defined(linux) && defined(TCP_MD5SIG)
-#if 0
-    printf("tcpi_sacked %d\n", ti.tcpi_sacked);
-    printf("tcpi_snd_cwnd %d\n", ti.tcpi_snd_cwnd);
-    printf("tcpi_total_retrans %d\n", ti.tcpi_total_retrans);
-#endif
     return ti.tcpi_total_retrans;
 #else
 #if defined(__FreeBSD__) && __FreeBSD_version >= 600000

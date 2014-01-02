@@ -1492,8 +1492,10 @@ iperf_defaults(struct iperf_test *testp)
         return -1;
     memset(tcp, 0, sizeof(struct protocol));
     udp = (struct protocol *) malloc(sizeof(struct protocol));
-    if (!udp)
+    if (!udp) {
+        free(tcp);
         return -1;
+    }
     memset(udp, 0, sizeof(struct protocol));
 
     tcp->id = Ptcp;

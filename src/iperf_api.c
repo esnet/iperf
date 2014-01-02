@@ -2137,6 +2137,7 @@ iperf_new_stream(struct iperf_test *test, int s)
     sp->settings = test->settings;
     sp->result = (struct iperf_stream_result *) malloc(sizeof(struct iperf_stream_result));
     if (!sp->result) {
+        free(sp);
         i_errno = IECREATESTREAM;
         return NULL;
     }

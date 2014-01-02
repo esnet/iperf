@@ -187,10 +187,8 @@ iperf_tcp_listen(struct iperf_test *test)
 #if defined(linux)
 	if (test->congestion) {
 	    if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
-		saved_errno = errno;
 		close(s);
 		freeaddrinfo(res);
-		errno = saved_errno;
 		i_errno = IESETCONGESTION;
 		return -1;
 	    } 
@@ -378,10 +376,8 @@ iperf_tcp_connect(struct iperf_test *test)
 #if defined(linux)
     if (test->congestion) {
 	if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
-	    saved_errno = errno;
 	    close(s);
 	    freeaddrinfo(server_res);
-	    errno = saved_errno;
 	    i_errno = IESETCONGESTION;
 	    return -1;
 	}

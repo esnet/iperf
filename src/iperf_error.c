@@ -291,8 +291,8 @@ iperf_strerror(int i_errno)
             perr = 1;
             break;
         case IESETCONGESTION:
-            snprintf(errstr, len, "unable to set TCP_CONGESTION");
-            perr = 1;
+            snprintf(errstr, len, "unable to set TCP_CONGESTION: " 
+                                  "Supplied congestion control algorithm not supported on this host");
             break;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011, The Regents of the University of California,
+ * Copyright (c) 2009-2014, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
@@ -449,6 +449,15 @@ iperf_run_client(struct iperf_test * test)
 		    concurrency_model = cm_select;
 		}
 	    }
+	}
+	// If we're in reverse mode, continue draining the data
+	// connection(s) even if test is over.  This prevents a
+	// deadlock where the server side fills up its pipe(s)
+	// and gets blocked, so it can't receive state changes
+	// from the client side.
+	else if (test->reverse && test->state == TEST_END) {
+	    if (iperf_recv(test, &read_set) < 0)
+		return -1;
 	}
     }
 

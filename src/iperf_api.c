@@ -1614,12 +1614,25 @@ iperf_reset_test(struct iperf_test *test)
     test->omit = OMIT;
     test->duration = DURATION;
     test->server_affinity = -1;
-    test->title = NULL;
-    test->congestion = NULL;
     test->state = 0;
-    test->server_hostname = NULL;
-    test->bind_address = NULL;
 
+    if(test->title) {
+        free(test->title);
+        test->title = NULL;
+    }
+    if(test->server_hostname) {
+        free(test->server_hostname);
+        test->server_hostname = NULL;
+    }
+    if(test->bind_address) {
+        free(test->bind_address);
+        test->bind_address = NULL;
+    }
+    if(test->congestion) {
+        free(test->congestion);
+        test->congestion = NULL;
+    }
+    
     test->ctrl_sck = -1;
     test->prot_listener = -1;
 

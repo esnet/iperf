@@ -43,7 +43,7 @@ main( int argc, char** argv )
 	    fprintf( stderr, "%s: error - %s\n\n", argv0, iperf_strerror( i_errno ) );
 	    ++consecutive_errors;
 	    if (consecutive_errors >= 5) {
-	        fprintf(stderr, "%s: too many errors, exitting\n", argv0);
+	        fprintf(stderr, "%s: too many errors, exiting\n", argv0);
 		break;
 	    }
 	} else

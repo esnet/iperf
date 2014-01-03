@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011, The Regents of the University of California,
+ * Copyright (c) 2009-2014, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
@@ -73,7 +73,7 @@ extern void tmr_cancel( Timer* timer );
 /* Clean up the timers package, freeing any unused storage. */
 extern void tmr_cleanup( void );
 
-/* Cancel all timers and free storage, usually in preparation for exitting. */
+/* Cancel all timers and free storage, usually in preparation for exiting. */
 extern void tmr_destroy( void );
 
 #endif /* __TIMER_H */

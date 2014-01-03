@@ -256,7 +256,7 @@ const char report_sum_bw_format[] =
 "[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec              %s\n";
 
 const char report_sum_bw_retrans_format[] =
-"[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec              %s\n";
+"[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec  %3d         %s\n";
 
 const char report_sum_bw_udp_format[] =
 "[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)  %s\n";

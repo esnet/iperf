@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2013, The Regents of the University of California,
+ * Copyright (c) 2009-2014, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
@@ -2322,6 +2322,9 @@ iperf_got_sigend(struct iperf_test *test)
 	(void) Nwrite(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp);
     }
     i_errno = (test->role == 'c') ? IECLIENTTERM : IESERVERTERM;
+    /* If the client, then dump JSON output if any */
+    if (test->role == 'c')
+	iperf_client_end(test);
     iperf_errexit(test, "interrupt - %s", iperf_strerror(i_errno));
 }
 

@@ -221,6 +221,16 @@ iperf_handle_message_client(struct iperf_test *test)
             break;
         case SERVER_TERMINATE:
             i_errno = IESERVERTERM;
+
+	    /*
+	     * Temporarily be in DISPLAY_RESULTS phase so we can get
+	     * ending summary statistics.
+	     */
+	    signed char oldstate = test->state;
+	    cpu_util(test->cpu_util);
+	    test->state = DISPLAY_RESULTS;
+	    test->reporter_callback(test);
+	    test->state = oldstate;
             return -1;
         case ACCESS_DENIED:
             i_errno = IEACCESSDENIED;

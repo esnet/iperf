@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011, The Regents of the University of California,
+ * Copyright (c) 2009-2014, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
@@ -203,6 +203,14 @@ iperf_handle_message_server(struct iperf_test *test)
             break;
         case CLIENT_TERMINATE:
             i_errno = IECLIENTTERM;
+
+	    // Temporarily be in DISPLAY_RESULTS phase so we can get
+	    // ending summary statistics.
+	    signed char oldstate = test->state;
+	    cpu_util(test->cpu_util);
+	    test->state = DISPLAY_RESULTS;
+	    test->reporter_callback(test);
+	    test->state = oldstate;
 
             // XXX: Remove this line below!
 	    iperf_err(test, "the client has terminated");

@@ -43,16 +43,18 @@ New options:
   -T, --title str           prefix every output line with this string
   -F, --file name           xmit/recv the specified file
   -A, --affinity n/n,m      set CPU affinity
+  -k, --blockcount #[KMG]   number of blocks (packets) to transmit (instead of -t or -n)
+  -L, --flowlabel           set IPv6 flow label (Linux only)
+
+Changed flags:
+  -C, --linux-congestion    set congestion control algorithm (Linux only)  (-Z in iperf2.0)
+
 
 Deprecated options:
 
-Plan to add for the next release:
-  -Z, --linux-congestion <algo>  set TCP congestion control algorithm (Linux only)
-
-Not planning to support. If you really miss these options, please submit a request in the issue tracker
+Not planning to support these iperf2 flags. If you really miss these options, please submit a request in the issue tracker
   -d, --dualtest           Do a bidirectional test simultaneously
   -r, --tradeoff           Do a bidirectional test individually
-  -N, --nodelay            set TCP no delay, disabling Nagle's Algorithm
   -T, --ttl                time-to-live, for multicast (default 1)
   -x, --reportexclude [CDMSV]   exclude C(connection) D(data) M(multicast) S(settings) V(server) reports
   -y, --reportstyle C      report as a Comma-Separated Values
@@ -85,6 +87,8 @@ several seconds to send a full block if the network has high loss, and the inter
 have widely varying interval times. We are trying to determine the best solution to this, but in 
 the meantime, try using a smaller block size if you get strange interval reports. 
 For example, try "-l 4K".
+
+* -Z flag on OSX sometimes hangs
 
 
 

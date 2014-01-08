@@ -1,11 +1,12 @@
-== iperf 3.0.0 ????-??-?? ==
+== iperf 3.0.0 2014-01-?? ==
   * Added the following new flags
      -D, --daemon	       run server as a daemon
      -L, --flowlabel           set IPv6 flow label (Linux only)
      -C, --linux-congestion    set congestion control algorithm (Linux only)
+     -k, --blockcount #[KMG]   number of blocks (packets) to transmit (instead of -t or -n)
   * Bug fixes
 
-== iperf 3.0.0 2013-11-15 ==
+== iperf 3.0-RC5 2013-11-15 ==
   * Added the following new flags
      -F, --file name           xmit/recv the specified file
      -A, --affinity n/n,m      set CPU affinity

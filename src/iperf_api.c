@@ -2162,19 +2162,27 @@ iperf_new_stream(struct iperf_test *test, int s)
     sp->buffer_fd = mkstemp(template);
     if (sp->buffer_fd == -1) {
         i_errno = IECREATESTREAM;
+        free(sp->result);
+        free(sp);
         return NULL;
     }
     if (unlink(template) < 0) {
         i_errno = IECREATESTREAM;
+        free(sp->result);
+        free(sp);
         return NULL;
     }
     if (ftruncate(sp->buffer_fd, test->settings->blksize) < 0) {
         i_errno = IECREATESTREAM;
+        free(sp->result);
+        free(sp);
         return NULL;
     }
     sp->buffer = (char *) mmap(NULL, test->settings->blksize, PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
     if (sp->buffer == MAP_FAILED) {
         i_errno = IECREATESTREAM;
+        free(sp->result);
+        free(sp);
         return NULL;
     }
     srandom(time(NULL));
@@ -2191,6 +2199,9 @@ iperf_new_stream(struct iperf_test *test, int s)
 	sp->diskfile_fd = open(test->diskfile_name, test->sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC));
 	if (sp->diskfile_fd == -1) {
 	    i_errno = IEFILE;
+            munmap(sp->buffer, sp->test->settings->blksize);
+            free(sp->result);
+            free(sp);
 	    return NULL;
 	}
         sp->snd2 = sp->snd;
@@ -2201,8 +2212,13 @@ iperf_new_stream(struct iperf_test *test, int s)
         sp->diskfile_fd = -1;
 
     /* Initialize stream */
-    if (iperf_init_stream(sp, test) < 0)
+    if (iperf_init_stream(sp, test) < 0) {
+        close(sp->buffer_fd);
+        munmap(sp->buffer, sp->test->settings->blksize);
+        free(sp->result);
+        free(sp);
         return NULL;
+    }
     iperf_add_stream(test, sp);
 
     return sp;

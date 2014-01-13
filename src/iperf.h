@@ -15,6 +15,12 @@
 #include <stdint.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
+
+#if defined(__FreeBSD__)
+#include <sys/param.h>
+#include <sys/cpuset.h>
+#endif
+
 #include "timer.h"
 #include "queue.h"
 #include "cjson.h"
@@ -161,6 +167,9 @@ struct iperf_test
     int       duration;                         /* total duration of test (-t flag) */
     char     *diskfile_name;			/* -F option */
     int       affinity, server_affinity;	/* -A option */
+#if (__FreeBSD__)
+    cpuset_t cpumask;
+#endif
     char     *title;				/* -T option */
     char     *congestion;			/* -C option */
 

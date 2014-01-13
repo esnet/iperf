@@ -35,6 +35,11 @@
 #include <setjmp.h>
 #include <stdarg.h>
 
+#if defined(__FreeBSD__)
+#include <sys/param.h>
+#include <sys/cpuset.h>
+#endif
+
 #include "net.h"
 #include "iperf.h"
 #include "iperf_api.h"
@@ -531,7 +536,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"zerocopy", no_argument, NULL, 'Z'},
         {"omit", required_argument, NULL, 'O'},
         {"file", required_argument, NULL, 'F'},
+#if defined(linux) || defined(__FreeBSD__)
         {"affinity", required_argument, NULL, 'A'},
+#endif
         {"title", required_argument, NULL, 'T'},
 #if defined(linux)
         {"linux-congestion", required_argument, NULL, 'C'},
@@ -713,6 +720,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 test->diskfile_name = optarg;
                 break;
             case 'A':
+#if defined(linux) || defined(__FreeBSD__)
                 test->affinity = atoi(optarg);
                 if (test->affinity < 0 || test->affinity > 1024) {
                     i_errno = IEAFFINITY;
@@ -727,6 +735,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		    }
 		    client_flag = 1;
 		}
+#else 
+                i_errno = IEUNIMP;
+                return -1;
+#endif 
                 break;
             case 'T':
                 test->title = malloc(strlen(optarg) + 4);
@@ -1457,6 +1469,9 @@ iperf_defaults(struct iperf_test *testp)
     testp->diskfile_name = (char*) 0;
     testp->affinity = -1;
     testp->server_affinity = -1;
+#if defined(__FreeBSD__)
+    CPU_ZERO(&testp->cpumask);
+#endif
     testp->title = NULL;
     testp->congestion = NULL;
     testp->server_port = PORT;
@@ -1614,6 +1629,9 @@ iperf_reset_test(struct iperf_test *test)
     test->omit = OMIT;
     test->duration = DURATION;
     test->server_affinity = -1;
+#if defined(__FreeBSD__)
+    CPU_ZERO(&test->cpumask);
+#endif
     test->state = 0;
 
     if(test->title) {
@@ -2399,10 +2417,10 @@ iperf_json_finish(struct iperf_test *test)
 }
 
 
-/* CPU affinity stuff - linux only. */
+/* CPU affinity stuff - Linux and FreeBSD only. */
 
 int
-iperf_setaffinity(int affinity)
+iperf_setaffinity(struct iperf_test *test, int affinity)
 {
 #ifdef linux
     cpu_set_t cpu_set;
@@ -2414,14 +2432,32 @@ iperf_setaffinity(int affinity)
         return -1;
     }
     return 0;
-#else /*linux*/
+#elif (__FreeBSD__)
+    cpuset_t cpumask;
+
+    if(cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, -1,
+                          sizeof(cpuset_t), &test->cpumask) != 0) {
+        i_errno = IEAFFINITY;
+        return -1;
+    }
+
+    CPU_ZERO(&cpumask);
+    CPU_SET(affinity, &cpumask);
+
+    if(cpuset_setaffinity(CPU_LEVEL_WHICH,CPU_WHICH_PID, -1,
+                          sizeof(cpuset_t), &cpumask) != 0) {
+        i_errno = IEAFFINITY;
+        return -1;
+    }
+    return 0;
+#else /* Linux or FreeBSD */
     i_errno = IEAFFINITY;
     return -1;
-#endif /*linux*/
+#endif /* Linux or FreeBSD*/
 }
 
 int
-iperf_clearaffinity(void)
+iperf_clearaffinity(struct iperf_test *test)
 {
 #ifdef linux
     cpu_set_t cpu_set;
@@ -2435,10 +2471,17 @@ iperf_clearaffinity(void)
         return -1;
     }
     return 0;
-#else /*linux*/
+#elif (__FreeBSD__)
+    if(cpuset_setaffinity(CPU_LEVEL_WHICH,CPU_WHICH_PID, -1,
+                          sizeof(cpuset_t), &test->cpumask) != 0) {
+        i_errno = IEAFFINITY;
+        return -1;
+    }
+    return 0;
+#else /* Linux or FreeBSD */
     i_errno = IEAFFINITY;
     return -1;
-#endif /*linux*/
+#endif /* Linux or FreeBSD */
 }
 
 int

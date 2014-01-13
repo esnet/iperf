@@ -342,7 +342,7 @@ iperf_run_client(struct iperf_test * test)
 	iperf_got_sigend(test);
 
     if (test->affinity != -1)
-	if (iperf_setaffinity(test->affinity) != 0)
+	if (iperf_setaffinity(test, test->affinity) != 0)
 	    return -1;
 
     if (test->json_output)

@@ -213,8 +213,8 @@ int iperf_json_start(struct iperf_test *);
 int iperf_json_finish(struct iperf_test *);
 
 /* CPU affinity routines */
-int iperf_setaffinity(int affinity);
-int iperf_clearaffinity(void);
+int iperf_setaffinity(struct iperf_test *, int affinity);
+int iperf_clearaffinity(struct iperf_test *);
 
 /* Custom printf routine. */
 int iprintf(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3)));

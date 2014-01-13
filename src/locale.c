@@ -73,7 +73,9 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -f, --format    [kmgKMG]  format to report: Kbits, Mbits, KBytes, MBytes\n"
                            "  -i, --interval  #         seconds between periodic bandwidth reports\n"
                            "  -F, --file name           xmit/recv the specified file\n"
+#if defined(linux) || defined(__FreeBSD__)
                            "  -A, --affinity n/n,m      set CPU affinity\n"
+#endif
                            "  -V, --verbose             more detailed output\n"
                            "  -J, --json                output in JSON format\n"
                            "  -v, --version             show version information and quit\n"

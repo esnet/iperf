@@ -136,7 +136,7 @@ iperf_accept(struct iperf_test *test)
         if (iperf_exchange_parameters(test) < 0)
             return -1;
 	if (test->server_affinity != -1) 
-	    if (iperf_setaffinity(test->server_affinity) != 0)
+	    if (iperf_setaffinity(test, test->server_affinity) != 0)
 		return -1;
         if (test->on_connect)
             test->on_connect(test);
@@ -436,7 +436,7 @@ iperf_run_server(struct iperf_test *test)
 	iperf_got_sigend(test);
 
     if (test->affinity != -1) 
-	if (iperf_setaffinity(test->affinity) != 0)
+	if (iperf_setaffinity(test, test->affinity) != 0)
 	    return -1;
 
     if (test->json_output)
@@ -603,7 +603,7 @@ iperf_run_server(struct iperf_test *test)
     } 
 
     if (test->server_affinity != -1) 
-	if (iperf_clearaffinity() != 0)
+	if (iperf_clearaffinity(test) != 0)
 	    return -1;
 
     return 0;

@@ -1,3 +1,6 @@
+== iperf 3.?.? ????-??-?? ==
+  * Setting CPU affinity now works on FreeBSD.
+
 == iperf 3.0.1 2014-01-10 ==
   * Added the following new flags
      -D, --daemon	       run server as a daemon

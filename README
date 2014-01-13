@@ -44,7 +44,7 @@ New options:
   -O, --omit N              omit the first n seconds (to ignore slowstart)
   -T, --title str           prefix every output line with this string
   -F, --file name           xmit/recv the specified file
-  -A, --affinity n/n,m      set CPU affinity
+  -A, --affinity n/n,m      set CPU affinity (Linux and FreeBSD only)
   -k, --blockcount #[KMG]   number of blocks (packets) to transmit (instead 
       		   	    of -t or -n)
   -L, --flowlabel           set IPv6 flow label (Linux only)

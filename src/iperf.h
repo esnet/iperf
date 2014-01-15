@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2013, The Regents of the University of California,
+ * Copyright (c) 2009-2014, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
@@ -175,6 +175,7 @@ struct iperf_test
     int	      verbose;                          /* -V option - verbose mode */
     int	      json_output;                      /* -J option - JSON output */
     int	      zerocopy;                         /* -Z option - use sendfile */
+    int       debug;				/* -d option - enable debug */
 
     int	      multisend;
     int	      may_use_sigalrm;

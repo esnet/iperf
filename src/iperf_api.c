@@ -543,6 +543,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(linux)
         {"linux-congestion", required_argument, NULL, 'C'},
 #endif
+        {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
     };
@@ -554,7 +555,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = 0;
-    while ((flag = getopt_long(argc, argv, "p:f:i:DVJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:h", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:DVJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dh", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
                 test->server_port = atoi(optarg);
@@ -753,6 +754,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		i_errno = IEUNIMP;
 		return -1;
 #endif /* linux */
+		break;
+	    case 'd':
+		test->debug = 1;
 		break;
             case 'h':
             default:

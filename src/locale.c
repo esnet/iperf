@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------- 
- * Copyright (c) 1999,2000,2001,2002,2003                              
+ * Copyright (c) 1999,2000,2001,2002,2003
  * The Board of Trustees of the University of Illinois            
  * All Rights Reserved.                                           
  *--------------------------------------------------------------- 
@@ -78,6 +78,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
 #endif
                            "  -V, --verbose             more detailed output\n"
                            "  -J, --json                output in JSON format\n"
+                           "  -d, --debug               emit debugging output\n"
                            "  -v, --version             show version information and quit\n"
                            "  -h, --help                show this message and quit\n"
                            "Server specific:\n"

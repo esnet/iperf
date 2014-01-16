@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011, The Regents of the University of California,
+ * Copyright (c) 2009-2014, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
@@ -184,7 +184,7 @@ iperf_tcp_listen(struct iperf_test *test)
                 return -1;
             }
         }
-#if defined(linux)
+#if defined(linux) && defined(TCP_CONGESTION)
 	if (test->congestion) {
 	    if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
 		close(s);
@@ -373,7 +373,7 @@ iperf_tcp_connect(struct iperf_test *test)
     }
 #endif
 
-#if defined(linux)
+#if defined(linux) && defined(TCP_CONGESTION)
     if (test->congestion) {
 	if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
 	    close(s);

@@ -540,7 +540,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"affinity", required_argument, NULL, 'A'},
 #endif
         {"title", required_argument, NULL, 'T'},
-#if defined(linux)
+#if defined(linux) && defined(TCP_CONGESTION)
         {"linux-congestion", required_argument, NULL, 'C'},
 #endif
         {"debug", no_argument, NULL, 'd'},
@@ -747,7 +747,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
 	    case 'C':
-#if defined(linux)
+#if defined(linux) && defined(TCP_CONGESTION)
 		test->congestion = strdup(optarg);
 		client_flag = 1;
 #else /* linux */

@@ -552,7 +552,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     int flag;
     int blksize;
     int server_flag, client_flag, rate_flag, duration_flag;
+#if defined(linux) || defined(__FreeBSD__)
     char* comma;
+#endif
     char* slash;
 
     blksize = 0;

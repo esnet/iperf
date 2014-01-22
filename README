@@ -104,5 +104,7 @@ try "-l 4K".
 
 * -Z flag on OSX sometimes hangs
 
+* On OpenBSD, the server seems to require a "-4" argument, implying
+that it can only be used with IPv4.
 
 

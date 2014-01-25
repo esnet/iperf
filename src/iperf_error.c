@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2013, The Regents of the University of California,
+ * Copyright (c) 2009-2014, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
@@ -47,6 +47,7 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
     } else
 	fprintf(stderr, "iperf3: %s\n", str);
     va_end(argp);
+    iperf_delete_pidfile(test);
     exit(1);
 }
 
@@ -293,6 +294,10 @@ iperf_strerror(int i_errno)
         case IESETCONGESTION:
             snprintf(errstr, len, "unable to set TCP_CONGESTION: " 
                                   "Supplied congestion control algorithm not supported on this host");
+            break;
+	case IEPIDFILE:
+            snprintf(errstr, len, "unable to write PID file");
+            perr = 1;
             break;
     }
 

@@ -1,5 +1,8 @@
 == iperf 3.?.? ????-??-?? ==
   * Setting CPU affinity now works on FreeBSD.
+  * Added -I flag for server to write a PID file, mostly useful for
+    daemon mode.
+  * Bug fixes.
 
 == iperf 3.0.1 2014-01-10 ==
   * Added the following new flags

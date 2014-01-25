@@ -172,6 +172,7 @@ struct iperf_test
 #endif
     char     *title;				/* -T option */
     char     *congestion;			/* -C option */
+    char     *pidfile;				/* -P option */
 
     int       ctrl_sck;
     int       listener;

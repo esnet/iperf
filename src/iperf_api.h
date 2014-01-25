@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2013, The Regents of the University of California,
+ * Copyright (c) 2009-2014, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
@@ -207,6 +207,8 @@ int iperf_server_listen(struct iperf_test *);
 int iperf_accept(struct iperf_test *);
 int iperf_handle_message_server(struct iperf_test *);
 void iperf_test_reset(struct iperf_test *);
+int iperf_create_pidfile(struct iperf_test *);
+int iperf_delete_pidfile(struct iperf_test *);
 
 /* JSON output routines. */
 int iperf_json_start(struct iperf_test *);
@@ -280,6 +282,7 @@ enum {
     IEAFFINITY = 132,       // Unable to set CPU affinity (check perror)
     IEDAEMON = 133,	    // Unable to become a daemon process
     IESETCONGESTION = 134,  // Unable to set TCP_CONGESTION
+    IEPIDFILE = 135,	    // Unable to write PID file
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

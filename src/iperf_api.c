@@ -545,6 +545,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(linux) && defined(TCP_CONGESTION)
         {"linux-congestion", required_argument, NULL, 'C'},
 #endif
+	{"pidfile", required_argument, NULL, 'I'},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -559,7 +560,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = 0;
-    while ((flag = getopt_long(argc, argv, "p:f:i:DVJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dh", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:DVJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:h", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
                 test->server_port = atoi(optarg);
@@ -762,6 +763,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	    case 'd':
 		test->debug = 1;
 		break;
+	    case 'I':
+		test->pidfile = strdup(optarg);
+		server_flag = 1;
+	        break;
             case 'h':
             default:
                 usage_long();
@@ -2383,6 +2388,39 @@ iperf_got_sigend(struct iperf_test *test)
     iperf_errexit(test, "interrupt - %s", iperf_strerror(i_errno));
 }
 
+/* Try to write a PID file if requested, return -1 on an error. */
+int
+iperf_create_pidfile(struct iperf_test *test)
+{
+    if (test->pidfile) {
+	int fd;
+	char buf[8];
+	fd = open(test->pidfile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	if (fd < 0) {
+	    return -1;
+	}
+	snprintf(buf, sizeof(buf), "%d", getpid()); /* no trailing newline */
+	if (write(fd, buf, strlen(buf) + 1) < 0) {
+	    return -1;
+	}
+	if (close(fd) < 0) {
+	    return -1;
+	};
+    }
+    return 0;
+}
+
+/* Get rid of a PID file, return -1 on error. */
+int
+iperf_delete_pidfile(struct iperf_test *test)
+{
+    if (test->pidfile) {
+	if (unlink(test->pidfile) < 0) {
+	    return -1;
+	}
+    }
+    return 0;
+}
 
 int
 iperf_json_start(struct iperf_test *test)

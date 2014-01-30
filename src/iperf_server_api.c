@@ -450,7 +450,7 @@ iperf_run_server(struct iperf_test *test)
 	iprintf(test, "%s\n", version);
 	iprintf(test, "%s", "");
 	fflush(stdout);
-	system("uname -a");
+	printf("%s\n", get_system_info());
     }
 
     // Open socket and listen

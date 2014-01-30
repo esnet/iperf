@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011, The Regents of the University of California,
+ * Copyright (c) 2009-2014, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/utsname.h>
 #include <time.h>
 #include <errno.h>
 
@@ -193,19 +194,20 @@ cpu_util(double pcpu[3])
     pcpu[2] = (systemdiff / timediff) * 100;
 }
 
-char*
+char *
 get_system_info(void)
-    {
-    FILE* fp;
-    static char buf[1000];
+{
+    static char buf[1024];
+    struct utsname  uts;
 
-    fp = popen("uname -a", "r");
-    if (fp == NULL)
-	return NULL;
-    fgets(buf, sizeof(buf), fp);
-    pclose(fp);
+    memset(buf, 0, 1024);
+    uname(&uts);
+
+    snprintf(buf, sizeof(buf), "%s %s %s %s %s", uts.sysname, uts.nodename, 
+	     uts.release, uts.version, uts.machine);
+
     return buf;
-    }
+}
 
 
 /* Helper routine for building cJSON objects in a printf-like manner.

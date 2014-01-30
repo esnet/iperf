@@ -588,8 +588,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 test->json_output = 1;
                 break;
             case 'v':
-                printf("%s\n", version);
-		system("uname -a");
+                printf("%s\n%s\n", version, get_system_info());
                 exit(0);
             case 's':
                 if (test->role == 'c') {

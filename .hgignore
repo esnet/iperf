@@ -1,0 +1,20 @@
+syntax: glob
+*~
+*.a
+*.o
+*.orig
+*.Po
+Makefile
+autom4te.cache
+config/test-driver
+config.log
+config.status
+libtool
+src/config.h
+src/stamp-h1
+src/iperf3
+src/iperf3_profile
+src/t_timer
+src/t_units
+src/t_uuid
+

@@ -208,7 +208,15 @@ iperf_tcp_listen(struct iperf_test *test)
 		opt = 0;
 	    else if (test->settings->domain == AF_INET6)
 		opt = 1;
-	    setsockopt(s, SOL_SOCKET, IPV6_V6ONLY, (char *) &opt, sizeof(opt));
+	    if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, 
+			   (char *) &opt, sizeof(opt)) < 0) {
+		saved_errno = errno;
+		close(s);
+		freeaddrinfo(res);
+		errno = saved_errno;
+		i_errno = IEV6ONLY;
+		return -1;
+	    }
 	}
 
         if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0) {

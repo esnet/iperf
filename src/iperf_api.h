@@ -280,6 +280,7 @@ enum {
     IEAFFINITY = 132,       // Unable to set CPU affinity (check perror)
     IEDAEMON = 133,	    // Unable to become a daemon process
     IESETCONGESTION = 134,  // Unable to set TCP_CONGESTION
+    IEV6ONLY = 136,  	    // Unable to set/unset IPV6_V6ONLY (check perror)
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

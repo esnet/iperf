@@ -39,7 +39,7 @@ case "$1" in
 esac
 
 set -x
-glibtoolize --copy --force --automake
+libtoolize --copy --force --automake
 aclocal -I config
 autoheader
 automake --foreign --add-missing --copy

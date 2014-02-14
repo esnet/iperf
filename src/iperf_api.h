@@ -23,6 +23,7 @@ struct iperf_stream;
 #define Psctp 12
 #define DEFAULT_UDP_BLKSIZE 8192
 #define DEFAULT_TCP_BLKSIZE (128 * 1024)  /* default read/write block size */
+#define DEFAULT_SCTP_BLKSIZE (64 * 1024)
 
 /* short option equivalents, used to support options that only have long form */
 #define OPT_SCTP 1

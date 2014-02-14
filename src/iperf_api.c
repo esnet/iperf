@@ -800,6 +800,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     if (blksize == 0) {
 	if (test->protocol->id == Pudp)
 	    blksize = DEFAULT_UDP_BLKSIZE;
+	else if (test->protocol->id == Psctp)
+	    blksize = DEFAULT_SCTP_BLKSIZE;
 	else
 	    blksize = DEFAULT_TCP_BLKSIZE;
     }

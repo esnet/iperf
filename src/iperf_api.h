@@ -20,8 +20,12 @@ struct iperf_stream;
 /* default settings */
 #define Ptcp SOCK_STREAM
 #define Pudp SOCK_DGRAM
+#define Psctp 12
 #define DEFAULT_UDP_BLKSIZE 8192
 #define DEFAULT_TCP_BLKSIZE (128 * 1024)  /* default read/write block size */
+
+/* short option equivalents, used to support options that only have long form */
+#define OPT_SCTP 1
 
 /* states */
 #define TEST_START 1
@@ -284,6 +288,7 @@ enum {
     IESETCONGESTION = 134,  // Unable to set TCP_CONGESTION
     IEPIDFILE = 135,	    // Unable to write PID file
     IEV6ONLY = 136,  	    // Unable to set/unset IPV6_V6ONLY (check perror)
+    IESETSCTPDISABLEFRAG = 137, // Unable to set SCTP Fragmentation (check perror)
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

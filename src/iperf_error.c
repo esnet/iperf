@@ -303,6 +303,10 @@ iperf_strerror(int i_errno)
 	    snprintf(errstr, len, "Unable to set/reset IPV6_V6ONLY");
 	    perr = 1;
 	    break;
+        case IESETSCTPDISABLEFRAG:
+            snprintf(errstr, len, "unable to set SCTP_DISABLE_FRAG");
+            perr = 1;
+            break;
     }
 
     if (herr || perr)

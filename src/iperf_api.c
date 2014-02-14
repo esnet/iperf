@@ -45,6 +45,7 @@
 #include "iperf_api.h"
 #include "iperf_udp.h"
 #include "iperf_tcp.h"
+#include "iperf_sctp.h"
 #include "timer.h"
 
 #include "cjson.h"
@@ -545,6 +546,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(linux) && defined(TCP_CONGESTION)
         {"linux-congestion", required_argument, NULL, 'C'},
 #endif
+#if defined(linux) || defined(__FreeBSD__)
+        {"sctp", no_argument, NULL, OPT_SCTP},
+#endif
 	{"pidfile", required_argument, NULL, 'I'},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
@@ -609,6 +613,16 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 set_protocol(test, Pudp);
 		client_flag = 1;
                 break;
+            case OPT_SCTP:
+#if defined(linux) || defined(__FreeBSD__)
+                set_protocol(test, Psctp);
+                client_flag = 1;
+#else /* linux */
+                i_errno = IEUNIMP;
+                return -1;
+#endif /* linux */
+            break;
+
             case 'b':
 		slash = strchr(optarg, '/');
 		if (slash) {
@@ -1082,6 +1096,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddTrueToObject(j, "tcp");
 	else if (test->protocol->id == Pudp)
 	    cJSON_AddTrueToObject(j, "udp");
+        else if (test->protocol->id == Psctp)
+            cJSON_AddTrueToObject(j, "sctp");
 	cJSON_AddIntToObject(j, "omit", test->omit);
 	if (test->server_affinity != -1)
 	    cJSON_AddIntToObject(j, "server_affinity", test->server_affinity);
@@ -1141,6 +1157,8 @@ get_parameters(struct iperf_test *test)
 	    set_protocol(test, Ptcp);
 	if ((j_p = cJSON_GetObjectItem(j, "udp")) != NULL)
 	    set_protocol(test, Pudp);
+        if ((j_p = cJSON_GetObjectItem(j, "sctp")) != NULL)
+            set_protocol(test, Psctp);
 	if ((j_p = cJSON_GetObjectItem(j, "omit")) != NULL)
 	    test->omit = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "server_affinity")) != NULL)
@@ -1471,10 +1489,32 @@ iperf_new_test()
 }
 
 /**************************************************************************/
+
+struct protocol *
+protocol_new(void)
+{
+    struct protocol *proto;
+
+    proto = malloc(sizeof(struct protocol));
+    if(!proto) {
+        return NULL;
+    }
+    memset(proto, 0, sizeof(struct protocol));
+
+    return proto;
+}
+
+void
+protocol_free(struct protocol *proto)
+{
+    free(proto); 
+}
+
+/**************************************************************************/
 int
 iperf_defaults(struct iperf_test *testp)
 {
-    struct protocol *tcp, *udp;
+    struct protocol *tcp, *udp, *sctp;
 
     testp->omit = OMIT;
     testp->duration = DURATION;
@@ -1514,16 +1554,9 @@ iperf_defaults(struct iperf_test *testp)
     SLIST_INIT(&testp->streams);
     SLIST_INIT(&testp->protocols);
 
-    tcp = (struct protocol *) malloc(sizeof(struct protocol));
+    tcp = protocol_new();
     if (!tcp)
         return -1;
-    memset(tcp, 0, sizeof(struct protocol));
-    udp = (struct protocol *) malloc(sizeof(struct protocol));
-    if (!udp) {
-        free(tcp);
-        return -1;
-    }
-    memset(udp, 0, sizeof(struct protocol));
 
     tcp->id = Ptcp;
     tcp->name = "TCP";
@@ -1534,6 +1567,12 @@ iperf_defaults(struct iperf_test *testp)
     tcp->recv = iperf_tcp_recv;
     tcp->init = NULL;
     SLIST_INSERT_HEAD(&testp->protocols, tcp, protocols);
+
+    udp = protocol_new();
+    if (!udp) {
+        protocol_free(tcp);
+        return -1;
+    }
 
     udp->id = Pudp;
     udp->name = "UDP";
@@ -1546,6 +1585,24 @@ iperf_defaults(struct iperf_test *testp)
     SLIST_INSERT_AFTER(tcp, udp, protocols);
 
     set_protocol(testp, Ptcp);
+
+    sctp = protocol_new();
+    if (!sctp) {
+        protocol_free(tcp);
+        protocol_free(udp);
+        return -1;
+    }
+
+    sctp->id = Psctp;
+    sctp->name = "SCTP";
+    sctp->accept = iperf_sctp_accept;
+    sctp->listen = iperf_sctp_listen;
+    sctp->connect = iperf_sctp_connect;
+    sctp->send = iperf_sctp_send;
+    sctp->recv = iperf_sctp_recv;
+    sctp->init = iperf_sctp_init;
+
+    SLIST_INSERT_AFTER(udp, sctp, protocols);
 
     testp->on_new_stream = iperf_on_new_stream;
     testp->on_test_start = iperf_on_test_start;
@@ -1844,7 +1901,7 @@ iperf_print_intermediate(struct iperf_test *test)
 
         start_time = timeval_diff(&sp->result->start_time,&irp->interval_start_time);
         end_time = timeval_diff(&sp->result->start_time,&irp->interval_end_time);
-	if (test->protocol->id == Ptcp) {
+	if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 	    if (test->sender && test->sender_has_retransmits) {
 		/* Interval sum, TCP with retransmits. */
 		if (test->json_output)
@@ -1906,7 +1963,7 @@ iperf_print_results(struct iperf_test *test)
 	iprintf(test, "%s", report_bw_separator);
 	if (test->verbose)
 	    iprintf(test, "%s", report_summary);
-	if (test->protocol->id == Ptcp) {
+	if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 	    if (test->sender_has_retransmits)
 		iprintf(test, "%s", report_bw_retrans_header);
 	    else
@@ -1931,7 +1988,7 @@ iperf_print_results(struct iperf_test *test)
         total_sent += bytes_sent;
         total_received += bytes_received;
 
-        if (test->protocol->id == Ptcp) {
+        if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 	    if (test->sender_has_retransmits) {
 		total_retransmits += sp->result->stream_retrans;
 	    }
@@ -1944,7 +2001,7 @@ iperf_print_results(struct iperf_test *test)
 	unit_snprintf(ubuf, UNIT_LEN, (double) bytes_sent, 'A');
 	bandwidth = (double) bytes_sent / (double) end_time;
 	unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
-	if (test->protocol->id == Ptcp) {
+	if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 	    if (test->sender_has_retransmits) {
 		/* Summary, TCP with retransmits. */
 		if (test->json_output)
@@ -1986,7 +2043,7 @@ iperf_print_results(struct iperf_test *test)
 	unit_snprintf(ubuf, UNIT_LEN, (double) bytes_received, 'A');
 	bandwidth = (double) bytes_received / (double) end_time;
 	unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
-	if (test->protocol->id == Ptcp) {
+	if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 	    if (test->json_output)
 		cJSON_AddItemToObject(json_summary_stream, "receiver", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_received, bandwidth * 8));
 	    else
@@ -1998,7 +2055,7 @@ iperf_print_results(struct iperf_test *test)
         unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
 	bandwidth = (double) total_sent / (double) end_time;
         unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
-        if (test->protocol->id == Ptcp) {
+        if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 	    if (test->sender_has_retransmits) {
 		/* Summary sum, TCP with retransmits. */
 		if (test->json_output)
@@ -2084,7 +2141,7 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 	    ** else nothing.
 	    */
 	    if (timeval_equals(&sp->result->start_time, &irp->interval_start_time)) {
-		if (test->protocol->id == Ptcp) {
+		if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 		    if (test->sender && test->sender_has_retransmits)
 			iprintf(test, "%s", report_bw_retrans_cwnd_header);
 		    else
@@ -2107,7 +2164,7 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
     st = timeval_diff(&sp->result->start_time, &irp->interval_start_time);
     et = timeval_diff(&sp->result->start_time, &irp->interval_end_time);
     
-    if (test->protocol->id == Ptcp) {
+    if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 	if (test->sender && test->sender_has_retransmits) {
 	    /* Interval, TCP with retransmits. */
 	    if (test->json_output)

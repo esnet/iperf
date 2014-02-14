@@ -87,6 +87,9 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -I, --pidfile file        write PID file\n"
                            "Client specific:\n"
                            "  -c, --client    <host>    run in client mode, connecting to <host>\n"
+#if defined(linux) || defined(__FreeBSD__)
+                           "  --sctp                    use SCTP rather than TCP\n"
+#endif
                            "  -u, --udp                 use UDP rather than TCP\n"
                            "  -b, --bandwidth #[KMG][/#] target bandwidth in bits/sec\n"
                            "                            (default %d Mbit/sec for UDP, unlimited for TCP)\n"

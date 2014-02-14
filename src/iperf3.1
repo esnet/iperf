@@ -46,6 +46,9 @@ Note that when using this feature, a process will only be bound
 to a single CPU (as opposed to a set containing potentialy multiple
 CPUs).
 .TP
+.BR -B ", " --bind " \fIhost\fR"
+bind to a specific interface
+.TP
 .BR -V ", " --verbose " "
 give more detailed output 
 .TP
@@ -113,9 +116,6 @@ run in reverse mode (server sends, client receives)
 .TP
 .BR -w ", " --window " \fIn\fR[KM]"
 TCP window size / socket buffer size (this gets sent to the server and used on that side too)
-.TP
-.BR -B ", " --bind " \fIn\fR[KM]"
-bind to a specific interface or multicast address
 .TP
 .BR -M ", " --set-mss " \fIn\fR"
 set TCP maximum segment size (MTU - 40 bytes)

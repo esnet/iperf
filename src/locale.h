@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011, The Regents of the University of California,
+ * Copyright (c) 2009-2014, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
@@ -46,10 +46,12 @@ extern const char report_read_lengths[] ;
 extern const char report_read_length_times[] ;
 extern const char report_bw_header[] ;
 extern const char report_bw_retrans_header[] ;
+extern const char report_bw_retrans_cwnd_header[] ;
 extern const char report_bw_udp_header[] ;
 extern const char report_bw_udp_sender_header[] ;
 extern const char report_bw_format[] ;
 extern const char report_bw_retrans_format[] ;
+extern const char report_bw_retrans_cwnd_format[] ;
 extern const char report_bw_udp_format[] ;
 extern const char report_bw_udp_sender_format[] ;
 extern const char report_summary[] ;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2013, The Regents of the University of California,
+ * Copyright (c) 2009-2014, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
@@ -81,6 +81,12 @@ save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp)
 
     if (getsockopt(sp->socket, IPPROTO_TCP, TCP_INFO, (void *)&irp->tcpInfo, &tcp_info_length) < 0)
 	iperf_err(sp->test, "getsockopt - %s", strerror(errno));
+
+    if (sp->test->debug) {
+	printf("tcpi_snd_cwnd %u tcpi_snd_mss %u\n",
+	       irp->tcpInfo.tcpi_snd_cwnd, irp->tcpInfo.tcpi_snd_mss);
+    }
+
 #endif
 }
 

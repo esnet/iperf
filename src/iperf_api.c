@@ -205,6 +205,12 @@ iperf_get_test_may_use_sigalrm(struct iperf_test *ipt)
     return ipt->may_use_sigalrm;
 }
 
+char
+iperf_get_test_unit_format(struct iperf_test *ipt)
+{
+    return ipt->settings->unit_format;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -344,6 +350,12 @@ void
 iperf_set_test_may_use_sigalrm(struct iperf_test *ipt, int may_use_sigalrm)
 {
     ipt->may_use_sigalrm = may_use_sigalrm;
+}
+
+void
+iperf_set_test_unit_format(struct iperf_test *ipt, char unit_format)
+{
+    ipt->settings->unit_format = unit_format;
 }
 
 /********************** Get/set test protocol structure ***********************/

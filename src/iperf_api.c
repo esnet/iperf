@@ -743,8 +743,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		}
                 break;
             case 'T':
-                test->title = malloc(strlen(optarg) + 4);
-		sprintf(test->title, "%s:  ", optarg);
+                test->title = strdup(optarg);
 		client_flag = 1;
                 break;
 	    case 'C':
@@ -2462,7 +2461,7 @@ iprintf(struct iperf_test *test, const char* format, ...)
     int r;
 
     if (test->title)
-        fputs(test->title, stdout);
+        printf("%s:  ", test->title);
     va_start(argp, format);
     r = vprintf(format, argp);
     va_end(argp);

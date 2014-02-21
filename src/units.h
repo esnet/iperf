@@ -8,7 +8,7 @@
  */
 
 enum {
-    UNIT_LEN = 11
+    UNIT_LEN = 32
 };
 
 double unit_atof( const char *s );

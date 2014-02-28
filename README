@@ -1,41 +1,86 @@
-= Summary =
+iperf3:  A TCP, UDP, and SCTP network bandwidth measurement tool
+================================================================
 
-iperf3 is a tool for measuring achievable bandwidth on IP networks.
+Summary
+-------
 
-iperf3 is NOT backwards compatible with the original iperf.
+iperf is a tool for active measurements of the maximum achievable
+bandwidth on IP networks.  It supports tuning of various parameters
+related to timing, protocols, and buffers.  For each test it reports
+the bandwidth, loss, and other parameters.
 
-Supported platforms:
-  * Linux
-  * FreeBSD 
-  * Mac OSX
+This version, sometimes referred to as iperf3, is a redesign of an
+original version developed at NLANR/DAST.  iperf3 is a new
+implementation from scratch, with the goal of a smaller, simpler code
+base, and a library version of the functionality that can be used in
+other programs. iperf3 also a number of features found in other tools
+such as nuttcp and netperf, but were missing from the original iperf.
+Note that iperf3 is NOT backwards compatible with the original iperf.
 
-= Building iperf3 =
+Primary development for iperf3 takes place on CentOS Linux, FreeBSD,
+and MacOS X.  At this time, these are the only officially supported
+platforms, however there have been some reports of success with
+OpenBSD, Android, other Linux distributions.
 
-== Prerequisites: ==
-  * libuuid: this is not installed by default for Debian/Ubuntu Systems
-             to install: apt-get install uuid-dev
+iperf3 is principally developed by ESnet / Lawrence Berkleley National
+Laboratory.  It is released under a two-clause BSD license.
 
-== Building ==
+For more information see: https://github.com/esnet/iperf
 
-./configure; make; make install
+Obtaining iperf3
+----------------
 
-(Note: If configure fails, try running ./bootstrap.sh first)
+Downloads of iperf3 are available at:
 
-= Latest version =
+    http://stats.es.net/software/iperf-3.0.1.tar.gz
 
 To check out the most recent code, do:
 
     git clone https://github.com/esnet/iperf.git
 
-= Bug Reports =
+Building iperf3
+---------------
+
+### Prerequisites: ###
+  * libuuid: this is not installed by default for Debian/Ubuntu Systems
+             to install: apt-get install uuid-dev
+
+### Building ###
+
+    ./configure; make; make install
+
+(Note: If configure fails, try running ./bootstrap.sh first)
+
+Invoking iperf3
+---------------
+
+iperf3 includes a manual page listing all of the command-line options.
+The manual page is the most up-to-date reference to the various flags and parameters.
+
+For sample command line usage, see: 
+
+http://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf-and-iperf3/
+
+Using the default options, iperf is meant to show typical well
+designed application performance.  'Typical well designed application'
+means avoiding artificial enhancements that work only for testing
+(such as splice()'ing the data to /dev/null).  iperf does also have
+flags for 'extreme best case' optimizations but they must be
+explicitly activated.
+
+These flags include:
+  -Z, --zerocopy            use a 'zero copy' sendfile() method of sending data
+  -A, --affinity n/n,m      set CPU affinity
+
+Bug Reports
+-----------
 
 Before submitting a bug report, try checking out the latest version of
 the code, and confirm that its not already fixed. Then submit to:
 https://github.com/esnet/iperf/issues
 
-For more information see: https://github.com/esnet/iperf
-
-= Changes from iperf 2.x =
+Changes from iperf 2.x
+----------------------
 
 New options:
 
@@ -70,24 +115,8 @@ options, please submit a request in the issue tracker:
 Also deprecated is the ability to set the options via environment
 variables.
 
-For sample command line usage, see: 
-
-http://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf-and-iperf3/
-
-
-Using the default options, iperf is meant to show typical well
-designed application performance.  'Typical well designed application'
-means avoiding artificial enhancements that work only for testing
-(such as splice()'ing the data to /dev/null).  iperf does also have
-flags for 'extreme best case' optimizations but they must be
-explicitly activated.
-
-These flags include:
-  -Z, --zerocopy            use a 'zero copy' sendfile() method of sending data
-  -A, --affinity n/n,m      set CPU affinity
-
-
-= Known Issues =
+Known Issues
+------------
 
 * UDP performance: iperf2/iperf3 both only are only about 50% as fast
 as nuttcp in UDP mode.  We are looking into this, but in the meantime,
@@ -107,5 +136,4 @@ try "-l 4K".
 
 * On OpenBSD, the server seems to require a "-4" argument, implying
 that it can only be used with IPv4.
-
 

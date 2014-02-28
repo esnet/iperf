@@ -32,7 +32,7 @@ Obtaining iperf3
 
 Downloads of iperf3 are available at:
 
-    http://stats.es.net/software/iperf-3.0.1.tar.gz
+    http://stats.es.net/software/
 
 To check out the most recent code, do:
 

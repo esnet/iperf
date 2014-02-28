@@ -23,16 +23,17 @@ Supported platforms:
 
 = Latest version =
 
-To check out the most recent code, do:  hg clone http://code.google.com/p/iperf/
+To check out the most recent code, do:
 
+    git clone https://github.com/esnet/iperf.git
 
 = Bug Reports =
 
 Before submitting a bug report, try checking out the latest version of
 the code, and confirm that its not already fixed. Then submit to:
-https://code.google.com/p/iperf/issues/list
+https://github.com/esnet/iperf/issues
 
-For more information see: http://code.google.com/p/iperf/
+For more information see: https://github.com/esnet/iperf
 
 = Changes from iperf 2.x =
 

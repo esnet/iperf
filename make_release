@@ -21,14 +21,14 @@ dirname=`echo $tag $proj | awk '{
 
 do_tag ()
 {
-    hg tag -m "tagging $tag" $tag
+    git tag --sign -m "tagging $tag" $tag
 }
 
 do_tar ()
 {
     tarball=${dirname}.tar.gz
     rm -f ${tarball}
-    hg archive -t tgz -p ${dirname} -X .hg\* -r ${tag} ${tarball}
+    git archive --prefix ${dirname}/ ${tag} -o ${tarball}
 
     # Compute SHA256 hash
     case `uname -s` in

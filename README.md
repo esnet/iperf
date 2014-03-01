@@ -15,6 +15,7 @@ implementation from scratch, with the goal of a smaller, simpler code
 base, and a library version of the functionality that can be used in
 other programs. iperf3 also a number of features found in other tools
 such as nuttcp and netperf, but were missing from the original iperf.
+These include, for example, a zero-copy mode and optional JSON output.
 Note that iperf3 is NOT backwards compatible with the original iperf.
 
 Primary development for iperf3 takes place on CentOS Linux, FreeBSD,
@@ -23,7 +24,7 @@ platforms, however there have been some reports of success with
 OpenBSD, Android, other Linux distributions.
 
 iperf3 is principally developed by ESnet / Lawrence Berkleley National
-Laboratory.  It is released under a two-clause BSD license.
+Laboratory.  It is released under a three-clause BSD license.
 
 For more information see: https://github.com/esnet/iperf
 
@@ -43,13 +44,13 @@ Building iperf3
 
 ### Prerequisites: ###
   * libuuid: this is not installed by default for Debian/Ubuntu Systems
-             to install: apt-get install uuid-dev
+             to install: `apt-get install uuid-dev`
 
 ### Building ###
 
     ./configure; make; make install
 
-(Note: If configure fails, try running ./bootstrap.sh first)
+(Note: If configure fails, try running `./bootstrap.sh` first)
 
 Invoking iperf3
 ---------------

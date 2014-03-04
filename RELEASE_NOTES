@@ -1,8 +1,47 @@
 == iperf 3.?.? ????-??-?? ==
+
+* User-visible changes
+
+  * The iperf3 project has been moved to GitHub, and various URLs in
+    documentation files have been changed to point there.
+
   * Setting CPU affinity now works on FreeBSD.
-  * Added -I flag for server to write a PID file, mostly useful for
-    daemon mode.
-  * Bug fixes.
+
+  * iperf3 now builds on Linux systems that do not support
+    TCP_CONGESTION.  Most notably this allows iperf3 to work on CentOS
+    5.
+
+  * An abort on MacOS 10.9 has been fixed (issue #135).
+
+  * Added -I flag for the server to write a PID file, mostly useful for
+    daemon mode (issue #120).
+
+  * A bug that could break some TCP tests on FreeBSD has been fixed.
+
+  * TCP snd_cwnd output is now printed by default on Linux (issue #99).
+
+  * SCTP support has been added (with the --sctp flag), on Linux and
+    FreeBSD (issue #131).
+
+  * In JSON output, the --title string no longer has a colon and two
+    spaces appended (issue #139).
+
+  * A buffer for holding formatted numeric values is now
+    properly-sized so that output is not truncated (issue #142).
+
+* Developer-visible changes
+
+  * Some memory leaks have been fixed.
+
+  * A -d flag enables debugging output.
+
+  * A .gitignore file has been added.
+
+  * libtoolize is now invoked correctly from the bootstrap.sh script.
+
+  * The test unit format can now be set from the API (issue #144).
+
+  * libiperf is now built as both shared and static libraries.
 
 == iperf 3.0.1 2014-01-10 ==
   * Added the following new flags

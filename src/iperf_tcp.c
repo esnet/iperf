@@ -184,6 +184,18 @@ iperf_tcp_listen(struct iperf_test *test)
                 return -1;
             }
         }
+	if (test->debug) {
+	    socklen_t optlen = sizeof(opt);
+	    if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, &optlen) < 0) {
+		saved_errno = errno;
+		close(s);
+		freeaddrinfo(res);
+		errno = saved_errno;
+		i_errno = IESETBUF;
+		return -1;
+	    }
+	    printf("SO_SNDBUF is %u\n", opt);
+	}
 #if defined(linux) && defined(TCP_CONGESTION)
 	if (test->congestion) {
 	    if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
@@ -335,6 +347,18 @@ iperf_tcp_connect(struct iperf_test *test)
             i_errno = IESETBUF;
             return -1;
         }
+    }
+    if (test->debug) {
+	socklen_t optlen = sizeof(opt);
+	if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, &optlen) < 0) {
+	    saved_errno = errno;
+	    close(s);
+	    freeaddrinfo(server_res);
+	    errno = saved_errno;
+	    i_errno = IESETBUF;
+	    return -1;
+	}
+	printf("SO_SNDBUF is %u\n", opt);
     }
 #if defined(linux)
     if (test->settings->flowlabel) {

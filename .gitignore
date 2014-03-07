@@ -1,5 +1,7 @@
 *~
 *.a
+*.la
+*.lo
 *.o
 *.orig
 *.Po
@@ -9,6 +11,8 @@ config/test-driver
 config.log
 config.status
 libtool
+src/.deps
+src/.libs
 src/config.h
 src/stamp-h1
 src/iperf3

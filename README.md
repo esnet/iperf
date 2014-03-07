@@ -136,3 +136,8 @@ try "-l 4K".
 * The -Z flag sometimes hangs on OSX.
 
 
+* When specifying the TCP buffer size using the "-w" flag on Linux, Linux 
+doubles the value you pass in. (You can see this using iperf3's debug flag). 
+But then the CWND does not actually ramp up to the doubled value, but only
+to about 75% of the doubled value. This appears to be by design.
+

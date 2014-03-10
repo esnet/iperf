@@ -28,7 +28,7 @@ do_tar ()
 {
     tarball=${dirname}.tar.gz
     rm -f ${tarball}
-    git archive --prefix ${dirname}/ ${tag} -o ${tarball}
+    git archive --format=tar --prefix ${dirname}/ ${tag} | gzip -9 > ${tarball}
 
     # Compute SHA256 hash
     case `uname -s` in

@@ -70,8 +70,9 @@ flags for 'extreme best case' optimizations but they must be
 explicitly activated.
 
 These flags include:
-  -Z, --zerocopy            use a 'zero copy' sendfile() method of sending data
-  -A, --affinity n/n,m      set CPU affinity
+
+    -Z, --zerocopy            use a 'zero copy' sendfile() method of sending data
+    -A, --affinity n/n,m      set CPU affinity
 
 Bug Reports
 -----------
@@ -85,20 +86,21 @@ Changes from iperf 2.x
 
 New options:
 
-  -V, --verbose             more detailed output than before
-  -J, --json                output in JSON format
-  -Z, --zerocopy            use a 'zero copy' sendfile() method of sending data
-  -O, --omit N              omit the first n seconds (to ignore slowstart)
-  -T, --title str           prefix every output line with this string
-  -F, --file name           xmit/recv the specified file
-  -A, --affinity n/n,m      set CPU affinity
-  -k, --blockcount #[KMG]   number of blocks (packets) to transmit (instead 
-      		   	    of -t or -n)
-  -L, --flowlabel           set IPv6 flow label (Linux only)
+    -V, --verbose             more detailed output than before
+    -J, --json                output in JSON format
+    -Z, --zerocopy            use a 'zero copy' sendfile() method of sending data
+    -O, --omit N              omit the first n seconds (to ignore slowstart)
+    -T, --title str           prefix every output line with this string
+    -F, --file name           xmit/recv the specified file
+    -A, --affinity n/n,m      set CPU affinity (Linux only)
+    -k, --blockcount #[KMG]   number of blocks (packets) to transmit (instead 
+                              of -t or -n)
+    -L, --flowlabel           set IPv6 flow label (Linux only)
 
 Changed flags:
-  -C, --linux-congestion    set congestion control algorithm (Linux only)
-      			    (-Z in iperf2.0)
+
+    -C, --linux-congestion    set congestion control algorithm (Linux only)
+                              (-Z in iperf2)
 
 
 Deprecated options:
@@ -106,12 +108,12 @@ Deprecated options:
 Not planning to support these iperf2 flags. If you really miss these
 options, please submit a request in the issue tracker:
 
-  -d, --dualtest           Do a bidirectional test simultaneously
-  -r, --tradeoff           Do a bidirectional test individually
-  -T, --ttl                time-to-live, for multicast (default 1)
-  -x, --reportexclude [CDMSV]   exclude C(connection) D(data) M(multicast) 
-      		      	   S(settings) V(server) reports
-  -y, --reportstyle C      report as a Comma-Separated Values
+    -d, --dualtest           Do a bidirectional test simultaneously
+    -r, --tradeoff           Do a bidirectional test individually
+    -T, --ttl                time-to-live, for multicast (default 1)
+    -x, --reportexclude [CDMSV]   exclude C(connection) D(data) M(multicast) 
+                                  S(settings) V(server) reports
+    -y, --reportstyle C      report as a Comma-Separated Values
 
 Also deprecated is the ability to set the options via environment
 variables.

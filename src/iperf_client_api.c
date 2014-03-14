@@ -355,8 +355,8 @@ iperf_run_client(struct iperf_test * test)
     } else if (test->verbose) {
 	iprintf(test, "%s\n", version);
 	iprintf(test, "%s", "");
-	fflush(stdout);
-	iprintf("%s\n", get_system_info());
+	iprintf(test, "%s\n", get_system_info());
+	iflush(test);
     }
 
     /* Start the client and connect to the server */

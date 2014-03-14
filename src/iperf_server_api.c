@@ -449,8 +449,8 @@ iperf_run_server(struct iperf_test *test)
     } else if (test->verbose) {
 	iprintf(test, "%s\n", version);
 	iprintf(test, "%s", "");
-	fflush(stdout);
 	iprintf(test, "%s\n", get_system_info());
+	iflush(test);
     }
 
     // Open socket and listen

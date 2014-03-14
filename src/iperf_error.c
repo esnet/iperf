@@ -28,11 +28,16 @@ iperf_err(struct iperf_test *test, const char *format, ...)
     if (test != NULL && test->json_output && test->json_top != NULL)
 	cJSON_AddStringToObject(test->json_top, "error", str);
     else
-	fprintf(stderr, "iperf3: %s\n", str);
+	if (test && test->outfile) {
+	    fprintf(test->outfile, "iperf3: %s\n", str);
+	}
+	else {
+	    fprintf(stderr, "iperf3: %s\n", str);
+	}
     va_end(argp);
 }
 
-/* Do a printf to stderr, then exit. */
+/* Do a printf to stderr or log file as appropriate, then exit. */
 void
 iperf_errexit(struct iperf_test *test, const char *format, ...)
 {
@@ -45,7 +50,12 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
 	cJSON_AddStringToObject(test->json_top, "error", str);
 	iperf_json_finish(test);
     } else
-	fprintf(stderr, "iperf3: %s\n", str);
+	if (test && test->outfile) {
+	    fprintf(test->outfile, "iperf3: %s\n", str);
+	}
+	else {
+	    fprintf(stderr, "iperf3: %s\n", str);
+	}
     va_end(argp);
     iperf_delete_pidfile(test);
     exit(1);
@@ -116,6 +126,10 @@ iperf_strerror(int i_errno)
         case IEENDCONDITIONS:
             snprintf(errstr, len, "only one test end condition (-t, -n, -k) may be specified");
             break;
+	case IELOGFILE:
+	    snprintf(errstr, len, "unable to open log file");
+	    perr = 1;
+	    break;
         case IENEWTEST:
             snprintf(errstr, len, "unable to create a new test");
             perr = 1;

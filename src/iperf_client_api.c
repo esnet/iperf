@@ -356,7 +356,7 @@ iperf_run_client(struct iperf_test * test)
 	iprintf(test, "%s\n", version);
 	iprintf(test, "%s", "");
 	fflush(stdout);
-	printf("%s\n", get_system_info());
+	iprintf("%s\n", get_system_info());
     }
 
     /* Start the client and connect to the server */
@@ -478,6 +478,8 @@ iperf_run_client(struct iperf_test * test)
 	iprintf(test, "\n");
 	iprintf(test, "%s", report_done);
     }
+
+    iflush(test);
 
     return 0;
 }

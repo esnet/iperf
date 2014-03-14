@@ -65,8 +65,8 @@ iperf_server_listen(struct iperf_test *test)
     }
 
     if (!test->json_output) {
-	printf("-----------------------------------------------------------\n");
-	printf("Server listening on %d\n", test->server_port);
+	iprintf(test, "-----------------------------------------------------------\n");
+	iprintf(test, "Server listening on %d\n", test->server_port);
     }
 
     // This needs to be changed to reflect if client has different window size
@@ -450,7 +450,7 @@ iperf_run_server(struct iperf_test *test)
 	iprintf(test, "%s\n", version);
 	iprintf(test, "%s", "");
 	fflush(stdout);
-	printf("%s\n", get_system_info());
+	iprintf(test, "%s\n", get_system_info());
     }
 
     // Open socket and listen
@@ -601,6 +601,8 @@ iperf_run_server(struct iperf_test *test)
 	if (iperf_json_finish(test) < 0)
 	    return -1;
     } 
+
+    iflush(test);
 
     if (test->server_affinity != -1) 
 	if (iperf_clearaffinity(test) != 0)

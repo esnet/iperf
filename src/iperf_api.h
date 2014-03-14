@@ -27,6 +27,7 @@ struct iperf_stream;
 
 /* short option equivalents, used to support options that only have long form */
 #define OPT_SCTP 1
+#define OPT_LOGFILE 2
 
 /* states */
 #define TEST_START 1
@@ -225,7 +226,7 @@ int iperf_clearaffinity(struct iperf_test *);
 
 /* Custom printf routine. */
 int iprintf(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3)));
-
+int iflush(struct iperf_test *test);
 
 /* Error routines. */
 void iperf_err(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3)));
@@ -251,6 +252,7 @@ enum {
     IEFILE = 14,            // -F file couldn't be opened
     IEBURST = 15,           // Invalid burst count. Maximum value = %dMAX_BURST
     IEENDCONDITIONS = 16,   // Only one test end condition (-t, -n, -k) may be specified
+    IELOGFILE = 17,	    // Can't open log file
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

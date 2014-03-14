@@ -78,6 +78,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
 #endif
                            "  -V, --verbose             more detailed output\n"
                            "  -J, --json                output in JSON format\n"
+                           "  --logfile f               send output to a log file\n"
                            "  -d, --debug               emit debugging output\n"
                            "  -v, --version             show version information and quit\n"
                            "  -h, --help                show this message and quit\n"

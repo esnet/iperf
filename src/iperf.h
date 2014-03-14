@@ -174,6 +174,9 @@ struct iperf_test
     char     *congestion;			/* -C option */
     char     *pidfile;				/* -P option */
 
+    char     *logfile;				/* --logfile option */
+    FILE     *outfile;
+
     int       ctrl_sck;
     int       listener;
     int       prot_listener;

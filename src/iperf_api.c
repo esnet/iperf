@@ -562,6 +562,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"sctp", no_argument, NULL, OPT_SCTP},
 #endif
 	{"pidfile", required_argument, NULL, 'I'},
+	{"logfile", required_argument, NULL, OPT_LOGFILE},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -791,11 +792,26 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->pidfile = strdup(optarg);
 		server_flag = 1;
 	        break;
+	    case OPT_LOGFILE:
+		test->logfile = strdup(optarg);
+		break;
             case 'h':
             default:
                 usage_long();
                 exit(1);
         }
+    }
+
+    /* Set logging to a file if specified, otherwise stdout*/
+    if (test->logfile) {
+	test->outfile = fopen(test->logfile, "a+");
+	if (test->outfile == NULL) {
+	    i_errno = IELOGFILE;
+	    return -1;
+	}
+    }
+    else {
+	test->outfile = stdout;
     }
 
     /* Check flag / role compatibility. */
@@ -2524,9 +2540,8 @@ iperf_json_finish(struct iperf_test *test)
     str = cJSON_Print(test->json_top);
     if (str == NULL)
         return -1;
-    fputs(str, stdout);
-    putchar('\n');
-    fflush(stdout);
+    fprintf(test->outfile, "%s\n", str);
+    iflush(test);
     free(str);
     cJSON_Delete(test->json_top);
     test->json_top = test->json_start = test->json_intervals = test->json_end = NULL;
@@ -2608,9 +2623,15 @@ iprintf(struct iperf_test *test, const char* format, ...)
     int r;
 
     if (test->title)
-        printf("%s:  ", test->title);
+        fprintf(test->outfile, "%s:  ", test->title);
     va_start(argp, format);
-    r = vprintf(format, argp);
+    r = vfprintf(test->outfile, format, argp);
     va_end(argp);
     return r;
+}
+
+int
+iflush(struct iperf_test *test)
+{
+    return fflush(test->outfile);
 }

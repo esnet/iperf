@@ -1821,7 +1821,7 @@ iperf_print_intermediate(struct iperf_test *test)
     }
 
     /* next build string with sum of all streams */
-    if (test->num_streams > 1) {
+    if (test->num_streams > 1 || test->json_output) {
         sp = SLIST_FIRST(&test->streams); /* reset back to 1st stream */
         irp = TAILQ_LAST(&sp->result->interval_results, irlisthead);    /* use 1st stream for timing info */
 
@@ -1981,7 +1981,7 @@ iperf_print_results(struct iperf_test *test)
 	}
     }
 
-    if (test->num_streams > 1) {
+    if (test->num_streams > 1 || test->json_output) {
         unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
 	bandwidth = (double) total_sent / (double) end_time;
         unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);

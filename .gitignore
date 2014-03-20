@@ -20,3 +20,6 @@ src/iperf3_profile
 src/t_timer
 src/t_units
 src/t_uuid
+examples/.libs
+examples/mic
+examples/mis

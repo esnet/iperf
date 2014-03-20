@@ -802,16 +802,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         }
     }
 
-    /* Set logging to a file if specified, otherwise stdout*/
+    /* Set logging to a file if specified, otherwise use the default (stdout) */
     if (test->logfile) {
 	test->outfile = fopen(test->logfile, "a+");
 	if (test->outfile == NULL) {
 	    i_errno = IELOGFILE;
 	    return -1;
 	}
-    }
-    else {
-	test->outfile = stdout;
     }
 
     /* Check flag / role compatibility. */
@@ -1513,6 +1510,9 @@ iperf_new_test()
 	return NULL;
     }
     memset(test->settings, 0, sizeof(struct iperf_settings));
+
+    /* By default all output goes to stdout */
+    test->outfile = stdout;
 
     return test;
 }

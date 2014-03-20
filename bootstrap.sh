@@ -38,8 +38,21 @@ case "$1" in
 		;;
 esac
 
+if libtoolize --version >/dev/null 2>&1; then
+  libtoolize=libtoolize
+elif glibtoolize --version >/dev/null 2>&1; then
+  libtoolize=glibtoolize
+else
+  libtoolize=""
+fi
+
+if [ "x$libtoolize" = "x" ]; then
+  echo "Can't find libtoolize, exiting."
+  exit 1
+fi
+
 set -x
-libtoolize --copy --force --automake
+$libtoolize --copy --force --automake
 aclocal -I config
 autoheader
 automake --foreign --add-missing --copy

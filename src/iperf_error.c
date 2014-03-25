@@ -324,11 +324,11 @@ iperf_strerror(int i_errno)
     }
 
     if (herr || perr)
-        strncat(errstr, ": ", len);
+        strncat(errstr, ": ", sizeof(errstr)-strlen(errstr)-1);
     if (h_errno && herr) {
-        strncat(errstr, hstrerror(h_errno), len);
+        strncat(errstr, hstrerror(h_errno), sizeof(errstr)-strlen(errstr)-1);
     } else if (errno && perr) {
-        strncat(errstr, strerror(errno), len);
+        strncat(errstr, strerror(errno), sizeof(errstr)-strlen(errstr)-1);
     }
 
     return errstr;

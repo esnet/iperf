@@ -301,11 +301,11 @@ iperf_strerror(int i_errno)
     }
 
     if (herr || perr)
-        strncat(errstr, ": ", sizeof(errstr)-strlen(errstr)-1);
+        strncat(errstr, ": ", len - strlen(errstr) - 1);
     if (h_errno && herr) {
-        strncat(errstr, hstrerror(h_errno), sizeof(errstr)-strlen(errstr)-1);
+        strncat(errstr, hstrerror(h_errno), len - strlen(errstr) - 1);
     } else if (errno && perr) {
-        strncat(errstr, strerror(errno), sizeof(errstr)-strlen(errstr)-1);
+        strncat(errstr, strerror(errno), len - strlen(errstr) - 1);
     }
 
     return errstr;

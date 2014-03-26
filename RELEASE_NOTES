@@ -1,3 +1,25 @@
+== iperf 3.0.3 2014-03-26 ==
+
+* User-visible changes
+
+  * Due to several oversights, the source code archive for iperf 3.0.2
+    was distributed as an uncompressed tarball, despite having an
+    extension (".tar.gz") that indicated it was compressed.  The
+    release generation procedure has been changed to avoid this
+    problem going forward.
+
+  * Summary structures in the JSON output are now included, even if
+    there is only one stream.  This change makes consuming the JSON
+    output easier and more consistent (issue #151).
+
+  * A possible buffer overflow in iperf_error.c has been fixed (issue
+    #155).
+
+* Developer-visible changes
+
+  * Example programs now build correctly, after having been broken in
+    the 3.0.2 release (issue #152).
+
 == iperf 3.0.2 2014-03-10 ==
 
 * User-visible changes

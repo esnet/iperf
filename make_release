@@ -21,7 +21,7 @@ dirname=`echo $tag $proj | awk '{
 
 do_tag ()
 {
-    git tag --sign -m "tagging $tag" $tag
+    git tag -s -m "tagging $tag" $tag
 }
 
 do_tar ()

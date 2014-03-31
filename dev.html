@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>iperf3 Development &mdash; iperf 3.0.3 documentation</title>
+    
+    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-3.1.0/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/esnet/esnet.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.0.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="iperf 3.0.3 documentation" href="index.html" />
+    <link rel="prev" title="Invoking iperf3" href="invoking.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          <!-- LOGO: logo-esnet-ball-sm.png _static/logo-esnet-ball-sm.png --><img src="_static/logo-esnet-ball-sm.png">
+          iperf</a>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Section <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="news.html">iperf3 Project News</a></li>
+<li class="toctree-l1"><a class="reference internal" href="obtaining.html">Obtaining iperf3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building iperf3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="invoking.html">Invoking iperf3</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">iperf3 Development</a></li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="invoking.html" title="Previous Chapter: Invoking iperf3">
+      <span class="glyphicon glyphicon-chevron-left"></span>
+      <span class="hidden-sm">
+        Invoking iperf3
+      </span>
+    </a>
+  </li>
+              
+            
+            <li class="divider-vertical"></li>
+            
+                <li><a href="genindex.html">Index</a></li>
+                <li><a href="https://www.es.net">ESnet</a></li>
+            
+            <li><a href="https://github.com/esnet/iperf"><img src="_static/esnet/icon-github.png" height="20" width="20"></a></li>
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="_sources/dev.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
+<li><a class="reference internal" href="#">iperf3 Development</a><ul>
+<li><a class="reference internal" href="#mailing-lists">Mailing Lists</a></li>
+<li><a class="reference internal" href="#bug-reports">Bug Reports</a></li>
+<li><a class="reference internal" href="#changes-from-iperf-2-x">Changes from iperf 2.x</a></li>
+<li><a class="reference internal" href="#known-issues">Known Issues</a></li>
+<li><a class="reference internal" href="#versioning">Versioning</a></li>
+<li><a class="reference internal" href="#release-engineering-checklist">Release Engineering Checklist</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    <div class="col-md-9">
+      
+  <div class="section" id="iperf3-development">
+<h1>iperf3 Development<a class="headerlink" href="#iperf3-development" title="Permalink to this headline">¶</a></h1>
+<p>The iperf3 project is hosted on GitHub at:</p>
+<p><a class="reference external" href="http://github.com/esnet/iperf">http://github.com/esnet/iperf</a></p>
+<p>This site includes the source code repository, issue tracker, and
+wiki.</p>
+<div class="section" id="mailing-lists">
+<h2>Mailing Lists<a class="headerlink" href="#mailing-lists" title="Permalink to this headline">¶</a></h2>
+<p>The developer list for iperf3 is:  <a class="reference external" href="mailto:iperf3-dev&#37;&#52;&#48;googlegroups&#46;com">iperf3-dev<span>&#64;</span>googlegroups<span>&#46;</span>com</a>.
+Information on joining the mailing list can be found at:</p>
+<p><a class="reference external" href="http://groups.google.com/group/iperf-dev">http://groups.google.com/group/iperf-dev</a></p>
+<p>There is, at the moment, no mailing list for user questions, although
+a low volume of inquiries on the developer list is probably
+acceptable.  If necessary, a user-oriented mailing list might be
+created in the future.</p>
+</div>
+<div class="section" id="bug-reports">
+<h2>Bug Reports<a class="headerlink" href="#bug-reports" title="Permalink to this headline">¶</a></h2>
+<p>Before submitting a bug report, try checking out the latest version of
+the code, and confirm that it&#8217;s not already fixed.  Then submit to the
+iperf3 issue tracker on GitHub:</p>
+<p><a class="reference external" href="https://github.com/esnet/iperf/issues">https://github.com/esnet/iperf/issues</a></p>
+<p><strong>Note:</strong>  Issues submitted to the old iperf3 issue tracker on Google
+Code will be ignored.</p>
+</div>
+<div class="section" id="changes-from-iperf-2-x">
+<h2>Changes from iperf 2.x<a class="headerlink" href="#changes-from-iperf-2-x" title="Permalink to this headline">¶</a></h2>
+<p>New options (not necessarily complete, please refer to the manual page
+for a complete list of iperf3 options):</p>
+<div class="highlight-python"><div class="highlight"><pre>-V, --verbose             more detailed output than before
+-J, --json                output in JSON format
+-Z, --zerocopy            use a &#39;zero copy&#39; sendfile() method of sending data
+-O, --omit N              omit the first n seconds (to ignore slowstart)
+-T, --title str           prefix every output line with this string
+-F, --file name           xmit/recv the specified file
+-A, --affinity n/n,m      set CPU affinity (Linux and FreeBSD only)
+-k, --blockcount #[KMG]   number of blocks (packets) to transmit (instead
+                          of -t or -n)
+-L, --flowlabel           set IPv6 flow label (Linux only)
+</pre></div>
+</div>
+<p>Changed flags:</p>
+<div class="highlight-python"><div class="highlight"><pre>-C, --linux-congestion    set congestion control algorithm (Linux only)
+                          (-Z in iperf2)
+</pre></div>
+</div>
+<p>Deprecated flags (currently no plans to support):</p>
+<div class="highlight-python"><div class="highlight"><pre>-d, --dualtest           Do a bidirectional test simultaneously
+-r, --tradeoff           Do a bidirectional test individually
+-T, --ttl                time-to-live, for multicast (default 1)
+-x, --reportexclude [CDMSV]   exclude C(connection) D(data) M(multicast)
+                              S(settings) V(server) reports
+-y, --reportstyle C      report as a Comma-Separated Values
+</pre></div>
+</div>
+<p>Also deprecated is the ability to set the options via environment
+variables.</p>
+</div>
+<div class="section" id="known-issues">
+<h2>Known Issues<a class="headerlink" href="#known-issues" title="Permalink to this headline">¶</a></h2>
+<p>The following problems are notable known issues, which are probably of
+interest to a large fraction of users or have high impact for some
+users, and for which issues have already been filed in the issue
+tracker.  These issues are either open (indicating no solution
+currently exists) or closed with the notation that no further attempts
+to solve the problem are currently being made:</p>
+<ul class="simple">
+<li>UDP performance: iperf2/iperf3 both only are only about 50% as fast
+as nuttcp in UDP mode.  We are looking into this, but in the
+meantime, if you want to get UDP above 5Gbps, we recommend using
+nuttcp instead (<a class="reference external" href="http://www.nuttcp.net/">http://www.nuttcp.net/</a>).  (Issue #55)</li>
+<li>Interval reports on high-loss networks: The way iperf3 is currently
+implemented, the sender write command will block until the entire
+block has been written. This means that it might take several
+seconds to send a full block if the network has high loss, and the
+interval reports will have widely varying interval times. We are
+trying to determine the best solution to this, but in the meantime,
+try using a smaller block size if you get strange interval reports.
+For example, try <tt class="docutils literal"><span class="pre">-l</span> <span class="pre">4K</span></tt>.  (Issue #125)</li>
+<li>The <tt class="docutils literal"><span class="pre">-Z</span></tt> flag sometimes hangs on OSX.  (Issue #129)</li>
+<li>On OpenBSD, the server seems to require a <tt class="docutils literal"><span class="pre">-4</span></tt> argument, implying
+that it can only be used with IPv4.  (Issue #108)</li>
+<li>When specifying the TCP buffer size using the <tt class="docutils literal"><span class="pre">-w</span></tt> flag on Linux,
+Linux doubles the value you pass in. (You can see this using
+iperf3&#8217;s debug flag.)  But then the CWND does not actually ramp up
+to the doubled value, but only to about 75% of the doubled
+value. This appears to be by design.  (Issue #145)</li>
+</ul>
+<p>There are, of course, many other open and closed issues in the issue
+tracker.</p>
+</div>
+<div class="section" id="versioning">
+<h2>Versioning<a class="headerlink" href="#versioning" title="Permalink to this headline">¶</a></h2>
+<p>iperf version numbers use three-part release numbers:  <em>MAJOR.MINOR.PATCH</em></p>
+<p>The developers increment the:</p>
+<ul class="simple">
+<li><em>MAJOR</em> version when making incompatible API changes,</li>
+<li><em>MINOR</em> version when adding functionality in a backwards-compatible manner, and</li>
+<li><em>PATCH</em> version when making backwards-compatible bug fixes.</li>
+</ul>
+<p>This is roughly along the line of <a class="reference external" href="http://semver.org/">Semantic Versioning</a>.</p>
+</div>
+<div class="section" id="release-engineering-checklist">
+<h2>Release Engineering Checklist<a class="headerlink" href="#release-engineering-checklist" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><p class="first">Update the <tt class="docutils literal"><span class="pre">README</span></tt> and <tt class="docutils literal"><span class="pre">RELEASE_NOTES</span></tt> files to be accurate. Make sure
+that the &#8220;Known Issues&#8221; section of the <tt class="docutils literal"><span class="pre">README</span></tt> file is up to date.</p>
+</li>
+<li><p class="first">Compose a release announcement.  Most of the release announcement
+can be written before tagging.</p>
+</li>
+<li><p class="first">Starting from a clean source tree (be sure that <tt class="docutils literal"><span class="pre">git</span> <span class="pre">status</span></tt> emits
+no output):</p>
+<div class="highlight-python"><div class="highlight"><pre>vi src/version.h   # update the strings IPERF_VERSION and IPERF_VERSION_DATE
+vi configure.ac    # update version parameter in AC_INIT
+vi src/iperf3.1    # update manpage revision date if needed
+vi src/libiperf.3  # update manpage revision date if needed
+git commit -a
+./bootstrap.sh     # regenerate configure script, etc.
+git commit -a
+git push
+
+./make_release tag  # this creates a tag in the local repo that matches the version.h version
+git push --tags     # Push the new tag to the GitHub repo
+./make_release tar  # create tarball and compute SHA256 hash
+</pre></div>
+</div>
+<p>Doing the above steps on CentOS 6 (with its somewhat older
+autotools / libtools suite) is preferred; newer systems generate
+<tt class="docutils literal"><span class="pre">configure</span></tt> and <tt class="docutils literal"><span class="pre">Makefile</span></tt> scripts that tend to rebuild
+themselves rather frequently.  We might be able to address this
+problem (and graduate to newer autotools) by using
+<tt class="docutils literal"><span class="pre">AC_MAINTAINER_MODE</span></tt> but there&#8217;s a fair amount of religion
+associated with this.</p>
+</li>
+<li><p class="first">Stage the tarball (and a file containing the SHA256 hash) to the
+download site.  Currently this is located on <tt class="docutils literal"><span class="pre">stats.es.net</span></tt>.</p>
+</li>
+<li><p class="first">From another host, test the link in the release announcement by
+downloading a fresh copy of the file and verifying the SHA256
+checksum.</p>
+</li>
+<li><p class="first">Also verify (with file(1)) that the tarball is actually a gzipped
+tarball.</p>
+</li>
+<li><p class="first">For extra points, actually try downloading, compiling, and
+smoke-testing the results of the tarball on all supported
+platforms.</p>
+</li>
+<li><p class="first">Plug the SHA256 checksum into the release announcement.</p>
+</li>
+<li><p class="first">Send the release announcement (PGP-signed) to these addresses:</p>
+<ul class="simple">
+<li><a class="reference external" href="mailto:iperf-dev&#37;&#52;&#48;googlegroups&#46;com">iperf-dev<span>&#64;</span>googlegroups<span>&#46;</span>com</a></li>
+<li><a class="reference external" href="mailto:iperf-users&#37;&#52;&#48;lists&#46;sourceforge&#46;net">iperf-users<span>&#64;</span>lists<span>&#46;</span>sourceforge<span>&#46;</span>net</a></li>
+<li><a class="reference external" href="mailto:perfsonar-user&#37;&#52;&#48;internet2&#46;edu">perfsonar-user<span>&#64;</span>internet2<span>&#46;</span>edu</a></li>
+<li><a class="reference external" href="mailto:perfsonar-dev&#37;&#52;&#48;internet2&#46;edu">perfsonar-dev<span>&#64;</span>internet2<span>&#46;</span>edu</a></li>
+</ul>
+</li>
+</ol>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-1">
+        <a href="http://www.es.net/"><img src="_static/esnet/logo-esnet.png" alt="[ESnet]"></a>
+      </div>
+      <div class="col-md-11">
+        <p class="pull-right">
+        <a href="#">Back to top</a>
+        
+        </p>
+        <p>
+            &copy; Copyright 2014, ESnet.<br/>
+          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.<br/>
+        </p>
+      </div>
+    </div>
+  </div>
+</footer>
+  </body>
+</html>

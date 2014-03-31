@@ -10,6 +10,7 @@ autom4te.cache
 config/test-driver
 config.log
 config.status
+docs/_build
 libtool
 src/.deps
 src/.libs

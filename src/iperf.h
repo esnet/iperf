@@ -193,6 +193,7 @@ struct iperf_test
     int	      multisend;
     int	      may_use_sigalrm;
 
+    char     *json_output_string; /* rendered JSON output if json_output is set */
     /* Select related parameters */
     int       max_fd;
     fd_set    read_set;                         /* set of read sockets */

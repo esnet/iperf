@@ -1,4 +1,4 @@
-.TH LIBIPERF 3 "February 2014" ESnet "User Manuals"
+.TH LIBIPERF 3 "March 2014" ESnet "User Manuals"
 .SH NAME
 libiperf \- API for iperf3 network throughput tester
 
@@ -38,6 +38,11 @@ Running a test:
     int iperf_run_client(struct iperf_test *);
     int iperf_run_server(struct iperf_test *);
     void iperf_test_reset(struct iperf_test *);
+.fi
+Output:
+.nf
+    FILE *iperf_get_test_outfile(struct iperf_test *);
+    char* iperf_get_test_json_output_string(struct iperf_test *);
 .fi
 Error reporting:
 .nf

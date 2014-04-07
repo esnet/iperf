@@ -57,6 +57,7 @@ int	iperf_get_test_duration( struct iperf_test* ipt );
 char	iperf_get_test_role( struct iperf_test* ipt );
 int	iperf_get_test_reverse( struct iperf_test* ipt );
 int	iperf_get_test_blksize( struct iperf_test* ipt );
+FILE*	iperf_get_test_outfile( struct iperf_test* ipt );
 uint64_t iperf_get_test_rate( struct iperf_test* ipt );
 int     iperf_get_test_burst( struct iperf_test* ipt );
 int	iperf_get_test_socket_bufsize( struct iperf_test* ipt );
@@ -67,6 +68,7 @@ int	iperf_get_test_server_port( struct iperf_test* ipt );
 char*	iperf_get_test_server_hostname( struct iperf_test* ipt );
 int	iperf_get_test_protocol_id( struct iperf_test* ipt );
 int	iperf_get_test_json_output( struct iperf_test* ipt );
+char*	iperf_get_test_json_output_string ( struct iperf_test* ipt );
 int	iperf_get_test_zerocopy( struct iperf_test* ipt );
 int	iperf_get_test_may_use_sigalrm( struct iperf_test* ipt );
 

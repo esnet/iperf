@@ -145,6 +145,12 @@ iperf_get_test_blksize(struct iperf_test *ipt)
     return ipt->settings->blksize;
 }
 
+FILE *
+iperf_get_test_outfile (struct iperf_test *ipt)
+{
+    return ipt->outfile;
+}
+
 int
 iperf_get_test_socket_bufsize(struct iperf_test *ipt)
 {
@@ -191,6 +197,12 @@ int
 iperf_get_test_json_output(struct iperf_test *ipt)
 {
     return ipt->json_output;
+}
+
+char *
+iperf_get_test_json_output_string(struct iperf_test *ipt)
+{
+    return ipt->json_output_string;
 }
 
 int
@@ -1681,6 +1693,11 @@ iperf_free_test(struct iperf_test *test)
         free(prot);
     }
 
+    if (test->json_output_string) {
+	free(test->json_output_string);
+	test->json_output_string = NULL;
+    }
+
     /* XXX: Why are we setting these values to NULL? */
     // test->streams = NULL;
     test->stats_callback = NULL;
@@ -2535,14 +2552,11 @@ iperf_json_start(struct iperf_test *test)
 int
 iperf_json_finish(struct iperf_test *test)
 {
-    char *str;
-
-    str = cJSON_Print(test->json_top);
-    if (str == NULL)
+    test->json_output_string = cJSON_Print(test->json_top);
+    if (test->json_output_string == NULL)
         return -1;
-    fprintf(test->outfile, "%s\n", str);
+    fprintf(test->outfile, "%s\n", test->json_output_string);
     iflush(test);
-    free(str);
     cJSON_Delete(test->json_top);
     test->json_top = test->json_start = test->json_intervals = test->json_end = NULL;
     return 0;

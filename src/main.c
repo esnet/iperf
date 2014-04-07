@@ -117,7 +117,7 @@ run(struct iperf_test *test)
 		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 	    }
             for (;;) {
-                if (iperf_run_server(test) < 0) {
+		if (iperf_run_server(test) < 0) {
 		    iperf_err(test, "error - %s", iperf_strerror(i_errno));
                     fprintf(stderr, "\n");
 		    ++consecutive_errors;
@@ -131,8 +131,8 @@ run(struct iperf_test *test)
             }
 	    iperf_delete_pidfile(test);
             break;
-        case 'c':
-            if (iperf_run_client(test) < 0)
+	case 'c':
+	    if (iperf_run_client(test) < 0)
 		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
             break;
         default:

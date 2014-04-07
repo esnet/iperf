@@ -11,7 +11,7 @@ wiki.
 Mailing Lists
 -------------
 
-The developer list for iperf3 is:  iperf3-dev@googlegroups.com.
+The developer list for iperf3 is:  iperf-dev@googlegroups.com.
 Information on joining the mailing list can be found at:
 
 http://groups.google.com/group/iperf-dev
@@ -30,8 +30,9 @@ iperf3 issue tracker on GitHub:
 
 https://github.com/esnet/iperf/issues
 
-**Note:**  Issues submitted to the old iperf3 issue tracker on Google
-Code will be ignored.
+**Note:** Issues submitted to the old iperf3 issue tracker on Google
+Code (or comments to existing issues on the Google Code issue tracker)
+will be ignored.
 
 Changes from iperf 2.x
 ----------------------
@@ -78,19 +79,18 @@ tracker.  These issues are either open (indicating no solution
 currently exists) or closed with the notation that no further attempts
 to solve the problem are currently being made:
 
-* UDP performance: iperf2/iperf3 both only are only about 50% as fast
-  as nuttcp in UDP mode.  We are looking into this, but in the
-  meantime, if you want to get UDP above 5Gbps, we recommend using
-  nuttcp instead (http://www.nuttcp.net/).  (Issue #55)
+* UDP performance: iperf2/iperf3 are both only about 50% as fast
+  as nuttcp in UDP mode.  This is being investigated, but in the
+  meantime, if UDP tests above 5Gbps are needed, using
+  `nuttcp <http://www.nuttcp.net/>`_ is recommended.  (Issue #55)
 
 * Interval reports on high-loss networks: The way iperf3 is currently
   implemented, the sender write command will block until the entire
   block has been written. This means that it might take several
   seconds to send a full block if the network has high loss, and the
-  interval reports will have widely varying interval times. We are
-  trying to determine the best solution to this, but in the meantime,
-  try using a smaller block size if you get strange interval reports.
-  For example, try ``-l 4K``.  (Issue #125)
+  interval reports will have widely varying interval times.  A
+  solution is being discussed, but in the meantime a work around is to
+  try using a small block size, for example ``-l 4K``.  (Issue #125)
 
 * The ``-Z`` flag sometimes hangs on OSX.  (Issue #129)
 
@@ -98,10 +98,12 @@ to solve the problem are currently being made:
   that it can only be used with IPv4.  (Issue #108)
 
 * When specifying the TCP buffer size using the ``-w`` flag on Linux,
-  Linux doubles the value you pass in. (You can see this using
-  iperf3's debug flag.)  But then the CWND does not actually ramp up
+  the Linux kernel automatically doubles the value passed in to
+  compensate for overheads.  (This can be observed by using
+  iperf3's ``--debug`` flag.)  However, CWND does not actually ramp up
   to the doubled value, but only to about 75% of the doubled
-  value. This appears to be by design.  (Issue #145)
+  value.  Some part of this behavior is documented in the tcp(7)
+  manual page.  (Issue #145)
 
 There are, of course, many other open and closed issues in the issue
 tracker.
@@ -109,7 +111,9 @@ tracker.
 Versioning
 ----------
 
-iperf version numbers use three-part release numbers:  *MAJOR.MINOR.PATCH*
+iperf3 version numbers use (roughly) a `Semantic Versioning
+<http://semver.org/>`_ scheme, in which version numbers consist of
+three parts:  *MAJOR.MINOR.PATCH*
 
 The developers increment the:
 
@@ -118,8 +122,6 @@ The developers increment the:
 * *MINOR* version when adding functionality in a backwards-compatible manner, and
 
 * *PATCH* version when making backwards-compatible bug fixes.
-
-This is roughly along the line of `Semantic Versioning <http://semver.org/>`_.
 
 Release Engineering Checklist
 -----------------------------
@@ -149,7 +151,7 @@ Release Engineering Checklist
    Doing the above steps on CentOS 6 (with its somewhat older
    autotools / libtools suite) is preferred; newer systems generate
    ``configure`` and ``Makefile`` scripts that tend to rebuild
-   themselves rather frequently.  We might be able to address this
+   themselves rather frequently.  It might be possible to address this
    problem (and graduate to newer autotools) by using
    ``AC_MAINTAINER_MODE`` but there's a fair amount of religion
    associated with this.
@@ -179,4 +181,9 @@ Release Engineering Checklist
    * perfsonar-user@internet2.edu
 
    * perfsonar-dev@internet2.edu
+
+10.  Update the iperf3 Project News section of the documentation site
+     to announce the new release (see ``docs/news.rst`` in the source
+     tree) and deploy a new build of the documentation to GitHub
+     Pages.
 

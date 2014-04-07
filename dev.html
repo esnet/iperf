@@ -146,7 +146,7 @@
 wiki.</p>
 <div class="section" id="mailing-lists">
 <h2>Mailing Lists<a class="headerlink" href="#mailing-lists" title="Permalink to this headline">¶</a></h2>
-<p>The developer list for iperf3 is:  <a class="reference external" href="mailto:iperf3-dev&#37;&#52;&#48;googlegroups&#46;com">iperf3-dev<span>&#64;</span>googlegroups<span>&#46;</span>com</a>.
+<p>The developer list for iperf3 is:  <a class="reference external" href="mailto:iperf-dev&#37;&#52;&#48;googlegroups&#46;com">iperf-dev<span>&#64;</span>googlegroups<span>&#46;</span>com</a>.
 Information on joining the mailing list can be found at:</p>
 <p><a class="reference external" href="http://groups.google.com/group/iperf-dev">http://groups.google.com/group/iperf-dev</a></p>
 <p>There is, at the moment, no mailing list for user questions, although
@@ -160,8 +160,9 @@ created in the future.</p>
 the code, and confirm that it&#8217;s not already fixed.  Then submit to the
 iperf3 issue tracker on GitHub:</p>
 <p><a class="reference external" href="https://github.com/esnet/iperf/issues">https://github.com/esnet/iperf/issues</a></p>
-<p><strong>Note:</strong>  Issues submitted to the old iperf3 issue tracker on Google
-Code will be ignored.</p>
+<p><strong>Note:</strong> Issues submitted to the old iperf3 issue tracker on Google
+Code (or comments to existing issues on the Google Code issue tracker)
+will be ignored.</p>
 </div>
 <div class="section" id="changes-from-iperf-2-x">
 <h2>Changes from iperf 2.x<a class="headerlink" href="#changes-from-iperf-2-x" title="Permalink to this headline">¶</a></h2>
@@ -205,40 +206,41 @@ tracker.  These issues are either open (indicating no solution
 currently exists) or closed with the notation that no further attempts
 to solve the problem are currently being made:</p>
 <ul class="simple">
-<li>UDP performance: iperf2/iperf3 both only are only about 50% as fast
-as nuttcp in UDP mode.  We are looking into this, but in the
-meantime, if you want to get UDP above 5Gbps, we recommend using
-nuttcp instead (<a class="reference external" href="http://www.nuttcp.net/">http://www.nuttcp.net/</a>).  (Issue #55)</li>
+<li>UDP performance: iperf2/iperf3 are both only about 50% as fast
+as nuttcp in UDP mode.  This is being investigated, but in the
+meantime, if UDP tests above 5Gbps are needed, using
+<a class="reference external" href="http://www.nuttcp.net/">nuttcp</a> is recommended.  (Issue #55)</li>
 <li>Interval reports on high-loss networks: The way iperf3 is currently
 implemented, the sender write command will block until the entire
 block has been written. This means that it might take several
 seconds to send a full block if the network has high loss, and the
-interval reports will have widely varying interval times. We are
-trying to determine the best solution to this, but in the meantime,
-try using a smaller block size if you get strange interval reports.
-For example, try <tt class="docutils literal"><span class="pre">-l</span> <span class="pre">4K</span></tt>.  (Issue #125)</li>
+interval reports will have widely varying interval times.  A
+solution is being discussed, but in the meantime a work around is to
+try using a small block size, for example <tt class="docutils literal"><span class="pre">-l</span> <span class="pre">4K</span></tt>.  (Issue #125)</li>
 <li>The <tt class="docutils literal"><span class="pre">-Z</span></tt> flag sometimes hangs on OSX.  (Issue #129)</li>
 <li>On OpenBSD, the server seems to require a <tt class="docutils literal"><span class="pre">-4</span></tt> argument, implying
 that it can only be used with IPv4.  (Issue #108)</li>
 <li>When specifying the TCP buffer size using the <tt class="docutils literal"><span class="pre">-w</span></tt> flag on Linux,
-Linux doubles the value you pass in. (You can see this using
-iperf3&#8217;s debug flag.)  But then the CWND does not actually ramp up
+the Linux kernel automatically doubles the value passed in to
+compensate for overheads.  (This can be observed by using
+iperf3&#8217;s <tt class="docutils literal"><span class="pre">--debug</span></tt> flag.)  However, CWND does not actually ramp up
 to the doubled value, but only to about 75% of the doubled
-value. This appears to be by design.  (Issue #145)</li>
+value.  Some part of this behavior is documented in the tcp(7)
+manual page.  (Issue #145)</li>
 </ul>
 <p>There are, of course, many other open and closed issues in the issue
 tracker.</p>
 </div>
 <div class="section" id="versioning">
 <h2>Versioning<a class="headerlink" href="#versioning" title="Permalink to this headline">¶</a></h2>
-<p>iperf version numbers use three-part release numbers:  <em>MAJOR.MINOR.PATCH</em></p>
+<p>iperf3 version numbers use (roughly) a <a class="reference external" href="http://semver.org/">Semantic Versioning</a> scheme, in which version numbers consist of
+three parts:  <em>MAJOR.MINOR.PATCH</em></p>
 <p>The developers increment the:</p>
 <ul class="simple">
 <li><em>MAJOR</em> version when making incompatible API changes,</li>
 <li><em>MINOR</em> version when adding functionality in a backwards-compatible manner, and</li>
 <li><em>PATCH</em> version when making backwards-compatible bug fixes.</li>
 </ul>
-<p>This is roughly along the line of <a class="reference external" href="http://semver.org/">Semantic Versioning</a>.</p>
 </div>
 <div class="section" id="release-engineering-checklist">
 <h2>Release Engineering Checklist<a class="headerlink" href="#release-engineering-checklist" title="Permalink to this headline">¶</a></h2>
@@ -268,7 +270,7 @@ git push --tags     # Push the new tag to the GitHub repo
 <p>Doing the above steps on CentOS 6 (with its somewhat older
 autotools / libtools suite) is preferred; newer systems generate
 <tt class="docutils literal"><span class="pre">configure</span></tt> and <tt class="docutils literal"><span class="pre">Makefile</span></tt> scripts that tend to rebuild
-themselves rather frequently.  We might be able to address this
+themselves rather frequently.  It might be possible to address this
 problem (and graduate to newer autotools) by using
 <tt class="docutils literal"><span class="pre">AC_MAINTAINER_MODE</span></tt> but there&#8217;s a fair amount of religion
 associated with this.</p>
@@ -296,6 +298,11 @@ platforms.</p>
 <li><a class="reference external" href="mailto:perfsonar-user&#37;&#52;&#48;internet2&#46;edu">perfsonar-user<span>&#64;</span>internet2<span>&#46;</span>edu</a></li>
 <li><a class="reference external" href="mailto:perfsonar-dev&#37;&#52;&#48;internet2&#46;edu">perfsonar-dev<span>&#64;</span>internet2<span>&#46;</span>edu</a></li>
 </ul>
+</li>
+<li><p class="first">Update the iperf3 Project News section of the documentation site
+to announce the new release (see <tt class="docutils literal"><span class="pre">docs/news.rst</span></tt> in the source
+tree) and deploy a new build of the documentation to GitHub
+Pages.</p>
 </li>
 </ol>
 </div>

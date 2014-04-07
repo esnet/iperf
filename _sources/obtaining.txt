@@ -8,8 +8,13 @@ Binary Distributions
 
 Binary packages are available for several supported operating systems:
 
-* FreeBSD:  `Ports Collection <http://freshports.org/benchmarks/iperf3>`_
-* Fedora / CentOS:
+* FreeBSD:  `benchmarks/iperf3
+  <http://freshports.org/benchmarks/iperf3>`_ in the FreeBSD Ports Collection
+* Fedora / CentOS: `iperf3
+  <https://apps.fedoraproject.org/packages/iperf3/>`_ and
+  `iperf3-devel
+  <https://apps.fedoraproject.org/packages/iperf3-devel>`_ in Fedora
+  19 and 20 and in Fedora EPEL 5, 6, and 7.
 
 Source Distributions
 --------------------
@@ -35,7 +40,7 @@ GitHub using:
 
 ``git clone https://github.com/esnet/iperf.git``
 
-Primary development for iperf3 takes place on CentOS 6 Linux, FreeBSD,
-and MacOS X. At this time, these are the only officially supported
+Primary development for iperf3 takes place on CentOS 6 Linux, FreeBSD 10,
+and MacOS X 10.8. At this time, these are the only officially supported
 platforms, however there have been some reports of success with
 OpenBSD, Android, and other Linux distributions.

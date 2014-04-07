@@ -11,6 +11,7 @@ config/test-driver
 config.log
 config.status
 docs/_build
+docs/_static
 libtool
 src/.deps
 src/.libs

@@ -30,20 +30,20 @@ iperf3 is principally developed by `ESnet <http://www.es.net/>`_ /
 `Lawrence Berkleley National Laboratory <http://www.lbl.gov/>`_.  It
 is released under a three-clause BSD license.
 
-The iperf3 project is hosted on GitHub at:
+Links for the Impatient
+-----------------------
 
+Project site (source code repository, issue tracker) hosted on GitHub:
 https://github.com/esnet/iperf
 
-The GitHub project site includes the source code repository, issue
-tracker.
-
-This documention tree is hosted on GitHub pages at:
-
+Documentation tree hosted on GitHub Pages:
 https://esnet.github.io/iperf/
 
-For more information on obtaining iperf3, see :ref:`obtaining`.
+Source code downloads:
+https://stats.es.net/software/
 
-Contents:
+Contents
+--------
 
 .. toctree::
    :maxdepth: 2
@@ -55,7 +55,7 @@ Contents:
    dev
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`

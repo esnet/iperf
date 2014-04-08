@@ -44,7 +44,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'iperf'
+project = u'iperf3'
 copyright = u'2014, ESnet'
 
 # The version info for the project you're documenting, acts as replacement for

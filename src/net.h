@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011, The Regents of the University of California,
+ * Copyright (c) 2009-2014, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
@@ -24,34 +24,4 @@ int getsockdomain(int sock);
 #define NET_SOFTERROR -1
 #define NET_HARDERROR -2
 
-unsigned long long htonll(unsigned long long);
-unsigned long long ntohll(unsigned long long);
-
-/* XXX: Need a better check for byte order */
-#if BYTE_ORDER == BIG_ENDIAN
-#define HTONLL(n) (n)
-#define NTOHLL(n) (n)
-#else
-#define HTONLL(n) ((((unsigned long long)(n) & 0xFF) << 56) | \
-                   (((unsigned long long)(n) & 0xFF00) << 40) | \
-                   (((unsigned long long)(n) & 0xFF0000) << 24) | \
-                   (((unsigned long long)(n) & 0xFF000000) << 8) | \
-                   (((unsigned long long)(n) & 0xFF00000000) >> 8) | \
-                   (((unsigned long long)(n) & 0xFF0000000000) >> 24) | \
-                   (((unsigned long long)(n) & 0xFF000000000000) >> 40) | \
-                   (((unsigned long long)(n) & 0xFF00000000000000) >> 56))
-
-#define NTOHLL(n) ((((unsigned long long)(n) & 0xFF) << 56) | \
-                   (((unsigned long long)(n) & 0xFF00) << 40) | \
-                   (((unsigned long long)(n) & 0xFF0000) << 24) | \
-                   (((unsigned long long)(n) & 0xFF000000) << 8) | \
-                   (((unsigned long long)(n) & 0xFF00000000) >> 8) | \
-                   (((unsigned long long)(n) & 0xFF0000000000) >> 24) | \
-                   (((unsigned long long)(n) & 0xFF000000000000) >> 40) | \
-                   (((unsigned long long)(n) & 0xFF00000000000000) >> 56))
-#endif
-
-#define htonll(n) HTONLL(n)
-#define ntohll(n) NTOHLL(n)
-
-#endif
+#endif /* __NET_H */

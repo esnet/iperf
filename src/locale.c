@@ -53,6 +53,8 @@
 
 #include "version.h"
 
+#include "config.h"
+
 #ifdef __cplusplus
 extern    "C"
 {
@@ -124,7 +126,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
 
 			   "\n"
                            "[KMG] indicates options that support a K/M/G suffix for kilo-, mega-, or giga-\n"
-                           "Report bugs to <iperf-users@lists.sourceforge.net>\n";
+                           "Report bugs to " PACKAGE_BUGREPORT "\n";
 
 
 #ifdef OBSOLETE /* from old iperf: no longer supported. Add some of these back someday */
@@ -138,7 +140,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
   "-y, --reportstyle C      report as a Comma-Separated Values\n"
 #endif
 
-const char version[] = "iperf version " IPERF_VERSION " (" IPERF_VERSION_DATE ")";
+const char version[] = PACKAGE_STRING " (" IPERF_VERSION_DATE ")";
 
 /* -------------------------------------------------------------------
  * settings

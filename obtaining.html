@@ -164,6 +164,20 @@ tarballs at:</p>
 <p><strong>Note:</strong>  Due to a software packaging error, the 3.0.2 release
 tarball was not compressed, even though its filename had a <tt class="docutils literal"><span class="pre">.tar.gz</span></tt>
 suffix.</p>
+<p><strong>Note:</strong>  GitHub, which currently hosts the iperf3 project, supports
+a &#8220;Releases&#8221; feature, which can automatically generate <tt class="docutils literal"><span class="pre">.zip</span></tt> or <tt class="docutils literal"><span class="pre">.tar.gz</span></tt>
+archives, on demand, from tags in the iperf3 source tree.  These tags are
+created during the release engineering process to mark the exact
+version of files making up a release.</p>
+<p>In theory, the <tt class="docutils literal"><span class="pre">.tar.gz</span></tt> files produced by GitHub contain the same
+contents as what are in the official tarballs, note that the tarballs
+themselves will be different due to internal timestamps or other
+metadata.  Therefore these files will <em>not</em> match the published SHA256
+checksums and no guarantees can be made about the integrity of the
+files.  The authors of iperf3 always recommend downloading source
+distributions from the the directory above (or a mirror site), and
+verifying the SHA256 checksums before using them for any purpose, to
+ensure the files have not been tampered with.</p>
 </div>
 <div class="section" id="source-code-repository">
 <h2>Source Code Repository<a class="headerlink" href="#source-code-repository" title="Permalink to this headline">¶</a></h2>

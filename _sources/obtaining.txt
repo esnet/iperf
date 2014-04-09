@@ -28,6 +28,22 @@ http://stats.es.net/software/
 tarball was not compressed, even though its filename had a ``.tar.gz``
 suffix.
 
+**Note:**  GitHub, which currently hosts the iperf3 project, supports
+a "Releases" feature, which can automatically generate ``.zip`` or ``.tar.gz``
+archives, on demand, from tags in the iperf3 source tree.  These tags are
+created during the release engineering process to mark the exact
+version of files making up a release.
+
+In theory, the ``.tar.gz`` files produced by GitHub contain the same
+contents as what are in the official tarballs, note that the tarballs
+themselves will be different due to internal timestamps or other
+metadata.  Therefore these files will *not* match the published SHA256
+checksums and no guarantees can be made about the integrity of the
+files.  The authors of iperf3 always recommend downloading source
+distributions from the the directory above (or a mirror site), and
+verifying the SHA256 checksums before using them for any purpose, to
+ensure the files have not been tampered with.
+
 Source Code Repository
 ----------------------
 

@@ -46,4 +46,8 @@ exit 1
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 
+# Check for SCTP support
+AC_CHECK_HEADERS([netinet/sctp.h],
+		 AC_DEFINE([HAVE_SCTP], [1], [Have SCTP support.]))
+
 AC_OUTPUT([Makefile src/Makefile examples/Makefile])

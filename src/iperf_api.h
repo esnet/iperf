@@ -255,6 +255,7 @@ enum {
     IEBURST = 15,           // Invalid burst count. Maximum value = %dMAX_BURST
     IEENDCONDITIONS = 16,   // Only one test end condition (-t, -n, -k) may be specified
     IELOGFILE = 17,	    // Can't open log file
+    IENOSCTP = 18,	    // No SCTP support available
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

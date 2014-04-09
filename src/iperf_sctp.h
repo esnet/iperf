@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011, The Regents of the University of California,
+ * Copyright (c) 2009-2014, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
@@ -9,11 +9,6 @@
 
 #ifndef        IPERF_SCTP_H
 #define        IPERF_SCTP_H
-
-
-#ifndef SCTP_DISABLE_FRAGMENTS
-#define SCTP_DISABLE_FRAGMENTS  8
-#endif
 
 /**
  * iperf_sctp_accept -- accepts a new SCTP connection

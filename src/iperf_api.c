@@ -40,12 +40,15 @@
 #include <sys/cpuset.h>
 #endif
 
+#include "config.h"
 #include "net.h"
 #include "iperf.h"
 #include "iperf_api.h"
 #include "iperf_udp.h"
 #include "iperf_tcp.h"
+#if defined(HAVE_SCTP)
 #include "iperf_sctp.h"
+#endif /* HAVE_SCTP */
 #include "timer.h"
 
 #include "cjson.h"
@@ -570,7 +573,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(linux) && defined(TCP_CONGESTION)
         {"linux-congestion", required_argument, NULL, 'C'},
 #endif
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(HAVE_SCTP)
         {"sctp", no_argument, NULL, OPT_SCTP},
 #endif
 	{"pidfile", required_argument, NULL, 'I'},
@@ -639,13 +642,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
             case OPT_SCTP:
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(HAVE_SCTP)
                 set_protocol(test, Psctp);
                 client_flag = 1;
-#else /* linux */
+#else /* HAVE_SCTP */
                 i_errno = IEUNIMP;
                 return -1;
-#endif /* linux */
+#endif /* HAVE_SCTP */
             break;
 
             case 'b':
@@ -1555,7 +1558,10 @@ protocol_free(struct protocol *proto)
 int
 iperf_defaults(struct iperf_test *testp)
 {
-    struct protocol *tcp, *udp, *sctp;
+    struct protocol *tcp, *udp;
+#if defined(HAVE_SCTP)
+    struct protocol *sctp;
+#endif /* HAVE_SCTP */
 
     testp->omit = OMIT;
     testp->duration = DURATION;
@@ -1627,6 +1633,7 @@ iperf_defaults(struct iperf_test *testp)
 
     set_protocol(testp, Ptcp);
 
+#if defined(HAVE_SCTP)
     sctp = protocol_new();
     if (!sctp) {
         protocol_free(tcp);
@@ -1644,6 +1651,7 @@ iperf_defaults(struct iperf_test *testp)
     sctp->init = iperf_sctp_init;
 
     SLIST_INSERT_AFTER(udp, sctp, protocols);
+#endif /* HAVE_SCTP */
 
     testp->on_new_stream = iperf_on_new_stream;
     testp->on_test_start = iperf_on_test_start;

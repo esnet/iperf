@@ -130,6 +130,9 @@ iperf_strerror(int i_errno)
 	    snprintf(errstr, len, "unable to open log file");
 	    perr = 1;
 	    break;
+	case IENOSCTP:
+	    snprintf(errstr, len, "no SCTP support available");
+	    break;
         case IENEWTEST:
             snprintf(errstr, len, "unable to create a new test");
             perr = 1;

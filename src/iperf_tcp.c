@@ -26,9 +26,9 @@
 #include "iperf_tcp.h"
 #include "net.h"
 
-#if defined(linux)
+#if defined(HAVE_FLOWLABEL)
 #include "flowlabel.h"
-#endif
+#endif /* HAVE_FLOWLABEL */
 
 /* iperf_tcp_recv
  *
@@ -361,7 +361,7 @@ iperf_tcp_connect(struct iperf_test *test)
 	}
 	printf("SO_SNDBUF is %u\n", opt);
     }
-#if defined(linux)
+#if defined(HAVE_FLOWLABEL)
     if (test->settings->flowlabel) {
         if (server_res->ai_addr->sa_family != AF_INET6) {
 	    saved_errno = errno;
@@ -404,7 +404,7 @@ iperf_tcp_connect(struct iperf_test *test)
             } 
 	}
     }
-#endif
+#endif /* HAVE_FLOWLABEL */
 
 #if defined(linux) && defined(TCP_CONGESTION)
     if (test->congestion) {

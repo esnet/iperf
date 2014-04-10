@@ -63,4 +63,21 @@ if test "x$iperf3_cv_header_tcp_congestion" = "xyes"; then
     AC_DEFINE([HAVE_TCP_CONGESTION], [1], [Have TCP_CONGESTION sockopt.])
 fi
 
+# Check for IPv6 flowlabel support (believed to be Linux only)
+# We check for IPV6_FLOWLABEL_MGR in <linux/in6.h> even though we
+# don't use that file directly (we have our own stripped-down
+# copy, see src/flowlabel.h for more details).
+AC_CACHE_CHECK([IPv6 flowlabel support],
+[iperf3_cv_header_flowlabel],
+AC_EGREP_CPP(yes,
+[#include <sys/types.h>
+#include <linux/in6.h>
+#ifdef IPV6_FLOWLABEL_MGR
+  yes
+#endif
+],iperf3_cv_header_flowlabel=yes,iperf3_cv_header_flowlabel=no))
+if test "x$iperf3_cv_header_flowlabel" = "xyes"; then
+    AC_DEFINE([HAVE_FLOWLABEL], [1], [Have IPv6 flowlabel support.])
+fi
+
 AC_OUTPUT([Makefile src/Makefile examples/Makefile])

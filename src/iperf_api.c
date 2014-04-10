@@ -562,7 +562,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"version4", no_argument, NULL, '4'},
         {"version6", no_argument, NULL, '6'},
         {"tos", required_argument, NULL, 'S'},
+#if defined(HAVE_FLOWLABEL)
         {"flowlabel", required_argument, NULL, 'L'},
+#endif /* HAVE_FLOWLABEL */
         {"zerocopy", no_argument, NULL, 'Z'},
         {"omit", required_argument, NULL, 'O'},
         {"file", required_argument, NULL, 'F'},
@@ -735,17 +737,17 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
             case 'L':
-#if defined(linux)
+#if defined(HAVE_FLOWLABEL)
                 test->settings->flowlabel = strtol(optarg, NULL, 0);
 		if (test->settings->flowlabel < 1 || test->settings->flowlabel > 0xfffff) {
                     i_errno = IESETFLOW;
                     return -1;
 		}
 		client_flag = 1;
-#else /* linux */
+#else /* HAVE_FLOWLABEL */
                 i_errno = IEUNIMP;
                 return -1;
-#endif /* linux */
+#endif /* HAVE_FLOWLABEL */
                 break;
             case 'Z':
                 if (!has_sendfile()) {

@@ -406,7 +406,7 @@ iperf_tcp_connect(struct iperf_test *test)
     }
 #endif /* HAVE_FLOWLABEL */
 
-#if defined(linux) && defined(TCP_CONGESTION)
+#if defined(HAVE_TCP_CONGESTION)
     if (test->congestion) {
 	if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
 	    close(s);
@@ -415,7 +415,7 @@ iperf_tcp_connect(struct iperf_test *test)
 	    return -1;
 	}
     }
-#endif
+#endif /* HAVE_TCP_CONGESTION */
 
     if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS) {
 	saved_errno = errno;

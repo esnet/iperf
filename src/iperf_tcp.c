@@ -20,6 +20,7 @@
 #include <sys/time.h>
 #include <sys/select.h>
 
+#include "config.h"
 #include "iperf.h"
 #include "iperf_api.h"
 #include "iperf_tcp.h"
@@ -196,7 +197,7 @@ iperf_tcp_listen(struct iperf_test *test)
 	    }
 	    printf("SO_SNDBUF is %u\n", opt);
 	}
-#if defined(linux) && defined(TCP_CONGESTION)
+#if defined(HAVE_TCP_CONGESTION)
 	if (test->congestion) {
 	    if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
 		close(s);
@@ -205,7 +206,7 @@ iperf_tcp_listen(struct iperf_test *test)
 		return -1;
 	    } 
 	}
-#endif
+#endif /* HAVE_TCP_CONGESTION */
         opt = 1;
         if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
 	    saved_errno = errno;

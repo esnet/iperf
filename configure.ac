@@ -50,4 +50,17 @@ AC_C_CONST
 AC_CHECK_HEADERS([netinet/sctp.h],
 		 AC_DEFINE([HAVE_SCTP], [1], [Have SCTP support.]))
 
+# Check for TCP_CONGESTION sockopt (believed to be Linux only)
+AC_CACHE_CHECK([TCP_CONGESTION socket option],
+[iperf3_cv_header_tcp_congestion],
+AC_EGREP_CPP(yes,
+[#include <netinet/tcp.h>
+#ifdef TCP_CONGESTION
+  yes
+#endif
+],iperf3_cv_header_tcp_congestion=yes,iperf3_cv_header_tcp_congestion=no))
+if test "x$iperf3_cv_header_tcp_congestion" = "xyes"; then
+    AC_DEFINE([HAVE_TCP_CONGESTION], [1], [Have TCP_CONGESTION sockopt.])
+fi
+
 AC_OUTPUT([Makefile src/Makefile examples/Makefile])

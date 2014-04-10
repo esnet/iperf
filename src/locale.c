@@ -106,9 +106,9 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -R, --reverse             run in reverse mode (server sends, client receives)\n"
                            "  -w, --window    #[KMG]    TCP window size (socket buffer size)\n"
                            "  -B, --bind      <host>    bind to a specific interface\n"
-#if defined(linux)
+#if defined(HAVE_TCP_CONGESTION)
                            "  -C, --linux-congestion <algo>  set TCP congestion control algorithm (Linux only)\n"
-#endif
+#endif /* HAVE_TCP_CONGESTION */
                            "  -M, --set-mss   #         set TCP maximum segment size (MTU - 40 bytes)\n"
                            "  -N, --nodelay             set TCP no delay, disabling Nagle's Algorithm\n"
                            "  -4, --version4            only use IPv4\n"

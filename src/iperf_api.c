@@ -570,9 +570,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"affinity", required_argument, NULL, 'A'},
 #endif
         {"title", required_argument, NULL, 'T'},
-#if defined(linux) && defined(TCP_CONGESTION)
+#if defined(HAVE_TCP_CONGESTION)
         {"linux-congestion", required_argument, NULL, 'C'},
-#endif
+#endif /* HAVE_TCP_CONGESTION */
 #if defined(HAVE_SCTP)
         {"sctp", no_argument, NULL, OPT_SCTP},
 #endif
@@ -792,13 +792,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
 	    case 'C':
-#if defined(linux) && defined(TCP_CONGESTION)
+#if defined(HAVE_TCP_CONGESTION)
 		test->congestion = strdup(optarg);
 		client_flag = 1;
-#else /* linux */
+#else /* HAVE_TCP_CONGESTION */
 		i_errno = IEUNIMP;
 		return -1;
-#endif /* linux */
+#endif /* HAVE_TCP_CONGESTION */
 		break;
 	    case 'd':
 		test->debug = 1;

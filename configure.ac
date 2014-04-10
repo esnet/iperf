@@ -20,11 +20,6 @@ AC_PROG_RANLIB
 AC_PROG_LN_S
 AC_PROG_LIBTOOL
 
-
-# Sets a conditional makefile variable so that certain Makefile tasks will be
-# performed only on linux (currently, add -luuid to LD_FLAGS)
-AM_CONDITIONAL(LINUX, [case $host_os in linux*) true;; *) false;; esac]) 
-
 # Checks for header files.
 AC_HEADER_STDC
 

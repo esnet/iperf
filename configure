@@ -11845,6 +11845,47 @@ _ACEOF
 
 fi
 
+# Check for IPv6 flowlabel support (believed to be Linux only)
+# We check for IPV6_FLOWLABEL_MGR in <linux/in6.h> even though we
+# don't use that file directly (we have our own stripped-down
+# copy, see src/flowlabel.h for more details).
+{ $as_echo "$as_me:$LINENO: checking IPv6 flowlabel support" >&5
+$as_echo_n "checking IPv6 flowlabel support... " >&6; }
+if test "${iperf3_cv_header_flowlabel+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <sys/types.h>
+#include <linux/in6.h>
+#ifdef IPV6_FLOWLABEL_MGR
+  yes
+#endif
+
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "yes" >/dev/null 2>&1; then
+  iperf3_cv_header_flowlabel=yes
+else
+  iperf3_cv_header_flowlabel=no
+fi
+rm -f conftest*
+
+fi
+{ $as_echo "$as_me:$LINENO: result: $iperf3_cv_header_flowlabel" >&5
+$as_echo "$iperf3_cv_header_flowlabel" >&6; }
+if test "x$iperf3_cv_header_flowlabel" = "xyes"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_FLOWLABEL 1
+_ACEOF
+
+fi
+
 ac_config_files="$ac_config_files Makefile src/Makefile examples/Makefile"
 
 cat >confcache <<\_ACEOF

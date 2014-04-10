@@ -11808,6 +11808,43 @@ fi
 done
 
 
+# Check for TCP_CONGESTION sockopt (believed to be Linux only)
+{ $as_echo "$as_me:$LINENO: checking TCP_CONGESTION socket option" >&5
+$as_echo_n "checking TCP_CONGESTION socket option... " >&6; }
+if test "${iperf3_cv_header_tcp_congestion+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <netinet/tcp.h>
+#ifdef TCP_CONGESTION
+  yes
+#endif
+
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "yes" >/dev/null 2>&1; then
+  iperf3_cv_header_tcp_congestion=yes
+else
+  iperf3_cv_header_tcp_congestion=no
+fi
+rm -f conftest*
+
+fi
+{ $as_echo "$as_me:$LINENO: result: $iperf3_cv_header_tcp_congestion" >&5
+$as_echo "$iperf3_cv_header_tcp_congestion" >&6; }
+if test "x$iperf3_cv_header_tcp_congestion" = "xyes"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_TCP_CONGESTION 1
+_ACEOF
+
+fi
+
 ac_config_files="$ac_config_files Makefile src/Makefile examples/Makefile"
 
 cat >confcache <<\_ACEOF

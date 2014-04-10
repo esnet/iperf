@@ -33,6 +33,9 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
+/* Have TCP_CONGESTION sockopt. */
+#undef HAVE_TCP_CONGESTION
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 

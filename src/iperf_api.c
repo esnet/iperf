@@ -10,6 +10,8 @@
 #define _GNU_SOURCE
 #define __USE_GNU
 
+#include "iperf_config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,7 +42,6 @@
 #include <sys/cpuset.h>
 #endif /* HAVE_CPUSET_SETAFFINITY */
 
-#include "config.h"
 #include "net.h"
 #include "iperf.h"
 #include "iperf_api.h"
@@ -622,7 +623,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 test->json_output = 1;
                 break;
             case 'v':
-                printf("%s\n%s\n", version, get_system_info());
+                printf("%s\n%s\n%s\n", version, get_system_info(), 
+		       get_optional_features());
                 exit(0);
             case 's':
                 if (test->role == 'c') {
@@ -817,6 +819,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 usage_long();
                 exit(1);
         }
+    }
+
+    if (test->debug) {
+	printf("fubar\n");
     }
 
     /* Set logging to a file if specified, otherwise use the default (stdout) */

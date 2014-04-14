@@ -9,7 +9,7 @@ AC_CONFIG_AUX_DIR(config)
 # Initialize the automake system
 AM_INIT_AUTOMAKE
 
-AM_CONFIG_HEADER(src/config.h)
+AM_CONFIG_HEADER(src/iperf_config.h)
 
 AC_CANONICAL_HOST
 

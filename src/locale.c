@@ -50,10 +50,9 @@
  * -------------------------------------------------------------------
  * Strings and other stuff that is locale specific.
  * ------------------------------------------------------------------- */
+#include "iperf_config.h"
 
 #include "version.h"
-
-#include "config.h"
 
 #ifdef __cplusplus
 extern    "C"

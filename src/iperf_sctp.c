@@ -6,6 +6,7 @@
  * This code is distributed under a BSD style license, see the LICENSE file
  * for complete information.
  */
+#include "iperf_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,8 +20,6 @@
 #include <netinet/tcp.h>
 #include <sys/time.h>
 #include <sys/select.h>
-
-#include "config.h"
 
 #ifdef HAVE_NETINET_SCTP_H
 #include <netinet/sctp.h>

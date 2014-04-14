@@ -6,6 +6,7 @@
  * This code is distributed under a BSD style license, see the LICENSE file
  * for complete information.
  */
+#include "iperf_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,7 +21,6 @@
 #include <sys/time.h>
 #include <sys/select.h>
 
-#include "config.h"
 #include "iperf.h"
 #include "iperf_api.h"
 #include "iperf_tcp.h"

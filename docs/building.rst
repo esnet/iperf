@@ -9,13 +9,7 @@ Prerequisites
 -------------
 
 iperf3 requires few (if any) dependencies on common operating
-systems.  The only known prerequesites are listed here.
-
-* ``libuuid``:  ``libuuid`` is not installed by default on Debian /
-  Ubuntu Linux systems.  To install this, use this command before
-  building iperf3:
-
-  ``apt-get install uuid-dev``
+systems.  The only known prerequisites are listed here.
 
 Building
 --------

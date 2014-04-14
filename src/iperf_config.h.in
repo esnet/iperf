@@ -27,6 +27,9 @@
 /* Have SCTP support. */
 #undef HAVE_SCTP
 
+/* Define to 1 if you have the `sendfile' function. */
+#undef HAVE_SENDFILE
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 

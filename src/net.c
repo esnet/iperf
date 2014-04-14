@@ -36,7 +36,7 @@
 #endif
 #endif
 #endif
-#endif HAVE_SENDFILE
+#endif /* HAVE_SENDFILE */
 
 #include "iperf_util.h"
 #include "net.h"

@@ -2544,7 +2544,7 @@ am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
 
 
 
-ac_config_headers="$ac_config_headers src/config.h"
+ac_config_headers="$ac_config_headers src/iperf_config.h"
 
 
 # Make sure we can run config.sub.
@@ -12868,7 +12868,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
-    "src/config.h") CONFIG_HEADERS="$CONFIG_HEADERS src/config.h" ;;
+    "src/iperf_config.h") CONFIG_HEADERS="$CONFIG_HEADERS src/iperf_config.h" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;

@@ -75,4 +75,13 @@ if test "x$iperf3_cv_header_flowlabel" = "xyes"; then
     AC_DEFINE([HAVE_FLOWLABEL], [1], [Have IPv6 flowlabel support.])
 fi
 
+# Check for CPU affinity support.  FreeBSD and Linux do this differently
+# unfortunately so we have to check separately for each of them.
+# FreeBSD uses cpuset_setaffinity while Linux uses sched_setaffinity.
+# Define HAVE_CPU_AFFINITY to indicate the CPU affinity setting as a
+# generic concept is available.
+AC_CHECK_FUNCS([cpuset_setaffinity sched_setaffinity],
+	       AC_DEFINE([HAVE_CPU_AFFINITY], [1], 
+	 	         [Have CPU affinity support.]))
+
 AC_OUTPUT([Makefile src/Makefile examples/Makefile])

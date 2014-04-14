@@ -35,10 +35,10 @@
 #include <setjmp.h>
 #include <stdarg.h>
 
-#if defined(__FreeBSD__)
+#if defined(HAVE_CPUSET_SETAFFINITY)
 #include <sys/param.h>
 #include <sys/cpuset.h>
-#endif
+#endif /* HAVE_CPUSET_SETAFFINITY */
 
 #include "config.h"
 #include "net.h"
@@ -568,9 +568,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"zerocopy", no_argument, NULL, 'Z'},
         {"omit", required_argument, NULL, 'O'},
         {"file", required_argument, NULL, 'F'},
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(HAVE_CPU_AFFINITY)
         {"affinity", required_argument, NULL, 'A'},
-#endif
+#endif /* HAVE_CPU_AFFINITY */
         {"title", required_argument, NULL, 'T'},
 #if defined(HAVE_TCP_CONGESTION)
         {"linux-congestion", required_argument, NULL, 'C'},
@@ -587,9 +587,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     int flag;
     int blksize;
     int server_flag, client_flag, rate_flag, duration_flag;
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(HAVE_CPU_AFFINITY)
     char* comma;
-#endif
+#endif /* HAVE_CPU_AFFINITY */
     char* slash;
 
     blksize = 0;
@@ -769,7 +769,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 test->diskfile_name = optarg;
                 break;
             case 'A':
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(HAVE_CPU_AFFINITY)
                 test->affinity = atoi(optarg);
                 if (test->affinity < 0 || test->affinity > 1024) {
                     i_errno = IEAFFINITY;
@@ -784,10 +784,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		    }
 		    client_flag = 1;
 		}
-#else 
+#else /* HAVE_CPU_AFFINITY */
                 i_errno = IEUNIMP;
                 return -1;
-#endif 
+#endif /* HAVE_CPU_AFFINITY */
                 break;
             case 'T':
                 test->title = strdup(optarg);
@@ -1570,9 +1570,9 @@ iperf_defaults(struct iperf_test *testp)
     testp->diskfile_name = (char*) 0;
     testp->affinity = -1;
     testp->server_affinity = -1;
-#if defined(__FreeBSD__)
+#if defined(HAVE_CPUSET_SETAFFINITY)
     CPU_ZERO(&testp->cpumask);
-#endif
+#endif /* HAVE_CPUSET_SETAFFINITY */
     testp->title = NULL;
     testp->congestion = NULL;
     testp->server_port = PORT;
@@ -1754,9 +1754,9 @@ iperf_reset_test(struct iperf_test *test)
     test->omit = OMIT;
     test->duration = DURATION;
     test->server_affinity = -1;
-#if defined(__FreeBSD__)
+#if defined(HAVE_CPUSET_SETAFFINITY)
     CPU_ZERO(&test->cpumask);
-#endif
+#endif /* HAVE_CPUSET_SETAFFINITY */
     test->state = 0;
 
     if(test->title) {
@@ -2578,7 +2578,7 @@ iperf_json_finish(struct iperf_test *test)
 int
 iperf_setaffinity(struct iperf_test *test, int affinity)
 {
-#ifdef linux
+#if defined(HAVE_SCHED_SETAFFINITY)
     cpu_set_t cpu_set;
 
     CPU_ZERO(&cpu_set);
@@ -2588,7 +2588,7 @@ iperf_setaffinity(struct iperf_test *test, int affinity)
         return -1;
     }
     return 0;
-#elif (__FreeBSD__)
+#elif defined(HAVE_CPUSET_SETAFFINITY)
     cpuset_t cpumask;
 
     if(cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, -1,
@@ -2606,16 +2606,16 @@ iperf_setaffinity(struct iperf_test *test, int affinity)
         return -1;
     }
     return 0;
-#else /* Linux or FreeBSD */
+#else /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY */
     i_errno = IEAFFINITY;
     return -1;
-#endif /* Linux or FreeBSD*/
+#endif /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY */
 }
 
 int
 iperf_clearaffinity(struct iperf_test *test)
 {
-#ifdef linux
+#if defined(HAVE_SCHED_SETAFFINITY)
     cpu_set_t cpu_set;
     int i;
 
@@ -2627,17 +2627,17 @@ iperf_clearaffinity(struct iperf_test *test)
         return -1;
     }
     return 0;
-#elif (__FreeBSD__)
+#elif defined(HAVE_CPUSET_SETAFFINITY)
     if(cpuset_setaffinity(CPU_LEVEL_WHICH,CPU_WHICH_PID, -1,
                           sizeof(cpuset_t), &test->cpumask) != 0) {
         i_errno = IEAFFINITY;
         return -1;
     }
     return 0;
-#else /* Linux or FreeBSD */
+#else /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY */
     i_errno = IEAFFINITY;
     return -1;
-#endif /* Linux or FreeBSD */
+#endif /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY */
 }
 
 int

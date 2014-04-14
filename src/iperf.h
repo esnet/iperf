@@ -16,10 +16,10 @@
 #include <sys/socket.h>
 #include <netinet/tcp.h>
 
-#if defined(__FreeBSD__)
+#if defined(HAVE_CPUSET_SETAFFINITY)
 #include <sys/param.h>
 #include <sys/cpuset.h>
-#endif
+#endif /* HAVE_CPUSET_SETAFFINITY */
 
 #include "timer.h"
 #include "queue.h"
@@ -167,9 +167,9 @@ struct iperf_test
     int       duration;                         /* total duration of test (-t flag) */
     char     *diskfile_name;			/* -F option */
     int       affinity, server_affinity;	/* -A option */
-#if (__FreeBSD__)
+#if defined(HAVE_CPUSET_SETAFFINITY)
     cpuset_t cpumask;
-#endif
+#endif /* HAVE_CPUSET_SETAFFINITY */
     char     *title;				/* -T option */
     char     *congestion;			/* -C option */
     char     *pidfile;				/* -P option */

@@ -84,4 +84,9 @@ AC_CHECK_FUNCS([cpuset_setaffinity sched_setaffinity],
 	       AC_DEFINE([HAVE_CPU_AFFINITY], [1], 
 	 	         [Have CPU affinity support.]))
 
+# Check for sendfile support.  FreeBSD, Linux, and MacOS all support
+# this system call, but they're all different in terms of what headers
+# it needs and what arguments it expects.
+AC_CHECK_FUNCS([sendfile])
+
 AC_OUTPUT([Makefile src/Makefile examples/Makefile])

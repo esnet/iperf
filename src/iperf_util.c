@@ -258,6 +258,16 @@ get_optional_features(void)
     numfeatures++;
 #endif /* HAVE_TCP_CONGESTION */
     
+#if defined(HAVE_SENDFILE)
+    if (numfeatures > 0) {
+	strncat(features, ", ",
+		sizeof(features) - strlen(features) - 1);
+    }
+    strncat(features, "sendfile / zerocopy",
+	sizeof(features) - strlen(features) - 1);
+    numfeatures++;
+#endif /* HAVE_SENDFILE */
+
     if (numfeatures == 0) {
 	strncat(features, "None", 
 		sizeof(features) - strlen(features) - 1);

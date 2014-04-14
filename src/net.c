@@ -1,11 +1,12 @@
 /*
- * Copyright (c) 2009-2011, The Regents of the University of California,
+ * Copyright (c) 2009-2014, The Regents of the University of California,
  * through Lawrence Berkeley National Laboratory (subject to receipt of any
  * required approvals from the U.S. Dept. of Energy).  All rights reserved.
  *
  * This code is distributed under a BSD style license, see the LICENSE file
  * for complete information.
  */
+#include "iperf_config.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -20,6 +21,7 @@
 #include <string.h>
 #include <sys/fcntl.h>
 
+#ifdef HAVE_SENDFILE
 #ifdef linux
 #include <sys/sendfile.h>
 #else
@@ -34,6 +36,7 @@
 #endif
 #endif
 #endif
+#endif HAVE_SENDFILE
 
 #include "iperf_util.h"
 #include "net.h"
@@ -218,19 +221,12 @@ Nwrite(int fd, const char *buf, size_t count, int prot)
 int
 has_sendfile(void)
 {
-#ifdef linux
+#if defined(HAS_SENDFILE)
     return 1;
-#else
-#ifdef __FreeBSD__
-    return 1;
-#else
-#if defined(__APPLE__) && defined(__MACH__) && defined(MAC_OS_X_VERSION_10_6)	/* OS X */
-    return 1;
-#else
+#else /* HAS_SENDFILE */
     return 0;
-#endif
-#endif
-#endif
+#endif /* HAS_SENDFILE */
+
 }
 
 
@@ -242,6 +238,7 @@ int
 Nsendfile(int fromfd, int tofd, const char *buf, size_t count)
 {
     off_t offset;
+#if defined(HAVE_SENDFILE)
 #if defined(__FreeBSD__) || (defined(__APPLE__) && defined(__MACH__) && defined(MAC_OS_X_VERSION_10_6))
     off_t sent;
 #endif
@@ -271,6 +268,7 @@ Nsendfile(int fromfd, int tofd, const char *buf, size_t count)
 #endif
 #endif
 #endif
+#endif /* HAVE_SENDFILE */
 	if (r < 0) {
 	    switch (errno) {
 		case EINTR:

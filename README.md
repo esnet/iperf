@@ -43,8 +43,8 @@ Building iperf3
 ---------------
 
 ### Prerequisites: ###
-  * libuuid: this is not installed by default for Debian/Ubuntu Systems
-             to install: `apt-get install uuid-dev`
+
+None.
 
 ### Building ###
 

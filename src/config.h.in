@@ -1,5 +1,11 @@
 /* src/config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define to 1 if you have the `cpuset_setaffinity' function. */
+#undef HAVE_CPUSET_SETAFFINITY
+
+/* Have CPU affinity support. */
+#undef HAVE_CPU_AFFINITY
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
@@ -14,6 +20,9 @@
 
 /* Define to 1 if you have the <netinet/sctp.h> header file. */
 #undef HAVE_NETINET_SCTP_H
+
+/* Define to 1 if you have the `sched_setaffinity' function. */
+#undef HAVE_SCHED_SETAFFINITY
 
 /* Have SCTP support. */
 #undef HAVE_SCTP

@@ -574,6 +574,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif /* HAVE_CPU_AFFINITY */
         {"title", required_argument, NULL, 'T'},
 #if defined(HAVE_TCP_CONGESTION)
+        {"congestion", required_argument, NULL, 'C'},
         {"linux-congestion", required_argument, NULL, 'C'},
 #endif /* HAVE_TCP_CONGESTION */
 #if defined(HAVE_SCTP)

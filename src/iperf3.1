@@ -149,8 +149,11 @@ period.
 .BR -T ", " --title " \fIstr\fR"
 Prefix every output line with this string.
 .TP
-.BR -C ", " --linux-congestion " \fIalgo\fR"
-Set the congestion control algorithm (linux only).
+.BR -C ", " --congestion " \fIalgo\fR"
+Set the congestion control algorithm (Linux and FreeBSD only).  An
+older
+.B --linux-congestion
+synonym for this flag is accepted but is deprecated.
 
 .SH AUTHORS
 Iperf was originally written by Mark Gates and Alex Warshavsky.

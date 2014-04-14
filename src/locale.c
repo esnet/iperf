@@ -106,7 +106,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -w, --window    #[KMG]    TCP window size (socket buffer size)\n"
                            "  -B, --bind      <host>    bind to a specific interface\n"
 #if defined(HAVE_TCP_CONGESTION)
-                           "  -C, --linux-congestion <algo>  set TCP congestion control algorithm (Linux only)\n"
+                           "  -C, --congestion <algo>   set TCP congestion control algorithm (Linux and FreeBSD only)\n"
 #endif /* HAVE_TCP_CONGESTION */
                            "  -M, --set-mss   #         set TCP maximum segment size (MTU - 40 bytes)\n"
                            "  -N, --nodelay             set TCP no delay, disabling Nagle's Algorithm\n"

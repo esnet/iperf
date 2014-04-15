@@ -268,7 +268,6 @@ Nsendfile(int fromfd, int tofd, const char *buf, size_t count)
 #endif
 #endif
 #endif
-#endif /* HAVE_SENDFILE */
 	if (r < 0) {
 	    switch (errno) {
 		case EINTR:
@@ -287,6 +286,10 @@ Nsendfile(int fromfd, int tofd, const char *buf, size_t count)
 	nleft -= r;
     }
     return count;
+#else /* HAVE_SENDFILE */
+    errno = ENOSYS;	/* error if somehow get called without HAVE_SENDFILE */
+    return -1;
+#endif /* HAVE_SENDFILE */
 }
 
 /*************************************************************************/

@@ -516,6 +516,8 @@ iperf_run_server(struct iperf_test *test)
 			    FD_SET(s, &test->read_set);
 			if (s > test->max_fd) test->max_fd = s;
 
+                        setnonblocking(s, 1);
+
                         streams_accepted++;
                         if (test->on_new_stream)
                             test->on_new_stream(sp);

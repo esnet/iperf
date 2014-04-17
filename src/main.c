@@ -78,9 +78,6 @@ main(int argc, char **argv)
         iperf_errexit(NULL, "create new test error - %s", iperf_strerror(i_errno));
     iperf_defaults(test);	/* sets defaults */
 
-    /* This main program doesn't use SIGALRM, so the iperf API may use it. */
-    iperf_set_test_may_use_sigalrm(test, 1);
-
     if (iperf_parse_arguments(test, argc, argv) < 0) {
         iperf_err(test, "parameter error - %s", iperf_strerror(i_errno));
         fprintf(stderr, "\n");

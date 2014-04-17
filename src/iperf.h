@@ -178,7 +178,6 @@ struct iperf_test
     int       debug;				/* -d option - enable debug */
 
     int	      multisend;
-    int	      may_use_sigalrm;
 
     /* Select related parameters */
     int       max_fd;

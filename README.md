@@ -132,17 +132,11 @@ placement of the iperf3 process on a CPU and its relation to the
 inbound NIC.  In some cases this problem can be mitigated by an
 appropriate use of the CPU affinity (-A) option.  (Issue #55)
 
-* Interval reports on high-loss networks: The way iperf3 is currently
-implemented, the sender write command will block until the entire
-block has been written. This means that it might take several seconds
-to send a full block if the network has high loss, and the interval
-reports will have widely varying interval times. We are trying to
-determine the best solution to this, but in the meantime, try using a
-smaller block size if you get strange interval reports.  For example,
-try "-l 4K".
-
 * The -Z flag sometimes causes the iperf3 client to hang on OSX.
 (Issue #129)
+
+* On OpenBSD, the server seems to require a "-4" argument, implying
+that it can only be used with IPv4.
 
 * When specifying the TCP buffer size using the "-w" flag on Linux, Linux 
 doubles the value you pass in. (You can see this using iperf3's debug flag). 

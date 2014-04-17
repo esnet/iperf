@@ -70,7 +70,6 @@ int	iperf_get_test_protocol_id( struct iperf_test* ipt );
 int	iperf_get_test_json_output( struct iperf_test* ipt );
 char*	iperf_get_test_json_output_string ( struct iperf_test* ipt );
 int	iperf_get_test_zerocopy( struct iperf_test* ipt );
-int	iperf_get_test_may_use_sigalrm( struct iperf_test* ipt );
 
 /* Setter routines for some fields inside iperf_test. */
 void	iperf_set_verbose( struct iperf_test* ipt, int verbose );
@@ -92,7 +91,6 @@ void	iperf_set_test_reverse( struct iperf_test* ipt, int reverse );
 void	iperf_set_test_json_output( struct iperf_test* ipt, int json_output );
 int	iperf_has_zerocopy( void );
 void	iperf_set_test_zerocopy( struct iperf_test* ipt, int zerocopy );
-void	iperf_set_test_may_use_sigalrm( struct iperf_test* ipt, int may_use_sigalrm );
 
 /**
  * exchange_parameters - handles the param_Exchange part for client

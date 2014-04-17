@@ -315,26 +315,15 @@ sigend_handler(int sig)
 }
 
 
-typedef enum { cm_select, cm_itimer } cm_t;
-
-static int sigalrm_triggered;
-
-static void
-sigalrm_handler(int sig)
-{
-    sigalrm_triggered = 1;
-}
-
 int
 iperf_run_client(struct iperf_test * test)
 {
-    cm_t concurrency_model;
     int startup;
     int result = 0;
     fd_set read_set, write_set;
     struct timeval now;
     struct timeval* timeout = NULL;
-    struct itimerval itv;
+    struct iperf_stream *sp;
 
     /* Termination signals. */
     iperf_catch_sigend(sigend_handler);
@@ -367,26 +356,22 @@ iperf_run_client(struct iperf_test * test)
     cpu_util(NULL);
 
     startup = 1;
-    concurrency_model = cm_select;	/* always start in select mode */
     while (test->state != IPERF_DONE) {
-
-	if (concurrency_model == cm_select) {
-	    memcpy(&read_set, &test->read_set, sizeof(fd_set));
-	    memcpy(&write_set, &test->write_set, sizeof(fd_set));
-	    (void) gettimeofday(&now, NULL);
-	    timeout = tmr_timeout(&now);
-	    result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
-	    if (result < 0 && errno != EINTR) {
-		i_errno = IESELECT;
-		return -1;
-	    }
-	    if (result > 0) {
-		if (FD_ISSET(test->ctrl_sck, &read_set)) {
-		    if (iperf_handle_message_client(test) < 0) {
-			return -1;
-		    }
-		    FD_CLR(test->ctrl_sck, &read_set);
+	memcpy(&read_set, &test->read_set, sizeof(fd_set));
+	memcpy(&write_set, &test->write_set, sizeof(fd_set));
+	(void) gettimeofday(&now, NULL);
+	timeout = tmr_timeout(&now);
+	result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
+	if (result < 0 && errno != EINTR) {
+  	    i_errno = IESELECT;
+	    return -1;
+	}
+	if (result > 0) {
+	    if (FD_ISSET(test->ctrl_sck, &read_set)) {
+ 	        if (iperf_handle_message_client(test) < 0) {
+		    return -1;
 		}
+		FD_CLR(test->ctrl_sck, &read_set);
 	    }
 	}
 
@@ -395,26 +380,10 @@ iperf_run_client(struct iperf_test * test)
 	    /* Is this our first time really running? */
 	    if (startup) {
 	        startup = 0;
-		/* Decide which concurrency model to use for the real test.
-		** SIGALRM is less overhead but there are a bunch of cases
-		** where it either won't work or is ill-advised.
-		*/
-		if (test->may_use_sigalrm && test->settings->rate == 0 &&
-		    (test->stats_interval == 0 || test->stats_interval > 0.2) &&
-		    (test->reporter_interval == 0 || test->reporter_interval > 0.2) &&
-		    (test->omit == 0 || test->omit > 0.2) &&
-		    ! test->reverse) {
-		    concurrency_model = cm_itimer;
-		    test->multisend = 1;
-		    signal(SIGALRM, sigalrm_handler);
-		    sigalrm_triggered = 0;
-		    itv.it_interval.tv_sec = 0;
-		    itv.it_interval.tv_usec = 100000;
-		    itv.it_value.tv_sec = 0;
-		    itv.it_value.tv_usec = 100000;
-		    (void) setitimer(ITIMER_REAL, &itv, NULL);
-		}
 
+                SLIST_FOREACH(sp, &test->streams, streams) {
+                    setnonblocking(sp->socket, 1);
+                }
 	    }
 
 	    if (test->reverse) {
@@ -423,41 +392,30 @@ iperf_run_client(struct iperf_test * test)
 		    return -1;
 	    } else {
 		// Regular mode. Client sends.
-		if (iperf_send(test, concurrency_model == cm_itimer ? NULL : &write_set) < 0)
+		if (iperf_send(test, &write_set) < 0)
 		    return -1;
 	    }
 
-	    if ((concurrency_model == cm_select &&
-	         (result == 0 ||
-		  (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0))) ||
-	        (concurrency_model == cm_itimer && sigalrm_triggered)) {
-		/* Run the timers. */
-		(void) gettimeofday(&now, NULL);
-		tmr_run(&now);
-	        if (concurrency_model == cm_itimer)
-		    sigalrm_triggered = 0;
-	    }
+            /* Run the timers. */
+            (void) gettimeofday(&now, NULL);
+            tmr_run(&now);
 
 	    /* Is the test done yet? */
 	    if ((!test->omitting) &&
 	        ((test->duration != 0 && test->done) ||
 	         (test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes) ||
 	         (test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks))) {
+
+                SLIST_FOREACH(sp, &test->streams, streams) {
+                    setnonblocking(sp->socket, 0);
+                }
+
 		/* Yes, done!  Send TEST_END. */
 		test->done = 1;
 		cpu_util(test->cpu_util);
 		test->stats_callback(test);
 		if (iperf_set_send_state(test, TEST_END) != 0)
 		    return -1;
-		/* If we were doing setitimer(), go back to select() for the end. */
-		if (concurrency_model == cm_itimer) {
-		    itv.it_interval.tv_sec = 0;
-		    itv.it_interval.tv_usec = 0;
-		    itv.it_value.tv_sec = 0;
-		    itv.it_value.tv_usec = 0;
-		    (void) setitimer(ITIMER_REAL, &itv, NULL);
-		    concurrency_model = cm_select;
-		}
 	    }
 	}
 	// If we're in reverse mode, continue draining the data

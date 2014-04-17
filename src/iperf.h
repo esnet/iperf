@@ -193,7 +193,6 @@ struct iperf_test
     int       debug;				/* -d option - enable debug */
 
     int	      multisend;
-    int	      may_use_sigalrm;
 
     char     *json_output_string; /* rendered JSON output if json_output is set */
     /* Select related parameters */

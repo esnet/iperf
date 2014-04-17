@@ -36,9 +36,6 @@ main( int argc, char** argv )
     iperf_defaults( test );
     iperf_set_verbose( test, 1 );
 
-    /* This main program doesn't use SIGALRM, so the iperf API may use it. */
-    iperf_set_test_may_use_sigalrm(test, 1);
-
     iperf_set_test_role( test, 'c' );
     iperf_set_test_server_hostname( test, host );
     iperf_set_test_server_port( test, port );

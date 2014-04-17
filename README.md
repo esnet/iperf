@@ -126,15 +126,6 @@ as nuttcp in UDP mode.  We are looking into this, but in the meantime,
 if you want to get UDP above 5Gbps, we recommend using nuttcp instead
 (http://www.nuttcp.net/).
 
-* Interval reports on high-loss networks: The way iperf3 is currently
-implemented, the sender write command will block until the entire
-block has been written. This means that it might take several seconds
-to send a full block if the network has high loss, and the interval
-reports will have widely varying interval times. We are trying to
-determine the best solution to this, but in the meantime, try using a
-smaller block size if you get strange interval reports.  For example,
-try "-l 4K".
-
 * The -Z flag sometimes hangs on OSX.
 
 * On OpenBSD, the server seems to require a "-4" argument, implying

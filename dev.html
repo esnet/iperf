@@ -227,6 +227,10 @@ iperf3&#8217;s <tt class="docutils literal"><span class="pre">--debug</span></tt
 to the doubled value, but only to about 75% of the doubled
 value.  Some part of this behavior is documented in the tcp(7)
 manual page.  (Issue #145)</li>
+<li>On some platforms (observed on at least one version of Ubuntu
+Linux), it might be necessary to invoke <tt class="docutils literal"><span class="pre">ldconfig</span></tt> manually after
+doing a <tt class="docutils literal"><span class="pre">make</span> <span class="pre">install</span></tt> before the <tt class="docutils literal"><span class="pre">iperf3</span></tt> executable can find
+its shared library.  (Issue #153)</li>
 </ul>
 <p>There are, of course, many other open and closed issues in the issue
 tracker.</p>

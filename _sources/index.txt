@@ -33,11 +33,11 @@ is released under a three-clause BSD license.
 Links for the Impatient
 -----------------------
 
+Project homepage and documentation hosted on GitHub Pages:
+http://software.es.net/iperf/
+
 Project site (source code repository, issue tracker) hosted on GitHub:
 https://github.com/esnet/iperf
-
-Documentation tree hosted on GitHub Pages:
-https://esnet.github.io/iperf/
 
 Source code downloads:
 https://stats.es.net/software/

@@ -105,6 +105,11 @@ to solve the problem are currently being made:
   value.  Some part of this behavior is documented in the tcp(7)
   manual page.  (Issue #145)
 
+* On some platforms (observed on at least one version of Ubuntu
+  Linux), it might be necessary to invoke ``ldconfig`` manually after
+  doing a ``make install`` before the ``iperf3`` executable can find
+  its shared library.  (Issue #153)
+
 There are, of course, many other open and closed issues in the issue
 tracker.
 

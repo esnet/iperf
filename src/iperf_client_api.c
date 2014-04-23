@@ -381,9 +381,12 @@ iperf_run_client(struct iperf_test * test)
 	    if (startup) {
 	        startup = 0;
 
-                SLIST_FOREACH(sp, &test->streams, streams) {
-                    setnonblocking(sp->socket, 1);
-                }
+		// If the client is sending (normal mode) then set nonblocking sockets
+		if (!test->reverse) {
+		    SLIST_FOREACH(sp, &test->streams, streams) {
+			setnonblocking(sp->socket, 1);
+		    }
+		}
 	    }
 
 	    if (test->reverse) {
@@ -406,9 +409,12 @@ iperf_run_client(struct iperf_test * test)
 	         (test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes) ||
 	         (test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks))) {
 
-                SLIST_FOREACH(sp, &test->streams, streams) {
-                    setnonblocking(sp->socket, 0);
-                }
+		// If the client is sending (normal mode) then undo nonblocking sockets
+		if (!test->reverse) {
+		    SLIST_FOREACH(sp, &test->streams, streams) {
+			setnonblocking(sp->socket, 0);
+		    }
+		}
 
 		/* Yes, done!  Send TEST_END. */
 		test->done = 1;

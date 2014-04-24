@@ -43,14 +43,14 @@ TESTS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT)
 subdir = src
 DIST_COMMON = $(dist_man_MANS) $(include_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(srcdir)/iperf_config.h.in
+	$(srcdir)/iperf_config.h.in $(srcdir)/version.h.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/mkinstalldirs
 CONFIG_HEADER = iperf_config.h
-CONFIG_CLEAN_FILES =
+CONFIG_CLEAN_FILES = version.h
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -385,6 +385,8 @@ $(srcdir)/iperf_config.h.in:  $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f iperf_config.h stamp-h1
+version.h: $(top_builddir)/config.status $(srcdir)/version.h.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 install-libLTLIBRARIES: $(lib_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
 	test -z "$(libdir)" || $(MKDIR_P) "$(DESTDIR)$(libdir)"

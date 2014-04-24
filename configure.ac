@@ -89,4 +89,4 @@ AC_CHECK_FUNCS([cpuset_setaffinity sched_setaffinity],
 # it needs and what arguments it expects.
 AC_CHECK_FUNCS([sendfile])
 
-AC_OUTPUT([Makefile src/Makefile examples/Makefile])
+AC_OUTPUT([Makefile src/Makefile src/version.h examples/Makefile])

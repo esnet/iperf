@@ -516,8 +516,8 @@ iperf_run_server(struct iperf_test *test)
 			    FD_SET(s, &test->read_set);
 			if (s > test->max_fd) test->max_fd = s;
 
-			// If the server is sending (reverse mode) then set nonblocking sockets
-			if (test->reverse) {
+			// If the protocol isn't UDP, set nonblocking sockets
+			if (test->protocol->id != Pudp) {
 			    setnonblocking(s, 1);
 			}
 

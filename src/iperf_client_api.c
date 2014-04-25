@@ -381,8 +381,8 @@ iperf_run_client(struct iperf_test * test)
 	    if (startup) {
 	        startup = 0;
 
-		// If the client is sending (normal mode) then set nonblocking sockets
-		if (!test->reverse) {
+		// Set non-blocking for non-UDP tests
+		if (test->protocol->id != Pudp) {
 		    SLIST_FOREACH(sp, &test->streams, streams) {
 			setnonblocking(sp->socket, 1);
 		    }
@@ -409,8 +409,8 @@ iperf_run_client(struct iperf_test * test)
 	         (test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes) ||
 	         (test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks))) {
 
-		// If the client is sending (normal mode) then undo nonblocking sockets
-		if (!test->reverse) {
+		// Set non-blocking for non-UDP tests
+		if (test->protocol->id != Pudp) {
 		    SLIST_FOREACH(sp, &test->streams, streams) {
 			setnonblocking(sp->socket, 0);
 		    }

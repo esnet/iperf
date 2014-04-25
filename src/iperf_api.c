@@ -810,10 +810,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         }
     }
 
-    if (test->debug) {
-	printf("fubar\n");
-    }
-
     /* Set logging to a file if specified, otherwise use the default (stdout) */
     if (test->logfile) {
 	test->outfile = fopen(test->logfile, "a+");

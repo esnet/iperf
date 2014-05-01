@@ -121,10 +121,14 @@ variables.
 Known Issues
 ------------
 
-* UDP performance: iperf2/iperf3 both only are only about 50% as fast
-as nuttcp in UDP mode.  We are looking into this, but in the meantime,
-if you want to get UDP above 5Gbps, we recommend using nuttcp instead
-(http://www.nuttcp.net/).
+* UDP performance: Some problems have been noticed with iperf3 on the
+ESnet 100G testbed at high UDP rates (above 10Gbps).  The symptom is
+that on any particular run of iperf3 the receiver reports a loss rate
+of about 20%, regardless of the -b option used on the client side.
+This problem appears not to be iperf3-specific, and may be due to the
+placement of the iperf3 process on a CPU and its relation to the
+inbound NIC.  In some cases this problem can be mitigated by an
+appropriate use of the CPU affinity (-A) option.  (Issue #55)
 
 * Interval reports on high-loss networks: The way iperf3 is currently
 implemented, the sender write command will block until the entire
@@ -135,8 +139,8 @@ determine the best solution to this, but in the meantime, try using a
 smaller block size if you get strange interval reports.  For example,
 try "-l 4K".
 
-* The -Z flag sometimes hangs on OSX.
-
+* The -Z flag sometimes causes the iperf3 client to hang on OSX.
+(Issue #129)
 
 * When specifying the TCP buffer size using the "-w" flag on Linux, Linux 
 doubles the value you pass in. (You can see this using iperf3's debug flag). 

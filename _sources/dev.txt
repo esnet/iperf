@@ -159,13 +159,10 @@ Release Engineering Checklist
     git push --tags     # Push the new tag to the GitHub repo
     ./make_release tar  # create tarball and compute SHA256 hash
 
-   Doing the above steps on CentOS 6 (with its somewhat older
-   autotools / libtools suite) is preferred; newer systems generate
-   ``configure`` and ``Makefile`` scripts that tend to rebuild
-   themselves rather frequently.  It might be possible to address this
-   problem (and graduate to newer autotools) by using
-   ``AC_MAINTAINER_MODE`` but there's a fair amount of religion
-   associated with this.
+   These steps should be done on a platform with a relatively recent
+   version of autotools / libtools.  Examples are MacOS / MacPorts or
+   FreeBSD.  The versions of these tools in CentOS 6 are somewhat
+   older and probably should be avoided.
 
 4. Stage the tarball (and a file containing the SHA256 hash) to the
    download site.  Currently this is located on ``stats.es.net``.

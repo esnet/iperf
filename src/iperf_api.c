@@ -1824,12 +1824,9 @@ iperf_reset_stats(struct iperf_test *test)
 /**************************************************************************/
 
 /**
- * iperf_stats_callback -- handles the statistic gathering for both the client and server
- *
- * XXX: This function needs to be updated to reflect the new code
+ * Gather statistics during a test.
+ * This function works for both the client and server side.
  */
-
-
 void
 iperf_stats_callback(struct iperf_test *test)
 {
@@ -1886,6 +1883,12 @@ iperf_stats_callback(struct iperf_test *test)
     }
 }
 
+/**
+ * Print intermediate results during a test (interval report).
+ * Uses print_interval_results to print the results for each stream,
+ * then prints an interval summary for all streams in this
+ * interval.
+ */
 static void
 iperf_print_intermediate(struct iperf_test *test)
 {
@@ -1980,6 +1983,9 @@ iperf_print_intermediate(struct iperf_test *test)
     }
 }
 
+/**
+ * Print overall summary statistics at the end of a test.
+ */
 static void
 iperf_print_results(struct iperf_test *test)
 {
@@ -2142,10 +2148,11 @@ iperf_print_results(struct iperf_test *test)
 /**************************************************************************/
 
 /**
- * iperf_reporter_callback -- handles the report printing
- *
+ * Main report-printing callback.
+ * Prints results either during a test (interval report only) or 
+ * after the entire test has been run (last interval report plus 
+ * overall summary).
  */
-
 void
 iperf_reporter_callback(struct iperf_test *test)
 {
@@ -2163,7 +2170,11 @@ iperf_reporter_callback(struct iperf_test *test)
 
 }
 
-/**************************************************************************/
+/**
+ * Print the interval results for one stream.
+ * This function needs to know about the overall test so it can determine the
+ * context for printing headers, separators, etc.
+ */
 static void
 print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *json_interval_streams)
 {
@@ -2466,6 +2477,12 @@ iperf_catch_sigend(void (*handler)(int))
     signal(SIGHUP, handler);
 }
 
+/**
+ * Called as a result of getting a signal.
+ * Depending on the current state of the test (and the role of this
+ * process) compute and report one more set of ending statistics
+ * before cleaning up and exiting.
+ */
 void
 iperf_got_sigend(struct iperf_test *test)
 {

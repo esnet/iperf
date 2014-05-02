@@ -9,6 +9,7 @@ AC_CONFIG_AUX_DIR(config)
 # Initialize the automake system
 AM_INIT_AUTOMAKE
 
+AM_MAINTAINER_MODE
 AM_CONFIG_HEADER(src/config.h)
 
 AC_CANONICAL_HOST

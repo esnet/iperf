@@ -221,11 +221,11 @@ Nwrite(int fd, const char *buf, size_t count, int prot)
 int
 has_sendfile(void)
 {
-#if defined(HAS_SENDFILE)
+#if defined(HAVE_SENDFILE)
     return 1;
-#else /* HAS_SENDFILE */
+#else /* HAVE_SENDFILE */
     return 0;
-#endif /* HAS_SENDFILE */
+#endif /* HAVE_SENDFILE */
 
 }
 

@@ -1,4 +1,10 @@
 /*--------------------------------------------------------------- 
+ * Copyright (c) 2014, The Regents of the University of California,
+ * through Lawrence Berkeley National Laboratory (subject to receipt of any
+ * required approvals from the U.S. Dept. of Energy).  All rights reserved.
+ *
+ * Based on code that is:
+ *
  * Copyright (c) 1999,2000,2001,2002,2003
  * The Board of Trustees of the University of Illinois            
  * All Rights Reserved.                                           
@@ -117,7 +123,9 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
 
 			   "\n"
                            "[KMG] indicates options that support a K/M/G suffix for kilo-, mega-, or giga-\n"
-                           "Report bugs to <iperf-users@lists.sourceforge.net>\n";
+			   "\n"
+                           "iperf3 homepage at: " PACKAGE_URL "\n"
+                           "Report bugs to:     " PACKAGE_BUGREPORT "\n";
 
 
 #ifdef OBSOLETE /* from old iperf: no longer supported. Add some of these back someday */

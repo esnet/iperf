@@ -26,7 +26,9 @@ OpenBSD, Android, other Linux distributions.
 iperf3 is principally developed by ESnet / Lawrence Berkleley National
 Laboratory.  It is released under a three-clause BSD license.
 
-For more information see: https://github.com/esnet/iperf
+For more information see: http://software.es.net/iperf
+
+Source code and issue tracker: https://github.com/esnet/iperf
 
 Obtaining iperf3
 ----------------

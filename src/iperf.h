@@ -241,7 +241,7 @@ struct iperf_test
 #define MAX_BLOCKSIZE MB
 #define MIN_INTERVAL 0.1
 #define MAX_INTERVAL 60.0
-#define MAX_TIME 3600
+#define MAX_TIME 86400
 #define MAX_BURST 1000
 #define MAX_MSS (9 * 1024)
 #define MAX_STREAMS 128

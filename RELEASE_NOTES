@@ -1,3 +1,23 @@
+* User-visible changes
+
+  * Erroneous output when doing --json output has been fixed (this
+    problem was caused by an attempt to fix issue #158).
+
+  * The maximum test running time has been increased from one hour to
+    one day (issue #166).
+
+  * Project documentation has been moved to GitHub Pages at this URL:
+    http://software.es.net/iperf/.
+
+  * A bug that caused CPU time to be computed incorrectly on FreeBSD
+    has been fixed.
+
+* Developer-visible changes
+
+  * automake/autoconf/libtool have been updated to more recent
+    versions.  AM_MAINTAINER_MODE is now used to avoid requiring these
+    tools at build-time.
+
 == iperf 3.0.3 2014-03-26 ==
 
 * User-visible changes

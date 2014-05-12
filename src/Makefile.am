@@ -76,3 +76,6 @@ TESTS                   = \
                         t_uuid
 
 dist_man_MANS          = iperf3.1 libiperf.3
+
+install-exec-hook:
+	ldconfig

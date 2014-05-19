@@ -587,7 +587,7 @@ libiperf_la_SOURCES = \
 
 # Specify the sources and various flags for the iperf binary
 iperf3_SOURCES = main.c
-iperf3_CFLAGS = -g -Wall
+iperf3_CFLAGS = -g
 iperf3_LDADD = libiperf.la
 iperf3_LDFLAGS = -g
 
@@ -596,21 +596,21 @@ iperf3_LDFLAGS = -g
 iperf3_profile_SOURCES = main.c \
 						  $(libiperf_la_SOURCES)
 
-iperf3_profile_CFLAGS = -pg -g -Wall
+iperf3_profile_CFLAGS = -pg -g
 iperf3_profile_LDADD = libiperf.la
 iperf3_profile_LDFLAGS = -pg -g
 
 # Specify the sources and various flags for the test cases
 t_timer_SOURCES = t_timer.c
-t_timer_CFLAGS = -g -Wall
+t_timer_CFLAGS = -g
 t_timer_LDFLAGS = 
 t_timer_LDADD = libiperf.la
 t_units_SOURCES = t_units.c
-t_units_CFLAGS = -g -Wall
+t_units_CFLAGS = -g
 t_units_LDFLAGS = 
 t_units_LDADD = libiperf.la
 t_uuid_SOURCES = t_uuid.c
-t_uuid_CFLAGS = -g -Wall
+t_uuid_CFLAGS = -g
 t_uuid_LDFLAGS = 
 t_uuid_LDADD = libiperf.la
 dist_man_MANS = iperf3.1 libiperf.3

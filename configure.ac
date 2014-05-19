@@ -20,6 +20,13 @@ AC_PROG_RANLIB
 AC_PROG_LN_S
 AC_PROG_LIBTOOL
 
+# Add -Wall -Werror if we are using GCC.
+# We also need -Wno-deprecated-declarations, primarily because on MacOS, daemon(3)
+# is deprecated starting from MacOS 10.5.
+if test "x$GCC" = "xyes"; then
+  CFLAGS="$CFLAGS -Wall -Werror -Wno-deprecated-declarations"
+fi
+
 # Checks for header files.
 AC_HEADER_STDC
 

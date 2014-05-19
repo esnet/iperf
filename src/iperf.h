@@ -14,7 +14,9 @@
 
 #include <sys/time.h>
 #include <sys/types.h>
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
 #include <sys/socket.h>
 #include <netinet/tcp.h>
 

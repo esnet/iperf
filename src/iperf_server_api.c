@@ -24,7 +24,9 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <pthread.h>
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
 #include <netinet/tcp.h>
 #include <sys/time.h>
 #include <sys/resource.h>

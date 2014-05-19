@@ -3,7 +3,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <sysexits.h>
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
 
 #include <iperf_api.h>
 

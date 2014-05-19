@@ -26,6 +26,13 @@ AC_PROG_LIBTOOL
 # performed only on linux (currently, add -luuid to LD_FLAGS)
 AM_CONDITIONAL(LINUX, [case $host_os in linux*) true;; *) false;; esac]) 
 
+# Add -Wall -Werror if we are using GCC.
+# We also need -Wno-deprecated-declarations, primarily because on MacOS, daemon(3)
+# is deprecated starting from MacOS 10.5.
+if test "x$GCC" = "xyes"; then
+  CFLAGS="$CFLAGS -Wall -Werror -Wno-deprecated-declarations"
+fi
+
 # Checks for header files.
 AC_HEADER_STDC
 

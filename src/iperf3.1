@@ -137,6 +137,15 @@ Prefix every output line with this string.
 .TP
 .BR -C ", " --linux-congestion " \fIalgo\fR"
 Set the congestion control algorithm (linux only).
+.TP
+.BR "--get-server-output"
+Get the output from the server.
+The output format is determined by the server (in particular, if the
+server was invoked with the \fB--json\fR flag, the output will be in
+JSON format, otherwise it will be in human-readable format).
+If the client is run with \fB--json\fR, the server output is included
+in a JSON object; otherwise it is appended at the bottom of the
+human-readable output.
 
 .SH AUTHORS
 Iperf was originally written by Mark Gates and Alex Warshavsky.

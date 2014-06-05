@@ -193,6 +193,12 @@ iperf_get_test_zerocopy(struct iperf_test *ipt)
     return ipt->zerocopy;
 }
 
+int
+iperf_get_test_get_server_output(struct iperf_test *ipt)
+{
+    return ipt->get_server_output;
+}
+
 char
 iperf_get_test_unit_format(struct iperf_test *ipt)
 {
@@ -332,6 +338,12 @@ void
 iperf_set_test_zerocopy(struct iperf_test *ipt, int zerocopy)
 {
     ipt->zerocopy = zerocopy;
+}
+
+void
+iperf_set_test_get_server_output(struct iperf_test *ipt, int get_server_output)
+{
+    ipt->get_server_output = get_server_output;
 }
 
 void
@@ -538,6 +550,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(linux) && defined(TCP_CONGESTION)
         {"linux-congestion", required_argument, NULL, 'C'},
 #endif
+	{"get-server-output", no_argument, NULL, OPT_GET_SERVER_OUTPUT},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -746,6 +759,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		break;
 	    case 'd':
 		test->debug = 1;
+		break;
+	    case OPT_GET_SERVER_OUTPUT:
+		test->get_server_output = 1;
+		client_flag = 1;
 		break;
             case 'h':
             default:
@@ -1095,6 +1112,13 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddStringToObject(j, "title", test->title);
 	if (test->congestion)
 	    cJSON_AddStringToObject(j, "congestion", test->congestion);
+	if (test->get_server_output)
+	    cJSON_AddIntToObject(j, "get_server_output", iperf_get_test_get_server_output(test));
+
+	if (test->debug) {
+	    printf("send_parameters:\n%s\n", cJSON_Print(j));
+	}
+
 	if (JSON_write(test->ctrl_sck, j) < 0) {
 	    i_errno = IESENDPARAMS;
 	    r = -1;
@@ -1118,6 +1142,10 @@ get_parameters(struct iperf_test *test)
 	i_errno = IERECVPARAMS;
         r = -1;
     } else {
+	if (test->debug) {
+	    printf("get_parameters:\n%s\n", cJSON_Print(j));
+	}
+
 	if ((j_p = cJSON_GetObjectItem(j, "tcp")) != NULL)
 	    set_protocol(test, Ptcp);
 	if ((j_p = cJSON_GetObjectItem(j, "udp")) != NULL)
@@ -1156,6 +1184,8 @@ get_parameters(struct iperf_test *test)
 	    test->title = strdup(j_p->valuestring);
 	if ((j_p = cJSON_GetObjectItem(j, "congestion")) != NULL)
 	    test->congestion = strdup(j_p->valuestring);
+	if ((j_p = cJSON_GetObjectItem(j, "get_server_output")) != NULL)
+	    iperf_set_test_get_server_output(test, 1);
 	if (test->sender && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    test->sender_has_retransmits = 1;
 	cJSON_Delete(j);
@@ -1190,6 +1220,34 @@ send_results(struct iperf_test *test)
 	else
 	    sender_has_retransmits = test->sender_has_retransmits;
 	cJSON_AddIntToObject(j, "sender_has_retransmits", sender_has_retransmits);
+
+	/* If on the server and sending server output, then do this */
+	if (test->role == 's' && test->get_server_output) {
+	    if (test->json_output) {
+		/* Add JSON output */
+		cJSON_AddItemReferenceToObject(j, "server_output_json", test->json_top);
+	    }
+	    else {
+		/* Add textual output */
+		size_t buflen = 0;
+
+		/* Figure out how much room we need to hold the complete output string */
+		struct iperf_textline *t;
+		TAILQ_FOREACH(t, &(test->server_output_list), textlineentries) {
+		    buflen += strlen(t->line);
+		}
+
+		/* Allocate and build it up from the component lines */
+		char *output = calloc(buflen + 1, 1);
+		TAILQ_FOREACH(t, &(test->server_output_list), textlineentries) {
+		    strncat(output, t->line, buflen);
+		    buflen -= strlen(t->line);
+		}
+
+		cJSON_AddStringToObject(j, "server_output_text", output);
+	    }
+	}
+
 	j_streams = cJSON_CreateArray();
 	if (j_streams == NULL) {
 	    i_errno = IEPACKAGERESULTS;
@@ -1212,6 +1270,9 @@ send_results(struct iperf_test *test)
 		    cJSON_AddIntToObject(j_stream, "errors", sp->cnt_error);
 		    cJSON_AddIntToObject(j_stream, "packets", sp->packet_count);
 		}
+	    }
+	    if (r == 0 && test->debug) {
+		printf("send_results\n%s\n", cJSON_Print(j));
 	    }
 	    if (r == 0 && JSON_write(test->ctrl_sck, j) < 0) {
 		i_errno = IESENDRESULTS;
@@ -1244,6 +1305,7 @@ get_results(struct iperf_test *test)
     cJSON *j_jitter;
     cJSON *j_errors;
     cJSON *j_packets;
+    cJSON *j_server_output;
     int sid, cerror, pcount;
     double jitter;
     iperf_size_t bytes_transferred;
@@ -1263,6 +1325,10 @@ get_results(struct iperf_test *test)
 	    i_errno = IERECVRESULTS;
 	    r = -1;
 	} else {
+	    if (test->debug) {
+		printf("get_results\n%s\n", cJSON_Print(j));
+	    }
+
 	    test->remote_cpu_util[0] = j_cpu_util_total->valuefloat;
 	    test->remote_cpu_util[1] = j_cpu_util_user->valuefloat;
 	    test->remote_cpu_util[2] = j_cpu_util_system->valuefloat;
@@ -1313,6 +1379,24 @@ get_results(struct iperf_test *test)
 				    sp->result->stream_retrans = retransmits;
 				}
 			    }
+			}
+		    }
+		}
+		/*
+		 * If we're the client and we're supposed to get remote results,
+		 * look them up and process accordingly.
+		 */
+		if (test->role == 'c' && iperf_get_test_get_server_output(test)) {
+		    /* Look for JSON.  If we find it, grab the object so it doesn't get deleted. */
+		    j_server_output = cJSON_DetachItemFromObject(j, "server_output_json");
+		    if (j_server_output != NULL) {
+			test->json_server_output = j_server_output;
+		    }
+		    else {
+			/* No JSON, look for textual output.  Make a copy of the text for later. */
+			j_server_output = cJSON_GetObjectItem(j, "server_output_text");
+			if (j_server_output != NULL) {
+			    test->server_output_text = strdup(j_server_output->valuestring);
 			}
 		    }
 		}
@@ -1529,6 +1613,8 @@ iperf_defaults(struct iperf_test *testp)
     testp->on_connect = iperf_on_connect;
     testp->on_test_finish = iperf_on_test_finish;
 
+    TAILQ_INIT(&testp->server_output_list);
+
     return 0;
 }
 
@@ -1570,6 +1656,20 @@ iperf_free_test(struct iperf_test *test)
         prot = SLIST_FIRST(&test->protocols);
         SLIST_REMOVE_HEAD(&test->protocols, protocols);        
         free(prot);
+    }
+
+    if (test->server_output_text) {
+	free(test->server_output_text);
+	test->server_output_text = NULL;
+    }
+
+    /* Free output line buffers, if any (on the server only) */
+    struct iperf_textline *t;
+    while (!TAILQ_EMPTY(&test->server_output_list)) {
+	t = TAILQ_FIRST(&test->server_output_list);
+	TAILQ_REMOVE(&test->server_output_list, t, textlineentries);
+	free(t->line);
+	free(t);
     }
 
     /* XXX: Why are we setting these values to NULL? */
@@ -1657,6 +1757,15 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->mss = 0;
     memset(test->cookie, 0, COOKIE_SIZE);
     test->multisend = 10;	/* arbitrary */
+
+    /* Free output line buffers, if any (on the server only) */
+    struct iperf_textline *t;
+    while (!TAILQ_EMPTY(&test->server_output_list)) {
+	t = TAILQ_FIRST(&test->server_output_list);
+	TAILQ_REMOVE(&test->server_output_list, t, textlineentries);
+	free(t->line);
+	free(t);
+    }
 }
 
 
@@ -2006,8 +2115,24 @@ iperf_print_results(struct iperf_test *test)
 
     if (test->json_output)
 	cJSON_AddItemToObject(test->json_end, "cpu_utilization_percent", iperf_json_printf("host_total: %f  host_user: %f  host_system: %f  remote_total: %f  remote_user: %f  remote_system: %f", (double) test->cpu_util[0], (double) test->cpu_util[1], (double) test->cpu_util[2], (double) test->remote_cpu_util[0], (double) test->remote_cpu_util[1], (double) test->remote_cpu_util[2]));
-    else if (test->verbose)
-        iprintf(test, report_cpu, report_local, test->sender?report_sender:report_receiver, test->cpu_util[0], test->cpu_util[1], test->cpu_util[2], report_remote, test->sender?report_receiver:report_sender, test->remote_cpu_util[0], test->remote_cpu_util[1], test->remote_cpu_util[2]);
+    else {
+	if (test->verbose) {
+	    iprintf(test, report_cpu, report_local, test->sender?report_sender:report_receiver, test->cpu_util[0], test->cpu_util[1], test->cpu_util[2], report_remote, test->sender?report_receiver:report_sender, test->remote_cpu_util[0], test->remote_cpu_util[1], test->remote_cpu_util[2]);
+	}
+
+	/* Print server output if we're on the client and it was requested/provided */
+	if (test->role == 'c' && iperf_get_test_get_server_output(test)) {
+	    if (test->json_server_output) {
+		iprintf(test, "\nServer JSON output:\n%s\n", cJSON_Print(test->json_server_output));
+		cJSON_Delete(test->json_server_output);
+		test->json_server_output = NULL;
+	    }
+	    if (test->server_output_text) {
+		iprintf(test, "\nServer output:\n%s\n", test->server_output_text);
+		test->server_output_text = NULL;
+	    }
+	}
+    }
 }
 
 /**************************************************************************/
@@ -2393,6 +2518,13 @@ iperf_json_finish(struct iperf_test *test)
 {
     char *str;
 
+    /* Include server output */
+    if (test->json_server_output) {
+	cJSON_AddItemToObject(test->json_top, "server_output_json", test->json_server_output);
+    }
+    if (test->server_output_text) {
+	cJSON_AddStringToObject(test->json_top, "server_output_text", test->server_output_text);
+    }
     str = cJSON_Print(test->json_top);
     if (str == NULL)
         return -1;
@@ -2401,7 +2533,7 @@ iperf_json_finish(struct iperf_test *test)
     fflush(stdout);
     free(str);
     cJSON_Delete(test->json_top);
-    test->json_top = test->json_start = test->json_intervals = test->json_end = NULL;
+    test->json_top = test->json_start = test->json_intervals = test->json_server_output = test->json_end = NULL;
     return 0;
 }
 
@@ -2452,12 +2584,39 @@ int
 iprintf(struct iperf_test *test, const char* format, ...)
 {
     va_list argp;
-    int r;
+    int r = -1;
 
-    if (test->title)
-        printf("%s:  ", test->title);
-    va_start(argp, format);
-    r = vprintf(format, argp);
-    va_end(argp);
+    /*
+     * There are roughly two use cases here.  If we're the client,
+     * want to print stuff directly to the output stream.
+     * If we're the sender we might need to buffer up output to send
+     * to the client.
+     *
+     * This doesn't make a whole lot of difference except there are
+     * some chunks of output on the client (on particular the whole
+     * of the server output with --get-server-output) that could
+     * easily exceed the size of the line buffer, but which don't need
+     * to be buffered up anyway.
+     */
+    if (test->role == 'c') {
+	if (test->title)
+	    printf("%s:  ", test->title);
+	va_start(argp, format);
+	r = vprintf(format, argp);
+	va_end(argp);
+    }
+    else if (test->role == 's') {
+	char linebuffer[1024];
+	va_start(argp, format);
+	r = vsnprintf(linebuffer, sizeof(linebuffer), format, argp);
+	va_end(argp);
+	printf("%s", linebuffer);
+
+	if (test->role == 's' && iperf_get_test_get_server_output) {
+	    struct iperf_textline *l = (struct iperf_textline *) malloc(sizeof(struct iperf_textline));
+	    l->line = strdup(linebuffer);
+	    TAILQ_INSERT_TAIL(&(test->server_output_list), l, textlineentries);
+	}
+    }
     return r;
 }

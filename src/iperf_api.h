@@ -28,6 +28,7 @@ struct iperf_stream;
 /* short option equivalents, used to support options that only have long form */
 #define OPT_SCTP 1
 #define OPT_LOGFILE 2
+#define OPT_GET_SERVER_OUTPUT 3
 
 /* states */
 #define TEST_START 1
@@ -70,6 +71,7 @@ int	iperf_get_test_protocol_id( struct iperf_test* ipt );
 int	iperf_get_test_json_output( struct iperf_test* ipt );
 char*	iperf_get_test_json_output_string ( struct iperf_test* ipt );
 int	iperf_get_test_zerocopy( struct iperf_test* ipt );
+int	iperf_get_test_get_server_output( struct iperf_test* ipt );
 
 /* Setter routines for some fields inside iperf_test. */
 void	iperf_set_verbose( struct iperf_test* ipt, int verbose );
@@ -91,6 +93,7 @@ void	iperf_set_test_reverse( struct iperf_test* ipt, int reverse );
 void	iperf_set_test_json_output( struct iperf_test* ipt, int json_output );
 int	iperf_has_zerocopy( void );
 void	iperf_set_test_zerocopy( struct iperf_test* ipt, int zerocopy );
+void	iperf_set_test_get_server_output( struct iperf_test* ipt, int get_server_output );
 
 /**
  * exchange_parameters - handles the param_Exchange part for client

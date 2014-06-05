@@ -157,6 +157,11 @@ struct protocol {
     SLIST_ENTRY(protocol) protocols;
 };
 
+struct iperf_textline {
+    char *line;
+    TAILQ_ENTRY(iperf_textline) textlineentries;
+};
+
 struct iperf_test
 {
     char      role;                             /* 'c' lient or 's' erver */
@@ -193,6 +198,7 @@ struct iperf_test
     int	      json_output;                      /* -J option - JSON output */
     int	      zerocopy;                         /* -Z option - use sendfile */
     int       debug;				/* -d option - enable debug */
+    int	      get_server_output;		/* --get-server-output */
 
     int	      multisend;
 
@@ -239,6 +245,14 @@ struct iperf_test
     cJSON *json_start;
     cJSON *json_intervals;
     cJSON *json_end;
+
+    /* Server output (use on client side only) */
+    char *server_output_text;
+    cJSON *json_server_output;
+
+    /* Server output (use on server side only) */
+    TAILQ_HEAD(iperf_textlisthead, iperf_textline) server_output_list;
+
 };
 
 /* default settings */

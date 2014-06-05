@@ -125,6 +125,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -Z, --zerocopy            use a 'zero copy' method of sending data\n"
                            "  -O, --omit N              omit the first n seconds\n"
                            "  -T, --title str           prefix every output line with this string\n"
+                           "  --get-server-output       get results from server\n"
 
 #ifdef NOT_YET_SUPPORTED /* still working on these */
 #endif

@@ -2470,7 +2470,7 @@ iperf_new_stream(struct iperf_test *test, int s)
     sp->rcv = test->protocol->recv;
 
     if (test->diskfile_name != (char*) 0) {
-	sp->diskfile_fd = open(test->diskfile_name, test->sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC));
+	sp->diskfile_fd = open(test->diskfile_name, test->sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC), S_IRUSR|S_IWUSR);
 	if (sp->diskfile_fd == -1) {
 	    i_errno = IEFILE;
             munmap(sp->buffer, sp->test->settings->blksize);
@@ -2644,7 +2644,7 @@ iperf_create_pidfile(struct iperf_test *test)
     if (test->pidfile) {
 	int fd;
 	char buf[8];
-	fd = open(test->pidfile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	fd = open(test->pidfile, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR|S_IWUSR);
 	if (fd < 0) {
 	    return -1;
 	}

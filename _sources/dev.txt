@@ -195,3 +195,16 @@ Release Engineering Checklist
      tree) and deploy a new build of the documentation to GitHub
      Pages.
 
+Code Authors
+------------
+
+The main authors of iperf3 are (in alphabetical order):  Jon Dugan,
+Seth Elliott, Bruce A. Mah, Jeff Poskanzer, Kaustubh Prabhu.
+Additional code contributions have come from (also in alphabetical
+order):  Mark Ashley, Aaron Brown, Aeneas Jaißle, Susant Sahani, Brian
+Tierney.
+
+iperf3 contains some original code from iperf2.  The authors of iperf2
+are (in alphabetical order): Jon Dugan, John Estabrook, Jim Ferbuson,
+Andrew Gallatin, Mark Gates, Kevin Gibbs, Stephen Hemminger, Nathan
+Jones, Feng Qin, Gerrit Renker, Ajay Tirumala, Alex Warshavsky.

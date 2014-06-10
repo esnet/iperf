@@ -165,7 +165,7 @@ Release Engineering Checklist
    older and probably should be avoided.
 
 4. Stage the tarball (and a file containing the SHA256 hash) to the
-   download site.  Currently this is located on ``stats.es.net``.
+   download site.  Currently this is located on ``downloads.es.net``.
 
 5. From another host, test the link in the release announcement by
    downloading a fresh copy of the file and verifying the SHA256

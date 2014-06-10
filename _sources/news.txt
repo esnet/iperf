@@ -1,6 +1,17 @@
 iperf3 Project News
 ===================
 
+2014-06-10:  New iperf3 download site
+-------------------------------------
+
+iperf3 downloads are now hosted on a new server at ESnet:
+
+| URL:  http://downloads.es.net/pub/iperf/
+
+Going forward, new releases will be made available in this directory.
+Older releases will, at least for now, continue to also be available
+at the previous location.
+
 2014-03-26:  iperf-3.0.3 released
 ---------------------------------
 

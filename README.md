@@ -35,7 +35,7 @@ Obtaining iperf3
 
 Downloads of iperf3 are available at:
 
-    http://stats.es.net/software/
+    http://downloads.es.net/pub/iperf/
 
 To check out the most recent code, do:
 

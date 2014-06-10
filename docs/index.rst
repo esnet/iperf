@@ -40,7 +40,7 @@ Project site (source code repository, issue tracker) hosted on GitHub:
 https://github.com/esnet/iperf
 
 Source code downloads:
-https://stats.es.net/software/
+http://downloads.es.net/pub/iperf/
 
 Contents
 --------

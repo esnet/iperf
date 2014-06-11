@@ -7,7 +7,6 @@
 *.Po
 Makefile
 autom4te.cache
-config/test-driver
 config.log
 config.status
 libtool

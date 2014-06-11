@@ -2814,7 +2814,7 @@ iprintf(struct iperf_test *test, const char* format, ...)
 	va_end(argp);
 	fprintf(test->outfile, "%s", linebuffer);
 
-	if (test->role == 's' && iperf_get_test_get_server_output) {
+	if (test->role == 's' && iperf_get_test_get_server_output(test)) {
 	    struct iperf_textline *l = (struct iperf_textline *) malloc(sizeof(struct iperf_textline));
 	    l->line = strdup(linebuffer);
 	    TAILQ_INSERT_TAIL(&(test->server_output_list), l, textlineentries);

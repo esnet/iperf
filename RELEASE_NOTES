@@ -12,6 +12,18 @@
   * A bug that caused CPU time to be computed incorrectly on FreeBSD
     has been fixed.
 
+  * A timing issue which caused measurement intervals to be wrong
+    with TCP tests on lossy networks has been fixed (issue #125).
+
+  * Newer versions of autoconf / automake / libtool are now used by
+    default (issue #161).
+
+  * JSON output now indicates whether the test was run in --reverse
+    mode (issue #167).
+
+  * It is now possible to get (most of) the server-side output at
+    the client by using the --get-server-output flag (issue #160).
+
 * Developer-visible changes
 
   * automake/autoconf/libtool have been updated to more recent

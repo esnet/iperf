@@ -143,7 +143,6 @@ doubles the value you pass in. (You can see this using iperf3's debug flag).
 But then the CWND does not actually ramp up to the doubled value, but only
 to about 75% of the doubled value. This appears to be by design.
 
-* On some platforms (observed on at least one version of Ubuntu
-Linux), it might be necessary to invoke "ldconfig" manually after
-doing a "make install" before the iperf3 executable can find its
-shared library.  (Issue #153)
+* On some platforms, it might be necessary to invoke "ldconfig" 
+manually after doing a "make install" before the iperf3 executable can 
+find its shared library.  (Issue #153)

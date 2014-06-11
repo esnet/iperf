@@ -11,6 +11,10 @@
     TCP_CONGESTION.  Most notably this allows iperf3 to work on CentOS
     5.
 
+  * Selection of TCP congestion now works on FreeBSD, and is now
+    called --congestion (the old --linux-congestion option works
+    but is now deprecated).
+
   * An abort on MacOS 10.9 has been fixed (issue #135).
 
   * Added -I flag for the server to write a PID file, mostly useful for
@@ -40,6 +44,21 @@
   * A possible buffer overflow in iperf_error.c has been fixed (issue
     #155).
 
+  * A timing issue which caused measurement intervals to be wrong
+    with TCP tests on lossy networks has been fixed (issue #125).
+
+  * Newer versions of autoconf / automake / libtool are now used by
+    default (issue #161).
+
+  * The maximum test running time is now one day, up from one hour
+    (issue #166).
+
+  * JSON output now indicates whether the test was run in --reverse
+    mode (issue #167).
+
+  * It is now possible to get (most of) the server-side output at
+    the client by using the --get-server-output flag (issue #160).
+
 * Developer-visible changes
 
   * Some memory leaks have been fixed.
@@ -54,6 +73,13 @@
 
   * libiperf is now built by default as both shared and static
     libraries (issue #146, issue #152).
+
+  * Consumers of libiperf can now get the JSON output for a
+    just-completed test (issue #147).
+
+  * Detection of various optional features has been improved to check
+    for the presence or absence of platform functionality, not the name
+    of platforms.
 
 == iperf 3.0.1 2014-01-10 ==
   * Added the following new flags

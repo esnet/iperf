@@ -81,6 +81,11 @@
     for the presence or absence of platform functionality, not the name
     of platforms.
 
+  * In the JSON output, the "connection" structures are now stored as
+    an array in the "start" block, instead of overwriting each other.
+    While technically an incompatible API change, the former behavior
+    generated unusable JSON.
+
 == iperf 3.0.1 2014-01-10 ==
   * Added the following new flags
      -D, --daemon	       run server as a daemon

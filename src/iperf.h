@@ -225,6 +225,7 @@ struct iperf_test
     /* cJSON handles for use when in -J mode */\
     cJSON *json_top;
     cJSON *json_start;
+    cJSON *json_connected;
     cJSON *json_intervals;
     cJSON *json_end;
 

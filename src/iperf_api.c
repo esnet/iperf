@@ -1503,7 +1503,7 @@ connect_msg(struct iperf_stream *sp)
     }
 
     if (sp->test->json_output)
-        cJSON_AddItemToObject(sp->test->json_start, "connected", iperf_json_printf("socket: %d  local_host: %s  local_port: %d  remote_host: %s  remote_port: %d", (int64_t) sp->socket, ipl, (int64_t) lport, ipr, (int64_t) rport));
+        cJSON_AddItemToArray(sp->test->json_connected, iperf_json_printf("socket: %d  local_host: %s  local_port: %d  remote_host: %s  remote_port: %d", (int64_t) sp->socket, ipl, (int64_t) lport, ipr, (int64_t) rport));
     else
 	iprintf(sp->test, report_connected, sp->socket, ipl, lport, ipr, rport);
 }
@@ -2502,6 +2502,10 @@ iperf_json_start(struct iperf_test *test)
     if (test->json_start == NULL)
         return -1;
     cJSON_AddItemToObject(test->json_top, "start", test->json_start);
+    test->json_connected = cJSON_CreateArray();
+    if (test->json_connected == NULL)
+        return -1;
+    cJSON_AddItemToObject(test->json_start, "connected", test->json_connected);
     test->json_intervals = cJSON_CreateArray();
     if (test->json_intervals == NULL)
         return -1;
@@ -2533,7 +2537,7 @@ iperf_json_finish(struct iperf_test *test)
     fflush(stdout);
     free(str);
     cJSON_Delete(test->json_top);
-    test->json_top = test->json_start = test->json_intervals = test->json_server_output = test->json_end = NULL;
+    test->json_top = test->json_start = test->json_connected = test->json_intervals = test->json_server_output = test->json_end = NULL;
     return 0;
 }
 

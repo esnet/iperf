@@ -1,3 +1,5 @@
+== iperf 3.0.4 2014-06-13 ==
+
 * User-visible changes
 
   * Erroneous output when doing --json output has been fixed (this

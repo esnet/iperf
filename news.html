@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>iperf3 Project News &mdash; iperf3 3.0.3 documentation</title>
+    <title>iperf3 Project News &mdash; iperf3 3.0.5 documentation</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -16,7 +16,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.0.3',
+        VERSION:     '3.0.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -30,7 +30,7 @@
     <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="shortcut icon" href="_static/favicon.ico"/>
-    <link rel="top" title="iperf3 3.0.3 documentation" href="index.html" />
+    <link rel="top" title="iperf3 3.0.5 documentation" href="index.html" />
     <link rel="next" title="Obtaining iperf3" href="obtaining.html" />
     <link rel="prev" title="iperf3" href="index.html" />
 <meta charset='utf-8'>
@@ -133,6 +133,8 @@
       <div class="col-md-3">
         <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
 <li><a class="reference internal" href="#">iperf3 Project News</a><ul>
+<li><a class="reference internal" href="#project-documentation-on-github-pages">2014-06-16:  Project documentation on GitHub Pages</a></li>
+<li><a class="reference internal" href="#iperf-3-0-5-released">2014-06-16:  iperf-3.0.5 released</a></li>
 <li><a class="reference internal" href="#new-iperf3-download-site">2014-06-10:  New iperf3 download site</a></li>
 <li><a class="reference internal" href="#iperf-3-0-3-released">2014-03-26:  iperf-3.0.3 released</a></li>
 <li><a class="reference internal" href="#iperf-3-0-2-released">2014-03-10:  iperf-3.0.2 released</a></li>
@@ -148,6 +150,35 @@
       
   <div class="section" id="iperf3-project-news">
 <h1>iperf3 Project News<a class="headerlink" href="#iperf3-project-news" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="project-documentation-on-github-pages">
+<h2>2014-06-16:  Project documentation on GitHub Pages<a class="headerlink" href="#project-documentation-on-github-pages" title="Permalink to this headline">¶</a></h2>
+<p>iperf3 project documentation can now be found at:</p>
+<div class="line-block">
+<div class="line">URL:  <a class="reference external" href="http://software.es.net/iperf/">http://software.es.net/iperf/</a></div>
+</div>
+<p>This is a GitHub Pages site.  In an ongoing series of steps, content
+will be migrated from the iperf3 wiki to GitHub Pages.</p>
+</div>
+<div class="section" id="iperf-3-0-5-released">
+<h2>2014-06-16:  iperf-3.0.5 released<a class="headerlink" href="#iperf-3-0-5-released" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">URL:  <a class="reference external" href="http://downloads.es.net/pub/iperf/iperf-3.0.5.tar.gz">http://downloads.es.net/pub/iperf/iperf-3.0.5.tar.gz</a></div>
+<div class="line">SHA256:  <tt class="docutils literal"><span class="pre">e1e1989985b17a4c03b0fa207004ad164b137e37ab0682fecbf5e93bcaa920a6</span>&nbsp; <span class="pre">iperf-3.0.5.tar.gz</span></tt></div>
+</div>
+<p>This is the third maintenance release of iperf 3, with few more
+enhancements and bug fixes.  Highlights:</p>
+<ul class="simple">
+<li>A timing issue which caused measurement intervals to be wrong with
+TCP tests on lossy networks has been fixed.</li>
+<li>It is now possible to get (most of) the server-side output at
+the client by using the <tt class="docutils literal"><span class="pre">--get-server-output</span></tt> flag.</li>
+<li>A number of bugs with <tt class="docutils literal"><span class="pre">--json</span></tt> output have been fixed.</li>
+</ul>
+<p>A more extensive list of changes can always be found in the
+<tt class="docutils literal"><span class="pre">RELEASE_NOTES</span></tt> file in the source distribution.</p>
+<p>Note:  An iperf-3.0.4 release was planned and tagged, but not
+officially released.</p>
+</div>
 <div class="section" id="new-iperf3-download-site">
 <h2>2014-06-10:  New iperf3 download site<a class="headerlink" href="#new-iperf3-download-site" title="Permalink to this headline">¶</a></h2>
 <p>iperf3 downloads are now hosted on a new server at ESnet:</p>

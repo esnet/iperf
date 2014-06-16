@@ -143,9 +143,12 @@ netannounce(int domain, int proto, char *local, int port)
     /*
      * If we got an IPv6 socket, figure out if it should accept IPv4
      * connections as well.  We do that if and only if no address
-     * family was specified explicitly.
+     * family was specified explicitly.  Note that we can only
+     * do this if the IPV6_V6ONLY socket option is supported.  Also,
+     * OpenBSD explicitly omits support for IPv4-mapped addresses,
+     * even though it implements IPV6_V6ONLY.
      */
-#ifdef IPV6_V6ONLY
+#if defined(IPV6_V6ONLY) && !defined(__OpenBSD__)
     if (res->ai_family == AF_INET6 && (domain == AF_UNSPEC || domain == AF_INET6)) {
 	if (domain == AF_UNSPEC)
 	    opt = 0;

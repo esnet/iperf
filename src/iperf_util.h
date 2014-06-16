@@ -11,6 +11,7 @@
 #define __IPERF_UTIL_H
 
 #include "cjson.h"
+#include <sys/select.h>
 
 void make_cookie(char *);
 

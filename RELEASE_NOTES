@@ -1,4 +1,4 @@
-== iperf 3.0.4 2014-06-16 ==
+== iperf 3.0.5 2014-06-16 ==
 
 * User-visible changes
 
@@ -31,6 +31,8 @@
   * automake/autoconf/libtool have been updated to more recent
     versions.  AM_MAINTAINER_MODE is now used to avoid requiring these
     tools at build-time.
+
+== iperf 3.0.4 was not released ==
 
 == iperf 3.0.3 2014-03-26 ==
 

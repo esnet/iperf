@@ -141,23 +141,28 @@ Release Engineering Checklist
    that the "Known Issues" section of the ``README`` file is up to date.
 
 2. Compose a release announcement.  Most of the release announcement
-   can be written before tagging.
+   can be written before tagging.  Usually the previous version's
+   announcement can be used as a starting point.
 
-3. Starting from a clean source tree (be sure that ``git status`` emits
-   no output)::
+3. Preferably starting from a clean source tree (be sure that ``git
+   status`` emits no output)::
 
-    vi src/version.h   # update the strings IPERF_VERSION and IPERF_VERSION_DATE
+    vi RELEASE_NOTES   # update version number and release date
     vi configure.ac    # update version parameter in AC_INIT
     vi src/iperf3.1    # update manpage revision date if needed
     vi src/libiperf.3  # update manpage revision date if needed
-    git commit -a
+    git commit -a      # commit changes to the local repository only
     ./bootstrap.sh     # regenerate configure script, etc.
-    git commit -a
-    git push
+    git commit -a      # commit changes to the local repository only
 
-    ./make_release tag  # this creates a tag in the local repo that matches the version.h version
+    # Assuming that $VERSION is the version number to be released...
+    ./make_release tag $VERSION # this creates a tag in the local repo
+    ./make_release tar $VERSION # create tarball and compute SHA256 hash
+
+    # Testing of the release artifact happens here.  When all looks
+    # satisfactory (but not before that), then...
+    git push            # Push version changes
     git push --tags     # Push the new tag to the GitHub repo
-    ./make_release tar  # create tarball and compute SHA256 hash
 
    These steps should be done on a platform with a relatively recent
    version of autotools / libtools.  Examples are MacOS / MacPorts or
@@ -169,7 +174,8 @@ Release Engineering Checklist
 
 5. From another host, test the link in the release announcement by
    downloading a fresh copy of the file and verifying the SHA256
-   checksum.
+   checksum.  Checking all other links in the release announcement is
+   strongly recommended as well.
 
 6. Also verify (with file(1)) that the tarball is actually a gzipped
    tarball.
@@ -180,20 +186,35 @@ Release Engineering Checklist
    
 8. Plug the SHA256 checksum into the release announcement.
 
-9. Send the release announcement (PGP-signed) to these addresses:
+9. PGP-sign the release announcement text using ``pgp --clearsign``.
+   The signed announcement will be sent out in a subsequent emails,
+   but could also be archived.  Decoupling the signing from emailing
+   allows a signed release announcement to be resent via email or sent
+   by other, non-email means.
 
-   * iperf-dev@googlegroups.com
+10. Send the PGP-signed release announcement to the following
+    addresses.  Remember to turn off signing in the MUA, if applicable.
 
-   * iperf-users@lists.sourceforge.net
+    * iperf-dev@googlegroups.com
 
-   * perfsonar-user@internet2.edu
+    * iperf-users@lists.sourceforge.net
 
-   * perfsonar-dev@internet2.edu
+    * perfsonar-user@internet2.edu
 
-10.  Update the iperf3 Project News section of the documentation site
-     to announce the new release (see ``docs/news.rst`` in the source
-     tree) and deploy a new build of the documentation to GitHub
-     Pages.
+    * perfsonar-developer@internet2.edu
+
+    Note: Thunderbird sometimes mangles the PGP-signed release
+    announcement so that it does not verify correctly.  This could be
+    due to Thunderbird trying to wrap the length of extremely long
+    lines (such as the SHA256 hash).  Apple Mail and mutt seem to
+    handle this situation correctly.  Testing the release announcement
+    sending process by sending a copy to oneself first and attempting
+    to verify the signature is highly encouraged.
+
+11. Update the iperf3 Project News section of the documentation site
+    to announce the new release (see ``docs/news.rst`` and
+    ``docs/conf.py`` in the source tree) and deploy a new build of the
+    documentation to GitHub Pages.
 
 Code Authors
 ------------

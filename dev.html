@@ -260,22 +260,27 @@ three parts:  <em>MAJOR.MINOR.PATCH</em></p>
 that the &#8220;Known Issues&#8221; section of the <tt class="docutils literal"><span class="pre">README</span></tt> file is up to date.</p>
 </li>
 <li><p class="first">Compose a release announcement.  Most of the release announcement
-can be written before tagging.</p>
+can be written before tagging.  Usually the previous version&#8217;s
+announcement can be used as a starting point.</p>
 </li>
-<li><p class="first">Starting from a clean source tree (be sure that <tt class="docutils literal"><span class="pre">git</span> <span class="pre">status</span></tt> emits
-no output):</p>
-<div class="highlight-python"><div class="highlight"><pre>vi src/version.h   # update the strings IPERF_VERSION and IPERF_VERSION_DATE
+<li><p class="first">Preferably starting from a clean source tree (be sure that <tt class="docutils literal"><span class="pre">git</span>
+<span class="pre">status</span></tt> emits no output):</p>
+<div class="highlight-python"><div class="highlight"><pre>vi RELEASE_NOTES   # update version number and release date
 vi configure.ac    # update version parameter in AC_INIT
 vi src/iperf3.1    # update manpage revision date if needed
 vi src/libiperf.3  # update manpage revision date if needed
-git commit -a
+git commit -a      # commit changes to the local repository only
 ./bootstrap.sh     # regenerate configure script, etc.
-git commit -a
-git push
+git commit -a      # commit changes to the local repository only
 
-./make_release tag  # this creates a tag in the local repo that matches the version.h version
+# Assuming that $VERSION is the version number to be released...
+./make_release tag $VERSION # this creates a tag in the local repo
+./make_release tar $VERSION # create tarball and compute SHA256 hash
+
+# Testing of the release artifact happens here.  When all looks
+# satisfactory (but not before that), then...
+git push            # Push version changes
 git push --tags     # Push the new tag to the GitHub repo
-./make_release tar  # create tarball and compute SHA256 hash
 </pre></div>
 </div>
 <p>These steps should be done on a platform with a relatively recent
@@ -288,7 +293,8 @@ download site.  Currently this is located on <tt class="docutils literal"><span 
 </li>
 <li><p class="first">From another host, test the link in the release announcement by
 downloading a fresh copy of the file and verifying the SHA256
-checksum.</p>
+checksum.  Checking all other links in the release announcement is
+strongly recommended as well.</p>
 </li>
 <li><p class="first">Also verify (with file(1)) that the tarball is actually a gzipped
 tarball.</p>
@@ -299,18 +305,32 @@ platforms.</p>
 </li>
 <li><p class="first">Plug the SHA256 checksum into the release announcement.</p>
 </li>
-<li><p class="first">Send the release announcement (PGP-signed) to these addresses:</p>
+<li><p class="first">PGP-sign the release announcement text using <tt class="docutils literal"><span class="pre">pgp</span> <span class="pre">--clearsign</span></tt>.
+The signed announcement will be sent out in a subsequent emails,
+but could also be archived.  Decoupling the signing from emailing
+allows a signed release announcement to be resent via email or sent
+by other, non-email means.</p>
+</li>
+<li><p class="first">Send the PGP-signed release announcement to the following
+addresses.  Remember to turn off signing in the MUA, if applicable.</p>
 <ul class="simple">
 <li><a class="reference external" href="mailto:iperf-dev&#37;&#52;&#48;googlegroups&#46;com">iperf-dev<span>&#64;</span>googlegroups<span>&#46;</span>com</a></li>
 <li><a class="reference external" href="mailto:iperf-users&#37;&#52;&#48;lists&#46;sourceforge&#46;net">iperf-users<span>&#64;</span>lists<span>&#46;</span>sourceforge<span>&#46;</span>net</a></li>
 <li><a class="reference external" href="mailto:perfsonar-user&#37;&#52;&#48;internet2&#46;edu">perfsonar-user<span>&#64;</span>internet2<span>&#46;</span>edu</a></li>
-<li><a class="reference external" href="mailto:perfsonar-dev&#37;&#52;&#48;internet2&#46;edu">perfsonar-dev<span>&#64;</span>internet2<span>&#46;</span>edu</a></li>
+<li><a class="reference external" href="mailto:perfsonar-developer&#37;&#52;&#48;internet2&#46;edu">perfsonar-developer<span>&#64;</span>internet2<span>&#46;</span>edu</a></li>
 </ul>
+<p>Note: Thunderbird sometimes mangles the PGP-signed release
+announcement so that it does not verify correctly.  This could be
+due to Thunderbird trying to wrap the length of extremely long
+lines (such as the SHA256 hash).  Apple Mail and mutt seem to
+handle this situation correctly.  Testing the release announcement
+sending process by sending a copy to oneself first and attempting
+to verify the signature is highly encouraged.</p>
 </li>
 <li><p class="first">Update the iperf3 Project News section of the documentation site
-to announce the new release (see <tt class="docutils literal"><span class="pre">docs/news.rst</span></tt> in the source
-tree) and deploy a new build of the documentation to GitHub
-Pages.</p>
+to announce the new release (see <tt class="docutils literal"><span class="pre">docs/news.rst</span></tt> and
+<tt class="docutils literal"><span class="pre">docs/conf.py</span></tt> in the source tree) and deploy a new build of the
+documentation to GitHub Pages.</p>
 </li>
 </ol>
 </div>

@@ -1,6 +1,39 @@
 iperf3 Project News
 ===================
 
+2014-06-16:  Project documentation on GitHub Pages
+--------------------------------------------------
+
+iperf3 project documentation can now be found at:
+
+| URL:  http://software.es.net/iperf/
+
+This is a GitHub Pages site.  In an ongoing series of steps, content
+will be migrated from the iperf3 wiki to GitHub Pages.
+
+2014-06-16:  iperf-3.0.5 released
+---------------------------------
+
+| URL:  http://downloads.es.net/pub/iperf/iperf-3.0.5.tar.gz
+| SHA256:  ``e1e1989985b17a4c03b0fa207004ad164b137e37ab0682fecbf5e93bcaa920a6  iperf-3.0.5.tar.gz``
+
+This is the third maintenance release of iperf 3, with few more
+enhancements and bug fixes.  Highlights:
+
+* A timing issue which caused measurement intervals to be wrong with
+  TCP tests on lossy networks has been fixed.
+
+* It is now possible to get (most of) the server-side output at
+  the client by using the ``--get-server-output`` flag.
+
+* A number of bugs with ``--json`` output have been fixed.
+
+A more extensive list of changes can always be found in the
+``RELEASE_NOTES`` file in the source distribution.
+
+Note:  An iperf-3.0.4 release was planned and tagged, but not
+officially released.
+
 2014-06-10:  New iperf3 download site
 -------------------------------------
 

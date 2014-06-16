@@ -216,7 +216,7 @@ iperf_tcp_listen(struct iperf_test *test)
             i_errno = IEREUSEADDR;
             return -1;
         }
-#ifdef IPV6_V6ONLY
+#if defined(IPV6_V6ONLY) && !defined(__OpenBSD__)
 	if (test->settings->domain == AF_UNSPEC || test->settings->domain == AF_INET6) {
 	    if (test->settings->domain == AF_UNSPEC)
 		opt = 0;

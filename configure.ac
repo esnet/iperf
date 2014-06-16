@@ -1,5 +1,5 @@
 # Initialize the autoconf system for the specified tool, version and mailing list
-AC_INIT(iperf, 3.0.4, https://github.com/esnet/iperf, iperf, http://software.es.net/iperf/)
+AC_INIT(iperf, 3.0.5, https://github.com/esnet/iperf, iperf, http://software.es.net/iperf/)
 
 # Specify where the auxiliary files created by configure should go. The config
 # directory is picked so that they don't clutter up more useful directories.

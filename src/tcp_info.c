@@ -28,7 +28,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/param.h>
-#include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -122,38 +121,6 @@ get_snd_cwnd(struct iperf_interval_results *irp)
 #endif
 #endif
 }
-
-#ifdef notdef
-/*************************************************************/
-//print_tcpinfo(struct iperf_interval_results *r)
-void
-print_tcpinfo(struct iperf_test *test)
-{
-#if defined(linux)
-    long int retransmits = 0;
-    struct iperf_stream *sp;
-    SLIST_FOREACH(sp, &test->streams, streams) {
-        retransmits += TAILQ_LAST(&sp->result->interval_results, irlisthead)->tcpInfo.tcpi_retransmits;
-    }
-    printf("TCP Info\n");
-    printf("  Retransmits: %ld\n", retransmits);
-
-/* old test print_tcpinfo code
-    printf(report_tcpInfo, r->tcpInfo.tcpi_snd_cwnd, r->tcpInfo.tcpi_snd_ssthresh,
-	    r->tcpInfo.tcpi_rcv_ssthresh, r->tcpInfo.tcpi_unacked, r->tcpInfo.tcpi_sacked,
-	    r->tcpInfo.tcpi_lost, r->tcpInfo.tcpi_retrans, r->tcpInfo.tcpi_fackets, 
-	    r->tcpInfo.tcpi_rtt, r->tcpInfo.tcpi_reordering);
-*/
-#endif
-#if defined(__FreeBSD__)
-/*
-    printf(report_tcpInfo, r->tcpInfo.tcpi_snd_cwnd, r->tcpInfo.tcpi_rcv_space,
-	   r->tcpInfo.tcpi_snd_ssthresh, r->tcpInfo.tcpi_rtt);
-*/
-#endif
-}
-#endif
-
 
 /*************************************************************/
 void

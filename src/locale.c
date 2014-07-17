@@ -83,6 +83,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
 #if defined(HAVE_CPU_AFFINITY)
                            "  -A, --affinity n/n,m      set CPU affinity\n"
 #endif /* HAVE_CPU_AFFINITY */
+                           "  -B, --bind      <host>    bind to a specific interface\n"
                            "  -V, --verbose             more detailed output\n"
                            "  -J, --json                output in JSON format\n"
                            "  --logfile f               send output to a log file\n"
@@ -110,7 +111,6 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -P, --parallel  #         number of parallel client streams to run\n"
                            "  -R, --reverse             run in reverse mode (server sends, client receives)\n"
                            "  -w, --window    #[KMG]    TCP window size (socket buffer size)\n"
-                           "  -B, --bind      <host>    bind to a specific interface\n"
 #if defined(HAVE_TCP_CONGESTION)
                            "  -C, --congestion <algo>   set TCP congestion control algorithm (Linux and FreeBSD only)\n"
 #endif /* HAVE_TCP_CONGESTION */

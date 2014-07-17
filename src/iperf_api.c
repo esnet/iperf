@@ -1850,23 +1850,6 @@ iperf_reset_test(struct iperf_test *test)
     CPU_ZERO(&test->cpumask);
 #endif /* HAVE_CPUSET_SETAFFINITY */
     test->state = 0;
-
-    if(test->title) {
-        free(test->title);
-        test->title = NULL;
-    }
-    if(test->server_hostname) {
-        free(test->server_hostname);
-        test->server_hostname = NULL;
-    }
-    if(test->bind_address) {
-        free(test->bind_address);
-        test->bind_address = NULL;
-    }
-    if(test->congestion) {
-        free(test->congestion);
-        test->congestion = NULL;
-    }
     
     test->ctrl_sck = -1;
     test->prot_listener = -1;

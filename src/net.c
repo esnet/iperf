@@ -104,7 +104,7 @@ netannounce(int domain, int proto, char *local, int port)
 
     snprintf(portstr, 6, "%d", port);
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = (domain == AF_UNSPEC ? AF_INET6 : domain);
+    hints.ai_family = domain;
     hints.ai_socktype = proto;
     hints.ai_flags = AI_PASSIVE;
     if (getaddrinfo(local, portstr, &hints, &res) != 0)
@@ -123,10 +123,10 @@ netannounce(int domain, int proto, char *local, int port)
 	freeaddrinfo(res);
 	return -1;
     }
-    if (domain == AF_UNSPEC || domain == AF_INET6) {
+    if (res->ai_family == AF_INET6 && (domain == AF_UNSPEC || domain == AF_INET6)) {
 	if (domain == AF_UNSPEC)
 	    opt = 0;
-	else if (domain == AF_INET6)
+	else
 	    opt = 1;
 	if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, 
 		       (char *) &opt, sizeof(opt)) < 0) {

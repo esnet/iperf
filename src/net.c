@@ -104,7 +104,24 @@ netannounce(int domain, int proto, char *local, int port)
 
     snprintf(portstr, 6, "%d", port);
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = domain;
+    /* 
+     * If binding to the wildcard address with no explicit address
+     * family specified, then force us to get an AF_INET6 socket.  On
+     * CentOS 6 and MacOS, getaddrinfo(3) with AF_UNSPEC in ai_family,
+     * and ai_flags containing AI_PASSIVE returns a result structure
+     * with ai_family set to AF_INET, with the result that we create
+     * and bind an IPv4 address wildcard address and by default, we
+     * can't accept IPv6 connections.
+     *
+     * On FreeBSD, under the above circumstances, ai_family in the
+     * result structure is set to AF_INET6.
+     */
+    if (domain == AF_UNSPEC && !local) {
+	hints.ai_family = AF_INET6;
+    }
+    else {
+	hints.ai_family = domain;
+    }
     hints.ai_socktype = proto;
     hints.ai_flags = AI_PASSIVE;
     if (getaddrinfo(local, portstr, &hints, &res) != 0)
@@ -123,6 +140,12 @@ netannounce(int domain, int proto, char *local, int port)
 	freeaddrinfo(res);
 	return -1;
     }
+
+    /*
+     * If we got an IPv6 socket, figure out if it should accept IPv4
+     * connections as well.  We do that if and only if no address
+     * family was specified explicitly.
+     */
     if (res->ai_family == AF_INET6 && (domain == AF_UNSPEC || domain == AF_INET6)) {
 	if (domain == AF_UNSPEC)
 	    opt = 0;

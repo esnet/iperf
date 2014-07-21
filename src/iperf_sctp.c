@@ -155,6 +155,7 @@ iperf_sctp_listen(struct iperf_test *test)
         return -1;
     }
 
+#ifdef IPV6_V6ONLY
     if (test->settings->domain == AF_UNSPEC || test->settings->domain == AF_INET6) {
         if (test->settings->domain == AF_UNSPEC)
             opt = 0;
@@ -168,6 +169,7 @@ iperf_sctp_listen(struct iperf_test *test)
 	    return -1;
 	}
     }
+#endif /* IPV6_V6ONLY */
 
     opt = 1;
     if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {

@@ -143,12 +143,12 @@ netannounce(int domain, int proto, char *local, int port)
 	freeaddrinfo(res);
 	return -1;
     }
-
     /*
      * If we got an IPv6 socket, figure out if it should accept IPv4
      * connections as well.  We do that if and only if no address
      * family was specified explicitly.
      */
+#ifdef IPV6_V6ONLY
     if (res->ai_family == AF_INET6 && (domain == AF_UNSPEC || domain == AF_INET6)) {
 	if (domain == AF_UNSPEC)
 	    opt = 0;
@@ -161,6 +161,7 @@ netannounce(int domain, int proto, char *local, int port)
 	    return -1;
 	}
     }
+#endif /* IPV6_V6ONLY */
 
     if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0) {
         close(s);

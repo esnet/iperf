@@ -203,6 +203,7 @@ iperf_tcp_listen(struct iperf_test *test)
             i_errno = IEREUSEADDR;
             return -1;
         }
+#ifdef IPV6_V6ONLY
 	if (test->settings->domain == AF_UNSPEC || test->settings->domain == AF_INET6) {
 	    if (test->settings->domain == AF_UNSPEC)
 		opt = 0;
@@ -218,6 +219,7 @@ iperf_tcp_listen(struct iperf_test *test)
 		return -1;
 	    }
 	}
+#endif /* IPV6_V6ONLY */
 
         if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0) {
 	    saved_errno = errno;

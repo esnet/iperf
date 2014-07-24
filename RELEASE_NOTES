@@ -59,6 +59,11 @@
   * It is now possible to get (most of) the server-side output at
     the client by using the --get-server-output flag (issue #160).
 
+  * Various problems with the -B option have been fixed (issue #193).
+
+  * Various compatibility fixes for Android (issue #184, issue #185),
+    OpenBSD (issue #196), Solaris (#177, issue #180).
+
 * Developer-visible changes
 
   * Some memory leaks have been fixed.

@@ -205,6 +205,12 @@ iperf_get_test_unit_format(struct iperf_test *ipt)
     return ipt->settings->unit_format;
 }
 
+char *
+iperf_get_test_bind_address(struct iperf_test *ipt)
+{
+    return ipt->bind_address;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -350,6 +356,12 @@ void
 iperf_set_test_unit_format(struct iperf_test *ipt, char unit_format)
 {
     ipt->settings->unit_format = unit_format;
+}
+
+void
+iperf_set_test_bind_address(struct iperf_test *ipt, char *bind_address)
+{
+    ipt->bind_address = strdup(bind_address);
 }
 
 /********************** Get/set test protocol structure ***********************/

@@ -1,3 +1,15 @@
+== iperf 3.0.6 2014-06-?? ==
+
+* User-visible changes
+
+  * Several bugs that kept the -B option from working in various
+    circumstances have been fixed (issue #193).
+
+* Developer-visible changes
+
+  * The {get,set}_test_bind_address API calls have been added to
+    expose the -B functionality to API consumers (issue #197).
+
 == iperf 3.0.5 2014-06-16 ==
 
 * User-visible changes

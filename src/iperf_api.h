@@ -72,6 +72,7 @@ int	iperf_get_test_json_output( struct iperf_test* ipt );
 char*	iperf_get_test_json_output_string ( struct iperf_test* ipt );
 int	iperf_get_test_zerocopy( struct iperf_test* ipt );
 int	iperf_get_test_get_server_output( struct iperf_test* ipt );
+char*	iperf_get_test_bind_address ( struct iperf_test* ipt );
 
 /* Setter routines for some fields inside iperf_test. */
 void	iperf_set_verbose( struct iperf_test* ipt, int verbose );
@@ -94,6 +95,7 @@ void	iperf_set_test_json_output( struct iperf_test* ipt, int json_output );
 int	iperf_has_zerocopy( void );
 void	iperf_set_test_zerocopy( struct iperf_test* ipt, int zerocopy );
 void	iperf_set_test_get_server_output( struct iperf_test* ipt, int get_server_output );
+void	iperf_set_test_bind_address( struct iperf_test* ipt, char *bind_address );
 
 /**
  * exchange_parameters - handles the param_Exchange part for client

@@ -135,9 +135,6 @@ appropriate use of the CPU affinity (-A) option.  (Issue #55)
 * The -Z flag sometimes causes the iperf3 client to hang on OSX.
 (Issue #129)
 
-* On OpenBSD, the server seems to require a "-4" argument, implying
-that it can only be used with IPv4.
-
 * When specifying the TCP buffer size using the "-w" flag on Linux, Linux 
 doubles the value you pass in. (You can see this using iperf3's debug flag). 
 But then the CWND does not actually ramp up to the doubled value, but only

@@ -1,9 +1,12 @@
-== iperf 3.0.6 2014-06-?? ==
+== iperf 3.0.6 2014-06-28 ==
 
 * User-visible changes
 
   * Several bugs that kept the -B option from working in various
     circumstances have been fixed (issue #193).
+
+  * Various compatibility fixes for OpenBSD (issue #196) and
+    Solaris (issue #177).
 
 * Developer-visible changes
 

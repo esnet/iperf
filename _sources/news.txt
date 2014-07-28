@@ -1,6 +1,25 @@
 iperf3 Project News
 ===================
 
+2014-07-28:  iperf-3.0.6 released
+---------------------------------
+
+| URL:  http://downloads.es.net/pub/iperf/iperf-3.0.6.tar.gz
+| SHA256:  ``3c5909c9b286b6503ffa141a94cfc588915d6e67f2aa732b08df0af73e21938  iperf-3.0.6.tar.gz``
+
+This maintenance release includes the following bug fixes:
+
+* Several problems with the -B option have been fixed.  Also, API
+  calls have been added to libiperf to extend this functionality to
+  API clients.
+
+* Some portability fixes for OpenBSD and Solaris have been merged from
+  the mainline.
+
+As always, more details can be found in the ``RELEASE_NOTES`` file in
+the source distribution.
+
+
 2014-06-16:  Project documentation on GitHub Pages
 --------------------------------------------------
 

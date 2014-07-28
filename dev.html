@@ -225,8 +225,6 @@ try using a small block size, for example <tt class="docutils literal"><span cla
 a fix will be released in iperf 3.1)</li>
 <li>The <tt class="docutils literal"><span class="pre">-Z</span></tt> flag sometimes causes the iperf3 client to hang on OSX.
 (Issue #129)</li>
-<li>On OpenBSD, the server seems to require a <tt class="docutils literal"><span class="pre">-4</span></tt> argument, implying
-that it can only be used with IPv4.  (Issue #108)</li>
 <li>When specifying the TCP buffer size using the <tt class="docutils literal"><span class="pre">-w</span></tt> flag on Linux,
 the Linux kernel automatically doubles the value passed in to
 compensate for overheads.  (This can be observed by using
@@ -264,7 +262,8 @@ can be written before tagging.  Usually the previous version&#8217;s
 announcement can be used as a starting point.</p>
 </li>
 <li><p class="first">Preferably starting from a clean source tree (be sure that <tt class="docutils literal"><span class="pre">git</span>
-<span class="pre">status</span></tt> emits no output):</p>
+<span class="pre">status</span></tt> emits no output), make the changes necessary to produce
+the new version, such as bumping version numbers:</p>
 <div class="highlight-python"><div class="highlight"><pre>vi RELEASE_NOTES   # update version number and release date
 vi configure.ac    # update version parameter in AC_INIT
 vi src/iperf3.1    # update manpage revision date if needed
@@ -276,17 +275,14 @@ git commit -a      # commit changes to the local repository only
 # Assuming that $VERSION is the version number to be released...
 ./make_release tag $VERSION # this creates a tag in the local repo
 ./make_release tar $VERSION # create tarball and compute SHA256 hash
-
-# Testing of the release artifact happens here.  When all looks
-# satisfactory (but not before that), then...
-git push            # Push version changes
-git push --tags     # Push the new tag to the GitHub repo
 </pre></div>
 </div>
 <p>These steps should be done on a platform with a relatively recent
 version of autotools / libtools.  Examples are MacOS / MacPorts or
 FreeBSD.  The versions of these tools in CentOS 6 are somewhat
 older and probably should be avoided.</p>
+<p>The result will be a release artifact that should be used for
+pre-testing.</p>
 </li>
 <li><p class="first">Stage the tarball (and a file containing the SHA256 hash) to the
 download site.  Currently this is located on <tt class="docutils literal"><span class="pre">downloads.es.net</span></tt>.</p>
@@ -310,6 +306,14 @@ The signed announcement will be sent out in a subsequent emails,
 but could also be archived.  Decoupling the signing from emailing
 allows a signed release announcement to be resent via email or sent
 by other, non-email means.</p>
+</li>
+<li><p class="first">At this point, the release can and should be considered
+finalized.  To commit the release-engineering-related changes to
+GitHub and make them public, push them out thusly:</p>
+<div class="highlight-python"><div class="highlight"><pre>git push            # Push version changes
+git push --tags     # Push the new tag to the GitHub repo
+</pre></div>
+</div>
 </li>
 <li><p class="first">Send the PGP-signed release announcement to the following
 addresses.  Remember to turn off signing in the MUA, if applicable.</p>

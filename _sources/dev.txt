@@ -100,9 +100,6 @@ to solve the problem are currently being made:
 * The ``-Z`` flag sometimes causes the iperf3 client to hang on OSX.
   (Issue #129)
 
-* On OpenBSD, the server seems to require a ``-4`` argument, implying
-  that it can only be used with IPv4.  (Issue #108)
-
 * When specifying the TCP buffer size using the ``-w`` flag on Linux,
   the Linux kernel automatically doubles the value passed in to
   compensate for overheads.  (This can be observed by using
@@ -145,7 +142,8 @@ Release Engineering Checklist
    announcement can be used as a starting point.
 
 3. Preferably starting from a clean source tree (be sure that ``git
-   status`` emits no output)::
+   status`` emits no output), make the changes necessary to produce
+   the new version, such as bumping version numbers::
 
     vi RELEASE_NOTES   # update version number and release date
     vi configure.ac    # update version parameter in AC_INIT
@@ -159,15 +157,13 @@ Release Engineering Checklist
     ./make_release tag $VERSION # this creates a tag in the local repo
     ./make_release tar $VERSION # create tarball and compute SHA256 hash
 
-    # Testing of the release artifact happens here.  When all looks
-    # satisfactory (but not before that), then...
-    git push            # Push version changes
-    git push --tags     # Push the new tag to the GitHub repo
-
    These steps should be done on a platform with a relatively recent
    version of autotools / libtools.  Examples are MacOS / MacPorts or
    FreeBSD.  The versions of these tools in CentOS 6 are somewhat
    older and probably should be avoided.
+
+   The result will be a release artifact that should be used for
+   pre-testing.
 
 4. Stage the tarball (and a file containing the SHA256 hash) to the
    download site.  Currently this is located on ``downloads.es.net``.
@@ -192,7 +188,14 @@ Release Engineering Checklist
    allows a signed release announcement to be resent via email or sent
    by other, non-email means.
 
-10. Send the PGP-signed release announcement to the following
+10. At this point, the release can and should be considered
+    finalized.  To commit the release-engineering-related changes to
+    GitHub and make them public, push them out thusly::
+
+     git push            # Push version changes
+     git push --tags     # Push the new tag to the GitHub repo
+
+11. Send the PGP-signed release announcement to the following
     addresses.  Remember to turn off signing in the MUA, if applicable.
 
     * iperf-dev@googlegroups.com
@@ -211,7 +214,7 @@ Release Engineering Checklist
     sending process by sending a copy to oneself first and attempting
     to verify the signature is highly encouraged.
 
-11. Update the iperf3 Project News section of the documentation site
+12. Update the iperf3 Project News section of the documentation site
     to announce the new release (see ``docs/news.rst`` and
     ``docs/conf.py`` in the source tree) and deploy a new build of the
     documentation to GitHub Pages.

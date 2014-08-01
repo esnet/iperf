@@ -125,13 +125,33 @@ iperf_tcp_listen(struct iperf_test *test)
 
     s = test->listener;
 
+    /*
+     * If certain parameters are specified (such as socket buffer
+     * size), then throw away the listening socket (the one for which
+     * we just accepted the control connection) and recreate it with
+     * those parameters.  That way, when new data connections are
+     * set, they'll have all the correct parameters in place.
+     *
+     * It's not clear whether this is a requirement or a convenience.
+     */
     if (test->no_delay || test->settings->mss || test->settings->socket_bufsize) {
         FD_CLR(s, &test->read_set);
         close(s);
 
         snprintf(portstr, 6, "%d", test->server_port);
         memset(&hints, 0, sizeof(hints));
-        hints.ai_family = (test->settings->domain == AF_UNSPEC ? AF_INET6 : test->settings->domain);
+
+	/*
+	 * If binding to the wildcard address with no explicit address
+	 * family specified, then force us to get an AF_INET6 socket.
+	 * More details in the comments in netanounce().
+	 */
+	if (test->settings->domain == AF_UNSPEC && !test->bind_address) {
+	    hints.ai_family = AF_INET6;
+	}
+	else {
+	    hints.ai_family = test->settings->domain;
+	}
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_flags = AI_PASSIVE;
         if (getaddrinfo(test->bind_address, portstr, &hints, &res) != 0) {
@@ -216,11 +236,17 @@ iperf_tcp_listen(struct iperf_test *test)
             i_errno = IEREUSEADDR;
             return -1;
         }
+
+	/*
+	 * If we got an IPv6 socket, figure out if it shoudl accept IPv4
+	 * connections as well.  See documentation in netannounce() for
+	 * more details.
+	 */
 #if defined(IPV6_V6ONLY) && !defined(__OpenBSD__)
-	if (test->settings->domain == AF_UNSPEC || test->settings->domain == AF_INET6) {
+	if (res->ai_family == AF_INET6 && (test->settings->domain == AF_UNSPEC || test->settings->domain == AF_INET)) {
 	    if (test->settings->domain == AF_UNSPEC)
 		opt = 0;
-	    else if (test->settings->domain == AF_INET6)
+	    else 
 		opt = 1;
 	    if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, 
 			   (char *) &opt, sizeof(opt)) < 0) {

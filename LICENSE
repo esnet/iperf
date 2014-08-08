@@ -37,3 +37,244 @@ Enhancements, then you hereby grant the following license: a  non-exclusive,
 royalty-free perpetual license to install, use, modify, prepare derivative
 works, incorporate into other computer software, distribute, and sublicense
 such enhancements or derivative works thereof, in binary and source code form.
+
+=====
+
+This software contains source code (bootstrap.sh) that is:
+
+  #########################################################################
+  #                                                                       #
+  #                          Copyright (C)  2003                          #
+  #                               Internet2                               #
+  #                                                                       #
+  #  Licensed under the Apache License, Version 2.0 (the "License");      #
+  #  you may not use this file except in compliance with the License.     #
+  #  You may obtain a copy of the License at                              #
+  #                                                                       #
+  #  http://www.apache.org/licenses/LICENSE-2.0                           #
+  #                                                                       #
+  #  Unless required by applicable law or agreed to in writing, software  #
+  #  distributed under the License is distributed on an "AS IS" BASIS,    #
+  #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or      #
+  #  implied. See the License for the specific language governing         #
+  #  permissions and limitations under the License.                       #
+  #                                                                       #
+  #########################################################################
+
+=====
+
+This software contains source code (src/cjson.{c,h}) that is:
+
+  Copyright (c) 2009 Dave Gamble
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  THE SOFTWARE.
+
+=====
+
+This software contains source code (src/net.{c,h}) that is:
+
+  This software was developed as part of a project at MIT.
+
+  Copyright (c) 2005-2007 Russ Cox,
+		     Massachusetts Institute of Technology
+
+  Permission is hereby granted, free of charge, to any person obtaining
+  a copy of this software and associated documentation files (the
+  "Software"), to deal in the Software without restriction, including
+  without limitation the rights to use, copy, modify, merge, publish,
+  distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to
+  the following conditions:
+
+  The above copyright notice and this permission notice shall be
+  included in all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+  ===
+
+  Contains parts of an earlier library that has:
+
+  /*
+   * The authors of this software are Rob Pike, Sape Mullender, and Russ Cox
+   *              Copyright (c) 2003 by Lucent Technologies.
+   * Permission to use, copy, modify, and distribute this software for any
+   * purpose without fee is hereby granted, provided that this entire notice
+   * is included in all copies of any software which is or includes a copy
+   * or modification of this software and in all copies of the supporting
+   * documentation for such software.
+   * THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR IMPLIED
+   * WARRANTY.  IN PARTICULAR, NEITHER THE AUTHORS NOR LUCENT TECHNOLOGIES MAKE ANY
+   * REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE MERCHANTABILITY
+   * OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
+  */
+
+=====
+
+This software contains source code (src/queue.h) that is:
+
+  /*
+   * Copyright (c) 1991, 1993
+   *      The Regents of the University of California.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification, are permitted provided that the following conditions
+   * are met:
+   * 1. Redistributions of source code must retain the above copyright
+   *    notice, this list of conditions and the following disclaimer.
+   * 2. Redistributions in binary form must reproduce the above copyright
+   *    notice, this list of conditions and the following disclaimer in the
+   *    documentation and/or other materials provided with the distribution.
+   * 3. Neither the name of the University nor the names of its contributors
+   *    may be used to endorse or promote products derived from this software
+   *    without specific prior written permission.
+   *
+   * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+   * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+   * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+   * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+   * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+   * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+   * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+   * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+   * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+   * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+   * SUCH DAMAGE.
+   *
+   *      @(#)queue.h     8.5 (Berkeley) 8/20/94
+   */
+
+=====
+
+This software contains source code (src/tcp_window_size.{c,h}) that is:
+
+  /*---------------------------------------------------------------
+   * Copyright (c) 1999,2000,2001,2002,2003
+   * The Board of Trustees of the University of Illinois
+   * All Rights Reserved.
+   *---------------------------------------------------------------
+   * Permission is hereby granted, free of charge, to any person
+   * obtaining a copy of this software (Iperf) and associated
+   * documentation files (the "Software"), to deal in the Software
+   * without restriction, including without limitation the
+   * rights to use, copy, modify, merge, publish, distribute,
+   * sublicense, and/or sell copies of the Software, and to permit
+   * persons to whom the Software is furnished to do
+   * so, subject to the following conditions:
+   *
+   *
+   * Redistributions of source code must retain the above
+   * copyright notice, this list of conditions and
+   * the following disclaimers.
+   *
+   *
+   * Redistributions in binary form must reproduce the above
+   * copyright notice, this list of conditions and the following
+   * disclaimers in the documentation and/or other materials
+   * provided with the distribution.
+   *
+   *
+   * Neither the names of the University of Illinois, NCSA,
+   * nor the names of its contributors may be used to endorse
+   * or promote products derived from this Software without
+   * specific prior written permission.
+   *
+   * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+   * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+   * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+   * NONINFRINGEMENT. IN NO EVENT SHALL THE CONTIBUTORS OR COPYRIGHT
+   * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+   * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+   * ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+   * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+   * ________________________________________________________________
+   * National Laboratory for Applied Network Research
+   * National Center for Supercomputing Applications
+   * University of Illinois at Urbana-Champaign
+   * http://www.ncsa.uiuc.edu
+   * ________________________________________________________________
+   *
+   * tcp_window_size.c
+   * by Mark Gates <mgates@nlanr.net>
+   * -------------------------------------------------------------------
+   * set/getsockopt
+   * ------------------------------------------------------------------- */
+
+=====
+
+This software contains source code (src/units.{c.h}) that is:
+
+  /*---------------------------------------------------------------
+   * Copyright (c) 1999,2000,2001,2002,2003
+   * The Board of Trustees of the University of Illinois
+   * All Rights Reserved.
+   *---------------------------------------------------------------
+   * Permission is hereby granted, free of charge, to any person
+   * obtaining a copy of this software (Iperf) and associated
+   * documentation files (the "Software"), to deal in the Software
+   * without restriction, including without limitation the
+   * rights to use, copy, modify, merge, publish, distribute,
+   * sublicense, and/or sell copies of the Software, and to permit
+   * persons to whom the Software is furnished to do
+   * so, subject to the following conditions:
+   *
+   *
+   * Redistributions of source code must retain the above
+   * copyright notice, this list of conditions and
+   * the following disclaimers.
+   *
+   *
+   * Redistributions in binary form must reproduce the above
+   * copyright notice, this list of conditions and the following
+   * disclaimers in the documentation and/or other materials
+   * provided with the distribution.
+   *
+   *
+   * Neither the names of the University of Illinois, NCSA,
+   * nor the names of its contributors may be used to endorse
+   * or promote products derived from this Software without
+   * specific prior written permission.
+   *
+   * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+   * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+   * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+   * NONINFRINGEMENT. IN NO EVENT SHALL THE CONTIBUTORS OR COPYRIGHT
+   * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+   * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+   * ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+   * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+   * ________________________________________________________________
+   * National Laboratory for Applied Network Research
+   * National Center for Supercomputing Applications
+   * University of Illinois at Urbana-Champaign
+   * http://www.ncsa.uiuc.edu
+   * ________________________________________________________________
+   *
+   * stdio.c
+   * by Mark Gates <mgates@nlanr.net>
+   * and Ajay Tirumalla <tirumala@ncsa.uiuc.edu>
+   * -------------------------------------------------------------------
+   * input and output numbers, converting with kilo, mega, giga
+   * ------------------------------------------------------------------- */

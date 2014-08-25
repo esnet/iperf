@@ -683,7 +683,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 			return -1;
 		    }
 		}
-                test->settings->rate = unit_atof(optarg);
+                test->settings->rate = unit_atof_rate(optarg);
 		rate_flag = 1;
 		client_flag = 1;
                 break;

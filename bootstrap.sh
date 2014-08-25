@@ -1,52 +1,20 @@
-#!/bin/sh
+#! /bin/sh
 #
-#########################################################################
-#									#
-#			   Copyright (C)  2003				#
-#	     			Internet2				#
-#                                                                       #
-#  Licensed under the Apache License, Version 2.0 (the "License");      #
-#  you may not use this file except in compliance with the License.     #
-#  You may obtain a copy of the License at                              #
-#                                                                       #
-#  http://www.apache.org/licenses/LICENSE-2.0                           #
-#                                                                       #
-#  Unless required by applicable law or agreed to in writing, software  #
-#  distributed under the License is distributed on an "AS IS" BASIS,    #
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or      #
-#  implied. See the License for the specific language governing         #
-#  permissions and limitations under the License.                       #
-#									#
-#########################################################################
+# Copyright (c) 2014, The Regents of the University of California,
+# through Lawrence Berkeley National Laboratory (subject to receipt of
+# any required approvals from the U.S. Dept. of Energy).  All rights
+# reserved.
 #
-#	File:		bootstrap
+# This code is distributed under a BSD style license, see the LICENSE
+# file for complete information.
 #
-#	Author:		Jeff Boote
-#			Internet2
-#
-#	Date:		Tue Sep 16 14:21:57 MDT 2003
-#
-#	Description:	
-#			This script is used to bootstrap the autobuild
-#			process.
-#
-#			RUNNING THIS SCRIPT IS NOT RECOMMENDED
-#			(You should just use the "configure" script
-#			that was bundled with the distribution if
-#			at all possible.)
-#
-case "$1" in
-	ac257)
-		alias autoconf=autoconf257
-		alias autoheader=autoheader257
-		alias automake=automake17
-		alias aclocal=aclocal17
-		export AUTOCONF=autoconf257
-		;;
-	*)
-		;;
-esac
 
+# When changes are made to the build infrastructure, invoke this
+# script to regenerate all of the autotools-built files.
+# Normally, this is only of use to developers.
+
+# Figure out how to invoke libtoolize.  On MacOS (with MacPorts)
+# it's invoked as glibtoolize.
 if libtoolize --version >/dev/null 2>&1; then
   libtoolize=libtoolize
 elif glibtoolize --version >/dev/null 2>&1; then
@@ -54,12 +22,12 @@ elif glibtoolize --version >/dev/null 2>&1; then
 else
   libtoolize=""
 fi
-
 if [ "x$libtoolize" = "x" ]; then
   echo "Can't find libtoolize, exiting."
   exit 1
 fi
 
+# Execute the various autotools commands in the correct order.
 set -x
 $libtoolize --copy --force --automake
 aclocal -I config

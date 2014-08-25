@@ -71,6 +71,10 @@ extern    "C"
     const long MEGA_UNIT = 1024 * 1024;
     const long GIGA_UNIT = 1024 * 1024 * 1024;
 
+    const long KILO_RATE_UNIT = 1000;
+    const long MEGA_RATE_UNIT = 1000 * 1000;
+    const long GIGA_RATE_UNIT = 1000 * 1000 * 1000;
+
 /* -------------------------------------------------------------------
  * unit_atof
  *
@@ -106,6 +110,44 @@ extern    "C"
 	}
 	          return n;
     }				/* end unit_atof */
+
+
+/* -------------------------------------------------------------------
+ * unit_atof_rate
+ *
+ * Similar to unit_atof, but uses 10-based rather than 2-based
+ * suffixes.
+ * ------------------------------------------------------------------- */
+
+    double    unit_atof_rate(const char *s)
+    {
+	double    n;
+	char      suffix = '\0';
+
+	          assert(s != NULL);
+
+	/* scan the number and any suffices */
+	          sscanf(s, "%lf%c", &n, &suffix);
+
+	/* convert according to [Gg Mm Kk] */
+	switch    (suffix)
+	{
+	case 'g': case 'G':
+	    n *= GIGA_RATE_UNIT;
+	    break;
+	case 'm': case 'M':
+	    n *= MEGA_RATE_UNIT;
+	    break;
+	case 'k': case 'K':
+	    n *= KILO_RATE_UNIT;
+	    break;
+	default:
+	    break;
+	}
+	          return n;
+    }				/* end unit_atof_rate */
+
+
 
 /* -------------------------------------------------------------------
  * unit_atoi

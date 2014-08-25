@@ -98,6 +98,8 @@ You can also add a '/' and a number to the bandwidth specifier.
 This is called "burst mode".
 It will send the given number of packets without pausing, even if that
 temporarily exceeds the specified bandwidth limit.
+Setting the target bandwidth to 0 will disable bandwidth limits
+(particularly useful for UDP tests).
 .TP
 .BR -t ", " --time " \fIn\fR"
 time in seconds to transmit for (default 10 secs)

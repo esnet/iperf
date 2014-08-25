@@ -100,7 +100,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  --sctp                    use SCTP rather than TCP\n"
 #endif /* HAVE_SCTP */
                            "  -u, --udp                 use UDP rather than TCP\n"
-                           "  -b, --bandwidth #[KMG][/#] target bandwidth in bits/sec\n"
+                           "  -b, --bandwidth #[KMG][/#] target bandwidth in bits/sec (0 for unlimited)\n"
                            "                            (default %d Mbit/sec for UDP, unlimited for TCP)\n"
                            "                            (optional slash and packet count for burst mode)\n"
                            "  -t, --time      #         time in seconds to transmit for (default %d secs)\n"

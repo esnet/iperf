@@ -23,7 +23,7 @@ and MacOS X.  At this time, these are the only officially supported
 platforms, however there have been some reports of success with
 OpenBSD, Android, other Linux distributions.
 
-iperf3 is principally developed by ESnet / Lawrence Berkleley National
+iperf3 is principally developed by ESnet / Lawrence Berkeley National
 Laboratory.  It is released under a three-clause BSD license.
 
 For more information see: http://software.es.net/iperf
@@ -143,3 +143,15 @@ to about 75% of the doubled value. This appears to be by design.
 * On some platforms, it might be necessary to invoke "ldconfig" 
 manually after doing a "make install" before the iperf3 executable can 
 find its shared library.  (Issue #153)
+
+Links
+-----
+
+This section lists links to user-contributed Web pages regarding
+iperf3.  ESnet and Lawrence Berkeley National Laboratory bear no
+responsibility for the content of these pages.
+
+* Installation instructions for Debian Linux (by Cameron Camp
+  <cameron@ivdatacenter.com>):
+
+  http://cheatsheet.logicalwebhost.com/iperf-network-testing/

@@ -141,11 +141,10 @@ iperf_accept(struct iperf_test *test)
         if (test->on_connect)
             test->on_connect(test);
     } else {
-        /* XXX: Do we even need to receive cookie if we're just going to deny anyways? */
-        if (Nread(s, cookie, COOKIE_SIZE, Ptcp) < 0) {
-            i_errno = IERECVCOOKIE;
-            return -1;
-        }
+	/*
+	 * Don't try to read from the socket.  It could block an ongoing test. 
+	 * Just send ACCESS_DENIED.
+	 */
         if (Nwrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp) < 0) {
             i_errno = IESENDMESSAGE;
             return -1;

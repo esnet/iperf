@@ -1,3 +1,20 @@
+== iperf 3.0.7 2014-08-28 ==
+
+* User-visible changes
+
+  * A server bug where new connections from clients could disrupt
+    running tests has been fixed (issue #202).
+
+  * Rates now consistently use 1000-based prefixes (K, M, G), where
+    sizes of objects now consistently use 1024-based prefixes (issue #173).
+
+  * UDP tests with unlimited bandwidth are now supported (issue #170).
+
+  * An interaction between the -w and -B options, which kept them from
+    working when used together, has been fixed (issue #193).
+
+* Developer-visible changes
+
 == iperf 3.0.6 2014-07-28 ==
 
 * User-visible changes

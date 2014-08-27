@@ -64,6 +64,14 @@
   * Various compatibility fixes for Android (issue #184, issue #185),
     OpenBSD (issue #196), Solaris (#177, issue #180).
 
+  * A server bug where new connections from clients could disrupt
+    running tests has been fixed (issue #202).
+
+  * Rates now consistently use 1000-based prefixes (K, M, G), where
+    sizes of objects now consistently use 1024-based prefixes (issue #173).
+
+  * UDP tests with unlimited bandwidth are now supported (issue #170).
+
 * Developer-visible changes
 
   * Some memory leaks have been fixed.

@@ -196,7 +196,10 @@ Release Engineering Checklist
      git push --tags     # Push the new tag to the GitHub repo
 
 11. Send the PGP-signed release announcement to the following
-    addresses.  Remember to turn off signing in the MUA, if applicable.
+    addresses.  Remember to turn off signing in the MUA, if
+    applicable.  Remember to check the source address when posting to
+    lists, as "closed" list will reject posting from all from
+    registered email addresses.
 
     * iperf-dev@googlegroups.com
 

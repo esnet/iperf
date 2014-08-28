@@ -126,6 +126,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -O, --omit N              omit the first n seconds\n"
                            "  -T, --title str           prefix every output line with this string\n"
                            "  --get-server-output       get results from server\n"
+                           "  --udp-counters-64bit      use 64-bit counters in UDP test packets\n"
 
 #ifdef NOT_YET_SUPPORTED /* still working on these */
 #endif

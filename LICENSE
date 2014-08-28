@@ -255,3 +255,15 @@ This software contains source code (src/units.{c.h}) that is:
    * -------------------------------------------------------------------
    * input and output numbers, converting with kilo, mega, giga
    * ------------------------------------------------------------------- */
+
+=====
+
+This software contains source code (src/portable_endian.h) that is:
+
+// "License": Public Domain
+// I, Mathias Panzenböck, place this file hereby into the public domain. Use it at your own risk for whatever you like.
+
+=====
+
+
+

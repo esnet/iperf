@@ -91,7 +91,7 @@ struct iperf_settings
     int       tos;                  /* type of service bit */
     int       flowlabel;            /* IPv6 flow label */
     iperf_size_t bytes;             /* number of bytes to send */
-    int       blocks;               /* number of blocks (packets) to send */
+    iperf_size_t blocks;            /* number of blocks (packets) to send */
     char      unit_format;          /* -f */
 };
 
@@ -200,6 +200,7 @@ struct iperf_test
     int	      zerocopy;                         /* -Z option - use sendfile */
     int       debug;				/* -d option - enable debug */
     int	      get_server_output;		/* --get-server-output */
+    int	      udp_counters_64bit;		/* --use-64-bit-udp-counters */
 
     int	      multisend;
 
@@ -227,7 +228,7 @@ struct iperf_test
     int       num_streams;                      /* total streams in the test (-P) */
 
     iperf_size_t bytes_sent;
-    int       blocks_sent;
+    iperf_size_t blocks_sent;
     char      cookie[COOKIE_SIZE];
 //    struct iperf_stream *streams;               /* pointer to list of struct stream */
     SLIST_HEAD(slisthead, iperf_stream) streams;

@@ -29,6 +29,7 @@ struct iperf_stream;
 #define OPT_SCTP 1
 #define OPT_LOGFILE 2
 #define OPT_GET_SERVER_OUTPUT 3
+#define OPT_UDP_COUNTERS_64BIT 4
 
 /* states */
 #define TEST_START 1
@@ -73,6 +74,7 @@ char*	iperf_get_test_json_output_string ( struct iperf_test* ipt );
 int	iperf_get_test_zerocopy( struct iperf_test* ipt );
 int	iperf_get_test_get_server_output( struct iperf_test* ipt );
 char*	iperf_get_test_bind_address ( struct iperf_test* ipt );
+int	iperf_get_test_udp_counters_64bit( struct iperf_test* ipt );
 
 /* Setter routines for some fields inside iperf_test. */
 void	iperf_set_verbose( struct iperf_test* ipt, int verbose );
@@ -96,6 +98,7 @@ int	iperf_has_zerocopy( void );
 void	iperf_set_test_zerocopy( struct iperf_test* ipt, int zerocopy );
 void	iperf_set_test_get_server_output( struct iperf_test* ipt, int get_server_output );
 void	iperf_set_test_bind_address( struct iperf_test* ipt, char *bind_address );
+void	iperf_set_test_udp_counters_64bit( struct iperf_test* ipt, int udp_counters_64bit );
 
 /**
  * exchange_parameters - handles the param_Exchange part for client

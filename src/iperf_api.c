@@ -59,7 +59,7 @@
 #include "tcp_window_size.h"
 #include "iperf_util.h"
 #include "locale.h"
-
+#include "version.h"
 
 /* Forwards. */
 static int send_parameters(struct iperf_test *test);
@@ -235,6 +235,12 @@ iperf_get_test_bind_address(struct iperf_test *ipt)
     return ipt->bind_address;
 }
 
+int
+iperf_get_test_udp_counters_64bit(struct iperf_test *ipt)
+{
+    return ipt->udp_counters_64bit;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -386,6 +392,12 @@ void
 iperf_set_test_bind_address(struct iperf_test *ipt, char *bind_address)
 {
     ipt->bind_address = strdup(bind_address);
+}
+
+void
+iperf_set_test_udp_counters_64bit(struct iperf_test *ipt, int udp_counters_64bit)
+{
+    ipt->udp_counters_64bit = udp_counters_64bit;
 }
 
 /********************** Get/set test protocol structure ***********************/
@@ -597,6 +609,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"pidfile", required_argument, NULL, 'I'},
 	{"logfile", required_argument, NULL, OPT_LOGFILE},
 	{"get-server-output", no_argument, NULL, OPT_GET_SERVER_OUTPUT},
+	{"udp-counters-64bit", no_argument, NULL, OPT_UDP_COUNTERS_64BIT},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -833,6 +846,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	    case OPT_GET_SERVER_OUTPUT:
 		test->get_server_output = 1;
 		client_flag = 1;
+		break;
+	    case OPT_UDP_COUNTERS_64BIT:
+		test->udp_counters_64bit = 1;
 		break;
             case 'h':
             default:
@@ -1197,6 +1213,10 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddStringToObject(j, "congestion", test->congestion);
 	if (test->get_server_output)
 	    cJSON_AddIntToObject(j, "get_server_output", iperf_get_test_get_server_output(test));
+	if (test->udp_counters_64bit)
+	    cJSON_AddIntToObject(j, "udp_counters_64bit", iperf_get_test_udp_counters_64bit(test));
+
+	cJSON_AddStringToObject(j, "client_version", IPERF_VERSION);
 
 	if (test->debug) {
 	    printf("send_parameters:\n%s\n", cJSON_Print(j));
@@ -1271,6 +1291,8 @@ get_parameters(struct iperf_test *test)
 	    test->congestion = strdup(j_p->valuestring);
 	if ((j_p = cJSON_GetObjectItem(j, "get_server_output")) != NULL)
 	    iperf_set_test_get_server_output(test, 1);
+	if ((j_p = cJSON_GetObjectItem(j, "udp_counters_64bit")) != NULL)
+	    iperf_set_test_udp_counters_64bit(test, 1);
 	if (test->sender && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    test->sender_has_retransmits = 1;
 	cJSON_Delete(j);
@@ -1883,6 +1905,7 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->mss = 0;
     memset(test->cookie, 0, COOKIE_SIZE);
     test->multisend = 10;	/* arbitrary */
+    test->udp_counters_64bit = 0;
 
     /* Free output line buffers, if any (on the server only) */
     struct iperf_textline *t;

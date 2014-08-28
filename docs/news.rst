@@ -1,6 +1,21 @@
 iperf3 Project News
 ===================
 
+2014-08-28:  iperf-3.0.7 released
+---------------------------------
+
+| URL:  http://downloads.es.net/pub/iperf/iperf-3.0.7.tar.gz
+| SHA256:  ``49510e886f9e876cd73dcd80414bfb8c49b147c82125585e09c2a6e92369d3f2  iperf-3.0.7.tar.gz``
+
+This maintenance release fixes several minor bugs.  Of particular
+note:
+
+* A bug that caused some problems with bwctl / perfSONAR has been
+  fixed.
+
+* A bug that made it possible to disrupt existing, running tests has
+  been fixed.
+
 2014-07-28:  iperf-3.0.6 released
 ---------------------------------
 

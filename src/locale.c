@@ -108,6 +108,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -k, --blockcount #[KMG]   number of blocks (packets) to transmit (instead of -t or -n)\n"
                            "  -l, --len       #[KMG]    length of buffer to read or write\n"
 			   "                            (default %d KB for TCP, %d KB for UDP)\n"
+                           "  -e, --cport     <host>    bind to a specific client port (default: ephemeral port)\n"
                            "  -P, --parallel  #         number of parallel client streams to run\n"
                            "  -R, --reverse             run in reverse mode (server sends, client receives)\n"
                            "  -w, --window    #[KMG]    TCP window size (socket buffer size)\n"
@@ -170,6 +171,9 @@ const char client_port[] =
 
 const char bind_address[] =
 "Binding to local address %s\n";
+
+const char bind_port[] =
+"Binding to local port %s\n";
 
 const char multicast_ttl[] =
 "Setting multicast TTL to %d\n";

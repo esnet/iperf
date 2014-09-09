@@ -262,6 +262,7 @@ enum {
     IEENDCONDITIONS = 16,   // Only one test end condition (-t, -n, -k) may be specified
     IELOGFILE = 17,	    // Can't open log file
     IENOSCTP = 18,	    // No SCTP support available
+    IEBIND = 19,			// Local port specified with no local bind option
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

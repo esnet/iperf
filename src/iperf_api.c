@@ -584,6 +584,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"reverse", no_argument, NULL, 'R'},
         {"window", required_argument, NULL, 'w'},
         {"bind", required_argument, NULL, 'B'},
+        {"cport", required_argument, NULL, 'e'},
         {"set-mss", required_argument, NULL, 'M'},
         {"no-delay", no_argument, NULL, 'N'},
         {"version4", no_argument, NULL, '4'},
@@ -624,7 +625,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = 0;
-    while ((flag = getopt_long(argc, argv, "p:f:i:DVJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:h", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:DVJvsc:ub:t:n:k:l:P:Rw:B:e:M:N46S:L:ZO:F:A:T:C:dI:h", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
                 test->server_port = atoi(optarg);
@@ -744,6 +745,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'B':
                 test->bind_address = strdup(optarg);
+                break;
+            case 'e':
+                test->bind_port = atoi(optarg);
                 break;
             case 'M':
                 test->settings->mss = atoi(optarg);
@@ -876,6 +880,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	return -1;
     }
 
+    if (!test->bind_address && test->bind_port) {
+        i_errno = IEBIND;
+        return -1;
+    }
     if (blksize == 0) {
 	if (test->protocol->id == Pudp)
 	    blksize = DEFAULT_UDP_BLKSIZE;

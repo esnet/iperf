@@ -10,7 +10,7 @@
 #ifndef __NET_H
 #define __NET_H
 
-int netdial(int domain, int proto, char *local, char *server, int port);
+int netdial(int domain, int proto, char *local, int local_port, char *server, int port);
 int netannounce(int domain, int proto, char *local, int port);
 int Nread(int fd, char *buf, size_t count, int prot);
 int Nwrite(int fd, const char *buf, size_t count, int prot) /* __attribute__((hot)) */;

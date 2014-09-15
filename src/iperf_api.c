@@ -584,6 +584,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"reverse", no_argument, NULL, 'R'},
         {"window", required_argument, NULL, 'w'},
         {"bind", required_argument, NULL, 'B'},
+        {"cport", required_argument, NULL, OPT_CLIENT_PORT},
         {"set-mss", required_argument, NULL, 'M'},
         {"no-delay", no_argument, NULL, 'N'},
         {"version4", no_argument, NULL, '4'},
@@ -745,6 +746,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             case 'B':
                 test->bind_address = strdup(optarg);
                 break;
+            case OPT_CLIENT_PORT:
+                test->bind_port = atoi(optarg);
+                break;
             case 'M':
                 test->settings->mss = atoi(optarg);
                 if (test->settings->mss > MAX_MSS) {
@@ -876,6 +880,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	return -1;
     }
 
+    if (!test->bind_address && test->bind_port) {
+        i_errno = IEBIND;
+        return -1;
+    }
     if (blksize == 0) {
 	if (test->protocol->id == Pudp)
 	    blksize = DEFAULT_UDP_BLKSIZE;

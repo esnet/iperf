@@ -16,12 +16,12 @@ base, and a library version of the functionality that can be used in
 other programs. iperf3 also a number of features found in other tools
 such as nuttcp and netperf, but were missing from the original iperf.
 These include, for example, a zero-copy mode and optional JSON output.
-Note that iperf3 is NOT backwards compatible with the original iperf.
+Note that iperf3 is *not* backwards compatible with the original iperf.
 
 Primary development for iperf3 takes place on CentOS Linux, FreeBSD,
 and MacOS X.  At this time, these are the only officially supported
 platforms, however there have been some reports of success with
-OpenBSD, Android, other Linux distributions.
+OpenBSD, Android, and other Linux distributions.
 
 iperf3 is principally developed by ESnet / Lawrence Berkeley National
 Laboratory.  It is released under a three-clause BSD license.
@@ -79,9 +79,23 @@ These flags include:
 Bug Reports
 -----------
 
-Before submitting a bug report, try checking out the latest version of
-the code, and confirm that its not already fixed. Then submit to:
+Before submitting a bug report, please make sure you're running the
+latest version of the code, and confirm that your issue has not
+already been fixed.  Then submit to the iperf3 issue tracker on
+GitHub:
+
 https://github.com/esnet/iperf/issues
+
+In your issue submission, please indicate the version of iperf3 and
+what platform you're trying to run on (provide the platform
+information even if you're not using a supported platform, we
+*might* be able to help anyway).  Exact command-line arguments will
+help us recreate your problem.  If you're getting error messages,
+please include them verbatim if possible, but remember to sanitize any
+sensitive information.
+
+If you have a question about usage or about the code, please do *not*
+submit an issue.  Please use one of the mailing lists for that.
 
 Changes from iperf 2.x
 ----------------------

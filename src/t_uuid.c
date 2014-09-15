@@ -22,8 +22,8 @@ main(int argc, char **argv)
     printf("cookie: '%s'\n", cookie);
     if (strlen(cookie) != 36)
     {
-	printf("Not 36 characters long!\n");
-	exit(-1);
+        printf("Not 36 characters long!\n");
+        exit(-1);
     }
     exit(0);
 }

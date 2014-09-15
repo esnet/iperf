@@ -79,11 +79,11 @@ save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp)
     socklen_t tcp_info_length = sizeof(struct tcp_info);
 
     if (getsockopt(sp->socket, IPPROTO_TCP, TCP_INFO, (void *)&irp->tcpInfo, &tcp_info_length) < 0)
-	iperf_err(sp->test, "getsockopt - %s", strerror(errno));
+      iperf_err(sp->test, "getsockopt - %s", strerror(errno));
 
     if (sp->test->debug) {
-	printf("tcpi_snd_cwnd %u tcpi_snd_mss %u\n",
-	       irp->tcpInfo.tcpi_snd_cwnd, irp->tcpInfo.tcpi_snd_mss);
+      printf("tcpi_snd_cwnd %u tcpi_snd_mss %u\n",
+          irp->tcpInfo.tcpi_snd_cwnd, irp->tcpInfo.tcpi_snd_mss);
     }
 
 #endif
@@ -127,13 +127,13 @@ void
 build_tcpinfo_message(struct iperf_interval_results *r, char *message)
 {
 #if defined(linux)
-    sprintf(message, report_tcpInfo, r->tcpInfo.tcpi_snd_cwnd, r->tcpInfo.tcpi_snd_ssthresh,
-	    r->tcpInfo.tcpi_rcv_ssthresh, r->tcpInfo.tcpi_unacked, r->tcpInfo.tcpi_sacked,
-	    r->tcpInfo.tcpi_lost, r->tcpInfo.tcpi_retrans, r->tcpInfo.tcpi_fackets, 
-	    r->tcpInfo.tcpi_rtt, r->tcpInfo.tcpi_reordering);
+  sprintf(message, report_tcpInfo, r->tcpInfo.tcpi_snd_cwnd, r->tcpInfo.tcpi_snd_ssthresh,
+          r->tcpInfo.tcpi_rcv_ssthresh, r->tcpInfo.tcpi_unacked, r->tcpInfo.tcpi_sacked,
+          r->tcpInfo.tcpi_lost, r->tcpInfo.tcpi_retrans, r->tcpInfo.tcpi_fackets, 
+          r->tcpInfo.tcpi_rtt, r->tcpInfo.tcpi_reordering);
 #endif
 #if defined(__FreeBSD__)
-    sprintf(message, report_tcpInfo, r->tcpInfo.tcpi_snd_cwnd,
-	    r->tcpInfo.tcpi_rcv_space, r->tcpInfo.tcpi_snd_ssthresh, r->tcpInfo.tcpi_rtt);
+  sprintf(message, report_tcpInfo, r->tcpInfo.tcpi_snd_cwnd,
+          r->tcpInfo.tcpi_rcv_space, r->tcpInfo.tcpi_snd_ssthresh, r->tcpInfo.tcpi_rtt);
 #endif
 }

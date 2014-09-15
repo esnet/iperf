@@ -26,14 +26,14 @@ iperf_err(struct iperf_test *test, const char *format, ...)
     va_start(argp, format);
     vsnprintf(str, sizeof(str), format, argp);
     if (test != NULL && test->json_output && test->json_top != NULL)
-	cJSON_AddStringToObject(test->json_top, "error", str);
+        cJSON_AddStringToObject(test->json_top, "error", str);
     else
-	if (test && test->outfile) {
-	    fprintf(test->outfile, "iperf3: %s\n", str);
-	}
-	else {
-	    fprintf(stderr, "iperf3: %s\n", str);
-	}
+        if (test && test->outfile) {
+            fprintf(test->outfile, "iperf3: %s\n", str);
+        }
+        else {
+            fprintf(stderr, "iperf3: %s\n", str);
+        }
     va_end(argp);
 }
 
@@ -47,15 +47,15 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
     va_start(argp, format);
     vsnprintf(str, sizeof(str), format, argp);
     if (test != NULL && test->json_output && test->json_top != NULL) {
-	cJSON_AddStringToObject(test->json_top, "error", str);
-	iperf_json_finish(test);
+        cJSON_AddStringToObject(test->json_top, "error", str);
+        iperf_json_finish(test);
     } else
-	if (test && test->outfile) {
-	    fprintf(test->outfile, "iperf3: %s\n", str);
-	}
-	else {
-	    fprintf(stderr, "iperf3: %s\n", str);
-	}
+        if (test && test->outfile) {
+            fprintf(test->outfile, "iperf3: %s\n", str);
+        }
+        else {
+            fprintf(stderr, "iperf3: %s\n", str);
+        }
     va_end(argp);
     iperf_delete_pidfile(test);
     exit(1);
@@ -126,13 +126,13 @@ iperf_strerror(int i_errno)
         case IEENDCONDITIONS:
             snprintf(errstr, len, "only one test end condition (-t, -n, -k) may be specified");
             break;
-	case IELOGFILE:
-	    snprintf(errstr, len, "unable to open log file");
-	    perr = 1;
-	    break;
-	case IENOSCTP:
-	    snprintf(errstr, len, "no SCTP support available");
-	    break;
+        case IELOGFILE:
+            snprintf(errstr, len, "unable to open log file");
+            perr = 1;
+            break;
+        case IENOSCTP:
+            snprintf(errstr, len, "no SCTP support available");
+            break;
         case IENEWTEST:
             snprintf(errstr, len, "unable to create a new test");
             perr = 1;
@@ -259,10 +259,10 @@ iperf_strerror(int i_errno)
             snprintf(errstr, len, "unable to set CPU affinity");
             perr = 1;
             break;
-	case IEDAEMON:
-	    snprintf(errstr, len, "unable to become a daemon");
-	    perr = 1;
-	    break;
+        case IEDAEMON:
+            snprintf(errstr, len, "unable to become a daemon");
+            perr = 1;
+            break;
         case IECREATESTREAM:
             snprintf(errstr, len, "unable to create a new stream");
             herr = 1;
@@ -312,14 +312,14 @@ iperf_strerror(int i_errno)
             snprintf(errstr, len, "unable to set TCP_CONGESTION: " 
                                   "Supplied congestion control algorithm not supported on this host");
             break;
-	case IEPIDFILE:
+        case IEPIDFILE:
             snprintf(errstr, len, "unable to write PID file");
             perr = 1;
             break;
-	case IEV6ONLY:
-	    snprintf(errstr, len, "Unable to set/reset IPV6_V6ONLY");
-	    perr = 1;
-	    break;
+        case IEV6ONLY:
+            snprintf(errstr, len, "Unable to set/reset IPV6_V6ONLY");
+            perr = 1;
+            break;
         case IESETSCTPDISABLEFRAG:
             snprintf(errstr, len, "unable to set SCTP_DISABLE_FRAG");
             perr = 1;

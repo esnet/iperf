@@ -53,25 +53,25 @@ iperf_udp_recv(struct iperf_stream *sp)
     sp->result->bytes_received_this_interval += r;
 
     if (sp->test->udp_counters_64bit) {
-	memcpy(&sec, sp->buffer, sizeof(sec));
-	memcpy(&usec, sp->buffer+4, sizeof(usec));
-	memcpy(&pcount, sp->buffer+8, sizeof(pcount));
-	sec = ntohl(sec);
-	usec = ntohl(usec);
-	pcount = be64toh(pcount);
-	sent_time.tv_sec = sec;
-	sent_time.tv_usec = usec;
+        memcpy(&sec, sp->buffer, sizeof(sec));
+        memcpy(&usec, sp->buffer+4, sizeof(usec));
+        memcpy(&pcount, sp->buffer+8, sizeof(pcount));
+        sec = ntohl(sec);
+        usec = ntohl(usec);
+        pcount = be64toh(pcount);
+        sent_time.tv_sec = sec;
+        sent_time.tv_usec = usec;
     }
     else {
-	uint32_t pc;
-	memcpy(&sec, sp->buffer, sizeof(sec));
-	memcpy(&usec, sp->buffer+4, sizeof(usec));
-	memcpy(&pc, sp->buffer+8, sizeof(pc));
-	sec = ntohl(sec);
-	usec = ntohl(usec);
-	pcount = ntohl(pc);
-	sent_time.tv_sec = sec;
-	sent_time.tv_usec = usec;
+        uint32_t pc;
+        memcpy(&sec, sp->buffer, sizeof(sec));
+        memcpy(&usec, sp->buffer+4, sizeof(usec));
+        memcpy(&pc, sp->buffer+8, sizeof(pc));
+        sec = ntohl(sec);
+        usec = ntohl(usec);
+        pcount = ntohl(pc);
+        sent_time.tv_sec = sec;
+        sent_time.tv_usec = usec;
     }
 
     /* Out of order packets */
@@ -82,7 +82,7 @@ iperf_udp_recv(struct iperf_stream *sp)
         sp->packet_count = pcount;
     } else {
         sp->outoforder_packets++;
-	iperf_err(sp->test, "OUT OF ORDER - incoming packet = %llu and received packet = %d AND SP = %d", pcount, sp->packet_count, sp->socket);
+        iperf_err(sp->test, "OUT OF ORDER - incoming packet = %llu and received packet = %d AND SP = %d", pcount, sp->packet_count, sp->socket);
     }
 
     /* jitter measurement */
@@ -98,7 +98,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     sp->jitter += (d - sp->jitter) / 16.0;
 
     if (sp->test->debug) {
-	fprintf(stderr, "packet_count %llu\n", sp->packet_count);
+        fprintf(stderr, "packet_count %llu\n", sp->packet_count);
     }
 
     return r;
@@ -122,36 +122,36 @@ iperf_udp_send(struct iperf_stream *sp)
 
     if (sp->test->udp_counters_64bit) {
 
-	uint32_t  sec, usec;
-	uint64_t  pcount;
+        uint32_t  sec, usec;
+        uint64_t  pcount;
 
-	sec = htonl(before.tv_sec);
-	usec = htonl(before.tv_usec);
-	pcount = htobe64(sp->packet_count);
-	
-	memcpy(sp->buffer, &sec, sizeof(sec));
-	memcpy(sp->buffer+4, &usec, sizeof(usec));
-	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
-	
+        sec = htonl(before.tv_sec);
+        usec = htonl(before.tv_usec);
+        pcount = htobe64(sp->packet_count);
+
+        memcpy(sp->buffer, &sec, sizeof(sec));
+        memcpy(sp->buffer+4, &usec, sizeof(usec));
+        memcpy(sp->buffer+8, &pcount, sizeof(pcount));
+
     }
     else {
 
-	uint32_t  sec, usec, pcount;
+        uint32_t  sec, usec, pcount;
 
-	sec = htonl(before.tv_sec);
-	usec = htonl(before.tv_usec);
-	pcount = htonl(sp->packet_count);
-	
-	memcpy(sp->buffer, &sec, sizeof(sec));
-	memcpy(sp->buffer+4, &usec, sizeof(usec));
-	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
-	
+        sec = htonl(before.tv_sec);
+        usec = htonl(before.tv_usec);
+        pcount = htonl(sp->packet_count);
+
+        memcpy(sp->buffer, &sec, sizeof(sec));
+        memcpy(sp->buffer+4, &usec, sizeof(usec));
+        memcpy(sp->buffer+8, &pcount, sizeof(pcount));
+
     }
 
     r = Nwrite(sp->socket, sp->buffer, size, Pudp);
 
     if (r < 0)
-	return r;
+        return r;
 
     sp->result->bytes_sent += r;
     sp->result->bytes_sent_this_interval += r;

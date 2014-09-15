@@ -13,14 +13,14 @@ libiperf_la_SOURCES     = \
                         iperf_api.c \
                         iperf_api.h \
                         iperf_error.c \
-			iperf_client_api.c \
+                        iperf_client_api.c \
                         iperf_server_api.c \
                         iperf_tcp.c \
                         iperf_tcp.h \
                         iperf_udp.c \
                         iperf_udp.h \
-			iperf_sctp.c \
-	                iperf_sctp.h \
+                        iperf_sctp.c \
+                        iperf_sctp.h \
                         iperf_util.c \
                         iperf_util.h \
                         locale.c \
@@ -46,7 +46,7 @@ iperf3_LDFLAGS          = -g
 # Specify the sources and various flags for the profiled iperf binary. This
 # binary recompiles all the source files to make sure they are all profiled.
 iperf3_profile_SOURCES  = main.c \
-						  $(libiperf_la_SOURCES)
+                          $(libiperf_la_SOURCES)
 
 iperf3_profile_CFLAGS   = -pg -g
 iperf3_profile_LDADD    = libiperf.la

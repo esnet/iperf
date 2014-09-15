@@ -325,6 +325,11 @@ iperf_tcp_connect(struct iperf_test *test)
     }
 
     if (test->bind_address) {
+        struct sockaddr_in *lcladdr;
+        lcladdr = (struct sockaddr_in *)local_res->ai_addr;
+        lcladdr->sin_port = htons(test->bind_port);
+        local_res->ai_addr = (struct sockaddr *)lcladdr;
+
         if (bind(s, (struct sockaddr *) local_res->ai_addr, local_res->ai_addrlen) < 0) {
 	    saved_errno = errno;
 	    close(s);

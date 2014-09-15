@@ -48,7 +48,7 @@
 
 /* make connection to server */
 int
-netdial(int domain, int proto, char *local, char *server, int port)
+netdial(int domain, int proto, char *local, int local_port, char *server, int port)
 {
     struct addrinfo hints, *local_res, *server_res;
     int s;
@@ -76,6 +76,13 @@ netdial(int domain, int proto, char *local, char *server, int port)
     }
 
     if (local) {
+        if (local_port) {
+            struct sockaddr_in *lcladdr;
+            lcladdr = (struct sockaddr_in *)local_res->ai_addr;
+            lcladdr->sin_port = htons(local_port);
+            local_res->ai_addr = (struct sockaddr *)lcladdr;
+        }
+
         if (bind(s, (struct sockaddr *) local_res->ai_addr, local_res->ai_addrlen) < 0) {
 	    close(s);
 	    freeaddrinfo(local_res);

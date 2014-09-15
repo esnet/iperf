@@ -30,6 +30,7 @@ struct iperf_stream;
 #define OPT_LOGFILE 2
 #define OPT_GET_SERVER_OUTPUT 3
 #define OPT_UDP_COUNTERS_64BIT 4
+#define OPT_CLIENT_PORT 5
 
 /* states */
 #define TEST_START 1
@@ -262,6 +263,7 @@ enum {
     IEENDCONDITIONS = 16,   // Only one test end condition (-t, -n, -k) may be specified
     IELOGFILE = 17,	    // Can't open log file
     IENOSCTP = 18,	    // No SCTP support available
+    IEBIND = 19,			// Local port specified with no local bind option
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

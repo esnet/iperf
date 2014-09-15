@@ -43,7 +43,7 @@
 #include "units.h"
 #include "tcp_window_size.h"
 #include "iperf_util.h"
-#include "locale.h"
+#include "iperf_locale.h"
 
 
 int

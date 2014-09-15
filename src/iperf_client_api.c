@@ -39,7 +39,7 @@
 #include "iperf.h"
 #include "iperf_api.h"
 #include "iperf_util.h"
-#include "locale.h"
+#include "iperf_locale.h"
 #include "net.h"
 #include "timer.h"
 

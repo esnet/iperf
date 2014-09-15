@@ -44,7 +44,7 @@
 #include "iperf.h"
 #include "iperf_api.h"
 #include "units.h"
-#include "locale.h"
+#include "iperf_locale.h"
 #include "net.h"
 
 

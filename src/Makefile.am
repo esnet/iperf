@@ -14,6 +14,8 @@ libiperf_la_SOURCES     = \
                         iperf_api.h \
                         iperf_error.c \
 			iperf_client_api.c \
+                        iperf_locale.c \
+                        iperf_locale.h \
                         iperf_server_api.c \
                         iperf_tcp.c \
                         iperf_tcp.h \
@@ -21,8 +23,6 @@ libiperf_la_SOURCES     = \
                         iperf_udp.h \
                         iperf_util.c \
                         iperf_util.h \
-                        locale.c \
-                        locale.h \
                         net.c \
                         net.h \
                         queue.h \

@@ -113,6 +113,10 @@ number of blocks (packets) to transmit (instead of -t or -n)
 .BR -l ", " --length " \fIn\fR[KM]"
 length of buffer to read or write (default 128 KB for TCP, 8KB for UDP)
 .TP
+.BR --cport " \fIport\fR"
+bind data streams to a specific client port (for TCP and UDP only,
+default is to use an ephemeral port)
+.TP
 .BR -P ", " --parallel " \fIn\fR"
 number of parallel client streams to run
 .TP

@@ -30,6 +30,7 @@ struct iperf_stream;
 #define OPT_LOGFILE 2
 #define OPT_GET_SERVER_OUTPUT 3
 #define OPT_UDP_COUNTERS_64BIT 4
+#define OPT_CLIENT_PORT 5
 
 /* states */
 #define TEST_START 1

@@ -33,8 +33,10 @@ iperf_create_streams(struct iperf_test *test)
     int i, s;
     struct iperf_stream *sp;
 
+    int orig_bind_port = test->bind_port;
     for (i = 0; i < test->num_streams; ++i) {
 
+        test->bind_port = orig_bind_port + i;
         if ((s = test->protocol->connect(test)) < 0)
             return -1;
 

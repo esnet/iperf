@@ -69,26 +69,26 @@ netdial(int domain, int proto, char *local, char *server, int port)
 
     s = socket(server_res->ai_family, proto, 0);
     if (s < 0) {
-	if (local)
-	    freeaddrinfo(local_res);
-	freeaddrinfo(server_res);
+        if (local)
+            freeaddrinfo(local_res);
+        freeaddrinfo(server_res);
         return -1;
     }
 
     if (local) {
         if (bind(s, (struct sockaddr *) local_res->ai_addr, local_res->ai_addrlen) < 0) {
-	    close(s);
-	    freeaddrinfo(local_res);
-	    freeaddrinfo(server_res);
+            close(s);
+            freeaddrinfo(local_res);
+            freeaddrinfo(server_res);
             return -1;
-	}
+        }
         freeaddrinfo(local_res);
     }
 
     ((struct sockaddr_in *) server_res->ai_addr)->sin_port = htons(port);
     if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS) {
-	close(s);
-	freeaddrinfo(server_res);
+        close(s);
+        freeaddrinfo(server_res);
         return -1;
     }
 
@@ -120,10 +120,10 @@ netannounce(int domain, int proto, char *local, int port)
      * result structure is set to AF_INET6.
      */
     if (domain == AF_UNSPEC && !local) {
-	hints.ai_family = AF_INET6;
+        hints.ai_family = AF_INET6;
     }
     else {
-	hints.ai_family = domain;
+        hints.ai_family = domain;
     }
     hints.ai_socktype = proto;
     hints.ai_flags = AI_PASSIVE;
@@ -132,16 +132,16 @@ netannounce(int domain, int proto, char *local, int port)
 
     s = socket(res->ai_family, proto, 0);
     if (s < 0) {
-	freeaddrinfo(res);
+        freeaddrinfo(res);
         return -1;
     }
 
     opt = 1;
     if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, 
-		   (char *) &opt, sizeof(opt)) < 0) {
-	close(s);
-	freeaddrinfo(res);
-	return -1;
+                (char *) &opt, sizeof(opt)) < 0) {
+        close(s);
+        freeaddrinfo(res);
+        return -1;
     }
     /*
      * If we got an IPv6 socket, figure out if it should accept IPv4
@@ -153,30 +153,30 @@ netannounce(int domain, int proto, char *local, int port)
      */
 #if defined(IPV6_V6ONLY) && !defined(__OpenBSD__)
     if (res->ai_family == AF_INET6 && (domain == AF_UNSPEC || domain == AF_INET6)) {
-	if (domain == AF_UNSPEC)
-	    opt = 0;
-	else
-	    opt = 1;
-	if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, 
-		       (char *) &opt, sizeof(opt)) < 0) {
-	    close(s);
-	    freeaddrinfo(res);
-	    return -1;
-	}
+        if (domain == AF_UNSPEC)
+            opt = 0;
+        else
+            opt = 1;
+        if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, 
+                    (char *) &opt, sizeof(opt)) < 0) {
+            close(s);
+            freeaddrinfo(res);
+            return -1;
+        }
     }
 #endif /* IPV6_V6ONLY */
 
     if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0) {
         close(s);
-	freeaddrinfo(res);
+        freeaddrinfo(res);
         return -1;
     }
 
     freeaddrinfo(res);
-    
+
     if (proto == SOCK_STREAM) {
         if (listen(s, 5) < 0) {
-	    close(s);
+            close(s);
             return -1;
         }
     }
@@ -223,23 +223,23 @@ Nwrite(int fd, const char *buf, size_t count, int prot)
     register size_t nleft = count;
 
     while (nleft > 0) {
-	r = write(fd, buf, nleft);
-	if (r < 0) {
-	    switch (errno) {
-		case EINTR:
-		case EAGAIN:
-		return count - nleft;
+        r = write(fd, buf, nleft);
+        if (r < 0) {
+            switch (errno) {
+                case EINTR:
+                case EAGAIN:
+                    return count - nleft;
 
-		case ENOBUFS:
-		return NET_SOFTERROR;
+                case ENOBUFS:
+                    return NET_SOFTERROR;
 
-		default:
-		return NET_HARDERROR;
-	    }
-	} else if (r == 0)
-	    return NET_SOFTERROR;
-	nleft -= r;
-	buf += r;
+                default:
+                    return NET_HARDERROR;
+            }
+        } else if (r == 0)
+            return NET_SOFTERROR;
+        nleft -= r;
+        buf += r;
     }
     return count;
 }
@@ -274,43 +274,43 @@ Nsendfile(int fromfd, int tofd, const char *buf, size_t count)
 
     nleft = count;
     while (nleft > 0) {
-	offset = count - nleft;
+        offset = count - nleft;
 #ifdef linux
-	r = sendfile(tofd, fromfd, &offset, nleft);
+        r = sendfile(tofd, fromfd, &offset, nleft);
 #else
 #ifdef __FreeBSD__
-	r = sendfile(fromfd, tofd, offset, nleft, NULL, &sent, 0);
-	if (r == 0)
-	    r = sent;
+        r = sendfile(fromfd, tofd, offset, nleft, NULL, &sent, 0);
+        if (r == 0)
+            r = sent;
 #else
 #if defined(__APPLE__) && defined(__MACH__) && defined(MAC_OS_X_VERSION_10_6)	/* OS X */
-	sent = nleft;
-	r = sendfile(fromfd, tofd, offset, &sent, NULL, 0);
-	if (r == 0)
-	    r = sent;
+        sent = nleft;
+        r = sendfile(fromfd, tofd, offset, &sent, NULL, 0);
+        if (r == 0)
+            r = sent;
 #else
-	/* Shouldn't happen. */
-	r = -1;
-	errno = ENOSYS;
+        /* Shouldn't happen. */
+        r = -1;
+        errno = ENOSYS;
 #endif
 #endif
 #endif
-	if (r < 0) {
-	    switch (errno) {
-		case EINTR:
-		case EAGAIN:
-		return count - nleft;
+        if (r < 0) {
+            switch (errno) {
+                case EINTR:
+                case EAGAIN:
+                    return count - nleft;
 
-		case ENOBUFS:
-		case ENOMEM:
-		return NET_SOFTERROR;
+                case ENOBUFS:
+                case ENOMEM:
+                    return NET_SOFTERROR;
 
-		default:
-		return NET_HARDERROR;
-	    }
-	} else if (r == 0)
-	    return NET_SOFTERROR;
-	nleft -= r;
+                default:
+                    return NET_HARDERROR;
+            }
+        } else if (r == 0)
+            return NET_SOFTERROR;
+        nleft -= r;
     }
     return count;
 #else /* HAVE_SENDFILE */
@@ -340,8 +340,8 @@ getsock_tcp_mss(int inSock)
     len = sizeof(mss);
     rc = getsockopt(inSock, IPPROTO_TCP, TCP_MAXSEG, (char *)&mss, &len);
     if (rc == -1) {
-	perror("getsockopt TCP_MAXSEG");
-	return -1;
+        perror("getsockopt TCP_MAXSEG");
+        return -1;
     }
 
     return mss;
@@ -410,14 +410,14 @@ setnonblocking(int fd, int nonblocking)
         return -1;
     }
     if (nonblocking)
-	newflags = flags | (int) O_NONBLOCK;
+        newflags = flags | (int) O_NONBLOCK;
     else
-	newflags = flags & ~((int) O_NONBLOCK);
+        newflags = flags & ~((int) O_NONBLOCK);
     if (newflags != flags)
-	if (fcntl(fd, F_SETFL, newflags) < 0) {
-	    perror("fcntl(F_SETFL)");
-	    return -1;
-	}
+        if (fcntl(fd, F_SETFL, newflags) < 0) {
+            perror("fcntl(F_SETFL)");
+            return -1;
+        }
     return 0;
 }
 
@@ -430,6 +430,6 @@ getsockdomain(int sock)
     socklen_t len = sizeof(sa);
 
     if (getsockname(sock, &sa, &len) < 0)
-	return -1;
+        return -1;
     return sa.sa_family;
 }

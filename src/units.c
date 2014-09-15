@@ -87,31 +87,31 @@ extern    "C"
 
     double    unit_atof(const char *s)
     {
-	double    n;
-	char      suffix = '\0';
+        double    n;
+        char      suffix = '\0';
 
-	          assert(s != NULL);
+        assert(s != NULL);
 
-	/* scan the number and any suffices */
-	          sscanf(s, "%lf%c", &n, &suffix);
+        /* scan the number and any suffices */
+        sscanf(s, "%lf%c", &n, &suffix);
 
-	/* convert according to [Gg Mm Kk] */
-	switch    (suffix)
-	{
-	case 'g': case 'G':
-	    n *= GIGA_UNIT;
-	    break;
-	case 'm': case 'M':
-	    n *= MEGA_UNIT;
-	    break;
-	case 'k': case 'K':
-	    n *= KILO_UNIT;
-	    break;
-	default:
-	    break;
-	}
-	          return n;
-    }				/* end unit_atof */
+        /* convert according to [Gg Mm Kk] */
+        switch    (suffix)
+        {
+            case 'g': case 'G':
+                n *= GIGA_UNIT;
+                break;
+            case 'm': case 'M':
+                n *= MEGA_UNIT;
+                break;
+            case 'k': case 'K':
+                n *= KILO_UNIT;
+                break;
+            default:
+                break;
+        }
+        return n;
+    } /* end unit_atof */
 
 
 /* -------------------------------------------------------------------
@@ -123,31 +123,31 @@ extern    "C"
 
     double    unit_atof_rate(const char *s)
     {
-	double    n;
-	char      suffix = '\0';
+        double    n;
+        char      suffix = '\0';
 
-	          assert(s != NULL);
+        assert(s != NULL);
 
-	/* scan the number and any suffices */
-	          sscanf(s, "%lf%c", &n, &suffix);
+        /* scan the number and any suffices */
+        sscanf(s, "%lf%c", &n, &suffix);
 
-	/* convert according to [Gg Mm Kk] */
-	switch    (suffix)
-	{
-	case 'g': case 'G':
-	    n *= GIGA_RATE_UNIT;
-	    break;
-	case 'm': case 'M':
-	    n *= MEGA_RATE_UNIT;
-	    break;
-	case 'k': case 'K':
-	    n *= KILO_RATE_UNIT;
-	    break;
-	default:
-	    break;
-	}
-	          return n;
-    }				/* end unit_atof_rate */
+        /* convert according to [Gg Mm Kk] */
+        switch    (suffix)
+        {
+            case 'g': case 'G':
+                n *= GIGA_RATE_UNIT;
+                break;
+            case 'm': case 'M':
+                n *= MEGA_RATE_UNIT;
+                break;
+            case 'k': case 'K':
+                n *= KILO_RATE_UNIT;
+                break;
+            default:
+                break;
+        }
+        return n;
+    } /* end unit_atof_rate */
 
 
 
@@ -161,80 +161,80 @@ extern    "C"
 
     iperf_size_t unit_atoi(const char *s)
     {
-	double    n;
-	char      suffix = '\0';
+        double    n;
+        char      suffix = '\0';
 
-	          assert(s != NULL);
+        assert(s != NULL);
 
-	/* scan the number and any suffices */
-	          sscanf(s, "%lf%c", &n, &suffix);
+        /* scan the number and any suffices */
+        sscanf(s, "%lf%c", &n, &suffix);
 
-	/* convert according to [Gg Mm Kk] */
-	switch    (suffix)
-	{
-	case 'g': case 'G':
-	    n *= GIGA_UNIT;
-	    break;
-	case 'm': case 'M':
-	    n *= MEGA_UNIT;
-	    break;
-	case 'k': case 'K':
-	    n *= KILO_UNIT;
-	    break;
-	default:
-	    break;
-	}
-	          return (iperf_size_t) n;
-    }				/* end unit_atof */
+        /* convert according to [Gg Mm Kk] */
+        switch (suffix)
+        {
+            case 'g': case 'G':
+                n *= GIGA_UNIT;
+                break;
+            case 'm': case 'M':
+                n *= MEGA_UNIT;
+                break;
+            case 'k': case 'K':
+                n *= KILO_UNIT;
+                break;
+            default:
+                break;
+        }
+        return (iperf_size_t) n;
+    } /* end unit_atof */
 
-/* -------------------------------------------------------------------
- * constants for byte_printf
- * ------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------
+     * constants for byte_printf
+     * ------------------------------------------------------------------- */
 
-/* used as indices into conversion_bytes[], label_byte[], and label_bit[] */
+    /* used as indices into conversion_bytes[], label_byte[], and label_bit[] */
     enum
     {
-	UNIT_CONV,
-	KILO_CONV,
-	MEGA_CONV,
-	GIGA_CONV
+        UNIT_CONV,
+        KILO_CONV,
+        MEGA_CONV,
+        GIGA_CONV
     };
 
-/* factor to multiply the number by */
+    /* factor to multiply the number by */
     const double conversion_bytes[] =
     {
-	1.0,			/* unit */
-	1.0 / 1024,		/* kilo */
-	1.0 / 1024 / 1024,	/* mega */
-	1.0 / 1024 / 1024 / 1024/* giga */
+        1.0,			/* unit */
+        1.0 / 1024,		/* kilo */
+        1.0 / 1024 / 1024,	/* mega */
+        1.0 / 1024 / 1024 / 1024/* giga */
     };
 
-/* factor to multiply the number by for bits*/
+    /* factor to multiply the number by for bits*/
     const double conversion_bits[] =
     {
-	1.0,			/* unit */
-	1.0 / 1000,		/* kilo */
-	1.0 / 1000 / 1000,	/* mega */
-	1.0 / 1000 / 1000 / 1000/* giga */
+        1.0,			/* unit */
+        1.0 / 1000,		/* kilo */
+        1.0 / 1000 / 1000,	/* mega */
+        1.0 / 1000 / 1000 / 1000/* giga */
     };
 
 
-/* labels for Byte formats [KMG] */
+    /* labels for Byte formats [KMG] */
     const char *label_byte[] =
     {
-	"Byte",
-	"KByte",
-	"MByte",
-	"GByte"
+        "Byte",
+        "KByte",
+        "MByte",
+        "GByte"
     };
 
-/* labels for bit formats [kmg] */
+    /* labels for bit formats [kmg] */
     const char *label_bit[] =
     {
-	"bit",
-	"Kbit",
-	"Mbit",
-	"Gbit"
+        "bit",
+        "Kbit",
+        "Mbit",
+        "Gbit"
     };
 
 /* -------------------------------------------------------------------
@@ -249,86 +249,85 @@ extern    "C"
  * (4 digits + space + 5 chars max + null)
  * ------------------------------------------------------------------- */
 
-    void      unit_snprintf(char *s, int inLen,
-			              double inNum, char inFormat)
+    void      unit_snprintf(char *s, int inLen, double inNum, char inFormat)
     {
-	int       conv;
-	const char *suffix;
-	const char *format;
+        int       conv;
+        const char *suffix;
+        const char *format;
 
-	/* convert to bits for [bkmga] */
-	if        (!isupper((int) inFormat))
-	{
-	    inNum *= 8;
-	}
-	switch    (toupper(inFormat))
-	{
-	case 'B':
-	    conv = UNIT_CONV;
-	    break;
-	case 'K':
-	    conv = KILO_CONV;
-	    break;
-	case 'M':
-	    conv = MEGA_CONV;
-	    break;
-	case 'G':
-	    conv = GIGA_CONV;
-	    break;
+        /* convert to bits for [bkmga] */
+        if (!isupper((int) inFormat))
+        {
+            inNum *= 8;
+        }
+        switch (toupper(inFormat))
+        {
+            case 'B':
+                conv = UNIT_CONV;
+                break;
+            case 'K':
+                conv = KILO_CONV;
+                break;
+            case 'M':
+                conv = MEGA_CONV;
+                break;
+            case 'G':
+                conv = GIGA_CONV;
+                break;
 
-	default:
-	case 'A':
-	    {
-		double    tmpNum = inNum;
-		conv = UNIT_CONV;
+            default:
+            case 'A':
+                {
+                    double    tmpNum = inNum;
+                    conv = UNIT_CONV;
 
-		if (isupper((int) inFormat))
-		{
-		    while (tmpNum >= 1024.0 && conv <= GIGA_CONV)
-		    {
-			tmpNum /= 1024.0;
-			conv++;
-		    }
-		} else
-		{
-		    while (tmpNum >= 1000.0 && conv <= GIGA_CONV)
-		    {
-			tmpNum /= 1000.0;
-			conv++;
-		    }
-		}
-		break;
-	    }
-	}
+                    if (isupper((int) inFormat))
+                    {
+                        while (tmpNum >= 1024.0 && conv <= GIGA_CONV)
+                        {
+                            tmpNum /= 1024.0;
+                            conv++;
+                        }
+                    } else
+                    {
+                        while (tmpNum >= 1000.0 && conv <= GIGA_CONV)
+                        {
+                            tmpNum /= 1000.0;
+                            conv++;
+                        }
+                    }
+                    break;
+                }
+        }
 
-	if (!isupper((int) inFormat))
-	{
-	    inNum *= conversion_bits[conv];
-	    suffix = label_bit[conv];
-	} else
-	{
-	    inNum *= conversion_bytes[conv];
-	    suffix = label_byte[conv];
-	}
+        if (!isupper((int) inFormat))
+        {
+            inNum *= conversion_bits[conv];
+            suffix = label_bit[conv];
+        } else
+        {
+            inNum *= conversion_bytes[conv];
+            suffix = label_byte[conv];
+        }
 
-	/* print such that we always fit in 4 places */
-	if (inNum < 9.995)
-	{			/* 9.995 would be rounded to 10.0 */
-	    format = "%4.2f %s";/* #.## */
-	} else if (inNum < 99.95)
-	{			/* 99.95 would be rounded to 100 */
-	    format = "%4.1f %s";/* ##.# */
-	} else if (inNum < 999.5)
-	{			/* 999.5 would be rounded to 1000 */
-	    format = "%4.0f %s";/* ### */
-	} else
-	{			/* 1000-1024 fits in 4 places If not using
-				 * Adaptive sizes then this code will not
-				 * control spaces */
-	    format = "%4.0f %s";/* #### */
-	}
-	snprintf(s, inLen, format, inNum, suffix);
-    }				/* end unit_snprintf */
+        /* print such that we always fit in 4 places */
+        if (inNum < 9.995)
+        {			/* 9.995 would be rounded to 10.0 */
+            format = "%4.2f %s";/* #.## */
+        } else if (inNum < 99.95)
+        {			/* 99.95 would be rounded to 100 */
+            format = "%4.1f %s";/* ##.# */
+        } else if (inNum < 999.5)
+        {			/* 999.5 would be rounded to 1000 */
+            format = "%4.0f %s";/* ### */
+        } else
+        {			/* 1000-1024 fits in 4 places If not using
+                     * Adaptive sizes then this code will not
+                     * control spaces */
+            format = "%4.0f %s";/* #### */
+        }
+        snprintf(s, inLen, format, inNum, suffix);
+    } /* end unit_snprintf */
 
 #ifdef __cplusplus
 }				/* end extern "C" */

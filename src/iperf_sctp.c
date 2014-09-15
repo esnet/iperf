@@ -162,12 +162,12 @@ iperf_sctp_listen(struct iperf_test *test)
         else if (test->settings->domain == AF_INET6)
             opt = 1;
         if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, 
-		       (char *) &opt, sizeof(opt)) < 0) {
-	    close(s);
-	    freeaddrinfo(res);
-	    i_errno = IEPROTOCOL;
-	    return -1;
-	}
+           (char *) &opt, sizeof(opt)) < 0) {
+            close(s);
+            freeaddrinfo(res);
+            i_errno = IEPROTOCOL;
+            return -1;
+        }
     }
 #endif /* IPV6_V6ONLY */
 
@@ -230,25 +230,25 @@ iperf_sctp_connect(struct iperf_test *test)
     hints.ai_socktype = SOCK_STREAM;
     snprintf(portstr, sizeof(portstr), "%d", test->server_port);
     if (getaddrinfo(test->server_hostname, portstr, &hints, &server_res) != 0) {
-	if (test->bind_address)
-	    freeaddrinfo(local_res);
+        if (test->bind_address)
+            freeaddrinfo(local_res);
         i_errno = IESTREAMCONNECT;
         return -1;
     }
 
     s = socket(server_res->ai_family, SOCK_STREAM, IPPROTO_SCTP);
     if (s < 0) {
-	if (test->bind_address)
-	    freeaddrinfo(local_res);
-	freeaddrinfo(server_res);
+        if (test->bind_address)
+            freeaddrinfo(local_res);
+        freeaddrinfo(server_res);
         i_errno = IESTREAMCONNECT;
         return -1;
     }
 
-   
+
     if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS) {
-	close(s);
-	freeaddrinfo(server_res);
+        close(s);
+        freeaddrinfo(server_res);
         i_errno = IESTREAMCONNECT;
         return -1;
     }
@@ -256,7 +256,7 @@ iperf_sctp_connect(struct iperf_test *test)
 
     /* Send cookie for verification */
     if (Nwrite(s, test->cookie, COOKIE_SIZE, Psctp) < 0) {
-	close(s);
+        close(s);
         i_errno = IESENDCOOKIE;
         return -1;
     }

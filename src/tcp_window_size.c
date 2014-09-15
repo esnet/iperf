@@ -84,15 +84,15 @@ set_tcp_windowsize(int sock, int bufsize, int dir)
 
     if (bufsize > 0)
     {
-	/*
+        /*
          * note: results are verified after connect() or listen(), since
          * some OS's don't show the corrected value until then.
          */
-//        printf("Setting TCP buffer to size: %d\n", bufsize);
-	newbufsize = bufsize;
-	rc = setsockopt(sock, SOL_SOCKET, dir, (char *) &newbufsize, sizeof(newbufsize));
-	if (rc < 0)
-	    return rc;
+        //        printf("Setting TCP buffer to size: %d\n", bufsize);
+        newbufsize = bufsize;
+        rc = setsockopt(sock, SOL_SOCKET, dir, (char *) &newbufsize, sizeof(newbufsize));
+        if (rc < 0)
+            return rc;
     } else {
 //        printf("      Using default TCP buffer size and assuming OS will do autotuning\n");
     }
@@ -118,7 +118,7 @@ get_tcp_windowsize(int sock, int dir)
     rc = getsockopt(sock, SOL_SOCKET, dir, (char *) &bufsize, &len);
 
     if (rc < 0)
-	return rc;
+        return rc;
 
     return bufsize;
 }

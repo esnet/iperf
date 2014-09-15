@@ -33,9 +33,9 @@ static void
 getnow( struct timeval* nowP, struct timeval* nowP2 )
 {
     if ( nowP != NULL )
-	*nowP2 = *nowP;
+        *nowP2 = *nowP;
     else
-	(void) gettimeofday( nowP2, NULL );
+        (void) gettimeofday( nowP2, NULL );
 }
 
 
@@ -46,38 +46,38 @@ list_add( Timer* t )
     Timer* t2prev;
 
     if ( timers == NULL ) {
-	/* The list is empty. */
-	timers = t;
-	t->prev = t->next = NULL;
+        /* The list is empty. */
+        timers = t;
+        t->prev = t->next = NULL;
     } else {
-	if ( t->time.tv_sec < timers->time.tv_sec ||
-	     ( t->time.tv_sec == timers->time.tv_sec &&
-	       t->time.tv_usec < timers->time.tv_usec ) ) {
-	    /* The new timer goes at the head of the list. */
-	    t->prev = NULL;
-	    t->next = timers;
-	    timers->prev = t;
-	    timers = t;
-	} else {
-	    /* Walk the list to find the insertion point. */
-	    for ( t2prev = timers, t2 = timers->next; t2 != NULL;
-		  t2prev = t2, t2 = t2->next ) {
-		if ( t->time.tv_sec < t2->time.tv_sec ||
-		     ( t->time.tv_sec == t2->time.tv_sec &&
-		       t->time.tv_usec < t2->time.tv_usec ) ) {
-		    /* Found it. */
-		    t2prev->next = t;
-		    t->prev = t2prev;
-		    t->next = t2;
-		    t2->prev = t;
-		    return;
-		}
-	    }
-	    /* Oops, got to the end of the list.  Add to tail. */
-	    t2prev->next = t;
-	    t->prev = t2prev;
-	    t->next = NULL;
-	}
+        if ( t->time.tv_sec < timers->time.tv_sec ||
+             ( t->time.tv_sec == timers->time.tv_sec &&
+             t->time.tv_usec < timers->time.tv_usec ) ) {
+            /* The new timer goes at the head of the list. */
+            t->prev = NULL;
+            t->next = timers;
+            timers->prev = t;
+            timers = t;
+        } else {
+            /* Walk the list to find the insertion point. */
+            for ( t2prev = timers, t2 = timers->next; t2 != NULL;
+                  t2prev = t2, t2 = t2->next ) {
+                if ( t->time.tv_sec < t2->time.tv_sec ||
+                     ( t->time.tv_sec == t2->time.tv_sec &&
+                     t->time.tv_usec < t2->time.tv_usec ) ) {
+                    /* Found it. */
+                    t2prev->next = t;
+                    t->prev = t2prev;
+                    t->next = t2;
+                    t2->prev = t;
+                    return;
+                }
+            }
+            /* Oops, got to the end of the list.  Add to tail. */
+            t2prev->next = t;
+            t->prev = t2prev;
+            t->next = NULL;
+        }
     }
 }
 
@@ -86,11 +86,11 @@ static void
 list_remove( Timer* t )
 {
     if ( t->prev == NULL )
-	timers = t->next;
+        timers = t->next;
     else
-	t->prev->next = t->next;
+        t->prev->next = t->next;
     if ( t->next != NULL )
-	t->next->prev = t->prev;
+        t->next->prev = t->prev;
 }
 
 
@@ -110,8 +110,8 @@ add_usecs( struct timeval* t, int64_t usecs )
     t->tv_sec += usecs / 1000000L;
     t->tv_usec += usecs % 1000000L;
     if ( t->tv_usec >= 1000000L ) {
-	t->tv_sec += t->tv_usec / 1000000L;
-	t->tv_usec %= 1000000L;
+        t->tv_sec += t->tv_usec / 1000000L;
+        t->tv_usec %= 1000000L;
     }
 }
 
@@ -127,12 +127,12 @@ tmr_create(
     getnow( nowP, &now );
 
     if ( free_timers != NULL ) {
-	t = free_timers;
-	free_timers = t->next;
+        t = free_timers;
+        free_timers = t->next;
     } else {
-	t = (Timer*) malloc( sizeof(Timer) );
-	if ( t == NULL )
-	    return NULL;
+        t = (Timer*) malloc( sizeof(Timer) );
+        if ( t == NULL )
+            return NULL;
     }
 
     t->timer_proc = timer_proc;
@@ -158,11 +158,11 @@ tmr_timeout( struct timeval* nowP )
     getnow( nowP, &now );
     /* Since the list is sorted, we only need to look at the first timer. */
     if ( timers == NULL )
-	return NULL;
+        return NULL;
     usecs = ( timers->time.tv_sec - now.tv_sec ) * 1000000LL +
-	    ( timers->time.tv_usec - now.tv_usec );
+        ( timers->time.tv_usec - now.tv_usec );
     if ( usecs <= 0 )
-	usecs = 0;
+        usecs = 0;
     timeout.tv_sec = usecs / 1000000LL;
     timeout.tv_usec = usecs % 1000000LL;
     return &timeout;
@@ -178,21 +178,21 @@ tmr_run( struct timeval* nowP )
 
     getnow( nowP, &now );
     for ( t = timers; t != NULL; t = next ) {
-	next = t->next;
-	/* Since the list is sorted, as soon as we find a timer
-	** that isn't ready yet, we are done.
-	*/
-	if ( t->time.tv_sec > now.tv_sec ||
-	     ( t->time.tv_sec == now.tv_sec &&
-	       t->time.tv_usec > now.tv_usec ) )
-	    break;
-	(t->timer_proc)( t->client_data, &now );
-	if ( t->periodic ) {
-	    /* Reschedule. */
-	    add_usecs( &t->time, t->usecs );
-	    list_resort( t );
-	} else
-	    tmr_cancel( t );
+        next = t->next;
+        /* Since the list is sorted, as soon as we find a timer
+         ** that isn't ready yet, we are done.
+         */
+        if ( t->time.tv_sec > now.tv_sec ||
+             ( t->time.tv_sec == now.tv_sec &&
+             t->time.tv_usec > now.tv_usec ) )
+            break;
+        (t->timer_proc)( t->client_data, &now );
+        if ( t->periodic ) {
+            /* Reschedule. */
+            add_usecs( &t->time, t->usecs );
+            list_resort( t );
+        } else
+            tmr_cancel( t );
     }
 }
 
@@ -201,7 +201,7 @@ void
 tmr_reset( struct timeval* nowP, Timer* t )
 {
     struct timeval now;
-    
+
     getnow( nowP, &now );
     t->time = now;
     add_usecs( &t->time, t->usecs );
@@ -227,9 +227,9 @@ tmr_cleanup( void )
     Timer* t;
 
     while ( free_timers != NULL ) {
-	t = free_timers;
-	free_timers = t->next;
-	free( (void*) t );
+        t = free_timers;
+        free_timers = t->next;
+        free( (void*) t );
     }
 }
 
@@ -238,6 +238,6 @@ void
 tmr_destroy( void )
 {
     while ( timers != NULL )
-	tmr_cancel( timers );
+        tmr_cancel( timers );
     tmr_cleanup();
 }

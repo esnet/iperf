@@ -106,8 +106,8 @@ struct iperf_stream
     int       remote_port;
     int       socket;
     int       id;
-	/* XXX: is settings just a pointer to the same struct in iperf_test? if not, 
-		should it be? */
+    /* XXX: is settings just a pointer to the same struct in iperf_test? if not, 
+       should it be? */
     struct iperf_settings *settings;	/* pointer to structure settings */
 
     /* non configurable members */

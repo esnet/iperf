@@ -64,6 +64,15 @@
 #	define be64toh(x) betoh64(x)
 #	define le64toh(x) letoh64(x)
 
+#elif defined(__SunOS)
+
+#	include <sys/types.h>
+#	include <netinet/in.h>
+#	include <inttypes.h>
+
+#	define be64toh(x) ntohll(x)
+#	define htobe64(x) htonll(x)
+
 #elif defined(__WINDOWS__)
 
 #	include <winsock2.h>

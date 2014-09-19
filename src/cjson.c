@@ -30,7 +30,9 @@
 #include <float.h>
 #include <limits.h>
 #include <ctype.h>
-#include <stdint.h>  
+#ifdef HAVE_STDINT_H
+#include <stdint.h> 
+#endif
 #include <sys/types.h>
 #include "cjson.h"
 

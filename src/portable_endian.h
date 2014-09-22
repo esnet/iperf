@@ -117,8 +117,10 @@
 
 #else
 
-#	error platform not supported
+#	warning platform not supported
+#	include <sys/endian.h>
 
 #endif
 
 #endif
+

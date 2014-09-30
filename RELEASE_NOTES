@@ -1,3 +1,15 @@
+== iperf 3.0.8 2014-09-30 ==
+
+* User-visible changes
+
+  * Updated license and copyright verbage to confirm to LBNL Tech
+    Transfer requirements.  No substantive changes; license remains
+    the 3-clause BSD license.
+
+* Developer-visible changes
+
+  * None.
+
 == iperf 3.0.7 2014-08-28 ==
 
 * User-visible changes

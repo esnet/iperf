@@ -27,7 +27,7 @@ supported platforms, however there have been some reports of success
 with OpenBSD, Android, and other Linux distributions.
 
 iperf3 is principally developed by `ESnet <http://www.es.net/>`_ /
-`Lawrence Berkleley National Laboratory <http://www.lbl.gov/>`_.  It
+`Lawrence Berkeley National Laboratory <http://www.lbl.gov/>`_.  It
 is released under a three-clause BSD license.
 
 Links for the Impatient

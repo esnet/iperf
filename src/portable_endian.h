@@ -55,7 +55,7 @@
 
 #	include <sys/endian.h>
 
-#elif defined(__SunOS)
+#elif defined(__SunOS) || defined(__sun)
 
 #	include <sys/types.h>
 #	include <netinet/in.h>

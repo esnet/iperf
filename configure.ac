@@ -68,6 +68,18 @@ echo "nanosleep() required for timing operations."
 exit 1
 ])
 
+# On illumos we need -lsocket
+AC_SEARCH_LIBS(socket, [socket], [], [
+echo "socket()"
+exit 1
+])
+
+# On illumos inet_ntop in in -lnsl
+AC_SEARCH_LIBS(inet_ntop, [nsl], [], [
+echo "inet_ntop()"
+exit 1
+])
+
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 

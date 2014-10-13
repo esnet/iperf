@@ -820,6 +820,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	i_errno = IEBLOCKSIZE;
 	return -1;
     }
+    if (test->protocol->id == Pudp &&
+	blksize > MAX_UDP_BLOCKSIZE) {
+	i_errno = IEUDPBLOCKSIZE;
+	return -1;
+    }
     test->settings->blksize = blksize;
 
     if (!rate_flag)

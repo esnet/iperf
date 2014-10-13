@@ -268,6 +268,7 @@ enum {
     IEFILE = 14,            // -F file couldn't be opened
     IEBURST = 15,           // Invalid burst count. Maximum value = %dMAX_BURST
     IEENDCONDITIONS = 16,   // Only one test end condition (-t, -n, -k) may be specified
+    IEUDPBLOCKSIZE = 20,    // Block size too large. Maximum value = %dMAX_UDP_BLOCKSIZE
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

@@ -110,6 +110,9 @@ iperf_strerror(int i_errno)
         case IEINTERVAL:
             snprintf(errstr, len, "invalid report interval (min = %g, max = %g seconds)", MIN_INTERVAL, MAX_INTERVAL);
             break;
+        case IEUDPBLOCKSIZE:
+            snprintf(errstr, len, "block size too large (maximum = %d bytes)", MAX_UDP_BLOCKSIZE);
+            break;
         case IEMSS:
             snprintf(errstr, len, "TCP MSS too large (maximum = %d bytes)", MAX_MSS);
             break;

@@ -124,6 +124,9 @@ iperf_strerror(int i_errno)
         case IEBIND:
             snprintf(errstr, len, "--bind must be specified to use --cport");
             break;
+        case IEUDPBLOCKSIZE:
+            snprintf(errstr, len, "block size too large (maximum = %d bytes)", MAX_UDP_BLOCKSIZE);
+            break;
         case IEMSS:
             snprintf(errstr, len, "TCP MSS too large (maximum = %d bytes)", MAX_MSS);
             break;

@@ -60,7 +60,12 @@ iperf_udp_recv(struct iperf_stream *sp)
 
     r = Nread(sp->socket, sp->buffer, size, Pudp);
 
-    if (r < 0)
+    /*
+     * If we got an error in the read, or if we didn't read anything
+     * because the underlying read(2) got a EAGAIN, then skip packet
+     * processing.
+     */
+    if (r <= 0)
         return r;
 
     sp->result->bytes_received += r;

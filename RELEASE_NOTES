@@ -1,3 +1,17 @@
+== iperf 3.0.9 2014-10-14 ==
+
+* User-visible changes
+
+  * Fixed a series of problems that came from attempting a UDP test
+    with a pathologically large block size.  This put the server into
+    an odd state where it could not accept new client connections.
+    This in turn caused subsequent client connections to crash when
+    interrupted (issue #212).
+
+* Developer-visible changes
+
+  * None.
+
 == iperf 3.0.8 2014-09-30 ==
 
 * User-visible changes

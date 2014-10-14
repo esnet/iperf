@@ -77,4 +77,4 @@ exit 1
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 
-AC_OUTPUT([Makefile src/Makefile src/version.h examples/Makefile])
+AC_OUTPUT([Makefile src/Makefile src/version.h examples/Makefile iperf3.spec])

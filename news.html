@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>iperf3 Project News &mdash; iperf3 3.0.8 documentation</title>
+    <title>iperf3 Project News &mdash; iperf3 3.0.9 documentation</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -16,7 +16,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.0.8',
+        VERSION:     '3.0.9',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -30,7 +30,7 @@
     <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="shortcut icon" href="_static/favicon.ico"/>
-    <link rel="top" title="iperf3 3.0.8 documentation" href="index.html" />
+    <link rel="top" title="iperf3 3.0.9 documentation" href="index.html" />
     <link rel="next" title="Obtaining iperf3" href="obtaining.html" />
     <link rel="prev" title="iperf3" href="index.html" />
 <meta charset='utf-8'>
@@ -133,6 +133,7 @@
       <div class="col-md-3">
         <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
 <li><a class="reference internal" href="#">iperf3 Project News</a><ul>
+<li><a class="reference internal" href="#iperf-3-0-9-released">2014-10-14:  iperf-3.0.9 released</a></li>
 <li><a class="reference internal" href="#iperf-3-0-8-released">2014-09-30:  iperf-3.0.8 released</a></li>
 <li><a class="reference internal" href="#iperf-3-0-7-released">2014-08-28:  iperf-3.0.7 released</a></li>
 <li><a class="reference internal" href="#iperf-3-0-6-released">2014-07-28:  iperf-3.0.6 released</a></li>
@@ -153,6 +154,18 @@
       
   <div class="section" id="iperf3-project-news">
 <h1>iperf3 Project News<a class="headerlink" href="#iperf3-project-news" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="iperf-3-0-9-released">
+<h2>2014-10-14:  iperf-3.0.9 released<a class="headerlink" href="#iperf-3-0-9-released" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">URL:  <a class="reference external" href="http://downloads.es.net/pub/iperf/iperf-3.0.9.tar.gz">http://downloads.es.net/pub/iperf/iperf-3.0.9.tar.gz</a></div>
+<div class="line">SHA256:  <tt class="docutils literal"><span class="pre">40249a2b30d26b937350b969bcb19f88e1beb356f886ed31422b554bac692459</span>&nbsp; <span class="pre">iperf-3.0.9.tar.gz</span></tt></div>
+</div>
+<p>This maintenance release fixes an issue for a situation in which
+attempting a UDP test with pathologically large (and illegal) packet
+sizes could put the iperf3 server in a state where it would stop
+accepting connections from clients, thus causing the clients to crash
+when interrupted.</p>
+</div>
 <div class="section" id="iperf-3-0-8-released">
 <h2>2014-09-30:  iperf-3.0.8 released<a class="headerlink" href="#iperf-3-0-8-released" title="Permalink to this headline">¶</a></h2>
 <div class="line-block">

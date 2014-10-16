@@ -12019,9 +12019,25 @@ fi
 
 
 # Check for SCTP support
+for ac_header in sys/socket.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/socket.h" "ac_cv_header_sys_socket_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_socket_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_SOCKET_H 1
+_ACEOF
+
+fi
+
+done
+
 for ac_header in netinet/sctp.h
 do :
-  ac_fn_c_check_header_mongrel "$LINENO" "netinet/sctp.h" "ac_cv_header_netinet_sctp_h" "$ac_includes_default"
+  ac_fn_c_check_header_compile "$LINENO" "netinet/sctp.h" "ac_cv_header_netinet_sctp_h" "#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+
+"
 if test "x$ac_cv_header_netinet_sctp_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_NETINET_SCTP_H 1

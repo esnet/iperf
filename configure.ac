@@ -93,7 +93,7 @@ AC_CHECK_HEADERS([netinet/sctp.h],
 #endif
 ])
 
-# Check for TCP_CONGESTION sockopt (believed to be Linux only)
+# Check for TCP_CONGESTION sockopt (believed to be Linux and FreeBSD only)
 AC_CACHE_CHECK([TCP_CONGESTION socket option],
 [iperf3_cv_header_tcp_congestion],
 AC_EGREP_CPP(yes,

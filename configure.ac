@@ -84,8 +84,14 @@ exit 1
 AC_C_CONST
 
 # Check for SCTP support
+AC_CHECK_HEADERS([sys/socket.h])
 AC_CHECK_HEADERS([netinet/sctp.h],
-		 AC_DEFINE([HAVE_SCTP], [1], [Have SCTP support.]))
+		 AC_DEFINE([HAVE_SCTP], [1], [Have SCTP support.]),
+		 [],
+		 [#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+])
 
 # Check for TCP_CONGESTION sockopt (believed to be Linux only)
 AC_CACHE_CHECK([TCP_CONGESTION socket option],

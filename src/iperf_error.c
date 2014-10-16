@@ -344,7 +344,7 @@ iperf_strerror(int i_errno)
 	    perr = 1;
 	    break;
         case IESETSCTPDISABLEFRAG:
-            snprintf(errstr, len, "unable to set SCTP_DISABLE_FRAG");
+            snprintf(errstr, len, "unable to set SCTP_DISABLE_FRAGMENTS");
             perr = 1;
             break;
     }

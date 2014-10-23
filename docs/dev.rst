@@ -182,7 +182,7 @@ Release Engineering Checklist
    
 8. Plug the SHA256 checksum into the release announcement.
 
-9. PGP-sign the release announcement text using ``pgp --clearsign``.
+9. PGP-sign the release announcement text using ``gpg --clearsign``.
    The signed announcement will be sent out in a subsequent emails,
    but could also be archived.  Decoupling the signing from emailing
    allows a signed release announcement to be resent via email or sent

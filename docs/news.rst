@@ -1,6 +1,29 @@
 iperf3 Project News
 ===================
 
+2014-10-14:  iperf-3.0.9 released
+---------------------------------
+
+| URL:  http://downloads.es.net/pub/iperf/iperf-3.0.9.tar.gz
+| SHA256:  ``40249a2b30d26b937350b969bcb19f88e1beb356f886ed31422b554bac692459  iperf-3.0.9.tar.gz``
+
+This maintenance release fixes an issue for a situation in which
+attempting a UDP test with pathologically large (and illegal) packet
+sizes could put the iperf3 server in a state where it would stop
+accepting connections from clients, thus causing the clients to crash
+when interrupted.
+
+
+2014-09-30:  iperf-3.0.8 released
+---------------------------------
+
+| URL:  http://downloads.es.net/pub/iperf/iperf-3.0.8.tar.gz
+| SHA256:  ``81b8d91159862896c57f9b90a006e8b5dc22bd94175d97bd0db50b0ae2c1a78e  iperf-3.0.8.tar.gz``
+
+This maintenance release is functionally identical to 3.0.7.  It
+incorporates updated license verbage and a minor compilation fix.
+
+
 2014-08-28:  iperf-3.0.7 released
 ---------------------------------
 

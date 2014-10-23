@@ -913,6 +913,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	i_errno = IEBLOCKSIZE;
 	return -1;
     }
+    if (test->protocol->id == Pudp &&
+	blksize > MAX_UDP_BLOCKSIZE) {
+	i_errno = IEUDPBLOCKSIZE;
+	return -1;
+    }
     test->settings->blksize = blksize;
 
     if (!rate_flag)
@@ -2103,6 +2108,8 @@ iperf_print_intermediate(struct iperf_test *test)
     /* next build string with sum of all streams */
     if (test->num_streams > 1 || test->json_output) {
         sp = SLIST_FIRST(&test->streams); /* reset back to 1st stream */
+	/* Only do this of course if there was a first stream */
+	if (sp) {
         irp = TAILQ_LAST(&sp->result->interval_results, irlisthead);    /* use 1st stream for timing info */
 
         unit_snprintf(ubuf, UNIT_LEN, (double) bytes, 'A');
@@ -2140,6 +2147,7 @@ iperf_print_intermediate(struct iperf_test *test)
 		else
 		    iprintf(test, report_sum_bw_udp_format, start_time, end_time, ubuf, nbuf, avg_jitter * 1000.0, lost_packets, total_packets, lost_percent, test->omitting?report_omitted:"");
 	    }
+	}
 	}
     }
 }
@@ -2187,6 +2195,13 @@ iperf_print_results(struct iperf_test *test)
 
     start_time = 0.;
     sp = SLIST_FIRST(&test->streams);
+    /* 
+     * If there is at least one stream, then figure out the length of time
+     * we were running the tests and print out some statistics about
+     * the streams.  It's possible to not have any streams at all
+     * if the client got interrupted before it got to do anything.
+     */
+    if (sp) {
     end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
     SLIST_FOREACH(sp, &test->streams, streams) {
 	if (test->json_output) {
@@ -2263,10 +2278,17 @@ iperf_print_results(struct iperf_test *test)
 		iprintf(test, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf, report_receiver);
 	}
     }
+    }
 
     if (test->num_streams > 1 || test->json_output) {
         unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
-	bandwidth = (double) total_sent / (double) end_time;
+	/* If no tests were run, arbitrariliy set bandwidth to 0. */
+	if (end_time > 0.0) {
+	    bandwidth = (double) total_sent / (double) end_time;
+	}
+	else {
+	    bandwidth = 0.0;
+	}
         unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
         if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 	    if (test->sender_has_retransmits) {
@@ -2283,7 +2305,13 @@ iperf_print_results(struct iperf_test *test)
 		    iprintf(test, report_sum_bw_format, start_time, end_time, ubuf, nbuf, report_sender);
 	    }
             unit_snprintf(ubuf, UNIT_LEN, (double) total_received, 'A');
-	    bandwidth = (double) total_received / (double) end_time;
+	    /* If no tests were run, set received bandwidth to 0 */
+	    if (end_time > 0.0) {
+		bandwidth = (double) total_received / (double) end_time;
+	    }
+	    else {
+		bandwidth = 0.0;
+	    }
             unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
 	    if (test->json_output)
 		cJSON_AddItemToObject(test->json_end, "sum_received", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f", (double) start_time, (double) end_time, (double) end_time, (int64_t) total_received, bandwidth * 8));
@@ -2292,7 +2320,13 @@ iperf_print_results(struct iperf_test *test)
         } else {
 	    /* Summary sum, UDP. */
             avg_jitter /= test->num_streams;
-	    lost_percent = 100.0 * lost_packets / total_packets;
+	    /* If no packets were sent, arbitrarily set loss percentage to 100. */
+	    if (total_packets > 0) {
+		lost_percent = 100.0 * lost_packets / total_packets;
+	    }
+	    else {
+		lost_percent = 100.0;
+	    }
 	    if (test->json_output)
 		cJSON_AddItemToObject(test->json_end, "sum", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f", (double) start_time, (double) end_time, (double) end_time, (int64_t) total_sent, bandwidth * 8, (double) avg_jitter * 1000.0, (int64_t) lost_packets, (int64_t) total_packets, (double) lost_percent));
 	    else

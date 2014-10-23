@@ -68,14 +68,32 @@ echo "nanosleep() required for timing operations."
 exit 1
 ])
 
+# On illumos we need -lsocket
+AC_SEARCH_LIBS(socket, [socket], [], [
+echo "socket()"
+exit 1
+])
+
+# On illumos inet_ntop in in -lnsl
+AC_SEARCH_LIBS(inet_ntop, [nsl], [], [
+echo "inet_ntop()"
+exit 1
+])
+
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 
 # Check for SCTP support
+AC_CHECK_HEADERS([sys/socket.h])
 AC_CHECK_HEADERS([netinet/sctp.h],
-		 AC_DEFINE([HAVE_SCTP], [1], [Have SCTP support.]))
+		 AC_DEFINE([HAVE_SCTP], [1], [Have SCTP support.]),
+		 [],
+		 [#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+])
 
-# Check for TCP_CONGESTION sockopt (believed to be Linux only)
+# Check for TCP_CONGESTION sockopt (believed to be Linux and FreeBSD only)
 AC_CACHE_CHECK([TCP_CONGESTION socket option],
 [iperf3_cv_header_tcp_congestion],
 AC_EGREP_CPP(yes,
@@ -119,4 +137,4 @@ AC_CHECK_FUNCS([cpuset_setaffinity sched_setaffinity],
 # it needs and what arguments it expects.
 AC_CHECK_FUNCS([sendfile])
 
-AC_OUTPUT([Makefile src/Makefile src/version.h examples/Makefile])
+AC_OUTPUT([Makefile src/Makefile src/version.h examples/Makefile iperf3.spec])

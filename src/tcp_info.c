@@ -100,8 +100,9 @@ save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp)
 	iperf_err(sp->test, "getsockopt - %s", strerror(errno));
 
     if (sp->test->debug) {
-	printf("tcpi_snd_cwnd %u tcpi_snd_mss %u\n",
-	       irp->tcpInfo.tcpi_snd_cwnd, irp->tcpInfo.tcpi_snd_mss);
+	printf("tcpi_snd_cwnd %u tcpi_snd_mss %u tcpi_rtt %u\n",
+	       irp->tcpInfo.tcpi_snd_cwnd, irp->tcpInfo.tcpi_snd_mss,
+	       irp->tcpInfo.tcpi_rtt);
     }
 
 #endif
@@ -134,6 +135,24 @@ get_snd_cwnd(struct iperf_interval_results *irp)
 #else
 #if defined(__FreeBSD__) && __FreeBSD_version >= 600000
     return irp->tcpInfo.tcpi_snd_cwnd * irp->tcpInfo.tcpi_snd_mss;
+#else
+    return -1;
+#endif
+#endif
+}
+
+/*************************************************************/
+/*
+ * Return rtt in usec.
+ */
+long
+get_rtt(struct iperf_interval_results *irp)
+{
+#if defined(linux) && defined(TCP_MD5SIG)
+    return irp->tcpInfo.tcpi_rtt;
+#else
+#if defined(__FreeBSD__) && __FreeBSD_version >= 600000
+    return irp->tcpInfo.tcpi_rtt;
 #else
     return -1;
 #endif

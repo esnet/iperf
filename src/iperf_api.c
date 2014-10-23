@@ -2023,10 +2023,17 @@ iperf_stats_callback(struct iperf_test *test)
 		    if (temp.snd_cwnd > rp->stream_max_snd_cwnd) {
 			rp->stream_max_snd_cwnd = temp.snd_cwnd;
 		    }
+		    
 		    temp.rtt = get_rtt(&temp);
 		    if (temp.rtt > rp->stream_max_rtt) {
 			rp->stream_max_rtt = temp.rtt;
 		    }
+		    if (rp->stream_min_rtt == 0 ||
+			temp.rtt < rp->stream_min_rtt) {
+			rp->stream_min_rtt = temp.rtt;
+		    }
+		    rp->stream_sum_rtt += temp.rtt;
+		    rp->stream_count_rtt++;
 		}
 	    }
 	} else {
@@ -2233,7 +2240,7 @@ iperf_print_results(struct iperf_test *test)
 	    if (test->sender_has_retransmits) {
 		/* Summary, TCP with retransmits. */
 		if (test->json_output)
-		    cJSON_AddItemToObject(json_summary_stream, "sender", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d  max_snd_cwnd:  %d  max_rtt:  %d", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8, (int64_t) sp->result->stream_retrans, (int64_t) sp->result->stream_max_snd_cwnd, (int64_t) sp->result->stream_max_rtt));
+		    cJSON_AddItemToObject(json_summary_stream, "sender", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d  max_snd_cwnd:  %d  max_rtt:  %d  min_rtt:  %d  mean_rtt:  %d", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8, (int64_t) sp->result->stream_retrans, (int64_t) sp->result->stream_max_snd_cwnd, (int64_t) sp->result->stream_max_rtt, (int64_t) sp->result->stream_min_rtt, (int64_t) ((sp->result->stream_count_rtt == 0) ? 0 : sp->result->stream_sum_rtt / sp->result->stream_count_rtt)));
 		else
 		    iprintf(test, report_bw_retrans_format, sp->socket, start_time, end_time, ubuf, nbuf, sp->result->stream_retrans, report_sender);
 	    } else {

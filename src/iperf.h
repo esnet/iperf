@@ -91,6 +91,9 @@ struct iperf_stream_result
     int stream_prev_total_sacks;
     int stream_sacks;
     int stream_max_rtt;
+    int stream_min_rtt;
+    int stream_sum_rtt;
+    int stream_count_rtt;
     int stream_max_snd_cwnd;
     struct timeval start_time;
     struct timeval end_time;

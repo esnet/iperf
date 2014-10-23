@@ -9,6 +9,7 @@
 /autom4te.cache
 /config.log
 /config.status
+/iperf3.spec
 docs/_build
 docs/_static
 /libtool

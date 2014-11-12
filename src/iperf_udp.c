@@ -184,9 +184,19 @@ iperf_udp_send(struct iperf_stream *sp)
 
 /**************************************************************************/
 
-/* iperf_udp_accept
+/*
+ * The following functions all have to do with managing UDP data sockets.
+ * UDP of course is connectionless, so there isn't really a concept of
+ * setting up a connection, although connect(2) can (and is) used to
+ * bind the remote end of sockets.  We need to simulate some of the
+ * connection management that is built-in to TCP so that each side of the
+ * connection knows about each other before the real data transfers begin.
+ */
+
+/*
+ * iperf_udp_accept
  *
- * accepts a new UDP connection
+ * Accepts a new UDP "connection"
  */
 int
 iperf_udp_accept(struct iperf_test *test)
@@ -196,8 +206,17 @@ iperf_udp_accept(struct iperf_test *test)
     socklen_t len;
     int       sz, s;
 
+    /*
+     * Get the current outstanding socket.  This socket will be used to handle
+     * data transfers and a new "listening" socket will be created.
+     */
     s = test->prot_listener;
 
+    /*
+     * Grab the UDP packet sent by the client.  From that we can extract the
+     * client's address, and then use that information to bind the remote side
+     * of the socket to the client.
+     */
     len = sizeof(sa_peer);
     if ((sz = recvfrom(test->prot_listener, &buf, sizeof(buf), 0, (struct sockaddr *) &sa_peer, &len)) < 0) {
         i_errno = IESTREAMACCEPT;
@@ -209,6 +228,9 @@ iperf_udp_accept(struct iperf_test *test)
         return -1;
     }
 
+    /*
+     * Create a new "listening" socket to replace the one we were using before.
+     */
     test->prot_listener = netannounce(test->settings->domain, Pudp, test->bind_address, test->server_port);
     if (test->prot_listener < 0) {
         i_errno = IESTREAMLISTEN;
@@ -219,7 +241,7 @@ iperf_udp_accept(struct iperf_test *test)
     test->max_fd = (test->max_fd < test->prot_listener) ? test->prot_listener : test->max_fd;
 
     /* Let the client know we're ready "accept" another UDP "stream" */
-    buf = 987654321;
+    buf = 987654321;		/* any content will work here */
     if (write(s, &buf, sizeof(buf)) < 0) {
         i_errno = IESTREAMWRITE;
         return -1;
@@ -229,9 +251,12 @@ iperf_udp_accept(struct iperf_test *test)
 }
 
 
-/* iperf_udp_listen
+/*
+ * iperf_udp_listen
  *
- * start up a listener for UDP stream connections
+ * Start up a listener for UDP stream connections.  Unlike for TCP,
+ * there is no listen(2) for UDP.  This socket will however accept
+ * a UDP datagram from a client (indicating the client's presence).
  */
 int
 iperf_udp_listen(struct iperf_test *test)
@@ -243,34 +268,43 @@ iperf_udp_listen(struct iperf_test *test)
         return -1;
     }
 
+    /*
+     * The caller will put this value into test->prot_listener.
+     */
     return s;
 }
 
 
-/* iperf_udp_connect
+/*
+ * iperf_udp_connect
  *
- * connect to a TCP stream listener
+ * "Connect" to a UDP stream listener.
  */
 int
 iperf_udp_connect(struct iperf_test *test)
 {
     int s, buf, sz;
 
+    /* Create and bind our local socket. */
     if ((s = netdial(test->settings->domain, Pudp, test->bind_address, test->bind_port, test->server_hostname, test->server_port)) < 0) {
         i_errno = IESTREAMCONNECT;
         return -1;
     }
 
-    /* Write to the UDP stream to let the server know we're here. */
-    buf = 123456789;
+    /*
+     * Write a datagram to the UDP stream to let the server know we're here.
+     * The server learns our address by obtaining its peer's address.
+     */
+    buf = 123456789;		/* this can be pretty much anything */
     if (write(s, &buf, sizeof(buf)) < 0) {
         // XXX: Should this be changed to IESTREAMCONNECT? 
         i_errno = IESTREAMWRITE;
         return -1;
     }
 
-    /* Wait until the server confirms the client UDP write */
-    // XXX: Should this read be TCP instead?
+    /*
+     * Wait until the server replies back to us.
+     */
     if ((sz = recv(s, &buf, sizeof(buf), 0)) < 0) {
         i_errno = IESTREAMREAD;
         return -1;

@@ -189,6 +189,22 @@ iperf_udp_accept(struct iperf_test *test)
     }
 
     /*
+     * Set socket buffer size if requested.  Do this for both sending and
+     * receiving so that we can cover both normal and --reverse operation.
+     */
+    int opt;
+    if ((opt = test->settings->socket_bufsize)) {
+        if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) < 0) {
+            i_errno = IESETBUF;
+            return -1;
+        }
+        if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) < 0) {
+            i_errno = IESETBUF;
+            return -1;
+        }
+    }
+
+    /*
      * Create a new "listening" socket to replace the one we were using before.
      */
     test->prot_listener = netannounce(test->settings->domain, Pudp, test->bind_address, test->server_port);
@@ -249,6 +265,22 @@ iperf_udp_connect(struct iperf_test *test)
     if ((s = netdial(test->settings->domain, Pudp, test->bind_address, test->server_hostname, test->server_port)) < 0) {
         i_errno = IESTREAMCONNECT;
         return -1;
+    }
+
+    /*
+     * Set socket buffer size if requested.  Do this for both sending and
+     * receiving so that we can cover both normal and --reverse operation.
+     */
+    int opt;
+    if ((opt = test->settings->socket_bufsize)) {
+        if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) < 0) {
+            i_errno = IESETBUF;
+            return -1;
+        }
+        if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) < 0) {
+            i_errno = IESETBUF;
+            return -1;
+        }
     }
 
     /*

@@ -124,7 +124,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
 			   "                            (default %d KB for TCP, %d KB for UDP)\n"
                            "  -P, --parallel  #         number of parallel client streams to run\n"
                            "  -R, --reverse             run in reverse mode (server sends, client receives)\n"
-                           "  -w, --window    #[KMG]    TCP window size (socket buffer size)\n"
+                           "  -w, --window    #[KMG]    set window size / socket buffer size\n"
 #if defined(linux)
                            "  -C, --linux-congestion <algo>  set TCP congestion control algorithm (Linux only)\n"
 #endif

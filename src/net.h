@@ -41,9 +41,7 @@ int getsockdomain(int sock);
 #define NET_SOFTERROR -1
 #define NET_HARDERROR -2
 
-unsigned long long htonll(unsigned long long);
-unsigned long long ntohll(unsigned long long);
-
+#ifndef htonll
 /* XXX: Need a better check for byte order */
 #if BYTE_ORDER == BIG_ENDIAN
 #define HTONLL(n) (n)
@@ -71,4 +69,5 @@ unsigned long long ntohll(unsigned long long);
 #define htonll(n) HTONLL(n)
 #define ntohll(n) NTOHLL(n)
 
+#endif
 #endif

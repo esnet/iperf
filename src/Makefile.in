@@ -131,8 +131,8 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libiperf_la_LIBADD =
 am_libiperf_la_OBJECTS = cjson.lo iperf_api.lo iperf_error.lo \
-	iperf_client_api.lo iperf_server_api.lo iperf_tcp.lo \
-	iperf_udp.lo iperf_util.lo locale.lo net.lo tcp_info.lo \
+	iperf_client_api.lo iperf_locale.lo iperf_server_api.lo \
+	iperf_tcp.lo iperf_udp.lo iperf_util.lo net.lo tcp_info.lo \
 	tcp_window_size.lo timer.lo units.lo
 libiperf_la_OBJECTS = $(am_libiperf_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -150,12 +150,12 @@ am__objects_1 = iperf3_profile-cjson.$(OBJEXT) \
 	iperf3_profile-iperf_api.$(OBJEXT) \
 	iperf3_profile-iperf_error.$(OBJEXT) \
 	iperf3_profile-iperf_client_api.$(OBJEXT) \
+	iperf3_profile-iperf_locale.$(OBJEXT) \
 	iperf3_profile-iperf_server_api.$(OBJEXT) \
 	iperf3_profile-iperf_tcp.$(OBJEXT) \
 	iperf3_profile-iperf_udp.$(OBJEXT) \
 	iperf3_profile-iperf_util.$(OBJEXT) \
-	iperf3_profile-locale.$(OBJEXT) iperf3_profile-net.$(OBJEXT) \
-	iperf3_profile-tcp_info.$(OBJEXT) \
+	iperf3_profile-net.$(OBJEXT) iperf3_profile-tcp_info.$(OBJEXT) \
 	iperf3_profile-tcp_window_size.$(OBJEXT) \
 	iperf3_profile-timer.$(OBJEXT) iperf3_profile-units.$(OBJEXT)
 am_iperf3_profile_OBJECTS = iperf3_profile-main.$(OBJEXT) \
@@ -560,6 +560,8 @@ libiperf_la_SOURCES = \
                         iperf_api.h \
                         iperf_error.c \
 			iperf_client_api.c \
+                        iperf_locale.c \
+                        iperf_locale.h \
                         iperf_server_api.c \
                         iperf_tcp.c \
                         iperf_tcp.h \
@@ -567,8 +569,6 @@ libiperf_la_SOURCES = \
                         iperf_udp.h \
                         iperf_util.c \
                         iperf_util.h \
-                        locale.c \
-                        locale.h \
                         net.c \
                         net.h \
                         queue.h \
@@ -792,11 +792,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_api.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_client_api.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_error.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_locale.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_server_api.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_tcp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_udp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_util.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-locale.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-net.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-tcp_info.Po@am__quote@
@@ -806,11 +806,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_api.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_client_api.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_error.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_locale.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_server_api.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_tcp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_udp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_util.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/locale.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/net.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_timer-t_timer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_units-t_units.Po@am__quote@
@@ -925,6 +925,20 @@ iperf3_profile-iperf_client_api.obj: iperf_client_api.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-iperf_client_api.obj `if test -f 'iperf_client_api.c'; then $(CYGPATH_W) 'iperf_client_api.c'; else $(CYGPATH_W) '$(srcdir)/iperf_client_api.c'; fi`
 
+iperf3_profile-iperf_locale.o: iperf_locale.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-iperf_locale.o -MD -MP -MF $(DEPDIR)/iperf3_profile-iperf_locale.Tpo -c -o iperf3_profile-iperf_locale.o `test -f 'iperf_locale.c' || echo '$(srcdir)/'`iperf_locale.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/iperf3_profile-iperf_locale.Tpo $(DEPDIR)/iperf3_profile-iperf_locale.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_locale.c' object='iperf3_profile-iperf_locale.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-iperf_locale.o `test -f 'iperf_locale.c' || echo '$(srcdir)/'`iperf_locale.c
+
+iperf3_profile-iperf_locale.obj: iperf_locale.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-iperf_locale.obj -MD -MP -MF $(DEPDIR)/iperf3_profile-iperf_locale.Tpo -c -o iperf3_profile-iperf_locale.obj `if test -f 'iperf_locale.c'; then $(CYGPATH_W) 'iperf_locale.c'; else $(CYGPATH_W) '$(srcdir)/iperf_locale.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/iperf3_profile-iperf_locale.Tpo $(DEPDIR)/iperf3_profile-iperf_locale.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_locale.c' object='iperf3_profile-iperf_locale.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-iperf_locale.obj `if test -f 'iperf_locale.c'; then $(CYGPATH_W) 'iperf_locale.c'; else $(CYGPATH_W) '$(srcdir)/iperf_locale.c'; fi`
+
 iperf3_profile-iperf_server_api.o: iperf_server_api.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-iperf_server_api.o -MD -MP -MF $(DEPDIR)/iperf3_profile-iperf_server_api.Tpo -c -o iperf3_profile-iperf_server_api.o `test -f 'iperf_server_api.c' || echo '$(srcdir)/'`iperf_server_api.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/iperf3_profile-iperf_server_api.Tpo $(DEPDIR)/iperf3_profile-iperf_server_api.Po
@@ -980,20 +994,6 @@ iperf3_profile-iperf_util.obj: iperf_util.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_util.c' object='iperf3_profile-iperf_util.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-iperf_util.obj `if test -f 'iperf_util.c'; then $(CYGPATH_W) 'iperf_util.c'; else $(CYGPATH_W) '$(srcdir)/iperf_util.c'; fi`
-
-iperf3_profile-locale.o: locale.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-locale.o -MD -MP -MF $(DEPDIR)/iperf3_profile-locale.Tpo -c -o iperf3_profile-locale.o `test -f 'locale.c' || echo '$(srcdir)/'`locale.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/iperf3_profile-locale.Tpo $(DEPDIR)/iperf3_profile-locale.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='locale.c' object='iperf3_profile-locale.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-locale.o `test -f 'locale.c' || echo '$(srcdir)/'`locale.c
-
-iperf3_profile-locale.obj: locale.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-locale.obj -MD -MP -MF $(DEPDIR)/iperf3_profile-locale.Tpo -c -o iperf3_profile-locale.obj `if test -f 'locale.c'; then $(CYGPATH_W) 'locale.c'; else $(CYGPATH_W) '$(srcdir)/locale.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/iperf3_profile-locale.Tpo $(DEPDIR)/iperf3_profile-locale.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='locale.c' object='iperf3_profile-locale.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-locale.obj `if test -f 'locale.c'; then $(CYGPATH_W) 'locale.c'; else $(CYGPATH_W) '$(srcdir)/locale.c'; fi`
 
 iperf3_profile-net.o: net.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-net.o -MD -MP -MF $(DEPDIR)/iperf3_profile-net.Tpo -c -o iperf3_profile-net.o `test -f 'net.c' || echo '$(srcdir)/'`net.c

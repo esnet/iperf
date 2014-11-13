@@ -1,3 +1,17 @@
+== iperf 3.0.10 2014-??-?? ==
+
+* User-visible changes
+
+  * Fixed the build on MacOS X Yosemite (issue #213).
+
+  * UDP tests now honor the -w option for setting the socket buffer
+    sizes (issue #219).
+
+* Developer-visible changes
+
+  * Added an RPM spec file plus functionality to fill in the version
+    number.
+
 == iperf 3.0.9 2014-10-14 ==
 
 * User-visible changes

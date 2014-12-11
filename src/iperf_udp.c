@@ -300,7 +300,9 @@ int
 iperf_udp_connect(struct iperf_test *test)
 {
     int s, buf, sz;
+#ifdef SO_RCVTIMEO
     struct timeval tv;
+#endif
 
     /* Create and bind our local socket. */
     if ((s = netdial(test->settings->domain, Pudp, test->bind_address, test->bind_port, test->server_hostname, test->server_port)) < 0) {
@@ -324,10 +326,12 @@ iperf_udp_connect(struct iperf_test *test)
         }
     }
 
+#ifdef SO_RCVTIMEO
     /* 30 sec timeout for a case when there is a network problem. */
     tv.tv_sec = 30;
     tv.tv_usec = 0;
     setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *)&tv, sizeof(struct timeval));
+#endif
 
     /*
      * Write a datagram to the UDP stream to let the server know we're here.

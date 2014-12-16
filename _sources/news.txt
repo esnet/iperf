@@ -1,6 +1,15 @@
 iperf3 Project News
 ===================
 
+2014-12-16:  iperf-3.0.10 released
+----------------------------------
+
+| URL:  http://downloads.es.net/pub/iperf/iperf-3.0.10.tar.gz
+| SHA256:  ``a113442967cf0981b0b2d538be7c88903b2fb0f87b0d281384e41b462e33059d  iperf-3.0.10.tar.gz``
+
+This maintenace release fixes building on MacOS X Yosemite, as well
+as making the -w option work correctly with UDP tests.
+
 2014-10-14:  iperf-3.0.9 released
 ---------------------------------
 

@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -228,6 +228,12 @@ iperf_get_test_bind_address(struct iperf_test *ipt)
     return ipt->bind_address;
 }
 
+int
+iperf_get_test_one_off(struct iperf_test *ipt)
+{
+    return ipt->one_off;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -379,6 +385,12 @@ void
 iperf_set_test_bind_address(struct iperf_test *ipt, char *bind_address)
 {
     ipt->bind_address = strdup(bind_address);
+}
+
+void
+iperf_set_test_one_off(struct iperf_test *ipt, int one_off)
+{
+    ipt->one_off = one_off;
 }
 
 /********************** Get/set test protocol structure ***********************/
@@ -550,6 +562,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"format", required_argument, NULL, 'f'},
         {"interval", required_argument, NULL, 'i'},
         {"daemon", no_argument, NULL, 'D'},
+        {"one-off", no_argument, NULL, '1'},
         {"verbose", no_argument, NULL, 'V'},
         {"json", no_argument, NULL, 'J'},
         {"version", no_argument, NULL, 'v'},
@@ -592,7 +605,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = 0;
-    while ((flag = getopt_long(argc, argv, "p:f:i:DVJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dh", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dh", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
                 test->server_port = atoi(optarg);
@@ -611,6 +624,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'D':
 		test->daemon = 1;
+		server_flag = 1;
+	        break;
+            case '1':
+		test->one_off = 1;
 		server_flag = 1;
 	        break;
             case 'V':

@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -86,6 +86,7 @@ int	iperf_get_test_json_output( struct iperf_test* ipt );
 int	iperf_get_test_zerocopy( struct iperf_test* ipt );
 int	iperf_get_test_get_server_output( struct iperf_test* ipt );
 char*	iperf_get_test_bind_address ( struct iperf_test* ipt );
+int	iperf_get_test_one_off( struct iperf_test* ipt );
 
 /* Setter routines for some fields inside iperf_test. */
 void	iperf_set_verbose( struct iperf_test* ipt, int verbose );
@@ -109,6 +110,7 @@ int	iperf_has_zerocopy( void );
 void	iperf_set_test_zerocopy( struct iperf_test* ipt, int zerocopy );
 void	iperf_set_test_get_server_output( struct iperf_test* ipt, int get_server_output );
 void	iperf_set_test_bind_address( struct iperf_test* ipt, char *bind_address );
+void	iperf_set_test_one_off( struct iperf_test* ipt, int one_off );
 
 /**
  * exchange_parameters - handles the param_Exchange part for client

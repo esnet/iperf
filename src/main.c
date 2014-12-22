@@ -139,6 +139,8 @@ run(struct iperf_test *test)
                 } else
 		    consecutive_errors = 0;
                 iperf_reset_test(test);
+                if (iperf_get_test_one_off(test))
+                    break;
             }
             break;
         case 'c':

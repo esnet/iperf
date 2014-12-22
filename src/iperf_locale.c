@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------- 
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -111,6 +111,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "Server specific:\n"
                            "  -s, --server              run in server mode\n"
                            "  -D, --daemon              run the server as a daemon\n"
+                           "  -1, --one-off             handle one client connection then exit\n"
                            "Client specific:\n"
                            "  -c, --client    <host>    run in client mode, connecting to <host>\n"
                            "  -u, --udp                 use UDP rather than TCP\n"

@@ -217,6 +217,7 @@ struct iperf_test
 
     /* boolean variables for Options */
     int       daemon;                           /* -D option */
+    int       one_off;                          /* -1 option */
     int       no_delay;                         /* -N option */
     int       reverse;                          /* -R option */
     int	      verbose;                          /* -V option - verbose mode */

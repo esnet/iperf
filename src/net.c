@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -298,23 +298,19 @@ Nsendfile(int fromfd, int tofd, const char *buf, size_t count)
 	offset = count - nleft;
 #ifdef linux
 	r = sendfile(tofd, fromfd, &offset, nleft);
-#else
-#ifdef __FreeBSD__
+	if (r > 0)
+	    nleft -= r;
+#elif defined(__FreeBSD__)
 	r = sendfile(fromfd, tofd, offset, nleft, NULL, &sent, 0);
-	if (r == 0)
-	    r = sent;
-#else
-#if defined(__APPLE__) && defined(__MACH__) && defined(MAC_OS_X_VERSION_10_6)	/* OS X */
+	nleft -= sent;
+#elif defined(__APPLE__) && defined(__MACH__) && defined(MAC_OS_X_VERSION_10_6)	/* OS X */
 	sent = nleft;
 	r = sendfile(fromfd, tofd, offset, &sent, NULL, 0);
-	if (r == 0)
-	    r = sent;
+	nleft -= sent;
 #else
 	/* Shouldn't happen. */
 	r = -1;
 	errno = ENOSYS;
-#endif
-#endif
 #endif
 	if (r < 0) {
 	    switch (errno) {
@@ -329,9 +325,11 @@ Nsendfile(int fromfd, int tofd, const char *buf, size_t count)
 		default:
 		return NET_HARDERROR;
 	    }
-	} else if (r == 0)
+	}
+#ifdef linux
+	else if (r == 0)
 	    return NET_SOFTERROR;
-	nleft -= r;
+#endif
     }
     return count;
 }

@@ -909,7 +909,7 @@ iperf_check_throttle(struct iperf_stream *sp, struct timeval *nowP)
 int
 iperf_send(struct iperf_test *test, fd_set *write_setP)
 {
-    register int multisend, r;
+    register int multisend, r, streams_active;
     register struct iperf_stream *sp;
     struct timeval now;
 
@@ -924,6 +924,7 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
     for (; multisend > 0; --multisend) {
 	if (test->settings->rate != 0 && test->settings->burst == 0)
 	    gettimeofday(&now, NULL);
+	streams_active = 0;
 	SLIST_FOREACH(sp, &test->streams, streams) {
 	    if (sp->green_light &&
 	        (write_setP == NULL || FD_ISSET(sp->socket, write_setP))) {
@@ -933,6 +934,7 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 		    i_errno = IESTREAMWRITE;
 		    return r;
 		}
+		streams_active = 1;
 		test->bytes_sent += r;
 		++test->blocks_sent;
 		if (test->settings->rate != 0 && test->settings->burst == 0)
@@ -943,6 +945,8 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 		    break;
 	    }
 	}
+	if (!streams_active)
+	    break;
     }
     if (test->settings->burst != 0) {
 	gettimeofday(&now, NULL);

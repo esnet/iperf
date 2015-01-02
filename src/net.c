@@ -316,6 +316,8 @@ Nsendfile(int fromfd, int tofd, const char *buf, size_t count)
 	    switch (errno) {
 		case EINTR:
 		case EAGAIN:
+		if (count == nleft)
+		    return NET_SOFTERROR;
 		return count - nleft;
 
 		case ENOBUFS:

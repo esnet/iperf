@@ -10,7 +10,15 @@
 
 #endif
 
-#if defined(__linux__) || defined(__CYGWIN__)
+// GLIBC / Linux with endian(3) support, which was added in glibc 2.9.
+// Intended to support CentOS 6 and newer.
+#if defined(__linux__) && \
+    ((__GLIBC__ > 3) || \
+     (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 9))
+
+#	include <endian.h>
+
+#elif defined(__CYGWIN__)
 
 #	include <endian.h>
 
@@ -117,8 +125,38 @@
 
 #else
 
+// Unsupported platforms.
+// Intended to support CentOS 5 but hopefully not too far from
+// the truth because we use the homebrew htonll, et al. implementations
+// that were originally the sole implementation of this functionality
+// in iperf 3.0.
 #	warning platform not supported
-#	include <sys/endian.h>
+#	include <endian.h>
+#if BYTE_ORDER == BIG_ENDIAN
+#define HTONLL(n) (n)
+#define NTOHLL(n) (n)
+#else
+#define HTONLL(n) ((((unsigned long long)(n) & 0xFF) << 56) | \
+                   (((unsigned long long)(n) & 0xFF00) << 40) | \
+                   (((unsigned long long)(n) & 0xFF0000) << 24) | \
+                   (((unsigned long long)(n) & 0xFF000000) << 8) | \
+                   (((unsigned long long)(n) & 0xFF00000000) >> 8) | \
+                   (((unsigned long long)(n) & 0xFF0000000000) >> 24) | \
+                   (((unsigned long long)(n) & 0xFF000000000000) >> 40) | \
+                   (((unsigned long long)(n) & 0xFF00000000000000) >> 56))
+
+#define NTOHLL(n) ((((unsigned long long)(n) & 0xFF) << 56) | \
+                   (((unsigned long long)(n) & 0xFF00) << 40) | \
+                   (((unsigned long long)(n) & 0xFF0000) << 24) | \
+                   (((unsigned long long)(n) & 0xFF000000) << 8) | \
+                   (((unsigned long long)(n) & 0xFF00000000) >> 8) | \
+                   (((unsigned long long)(n) & 0xFF0000000000) >> 24) | \
+                   (((unsigned long long)(n) & 0xFF000000000000) >> 40) | \
+                   (((unsigned long long)(n) & 0xFF00000000000000) >> 56))
+#endif
+
+#define htobe64(n) HTONLL(n)
+#define be64toh(n) NTOHLL(n)
 
 #endif
 

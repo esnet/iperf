@@ -48,6 +48,7 @@ struct iperf_stream;
 #define OPT_GET_SERVER_OUTPUT 3
 #define OPT_UDP_COUNTERS_64BIT 4
 #define OPT_CLIENT_PORT 5
+#define OPT_NUMSTREAMS 6
 
 /* states */
 #define TEST_START 1
@@ -308,8 +309,8 @@ enum {
     IECLIENTTERM = 119,     // The client has terminated
     IESERVERTERM = 120,     // The server has terminated
     IEACCESSDENIED = 121,   // The server is busy running a test. Try again later.
-    IESETNODELAY = 122,     // Unable to set TCP NODELAY (check perror)
-    IESETMSS = 123,         // Unable to set TCP MSS (check perror)
+    IESETNODELAY = 122,     // Unable to set TCP/SCTP NODELAY (check perror)
+    IESETMSS = 123,         // Unable to set TCP/SCTP MSS (check perror)
     IESETBUF = 124,         // Unable to set socket buffer size (check perror)
     IESETTOS = 125,         // Unable to set IP TOS (check perror)
     IESETCOS = 126,         // Unable to set IPv6 traffic class (check perror)
@@ -324,6 +325,8 @@ enum {
     IEPIDFILE = 135,	    // Unable to write PID file
     IEV6ONLY = 136,  	    // Unable to set/unset IPV6_V6ONLY (check perror)
     IESETSCTPDISABLEFRAG = 137, // Unable to set SCTP Fragmentation (check perror)
+    IESETSCTPNSTREAM= 138,  //  Unable to set SCTP number of streams (check perror)
+    IESETSCTPBINDX= 139,    // Unable to process sctp_bindx() parameters
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

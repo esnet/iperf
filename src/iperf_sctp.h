@@ -60,4 +60,9 @@ int iperf_sctp_connect(struct iperf_test *);
 
 int iperf_sctp_init(struct iperf_test *test);
 
+#define IPERF_SCTP_CLIENT 0
+#define IPERF_SCTP_SERVER 1
+
+int iperf_sctp_bindx(struct iperf_test *test, int s, int is_server);
+
 #endif

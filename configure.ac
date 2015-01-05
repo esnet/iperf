@@ -1,4 +1,4 @@
-# iperf, Copyright (c) 2014, The Regents of the University of
+# iperf, Copyright (c) 2014, 2015, The Regents of the University of
 # California, through Lawrence Berkeley National Laboratory (subject
 # to receipt of any required approvals from the U.S. Dept. of
 # Energy).  All rights reserved.
@@ -86,7 +86,8 @@ AC_C_CONST
 # Check for SCTP support
 AC_CHECK_HEADERS([sys/socket.h])
 AC_CHECK_HEADERS([netinet/sctp.h],
-		 AC_DEFINE([HAVE_SCTP], [1], [Have SCTP support.]),
+		 AC_DEFINE([HAVE_SCTP], [1], [Have SCTP support.])
+		 AC_SEARCH_LIBS(sctp_bindx, [sctp]),
 		 [],
 		 [#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>

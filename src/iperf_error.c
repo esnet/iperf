@@ -241,11 +241,11 @@ iperf_strerror(int i_errno)
             snprintf(errstr, len, "the server is busy running a test. try again later");
             break;
         case IESETNODELAY:
-            snprintf(errstr, len, "unable to set TCP NODELAY");
+            snprintf(errstr, len, "unable to set TCP/SCTP NODELAY");
             perr = 1;
             break;
         case IESETMSS:
-            snprintf(errstr, len, "unable to set TCP MSS");
+            snprintf(errstr, len, "unable to set TCP/SCTP MSS");
             perr = 1;
             break;
         case IESETBUF:
@@ -345,6 +345,10 @@ iperf_strerror(int i_errno)
 	    break;
         case IESETSCTPDISABLEFRAG:
             snprintf(errstr, len, "unable to set SCTP_DISABLE_FRAGMENTS");
+            perr = 1;
+            break;
+        case IESETSCTPNSTREAM:
+            snprintf(errstr, len, "unable to set SCTP_INIT num of SCTP streams\n");
             perr = 1;
             break;
     }

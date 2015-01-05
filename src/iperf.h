@@ -116,6 +116,7 @@ struct iperf_settings
     iperf_size_t bytes;             /* number of bytes to send */
     iperf_size_t blocks;            /* number of blocks (packets) to send */
     char      unit_format;          /* -f */
+    int       num_ostreams;         /* SCTP initmsg settings */
 };
 
 struct iperf_test;
@@ -186,6 +187,12 @@ struct iperf_textline {
     TAILQ_ENTRY(iperf_textline) textlineentries;
 };
 
+struct xbind_entry {
+    char *name;
+    struct addrinfo *ai;
+    TAILQ_ENTRY(xbind_entry) link;
+};
+
 struct iperf_test
 {
     char      role;                             /* 'c' lient or 's' erver */
@@ -194,7 +201,8 @@ struct iperf_test
     struct protocol *protocol;
     signed char state;
     char     *server_hostname;                  /* -c option */
-    char     *bind_address;                     /* -B option */
+    char     *bind_address;                     /* first -B option */
+    TAILQ_HEAD(xbind_addrhead, xbind_entry) xbind_addrs; /* all -X opts */
     int       bind_port;                        /* --cport option */
     int       server_port;
     int       omit;                             /* duration of omit period (-O flag) */

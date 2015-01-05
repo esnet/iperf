@@ -130,10 +130,10 @@ run in reverse mode (server sends, client receives)
 window size / socket buffer size (this gets sent to the server and used on that side too)
 .TP
 .BR -M ", " --set-mss " \fIn\fR"
-set TCP maximum segment size (MTU - 40 bytes)
+set TCP/SCTP maximum segment size (MTU - 40 bytes)
 .TP
 .BR -N ", " --no-delay " "
-set TCP no delay, disabling Nagle's Algorithm
+set TCP/SCTP no delay, disabling Nagle's Algorithm
 .TP
 .BR -4 ", " --version4 " "
 only use IPv4
@@ -146,6 +146,24 @@ set the IP 'type of service'
 .TP
 .BR -L ", " --flowlabel " \fIn\fR"
 set the IPv6 flow label (currently only supported on Linux)
+.TP
+.BR -X ", " --xbind " \fIname\fR"
+Bind SCTP associations to a specific subset of links using sctp_bindx(3).
+The \fB--B\fR flag will be ignored if this flag is specified.
+Normally SCTP will include the protocol addresses of all active links
+on the local host when setting up an association. Specifying at least
+one \fB--X\fR name will disable this behaviour.
+This flag must be specified for each link to be included in the
+association, and is supported for both iperf servers and clients
+(the latter are supported by passing the first \fB--X\fR argument to bind(2)).
+Hostnames are accepted as arguments and are resolved using
+getaddrinfo(3).
+If the \fB--4\fR or \fB--6\fR flags are specified, names
+which do not resolve to addresses within the
+specified protocol family will be ignored.
+.TP
+.BR --nstreams " \fIn\fR"
+Set number of SCTP streams.
 .TP
 .BR -Z ", " --zerocopy " "
 Use a "zero copy" method of sending data, such as sendfile(2),

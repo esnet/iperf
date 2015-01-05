@@ -636,6 +636,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif /* HAVE_TCP_CONGESTION */
 #if defined(HAVE_SCTP)
         {"sctp", no_argument, NULL, OPT_SCTP},
+        {"nstreams", required_argument, NULL, OPT_NUMSTREAMS},
+        {"xbind", required_argument, NULL, 'X'},
 #endif
 	{"pidfile", required_argument, NULL, 'I'},
 	{"logfile", required_argument, NULL, OPT_LOGFILE},
@@ -652,10 +654,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     char* comma;
 #endif /* HAVE_CPU_AFFINITY */
     char* slash;
+    struct xbind_entry *xbe;
 
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = 0;
-    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:h", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
                 test->server_port = atoi(optarg);
@@ -719,6 +722,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif /* HAVE_SCTP */
             break;
 
+            case OPT_NUMSTREAMS:
+#if defined(linux) || defined(__FreeBSD__)
+                test->settings->num_ostreams = unit_atoi(optarg);
+                client_flag = 1;
+#else /* linux */
+                i_errno = IEUNIMP;
+                return -1;
+#endif /* linux */
             case 'b':
 		slash = strchr(optarg, '/');
 		if (slash) {
@@ -817,6 +828,20 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 i_errno = IEUNIMP;
                 return -1;
 #endif /* HAVE_FLOWLABEL */
+                break;
+            case 'X':
+		xbe = (struct xbind_entry *)malloc(sizeof(struct xbind_entry));
+                if (!xbe) {
+		    i_errno = IESETSCTPBINDX;
+                    return -1;
+                }
+	        memset(xbe, 0, sizeof(*xbe));
+                xbe->name = strdup(optarg);
+                if (!xbe->name) {
+		    i_errno = IESETSCTPBINDX;
+                    return -1;
+                }
+		TAILQ_INSERT_TAIL(&test->xbind_addrs, xbe, link);
                 break;
             case 'Z':
                 if (!has_sendfile()) {
@@ -1732,6 +1757,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->diskfile_name = (char*) 0;
     testp->affinity = -1;
     testp->server_affinity = -1;
+    TAILQ_INIT(&testp->xbind_addrs);
 #if defined(HAVE_CPUSET_SETAFFINITY)
     CPU_ZERO(&testp->cpumask);
 #endif /* HAVE_CPUSET_SETAFFINITY */
@@ -1845,6 +1871,18 @@ iperf_free_test(struct iperf_test *test)
 	free(test->server_hostname);
     if (test->bind_address)
 	free(test->bind_address);
+    if (!TAILQ_EMPTY(&test->xbind_addrs)) {
+        struct xbind_entry *xbe;
+
+        while (!TAILQ_EMPTY(&test->xbind_addrs)) {
+            xbe = TAILQ_FIRST(&test->xbind_addrs);
+            TAILQ_REMOVE(&test->xbind_addrs, xbe, link);
+            if (xbe->ai)
+                freeaddrinfo(xbe->ai);
+            free(xbe->name);
+            free(xbe);
+        }
+    }
     free(test->settings);
     if (test->title)
 	free(test->title);
@@ -1883,6 +1921,18 @@ iperf_free_test(struct iperf_test *test)
 	TAILQ_REMOVE(&test->server_output_list, t, textlineentries);
 	free(t->line);
 	free(t);
+    }
+
+    /* sctp_bindx: do not free the arguments, only the resolver results */
+    if (!TAILQ_EMPTY(&test->xbind_addrs)) {
+        struct xbind_entry *xbe;
+
+        TAILQ_FOREACH(xbe, &test->xbind_addrs, link) {
+            if (xbe->ai) {
+                freeaddrinfo(xbe->ai);
+                xbe->ai = NULL;
+            }
+        }
     }
 
     /* XXX: Why are we setting these values to NULL? */

@@ -42,6 +42,9 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Define to 1 if the system has the type `struct sctp_assoc_value'. */
+#undef HAVE_STRUCT_SCTP_ASSOC_VALUE
+
 /* Define to 1 if you have the <sys/socket.h> header file. */
 #undef HAVE_SYS_SOCKET_H
 

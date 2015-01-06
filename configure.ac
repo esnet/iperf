@@ -25,6 +25,7 @@
 
 # Initialize the autoconf system for the specified tool, version and mailing list
 AC_INIT(iperf, 3-CURRENT, https://github.com/esnet/iperf, iperf, http://software.es.net/iperf/)
+AC_LANG(C)
 
 # Specify where the auxiliary files created by configure should go. The config
 # directory is picked so that they don't clutter up more useful directories.
@@ -88,6 +89,7 @@ AC_CHECK_HEADERS([sys/socket.h])
 AC_CHECK_HEADERS([netinet/sctp.h],
 		 AC_DEFINE([HAVE_SCTP], [1], [Have SCTP support.])
 		 AC_SEARCH_LIBS(sctp_bindx, [sctp]),
+		 AC_CHECK_TYPES([struct sctp_assoc_value])
 		 [],
 		 [#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>

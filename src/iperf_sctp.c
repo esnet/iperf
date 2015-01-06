@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -280,8 +280,21 @@ iperf_sctp_connect(struct iperf_test *test)
     }
 
     if ((test->settings->mss >= 512 && test->settings->mss <= 131072)) {
+
+	/*
+	 * Some platforms use a struct sctp_assoc_value as the
+	 * argument to SCTP_MAXSEG.  Other (older API implementations)
+	 * take an int.  FreeBSD 10 and CentOS 6 support SCTP_MAXSEG,
+	 * but OpenSolaris 11 doesn't.
+	 */
+#ifdef HAVE_STRUCT_SCTP_ASSOC_VALUE
         struct sctp_assoc_value av;
 
+	/*
+	 * Some platforms support SCTP_FUTURE_ASSOC, others need to
+	 * (equivalently) do 0 here.  FreeBSD 10 is an example of the
+	 * former, CentOS 6 Linux is an example of the latter.
+	 */
 #ifdef SCTP_FUTURE_ASSOC
         av.assoc_id = SCTP_FUTURE_ASSOC;
 #else
@@ -295,6 +308,21 @@ iperf_sctp_connect(struct iperf_test *test)
             i_errno = IESETMSS;
             return -1;
         }
+#else
+	opt = test->settings->mss;
+
+	/*
+	 * Solaris might not support this option.  If it doesn't work,
+	 * ignore the error (at least for now).
+	 */
+        if (setsockopt(s, IPPROTO_SCTP, SCTP_MAXSEG, &opt, sizeof(opt)) < 0 &&
+	    errno != ENOPROTOOPT) {
+            close(s);
+            freeaddrinfo(server_res);
+            i_errno = IESETMSS;
+            return -1;
+        }
+#endif HAVE_STRUCT_SCTP_ASSOC_VALUE
     }
 
     if (test->settings->num_ostreams > 0) {
@@ -333,8 +361,16 @@ iperf_sctp_connect(struct iperf_test *test)
         return -1;
     }
 
+    /*
+     * We want to allow fragmentation.  But there's at least one
+     * implementation (Solaris) that doesn't support this option,
+     * even though it defines SCTP_DISABLE_FRAGMENTS.  So we have to
+     * try setting the option and ignore the error, if it doesn't
+     * work.
+     */
     opt = 0;
-    if(setsockopt(s, IPPROTO_SCTP, SCTP_DISABLE_FRAGMENTS, &opt, sizeof(opt)) < 0) {
+    if (setsockopt(s, IPPROTO_SCTP, SCTP_DISABLE_FRAGMENTS, &opt, sizeof(opt)) < 0 &&
+	errno != ENOPROTOOPT) {
         close(s);
         freeaddrinfo(server_res);
         i_errno = IESETSCTPDISABLEFRAG;

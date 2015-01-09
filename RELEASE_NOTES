@@ -1,3 +1,16 @@
+== iperf 3.0.11 2015-01-09 ==
+
+* User-visible changes
+
+  * Added -1 / --one-off flag, which causes the iperf3 server to
+    process one client connection and then exit.  Intended primarily
+    for bwctl integration (issue #230).
+
+  * Added various minor bug fixes (issues #231, #232, #233).
+
+  * Added 30-second timeout for UDP tests if unable to establish UDP
+    connectivity between sender and receiver (issue #222).
+
 == iperf 3.0.10 2014-12-16 ==
 
 * User-visible changes

@@ -37,7 +37,7 @@ do_tar ()
 	Darwin) sha="shasum -a 256" ;;
 	*) sha=echo ;;
     esac
-    ${sha} ${tarball}
+    ${sha} ${tarball} | tee ${tarball}.sha256
 }
 
 usage ()

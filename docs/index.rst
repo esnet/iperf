@@ -22,7 +22,7 @@ optional JSON output.  Note that iperf3 is *not* backwards compatible
 with the original iperf.
 
 Primary development for iperf3 takes place on CentOS 6 Linux, FreeBSD
-10, and MacOS 10.9.  At this time, these are the only officially
+10, and MacOS 10.10.  At this time, these are the only officially
 supported platforms, however there have been some reports of success
 with OpenBSD, Android, and other Linux distributions.
 

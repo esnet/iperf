@@ -1,13 +1,23 @@
 iperf3 Project News
 ===================
 
+2015-01-09:  iperf-3.0.11 released
+----------------------------------
+
+| URL:  http://downloads.es.net/pub/iperf/iperf-3.0.11.tar.gz
+| SHA256:  ``e01db5be6f47f67c987463095fe4f5b8b9ff891fb92c39104d042ad8fde97f6e  iperf-3.0.11.tar.gz``
+
+This maintenance release adds a -1 flag to make the iperf3 execute a
+single test and exit, needed for an upcoming bwctl release.  A few
+other bugs are also fixed.
+
 2014-12-16:  iperf-3.0.10 released
 ----------------------------------
 
 | URL:  http://downloads.es.net/pub/iperf/iperf-3.0.10.tar.gz
 | SHA256:  ``a113442967cf0981b0b2d538be7c88903b2fb0f87b0d281384e41b462e33059d  iperf-3.0.10.tar.gz``
 
-This maintenace release fixes building on MacOS X Yosemite, as well
+This maintenance release fixes building on MacOS X Yosemite, as well
 as making the -w option work correctly with UDP tests.
 
 2014-10-14:  iperf-3.0.9 released
@@ -66,9 +76,11 @@ This maintenance release includes the following bug fixes:
 As always, more details can be found in the ``RELEASE_NOTES`` file in
 the source distribution.
 
+Older News
+----------
 
 2014-06-16:  Project documentation on GitHub Pages
---------------------------------------------------
+..................................................
 
 iperf3 project documentation can now be found at:
 
@@ -78,7 +90,7 @@ This is a GitHub Pages site.  In an ongoing series of steps, content
 will be migrated from the iperf3 wiki to GitHub Pages.
 
 2014-06-16:  iperf-3.0.5 released
----------------------------------
+.................................
 
 | URL:  http://downloads.es.net/pub/iperf/iperf-3.0.5.tar.gz
 | SHA256:  ``e1e1989985b17a4c03b0fa207004ad164b137e37ab0682fecbf5e93bcaa920a6  iperf-3.0.5.tar.gz``
@@ -101,7 +113,7 @@ Note:  An iperf-3.0.4 release was planned and tagged, but not
 officially released.
 
 2014-06-10:  New iperf3 download site
--------------------------------------
+.....................................
 
 iperf3 downloads are now hosted on a new server at ESnet:
 
@@ -112,7 +124,7 @@ Older releases will, at least for now, continue to also be available
 at the previous location.
 
 2014-03-26:  iperf-3.0.3 released
----------------------------------
+.................................
 
 | URL:  http://stats.es.net/software/iperf-3.0.3.tar.gz
 | SHA256:  ``79daf3e5e5c933b2fc4843d6d21c98d741fe39b33ac05bd7a11c50d321a2f59d  iperf-3.0.3.tar.gz``
@@ -131,7 +143,7 @@ More information on changes can be found in the ``RELEASE_NOTES``
 file in the source distribution.
 
 2014-03-10:  iperf-3.0.2 released
----------------------------------
+.................................
 
 | URL:  http://stats.es.net/software/iperf-3.0.2.tar.gz
 | SHA256:  ``3c379360bf40e6ac91dfc508cb43fefafb4739c651d9a8d905a30ec99095b282  iperf-3.0.2.tar.gz``
@@ -154,14 +166,14 @@ More information on changes can be found in the ``RELEASE_NOTES``
 file in the source distribution.
 
 2014-02-28:  iperf migrated to GitHub
--------------------------------------
+.....................................
 
 The new project page can be found at:
 
 https://github.com/esnet/iperf
 
 2014-01-10:  iperf-3.0.1 released
----------------------------------
+.................................
 
 | URL:  http://stats.es.net/software/iperf-3.0.1.tar.gz
 | SHA256:  ``32b419ef634dd7670328c3cecc158babf7d706bd4b3d248cf95965528a20e614 iperf-3.0.1.tar.gz``

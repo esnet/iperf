@@ -228,8 +228,8 @@ Code Authors
 The main authors of iperf3 are (in alphabetical order):  Jon Dugan,
 Seth Elliott, Bruce A. Mah, Jeff Poskanzer, Kaustubh Prabhu.
 Additional code contributions have come from (also in alphabetical
-order):  Mark Ashley, Aaron Brown, Aeneas Jaißle, Susant Sahani, Brian
-Tierney.
+order):  Mark Ashley, Aaron Brown, Aeneas Jaißle, Susant Sahani, 
+Bruce Simpson, Brian Tierney.
 
 iperf3 contains some original code from iperf2.  The authors of iperf2
 are (in alphabetical order): Jon Dugan, John Estabrook, Jim Ferbuson,

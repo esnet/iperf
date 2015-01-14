@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -53,7 +53,9 @@ iperf_create_streams(struct iperf_test *test)
     int orig_bind_port = test->bind_port;
     for (i = 0; i < test->num_streams; ++i) {
 
-        test->bind_port = orig_bind_port + i;
+        test->bind_port = orig_bind_port;
+	if (orig_bind_port)
+	    test->bind_port += i;
         if ((s = test->protocol->connect(test)) < 0)
             return -1;
 

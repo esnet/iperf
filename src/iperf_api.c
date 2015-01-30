@@ -210,6 +210,12 @@ iperf_get_test_server_hostname(struct iperf_test *ipt)
     return ipt->server_hostname;
 }
 
+char*
+iperf_get_test_authentication(struct iperf_test *ipt)
+{
+    return ipt->authentication;
+}
+
 int
 iperf_get_test_protocol_id(struct iperf_test *ipt)
 {
@@ -330,6 +336,12 @@ void
 iperf_set_test_server_port(struct iperf_test *ipt, int server_port)
 {
     ipt->server_port = server_port;
+}
+
+void
+iperf_set_test_authentication(struct iperf_test *ipt, char* authentication)
+{
+    ipt->authentication = strdup(authentication);
 }
 
 void
@@ -597,6 +609,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"port", required_argument, NULL, 'p'},
         {"format", required_argument, NULL, 'f'},
         {"interval", required_argument, NULL, 'i'},
+        {"authentication", required_argument, NULL, 'a'},
         {"daemon", no_argument, NULL, 'D'},
         {"one-off", no_argument, NULL, '1'},
         {"verbose", no_argument, NULL, 'V'},
@@ -658,7 +671,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = 0;
-    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:a:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
                 test->server_port = atoi(optarg);
@@ -815,6 +828,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             case 'S':
                 test->settings->tos = strtol(optarg, NULL, 0);
 		client_flag = 1;
+                break;
+            case 'a':
+                test->authentication = strdup(optarg);
                 break;
             case 'L':
 #if defined(HAVE_FLOWLABEL)
@@ -1164,6 +1180,17 @@ iperf_create_send_timers(struct iperf_test * test)
     return 0;
 }
 
+int authentication_matches(struct iperf_test *test)
+{
+    iprintf(test, "server auth:%s, client auth:%s\n", test->authentication, test->client_authentication);
+    //no server authentication, automatically pass
+    if (!test->authentication)
+        return 1;
+    if (!test->client_authentication)
+        return -1;
+    return strcmp(test->authentication, test->client_authentication) == 0 ? 1 : -1;
+}
+
 /**
  * iperf_exchange_parameters - handles the param_Exchange part for client
  *
@@ -1183,6 +1210,10 @@ iperf_exchange_parameters(struct iperf_test *test)
     } else {
 
         if (get_parameters(test) < 0)
+            return -1;
+
+        //If using authentication, check that the auth sent by the client matches the server config.
+        if (authentication_matches(test) < 0)
             return -1;
 
         if ((s = test->protocol->listen(test)) < 0) {
@@ -1285,6 +1316,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddIntToObject(j, "flowlabel", test->settings->flowlabel);
 	if (test->title)
 	    cJSON_AddStringToObject(j, "title", test->title);
+	if (test->authentication)
+	    cJSON_AddStringToObject(j, "authentication", test->authentication);
 	if (test->congestion)
 	    cJSON_AddStringToObject(j, "congestion", test->congestion);
 	if (test->get_server_output)
@@ -1363,6 +1396,8 @@ get_parameters(struct iperf_test *test)
 	    test->settings->flowlabel = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "title")) != NULL)
 	    test->title = strdup(j_p->valuestring);
+	if ((j_p = cJSON_GetObjectItem(j, "authentication")) != NULL)
+	    test->client_authentication = strdup(j_p->valuestring);
 	if ((j_p = cJSON_GetObjectItem(j, "congestion")) != NULL)
 	    test->congestion = strdup(j_p->valuestring);
 	if ((j_p = cJSON_GetObjectItem(j, "get_server_output")) != NULL)
@@ -1764,6 +1799,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->title = NULL;
     testp->congestion = NULL;
     testp->server_port = PORT;
+    testp->authentication = NULL;
     testp->ctrl_sck = -1;
     testp->prot_listener = -1;
 
@@ -1869,6 +1905,8 @@ iperf_free_test(struct iperf_test *test)
 
     if (test->server_hostname)
 	free(test->server_hostname);
+    if (test->authentication)
+	free(test->authentication);
     if (test->bind_address)
 	free(test->bind_address);
     if (!TAILQ_EMPTY(&test->xbind_addrs)) {

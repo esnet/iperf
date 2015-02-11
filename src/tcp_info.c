@@ -127,12 +127,10 @@ get_snd_cwnd(struct iperf_interval_results *irp)
 {
 #if defined(linux) && defined(TCP_MD5SIG)
     return irp->tcpInfo.tcpi_snd_cwnd * irp->tcpInfo.tcpi_snd_mss;
-#else
-#if defined(__FreeBSD__) && __FreeBSD_version >= 600000
+#elif defined(__FreeBSD__) && __FreeBSD_version >= 600000
     return irp->tcpInfo.tcpi_snd_cwnd * irp->tcpInfo.tcpi_snd_mss;
 #else
     return -1;
-#endif
 #endif
 }
 
@@ -145,12 +143,10 @@ get_rtt(struct iperf_interval_results *irp)
 {
 #if defined(linux) && defined(TCP_MD5SIG)
     return irp->tcpInfo.tcpi_rtt;
-#else
-#if defined(__FreeBSD__) && __FreeBSD_version >= 600000
+#elif defined(__FreeBSD__) && __FreeBSD_version >= 600000
     return irp->tcpInfo.tcpi_rtt;
 #else
     return -1;
-#endif
 #endif
 }
 

@@ -79,13 +79,10 @@ has_tcpinfo_retransmits(void)
     ** tcpi_total_retrans field that we need; if not, not.
     */
     return 1;
-#else
-#if defined(__FreeBSD__) && __FreeBSD_version >= 600000
-    /* return 1; */
-    return 0;	/* FreeBSD retransmit reporting doesn't actually work yet */
+#elif defined(__FreeBSD__) && __FreeBSD_version >= 600000
+    return 1;	/* Should work now... */
 #else
     return 0;
-#endif
 #endif
 }
 
@@ -114,12 +111,10 @@ get_total_retransmits(struct iperf_interval_results *irp)
 {
 #if defined(linux) && defined(TCP_MD5SIG)
     return irp->tcpInfo.tcpi_total_retrans;
-#else
-#if defined(__FreeBSD__) && __FreeBSD_version >= 600000
-    return irp->tcpInfo.__tcpi_retransmits;
+#elif defined(__FreeBSD__) && __FreeBSD_version >= 600000
+    return irp->tcpInfo.tcpi_snd_rexmitpack;
 #else
     return -1;
-#endif
 #endif
 }
 

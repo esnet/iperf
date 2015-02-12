@@ -130,7 +130,6 @@ iperf_accept(struct iperf_test *test)
 {
     int s;
     signed char rbuf = ACCESS_DENIED;
-    char cookie[COOKIE_SIZE];
     socklen_t len;
     struct sockaddr_storage addr;
 

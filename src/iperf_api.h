@@ -27,6 +27,7 @@
 #ifndef        __IPERF_API_H
 #define        __IPERF_API_H
 
+#include <sys/time.h>
 #include <setjmp.h>
 
 struct iperf_test;

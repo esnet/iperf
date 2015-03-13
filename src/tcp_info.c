@@ -160,7 +160,6 @@ get_rtt(struct iperf_interval_results *irp)
 #else
     return -1;
 #endif
-#endif
 }
 
 /*************************************************************/

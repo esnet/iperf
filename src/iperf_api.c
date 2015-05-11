@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -2451,6 +2451,7 @@ iperf_reporter_callback(struct iperf_test *test)
             /* print interval results for each stream */
             iperf_print_intermediate(test);
             break;
+        case TEST_END:
         case DISPLAY_RESULTS:
             iperf_print_intermediate(test);
             iperf_print_results(test);

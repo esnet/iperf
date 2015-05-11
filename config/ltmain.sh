@@ -2,11 +2,11 @@
 ## DO NOT EDIT - This file generated from ./build-aux/ltmain.in
 ##               by inline-source v2014-01-03.01
 
-# libtool (GNU libtool) 2.4.4
+# libtool (GNU libtool) 2.4.6
 # Provide generalized library-building support services.
 # Written by Gordon Matzigkeit <gord@gnu.ai.mit.edu>, 1996
 
-# Copyright (C) 1996-2014 Free Software Foundation, Inc.
+# Copyright (C) 1996-2015 Free Software Foundation, Inc.
 # This is free software; see the source for copying conditions.  There is NO
 # warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
@@ -31,8 +31,8 @@
 
 PROGRAM=libtool
 PACKAGE=libtool
-VERSION=2.4.4
-package_revision=2.4.4
+VERSION=2.4.6
+package_revision=2.4.6
 
 
 ## ------ ##
@@ -64,12 +64,12 @@ package_revision=2.4.4
 # libraries, which are installed to $pkgauxdir.
 
 # Set a version string for this script.
-scriptversion=2014-01-03.01; # UTC
+scriptversion=2015-01-20.17; # UTC
 
 # General shell script boiler plate, and helper functions.
 # Written by Gary V. Vaughan, 2004
 
-# Copyright (C) 2004-2014 Free Software Foundation, Inc.
+# Copyright (C) 2004-2015 Free Software Foundation, Inc.
 # This is free software; see the source for copying conditions.  There is NO
 # warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
@@ -192,7 +192,7 @@ func_path_progs ()
 
     _G_path_prog_max=0
     _G_path_prog_found=false
-    _G_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+    _G_save_IFS=$IFS; IFS=${PATH_SEPARATOR-:}
     for _G_dir in $_G_PATH; do
       IFS=$_G_save_IFS
       test -z "$_G_dir" && _G_dir=.
@@ -1375,7 +1375,7 @@ scriptversion=2014-01-07.03; # UTC
 # A portable, pluggable option parser for Bourne shell.
 # Written by Gary V. Vaughan, 2010
 
-# Copyright (C) 2010-2014 Free Software Foundation, Inc.
+# Copyright (C) 2010-2015 Free Software Foundation, Inc.
 # This is free software; see the source for copying conditions.  There is NO
 # warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
@@ -1977,7 +1977,7 @@ func_version ()
 # End:
 
 # Set a version string.
-scriptversion='(GNU libtool) 2.4.4'
+scriptversion='(GNU libtool) 2.4.6'
 
 
 # func_echo ARG...
@@ -2039,7 +2039,12 @@ usage_message="Options:
 "
 
 # Additional text appended to 'usage_message' in response to '--help'.
-long_help_message=$long_help_message"
+func_help ()
+{
+    $debug_cmd
+
+    func_usage_message
+    $ECHO "$long_help_message
 
 MODE must be one of the following:
 
@@ -2063,13 +2068,15 @@ include the following information:
        compiler:       $LTCC
        compiler flags: $LTCFLAGS
        linker:         $LD (gnu? $with_gnu_ld)
-       version:        $progname (GNU libtool) 2.4.4
+       version:        $progname (GNU libtool) 2.4.6
        automake:       `($AUTOMAKE --version) 2>/dev/null |$SED 1q`
        autoconf:       `($AUTOCONF --version) 2>/dev/null |$SED 1q`
 
 Report bugs to <bug-libtool@gnu.org>.
 GNU libtool home page: <http://www.gnu.org/software/libtool/>.
 General help using GNU software: <http://www.gnu.org/gethelp/>."
+    exit 0
+}
 
 
 # func_lo2o OBJECT-NAME
@@ -6461,6 +6468,24 @@ func_win32_import_lib_p ()
     esac
 }
 
+# func_suncc_cstd_abi
+# !!ONLY CALL THIS FOR SUN CC AFTER $compile_command IS FULLY EXPANDED!!
+# Several compiler flags select an ABI that is incompatible with the
+# Cstd library. Avoid specifying it if any are in CXXFLAGS.
+func_suncc_cstd_abi ()
+{
+    $debug_cmd
+
+    case " $compile_command " in
+    *" -compat=g "*|*\ -std=c++[0-9][0-9]\ *|*" -library=stdcxx4 "*|*" -library=stlport4 "*)
+      suncc_use_cstd_abi=no
+      ;;
+    *)
+      suncc_use_cstd_abi=yes
+      ;;
+    esac
+}
+
 # func_mode_link arg...
 func_mode_link ()
 {
@@ -7436,6 +7461,9 @@ func_mode_link ()
     fi
     eval sys_lib_search_path=\"$sys_lib_search_path_spec\"
     eval sys_lib_dlsearch_path=\"$sys_lib_dlsearch_path_spec\"
+
+    # Definition is injected by LT_CONFIG during libtool generation.
+    func_munge_path_list sys_lib_dlsearch_path "$LT_SYS_LIBRARY_PATH"
 
     func_dirname "$output" "/" ""
     output_objdir=$func_dirname_result$objdir
@@ -8599,6 +8627,37 @@ func_mode_link ()
 	  eval $var=\"$tmp_libs\"
 	done # for var
       fi
+
+      # Add Sun CC postdeps if required:
+      test CXX = "$tagname" && {
+        case $host_os in
+        linux*)
+          case `$CC -V 2>&1 | sed 5q` in
+          *Sun\ C*) # Sun C++ 5.9
+            func_suncc_cstd_abi
+
+            if test no != "$suncc_use_cstd_abi"; then
+              func_append postdeps ' -library=Cstd -library=Crun'
+            fi
+            ;;
+          esac
+          ;;
+
+        solaris*)
+          func_cc_basename "$CC"
+          case $func_cc_basename_result in
+          CC* | sunCC*)
+            func_suncc_cstd_abi
+
+            if test no != "$suncc_use_cstd_abi"; then
+              func_append postdeps ' -library=Cstd -library=Crun'
+            fi
+            ;;
+          esac
+          ;;
+        esac
+      }
+
       # Last step: remove runtime libs from dependency_libs
       # (they stay in deplibs)
       tmp_libs=

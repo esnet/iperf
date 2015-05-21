@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -223,7 +223,7 @@ Nread(int fd, char *buf, size_t count, int prot)
     while (nleft > 0) {
         r = read(fd, buf, nleft);
         if (r < 0) {
-            if (errno == EINTR || errno == EAGAIN)
+            if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
                 break;
             else
                 return NET_HARDERROR;
@@ -253,6 +253,9 @@ Nwrite(int fd, const char *buf, size_t count, int prot)
 	    switch (errno) {
 		case EINTR:
 		case EAGAIN:
+#if (EAGAIN != EWOULDBLOCK)
+		case EWOULDBLOCK:
+#endif
 		return count - nleft;
 
 		case ENOBUFS:
@@ -320,6 +323,9 @@ Nsendfile(int fromfd, int tofd, const char *buf, size_t count)
 	    switch (errno) {
 		case EINTR:
 		case EAGAIN:
+#if (EAGAIN != EWOULDBLOCK)
+		case EWOULDBLOCK:
+#endif
 		if (count == nleft)
 		    return NET_SOFTERROR;
 		return count - nleft;

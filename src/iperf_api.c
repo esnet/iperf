@@ -2542,6 +2542,9 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 		iprintf(test, report_bw_udp_format, sp->socket, st, et, ubuf, nbuf, irp->jitter * 1000.0, irp->interval_cnt_error, irp->interval_packet_count, lost_percent, irp->omitted?report_omitted:"");
 	}
     }
+
+    if (test->logfile)
+        iflush(test);
 }
 
 /**************************************************************************/

@@ -1,19 +1,210 @@
-== iperf 3.?.? ????-??-?? ==
+== iperf 3.1.0 ????-??-?? ==
+
+The release notes for iperf 3.1.0 describe changes and new
+functionality in iperf 3.1.0, but not present in 3.0.11 or any earlier
+3.0.x release.
+
+* Selected user-visible changes
+
+  * SCTP support has been added (with the --sctp flag), on Linux and
+    FreeBSD (issue #131).
+
+  * Setting CPU affinity now works on FreeBSD.
+
+  * Selection of TCP congestion now works on FreeBSD, and is now
+    called --congestion (the old --linux-congestion option works
+    but is now deprecated).
+
+  * Added -I flag for the server to write a PID file, mostly useful for
+    daemon mode (issue #120).
+
+  * A --logfile argument can now force all output to go to a file,
+    rather than to a file.  This is especially useful when running an
+    iperf3 server in daemon mode (issue #119).
+
+  * Various compatibility fixes for Android (issue #184, issue #185),
+    NetBSD (issue #248), Solaris (issue #175, issue #178, issue #180,
+    issue #211), vxWorks (issue #268).
+
+  * A --udp-counters-64bit feature has been added to support very long
+    UDP tests (issue #191).
+
+  * A --cport option to specify the client-side port has been added
+    (issue #207, issue #209, issue #239).
+
+  * Some calculation errors with the -O feature have been fixed (issue
+    #236).
+
+  * A potential crash in the iperf3 server has been fixed (issue #257,
+    issue #258).
+
+* Developer-visible changes
+
+  * Consumers of libiperf can now get the JSON output for a
+    just-completed test (issue #147).
+
+  * Detection of various optional features has been improved to check
+    for the presence or absence of platform functionality, not the name
+    of platforms.
+
+  * Out-of-tree builds now work (issue #265).
+
+== iperf 3.0.11 2015-01-09 ==
+
+* User-visible changes
+
+  * Added -1 / --one-off flag, which causes the iperf3 server to
+    process one client connection and then exit.  Intended primarily
+    for bwctl integration (issue #230).
+
+  * Added various minor bug fixes (issues #231, #232, #233).
+
+  * Added 30-second timeout for UDP tests if unable to establish UDP
+    connectivity between sender and receiver (issue #222).
+
+== iperf 3.0.10 2014-12-16 ==
+
+* User-visible changes
+
+  * Fixed the build on MacOS X Yosemite (issue #213).
+
+  * UDP tests now honor the -w option for setting the socket buffer
+    sizes (issue #219).
+
+* Developer-visible changes
+
+  * Added an RPM spec file plus functionality to fill in the version
+    number.
+
+  * Fixed potential filename collision with a system header (issue
+    #203).
+
+== iperf 3.0.9 2014-10-14 ==
+
+* User-visible changes
+
+  * Fixed a series of problems that came from attempting a UDP test
+    with a pathologically large block size.  This put the server into
+    an odd state where it could not accept new client connections.
+    This in turn caused subsequent client connections to crash when
+    interrupted (issue #212).
+
+* Developer-visible changes
+
+  * None.
+
+== iperf 3.0.8 2014-09-30 ==
+
+* User-visible changes
+
+  * Updated license and copyright verbage to confirm to LBNL Tech
+    Transfer requirements.  No substantive changes; license remains
+    the 3-clause BSD license.
+
+* Developer-visible changes
+
+  * None.
+
+== iperf 3.0.7 2014-08-28 ==
+
+* User-visible changes
+
+  * A server bug where new connections from clients could disrupt
+    running tests has been fixed (issue #202).
+
+  * Rates now consistently use 1000-based prefixes (K, M, G), where
+    sizes of objects now consistently use 1024-based prefixes (issue #173).
+
+  * UDP tests with unlimited bandwidth are now supported (issue #170).
+
+  * An interaction between the -w and -B options, which kept them from
+    working when used together, has been fixed (issue #193).
+
+* Developer-visible changes
+
+== iperf 3.0.6 2014-07-28 ==
+
+* User-visible changes
+
+  * Several bugs that kept the -B option from working in various
+    circumstances have been fixed (issue #193).
+
+  * Various compatibility fixes for OpenBSD (issue #196) and
+    Solaris (issue #177).
+
+* Developer-visible changes
+
+  * The {get,set}_test_bind_address API calls have been added to
+    expose the -B functionality to API consumers (issue #197).
+
+== iperf 3.0.5 2014-06-16 ==
+
+* User-visible changes
+
+  * Erroneous output when doing --json output has been fixed (this
+    problem was caused by an attempt to fix issue #158).
+
+  * The maximum test running time has been increased from one hour to
+    one day (issue #166).
+
+  * Project documentation has been moved to GitHub Pages at this URL:
+    http://software.es.net/iperf/.
+
+  * A bug that caused CPU time to be computed incorrectly on FreeBSD
+    has been fixed.
+
+  * A timing issue which caused measurement intervals to be wrong
+    with TCP tests on lossy networks has been fixed (issue #125).
+
+  * Newer versions of autoconf / automake / libtool are now used by
+    default (issue #161).
+
+  * JSON output now indicates whether the test was run in --reverse
+    mode (issue #167).
+
+  * It is now possible to get (most of) the server-side output at
+    the client by using the --get-server-output flag (issue #160).
+
+* Developer-visible changes
+
+  * automake/autoconf/libtool have been updated to more recent
+    versions.  AM_MAINTAINER_MODE is now used to avoid requiring these
+    tools at build-time.
+
+== iperf 3.0.4 was not released ==
+
+== iperf 3.0.3 2014-03-26 ==
+
+* User-visible changes
+
+  * Due to several oversights, the source code archive for iperf 3.0.2
+    was distributed as an uncompressed tarball, despite having an
+    extension (".tar.gz") that indicated it was compressed.  The
+    release generation procedure has been changed to avoid this
+    problem going forward.
+
+  * Summary structures in the JSON output are now included, even if
+    there is only one stream.  This change makes consuming the JSON
+    output easier and more consistent (issue #151).
+
+  * A possible buffer overflow in iperf_error.c has been fixed (issue
+    #155).
+
+* Developer-visible changes
+
+  * Example programs now build correctly, after having been broken in
+    the 3.0.2 release (issue #152).
+
+== iperf 3.0.2 2014-03-10 ==
 
 * User-visible changes
 
   * The iperf3 project has been moved to GitHub, and various URLs in
     documentation files have been changed to point there.
 
-  * Setting CPU affinity now works on FreeBSD.
-
   * iperf3 now builds on Linux systems that do not support
     TCP_CONGESTION.  Most notably this allows iperf3 to work on CentOS
     5.
-
-  * Selection of TCP congestion now works on FreeBSD, and is now
-    called --congestion (the old --linux-congestion option works
-    but is now deprecated).
 
   * An abort on MacOS 10.9 has been fixed (issue #135).
 
@@ -24,53 +215,11 @@
 
   * TCP snd_cwnd output is now printed by default on Linux (issue #99).
 
-  * SCTP support has been added (with the --sctp flag), on Linux and
-    FreeBSD (issue #131).
-
   * In JSON output, the --title string no longer has a colon and two
     spaces appended (issue #139).
 
   * A buffer for holding formatted numeric values is now
     properly-sized so that output is not truncated (issue #142).
-
-  * A --logfile argument can now force all output to go to a file,
-    rather than to a file.  This is especially useful when running an
-    iperf3 server in daemon mode (issue #119).
-
-  * Summary structures in the JSON output are now included, even if
-    there is only one stream.  This change makes consuming the JSON
-    output easier and more consistent (issue #151).
-
-  * A possible buffer overflow in iperf_error.c has been fixed (issue
-    #155).
-
-  * A timing issue which caused measurement intervals to be wrong
-    with TCP tests on lossy networks has been fixed (issue #125).
-
-  * Newer versions of autoconf / automake / libtool are now used by
-    default (issue #161).
-
-  * The maximum test running time is now one day, up from one hour
-    (issue #166).
-
-  * JSON output now indicates whether the test was run in --reverse
-    mode (issue #167).
-
-  * It is now possible to get (most of) the server-side output at
-    the client by using the --get-server-output flag (issue #160).
-
-  * Various problems with the -B option have been fixed (issue #193).
-
-  * Various compatibility fixes for Android (issue #184, issue #185),
-    OpenBSD (issue #196), Solaris (#177, issue #180).
-
-  * A server bug where new connections from clients could disrupt
-    running tests has been fixed (issue #202).
-
-  * Rates now consistently use 1000-based prefixes (K, M, G), where
-    sizes of objects now consistently use 1024-based prefixes (issue #173).
-
-  * UDP tests with unlimited bandwidth are now supported (issue #170).
 
 * Developer-visible changes
 
@@ -84,15 +233,7 @@
 
   * The test unit format can now be set from the API (issue #144).
 
-  * libiperf is now built by default as both shared and static
-    libraries (issue #146, issue #152).
-
-  * Consumers of libiperf can now get the JSON output for a
-    just-completed test (issue #147).
-
-  * Detection of various optional features has been improved to check
-    for the presence or absence of platform functionality, not the name
-    of platforms.
+  * libiperf is now built as both shared and static libraries.
 
   * In the JSON output, the "connection" structures are now stored as
     an array in the "start" block, instead of overwriting each other.

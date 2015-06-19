@@ -21,7 +21,7 @@ Note that iperf3 is *not* backwards compatible with the original iperf.
 Primary development for iperf3 takes place on CentOS Linux, FreeBSD,
 and MacOS X.  At this time, these are the only officially supported
 platforms, however there have been some reports of success with
-OpenBSD, Android, and other Linux distributions.
+OpenBSD, NetBSD, Android, Solaris, and other Linux distributions.
 
 iperf3 is principally developed by ESnet / Lawrence Berkeley National
 Laboratory.  It is released under a three-clause BSD license.
@@ -37,9 +37,9 @@ Downloads of iperf3 are available at:
 
     http://downloads.es.net/pub/iperf/
 
-To check out the most recent code, do:
+To check out the most recent code, clone the git repository at:
 
-    git clone https://github.com/esnet/iperf.git
+    https://github.com/esnet/iperf.git
 
 Building iperf3
 ---------------

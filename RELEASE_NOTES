@@ -6,8 +6,8 @@ functionality in iperf 3.1.0, but not present in 3.0.11 or any earlier
 
 * Selected user-visible changes
 
-  * SCTP support has been added (with the --sctp flag), on Linux and
-    FreeBSD (issue #131).
+  * SCTP support has been added (with the --sctp flag), on Linux,
+    FreeBSD, and Solaris (issue #131).
 
   * Setting CPU affinity now works on FreeBSD.
 

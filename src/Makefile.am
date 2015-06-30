@@ -27,6 +27,7 @@ libiperf_la_SOURCES     = \
                         iperf_util.h \
                         net.c \
                         net.h \
+			portable_endian.h \
                         queue.h \
                         tcp_info.c \
                         tcp_window_size.c \

@@ -11,8 +11,6 @@ BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
 %if 0%{?el5}
 BuildRequires:  e2fsprogs-devel
-%else
-BuildRequires: libuuid-devel
 %endif
 
 %description
@@ -45,7 +43,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%doc AUTHORS INSTALL
+%%doc README.md INSTALL LICENSE RELEASE_NOTES
 %{_mandir}/man1/iperf3.1.gz
 %{_mandir}/man3/libiperf.3.gz
 %{_bindir}/iperf3

@@ -86,6 +86,7 @@ iperf_server_listen(struct iperf_test *test)
     if (!test->json_output) {
 	iprintf(test, "-----------------------------------------------------------\n");
 	iprintf(test, "Server listening on %d\n", test->server_port);
+    iprintf(test, "Server Authentication:%s\n", test->authentication);
     }
 
     // This needs to be changed to reflect if client has different window size

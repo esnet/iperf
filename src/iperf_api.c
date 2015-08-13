@@ -2574,7 +2574,7 @@ iperf_new_stream(struct iperf_test *test, int s)
 {
     int i;
     struct iperf_stream *sp;
-    char template[] = "/tmp/iperf3.XXXXXX";
+    char template[] = "./iperf3.XXXXXX";
 
     h_errno = 0;
 

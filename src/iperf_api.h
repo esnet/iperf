@@ -256,7 +256,7 @@ int iperf_setaffinity(struct iperf_test *, int affinity);
 int iperf_clearaffinity(struct iperf_test *);
 
 /* Custom printf routine. */
-int iprintf(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3)));
+int iperf_iprintf(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3)));
 int iflush(struct iperf_test *test);
 
 /* Error routines. */

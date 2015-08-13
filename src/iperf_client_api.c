@@ -154,7 +154,7 @@ client_omit_timer_proc(TimerClientData client_data, struct timeval *nowP)
     test->omitting = 0;
     iperf_reset_stats(test);
     if (test->verbose && !test->json_output && test->reporter_interval == 0)
-        iperf_iperf_iprintf(test, "%s", report_omit_done);
+        iperf_iprintf(test, "%s", report_omit_done);
 
     /* Reset the timers. */
     if (test->stats_timer != NULL)

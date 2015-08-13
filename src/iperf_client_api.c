@@ -154,7 +154,7 @@ client_omit_timer_proc(TimerClientData client_data, struct timeval *nowP)
     test->omitting = 0;
     iperf_reset_stats(test);
     if (test->verbose && !test->json_output && test->reporter_interval == 0)
-        iprintf(test, "%s", report_omit_done);
+        iperf_iprintf(test, "%s", report_omit_done);
 
     /* Reset the timers. */
     if (test->stats_timer != NULL)
@@ -350,9 +350,9 @@ iperf_run_client(struct iperf_test * test)
 	cJSON_AddItemToObject(test->json_start, "version", cJSON_CreateString(version));
 	cJSON_AddItemToObject(test->json_start, "system_info", cJSON_CreateString(get_system_info()));
     } else if (test->verbose) {
-	iprintf(test, "%s\n", version);
-	iprintf(test, "%s", "");
-	iprintf(test, "%s\n", get_system_info());
+	iperf_iprintf(test, "%s\n", version);
+	iperf_iprintf(test, "%s", "");
+	iperf_iprintf(test, "%s\n", get_system_info());
 	iflush(test);
     }
 
@@ -447,8 +447,8 @@ iperf_run_client(struct iperf_test * test)
 	if (iperf_json_finish(test) < 0)
 	    return -1;
     } else {
-	iprintf(test, "\n");
-	iprintf(test, "%s", report_done);
+	iperf_iprintf(test, "\n");
+	iperf_iprintf(test, "%s", report_done);
     }
 
     iflush(test);

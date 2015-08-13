@@ -84,8 +84,8 @@ iperf_server_listen(struct iperf_test *test)
     }
 
     if (!test->json_output) {
-	iprintf(test, "-----------------------------------------------------------\n");
-	iprintf(test, "Server listening on %d\n", test->server_port);
+	iperf_iprintf(test, "-----------------------------------------------------------\n");
+	iperf_iprintf(test, "Server listening on %d\n", test->server_port);
     }
 
     // This needs to be changed to reflect if client has different window size
@@ -107,15 +107,15 @@ iperf_server_listen(struct iperf_test *test)
         if (test->settings->socket_bufsize > 0) {
             unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A');
 	    if (!test->json_output) 
-		iprintf(test, report_window, ubuf);
+		iperf_iprintf(test, report_window, ubuf);
         } else {
 	    if (!test->json_output) 
-		iprintf(test, "%s", report_autotune);
+		iperf_iprintf(test, "%s", report_autotune);
         }
     }
     */
     if (!test->json_output)
-	iprintf(test, "-----------------------------------------------------------\n");
+	iperf_iprintf(test, "-----------------------------------------------------------\n");
 
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);
@@ -371,7 +371,7 @@ server_omit_timer_proc(TimerClientData client_data, struct timeval *nowP)
     test->omitting = 0;
     iperf_reset_stats(test);
     if (test->verbose && !test->json_output && test->reporter_interval == 0)
-	iprintf(test, "%s", report_omit_done);
+	iperf_iprintf(test, "%s", report_omit_done);
 
     /* Reset the timers. */
     if (test->stats_timer != NULL)
@@ -450,9 +450,9 @@ iperf_run_server(struct iperf_test *test)
 	cJSON_AddItemToObject(test->json_start, "version", cJSON_CreateString(version));
 	cJSON_AddItemToObject(test->json_start, "system_info", cJSON_CreateString(get_system_info()));
     } else if (test->verbose) {
-	iprintf(test, "%s\n", version);
-	iprintf(test, "%s", "");
-	iprintf(test, "%s\n", get_system_info());
+	iperf_iprintf(test, "%s\n", version);
+	iperf_iprintf(test, "%s", "");
+	iperf_iprintf(test, "%s\n", get_system_info());
 	iflush(test);
     }
 

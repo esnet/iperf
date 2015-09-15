@@ -457,10 +457,11 @@ setnonblocking(int fd, int nonblocking)
 int
 getsockdomain(int sock)
 {
-    struct sockaddr sa;
+    struct sockaddr_storage sa;
     socklen_t len = sizeof(sa);
 
-    if (getsockname(sock, &sa, &len) < 0)
-	return -1;
-    return sa.sa_family;
+    if (getsockname(sock, (struct sockaddr *)&sa, &len) < 0) {
+        return -1;
+    }
+    return ((struct sockaddr *) &sa)->sa_family;
 }

@@ -211,9 +211,9 @@ iperf_get_test_server_hostname(struct iperf_test *ipt)
 }
 
 char*
-iperf_get_test_tmp_path(struct iperf_test *ipt)
+iperf_get_test_template(struct iperf_test *ipt)
 {
-    return ipt->tmp_path;
+    return ipt->template;
 }
 
 int
@@ -379,9 +379,9 @@ iperf_set_test_server_hostname(struct iperf_test *ipt, char *server_hostname)
 }
 
 void
-iperf_set_test_tmp_path(struct iperf_test *ipt, char *tmp_path)
+iperf_set_test_template(struct iperf_test *ipt, char *template)
 {
-    ipt->tmp_path = strdup(tmp_path);
+    ipt->template = strdup(template);
 }
 
 void
@@ -1881,8 +1881,8 @@ iperf_free_test(struct iperf_test *test)
 
     if (test->server_hostname)
 	free(test->server_hostname);
-    if (test->tmp_path)
-    free(test->tmp_path);
+    if (test->template)
+    free(test->template);
     if (test->bind_address)
 	free(test->bind_address);
     if (!TAILQ_EMPTY(&test->xbind_addrs)) {
@@ -1897,6 +1897,7 @@ iperf_free_test(struct iperf_test *test)
             free(xbe);
         }
     }
+    if (test->settings)
     free(test->settings);
     if (test->title)
 	free(test->title);
@@ -2590,10 +2591,11 @@ iperf_new_stream(struct iperf_test *test, int s)
     struct iperf_stream *sp;
     
     char template[1024];
-    if (test->tmp_path) {
-        strcpy(template, strcat(test->tmp_path, "/iperf3.XXXXXX"));
+    if (test->template) {
+        snprintf(template, strlen(test->template), "%s", test->template);
     } else {
-        strcpy(template, "/tmp/iperf3.XXXXXX");
+        char buf[] = "/tmp/iperf3.XXXXXX";
+        snprintf(template, strlen(buf), "%s", buf);
     }
 
     h_errno = 0;

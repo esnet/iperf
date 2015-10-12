@@ -2592,10 +2592,10 @@ iperf_new_stream(struct iperf_test *test, int s)
     
     char template[1024];
     if (test->template) {
-        snprintf(template, strlen(test->template), "%s", test->template);
+        snprintf(template, sizeof(template) / sizeof(char), "%s", test->template);
     } else {
         char buf[] = "/tmp/iperf3.XXXXXX";
-        snprintf(template, strlen(buf), "%s", buf);
+        snprintf(template, sizeof(template) / sizeof(char), "%s", buf);
     }
 
     h_errno = 0;

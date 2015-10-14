@@ -23,8 +23,8 @@ functionality in iperf 3.1.0, but not present in 3.0.11 or any earlier
     iperf3 server in daemon mode (issue #119).
 
   * Various compatibility fixes for Android (issue #184, issue #185),
-    NetBSD (issue #248), Solaris (issue #175, issue #178, issue #180,
-    issue #211), vxWorks (issue #268).
+    iOS (issue #288), NetBSD (issue #248), Solaris (issue #175, issue
+    #178, issue #180, issue #211), vxWorks (issue #268).
 
   * A --udp-counters-64bit flag has been added to support very
     long-running UDP tests, which could cause a counter to overflow

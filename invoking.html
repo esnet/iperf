@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Invoking iperf3 &mdash; iperf3 3.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-3.1.0/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/esnet/esnet.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="iperf3 3.1 documentation" href="index.html" />
+    <link rel="next" title="iperf3 Development" href="dev.html" />
+    <link rel="prev" title="Building iperf3" href="building.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          <!-- LOGO: logo-esnet-ball-sm.png _static/logo-esnet-ball-sm.png --><img src="_static/logo-esnet-ball-sm.png">
+          iperf3</a>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Section <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="news.html">iperf3 Project News</a></li>
+<li class="toctree-l1"><a class="reference internal" href="obtaining.html">Obtaining iperf3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building iperf3</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Invoking iperf3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev.html">iperf3 Development</a></li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="building.html" title="Previous Chapter: Building iperf3">
+      <span class="glyphicon glyphicon-chevron-left"></span>
+      <span class="hidden-sm">
+        Building iperf3
+      </span>
+    </a>
+  </li>
+  <li>
+    <a href="dev.html" title="Next Chapter: iperf3 Development">
+      <span class="hidden-sm">
+        iperf3 Develo...
+      </span>
+      <span class="glyphicon glyphicon-chevron-right"></span>
+    </a>
+  </li>
+              
+            
+            <li class="divider-vertical"></li>
+            
+                <li><a href="genindex.html">Index</a></li>
+                <li><a href="https://www.es.net">ESnet</a></li>
+            
+            <li><a href="https://github.com/esnet/iperf"><img src="_static/esnet/icon-github.png" height="20" width="20"></a></li>
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="_sources/invoking.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
+<li><a class="reference internal" href="#">Invoking iperf3</a><ul>
+<li><a class="reference internal" href="#iperf3-manual-page">iperf3 Manual Page</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    <div class="col-md-9">
+      
+  <div class="section" id="invoking-iperf3">
+<h1>Invoking iperf3<a class="headerlink" href="#invoking-iperf3" title="Permalink to this headline">¶</a></h1>
+<p>iperf3 includes a manual page listing all of the command-line options.
+The manual page is the most up-to-date reference to the various flags and parameters.</p>
+<p>For sample command line usage, see:</p>
+<p><a class="reference external" href="http://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf-and-iperf3/">http://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf-and-iperf3/</a></p>
+<p>Using the default options, iperf3 is meant to show typical well
+designed application performance.  &#8220;Typical well designed application&#8221;
+means avoiding artificial enhancements that work only for testing
+(such as <code class="docutils literal"><span class="pre">splice()</span></code>-ing the data to <code class="docutils literal"><span class="pre">/dev/null</span></code>).  iperf3 does
+also have flags for &#8220;extreme best case&#8221; optimizations but they must be
+explicitly activated.  These flags include the <code class="docutils literal"><span class="pre">-Z</span></code> (<code class="docutils literal"><span class="pre">--zerocopy</span></code>)
+and <code class="docutils literal"><span class="pre">-A</span></code> (<code class="docutils literal"><span class="pre">--affinity</span></code>) options.</p>
+<div class="section" id="iperf3-manual-page">
+<h2>iperf3 Manual Page<a class="headerlink" href="#iperf3-manual-page" title="Permalink to this headline">¶</a></h2>
+<p>This section contains a plaintext rendering of the iperf3 manual page.
+It is presented here only for convenience; the authoritative iperf3
+manual page is included in the source tree and installed along with
+the executable.</p>
+<div class="highlight-python"><div class="highlight"><pre>IPERF(1)                         User Manuals                         IPERF(1)
+
+
+
+NAME
+iperf3 − perform network throughput tests
+
+SYNOPSIS
+iperf3 ‐s [ options ]
+iperf3 ‐c server [ options ]
+
+
+DESCRIPTION
+iperf3  is  a  tool for performing network throughput measurements.  It
+can test either TCP or UDP throughput.  To perform an iperf3  test  the
+user must establish both a server and a client.
+
+
+GENERAL OPTIONS
+‐p, ‐‐port n
+set server port to listen on/connect to to n (default 5201)
+
+‐f, ‐‐format
+[kmKM]   format to report: Kbits, Mbits, KBytes, MBytes
+
+‐i, ‐‐interval n
+pause  n  seconds between periodic bandwidth reports; default is
+1, use 0 to disable
+
+‐F, ‐‐file name
+client‐side: read from  the  file  and  write  to  the  network,
+instead of using random data; server‐side: read from the network
+and write to the file, instead of throwing the data away
+
+‐A, ‐‐affinity n/n,m
+Set the CPU affinity, if possible (Linux and FreeBSD only).   On
+both  the  client  and  server you can set the local affinity by
+using the n form of this argument (where n is a CPU number).  In
+addition,  on  the  client  side  you  can override the server’s
+affinity for just that one test, using the n,m form of argument.
+Note  that when using this feature, a process will only be bound
+to a single CPU (as opposed to a set containing potentialy  mul‐
+tiple CPUs).
+
+‐B, ‐‐bind host
+bind to a specific interface
+
+‐V, ‐‐verbose
+give more detailed output
+
+‐J, ‐‐json
+output in JSON format
+
+‐‐logfile file
+send output to a log file.
+
+‐d, ‐‐debug
+emit  debugging  output.  Primarily (perhaps exclusively) of use
+to developers.
+
+‐v, ‐‐version
+show version information and quit
+
+‐h, ‐‐help
+show a help synopsis
+
+
+SERVER SPECIFIC OPTIONS
+‐s, ‐‐server
+run in server mode
+
+‐D, ‐‐daemon
+run the server in background as a daemon
+
+‐I, ‐‐pidfile file
+write a file with the process ID, most useful when running as  a
+daemon.
+
+
+CLIENT SPECIFIC OPTIONS
+‐c, ‐‐client host
+run in client mode, connecting to the specified server
+
+‐‐sctp use SCTP rather than TCP (FreeBSD and Linux)
+
+‐u, ‐‐udp
+use UDP rather than TCP
+
+‐b, ‐‐bandwidth n[KM]
+set  target bandwidth to n bits/sec (default 1 Mbit/sec for UDP,
+unlimited for TCP).  If there are multiple  streams  (‐P  flag),
+the  bandwidth  limit is applied separately to each stream.  You
+can also add a ’/’ and a  number  to  the  bandwidth  specifier.
+This  is  called &quot;burst mode&quot;.  It will send the given number of
+packets without pausing, even if that  temporarily  exceeds  the
+specified bandwidth limit.
+
+‐t, ‐‐time n
+time in seconds to transmit for (default 10 secs)
+
+‐n, ‐‐bytes n[KM]
+number of bytes to transmit (instead of ‐t)
+
+‐k, ‐‐blockcount n[KM]
+number of blocks (packets) to transmit (instead of ‐t or ‐n)
+
+‐l, ‐‐length n[KM]
+length  of  buffer to read or write (default 128 KB for TCP, 8KB
+for UDP)
+
+‐P, ‐‐parallel n
+number of parallel client streams to run
+
+‐R, ‐‐reverse
+run in reverse mode (server sends, client receives)
+
+‐w, ‐‐window n[KM]
+TCP window size / socket buffer size  (this  gets  sent  to  the
+server and used on that side too)
+
+‐M, ‐‐set‐mss n
+set TCP maximum segment size (MTU ‐ 40 bytes)
+
+‐N, ‐‐no‐delay
+set TCP no delay, disabling Nagle’s Algorithm
+
+‐4, ‐‐version4
+only use IPv4
+
+‐6, ‐‐version6
+only use IPv6
+
+‐S, ‐‐tos n
+set the IP ’type of service’
+
+‐L, ‐‐flowlabel n
+set the IPv6 flow label (currently only supported on Linux)
+
+‐Z, ‐‐zerocopy
+Use  a  &quot;zero copy&quot; method of sending data, such as sendfile(2),
+instead of the usual write(2).
+
+‐O, ‐‐omit n
+Omit the first n seconds of the test, to skip past the TCP slow‐
+start period.
+
+‐T, ‐‐title str
+Prefix every output line with this string.
+
+‐C, ‐‐linux‐congestion algo
+Set the congestion control algorithm (linux only).
+
+
+AUTHORS
+Iperf  was  originally  written by Mark Gates and Alex Warshavsky.  Man
+page and maintence by Jon Dugan &lt;jdugan at x1024 dot net&gt;.  Other  con‐
+tributions  from  Ajay  Tirumala,  Jim Ferguson, Feng Qin, Kevin Gibbs,
+John Estabrook &lt;jestabro at ncsa.uiuc.edu&gt;, Andrew  Gallatin  &lt;gallatin
+at gmail.com&gt;, Stephen Hemminger &lt;shemminger at linux‐foundation.org&gt;
+
+
+SEE ALSO
+libiperf(3), https://github.com/esnet/iperf
+
+
+
+ESnet                            February 2014                        IPERF(1)
+</pre></div>
+</div>
+<p>The iperf3 manual page will typically be installed in manual
+section 1.</p>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-1">
+        <a href="http://www.es.net/"><img src="_static/esnet/logo-esnet.png" alt="[ESnet]"></a>
+      </div>
+      <div class="col-md-11">
+        <p class="pull-right">
+        <a href="#">Back to top</a>
+        
+        </p>
+        <p>
+            &copy; Copyright 2014-2015, ESnet.<br/>
+          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.<br/>
+        </p>
+      </div>
+    </div>
+  </div>
+</footer>
+  </body>
+</html>

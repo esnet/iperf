@@ -1,7 +1,7 @@
-== iperf 3.1.0 ????-??-?? ==
+== iperf 3.1 2015-10-16 ==
 
-The release notes for iperf 3.1.0 describe changes and new
-functionality in iperf 3.1.0, but not present in 3.0.11 or any earlier
+The release notes for iperf 3.1 describe changes and new
+functionality in iperf 3.1, but not present in 3.0.11 or any earlier
 3.0.x release.
 
 * Selected user-visible changes

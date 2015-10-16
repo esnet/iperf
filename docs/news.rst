@@ -1,6 +1,17 @@
 iperf3 Project News
 ===================
 
+2015-10-16:  iperf-3.1 released
+-------------------------------
+
+| URL:  http://downloads.es.net/pub/iperf/iperf-3.1.tar.gz
+| SHA256:  ``4385a32ece25cb09d4606b4c99316356b3d2cb03b318aa056b99cdb91c5ce656  iperf-3.1.tar.gz``
+
+This release adds support for SCTP on supported platforms, better
+feature detection on FreeBSD, better compatibility with various
+platforms, and a number of bug fixes.
+
+
 2015-01-09:  iperf-3.0.11 released
 ----------------------------------
 

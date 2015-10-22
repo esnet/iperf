@@ -2594,8 +2594,9 @@ iperf_new_stream(struct iperf_test *test, int s)
     if (test->template) {
         snprintf(template, sizeof(template) / sizeof(char), "%s", test->template);
     } else {
-        char buf[] = "/tmp/iperf3.XXXXXX";
-        snprintf(template, sizeof(template) / sizeof(char), "%s", buf);
+        char *tmpdir = getenv("TMPDIR");
+        snprintf(template, sizeof(template) / sizeof(char), "%s/iperf3.XXXXXX",
+                 tmpdir ? tmpdir : "/tmp");
     }
 
     h_errno = 0;

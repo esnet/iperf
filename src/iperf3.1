@@ -95,7 +95,7 @@ use UDP rather than TCP
 .TP
 .BR -b ", " --bandwidth " \fIn\fR[KM]"
 set target bandwidth to \fIn\fR bits/sec (default 1 Mbit/sec for UDP, unlimited for TCP).
-If there are multiple streams (-P flag), the bandwidth limit is applied
+If there are multiple streams (\-P flag), the bandwidth limit is applied
 separately to each stream.
 You can also add a '/' and a number to the bandwidth specifier.
 This is called "burst mode".
@@ -108,10 +108,10 @@ Setting the target bandwidth to 0 will disable bandwidth limits
 time in seconds to transmit for (default 10 secs)
 .TP
 .BR -n ", " --bytes " \fIn\fR[KM]"
-number of bytes to transmit (instead of -t)
+number of bytes to transmit (instead of \-t)
 .TP
 .BR -k ", " --blockcount " \fIn\fR[KM]"
-number of blocks (packets) to transmit (instead of -t or -n)
+number of blocks (packets) to transmit (instead of \-t or \-n)
 .TP
 .BR -l ", " --length " \fIn\fR[KM]"
 length of buffer to read or write (default 128 KB for TCP, 8KB for UDP)

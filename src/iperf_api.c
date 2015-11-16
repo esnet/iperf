@@ -213,7 +213,7 @@ iperf_get_test_server_hostname(struct iperf_test *ipt)
 char*
 iperf_get_test_template(struct iperf_test *ipt)
 {
-    return ipt->template;
+    return ipt->tmp_template;
 }
 
 int
@@ -379,9 +379,9 @@ iperf_set_test_server_hostname(struct iperf_test *ipt, char *server_hostname)
 }
 
 void
-iperf_set_test_template(struct iperf_test *ipt, char *template)
+iperf_set_test_template(struct iperf_test *ipt, char *tmp_template)
 {
-    ipt->template = strdup(template);
+    ipt->tmp_template = strdup(tmp_template);
 }
 
 void
@@ -1881,8 +1881,8 @@ iperf_free_test(struct iperf_test *test)
 
     if (test->server_hostname)
 	free(test->server_hostname);
-    if (test->template)
-    free(test->template);
+    if (test->tmp_template)
+	free(test->tmp_template);
     if (test->bind_address)
 	free(test->bind_address);
     if (!TAILQ_EMPTY(&test->xbind_addrs)) {
@@ -2591,8 +2591,8 @@ iperf_new_stream(struct iperf_test *test, int s)
     struct iperf_stream *sp;
     
     char template[1024];
-    if (test->template) {
-        snprintf(template, sizeof(template) / sizeof(char), "%s", test->template);
+    if (test->tmp_template) {
+        snprintf(template, sizeof(template) / sizeof(char), "%s", test->tmp_template);
     } else {
         char buf[] = "/tmp/iperf3.XXXXXX";
         snprintf(template, sizeof(template) / sizeof(char), "%s", buf);

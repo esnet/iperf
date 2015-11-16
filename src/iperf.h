@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -202,7 +202,7 @@ struct iperf_test
     struct protocol *protocol;
     signed char state;
     char     *server_hostname;                  /* -c option */
-    char     *template;                         /* -c option */
+    char     *tmp_template;
     char     *bind_address;                     /* first -B option */
     TAILQ_HEAD(xbind_addrhead, xbind_entry) xbind_addrs; /* all -X opts */
     int       bind_port;                        /* --cport option */

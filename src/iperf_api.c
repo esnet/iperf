@@ -2865,8 +2865,6 @@ iperf_json_start(struct iperf_test *test)
     test->json_top = cJSON_CreateObject();
     if (test->json_top == NULL)
         return -1;
-    if (test->title)
-	cJSON_AddStringToObject(test->json_top, "title", test->title);
     test->json_start = cJSON_CreateObject();
     if (test->json_start == NULL)
         return -1;
@@ -2889,6 +2887,8 @@ iperf_json_start(struct iperf_test *test)
 int
 iperf_json_finish(struct iperf_test *test)
 {
+    if (test->title)
+	cJSON_AddStringToObject(test->json_top, "title", test->title);
     /* Include server output */
     if (test->json_server_output) {
 	cJSON_AddItemToObject(test->json_top, "server_output_json", test->json_server_output);

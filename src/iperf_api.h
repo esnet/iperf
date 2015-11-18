@@ -289,6 +289,7 @@ enum {
     IENOSCTP = 18,	    // No SCTP support available
     IEBIND = 19,			// Local port specified with no local bind option
     IEUDPBLOCKSIZE = 20,    // Block size too large. Maximum value = %dMAX_UDP_BLOCKSIZE
+    IEBADTOS = 21,	    // Bad TOS value
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

@@ -662,6 +662,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     int flag;
     int blksize;
     int server_flag, client_flag, rate_flag, duration_flag;
+    char *endptr;
 #if defined(HAVE_CPU_AFFINITY)
     char* comma;
 #endif /* HAVE_CPU_AFFINITY */
@@ -825,13 +826,20 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 test->settings->domain = AF_INET6;
                 break;
             case 'S':
-                test->settings->tos = strtol(optarg, NULL, 0);
+                test->settings->tos = strtol(optarg, &endptr, 0);
+		if (endptr == optarg ||
+		    test->settings->tos < 0 ||
+		    test->settings->tos > 255) {
+		    i_errno = IEBADTOS;
+		    return -1;
+		}
 		client_flag = 1;
                 break;
             case 'L':
 #if defined(HAVE_FLOWLABEL)
-                test->settings->flowlabel = strtol(optarg, NULL, 0);
-		if (test->settings->flowlabel < 1 || test->settings->flowlabel > 0xfffff) {
+                test->settings->flowlabel = strtol(optarg, &endptr, 0);
+		if (endptr == optarg ||
+		    test->settings->flowlabel < 1 || test->settings->flowlabel > 0xfffff) {
                     i_errno = IESETFLOW;
                     return -1;
 		}
@@ -876,8 +884,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'A':
 #if defined(HAVE_CPU_AFFINITY)
-                test->affinity = atoi(optarg);
-                if (test->affinity < 0 || test->affinity > 1024) {
+                test->affinity = strtol(optarg, &endptr, 0);
+                if (endptr == optarg || 
+		    test->affinity < 0 || test->affinity > 1024) {
                     i_errno = IEAFFINITY;
                     return -1;
                 }

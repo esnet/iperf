@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -153,10 +153,9 @@ run(struct iperf_test *test)
             for (;;) {
 		if (iperf_run_server(test) < 0) {
 		    iperf_err(test, "error - %s", iperf_strerror(i_errno));
-                    fprintf(stderr, "\n");
 		    ++consecutive_errors;
 		    if (consecutive_errors >= 5) {
-		        fprintf(stderr, "too many errors, exiting\n");
+		        iperf_errexit(test, "too many errors, exiting");
 			break;
 		    }
                 } else

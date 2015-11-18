@@ -1,24 +1,3 @@
-== iperf 3.1.1 2015-11-?? ==
-
-The release notes for iperf 3.1.1 describe changes and new
-functionality in iperf 3.1.1, but not present in 3.1.
-
-* User-visible changes
-
-  * Some markup fixes have been made in the manpages for Debian
-    compatibility (issue #291).
-
-  * A bug where the -T title option was not being output correctly
-    in JSON output has been fixed (issue #292).
-
-  * Argument handling for some command-line options has been improved
-    (issue #316).
-
-* Developer-visible changes
-
-  * A regression with C++ compatibility in one of the iperf header
-    files has been fixed (issue #323).
-
 == iperf 3.1 2015-10-16 ==
 
 The release notes for iperf 3.1 describe changes and new

@@ -26,6 +26,13 @@ OpenBSD, NetBSD, Android, Solaris, and other Linux distributions.
 iperf3 is principally developed by ESnet / Lawrence Berkeley National
 Laboratory.  It is released under a three-clause BSD license.
 
+Note that at this point, ESnet plans to support iperf3 in "maintenance
+mode".  At this point, there are no definite plans for further iperf3
+releases, and ESnet will be providing a very limited amount of
+resources for support and development, going forward.  However, ESnet
+could issue new iperf3 releases to deal with security issues or
+high-impact bug fixes.
+
 For more information see: http://software.es.net/iperf
 
 Source code and issue tracker: https://github.com/esnet/iperf
@@ -149,14 +156,28 @@ appropriate use of the CPU affinity (-A) option.  (Issue #55)
 * The -Z flag sometimes causes the iperf3 client to hang on OSX.
 (Issue #129)
 
-* When specifying the TCP buffer size using the "-w" flag on Linux, Linux 
+* When specifying the socket buffer size using the "-w" flag on Linux, Linux 
 doubles the value you pass in. (You can see this using iperf3's debug flag). 
 But then the CWND does not actually ramp up to the doubled value, but only
 to about 75% of the doubled value. This appears to be by design.
 
+* Although the "-w" flag is documented as setting the (TCP) window
+size, it is also used to set the socket buffer size.  This has been
+shown to be helpful with high-bitrate UDP tests.
+
 * On some platforms, it might be necessary to invoke "ldconfig" 
 manually after doing a "make install" before the iperf3 executable can 
 find its shared library.  (Issue #153)
+
+* The results printed on the server side at the end of a test do not
+correctly reflect the client-side measurements.  This is due to the
+ordering of computing and transferring results between the client
+and server.  (Issue #293)
+
+* The server could have a very short measurement reporting interval at
+the end of a test (particularly a UDP test), containing few or no
+packets.  This issue is due to an artifact of timing between the
+client and server.  (Issue #278)
 
 Links
 -----
@@ -173,7 +194,7 @@ responsibility for the content of these pages.
 Copyright
 ---------
 
-iperf, Copyright (c) 2014, The Regents of the University of
+iperf, Copyright (c) 2014, 2015, The Regents of the University of
 California, through Lawrence Berkeley National Laboratory (subject
 to receipt of any required approvals from the U.S. Dept. of
 Energy).  All rights reserved.

@@ -216,6 +216,9 @@ struct iperf_test
 #endif /* HAVE_CPUSET_SETAFFINITY */
     char     *title;				/* -T option */
     char     *congestion;			/* -C option */
+    int      md5sig_peer_ip_ver;    /* --md5sig */
+    char     *md5sig_peer_ip;       /* --md5sig */
+    int      md5sig_peer_port;      /* --md5sig */
     char     *pidfile;				/* -P option */
 
     char     *logfile;				/* --logfile option */

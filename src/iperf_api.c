@@ -600,6 +600,33 @@ iperf_on_test_finish(struct iperf_test *test)
 
 
 /******************************************************************************/
+static int
+parse_md5sig_args(char *opt, struct iperf_test *test)
+{
+    char *port, *ver;
+
+    ver = strtok(opt, ",");
+    if (!ver)
+        return -1;
+    test->md5sig_peer_ip_ver = atoi(ver);
+    if (test->md5sig_peer_ip_ver != 4 && test->md5sig_peer_ip_ver != 6)
+        return -1;
+    test->md5sig_peer_ip_ver = test->md5sig_peer_ip_ver == 4 ?
+        AF_INET : AF_INET6;
+
+    test->md5sig_peer_ip = strtok(NULL, ",");
+    if (test->md5sig_peer_ip == NULL)
+        return -1;
+
+    port = strtok(NULL, ",");
+    if (!port)
+        return -1;
+    test->md5sig_peer_port = atoi(port);
+    if (test->md5sig_peer_port < 1 && test->md5sig_peer_port > 65535)
+        return -1;
+
+    return 0;
+}
 
 int
 iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
@@ -646,6 +673,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"congestion", required_argument, NULL, 'C'},
         {"linux-congestion", required_argument, NULL, 'C'},
 #endif /* HAVE_TCP_CONGESTION */
+#if defined(HAVE_TCP_MD5SIG)
+        {"md5sig", required_argument, NULL, OPT_TCP_MD5SIG},
+#endif
 #if defined(HAVE_SCTP)
         {"sctp", no_argument, NULL, OPT_SCTP},
         {"nstreams", required_argument, NULL, OPT_NUMSTREAMS},
@@ -917,6 +947,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		return -1;
 #endif /* HAVE_TCP_CONGESTION */
 		break;
+#if defined(HAVE_TCP_MD5SIG)
+        case OPT_TCP_MD5SIG:
+        if (parse_md5sig_args(strdup(optarg), test)) {
+            i_errno = IESETTCPMD5SIG;
+            return -1;
+        }
+#endif
 	    case 'd':
 		test->debug = 1;
 		break;
@@ -964,6 +1001,24 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         i_errno = IEBIND;
         return -1;
     }
+
+    if ((!test->md5sig_peer_ip && test->md5sig_peer_port) ||
+            (test->md5sig_peer_ip && !test->md5sig_peer_port)) {
+        i_errno = IESETTCPMD5SIG;
+        return -1;
+    }
+    if (test->md5sig_peer_ip && test->md5sig_peer_port) {
+        if (test->role == 'c' && !(test->bind_address && test->bind_port)) {
+            i_errno = IESETTCPMD5SIG;
+            return -1;
+
+        }
+        if (test->role == 's' && !test->bind_address) {
+            i_errno = IESETTCPMD5SIG;
+            return -1;
+        }
+    }
+
     if (blksize == 0) {
 	if (test->protocol->id == Pudp)
 	    blksize = DEFAULT_UDP_BLKSIZE;

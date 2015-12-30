@@ -38,6 +38,7 @@
 #include <netdb.h>
 #include <string.h>
 #include <sys/fcntl.h>
+#include <arpa/inet.h>
 
 #ifdef HAVE_SENDFILE
 #ifdef linux
@@ -208,6 +209,201 @@ netannounce(int domain, int proto, char *local, int port)
 
     return s;
 }
+
+#if defined(HAVE_TCP_MD5SIG)
+int
+set_tcp_md5sig(int sockfd, int af, char *md5sig_peer_ip, int md5sig_peer_port)
+{
+    struct tcp_md5sig md5;
+    struct sockaddr_in *addr4;
+    struct sockaddr_in6 *addr6;
+
+    memset(&md5, 0, sizeof(md5));
+    if (af == AF_INET) {
+        addr4 = (struct sockaddr_in *) &(md5.tcpm_addr);
+        addr4->sin_family = af;
+        addr4->sin_port = htons(md5sig_peer_port);
+        inet_pton(AF_INET, md5sig_peer_ip, &(addr4->sin_addr));
+    }
+    else if (af == AF_INET6) {
+        addr6 = (struct sockaddr_in6 *) &(md5.tcpm_addr);
+        addr6->sin6_family = af;
+        addr6->sin6_port = htons(md5sig_peer_port);
+        inet_pton(AF_INET6, md5sig_peer_ip, &(addr6->sin6_addr));
+    }
+    memcpy(&(md5.tcpm_key), TCP_MD5SIG_KEY, TCP_MD5SIG_KEY_SZ);
+    md5.tcpm_keylen = TCP_MD5SIG_KEY_SZ;
+    if (setsockopt(sockfd, IPPROTO_TCP, TCP_MD5SIG, &md5, sizeof(md5)) < 0) {
+        perror("TCP_MD5SIG");
+        close(sockfd);
+        return -1;
+    }
+    return 0;
+}
+
+/* make connection to server */
+int
+netdial_md5(int domain, int proto, char *local, int local_port, char *server, int port,
+		int md5sig_peer_ip_ver, char *md5sig_peer_ip, int md5sig_peer_port)
+{
+    struct addrinfo hints, *local_res, *server_res;
+    int s, opt;
+
+    if (local) {
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = domain;
+        hints.ai_socktype = proto;
+        if (getaddrinfo(local, NULL, &hints, &local_res) != 0)
+            return -1;
+    }
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = domain;
+    hints.ai_socktype = proto;
+    if (getaddrinfo(server, NULL, &hints, &server_res) != 0)
+        return -1;
+
+    s = socket(server_res->ai_family, proto, 0);
+    if (s < 0) {
+        if (local)
+            freeaddrinfo(local_res);
+        freeaddrinfo(server_res);
+        return -1;
+    }
+
+    if (md5sig_peer_ip) {
+        if (set_tcp_md5sig(s, md5sig_peer_ip_ver, md5sig_peer_ip,
+					md5sig_peer_port) != 0)
+            return -1;
+    }
+
+    if (local) {
+        if (local_port) {
+            struct sockaddr_in *lcladdr;
+            lcladdr = (struct sockaddr_in *)local_res->ai_addr;
+            lcladdr->sin_port = htons(local_port);
+            local_res->ai_addr = (struct sockaddr *)lcladdr;
+        }
+
+        if (bind(s, (struct sockaddr *) local_res->ai_addr, local_res->ai_addrlen) < 0) {
+            close(s);
+            freeaddrinfo(local_res);
+            freeaddrinfo(server_res);
+            return -1;
+        }
+        freeaddrinfo(local_res);
+    }
+
+    opt = 1;
+    if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        close(s);
+        return -1;
+    }
+
+    ((struct sockaddr_in *) server_res->ai_addr)->sin_port = htons(port);
+    if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS) {
+        close(s);
+        freeaddrinfo(server_res);
+        return -1;
+    }
+
+    freeaddrinfo(server_res);
+    return s;
+}
+
+int
+netannounce_md5(int domain, int proto, char *local, int port, int md5sig_peer_ip_ver,
+        char *md5sig_peer_ip, int md5sig_peer_port, int num_streams)
+{
+    struct addrinfo hints, *res;
+    char portstr[6];
+    int s, opt, i;
+
+    snprintf(portstr, 6, "%d", port);
+    memset(&hints, 0, sizeof(hints));
+    /*
+     * If binding to the wildcard address with no explicit address
+     * family specified, then force us to get an AF_INET6 socket.  On
+     * CentOS 6 and MacOS, getaddrinfo(3) with AF_UNSPEC in ai_family,
+     * and ai_flags containing AI_PASSIVE returns a result structure
+     * with ai_family set to AF_INET, with the result that we create
+     * and bind an IPv4 address wildcard address and by default, we
+     * can't accept IPv6 connections.
+     *
+     * On FreeBSD, under the above circumstances, ai_family in the
+     * result structure is set to AF_INET6.
+     */
+    if (domain == AF_UNSPEC && !local) {
+        hints.ai_family = AF_INET6;
+    }
+    else {
+        hints.ai_family = domain;
+    }
+    hints.ai_socktype = proto;
+    hints.ai_flags = AI_PASSIVE;
+    if (getaddrinfo(local, portstr, &hints, &res) != 0)
+        return -1;
+
+    s = socket(res->ai_family, proto, 0);
+    if (s < 0) {
+        freeaddrinfo(res);
+        return -1;
+    }
+
+    opt = 1;
+    if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
+                (char *) &opt, sizeof(opt)) < 0) {
+        close(s);
+        freeaddrinfo(res);
+        return -1;
+    }
+    /*
+     * If we got an IPv6 socket, figure out if it should accept IPv4
+     * connections as well.  We do that if and only if no address
+     * family was specified explicitly.  Note that we can only
+     * do this if the IPV6_V6ONLY socket option is supported.  Also,
+     * OpenBSD explicitly omits support for IPv4-mapped addresses,
+     * even though it implements IPV6_V6ONLY.
+     */
+#if defined(IPV6_V6ONLY) && !defined(__OpenBSD__)
+    if (res->ai_family == AF_INET6 && (domain == AF_UNSPEC || domain == AF_INET6)) {
+        if (domain == AF_UNSPEC)
+            opt = 0;
+        else
+            opt = 1;
+        if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY,
+                    (char *) &opt, sizeof(opt)) < 0) {
+            close(s);
+            freeaddrinfo(res);
+            return -1;
+        }
+    }
+#endif /* IPV6_V6ONLY */
+
+    if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0) {
+        close(s);
+        freeaddrinfo(res);
+        return -1;
+    }
+
+    freeaddrinfo(res);
+
+    for (i=0; i<num_streams+1; i++) {
+        md5sig_peer_port += i;
+        if (set_tcp_md5sig(s, md5sig_peer_ip_ver, md5sig_peer_ip, md5sig_peer_port))
+            return -1;
+    }
+
+    if (proto == SOCK_STREAM) {
+        if (listen(s, 5) < 0) {
+            close(s);
+            return -1;
+        }
+    }
+
+    return s;
+}
+#endif
 
 
 /*******************************************************************/

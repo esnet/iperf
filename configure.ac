@@ -110,6 +110,19 @@ if test "x$iperf3_cv_header_tcp_congestion" = "xyes"; then
     AC_DEFINE([HAVE_TCP_CONGESTION], [1], [Have TCP_CONGESTION sockopt.])
 fi
 
+# Check for TCP_MD5SIG sockopt (believed to be Linux only)
+AC_CACHE_CHECK([TCP_MD5SIG socket option],
+[iperf3_cv_header_tcp_md5sig],
+AC_EGREP_CPP(yes,
+[#include <netinet/tcp.h>
+#ifdef TCP_MD5SIG
+  yes
+#endif
+],iperf3_cv_header_tcp_md5sig=yes,iperf3_cv_header_tcp_md5sig=no))
+if test "x$iperf3_cv_header_tcp_md5sig" = "xyes"; then
+    AC_DEFINE([HAVE_TCP_MD5SIG], [1], [Have TCP_MD5SIG sockopt.])
+fi
+
 # Check for IPv6 flowlabel support (believed to be Linux only)
 # We check for IPV6_FLOWLABEL_MGR in <linux/in6.h> even though we
 # don't use that file directly (we have our own stripped-down

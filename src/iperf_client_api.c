@@ -35,6 +35,8 @@
 #include <sys/select.h>
 #include <sys/uio.h>
 #include <arpa/inet.h>
+#include <netdb.h>
+#include <arpa/inet.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -51,7 +53,7 @@ iperf_create_streams(struct iperf_test *test)
     struct iperf_stream *sp;
 
     int orig_bind_port = test->bind_port;
-    for (i = 0; i < test->num_streams; ++i) {
+    for (i = 1; i <= test->num_streams; ++i) {
 
         test->bind_port = orig_bind_port;
 	if (orig_bind_port)
@@ -288,9 +290,27 @@ iperf_connect(struct iperf_test *test)
     make_cookie(test->cookie);
 
     /* Create and connect the control channel */
-    if (test->ctrl_sck < 0)
+    if (test->ctrl_sck < 0) {
 	// Create the control channel using an ephemeral port
-	test->ctrl_sck = netdial(test->settings->domain, Ptcp, test->bind_address, 0, test->server_hostname, test->server_port);
+#if defined (HAVE_TCP_MD5SIG)
+        if (test->md5sig_peer_ip_ver) {
+            test->ctrl_sck = netdial_md5(test->settings->domain, Ptcp,
+                    test->bind_address, test->bind_port,
+                    test->server_hostname, test->server_port,
+                    test->md5sig_peer_ip_ver, test->md5sig_peer_ip,
+                    test->md5sig_peer_port);
+        }
+        else {
+            test->ctrl_sck = netdial(test->settings->domain, Ptcp,
+                    test->bind_address, test->bind_port,
+                    test->server_hostname, test->server_port);
+        }
+#else
+        test->ctrl_sck = netdial(test->settings->domain, Ptcp,
+                test->bind_address, test->bind_port,
+                test->server_hostname, test->server_port);
+#endif
+    }
     if (test->ctrl_sck < 0) {
         i_errno = IECONNECT;
         return -1;

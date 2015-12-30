@@ -49,7 +49,9 @@
 #include <sys/resource.h>
 #include <sched.h>
 #include <setjmp.h>
+#include <arpa/inet.h>
 
+#include "iperf_config.h"
 #include "iperf.h"
 #include "iperf_api.h"
 #include "iperf_udp.h"
@@ -66,21 +68,31 @@
 int
 iperf_server_listen(struct iperf_test *test)
 {
-    retry:
-    if((test->listener = netannounce(test->settings->domain, Ptcp, test->bind_address, test->server_port)) < 0) {
-	if (errno == EAFNOSUPPORT && (test->settings->domain == AF_INET6 || test->settings->domain == AF_UNSPEC)) {
-	    /* If we get "Address family not supported by protocol", that
-	    ** probably means we were compiled with IPv6 but the running
-	    ** kernel does not actually do IPv6.  This is not too unusual,
-	    ** v6 support is and perhaps always will be spotty.
-	    */
-	    warning("this system does not seem to support IPv6 - trying IPv4");
-	    test->settings->domain = AF_INET;
-	    goto retry;
-	} else {
-	    i_errno = IELISTEN;
-	    return -1;
-	}
+retry:
+#if defined (HAVE_TCP_MD5SIG)
+    if (test->md5sig_peer_ip) {
+        test->listener = netannounce_md5(test->settings->domain, Ptcp, test->bind_address, test->server_port,
+                test->md5sig_peer_ip_ver, test->md5sig_peer_ip, test->md5sig_peer_port, test->num_streams);
+    } else {
+        test->listener = netannounce(test->settings->domain, Ptcp, test->bind_address, test->server_port);
+    }
+#else
+    test->listener = netannounce(test->settings->domain, Ptcp, test->bind_address, test->server_port);
+#endif
+    if(test->listener < 0) {
+        if (errno == EAFNOSUPPORT && (test->settings->domain == AF_INET6 || test->settings->domain == AF_UNSPEC)) {
+            /* If we get "Address family not supported by protocol", that
+             ** probably means we were compiled with IPv6 but the running
+             ** kernel does not actually do IPv6.  This is not too unusual,
+             ** v6 support is and perhaps always will be spotty.
+             */
+            warning("this system does not seem to support IPv6 - trying IPv4");
+            test->settings->domain = AF_INET;
+            goto retry;
+        } else {
+            i_errno = IELISTEN;
+            return -1;
+        }
     }
 
     if (!test->json_output) {
@@ -396,7 +408,7 @@ create_server_omit_timer(struct iperf_test * test)
 	}
 	test->omitting = 1;
 	cd.p = test;
-	test->omit_timer = tmr_create(&now, server_omit_timer_proc, cd, test->omit * SEC_TO_US, 0); 
+	test->omit_timer = tmr_create(&now, server_omit_timer_proc, cd, test->omit * SEC_TO_US, 0);
 	if (test->omit_timer == NULL) {
 	    i_errno = IEINITTEST;
 	    return -1;

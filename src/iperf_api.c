@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, 2016, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -2243,7 +2243,12 @@ iperf_print_intermediate(struct iperf_test *test)
 		    iprintf(test, report_sum_bw_udp_sender_format, start_time, end_time, ubuf, nbuf, total_packets, test->omitting?report_omitted:"");
 	    } else {
 		avg_jitter /= test->num_streams;
-		lost_percent = 100.0 * lost_packets / total_packets;
+		if (total_packets > 0) {
+		    lost_percent = 100.0 * lost_packets / total_packets;
+		}
+		else {
+		    lost_percent = 0.0;
+		}
 		if (test->json_output)
 		    cJSON_AddItemToObject(json_interval, "sum", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f  omitted: %b", (double) start_time, (double) end_time, (double) irp->interval_duration, (int64_t) bytes, bandwidth * 8, (double) avg_jitter * 1000.0, (int64_t) lost_packets, (int64_t) total_packets, (double) lost_percent, test->omitting));
 		else
@@ -2347,7 +2352,12 @@ iperf_print_results(struct iperf_test *test)
 	    }
 	} else {
 	    /* Summary, UDP. */
-	    lost_percent = 100.0 * sp->cnt_error / (sp->packet_count - sp->omitted_packet_count);
+	    if (sp->packet_count - sp->omitted_packet_count > 0) {
+		lost_percent = 100.0 * sp->cnt_error / (sp->packet_count - sp->omitted_packet_count);
+	    }
+	    else {
+		lost_percent = 0.0;
+	    }
 	    if (test->json_output)
 		cJSON_AddItemToObject(json_summary_stream, "udp", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f  out_of_order: %d", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8, (double) sp->jitter * 1000.0, (int64_t) sp->cnt_error, (int64_t) (sp->packet_count - sp->omitted_packet_count), (double) lost_percent, (int64_t) sp->outoforder_packets));
 	    else {
@@ -2422,12 +2432,12 @@ iperf_print_results(struct iperf_test *test)
         } else {
 	    /* Summary sum, UDP. */
             avg_jitter /= test->num_streams;
-	    /* If no packets were sent, arbitrarily set loss percentage to 100. */
+	    /* If no packets were sent, arbitrarily set loss percentage to 0. */
 	    if (total_packets > 0) {
 		lost_percent = 100.0 * lost_packets / total_packets;
 	    }
 	    else {
-		lost_percent = 100.0;
+		lost_percent = 0.0;
 	    }
 	    if (test->json_output)
 		cJSON_AddItemToObject(test->json_end, "sum", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f", (double) start_time, (double) end_time, (double) end_time, (int64_t) total_sent, bandwidth * 8, (double) avg_jitter * 1000.0, (int64_t) lost_packets, (int64_t) total_packets, (double) lost_percent));
@@ -2559,7 +2569,12 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 	    else
 		iprintf(test, report_bw_udp_sender_format, sp->socket, st, et, ubuf, nbuf, irp->interval_packet_count, irp->omitted?report_omitted:"");
 	} else {
-	    lost_percent = 100.0 * irp->interval_cnt_error / irp->interval_packet_count;
+	    if (irp->interval_packet_count > 0) {
+		lost_percent = 100.0 * irp->interval_cnt_error / irp->interval_packet_count;
+	    }
+	    else {
+		lost_percent = 0.0;
+	    }
 	    if (test->json_output)
 		cJSON_AddItemToArray(json_interval_streams, iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f  omitted: %b", (int64_t) sp->socket, (double) st, (double) et, (double) irp->interval_duration, (int64_t) irp->bytes_transferred, bandwidth * 8, (double) irp->jitter * 1000.0, (int64_t) irp->interval_cnt_error, (int64_t) irp->interval_packet_count, (double) lost_percent, irp->omitted));
 	    else

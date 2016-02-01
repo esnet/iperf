@@ -24,7 +24,7 @@
 # file for complete information.
 
 # Initialize the autoconf system for the specified tool, version and mailing list
-AC_INIT(iperf, 3.1.1, https://github.com/esnet/iperf, iperf, http://software.es.net/iperf/)
+AC_INIT(iperf, 3.1.2, https://github.com/esnet/iperf, iperf, http://software.es.net/iperf/)
 AC_LANG(C)
 
 # Specify where the auxiliary files created by configure should go. The config

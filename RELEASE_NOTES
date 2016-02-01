@@ -1,3 +1,21 @@
+== iperf 3.1.2 2016-02-01 ==
+
+The release notes for iperf 3.1.2 describe changes, including bug
+fixes and new functionality, made since iperf 3.1.1.
+
+* User-visible changes
+
+  * Fixed a bug that caused nan values to be emitted (incorrectly)
+    into JSON, particularly at the end of UDP tests (issue #278).
+
+  * Fixed a bug that caused the wrong value to be printed for
+    out-of-order UDP packets (issue #329).
+
+  * Added a contrib/ directory containing a few submitted graphing
+    scripts.
+
+* Developer-visible changes
+
 == iperf 3.1.1 2015-11-19 ==
 
 The release notes for iperf 3.1.1 describe changes and new

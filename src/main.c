@@ -77,7 +77,7 @@ main(int argc, char **argv)
         fprintf(stderr, "setting priority to valid level\n");
         rc = setpriority(PRIO_PROCESS, 0, 0);
     }
-    
+
     /* setting the affinity of the process  */
     cpu_set_t cpu_set;
     int affinity = -1;
@@ -134,41 +134,41 @@ run(struct iperf_test *test)
     /* Termination signals. */
     iperf_catch_sigend(sigend_handler);
     if (setjmp(sigend_jmp_buf))
-	iperf_got_sigend(test);
+        iperf_got_sigend(test);
 
     switch (test->role) {
         case 's':
-	    if (test->daemon) {
-		int rc = daemon(0, 0);
-		if (rc < 0) {
-		    i_errno = IEDAEMON;
-		    iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
-		}
-	    }
-	    consecutive_errors = 0;
-	    if (iperf_create_pidfile(test) < 0) {
-		i_errno = IEPIDFILE;
-		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
-	    }
+            if (test->daemon) {
+                int rc = daemon(0, 0);
+                if (rc < 0) {
+                    i_errno = IEDAEMON;
+                    iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
+                }
+            }
+            consecutive_errors = 0;
+            if (iperf_create_pidfile(test) < 0) {
+                i_errno = IEPIDFILE;
+                iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
+            }
             for (;;) {
-		if (iperf_run_server(test) < 0) {
-		    iperf_err(test, "error - %s", iperf_strerror(i_errno));
-		    ++consecutive_errors;
-		    if (consecutive_errors >= 5) {
-		        iperf_errexit(test, "too many errors, exiting");
-			break;
-		    }
+                if (iperf_run_server(test) < 0) {
+                    iperf_err(test, "error - %s", iperf_strerror(i_errno));
+                    ++consecutive_errors;
+                    if (consecutive_errors >= 5) {
+                        iperf_errexit(test, "too many errors, exiting");
+                        break;
+                    }
                 } else
-		    consecutive_errors = 0;
+                    consecutive_errors = 0;
                 iperf_reset_test(test);
                 if (iperf_get_test_one_off(test))
                     break;
             }
-	    iperf_delete_pidfile(test);
+            iperf_delete_pidfile(test);
             break;
-	case 'c':
-	    if (iperf_run_client(test) < 0)
-		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
+        case 'c':
+            if (iperf_run_client(test) < 0)
+                iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
             break;
         default:
             usage();

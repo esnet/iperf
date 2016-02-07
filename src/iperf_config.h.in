@@ -57,6 +57,9 @@
 /* Have TCP_CONGESTION sockopt. */
 #undef HAVE_TCP_CONGESTION
 
+/* Have TCP_MD5SIG sockopt. */
+#undef HAVE_TCP_MD5SIG
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 

@@ -50,6 +50,7 @@ struct iperf_stream;
 #define OPT_UDP_COUNTERS_64BIT 4
 #define OPT_CLIENT_PORT 5
 #define OPT_NUMSTREAMS 6
+#define OPT_TCP_MD5SIG 7
 
 /* states */
 #define TEST_START 1
@@ -344,6 +345,7 @@ enum {
     /* Timer errors */
     IENEWTIMER = 300,       // Unable to create new timer (check perror)
     IEUPDATETIMER = 301,    // Unable to update timer (check perror)
+    IESETTCPMD5SIG = 302,   // Unable to set TCP_MD5SIG option
 };
 
 #endif /* !__IPERF_API_H */

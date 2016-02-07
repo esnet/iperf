@@ -27,6 +27,11 @@
 #ifndef __NET_H
 #define __NET_H
 
+#if defined(HAVE_TCP_MD5SIG)
+#define TCP_MD5SIG_KEY          "iperf3"
+#define TCP_MD5SIG_KEY_SZ       (sizeof(TCP_MD5SIG_KEY)/sizeof(TCP_MD5SIG_KEY[0]))
+#endif
+
 int netdial(int domain, int proto, char *local, int local_port, char *server, int port);
 int netannounce(int domain, int proto, char *local, int port);
 int Nread(int fd, char *buf, size_t count, int prot);
@@ -37,6 +42,7 @@ int getsock_tcp_mss(int inSock);
 int set_tcp_options(int sock, int no_delay, int mss);
 int setnonblocking(int fd, int nonblocking);
 int getsockdomain(int sock);
+int set_tcp_md5sig(int sockfd, int af, char *md5sig_peer_ip, int md5sig_peer_port);
 
 #define NET_SOFTERROR -1
 #define NET_HARDERROR -2

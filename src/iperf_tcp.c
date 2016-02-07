@@ -38,6 +38,8 @@
 #include <netinet/tcp.h>
 #include <sys/time.h>
 #include <sys/select.h>
+#include <arpa/inet.h>
+
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -128,6 +130,38 @@ iperf_tcp_accept(struct iperf_test * test)
     return s;
 }
 
+#if defined(HAVE_TCP_MD5SIG)
+int
+__set_tcp_md5sig(int sockfd, struct iperf_test *test)
+{
+    struct tcp_md5sig md5;
+    struct sockaddr_in *addr4;
+    struct sockaddr_in6 *addr6;
+    int af = test->md5sig_peer_ip_ver;
+
+    memset(&md5, 0, sizeof(md5));
+    if (af == AF_INET) {
+        addr4 = (struct sockaddr_in *) &(md5.tcpm_addr);
+        addr4->sin_family = af;
+        addr4->sin_port = htons(test->md5sig_peer_port);
+        inet_pton(AF_INET, test->md5sig_peer_ip, &(addr4->sin_addr));
+    }
+    else if (af == AF_INET6) {
+        addr6 = (struct sockaddr_in6 *) &(md5.tcpm_addr);
+        addr6->sin6_family = af;
+        addr6->sin6_port = htons(test->md5sig_peer_port);
+        inet_pton(AF_INET6, test->md5sig_peer_ip, &(addr6->sin6_addr));
+    }
+    memcpy(&(md5.tcpm_key), TCP_MD5SIG_KEY, TCP_MD5SIG_KEY_SZ);
+    md5.tcpm_keylen = TCP_MD5SIG_KEY_SZ;
+    if (setsockopt(sockfd, IPPROTO_TCP, TCP_MD5SIG, &md5, sizeof(md5)) < 0) {
+        close(sockfd);
+        i_errno = IESETTCPMD5SIG;
+        return -1;
+    }
+    return 0;
+}
+#endif
 
 /* iperf_tcp_listen
  *
@@ -140,6 +174,9 @@ iperf_tcp_listen(struct iperf_test *test)
     char portstr[6];
     int s, opt;
     int saved_errno;
+#if defined(HAVE_TCP_MD5SIG)
+    int i;
+#endif
 
     s = test->listener;
 
@@ -159,17 +196,17 @@ iperf_tcp_listen(struct iperf_test *test)
         snprintf(portstr, 6, "%d", test->server_port);
         memset(&hints, 0, sizeof(hints));
 
-	/*
-	 * If binding to the wildcard address with no explicit address
-	 * family specified, then force us to get an AF_INET6 socket.
-	 * More details in the comments in netanounce().
-	 */
-	if (test->settings->domain == AF_UNSPEC && !test->bind_address) {
-	    hints.ai_family = AF_INET6;
-	}
-	else {
-	    hints.ai_family = test->settings->domain;
-	}
+        /*
+         * If binding to the wildcard address with no explicit address
+         * family specified, then force us to get an AF_INET6 socket.
+         * More details in the comments in netanounce().
+         */
+        if (test->settings->domain == AF_UNSPEC && !test->bind_address) {
+            hints.ai_family = AF_INET6;
+        }
+        else {
+            hints.ai_family = test->settings->domain;
+        }
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_flags = AI_PASSIVE;
         if (getaddrinfo(test->bind_address, portstr, &hints, &res) != 0) {
@@ -178,7 +215,7 @@ iperf_tcp_listen(struct iperf_test *test)
         }
 
         if ((s = socket(res->ai_family, SOCK_STREAM, 0)) < 0) {
-	    freeaddrinfo(res);
+            freeaddrinfo(res);
             i_errno = IESTREAMLISTEN;
             return -1;
         }
@@ -186,10 +223,10 @@ iperf_tcp_listen(struct iperf_test *test)
         if (test->no_delay) {
             opt = 1;
             if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0) {
-		saved_errno = errno;
-		close(s);
-		freeaddrinfo(res);
-		errno = saved_errno;
+                saved_errno = errno;
+                close(s);
+                freeaddrinfo(res);
+                errno = saved_errno;
                 i_errno = IESETNODELAY;
                 return -1;
             }
@@ -197,77 +234,92 @@ iperf_tcp_listen(struct iperf_test *test)
         // XXX: Setting MSS is very buggy!
         if ((opt = test->settings->mss)) {
             if (setsockopt(s, IPPROTO_TCP, TCP_MAXSEG, &opt, sizeof(opt)) < 0) {
-		saved_errno = errno;
-		close(s);
-		freeaddrinfo(res);
-		errno = saved_errno;
+                saved_errno = errno;
+                close(s);
+                freeaddrinfo(res);
+                errno = saved_errno;
                 i_errno = IESETMSS;
                 return -1;
             }
         }
         if ((opt = test->settings->socket_bufsize)) {
             if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) < 0) {
-		saved_errno = errno;
-		close(s);
-		freeaddrinfo(res);
-		errno = saved_errno;
+                saved_errno = errno;
+                close(s);
+                freeaddrinfo(res);
+                errno = saved_errno;
                 i_errno = IESETBUF;
                 return -1;
             }
             if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) < 0) {
-		saved_errno = errno;
-		close(s);
-		freeaddrinfo(res);
-		errno = saved_errno;
+                saved_errno = errno;
+                close(s);
+                freeaddrinfo(res);
+                errno = saved_errno;
                 i_errno = IESETBUF;
                 return -1;
             }
         }
-	if (test->debug) {
-	    socklen_t optlen = sizeof(opt);
-	    if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, &optlen) < 0) {
-		saved_errno = errno;
-		close(s);
-		freeaddrinfo(res);
-		errno = saved_errno;
-		i_errno = IESETBUF;
-		return -1;
-	    }
-	    printf("SO_SNDBUF is %u\n", opt);
-	}
+        if (test->debug) {
+            socklen_t optlen = sizeof(opt);
+            if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, &optlen) < 0) {
+                saved_errno = errno;
+                close(s);
+                freeaddrinfo(res);
+                errno = saved_errno;
+                i_errno = IESETBUF;
+                return -1;
+            }
+            printf("SO_SNDBUF is %u\n", opt);
+        }
 #if defined(HAVE_TCP_CONGESTION)
-	if (test->congestion) {
-	    if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
-		close(s);
-		freeaddrinfo(res);
-		i_errno = IESETCONGESTION;
-		return -1;
-	    } 
-	}
+        if (test->congestion) {
+            if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
+                close(s);
+                freeaddrinfo(res);
+                i_errno = IESETCONGESTION;
+                return -1;
+            }
+        }
 #endif /* HAVE_TCP_CONGESTION */
+#if 0
         opt = 1;
         if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-	    saved_errno = errno;
+            saved_errno = errno;
             close(s);
-	    freeaddrinfo(res);
-	    errno = saved_errno;
+            freeaddrinfo(res);
+            errno = saved_errno;
             i_errno = IEREUSEADDR;
             return -1;
         }
+#endif
+#if defined(HAVE_TCP_MD5SIG)
+        if (test->md5sig_peer_ip_ver) {
+            for (i=0; i<=test->num_streams+2; i++) {
+                test->md5sig_peer_port += i;
+                if ((i_errno = __set_tcp_md5sig(s, test)) != 0) {
+                    close(s);
+                    freeaddrinfo(res);
+                    return -1;
+                }
+            }
+        }
+#endif /* HAVE_TCP_MD5SIG */
 
-	/*
-	 * If we got an IPv6 socket, figure out if it shoudl accept IPv4
-	 * connections as well.  See documentation in netannounce() for
-	 * more details.
-	 */
+        /*
+         * If we got an IPv6 socket, figure out if it shoudl accept IPv4
+         * connections as well.  See documentation in netannounce() for
+         * more details.
+         */
 #if defined(IPV6_V6ONLY) && !defined(__OpenBSD__)
+
 	if (res->ai_family == AF_INET6 && (test->settings->domain == AF_UNSPEC || test->settings->domain == AF_INET)) {
 	    if (test->settings->domain == AF_UNSPEC)
 		opt = 0;
 	    else 
 		opt = 1;
 	    if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, 
-			   (char *) &opt, sizeof(opt)) < 0) {
+			    (char *) &opt, sizeof(opt)) < 0) {
 		saved_errno = errno;
 		close(s);
 		freeaddrinfo(res);
@@ -279,10 +331,10 @@ iperf_tcp_listen(struct iperf_test *test)
 #endif /* IPV6_V6ONLY */
 
         if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0) {
-	    saved_errno = errno;
+            saved_errno = errno;
             close(s);
-	    freeaddrinfo(res);
-	    errno = saved_errno;
+            freeaddrinfo(res);
+            errno = saved_errno;
             i_errno = IESTREAMLISTEN;
             return -1;
         }
@@ -296,7 +348,7 @@ iperf_tcp_listen(struct iperf_test *test)
 
         test->listener = s;
     }
-    
+
     return s;
 }
 
@@ -467,6 +519,13 @@ iperf_tcp_connect(struct iperf_test *test)
 	}
     }
 #endif /* HAVE_TCP_CONGESTION */
+
+#if defined(HAVE_TCP_MD5SIG)
+    if (test->md5sig_peer_ip_ver) {
+        if ((i_errno = __set_tcp_md5sig(s, test)) != 0)
+            return -1;
+    }
+#endif /* HAVE_TCP_MD5SIG */
 
     if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS) {
 	saved_errno = errno;

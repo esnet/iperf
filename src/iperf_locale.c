@@ -139,6 +139,14 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
 #if defined(HAVE_TCP_CONGESTION)
                            "  -C, --congestion <algo>   set TCP congestion control algorithm (Linux and FreeBSD only)\n"
 #endif /* HAVE_TCP_CONGESTION */
+#if defined(HAVE_TCP_MD5SIG)
+                           "  --md5sig <peer IP version>,<peer IP>,<peer port>\n"
+                           "                            set TCP MD5 option (Linux only)\n"
+                           "                            following options are mandatory with this option\n"
+                           "                            -B/--bind (server and client)\n"
+                           "                            -p/--port   # (server and client)\n"
+                           "                            --cport     # (client)\n"
+#endif /* HAVE_TCP_MD5SIG */
                            "  -M, --set-mss   #         set TCP/SCTP maximum segment size (MTU - 40 bytes)\n"
                            "  -N, --no-delay            set TCP/SCTP no delay, disabling Nagle's Algorithm\n"
                            "  -4, --version4            only use IPv4\n"

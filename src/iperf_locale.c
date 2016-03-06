@@ -1,4 +1,4 @@
-/*--------------------------------------------------------------- 
+/*---------------------------------------------------------------
  * iperf, Copyright (c) 2014, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
@@ -27,49 +27,49 @@
  * Based on code that is:
  *
  * Copyright (c) 1999,2000,2001,2002,2003
- * The Board of Trustees of the University of Illinois            
- * All Rights Reserved.                                           
- *--------------------------------------------------------------- 
- * Permission is hereby granted, free of charge, to any person    
- * obtaining a copy of this software (Iperf) and associated       
- * documentation files (the "Software"), to deal in the Software  
- * without restriction, including without limitation the          
- * rights to use, copy, modify, merge, publish, distribute,        
- * sublicense, and/or sell copies of the Software, and to permit     
+ * The Board of Trustees of the University of Illinois
+ * All Rights Reserved.
+ *---------------------------------------------------------------
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software (Iperf) and associated
+ * documentation files (the "Software"), to deal in the Software
+ * without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute,
+ * sublicense, and/or sell copies of the Software, and to permit
  * persons to whom the Software is furnished to do
- * so, subject to the following conditions: 
+ * so, subject to the following conditions:
  *
- *     
- * Redistributions of source code must retain the above 
- * copyright notice, this list of conditions and 
- * the following disclaimers. 
  *
- *     
- * Redistributions in binary form must reproduce the above 
- * copyright notice, this list of conditions and the following 
- * disclaimers in the documentation and/or other materials 
- * provided with the distribution. 
- * 
- *     
- * Neither the names of the University of Illinois, NCSA, 
- * nor the names of its contributors may be used to endorse 
+ * Redistributions of source code must retain the above
+ * copyright notice, this list of conditions and
+ * the following disclaimers.
+ *
+ *
+ * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following
+ * disclaimers in the documentation and/or other materials
+ * provided with the distribution.
+ *
+ *
+ * Neither the names of the University of Illinois, NCSA,
+ * nor the names of its contributors may be used to endorse
  * or promote products derived from this Software without
- * specific prior written permission. 
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
- * NONINFRINGEMENT. IN NO EVENT SHALL THE CONTIBUTORS OR COPYRIGHT 
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, 
+ * specific prior written permission.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE CONTIBUTORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. 
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * ________________________________________________________________
- * National Laboratory for Applied Network Research 
- * National Center for Supercomputing Applications 
- * University of Illinois at Urbana-Champaign 
+ * National Laboratory for Applied Network Research
+ * National Center for Supercomputing Applications
+ * University of Illinois at Urbana-Champaign
  * http://www.ncsa.uiuc.edu
- * ________________________________________________________________ 
+ * ________________________________________________________________
  *
  * Locale.c
  * by Ajay Tirumala <tirumala@ncsa.uiuc.edu>
@@ -108,6 +108,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -V, --verbose             more detailed output\n"
                            "  -J, --json                output in JSON format\n"
                            "  --logfile f               send output to a log file\n"
+                           "  --forceflush              force flushing output at every interval\n"
                            "  -d, --debug               emit debugging output\n"
                            "  -v, --version             show version information and quit\n"
                            "  -h, --help                show this message and quit\n"

@@ -4,7 +4,7 @@ Invoking iperf3
 iperf3 includes a manual page listing all of the command-line options.
 The manual page is the most up-to-date reference to the various flags and parameters.
 
-For sample command line usage, see: 
+For sample command line usage, see:
 
 http://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf-and-iperf3/
 
@@ -81,6 +81,10 @@ the executable.
 
    ‐‐logfile file
    send output to a log file.
+
+   --forceflush
+   force flushing output at every interval. Used to avoid buffering when sending
+   output to pipe.
 
    ‐d, ‐‐debug
    emit  debugging  output.  Primarily (perhaps exclusively) of use
@@ -196,4 +200,3 @@ the executable.
 
 The iperf3 manual page will typically be installed in manual
 section 1.
-

@@ -6,7 +6,7 @@ iperf3 \- perform network throughput tests
 .I options
 .B ]
 .br
-.B iperf3 -c 
+.B iperf3 -c
 .I server
 .B [
 .I options
@@ -50,13 +50,17 @@ CPUs).
 bind to a specific interface
 .TP
 .BR -V ", " --verbose " "
-give more detailed output 
+give more detailed output
 .TP
 .BR -J ", " --json " "
 output in JSON format
 .TP
 .BR --logfile " \fIfile\fR"
 send output to a log file.
+.TP
+.BR --forceflush " "
+force flushing output at every interval.
+Used to avoid buffering when sending output to pipe. 
 .TP
 .BR -d ", " --debug " "
 emit debugging output.

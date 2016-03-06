@@ -131,7 +131,7 @@ struct iperf_stream
     int       remote_port;
     int       socket;
     int       id;
-	/* XXX: is settings just a pointer to the same struct in iperf_test? if not, 
+	/* XXX: is settings just a pointer to the same struct in iperf_test? if not,
 		should it be? */
     struct iperf_settings *settings;	/* pointer to structure settings */
 
@@ -236,6 +236,7 @@ struct iperf_test
     int       debug;				/* -d option - enable debug */
     int	      get_server_output;		/* --get-server-output */
     int	      udp_counters_64bit;		/* --use-64-bit-udp-counters */
+    int       forceflush; /* --forceflush - flushing output at every interval */
 
     int	      multisend;
 
@@ -245,7 +246,7 @@ struct iperf_test
     fd_set    read_set;                         /* set of read sockets */
     fd_set    write_set;                        /* set of write sockets */
 
-    /* Interval related members */ 
+    /* Interval related members */
     int       omitting;
     double    stats_interval;
     double    reporter_interval;

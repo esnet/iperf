@@ -50,6 +50,7 @@ struct iperf_stream;
 #define OPT_UDP_COUNTERS_64BIT 4
 #define OPT_CLIENT_PORT 5
 #define OPT_NUMSTREAMS 6
+#define OPT_FORCEFLUSH 7
 #define OPT_NO_FQ_SOCKET_PACING 9
 
 /* states */

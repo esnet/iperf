@@ -242,6 +242,7 @@ struct iperf_test
     int       debug;				/* -d option - enable debug */
     int	      get_server_output;		/* --get-server-output */
     int	      udp_counters_64bit;		/* --use-64-bit-udp-counters */
+    int       forceflush; /* --forceflush - flushing output at every interval */
     int       no_fq_socket_pacing;	  /* --no-fq-socket-pacing */
     int	      multisend;
 

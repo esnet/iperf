@@ -58,6 +58,10 @@ output in JSON format
 .BR --logfile " \fIfile\fR"
 send output to a log file.
 .TP
+.BR --forceflush " "
+force flushing output at every interval.
+Used to avoid buffering when sending output to pipe.
+.TP
 .BR -d ", " --debug " "
 emit debugging output.
 Primarily (perhaps exclusively) of use to developers.

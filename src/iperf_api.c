@@ -665,6 +665,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif
 	{"pidfile", required_argument, NULL, 'I'},
 	{"logfile", required_argument, NULL, OPT_LOGFILE},
+	{"forceflush", no_argument, NULL, OPT_FORCEFLUSH},
 	{"get-server-output", no_argument, NULL, OPT_GET_SERVER_OUTPUT},
 	{"udp-counters-64bit", no_argument, NULL, OPT_UDP_COUNTERS_64BIT},
 	{"no-fq-socket-pacing", no_argument, NULL, OPT_NO_FQ_SOCKET_PACING},
@@ -939,6 +940,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	        break;
 	    case OPT_LOGFILE:
 		test->logfile = strdup(optarg);
+		break;
+	    case OPT_FORCEFLUSH:
+		test->forceflush = 1;
 		break;
 	    case OPT_GET_SERVER_OUTPUT:
 		test->get_server_output = 1;
@@ -2693,7 +2697,7 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 	}
     }
 
-    if (test->logfile)
+    if (test->logfile || test->forceflush)
         iflush(test);
 }
 

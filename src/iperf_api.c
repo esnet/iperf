@@ -2518,6 +2518,11 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 	iperf_err(test, "print_interval_results error: interval_results is NULL");
         return;
     }
+    if (irp->interval_duration == 0) {
+        /* server may end-up with 0 duration interval if it receives TEST_END right
+           after beginning new interval */
+        return;
+    }
     if (!test->json_output) {
 	/* First stream? */
 	if (sp == SLIST_FIRST(&test->streams)) {

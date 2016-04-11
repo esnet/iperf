@@ -36,7 +36,7 @@ def generate_output(iperf, options):
 def summed_output(iperf, options):
     """Format summed output."""
 
-    row_header = '???'  # XXX get this value
+    row_header = None
 
     byte = list()
     bits_per_second = list()
@@ -47,6 +47,10 @@ def summed_output(iperf, options):
         for ii in i.get('streams'):
             if options.verbose:
                 pp.pprint(i)
+            # grab the first start value
+            if row_header is None:
+                row_header = round(float(ii.get('start')), 4)
+            # aggregate the rest of the values
             byte.append(ii.get('bytes'))
             bits_per_second.append(float(ii.get('bits_per_second')) / (1000*1000*1000))
             retransmits.append(ii.get('retransmits'))

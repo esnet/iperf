@@ -33,6 +33,36 @@ def generate_output(iperf, options):
             yield row
 
 
+def summed_output(iperf, options):
+    """Format summed output."""
+
+    row_header = '???'  # XXX get this value
+
+    byte = list()
+    bits_per_second = list()
+    retransmits = list()
+    snd_cwnd = list()
+
+    for i in iperf.get('intervals'):
+        for ii in i.get('streams'):
+            if options.verbose:
+                pp.pprint(i)
+            byte.append(ii.get('bytes'))
+            bits_per_second.append(float(ii.get('bits_per_second')) / (1000*1000*1000))
+            retransmits.append(ii.get('retransmits'))
+            snd_cwnd.append(float(ii.get('snd_cwnd')) / (1000*1000))
+
+    row = '{h} {b} {bps} {r} {s}\n'.format(
+        h=row_header,
+        b=sum(byte),
+        bps=round(sum(bits_per_second), 3),
+        r=sum(retransmits),
+        s=round(sum(snd_cwnd) / len(snd_cwnd), 2)
+    )
+
+    return row
+
+
 def main():
     """Execute the read and formatting."""
     usage = '%prog [ -f FILE | -o OUT | -v ]'
@@ -43,6 +73,9 @@ def main():
     parser.add_option('-o', '--output', metavar='OUT',
                       type='string', dest='output',
                       help='Optional file to append output to.')
+    parser.add_option('-s', '--sum',
+                      dest='summed', action='store_true', default=False,
+                      help='Summed version of the output.')
     parser.add_option('-v', '--verbose',
                       dest='verbose', action='store_true', default=False,
                       help='Verbose debug output to stderr.')
@@ -73,7 +106,12 @@ def main():
     else:
         fh = sys.stdout
 
-    for i in generate_output(iperf, options):
+    if options.summed:
+        fmt = summed_output
+    else:
+        fmt = generate_output
+
+    for i in fmt(iperf, options):
         fh.write(i)
 
 

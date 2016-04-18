@@ -36,35 +36,36 @@ def generate_output(iperf, options):
 def summed_output(iperf, options):
     """Format summed output."""
 
-    row_header = None
-
-    byte = list()
-    bits_per_second = list()
-    retransmits = list()
-    snd_cwnd = list()
-
     for i in iperf.get('intervals'):
+
+        row_header = None
+
+        byte = list()
+        bits_per_second = list()
+        retransmits = list()
+        snd_cwnd = list()
+
         for ii in i.get('streams'):
             if options.verbose:
                 pp.pprint(i)
             # grab the first start value
             if row_header is None:
-                row_header = round(float(ii.get('start')), 4)
+                row_header = round(float(ii.get('start')), 2)
             # aggregate the rest of the values
             byte.append(ii.get('bytes'))
             bits_per_second.append(float(ii.get('bits_per_second')) / (1000*1000*1000))
             retransmits.append(ii.get('retransmits'))
             snd_cwnd.append(float(ii.get('snd_cwnd')) / (1000*1000))
 
-    row = '{h} {b} {bps} {r} {s}\n'.format(
-        h=row_header,
-        b=sum(byte),
-        bps=round(sum(bits_per_second), 3),
-        r=sum(retransmits),
-        s=round(sum(snd_cwnd) / len(snd_cwnd), 2)
-    )
+        row = '{h} {b} {bps} {r} {s}\n'.format(
+            h=row_header,
+            b=sum(byte),
+            bps=round(sum(bits_per_second), 3),
+            r=sum(retransmits),
+            s=round(sum(snd_cwnd) / len(snd_cwnd), 2)
+        )
 
-    return row
+        yield row
 
 
 def main():

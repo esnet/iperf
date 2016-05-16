@@ -152,7 +152,9 @@ struct iperf_stream
     double    jitter;
     double    prev_transit;
     int       outoforder_packets;
+    int       omitted_outoforder_packets;
     int       cnt_error;
+    int       omitted_cnt_error;
     uint64_t  target;
 
     struct sockaddr_storage local_addr;

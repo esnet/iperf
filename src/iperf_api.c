@@ -2062,9 +2062,9 @@ iperf_reset_stats(struct iperf_test *test)
     gettimeofday(&now, NULL);
     SLIST_FOREACH(sp, &test->streams, streams) {
 	sp->omitted_packet_count = sp->packet_count;
+        sp->omitted_cnt_error = sp->cnt_error;
+        sp->omitted_outoforder_packets = sp->outoforder_packets;
 	sp->jitter = 0;
-	sp->outoforder_packets = 0;
-	sp->cnt_error = 0;
 	rp = sp->result;
         rp->bytes_sent = rp->bytes_received = 0;
         rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;
@@ -2333,7 +2333,7 @@ iperf_print_results(struct iperf_test *test)
 	    }
 	} else {
             total_packets += (sp->packet_count - sp->omitted_packet_count);
-            lost_packets += sp->cnt_error;
+            lost_packets += (sp->cnt_error - sp->omitted_cnt_error);
             avg_jitter += sp->jitter;
         }
 
@@ -2357,19 +2357,19 @@ iperf_print_results(struct iperf_test *test)
 	} else {
 	    /* Summary, UDP. */
 	    if (sp->packet_count - sp->omitted_packet_count > 0) {
-		lost_percent = 100.0 * sp->cnt_error / (sp->packet_count - sp->omitted_packet_count);
+              lost_percent = 100.0 * (sp->cnt_error - sp->omitted_cnt_error) / (sp->packet_count - sp->omitted_packet_count);
 	    }
 	    else {
 		lost_percent = 0.0;
 	    }
 	    if (test->json_output)
-		cJSON_AddItemToObject(json_summary_stream, "udp", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f  out_of_order: %d", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8, (double) sp->jitter * 1000.0, (int64_t) sp->cnt_error, (int64_t) (sp->packet_count - sp->omitted_packet_count), (double) lost_percent, (int64_t) sp->outoforder_packets));
+              cJSON_AddItemToObject(json_summary_stream, "udp", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f  out_of_order: %d", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8, (double) sp->jitter * 1000.0, (int64_t) (sp->cnt_error - sp->omitted_cnt_error), (int64_t) (sp->packet_count - sp->omitted_packet_count), (double) lost_percent, (int64_t) (sp->outoforder_packets - sp->omitted_outoforder_packets)));
 	    else {
-		iprintf(test, report_bw_udp_format, sp->socket, start_time, end_time, ubuf, nbuf, sp->jitter * 1000.0, sp->cnt_error, (sp->packet_count - sp->omitted_packet_count), lost_percent, "");
+              iprintf(test, report_bw_udp_format, sp->socket, start_time, end_time, ubuf, nbuf, sp->jitter * 1000.0, (sp->cnt_error - sp->omitted_cnt_error), (sp->packet_count - sp->omitted_packet_count), lost_percent, "");
 		if (test->role == 'c')
 		    iprintf(test, report_datagrams, sp->socket, (sp->packet_count - sp->omitted_packet_count));
-		if (sp->outoforder_packets > 0)
-		    iprintf(test, report_sum_outoforder, start_time, end_time, sp->outoforder_packets);
+		if ((sp->outoforder_packets - sp->omitted_outoforder_packets) > 0)
+                  iprintf(test, report_sum_outoforder, start_time, end_time, (sp->outoforder_packets - sp->omitted_outoforder_packets));
 	    }
 	}
 

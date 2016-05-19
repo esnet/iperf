@@ -2339,7 +2339,7 @@ iperf_print_results(struct iperf_test *test)
         }
 
 	unit_snprintf(ubuf, UNIT_LEN, (double) bytes_sent, 'A');
-	bandwidth = (double) bytes_received / (double) end_time;
+	bandwidth = (double) bytes_sent / (double) end_time;
 	unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
 	if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 	    if (test->sender_has_retransmits) {
@@ -2386,7 +2386,7 @@ iperf_print_results(struct iperf_test *test)
 	}
 
 	unit_snprintf(ubuf, UNIT_LEN, (double) bytes_received, 'A');
-	bandwidth = (double) bytes_sent / (double) end_time;
+	bandwidth = (double) bytes_received / (double) end_time;
 	unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
 	if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 	    if (test->json_output)

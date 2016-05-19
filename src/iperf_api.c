@@ -1038,7 +1038,7 @@ iperf_check_throttle(struct iperf_stream *sp, struct timeval *nowP)
 
     if (sp->test->done)
         return;
-    seconds = timeval_diff(&sp->result->start_time, nowP);
+    seconds = timeval_diff(&sp->result->start_time_fixed, nowP);
     bits_per_second = sp->result->bytes_sent * 8 / seconds;
     if (bits_per_second < sp->test->settings->rate) {
         sp->green_light = 1;
@@ -1142,7 +1142,7 @@ iperf_init_test(struct iperf_test *test)
 	return -1;
     }
     SLIST_FOREACH(sp, &test->streams, streams) {
-	sp->result->start_time = now;
+	sp->result->start_time = sp->result->start_time_fixed = now;
     }
 
     if (test->on_test_start)
@@ -1469,7 +1469,7 @@ send_results(struct iperf_test *test)
 		    r = -1;
 		} else {
 		    cJSON_AddItemToArray(j_streams, j_stream);
-		    bytes_transferred = test->sender ? sp->result->bytes_sent : sp->result->bytes_received;
+		    bytes_transferred = test->sender ? (sp->result->bytes_sent - sp->result->bytes_sent_omit) : sp->result->bytes_received;
 		    retransmits = (test->sender && test->sender_has_retransmits) ? sp->result->stream_retrans : -1;
 		    cJSON_AddIntToObject(j_stream, "id", sp->id);
 		    cJSON_AddIntToObject(j_stream, "bytes", bytes_transferred);
@@ -2066,7 +2066,8 @@ iperf_reset_stats(struct iperf_test *test)
         sp->omitted_outoforder_packets = sp->outoforder_packets;
 	sp->jitter = 0;
 	rp = sp->result;
-        rp->bytes_sent = rp->bytes_received = 0;
+        rp->bytes_sent_omit = rp->bytes_sent;
+        rp->bytes_received = 0;
         rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;
 	if (test->sender && test->sender_has_retransmits) {
 	    struct iperf_interval_results ir; /* temporary results structure */
@@ -2322,7 +2323,7 @@ iperf_print_results(struct iperf_test *test)
 	    cJSON_AddItemToArray(json_summary_streams, json_summary_stream);
 	}
 
-        bytes_sent = sp->result->bytes_sent;
+        bytes_sent = sp->result->bytes_sent - sp->result->bytes_sent_omit;
         bytes_received = sp->result->bytes_received;
         total_sent += bytes_sent;
         total_received += bytes_received;
@@ -2338,7 +2339,7 @@ iperf_print_results(struct iperf_test *test)
         }
 
 	unit_snprintf(ubuf, UNIT_LEN, (double) bytes_sent, 'A');
-	bandwidth = (double) bytes_sent / (double) end_time;
+	bandwidth = (double) bytes_received / (double) end_time;
 	unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
 	if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 	    if (test->sender_has_retransmits) {
@@ -2400,7 +2401,7 @@ iperf_print_results(struct iperf_test *test)
         unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
 	/* If no tests were run, arbitrariliy set bandwidth to 0. */
 	if (end_time > 0.0) {
-	    bandwidth = (double) total_sent / (double) end_time;
+	    bandwidth = (double) total_received / (double) end_time;
 	}
 	else {
 	    bandwidth = 0.0;

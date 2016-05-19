@@ -2386,7 +2386,7 @@ iperf_print_results(struct iperf_test *test)
 	}
 
 	unit_snprintf(ubuf, UNIT_LEN, (double) bytes_received, 'A');
-	bandwidth = (double) bytes_received / (double) end_time;
+	bandwidth = (double) bytes_sent / (double) end_time;
 	unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
 	if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 	    if (test->json_output)
@@ -2401,7 +2401,7 @@ iperf_print_results(struct iperf_test *test)
         unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
 	/* If no tests were run, arbitrariliy set bandwidth to 0. */
 	if (end_time > 0.0) {
-	    bandwidth = (double) total_received / (double) end_time;
+	    bandwidth = (double) total_sent / (double) end_time;
 	}
 	else {
 	    bandwidth = 0.0;

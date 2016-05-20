@@ -87,6 +87,7 @@ struct iperf_stream_result
     iperf_size_t bytes_sent;
     iperf_size_t bytes_received_this_interval;
     iperf_size_t bytes_sent_this_interval;
+    iperf_size_t bytes_sent_omit;
     int stream_prev_total_retrans;
     int stream_retrans;
     int stream_prev_total_sacks;
@@ -98,6 +99,7 @@ struct iperf_stream_result
     int stream_max_snd_cwnd;
     struct timeval start_time;
     struct timeval end_time;
+    struct timeval start_time_fixed;
     TAILQ_HEAD(irlisthead, iperf_interval_results) interval_results;
     void     *data;
 };
@@ -152,7 +154,9 @@ struct iperf_stream
     double    jitter;
     double    prev_transit;
     int       outoforder_packets;
+    int       omitted_outoforder_packets;
     int       cnt_error;
+    int       omitted_cnt_error;
     uint64_t  target;
 
     struct sockaddr_storage local_addr;

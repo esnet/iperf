@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2016, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -245,6 +245,22 @@ iperf_tcp_listen(struct iperf_test *test)
 	    } 
 	}
 #endif /* HAVE_TCP_CONGESTION */
+#if defined(HAVE_SO_MAX_PACING_RATE)
+    /* If socket pacing is available and not disabled, try it. */
+    if (! test->no_fq_socket_pacing) {
+	/* Convert bits per second to bytes per second */
+	unsigned int rate = test->settings->rate / 8;
+	if (rate > 0) {
+	    if (test->debug) {
+		printf("Setting fair-queue socket pacing to %u\n", rate);
+	    }
+	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &rate, sizeof(rate)) < 0) {
+		warning("Unable to set socket pacing, using application pacing instead");
+		test->no_fq_socket_pacing = 1;
+	    }
+	}
+    }
+#endif /* HAVE_SO_MAX_PACING_RATE */
         opt = 1;
         if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
 	    saved_errno = errno;
@@ -467,6 +483,23 @@ iperf_tcp_connect(struct iperf_test *test)
 	}
     }
 #endif /* HAVE_TCP_CONGESTION */
+
+#if defined(HAVE_SO_MAX_PACING_RATE)
+    /* If socket pacing is available and not disabled, try it. */
+    if (! test->no_fq_socket_pacing) {
+	/* Convert bits per second to bytes per second */
+	unsigned int rate = test->settings->rate / 8;
+	if (rate > 0) {
+	    if (test->debug) {
+		printf("Socket pacing set to %u\n", rate);
+	    }
+	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &rate, sizeof(rate)) < 0) {
+		warning("Unable to set socket pacing, using application pacing instead");
+		test->no_fq_socket_pacing = 1;
+	    }
+	}
+    }
+#endif /* HAVE_SO_MAX_PACING_RATE */
 
     if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS) {
 	saved_errno = errno;

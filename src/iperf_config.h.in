@@ -30,6 +30,9 @@
 /* Define to 1 if you have the `sendfile' function. */
 #undef HAVE_SENDFILE
 
+/* Have SO_MAX_PACING_RATE sockopt. */
+#undef HAVE_SO_MAX_PACING_RATE
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
@@ -60,7 +63,8 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define to the sub-directory where libtool stores uninstalled libraries. */
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
 #undef LT_OBJDIR
 
 /* Name of package */

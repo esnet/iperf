@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2016, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -244,6 +244,23 @@ iperf_udp_accept(struct iperf_test *test)
         }
     }
 
+#if defined(HAVE_SO_MAX_PACING_RATE)
+    /* If socket pacing is available and not disabled, try it. */
+    if (! test->no_fq_socket_pacing) {
+	/* Convert bits per second to bytes per second */
+	unsigned int rate = test->settings->rate / 8;
+	if (rate > 0) {
+	    if (test->debug) {
+		printf("Setting fair-queue socket pacing to %u\n", rate);
+	    }
+	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &rate, sizeof(rate)) < 0) {
+		warning("Unable to set socket pacing, using application pacing instead");
+		test->no_fq_socket_pacing = 1;
+	    }
+	}
+    }
+#endif /* HAVE_SO_MAX_PACING_RATE */
+
     /*
      * Create a new "listening" socket to replace the one we were using before.
      */
@@ -325,6 +342,23 @@ iperf_udp_connect(struct iperf_test *test)
             return -1;
         }
     }
+
+#if defined(HAVE_SO_MAX_PACING_RATE)
+    /* If socket pacing is available and not disabled, try it. */
+    if (! test->no_fq_socket_pacing) {
+	/* Convert bits per second to bytes per second */
+	unsigned int rate = test->settings->rate / 8;
+	if (rate > 0) {
+	    if (test->debug) {
+		printf("Setting fair-queue socket pacing to %u\n", rate);
+	    }
+	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &rate, sizeof(rate)) < 0) {
+		warning("Unable to set socket pacing, using application pacing instead");
+		test->no_fq_socket_pacing = 1;
+	    }
+	}
+    }
+#endif /* HAVE_SO_MAX_PACING_RATE */
 
 #ifdef SO_RCVTIMEO
     /* 30 sec timeout for a case when there is a network problem. */

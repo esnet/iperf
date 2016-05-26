@@ -74,7 +74,8 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
 	    fprintf(stderr, "iperf3: %s\n", str);
 	}
     va_end(argp);
-    iperf_delete_pidfile(test);
+    if (test)
+        iperf_delete_pidfile(test);
     exit(1);
 }
 

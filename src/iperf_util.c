@@ -349,10 +349,13 @@ iperf_json_printf(const char *format, ...)
 		j = cJSON_CreateString(va_arg(argp, char *));
 		break;
 		default:
+		va_end(argp);
 		return NULL;
 	    }
-	    if (j == NULL)
-		return NULL;
+	    if (j == NULL) {
+	    	va_end(argp);
+	    	return NULL;
+	    }
 	    cJSON_AddItemToObject(o, name, j);
 	    np = name;
 	    break;

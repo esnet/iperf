@@ -1,4 +1,4 @@
-# iperf, Copyright (c) 2014, 2015, The Regents of the University of
+# iperf, Copyright (c) 2014, 2015, 2016, The Regents of the University of
 # California, through Lawrence Berkeley National Laboratory (subject
 # to receipt of any required approvals from the U.S. Dept. of
 # Energy).  All rights reserved.
@@ -140,5 +140,19 @@ AC_CHECK_FUNCS([cpuset_setaffinity sched_setaffinity],
 # this system call, but they're all different in terms of what headers
 # it needs and what arguments it expects.
 AC_CHECK_FUNCS([sendfile])
+
+# Check for packet pacing socket option (Linux only for now).
+AC_CACHE_CHECK([SO_MAX_PACING_RATE socket option],
+[iperf3_cv_header_so_max_pacing_rate],
+AC_EGREP_CPP(yes,
+[#include <sys/socket.h>
+#ifdef SO_MAX_PACING_RATE
+  yes
+#endif
+],iperf3_cv_header_so_max_pacing_rate=yes,iperf3_cv_header_so_max_pacing_rate=no))
+if test "x$iperf3_cv_header_so_max_pacing_rate" = "xyes"; then
+    AC_DEFINE([HAVE_SO_MAX_PACING_RATE], [1], [Have SO_MAX_PACING_RATE sockopt.])
+fi
+
 
 AC_OUTPUT([Makefile src/Makefile src/version.h examples/Makefile iperf3.spec])

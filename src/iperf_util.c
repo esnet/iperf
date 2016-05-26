@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2016, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -284,6 +284,16 @@ get_optional_features(void)
 	sizeof(features) - strlen(features) - 1);
     numfeatures++;
 #endif /* HAVE_SENDFILE */
+
+#if defined(HAVE_SO_MAX_PACING_RATE)
+    if (numfeatures > 0) {
+	strncat(features, ", ",
+		sizeof(features) - strlen(features) - 1);
+    }
+    strncat(features, "socket pacing",
+	sizeof(features) - strlen(features) - 1);
+    numfeatures++;
+#endif /* HAVE_SO_MAX_PACING_RATE */
 
     if (numfeatures == 0) {
 	strncat(features, "None", 

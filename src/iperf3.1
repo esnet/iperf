@@ -103,6 +103,14 @@ It will send the given number of packets without pausing, even if that
 temporarily exceeds the specified bandwidth limit.
 Setting the target bandwidth to 0 will disable bandwidth limits
 (particularly useful for UDP tests).
+On platforms supporting the \fCSO_MAX_PACING_RATE\fR socket option
+(currently only Linux), fair-queueing socket-level pacing, implemented in
+the kernel, will be used.
+On other platforms, iperf3 will implement its own rate control.
+.TP
+.BR --no-fq-socket-pacing
+disable the use of fair-queueing based socket-level pacing with the -b
+option, and rely on iperf3's internal rate control.
 .TP
 .BR -t ", " --time " \fIn\fR"
 time in seconds to transmit for (default 10 secs)

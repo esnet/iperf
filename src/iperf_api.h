@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, 2016, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -50,6 +50,7 @@ struct iperf_stream;
 #define OPT_UDP_COUNTERS_64BIT 4
 #define OPT_CLIENT_PORT 5
 #define OPT_NUMSTREAMS 6
+#define OPT_NO_FQ_SOCKET_PACING 9
 
 /* states */
 #define TEST_START 1
@@ -331,6 +332,7 @@ enum {
     IESETSCTPDISABLEFRAG = 137, // Unable to set SCTP Fragmentation (check perror)
     IESETSCTPNSTREAM= 138,  //  Unable to set SCTP number of streams (check perror)
     IESETSCTPBINDX= 139,    // Unable to process sctp_bindx() parameters
+    IESETPACING= 140,       // Unable to set socket pacing rate
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

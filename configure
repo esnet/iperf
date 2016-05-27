@@ -12774,6 +12774,38 @@ fi
 done
 
 
+# Check for packet pacing socket option (Linux only for now).
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking SO_MAX_PACING_RATE socket option" >&5
+$as_echo_n "checking SO_MAX_PACING_RATE socket option... " >&6; }
+if ${iperf3_cv_header_so_max_pacing_rate+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/socket.h>
+#ifdef SO_MAX_PACING_RATE
+  yes
+#endif
+
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "yes" >/dev/null 2>&1; then :
+  iperf3_cv_header_so_max_pacing_rate=yes
+else
+  iperf3_cv_header_so_max_pacing_rate=no
+fi
+rm -f conftest*
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $iperf3_cv_header_so_max_pacing_rate" >&5
+$as_echo "$iperf3_cv_header_so_max_pacing_rate" >&6; }
+if test "x$iperf3_cv_header_so_max_pacing_rate" = "xyes"; then
+
+$as_echo "#define HAVE_SO_MAX_PACING_RATE 1" >>confdefs.h
+
+fi
+
+
 ac_config_files="$ac_config_files Makefile src/Makefile src/version.h examples/Makefile iperf3.spec"
 
 cat >confcache <<\_ACEOF

@@ -1,3 +1,37 @@
+== iperf 3.1.3 2016-06-08 ==
+
+The release notes for iperf 3.1.3 describe changes, including bug
+fixes and new functionality, made since iperf 3.1.2.
+
+* Security
+
+  * Fix a buffer overflow / heap corruption issue that could occur if
+    a malformed JSON string was passed on the control channel.  In
+    theory, this vulnerability could be leveraged to create a heap
+    exploit.  This issue, present in the cJSON library, was already
+    fixed upstream, so was addressed here in iperf3 by importing a
+    newer version of cJSON (plus local ESnet modifications).
+    Discovered and reported by Dave McDaniel, Cisco Talos.
+    Cross-references: TALOS-CAN-0164, ESNET-SECADV-2016-0001,
+    CVE-2016-4303.
+
+* User-visible changes
+
+  * On supported platforms (recent Linux), iperf3 can use
+    fair-queueing-based per-socket pacing instead of its own
+    application-level pacing for the --bandwidth option.
+    Application-level pacing can be forced with the
+    -no-fq-socket-pacing flag.
+
+  * A bug that could show negative loss counters with --udp and --omit
+    has been fixed (issue #412, pull request #414).
+
+* Developer-visible changes
+
+  * Fixed the build on FreeBSD 11-CURRENT (issue #413).
+
+  * Fixed various coding errors (issue #423, issue #425).
+
 == iperf 3.1.2 2016-02-01 ==
 
 The release notes for iperf 3.1.2 describe changes, including bug

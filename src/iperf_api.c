@@ -1506,14 +1506,32 @@ JSON_read(int fd)
     uint32_t hsize, nsize;
     char *str;
     cJSON *json = NULL;
+    int rc;
 
+    /*
+     * Read a four-byte integer, which is the length of the JSON to follow.
+     * Then read the JSON into a buffer and parse it.  Return a parsed JSON
+     * structure, NULL if there was an error.
+     */
     if (Nread(fd, (char*) &nsize, sizeof(nsize), Ptcp) >= 0) {
 	hsize = ntohl(nsize);
-	str = (char *) malloc(hsize+1);	/* +1 for EOS */
+	/* Allocate a buffer to hold the JSON */
+	str = (char *) calloc(sizeof(char), hsize+1);	/* +1 for trailing null */
 	if (str != NULL) {
-	    if (Nread(fd, str, hsize, Ptcp) >= 0) {
-		str[hsize] = '\0';	/* add the EOS */
-		json = cJSON_Parse(str);
+	    rc = Nread(fd, str, hsize, Ptcp);
+	    if (rc >= 0) {
+		/*
+		 * We should be reading in the number of bytes corresponding to the
+		 * length in that 4-byte integer.  If we don't the socket might have
+		 * prematurely closed.  Only do the JSON parsing if we got the
+		 * correct number of bytes.
+		 */
+		if (rc == hsize) {
+		    json = cJSON_Parse(str);
+		}
+		else {
+		    printf("WARNING:  Size of data read does not correspond to offered length\n");
+		}
 	    }
 	}
 	free(str);

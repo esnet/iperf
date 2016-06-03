@@ -1,3 +1,20 @@
+== iperf 3.0.12 2016-06-08 ==
+
+The release notes for iperf 3.0.12 describe changes, including bug
+fixes and new functionality, made since iperf 3.0.11.
+
+* Security
+
+  * Fix a buffer overflow / heap corruption issue that could occur if
+    a malformed JSON string was passed on the control channel.  In
+    theory, this vulnerability could be leveraged to create a heap
+    exploit.  This issue, present in the cJSON library, was already
+    fixed upstream, so was addressed here in iperf3 by importing a
+    newer version of cJSON (plus local ESnet modifications).
+    Discovered and reported by Dave McDaniel, Cisco Talos.
+    Cross-references: TALOS-CAN-0164, ESNET-SECADV-2016-0001,
+    CVE-2016-4303.
+
 == iperf 3.0.11 2015-01-09 ==
 
 * User-visible changes

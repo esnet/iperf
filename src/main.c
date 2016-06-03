@@ -129,8 +129,6 @@ sigend_handler(int sig)
 static int
 run(struct iperf_test *test)
 {
-    int consecutive_errors;
-
     /* Termination signals. */
     iperf_catch_sigend(sigend_handler);
     if (setjmp(sigend_jmp_buf))
@@ -145,21 +143,20 @@ run(struct iperf_test *test)
 		    iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 		}
 	    }
-	    consecutive_errors = 0;
 	    if (iperf_create_pidfile(test) < 0) {
 		i_errno = IEPIDFILE;
 		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 	    }
             for (;;) {
-		if (iperf_run_server(test) < 0) {
+		int rc;
+		rc = iperf_run_server(test);
+		if (rc < 0) {
 		    iperf_err(test, "error - %s", iperf_strerror(i_errno));
-		    ++consecutive_errors;
-		    if (consecutive_errors >= 5) {
-		        iperf_errexit(test, "too many errors, exiting");
+		    if (rc < -1) {
+		        iperf_errexit(test, "exiting");
 			break;
 		    }
-                } else
-		    consecutive_errors = 0;
+                }
                 iperf_reset_test(test);
                 if (iperf_get_test_one_off(test))
                     break;

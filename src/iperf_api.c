@@ -1168,17 +1168,7 @@ send_parameters(struct iperf_test *test)
 	if (test->congestion)
 	    cJSON_AddStringToObject(j, "congestion", test->congestion);
 	if (test->get_server_output)
-<<<<<<< HEAD
-	    cJSON_AddIntToObject(j, "get_server_output", iperf_get_test_get_server_output(test));
-=======
 	    cJSON_AddNumberToObject(j, "get_server_output", iperf_get_test_get_server_output(test));
-	if (test->udp_counters_64bit)
-	    cJSON_AddNumberToObject(j, "udp_counters_64bit", iperf_get_test_udp_counters_64bit(test));
-	if (test->no_fq_socket_pacing)
-	    cJSON_AddNumberToObject(j, "no_fq_socket_pacing", iperf_get_no_fq_socket_pacing(test));
-
-	cJSON_AddStringToObject(j, "client_version", IPERF_VERSION);
->>>>>>> ed94082... Fix a buffer overflow / heap corruption issue that could occur if a
 
 	if (test->debug) {
 	    printf("send_parameters:\n%s\n", cJSON_Print(j));

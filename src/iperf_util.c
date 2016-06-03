@@ -272,10 +272,10 @@ iperf_json_printf(const char *format, ...)
 		j = cJSON_CreateBool(va_arg(argp, int));
 		break;
 		case 'd':
-		j = cJSON_CreateInt(va_arg(argp, int64_t));
+		j = cJSON_CreateNumber(va_arg(argp, int64_t));
 		break;
 		case 'f':
-		j = cJSON_CreateFloat(va_arg(argp, double));
+		j = cJSON_CreateNumber(va_arg(argp, double));
 		break;
 		case 's':
 		j = cJSON_CreateString(va_arg(argp, char *));

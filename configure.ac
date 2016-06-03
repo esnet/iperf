@@ -62,6 +62,12 @@ AC_HEADER_STDC
 # Check for systems which need -lsocket and -lnsl
 #AX_LIB_SOCKET_NSL
 
+# Check for the math library (needed by cjson on some platforms)
+AC_SEARCH_LIBS(floor, [m], [], [
+echo "floor()"
+exit 1
+])
+
 # Solaris puts nanosleep in -lrt
 AC_SEARCH_LIBS(nanosleep, [rt], [], [
 echo "nanosleep() required for timing operations."

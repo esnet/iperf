@@ -440,11 +440,11 @@ iperf_run_server(struct iperf_test *test)
 
     if (test->affinity != -1) 
 	if (iperf_setaffinity(test, test->affinity) != 0)
-	    return -1;
+	    return -2;
 
     if (test->json_output)
 	if (iperf_json_start(test) < 0)
-	    return -1;
+	    return -2;
 
     if (test->json_output) {
 	cJSON_AddItemToObject(test->json_start, "version", cJSON_CreateString(version));
@@ -458,7 +458,7 @@ iperf_run_server(struct iperf_test *test)
 
     // Open socket and listen
     if (iperf_server_listen(test) < 0) {
-        return -1;
+        return -2;
     }
 
     // Begin calculating CPU utilization

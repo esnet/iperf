@@ -115,8 +115,6 @@ main(int argc, char **argv)
 static int
 run(struct iperf_test *test)
 {
-    int consecutive_errors;
-
     switch (test->role) {
         case 's':
 	    if (test->daemon) {
@@ -126,18 +124,16 @@ run(struct iperf_test *test)
 		    iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 		}
 	    }
-	    consecutive_errors = 0;
             for (;;) {
-                if (iperf_run_server(test) < 0) {
+		int rc;
+		rc = iperf_run_server(test);
+		if (rc < 0) {
 		    iperf_err(test, "error - %s", iperf_strerror(i_errno));
-                    fprintf(stderr, "\n");
-		    ++consecutive_errors;
-		    if (consecutive_errors >= 5) {
-		        fprintf(stderr, "too many errors, exiting\n");
+		    if (rc < -1) {
+		        iperf_errexit(test, "exiting");
 			break;
 		    }
-                } else
-		    consecutive_errors = 0;
+                }
                 iperf_reset_test(test);
                 if (iperf_get_test_one_off(test))
                     break;

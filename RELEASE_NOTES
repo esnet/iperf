@@ -5,15 +5,14 @@ fixes and new functionality, made since iperf 3.1.2.
 
 * Security
 
-  * Fix a buffer overflow / heap corruption issue that could occur if
-    a malformed JSON string was passed on the control channel.  In
+  * Fixed a buffer overflow / heap corruption issue that could occur
+    if a malformed JSON string was passed on the control channel.  In
     theory, this vulnerability could be leveraged to create a heap
     exploit.  This issue, present in the cJSON library, was already
-    fixed upstream, so was addressed here in iperf3 by importing a
-    newer version of cJSON (plus local ESnet modifications).
-    Discovered and reported by Dave McDaniel, Cisco Talos.
-    Cross-references: TALOS-CAN-0164, ESNET-SECADV-2016-0001,
-    CVE-2016-4303.
+    fixed upstream, so was addressed in iperf3 by importing a newer
+    version of cJSON (plus local ESnet modifications).  Discovered and
+    reported by Dave McDaniel, Cisco Talos.  Cross-references:
+    TALOS-CAN-0164, ESNET-SECADV-2016-0001, CVE-2016-4303.
 
 * User-visible changes
 
@@ -25,6 +24,11 @@ fixes and new functionality, made since iperf 3.1.2.
 
   * A bug that could show negative loss counters with --udp and --omit
     has been fixed (issue #412, pull request #414).
+
+  * Error handling has been made slightly more robust.  Also, the
+    iperf3 server will no longer exit after five consecutive errors,
+    but will only exit for certain types of errors that prevent it
+    from participating in any tests at all.
 
 * Developer-visible changes
 

@@ -82,6 +82,10 @@ the executable.
    ‐‐logfile file
    send output to a log file.
 
+   --forceflush
+   force flushing output at every interval. Used to avoid buffering when sending
+   output to pipe.
+
    ‐d, ‐‐debug
    emit  debugging  output.  Primarily (perhaps exclusively) of use
    to developers.

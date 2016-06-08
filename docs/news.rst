@@ -1,6 +1,29 @@
 iperf3 Project News
 ===================
 
+2016-06-08:  Security Issue:  iperf-3.1.3, iperf-3.0.12 released
+----------------------------------------------------------------
+
+| URL:  http://downloads.es.net/pub/iperf/iperf-3.1.3.tar.gz
+| SHA256:  ``60d8db69b1d74a64d78566c2317c373a85fef691b8d277737ee5d29f448595bf  iperf-3.1.3.tar.gz``
+
+| URL:  http://downloads.es.net/pub/iperf/iperf-3.0.12.tar.gz
+| SHA256:  ``9393d646e4e616f0cd7864bc8ceacc379f5d36b08003a3d8d65cd7c99d15daec  iperf-3.0.12.tar.gz``
+
+These releases address a security issue that could cause a crash of an
+iperf3 process (it could theoretically lead to a remote code
+execution).  Although the risk for common use cases is believed to be
+low, all users are encouraged to update to these versions or newer as
+soon as possible.  More information on the security vulnerability can
+be found in the following ESnet Software Security Advisory:
+
+https://raw.githubusercontent.com/esnet/security/master/cve-2016-4303/esnet-secadv-2016-0001.txt.asc
+
+iperf-3.1.3 also includes support for fair-queueing, per-socket based
+pacing of tests on platforms that support it (currently recent Linux
+distributions), as well as several other fixes.
+
+
 2016-02-01:  iperf-3.1.2 released
 ---------------------------------
 

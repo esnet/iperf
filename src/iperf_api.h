@@ -334,6 +334,7 @@ enum {
     IESETSCTPNSTREAM= 138,  //  Unable to set SCTP number of streams (check perror)
     IESETSCTPBINDX= 139,    // Unable to process sctp_bindx() parameters
     IESETPACING= 140,       // Unable to set socket pacing rate
+    IEBADCOOKIE = 141,
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

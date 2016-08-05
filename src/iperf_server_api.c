@@ -312,6 +312,26 @@ iperf_test_reset(struct iperf_test *test)
 }
 
 static void
+server_timer_proc(TimerClientData client_data, struct timeval *nowP)
+{
+    struct iperf_test *test = client_data.p;
+    struct iperf_stream *sp;
+
+    test->timer = NULL;
+    if (test->done)
+        return;
+    test->done = 1;
+    /* Free streams */
+    while (!SLIST_EMPTY(&test->streams)) {
+        sp = SLIST_FIRST(&test->streams);
+        SLIST_REMOVE_HEAD(&test->streams, streams);
+        close(sp->socket);
+        iperf_free_stream(sp);
+    }
+    close(test->ctrl_sck);
+}
+
+static void
 server_stats_timer_proc(TimerClientData client_data, struct timeval *nowP)
 {
     struct iperf_test *test = client_data.p;
@@ -344,6 +364,16 @@ create_server_timers(struct iperf_test * test)
 	return -1;
     }
     cd.p = test;
+    test->timer = test->stats_timer = test->reporter_timer = NULL;
+    if (test->duration != 0 ) {
+        test->done = 0;
+        test->timer = tmr_create(&now, server_timer_proc, cd, (test->duration + test->omit + 5) * SEC_TO_US, 0);
+        if (test->timer == NULL) {
+            i_errno = IEINITTEST;
+            return -1;
+        }
+    }
+
     test->stats_timer = test->reporter_timer = NULL;
     if (test->stats_interval != 0) {
         test->stats_timer = tmr_create(&now, server_stats_timer_proc, cd, test->stats_interval * SEC_TO_US, 1);
@@ -425,6 +455,10 @@ cleanup_server(struct iperf_test *test)
     if (test->omit_timer != NULL) {
 	tmr_cancel(test->omit_timer);
 	test->omit_timer = NULL;
+    }
+    if (test->timer != NULL) {
+        tmr_cancel(test->timer);
+        test->timer = NULL;
     }
 }
 

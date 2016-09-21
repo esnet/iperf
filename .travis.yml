@@ -1,7 +1,7 @@
 language: c
- compiler:
+compiler:
    - gcc
    - clang
- os: linux
+os: linux
  
- script: ./configure && make && make check
+script: ./configure && make && make check

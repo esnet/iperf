@@ -544,12 +544,12 @@ iperf_run_server(struct iperf_test *test)
                     } else { 
                         if (test->no_delay || test->settings->mss || test->settings->socket_bufsize) {
                             FD_CLR(test->listener, &test->read_set);
-                            close(test->listener);
                             if ((s = netannounce(test->settings->domain, Ptcp, test->bind_address, test->server_port)) < 0) {
 				cleanup_server(test);
                                 i_errno = IELISTEN;
                                 return -1;
                             }
+                            close(test->listener);
                             test->listener = s;
                             FD_SET(test->listener, &test->read_set);
 			    if (test->listener > test->max_fd) test->max_fd = test->listener;

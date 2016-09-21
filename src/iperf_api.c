@@ -2593,7 +2593,12 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
     }
 
     unit_snprintf(ubuf, UNIT_LEN, (double) (irp->bytes_transferred), 'A');
-    bandwidth = (double) irp->bytes_transferred / (double) irp->interval_duration;
+    if (irp->interval_duration > 0.0) {
+	bandwidth = (double) irp->bytes_transferred / (double) irp->interval_duration;
+    }
+    else {
+	bandwidth = 0.0;
+    }
     unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
     
     st = timeval_diff(&sp->result->start_time, &irp->interval_start_time);

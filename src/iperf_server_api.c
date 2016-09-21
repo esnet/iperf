@@ -139,38 +139,46 @@ iperf_accept(struct iperf_test *test)
         return -1;
     }
 
-    if (test->ctrl_sck == -1) {
-        /* Server free, accept new client */
-        test->ctrl_sck = s;
-        if (Nread(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) < 0) {
-            i_errno = IERECVCOOKIE;
-            return -1;
-        }
-	FD_SET(test->ctrl_sck, &test->read_set);
-	if (test->ctrl_sck > test->max_fd) test->max_fd = test->ctrl_sck;
+	if (test->ctrl_sck == -1) {
+		/* Server free, accept new client */
 
-	if (iperf_set_send_state(test, PARAM_EXCHANGE) != 0)
-            return -1;
-        if (iperf_exchange_parameters(test) < 0)
-            return -1;
-	if (test->server_affinity != -1) 
-	    if (iperf_setaffinity(test, test->server_affinity) != 0)
+		if (Nread(s, test->cookie, COOKIE_SIZE, Ptcp) < 0) {
+			i_errno = IERECVCOOKIE;
+			iperf_err(test, "Rejected connection - recv cookie");
+			close(s);						
+			return -1;
+		}
+		test->ctrl_sck = s;
+
+		FD_SET(test->ctrl_sck, &test->read_set);
+		if (test->ctrl_sck > test->max_fd)
+			test->max_fd = test->ctrl_sck;
+
+		if (iperf_set_send_state(test, PARAM_EXCHANGE) != 0)
+			return -1;
+		if (iperf_exchange_parameters(test) < 0)
+			return -1;
+		if (test->server_affinity != -1)
+			if (iperf_setaffinity(test, test->server_affinity) != 0)
+				return -1;
+		if (test->on_connect)
+			test->on_connect(test);
+	} else {
+		/*
+		 * Don't try to read from the socket.  It could block an ongoing test.
+		 * Just send ACCESS_DENIED.
+		 */
+		if (Nwrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp) < 0) {
+			i_errno = IESENDMESSAGE;
+		} else {
+			i_errno = IEBADCOOKIE;
+			iperf_err(test, "Rejected connection - bad cookie");	
+		}
+		close(s);
 		return -1;
-        if (test->on_connect)
-            test->on_connect(test);
-    } else {
-	/*
-	 * Don't try to read from the socket.  It could block an ongoing test. 
-	 * Just send ACCESS_DENIED.
-	 */
-        if (Nwrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp) < 0) {
-            i_errno = IESENDMESSAGE;
-            return -1;
-        }
-        close(s);
-    }
+	}
 
-    return 0;
+	return 0;
 }
 
 
@@ -487,11 +495,16 @@ iperf_run_server(struct iperf_test *test)
 	if (result > 0) {
             if (FD_ISSET(test->listener, &read_set)) {
                 if (test->state != CREATE_STREAMS) {
+			FD_CLR(test->listener, &read_set);
                     if (iperf_accept(test) < 0) {
+			//In case of non critical error we want to ignore connection
+			//and not affect a running test
+			if((test->ctrl_sck == -1) || (i_errno == IEBADCOOKIE)
+				|| (i_errno == IESENDMESSAGE) || (i_errno == IEACCEPT))
+				continue;
 			cleanup_server(test);
-                        return -1;
+			return -1;
                     }
-                    FD_CLR(test->listener, &read_set);
                 }
             }
             if (FD_ISSET(test->ctrl_sck, &read_set)) {
@@ -506,11 +519,10 @@ iperf_run_server(struct iperf_test *test)
                 if (FD_ISSET(test->prot_listener, &read_set)) {
     
                     if ((s = test->protocol->accept(test)) < 0) {
-			cleanup_server(test);
-                        return -1;
+			iprintf(test, "Connection failed: %d", i_errno);
+			iflush(test);
 		    }
-
-                    if (!is_closed(s)) {
+                   else if (!is_closed(s)) {
                         sp = iperf_new_stream(test, s);
                         if (!sp) {
 			    cleanup_server(test);

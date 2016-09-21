@@ -1855,6 +1855,10 @@ iperf_defaults(struct iperf_test *testp)
     testp->stats_interval = testp->reporter_interval = 1;
     testp->num_streams = 1;
 
+#if ! defined(HAVE_SO_MAX_PACING_RATE)
+    testp->no_fq_socket_pacing = 1;
+#endif
+
     testp->settings->domain = AF_UNSPEC;
     testp->settings->unit_format = 'a';
     testp->settings->socket_bufsize = 0;    /* use autotuning */

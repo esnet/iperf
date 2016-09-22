@@ -2522,21 +2522,44 @@ iperf_print_results(struct iperf_test *test)
 
     if (test->json_output) {
 	cJSON_AddItemToObject(test->json_end, "cpu_utilization_percent", iperf_json_printf("host_total: %f  host_user: %f  host_system: %f  remote_total: %f  remote_user: %f  remote_system: %f", (double) test->cpu_util[0], (double) test->cpu_util[1], (double) test->cpu_util[2], (double) test->remote_cpu_util[0], (double) test->remote_cpu_util[1], (double) test->remote_cpu_util[2]));
-	if (test->congestion_used) {
-	    cJSON_AddStringToObject(test->json_end, "local_tcp_congestion", test->congestion_used);
+	if (test->protocol->id == Ptcp) {
+	    char *snd_congestion = NULL, *rcv_congestion = NULL;
+	    if (test->sender) {
+		snd_congestion = test->congestion_used;
+		rcv_congestion = test->remote_congestion_used;
+	    }
+	    else {
+		snd_congestion = test->remote_congestion_used;
+		rcv_congestion = test->congestion_used;
+	    }
+	    if (snd_congestion) {
+		cJSON_AddStringToObject(test->json_end, "sender_tcp_congestion", snd_congestion);
+	    }
+	    if (rcv_congestion) {
+		cJSON_AddStringToObject(test->json_end, "receiver_tcp_congestion", rcv_congestion);
+	    }
 	}
-	if (test->remote_congestion_used) {
-	    cJSON_AddStringToObject(test->json_end, "remote_tcp_congestion", test->remote_congestion_used);
-	}
-    }    
+    }
     else {
 	if (test->verbose) {
 	    iprintf(test, report_cpu, report_local, test->sender?report_sender:report_receiver, test->cpu_util[0], test->cpu_util[1], test->cpu_util[2], report_remote, test->sender?report_receiver:report_sender, test->remote_cpu_util[0], test->remote_cpu_util[1], test->remote_cpu_util[2]);
-	    if (test->congestion_used) {
-		iprintf(test, "local_tcp_congestion %s\n", test->congestion_used);
-	    }
-	    if (test->remote_congestion_used) {
-		iprintf(test, "remote_tcp_congestion %s\n", test->remote_congestion_used);
+
+	    if (test->protocol->id == Ptcp) {
+		char *snd_congestion = NULL, *rcv_congestion = NULL;
+		if (test->sender) {
+		    snd_congestion = test->congestion_used;
+		    rcv_congestion = test->remote_congestion_used;
+		}
+		else {
+		    snd_congestion = test->remote_congestion_used;
+		    rcv_congestion = test->congestion_used;
+		}
+		if (snd_congestion) {
+		    iprintf(test, "snd_tcp_congestion %s\n", snd_congestion);
+		}
+		if (rcv_congestion) {
+		    iprintf(test, "rcv_tcp_congestion %s\n", rcv_congestion);
+		}
 	    }
 	}
 

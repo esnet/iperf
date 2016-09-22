@@ -220,6 +220,8 @@ struct iperf_test
 #endif /* HAVE_CPUSET_SETAFFINITY */
     char     *title;				/* -T option */
     char     *congestion;			/* -C option */
+    char     *congestion_used;			/* what was actually used */
+    char     *remote_congestion_used;		/* what the other side used */
     char     *pidfile;				/* -P option */
 
     char     *logfile;				/* --logfile option */

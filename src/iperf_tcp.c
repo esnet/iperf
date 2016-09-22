@@ -235,16 +235,6 @@ iperf_tcp_listen(struct iperf_test *test)
 	    }
 	    printf("SO_SNDBUF is %u\n", opt);
 	}
-#if defined(HAVE_TCP_CONGESTION)
-	if (test->congestion) {
-	    if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
-		close(s);
-		freeaddrinfo(res);
-		i_errno = IESETCONGESTION;
-		return -1;
-	    } 
-	}
-#endif /* HAVE_TCP_CONGESTION */
 #if defined(HAVE_SO_MAX_PACING_RATE)
     /* If socket pacing is available and not disabled, try it. */
     if (! test->no_fq_socket_pacing) {
@@ -472,17 +462,6 @@ iperf_tcp_connect(struct iperf_test *test)
 	}
     }
 #endif /* HAVE_FLOWLABEL */
-
-#if defined(HAVE_TCP_CONGESTION)
-    if (test->congestion) {
-	if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
-	    close(s);
-	    freeaddrinfo(server_res);
-	    i_errno = IESETCONGESTION;
-	    return -1;
-	}
-    }
-#endif /* HAVE_TCP_CONGESTION */
 
 #if defined(HAVE_SO_MAX_PACING_RATE)
     /* If socket pacing is available and not disabled, try it. */

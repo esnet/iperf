@@ -62,6 +62,11 @@
 #include "iperf_util.h"
 #include "iperf_locale.h"
 
+#if defined(HAVE_TCP_CONGESTION)
+#if !defined(TCP_CA_NAME_MAX)
+#define TCP_CA_NAME_MAX 16
+#endif /* TCP_CA_NAME_MAX */
+#endif /* HAVE_TCP_CONGESTION */
 
 int
 iperf_server_listen(struct iperf_test *test)
@@ -509,6 +514,33 @@ iperf_run_server(struct iperf_test *test)
 			cleanup_server(test);
                         return -1;
 		    }
+
+#if defined(HAVE_TCP_CONGESTION)
+		    if (test->protocol->id == Ptcp) {
+			if (test->congestion) {
+			    if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
+				close(s);
+				cleanup_server(test);
+				i_errno = IESETCONGESTION;
+				return -1;
+			    } 
+			}
+			{
+			    int len = TCP_CA_NAME_MAX;
+			    char ca[TCP_CA_NAME_MAX + 1];
+			    if (getsockopt(s, IPPROTO_TCP, TCP_CONGESTION, ca, &len) < 0) {
+				close(s);
+				cleanup_server(test);
+				i_errno = IESETCONGESTION;
+				return -1;
+			    }
+			    test->congestion_used = strdup(ca);
+			    if (test->debug) {
+				printf("Congestion algorithm is %s\n", test->congestion_used);
+			    }
+			}
+		    }
+#endif /* HAVE_TCP_CONGESTION */
 
                     if (!is_closed(s)) {
                         sp = iperf_new_stream(test, s);

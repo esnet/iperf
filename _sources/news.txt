@@ -1,6 +1,17 @@
 iperf3 Project News
 ===================
 
+2016-10-31:  iperf-3.1.4 released
+---------------------------------
+
+| URL:  http://downloads.es.net/pub/iperf/iperf-3.1.4.tar.gz
+| SHA256:  ``db61d70ac62003ebe0bf15496bd8c4b3c4b728578a44d0a1a88fcf8afc0e8f76  iperf-3.1.4.tar.gz``
+
+This release fixes a few minor bugs, including a
+(non-security-impacting) buffer overflow fix ported from upstream
+cjson.
+
+
 2016-06-08:  Security Issue:  iperf-3.1.3, iperf-3.0.12 released
 ----------------------------------------------------------------
 

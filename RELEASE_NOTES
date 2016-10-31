@@ -1,4 +1,4 @@
-== iperf 3.1.4 2016-10-?? ==
+== iperf 3.1.4 2016-10-31 ==
 
 The release notes for iperf 3.1.4 describe changes, including bug
 fixes and new functionality, made since iperf 3.1.3.
@@ -6,15 +6,16 @@ fixes and new functionality, made since iperf 3.1.3.
 * User-visible changes
 
   * On systems that support setting the congestion control algorithm,
-    keep track of the congestion control algorithm (issue #461) and
+    iperf3 now keeps track of the congestion control algorithm and
     print it in the JSON output in the members sender_tcp_congestion
-    and receiver_tcp_congestion, along the way fix a few problems with
-    how the congestion control algorithm was set.
+    and receiver_tcp_congestion (issue #461).  A few bugs (probably
+    not user-visible) with setting the congestion control algorithm
+    were also fixed.
 
 * Developer-visible changes
 
   * Fixed a buffer overflow in the cJSON library (issue #466).  It is
-    not believed that this bug creates any security vulnerabilities in
+    not believed that this bug created any security vulnerabilities in
     the context of iperf3.
 
   * Travis CI builds are now enabled on this codeline (pull request #424).

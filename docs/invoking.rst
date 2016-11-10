@@ -26,177 +26,217 @@ the executable.
 
 ::
 
-   IPERF(1)                         User Manuals                         IPERF(1)
+   IPERF3(1)                        User Manuals                        IPERF3(1)
 
 
 
    NAME
-   iperf3 − perform network throughput tests
+	  iperf3 - perform network throughput tests
 
    SYNOPSIS
-   iperf3 ‐s [ options ]
-   iperf3 ‐c server [ options ]
+	  iperf3 -s [ options ]
+	  iperf3 -c server [ options ]
 
 
    DESCRIPTION
-   iperf3  is  a  tool for performing network throughput measurements.  It
-   can test either TCP or UDP throughput.  To perform an iperf3  test  the
-   user must establish both a server and a client.
+	  iperf3  is  a  tool for performing network throughput measurements.  It
+	  can test either TCP or UDP throughput.  To perform an iperf3  test  the
+	  user must establish both a server and a client.
 
 
    GENERAL OPTIONS
-   ‐p, ‐‐port n
-   set server port to listen on/connect to to n (default 5201)
+	  -p, --port n
+		 set server port to listen on/connect to to n (default 5201)
 
-   ‐f, ‐‐format
-   [kmKM]   format to report: Kbits, Mbits, KBytes, MBytes
+	  -f, --format
+		 [kmKM]   format to report: Kbits, Mbits, KBytes, MBytes
 
-   ‐i, ‐‐interval n
-   pause  n  seconds between periodic bandwidth reports; default is
-   1, use 0 to disable
+	  -i, --interval n
+		 pause  n  seconds between periodic bandwidth reports; default is
+		 1, use 0 to disable
 
-   ‐F, ‐‐file name
-   client‐side: read from  the  file  and  write  to  the  network,
-   instead of using random data; server‐side: read from the network
-   and write to the file, instead of throwing the data away
+	  -F, --file name
+		 client-side: read from  the  file  and  write  to  the  network,
+		 instead of using random data; server-side: read from the network
+		 and write to the file, instead of throwing the data away
 
-   ‐A, ‐‐affinity n/n,m
-   Set the CPU affinity, if possible (Linux and FreeBSD only).   On
-   both  the  client  and  server you can set the local affinity by
-   using the n form of this argument (where n is a CPU number).  In
-   addition,  on  the  client  side  you  can override the server’s
-   affinity for just that one test, using the n,m form of argument.
-   Note  that when using this feature, a process will only be bound
-   to a single CPU (as opposed to a set containing potentialy  mul‐
-   tiple CPUs).
+	  -A, --affinity n/n,m
+		 Set the CPU affinity, if possible (Linux and FreeBSD only).   On
+		 both  the  client  and  server you can set the local affinity by
+		 using the n form of this argument (where n is a CPU number).  In
+		 addition,  on  the  client  side  you  can override the server's
+		 affinity for just that one test, using the n,m form of argument.
+		 Note  that when using this feature, a process will only be bound
+		 to a single CPU (as opposed to a set containing potentialy  mul-
+		 tiple CPUs).
 
-   ‐B, ‐‐bind host
-   bind to a specific interface
+	  -B, --bind host
+		 bind to a specific interface
 
-   ‐V, ‐‐verbose
-   give more detailed output
+	  -V, --verbose
+		 give more detailed output
 
-   ‐J, ‐‐json
-   output in JSON format
+	  -J, --json
+		 output in JSON format
 
-   ‐‐logfile file
-   send output to a log file.
+	  --logfile file
+		 send output to a log file.
 
-   --forceflush
-   force flushing output at every interval. Used to avoid buffering when sending
-   output to pipe.
+	  --forceflush
+		 force  flushing output at every interval.  Used to avoid buffer-
+		 ing when sending output to pipe.
 
-   ‐d, ‐‐debug
-   emit  debugging  output.  Primarily (perhaps exclusively) of use
-   to developers.
+	  -d, --debug
+		 emit debugging output.  Primarily (perhaps exclusively)  of  use
+		 to developers.
 
-   ‐v, ‐‐version
-   show version information and quit
+	  -v, --version
+		 show version information and quit
 
-   ‐h, ‐‐help
-   show a help synopsis
+	  -h, --help
+		 show a help synopsis
 
 
    SERVER SPECIFIC OPTIONS
-   ‐s, ‐‐server
-   run in server mode
+	  -s, --server
+		 run in server mode
 
-   ‐D, ‐‐daemon
-   run the server in background as a daemon
+	  -D, --daemon
+		 run the server in background as a daemon
 
-   ‐I, ‐‐pidfile file
-   write a file with the process ID, most useful when running as  a
-   daemon.
+	  -I, --pidfile file
+		 write  a file with the process ID, most useful when running as a
+		 daemon.
+
+	  -1, --one-off
+		 handle one client connection, then exit.
 
 
    CLIENT SPECIFIC OPTIONS
-   ‐c, ‐‐client host
-   run in client mode, connecting to the specified server
+	  -c, --client host
+		 run in client mode, connecting to the specified server
 
-   ‐‐sctp use SCTP rather than TCP (FreeBSD and Linux)
+	  --sctp use SCTP rather than TCP (FreeBSD and Linux)
 
-   ‐u, ‐‐udp
-   use UDP rather than TCP
+	  -u, --udp
+		 use UDP rather than TCP
 
-   ‐b, ‐‐bandwidth n[KM]
-   set  target bandwidth to n bits/sec (default 1 Mbit/sec for UDP,
-   unlimited for TCP).  If there are multiple  streams  (‐P  flag),
-   the  bandwidth  limit is applied separately to each stream.  You
-   can also add a ’/’ and a  number  to  the  bandwidth  specifier.
-   This  is  called "burst mode".  It will send the given number of
-   packets without pausing, even if that  temporarily  exceeds  the
-   specified bandwidth limit.
+	  -b, --bandwidth n[KM]
+		 set target bandwidth to n bits/sec (default 1 Mbit/sec for  UDP,
+		 unlimited  for  TCP).   If there are multiple streams (-P flag),
+		 the bandwidth limit is applied separately to each  stream.   You
+		 can  also  add  a  '/'  and a number to the bandwidth specifier.
+		 This is called "burst mode".  It will send the given  number  of
+		 packets  without  pausing,  even if that temporarily exceeds the
+		 specified bandwidth limit.  Setting the target  bandwidth  to  0
+		 will  disable  bandwidth  limits  (particularly  useful  for UDP
+		 tests).  On platforms supporting the  SO_MAX_PACING_RATE  socket
+		 option  (currently  only Linux), fair-queueing socket-level pac-
+		 ing, implemented in the kernel, will be used.   On  other  plat-
+		 forms, iperf3 will implement its own rate control.
 
-   ‐t, ‐‐time n
-   time in seconds to transmit for (default 10 secs)
+	  --no-fq-socket-pacing
+		 disable  the use of fair-queueing based socket-level pacing with
+		 the -b option, and rely on iperf3's internal rate control.
 
-   ‐n, ‐‐bytes n[KM]
-   number of bytes to transmit (instead of ‐t)
+	  -t, --time n
+		 time in seconds to transmit for (default 10 secs)
 
-   ‐k, ‐‐blockcount n[KM]
-   number of blocks (packets) to transmit (instead of ‐t or ‐n)
+	  -n, --bytes n[KM]
+		 number of bytes to transmit (instead of -t)
 
-   ‐l, ‐‐length n[KM]
-   length  of  buffer to read or write (default 128 KB for TCP, 8KB
-   for UDP)
+	  -k, --blockcount n[KM]
+		 number of blocks (packets) to transmit (instead of -t or -n)
 
-   ‐P, ‐‐parallel n
-   number of parallel client streams to run
+	  -l, --length n[KM]
+		 length of buffer to read or write (default 128 KB for  TCP,  8KB
+		 for UDP)
 
-   ‐R, ‐‐reverse
-   run in reverse mode (server sends, client receives)
+	  --cport port
+		 bind  data  streams  to  a specific client port (for TCP and UDP
+		 only, default is to use an ephemeral port)
 
-   ‐w, ‐‐window n[KM]
-   TCP window size / socket buffer size  (this  gets  sent  to  the
-   server and used on that side too)
+	  -P, --parallel n
+		 number of parallel client streams to run
 
-   ‐M, ‐‐set‐mss n
-   set TCP maximum segment size (MTU ‐ 40 bytes)
+	  -R, --reverse
+		 run in reverse mode (server sends, client receives)
 
-   ‐N, ‐‐no‐delay
-   set TCP no delay, disabling Nagle’s Algorithm
+	  -w, --window n[KM]
+		 window size / socket buffer size (this gets sent to  the  server
+		 and used on that side too)
 
-   ‐4, ‐‐version4
-   only use IPv4
+	  -M, --set-mss n
+		 set TCP/SCTP maximum segment size (MTU - 40 bytes)
 
-   ‐6, ‐‐version6
-   only use IPv6
+	  -N, --no-delay
+		 set TCP/SCTP no delay, disabling Nagle's Algorithm
 
-   ‐S, ‐‐tos n
-   set the IP ’type of service’
+	  -4, --version4
+		 only use IPv4
 
-   ‐L, ‐‐flowlabel n
-   set the IPv6 flow label (currently only supported on Linux)
+	  -6, --version6
+		 only use IPv6
 
-   ‐Z, ‐‐zerocopy
-   Use  a  "zero copy" method of sending data, such as sendfile(2),
-   instead of the usual write(2).
+	  -S, --tos n
+		 set the IP 'type of service'
 
-   ‐O, ‐‐omit n
-   Omit the first n seconds of the test, to skip past the TCP slow‐
-   start period.
+	  -L, --flowlabel n
+		 set the IPv6 flow label (currently only supported on Linux)
 
-   ‐T, ‐‐title str
-   Prefix every output line with this string.
+	  -X, --xbind name
+		 Bind  SCTP  associations  to  a  specific  subset of links using
+		 sctp_bindx(3).  The --B flag will be ignored  if  this  flag  is
+		 specified.  Normally SCTP will include the protocol addresses of
+		 all active links on the local host when setting up  an  associa-
+		 tion.  Specifying at least one --X name will disable this behav-
+		 iour.  This flag must be specified for each link to be  included
+		 in  the association, and is supported for both iperf servers and
+		 clients (the latter are supported by passing the first --X argu-
+		 ment  to  bind(2)).  Hostnames are accepted as arguments and are
+		 resolved using getaddrinfo(3).  If the  --4  or  --6  flags  are
+		 specified,  names  which  do not resolve to addresses within the
+		 specified protocol family will be ignored.
 
-   ‐C, ‐‐linux‐congestion algo
-   Set the congestion control algorithm (linux only).
+	  --nstreams n
+		 Set number of SCTP streams.
+
+	  -Z, --zerocopy
+		 Use a "zero copy" method of sending data, such  as  sendfile(2),
+		 instead of the usual write(2).
+
+	  -O, --omit n
+		 Omit the first n seconds of the test, to skip past the TCP slow-
+		 start period.
+
+	  -T, --title str
+		 Prefix every output line with this string.
+
+	  -C, --congestion algo
+		 Set the congestion control algorithm (Linux and  FreeBSD  only).
+		 An  older  --linux-congestion  synonym for this flag is accepted
+		 but is deprecated.
+
+	  --get-server-output
+		 Get the output from the server.  The output format is determined
+		 by the server (in particular, if the server was invoked with the
+		 --json flag, the output will be in  JSON  format,  otherwise  it
+		 will  be  in  human-readable format).  If the client is run with
+		 --json, the server output is included in a JSON  object;  other-
+		 wise it is appended at the bottom of the human-readable output.
 
 
    AUTHORS
-   Iperf  was  originally  written by Mark Gates and Alex Warshavsky.  Man
-   page and maintence by Jon Dugan <jdugan at x1024 dot net>.  Other  con‐
-   tributions  from  Ajay  Tirumala,  Jim Ferguson, Feng Qin, Kevin Gibbs,
-   John Estabrook <jestabro at ncsa.uiuc.edu>, Andrew  Gallatin  <gallatin
-   at gmail.com>, Stephen Hemminger <shemminger at linux‐foundation.org>
+	  A list of the contributors to iperf3 can be found within the documenta-
+	  tion located at http://software.es.net/iperf/dev.html#authors.
 
 
    SEE ALSO
-   libiperf(3), https://github.com/esnet/iperf
+	  libiperf(3), http://software.es.net/iperf
 
 
 
-   ESnet                            February 2014                        IPERF(1)
+   ESnet                              May 2016                          IPERF3(1)
 
 The iperf3 manual page will typically be installed in manual
 section 1.

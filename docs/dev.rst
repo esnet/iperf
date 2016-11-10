@@ -222,6 +222,13 @@ Release Engineering Checklist
     ``docs/conf.py`` in the source tree) and deploy a new build of the
     documentation to GitHub Pages.
 
+13. If an update to the on-line manual page is needed, it can be
+    generated with this sequence of commands (tested on CentOS 7):
+     TERM=
+     export TERM
+     nroff -Tascii -c -man src/iperf3.1 | ul | sed 's/^/   /' > iperf3.txt
+    Then import the contents into ``docs/invoking.rst``.
+
 Code Authors
 ------------
 

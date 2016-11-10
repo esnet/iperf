@@ -341,6 +341,15 @@ to announce the new release (see <code class="docutils literal"><span class="pre
 <code class="docutils literal"><span class="pre">docs/conf.py</span></code> in the source tree) and deploy a new build of the
 documentation to GitHub Pages.</p>
 </li>
+<li><p class="first">If an update to the on-line manual page is needed, it can be
+generated with this sequence of commands (tested on CentOS 7) and
+import the result into <code class="docutils literal"><span class="pre">invoking.rst</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">TERM</span><span class="o">=</span>
+<span class="n">export</span> <span class="n">TERM</span>
+<span class="n">nroff</span> <span class="o">-</span><span class="n">Tascii</span> <span class="o">-</span><span class="n">c</span> <span class="o">-</span><span class="n">man</span> <span class="n">src</span><span class="o">/</span><span class="n">iperf3</span><span class="o">.</span><span class="mi">1</span> <span class="o">|</span> <span class="n">ul</span> <span class="o">|</span> <span class="n">sed</span> <span class="s1">&#39;s/^/   /&#39;</span> <span class="o">&gt;</span> <span class="n">iperf3</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+</div>
+</li>
 </ol>
 </div>
 <div class="section" id="code-authors">

@@ -1,0 +1,9 @@
+[Unit]
+Description=iperf3
+Requires=network-online.target
+
+[Service]
+ExecStart=/usr/bin/iperf3 -s
+
+[Install]
+WantedBy=multi-user.target

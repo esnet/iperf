@@ -317,6 +317,7 @@ iperf_tcp_connect(struct iperf_test *test)
     struct addrinfo hints, *local_res, *server_res;
     char portstr[6];
     int s, opt;
+    socklen_t optlen;
     int saved_errno;
 
     if (test->bind_address) {
@@ -406,18 +407,43 @@ iperf_tcp_connect(struct iperf_test *test)
             return -1;
         }
     }
+
+    /* Read back and verify the sender socket buffer size */
+    optlen = sizeof(opt);
+    if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, &optlen) < 0) {
+	saved_errno = errno;
+	close(s);
+	freeaddrinfo(server_res);
+	errno = saved_errno;
+	i_errno = IESETBUF;
+	return -1;
+    }
+    if (test->settings->socket_bufsize && test->settings->socket_bufsize != opt) {
+	i_errno = IESETBUF2;
+	return -1;
+    }
     if (test->debug) {
-	socklen_t optlen = sizeof(opt);
-	if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, &optlen) < 0) {
-	    saved_errno = errno;
-	    close(s);
-	    freeaddrinfo(server_res);
-	    errno = saved_errno;
-	    i_errno = IESETBUF;
-	    return -1;
-	}
 	printf("SO_SNDBUF is %u\n", opt);
     }
+
+    /* Read back and verify the receiver socket buffer size */
+    optlen = sizeof(opt);
+    if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, &optlen) < 0) {
+	saved_errno = errno;
+	close(s);
+	freeaddrinfo(server_res);
+	errno = saved_errno;
+	i_errno = IESETBUF;
+	return -1;
+    }
+    if (test->settings->socket_bufsize && test->settings->socket_bufsize != opt) {
+	i_errno = IESETBUF2;
+	return -1;
+    }
+    if (test->debug) {
+	printf("SO_RCVBUF is %u\n", opt);
+    }
+
 #if defined(HAVE_FLOWLABEL)
     if (test->settings->flowlabel) {
         if (server_res->ai_addr->sa_family != AF_INET6) {

@@ -233,6 +233,8 @@ iperf_udp_accept(struct iperf_test *test)
      * receiving so that we can cover both normal and --reverse operation.
      */
     int opt;
+    socklen_t optlen;
+    
     if ((opt = test->settings->socket_bufsize)) {
         if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) < 0) {
             i_errno = IESETBUF;
@@ -242,6 +244,34 @@ iperf_udp_accept(struct iperf_test *test)
             i_errno = IESETBUF;
             return -1;
         }
+    }
+
+    /* Read back and verify the sender socket buffer size */
+    optlen = sizeof(opt);
+    if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, &optlen) < 0) {
+	i_errno = IESETBUF;
+	return -1;
+    }
+    if (test->settings->socket_bufsize && test->settings->socket_bufsize != opt) {
+	i_errno = IESETBUF2;
+	return -1;
+    }
+    if (test->debug) {
+	printf("SO_SNDBUF is %u\n", opt);
+    }
+
+    /* Read back and verify the receiver socket buffer size */
+    optlen = sizeof(opt);
+    if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, &optlen) < 0) {
+	i_errno = IESETBUF;
+	return -1;
+    }
+    if (test->settings->socket_bufsize && test->settings->socket_bufsize != opt) {
+	i_errno = IESETBUF2;
+	return -1;
+    }
+    if (test->debug) {
+	printf("SO_RCVBUF is %u\n", opt);
     }
 
 #if defined(HAVE_SO_MAX_PACING_RATE)
@@ -332,6 +362,8 @@ iperf_udp_connect(struct iperf_test *test)
      * receiving so that we can cover both normal and --reverse operation.
      */
     int opt;
+    socklen_t optlen;
+    
     if ((opt = test->settings->socket_bufsize)) {
         if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) < 0) {
             i_errno = IESETBUF;
@@ -341,6 +373,33 @@ iperf_udp_connect(struct iperf_test *test)
             i_errno = IESETBUF;
             return -1;
         }
+    }
+    /* Read back and verify the sender socket buffer size */
+    optlen = sizeof(opt);
+    if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, &optlen) < 0) {
+	i_errno = IESETBUF;
+	return -1;
+    }
+    if (test->settings->socket_bufsize && test->settings->socket_bufsize != opt) {
+	i_errno = IESETBUF2;
+	return -1;
+    }
+    if (test->debug) {
+	printf("SO_SNDBUF is %u\n", opt);
+    }
+
+    /* Read back and verify the receiver socket buffer size */
+    optlen = sizeof(opt);
+    if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, &optlen) < 0) {
+	i_errno = IESETBUF;
+	return -1;
+    }
+    if (test->settings->socket_bufsize && test->settings->socket_bufsize != opt) {
+	i_errno = IESETBUF2;
+	return -1;
+    }
+    if (test->debug) {
+	printf("SO_RCVBUF is %u\n", opt);
     }
 
 #if defined(HAVE_SO_MAX_PACING_RATE)

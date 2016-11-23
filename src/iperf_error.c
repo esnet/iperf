@@ -359,6 +359,10 @@ iperf_strerror(int i_errno)
 	    snprintf(errstr, len, "unable to set socket pacing");
 	    perr = 1;
 	    break;
+	case IESETBUF2:
+	    snprintf(errstr, len, "socket buffer size not set correctly");
+	    break;
+	
     }
 
     if (herr || perr)

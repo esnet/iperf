@@ -251,6 +251,14 @@ iperf_tcp_listen(struct iperf_test *test)
 	}
     }
 #endif /* HAVE_SO_MAX_PACING_RATE */
+    if (test->no_fq_socket_pacing) {
+	unsigned int rate = test->settings->rate / 8;
+	if (rate > 0) {
+	    if (test->debug) {
+		printf("Setting application pacing to %u\n", rate);
+	    }
+	}
+    }
         opt = 1;
         if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
 	    saved_errno = errno;
@@ -496,7 +504,7 @@ iperf_tcp_connect(struct iperf_test *test)
 	unsigned int rate = test->settings->rate / 8;
 	if (rate > 0) {
 	    if (test->debug) {
-		printf("Socket pacing set to %u\n", rate);
+		printf("Setting fair-queue socket pacing to %u\n", rate);
 	    }
 	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &rate, sizeof(rate)) < 0) {
 		warning("Unable to set socket pacing, using application pacing instead");
@@ -505,6 +513,14 @@ iperf_tcp_connect(struct iperf_test *test)
 	}
     }
 #endif /* HAVE_SO_MAX_PACING_RATE */
+    if (test->no_fq_socket_pacing) {
+	unsigned int rate = test->settings->rate / 8;
+	if (rate > 0) {
+	    if (test->debug) {
+		printf("Setting application pacing to %u\n", rate);
+	    }
+	}
+    }
 
     if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS) {
 	saved_errno = errno;

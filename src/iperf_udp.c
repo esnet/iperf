@@ -290,6 +290,14 @@ iperf_udp_accept(struct iperf_test *test)
 	}
     }
 #endif /* HAVE_SO_MAX_PACING_RATE */
+    if (test->no_fq_socket_pacing) {
+	unsigned int rate = test->settings->rate / 8;
+	if (rate > 0) {
+	    if (test->debug) {
+		printf("Setting application pacing to %u\n", rate);
+	    }
+	}
+    }
 
     /*
      * Create a new "listening" socket to replace the one we were using before.
@@ -418,6 +426,14 @@ iperf_udp_connect(struct iperf_test *test)
 	}
     }
 #endif /* HAVE_SO_MAX_PACING_RATE */
+    if (test->no_fq_socket_pacing) {
+	unsigned int rate = test->settings->rate / 8;
+	if (rate > 0) {
+	    if (test->debug) {
+		printf("Setting application pacing to %u\n", rate);
+	    }
+	}
+    }
 
 #ifdef SO_RCVTIMEO
     /* 30 sec timeout for a case when there is a network problem. */

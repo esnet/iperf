@@ -426,12 +426,12 @@ iperf_tcp_connect(struct iperf_test *test)
 	i_errno = IESETBUF;
 	return -1;
     }
-    if (test->settings->socket_bufsize && test->settings->socket_bufsize != opt) {
+    if (test->debug) {
+	printf("SNDBUF is %u, expecting %u\n", opt, test->settings->socket_bufsize);
+    }
+    if (test->settings->socket_bufsize && test->settings->socket_bufsize > opt) {
 	i_errno = IESETBUF2;
 	return -1;
-    }
-    if (test->debug) {
-	printf("SO_SNDBUF is %u\n", opt);
     }
 
     /* Read back and verify the receiver socket buffer size */
@@ -444,12 +444,12 @@ iperf_tcp_connect(struct iperf_test *test)
 	i_errno = IESETBUF;
 	return -1;
     }
-    if (test->settings->socket_bufsize && test->settings->socket_bufsize != opt) {
+    if (test->debug) {
+	printf("RCVBUF is %u, expecting %u\n", opt, test->settings->socket_bufsize);
+    }
+    if (test->settings->socket_bufsize && test->settings->socket_bufsize > opt) {
 	i_errno = IESETBUF2;
 	return -1;
-    }
-    if (test->debug) {
-	printf("SO_RCVBUF is %u\n", opt);
     }
 
 #if defined(HAVE_FLOWLABEL)

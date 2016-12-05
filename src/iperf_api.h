@@ -39,7 +39,7 @@ struct iperf_stream;
 #define Ptcp SOCK_STREAM
 #define Pudp SOCK_DGRAM
 #define Psctp 12
-#define DEFAULT_UDP_BLKSIZE 8192
+#define DEFAULT_UDP_BLKSIZE 1452
 #define DEFAULT_TCP_BLKSIZE (128 * 1024)  /* default read/write block size */
 #define DEFAULT_SCTP_BLKSIZE (64 * 1024)
 

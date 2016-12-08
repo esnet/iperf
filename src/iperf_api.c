@@ -1008,17 +1008,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     }
     test->settings->blksize = blksize;
 
-    /* 
-     * If we're not doing TCP, then be sure we're doing application
-     * pacing and not per-socket fair-queue pacing.
-     */
-    if (test->role == 'c' && test->protocol->id != Ptcp) {
-	if (!test->no_fq_socket_pacing) {
-	    printf("Warning, forcing application pacing on non-TCP test\n");
-	    test->no_fq_socket_pacing = 1;
-	}
-    }
-
     if (!rate_flag)
 	test->settings->rate = test->protocol->id == Pudp ? UDP_RATE : 0;
 
@@ -1072,8 +1061,7 @@ iperf_check_throttle(struct iperf_stream *sp, struct timeval *nowP)
         return;
     seconds = timeval_diff(&sp->result->start_time_fixed, nowP);
     bits_per_second = sp->result->bytes_sent * 8 / seconds;
-    if (! sp->test->no_fq_socket_pacing ||
-	bits_per_second < sp->test->settings->rate) {
+    if (bits_per_second < sp->test->settings->rate) {
         sp->green_light = 1;
         FD_SET(sp->socket, &sp->test->write_set);
     } else {
@@ -1102,7 +1090,8 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 	    gettimeofday(&now, NULL);
 	streams_active = 0;
 	SLIST_FOREACH(sp, &test->streams, streams) {
-	    if ((sp->green_light &&
+	    if (! test->no_fq_socket_pacing ||
+		(sp->green_light &&
 		 (write_setP == NULL || FD_ISSET(sp->socket, write_setP)))) {
 		if ((r = sp->snd(sp)) < 0) {
 		    if (r == NET_SOFTERROR)

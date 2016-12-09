@@ -154,7 +154,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  --get-server-output       get results from server\n"
                            "  --udp-counters-64bit      use 64-bit counters in UDP test packets\n"
 #if defined(HAVE_SO_MAX_PACING_RATE)
-                           "  --no-fq-socket-pacing     disable fair-queuing based socket pacing\n"
+                           "  --fq-rate N               enable and set fair-queuing based socket pacing\n"
 			   "                            (Linux only)\n"
 #endif
 

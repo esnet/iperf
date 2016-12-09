@@ -129,7 +129,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "                            (default %d Mbit/sec for UDP, unlimited for TCP)\n"
                            "                            (optional slash and packet count for burst mode)\n"
 #if defined(HAVE_SO_MAX_PACING_RATE)
-                           "  --fq-rate #               enable fair-queuing based socket pacing in\n"
+                           "  --fq-rate #[KMG]          enable fair-queuing based socket pacing in\n"
 			   "                            bits/sec (Linux only)\n"
 #endif
                            "  -t, --time      #         time in seconds to transmit for (default %d secs)\n"

@@ -128,6 +128,10 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -b, --bandwidth #[KMG][/#] target bandwidth in bits/sec (0 for unlimited)\n"
                            "                            (default %d Mbit/sec for UDP, unlimited for TCP)\n"
                            "                            (optional slash and packet count for burst mode)\n"
+#if defined(HAVE_SO_MAX_PACING_RATE)
+                           "  --fq-rate #               enable fair-queuing based socket pacing in\n"
+			   "                            bits/sec (Linux only)\n"
+#endif
                            "  -t, --time      #         time in seconds to transmit for (default %d secs)\n"
                            "  -n, --bytes     #[KMG]    number of bytes to transmit (instead of -t)\n"
                            "  -k, --blockcount #[KMG]   number of blocks (packets) to transmit (instead of -t or -n)\n"
@@ -153,10 +157,6 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -T, --title str           prefix every output line with this string\n"
                            "  --get-server-output       get results from server\n"
                            "  --udp-counters-64bit      use 64-bit counters in UDP test packets\n"
-#if defined(HAVE_SO_MAX_PACING_RATE)
-                           "  --fq-rate N               enable and set fair-queuing based socket pacing\n"
-			   "                            (Linux only)\n"
-#endif
 
 #ifdef NOT_YET_SUPPORTED /* still working on these */
 #endif

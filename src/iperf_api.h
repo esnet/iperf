@@ -51,7 +51,8 @@ struct iperf_stream;
 #define OPT_CLIENT_PORT 5
 #define OPT_NUMSTREAMS 6
 #define OPT_FORCEFLUSH 7
-#define OPT_NO_FQ_SOCKET_PACING 9
+#define OPT_NO_FQ_SOCKET_PACING 9 /* UNUSED */
+#define OPT_FQ_RATE 10
 
 /* states */
 #define TEST_START 1

@@ -110,7 +110,8 @@ struct iperf_settings
     int       domain;               /* AF_INET or AF_INET6 */
     int       socket_bufsize;       /* window size for TCP */
     int       blksize;              /* size of read/writes (-l) */
-    uint64_t  rate;                 /* target data rate */
+    uint64_t  rate;                 /* target data rate for application pacing*/
+    uint64_t  fqrate;               /* target data rate for FQ pacing*/
     int       burst;                /* packets per burst */
     int       mss;                  /* for TCP MSS */
     int       ttl;                  /* IP TTL option */
@@ -243,7 +244,6 @@ struct iperf_test
     int	      get_server_output;		/* --get-server-output */
     int	      udp_counters_64bit;		/* --use-64-bit-udp-counters */
     int       forceflush; /* --forceflush - flushing output at every interval */
-    int       no_fq_socket_pacing;	  /* --no-fq-socket-pacing */
     int	      multisend;
 
     char     *json_output_string; /* rendered JSON output if json_output is set */

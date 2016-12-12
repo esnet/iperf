@@ -144,6 +144,12 @@ iperf_get_test_rate(struct iperf_test *ipt)
     return ipt->settings->rate;
 }
 
+uint64_t
+iperf_get_test_fqrate(struct iperf_test *ipt)
+{
+    return ipt->settings->fqrate;
+}
+
 int
 iperf_get_test_burst(struct iperf_test *ipt)
 {
@@ -270,12 +276,6 @@ iperf_get_test_one_off(struct iperf_test *ipt)
     return ipt->one_off;
 }
 
-int
-iperf_get_no_fq_socket_pacing(struct iperf_test *ipt)
-{
-    return ipt->no_fq_socket_pacing;
-}
-
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -330,6 +330,12 @@ void
 iperf_set_test_rate(struct iperf_test *ipt, uint64_t rate)
 {
     ipt->settings->rate = rate;
+}
+
+void
+iperf_set_test_fqrate(struct iperf_test *ipt, uint64_t fqrate)
+{
+    ipt->settings->fqrate = fqrate;
 }
 
 void
@@ -445,12 +451,6 @@ void
 iperf_set_test_one_off(struct iperf_test *ipt, int one_off)
 {
     ipt->one_off = one_off;
-}
-
-void
-iperf_set_no_fq_socket_pacing(struct iperf_test *ipt, int no_pacing)
-{
-    ipt->no_fq_socket_pacing = no_pacing;
 }
 
 /********************** Get/set test protocol structure ***********************/
@@ -668,7 +668,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"forceflush", no_argument, NULL, OPT_FORCEFLUSH},
 	{"get-server-output", no_argument, NULL, OPT_GET_SERVER_OUTPUT},
 	{"udp-counters-64bit", no_argument, NULL, OPT_UDP_COUNTERS_64BIT},
-	{"no-fq-socket-pacing", no_argument, NULL, OPT_NO_FQ_SOCKET_PACING},
+ 	{"no-fq-socket-pacing", no_argument, NULL, OPT_NO_FQ_SOCKET_PACING},
+	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -953,7 +954,18 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		break;
 	    case OPT_NO_FQ_SOCKET_PACING:
 #if defined(HAVE_SO_MAX_PACING_RATE)
-		test->no_fq_socket_pacing = 1;
+		printf("Warning:  --no-fq-socket-pacing is deprecated\n");
+		test->settings->fqrate = 0;
+		client_flag = 1;
+#else /* HAVE_SO_MAX_PACING_RATE */
+		i_errno = IEUNIMP;
+		return -1;
+#endif
+		break;
+	    case OPT_FQ_RATE:
+#if defined(HAVE_SO_MAX_PACING_RATE)
+		test->settings->fqrate = unit_atof_rate(optarg);
+		client_flag = 1;
 #else /* HAVE_SO_MAX_PACING_RATE */
 		i_errno = IEUNIMP;
 		return -1;
@@ -1090,8 +1102,7 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 	    gettimeofday(&now, NULL);
 	streams_active = 0;
 	SLIST_FOREACH(sp, &test->streams, streams) {
-	    if (! test->no_fq_socket_pacing ||
-		(sp->green_light &&
+	    if ((sp->green_light &&
 		 (write_setP == NULL || FD_ISSET(sp->socket, write_setP)))) {
 		if ((r = sp->snd(sp)) < 0) {
 		    if (r == NET_SOFTERROR)
@@ -1324,6 +1335,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "len", test->settings->blksize);
 	if (test->settings->rate)
 	    cJSON_AddNumberToObject(j, "bandwidth", test->settings->rate);
+	if (test->settings->fqrate)
+	    cJSON_AddNumberToObject(j, "fqrate", test->settings->fqrate);
 	if (test->settings->burst)
 	    cJSON_AddNumberToObject(j, "burst", test->settings->burst);
 	if (test->settings->tos)
@@ -1340,8 +1353,6 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "get_server_output", iperf_get_test_get_server_output(test));
 	if (test->udp_counters_64bit)
 	    cJSON_AddNumberToObject(j, "udp_counters_64bit", iperf_get_test_udp_counters_64bit(test));
-	if (test->no_fq_socket_pacing)
-	    cJSON_AddNumberToObject(j, "no_fq_socket_pacing", iperf_get_no_fq_socket_pacing(test));
 
 	cJSON_AddStringToObject(j, "client_version", IPERF_VERSION);
 
@@ -1406,6 +1417,8 @@ get_parameters(struct iperf_test *test)
 	    test->settings->blksize = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "bandwidth")) != NULL)
 	    test->settings->rate = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "fqrate")) != NULL)
+	    test->settings->fqrate = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "burst")) != NULL)
 	    test->settings->burst = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "TOS")) != NULL)
@@ -1422,8 +1435,6 @@ get_parameters(struct iperf_test *test)
 	    iperf_set_test_get_server_output(test, 1);
 	if ((j_p = cJSON_GetObjectItem(j, "udp_counters_64bit")) != NULL)
 	    iperf_set_test_udp_counters_64bit(test, 1);
-	if ((j_p = cJSON_GetObjectItem(j, "no_fq_socket_pacing")) != NULL)
-	    iperf_set_no_fq_socket_pacing(test, 1);
 	
 	if (test->sender && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    test->sender_has_retransmits = 1;
@@ -1859,15 +1870,12 @@ iperf_defaults(struct iperf_test *testp)
     testp->stats_interval = testp->reporter_interval = 1;
     testp->num_streams = 1;
 
-#if ! defined(HAVE_SO_MAX_PACING_RATE)
-    testp->no_fq_socket_pacing = 1;
-#endif
-
     testp->settings->domain = AF_UNSPEC;
     testp->settings->unit_format = 'a';
     testp->settings->socket_bufsize = 0;    /* use autotuning */
     testp->settings->blksize = DEFAULT_TCP_BLKSIZE;
     testp->settings->rate = 0;
+    testp->settings->fqrate = 0;
     testp->settings->burst = 0;
     testp->settings->mss = 0;
     testp->settings->bytes = 0;

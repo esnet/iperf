@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2016, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2016, 2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -259,6 +259,13 @@ iperf_udp_accept(struct iperf_test *test)
 	i_errno = IESETBUF2;
 	return -1;
     }
+    if (test->settings->blksize > opt) {
+	char str[80];
+	snprintf(str, sizeof(str),
+		 "Block size %d > sending socket buffer size %d",
+		 test->settings->blksize, opt);
+	warning(str);
+    }
 
     /* Read back and verify the receiver socket buffer size */
     optlen = sizeof(opt);
@@ -272,6 +279,13 @@ iperf_udp_accept(struct iperf_test *test)
     if (test->settings->socket_bufsize && test->settings->socket_bufsize > opt) {
 	i_errno = IESETBUF2;
 	return -1;
+    }
+    if (test->settings->blksize > opt) {
+	char str[80];
+	snprintf(str, sizeof(str),
+		 "Block size %d > receiving socket buffer size %d",
+		 test->settings->blksize, opt);
+	warning(str);
     }
 
 #if defined(HAVE_SO_MAX_PACING_RATE)
@@ -394,6 +408,13 @@ iperf_udp_connect(struct iperf_test *test)
 	i_errno = IESETBUF2;
 	return -1;
     }
+    if (test->settings->blksize > opt) {
+	char str[80];
+	snprintf(str, sizeof(str),
+		 "Block size %d > sending socket buffer size %d",
+		 test->settings->blksize, opt);
+	warning(str);
+    }
 
     /* Read back and verify the receiver socket buffer size */
     optlen = sizeof(opt);
@@ -407,6 +428,13 @@ iperf_udp_connect(struct iperf_test *test)
     if (test->settings->socket_bufsize && test->settings->socket_bufsize > opt) {
 	i_errno = IESETBUF2;
 	return -1;
+    }
+    if (test->settings->blksize > opt) {
+	char str[80];
+	snprintf(str, sizeof(str),
+		 "Block size %d > receiving socket buffer size %d",
+		 test->settings->blksize, opt);
+	warning(str);
     }
 
 #if defined(HAVE_SO_MAX_PACING_RATE)

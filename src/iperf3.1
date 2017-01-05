@@ -135,7 +135,12 @@ number of bytes to transmit (instead of \-t)
 number of blocks (packets) to transmit (instead of \-t or \-n)
 .TP
 .BR -l ", " --length " \fIn\fR[KM]"
-length of buffer to read or write (default 128 KB for TCP, 8KB for UDP)
+length of buffer to read or write.  For TCP tests, the default value
+is 128KB.
+In the case of UDP, iperf3 tries to dynamically determine a reasonable
+sending size based on the path MTU; if that cannot be determined it
+uses 1460 bytes as a sending size.
+For SCTP tests, the default size is 64KB.
 .TP
 .BR --cport " \fIport\fR"
 bind data streams to a specific client port (for TCP and UDP only,

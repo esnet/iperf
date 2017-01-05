@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, 2016, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, 2016, 2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -231,6 +231,8 @@ struct iperf_test
     int       ctrl_sck;
     int       listener;
     int       prot_listener;
+
+    int	      ctrl_sck_mss;			/* MSS for the control channel */
 
     /* boolean variables for Options */
     int       daemon;                           /* -D option */

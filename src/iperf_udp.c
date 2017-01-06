@@ -194,39 +194,14 @@ iperf_udp_send(struct iperf_stream *sp)
  */
 
 /*
- * iperf_udp_accept
- *
- * Accepts a new UDP "connection"
+ * Set and verify socket buffer sizes.
+ * Return 0 if no error, -1 if an error, +1 if socket buffers are
+ * potentially too small to hold a message.
  */
 int
-iperf_udp_accept(struct iperf_test *test)
+iperf_udp_buffercheck(struct iperf_test *test, int s)
 {
-    struct sockaddr_storage sa_peer;
-    int       buf;
-    socklen_t len;
-    int       sz, s;
-
-    /*
-     * Get the current outstanding socket.  This socket will be used to handle
-     * data transfers and a new "listening" socket will be created.
-     */
-    s = test->prot_listener;
-
-    /*
-     * Grab the UDP packet sent by the client.  From that we can extract the
-     * client's address, and then use that information to bind the remote side
-     * of the socket to the client.
-     */
-    len = sizeof(sa_peer);
-    if ((sz = recvfrom(test->prot_listener, &buf, sizeof(buf), 0, (struct sockaddr *) &sa_peer, &len)) < 0) {
-        i_errno = IESTREAMACCEPT;
-        return -1;
-    }
-
-    if (connect(s, (struct sockaddr *) &sa_peer, len) < 0) {
-        i_errno = IESTREAMACCEPT;
-        return -1;
-    }
+    int rc = 0;
 
     /*
      * Set socket buffer size if requested.  Do this for both sending and
@@ -265,6 +240,7 @@ iperf_udp_accept(struct iperf_test *test)
 		 "Block size %d > sending socket buffer size %d",
 		 test->settings->blksize, opt);
 	warning(str);
+	rc = 1;
     }
 
     /* Read back and verify the receiver socket buffer size */
@@ -286,8 +262,67 @@ iperf_udp_accept(struct iperf_test *test)
 		 "Block size %d > receiving socket buffer size %d",
 		 test->settings->blksize, opt);
 	warning(str);
+	rc = 1;
+    }
+    return rc;
+}
+
+/*
+ * iperf_udp_accept
+ *
+ * Accepts a new UDP "connection"
+ */
+int
+iperf_udp_accept(struct iperf_test *test)
+{
+    struct sockaddr_storage sa_peer;
+    int       buf;
+    socklen_t len;
+    int       sz, s;
+    int	      rc;
+
+    /*
+     * Get the current outstanding socket.  This socket will be used to handle
+     * data transfers and a new "listening" socket will be created.
+     */
+    s = test->prot_listener;
+
+    /*
+     * Grab the UDP packet sent by the client.  From that we can extract the
+     * client's address, and then use that information to bind the remote side
+     * of the socket to the client.
+     */
+    len = sizeof(sa_peer);
+    if ((sz = recvfrom(test->prot_listener, &buf, sizeof(buf), 0, (struct sockaddr *) &sa_peer, &len)) < 0) {
+        i_errno = IESTREAMACCEPT;
+        return -1;
     }
 
+    if (connect(s, (struct sockaddr *) &sa_peer, len) < 0) {
+        i_errno = IESTREAMACCEPT;
+        return -1;
+    }
+
+    /* Check and set socket buffer sizes */
+    rc = iperf_udp_buffercheck(test, s);
+    if (rc < 0)
+	/* error */
+	return rc;
+    /*
+     * If the socket buffer was too small, but it was the default
+     * size, then try explicitly setting it to something larger.
+     */
+    if (rc > 0) {
+	if (test->settings->socket_bufsize == 0) {
+	    printf("Increasing socket buffer size to %d\n",
+		test->settings->blksize);
+	    test->settings->socket_bufsize = test->settings->blksize;
+	    rc = iperf_udp_buffercheck(test, s);
+	    if (rc < 0)
+		return rc;
+	}
+    }
+	
 #if defined(HAVE_SO_MAX_PACING_RATE)
     /* If socket pacing is specified, try it. */
     if (test->settings->fqrate) {
@@ -371,6 +406,7 @@ iperf_udp_connect(struct iperf_test *test)
 #ifdef SO_RCVTIMEO
     struct timeval tv;
 #endif
+    int rc;
 
     /* Create and bind our local socket. */
     if ((s = netdial(test->settings->domain, Pudp, test->bind_address, test->bind_port, test->server_hostname, test->server_port)) < 0) {
@@ -378,65 +414,26 @@ iperf_udp_connect(struct iperf_test *test)
         return -1;
     }
 
+    /* Check and set socket buffer sizes */
+    rc = iperf_udp_buffercheck(test, s);
+    if (rc < 0)
+	/* error */
+	return rc;
     /*
-     * Set socket buffer size if requested.  Do this for both sending and
-     * receiving so that we can cover both normal and --reverse operation.
+     * If the socket buffer was too small, but it was the default
+     * size, then try explicitly setting it to something larger.
      */
-    int opt;
-    socklen_t optlen;
-    
-    if ((opt = test->settings->socket_bufsize)) {
-        if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) < 0) {
-            i_errno = IESETBUF;
-            return -1;
-        }
-        if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) < 0) {
-            i_errno = IESETBUF;
-            return -1;
-        }
+    if (rc > 0) {
+	if (test->settings->socket_bufsize == 0) {
+	    printf("Increasing socket buffer size to %d\n",
+		test->settings->blksize);
+	    test->settings->socket_bufsize = test->settings->blksize;
+	    rc = iperf_udp_buffercheck(test, s);
+	    if (rc < 0)
+		return rc;
+	}
     }
-    /* Read back and verify the sender socket buffer size */
-    optlen = sizeof(opt);
-    if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, &optlen) < 0) {
-	i_errno = IESETBUF;
-	return -1;
-    }
-    if (test->debug) {
-	printf("SNDBUF is %u, expecting %u\n", opt, test->settings->socket_bufsize);
-    }
-    if (test->settings->socket_bufsize && test->settings->socket_bufsize > opt) {
-	i_errno = IESETBUF2;
-	return -1;
-    }
-    if (test->settings->blksize > opt) {
-	char str[80];
-	snprintf(str, sizeof(str),
-		 "Block size %d > sending socket buffer size %d",
-		 test->settings->blksize, opt);
-	warning(str);
-    }
-
-    /* Read back and verify the receiver socket buffer size */
-    optlen = sizeof(opt);
-    if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, &optlen) < 0) {
-	i_errno = IESETBUF;
-	return -1;
-    }
-    if (test->debug) {
-	printf("RCVBUF is %u, expecting %u\n", opt, test->settings->socket_bufsize);
-    }
-    if (test->settings->socket_bufsize && test->settings->socket_bufsize > opt) {
-	i_errno = IESETBUF2;
-	return -1;
-    }
-    if (test->settings->blksize > opt) {
-	char str[80];
-	snprintf(str, sizeof(str),
-		 "Block size %d > receiving socket buffer size %d",
-		 test->settings->blksize, opt);
-	warning(str);
-    }
-
+	
 #if defined(HAVE_SO_MAX_PACING_RATE)
     /* If socket pacing is available and not disabled, try it. */
     if (test->settings->fqrate) {

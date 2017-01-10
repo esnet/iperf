@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, 2016, The Regents of the University of
+ * iperf, Copyright (c) 2014-2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -124,6 +124,12 @@ int
 iperf_get_control_socket(struct iperf_test *ipt)
 {
     return ipt->ctrl_sck;
+}
+
+int
+iperf_get_control_socket_mss(struct iperf_test *ipt)
+{
+    return ipt->ctrl_sck_mss;
 }
 
 int
@@ -544,7 +550,6 @@ iperf_on_connect(struct iperf_test *test)
     struct sockaddr_in *sa_inP;
     struct sockaddr_in6 *sa_in6P;
     socklen_t len;
-    int opt;
 
     now_secs = time((time_t*) 0);
     (void) strftime(now_str, sizeof(now_str), rfc1123_fmt, gmtime(&now_secs));
@@ -585,9 +590,7 @@ iperf_on_connect(struct iperf_test *test)
 	    if (test->settings->mss)
 		cJSON_AddNumberToObject(test->json_start, "tcp_mss", test->settings->mss);
 	    else {
-		len = sizeof(opt);
-		getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_MAXSEG, &opt, &len);
-		cJSON_AddNumberToObject(test->json_start, "tcp_mss_default", opt);
+		cJSON_AddNumberToObject(test->json_start, "tcp_mss_default", test->ctrl_sck_mss);
 	    }
 	}
     } else if (test->verbose) {
@@ -596,9 +599,7 @@ iperf_on_connect(struct iperf_test *test)
             if (test->settings->mss)
                 iprintf(test, "      TCP MSS: %d\n", test->settings->mss);
             else {
-                len = sizeof(opt);
-                getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_MAXSEG, &opt, &len);
-                iprintf(test, "      TCP MSS: %d (default)\n", opt);
+                iprintf(test, "      TCP MSS: %d (default)\n", test->ctrl_sck_mss);
             }
         }
 
@@ -1001,13 +1002,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     }
     if (blksize == 0) {
 	if (test->protocol->id == Pudp)
-	    blksize = DEFAULT_UDP_BLKSIZE;
+	    blksize = 0;	/* try to dynamically determine from MSS */
 	else if (test->protocol->id == Psctp)
 	    blksize = DEFAULT_SCTP_BLKSIZE;
 	else
 	    blksize = DEFAULT_TCP_BLKSIZE;
     }
-    if (blksize <= 0 || blksize > MAX_BLOCKSIZE) {
+    if ((test->protocol->id != Pudp && blksize <= 0) 
+	|| blksize > MAX_BLOCKSIZE) {
 	i_errno = IEBLOCKSIZE;
 	return -1;
     }

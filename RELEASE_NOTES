@@ -1,3 +1,52 @@
+== iperf 3.1.5 2017-01-13 ==
+
+The release notes for iperf 3.1.5 describe changes, including bug
+fixes and new functionality, made since iperf 3.1.4.
+
+Compatibility note: Fair-queueing is now specified differently in
+iperf 3.1.5 than in prior versions (which include 3.1.3 and 3.1.4).
+
+Compatibility note: UDP tests may yield different results from all
+prior versions of iperf3 (through 3.1.4) due to the new default UDP
+sending size.
+
+* User-visible changes
+
+  * The fair-queueing per-socket based pacing available on recent
+    Linux systems has been reimplemented with a different user
+    interface (#325, #467, #488).  The --bandwidth command-line flag
+    now controls only the application-level pacing, as was the case in
+    iperf 3.1.2 and all earlier versions.  Fair-queueing per-socket
+    based pacing is now controlled via a new --fq-rate command-line
+    flag.  Note that TCP and UDP tests may use --bandwidth, --fq-rate,
+    both flags, or neither flag.  SCTP tests currently support
+    --bandwidth only.  The --no-fq-socket-pacing flag, which was
+    introduced in iperf 3.1.3, has now been deprecated, and is
+    equivalent to --fq-rate=0.  iperf3 now reacts more gracefully if
+    --no-fq-socket-pacing or --fq-rate are specified on platforms that
+    don't support these options.
+
+  * iperf3 now chooses a more sane default UDP send size (#496, #498).
+    The former default (8KB) caused IP packet fragmentation on paths
+    having smaller MTUs (including any Ethernet network not configured
+    for jumbo frames).  This could have effects ranging from increased
+    burstiness, to packet loss, to complete failure of the test.
+    iperf3 now attempts to use the MSS of the control connection to
+    determine a default UDP send size if no sending length was
+    explicitly specified with --length.
+
+  * Several checks are now made when setting the socket buffer sizes
+    with the -w option, to verify that the settings have been applied
+    correctly.  The results of these checks can been seen when the
+    --debug flag is specified.  (#356)
+
+  * A --forceflush flag has been added to flush the output stream
+    after every statistics reporting interval.
+
+* Developer-visible changes
+
+  * A systemd service file has been added (#340, #430).
+
 == iperf 3.1.4 2016-10-31 ==
 
 The release notes for iperf 3.1.4 describe changes, including bug

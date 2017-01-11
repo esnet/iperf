@@ -313,6 +313,8 @@ struct iperf_test
 #define SEC_TO_NS 1000000000LL	/* too big for enum/const on some platforms */
 #define MAX_RESULT_STRING 4096
 
+#define UDP_BUFFER_EXTRA 1024
+
 /* constants for command line arg sanity checks */
 #define MB (1024 * 1024)
 #define MAX_TCP_BUFFER (512 * MB)

@@ -1,4 +1,4 @@
-# iperf, Copyright (c) 2014, 2015, 2016, The Regents of the University of
+# iperf, Copyright (c) 2014, 2015, 2016, 2017, The Regents of the University of
 # California, through Lawrence Berkeley National Laboratory (subject
 # to receipt of any required approvals from the U.S. Dept. of
 # Energy).  All rights reserved.
@@ -24,7 +24,7 @@
 # file for complete information.
 
 # Initialize the autoconf system for the specified tool, version and mailing list
-AC_INIT(iperf, 3.1.4, https://github.com/esnet/iperf, iperf, http://software.es.net/iperf/)
+AC_INIT(iperf, 3.1.5, https://github.com/esnet/iperf, iperf, http://software.es.net/iperf/)
 AC_LANG(C)
 
 # Specify where the auxiliary files created by configure should go. The config

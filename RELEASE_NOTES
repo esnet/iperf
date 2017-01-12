@@ -1,4 +1,4 @@
-== iperf 3.1.5 2017-01-13 ==
+== iperf 3.1.5 2017-01-12 ==
 
 The release notes for iperf 3.1.5 describe changes, including bug
 fixes and new functionality, made since iperf 3.1.4.
@@ -25,6 +25,13 @@ sending size.
     equivalent to --fq-rate=0.  iperf3 now reacts more gracefully if
     --no-fq-socket-pacing or --fq-rate are specified on platforms that
     don't support these options.
+
+    For UDP tests, note that the default --bandwidth is 1 Mbps.  Using
+    the fair-queueing-based pacing will probably require explicitly
+    setting both --bandwidth and --fq-rate, preferably to the same
+    value.  (While setting different values for --bandwidth and
+    --fq-rate can certainly be done, the results can range from
+    entertaining to perplexing.)
 
   * iperf3 now chooses a more sane default UDP send size (#496, #498).
     The former default (8KB) caused IP packet fragmentation on paths

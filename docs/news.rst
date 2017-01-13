@@ -1,6 +1,18 @@
 iperf3 Project News
 ===================
 
+2017-01-12:  iperf-3.1.5 released
+---------------------------------
+
+| URL:  http://downloads.es.net/pub/iperf/iperf-3.1.5.tar.gz
+| SHA256:  ``6e1a6200cd38baeab58ef0d7b8769e7aa6410c3a3168e65ea8277a4de79e5500  iperf-3.1.5.tar.gz``
+
+This version of iperf3 makes some improvements to the fair-queue-based
+pacing and improves the selection of the default UDP packet size.
+Users who use either of these aspects of iperf3 are encourage to
+review the release notes for this version.
+
+
 2016-10-31:  iperf-3.1.4 released
 ---------------------------------
 
@@ -44,8 +56,11 @@ distributions), as well as several other fixes.
 This release fixes a couple of minor bugs, including one that results
 in invalid JSON being emitted for UDP tests.
 
+Older News
+----------
+
 2015-11-19:  iperf-3.1.1 released
----------------------------------
+.................................
 
 | URL:  http://downloads.es.net/pub/iperf/iperf-3.1.1.tar.gz
 | SHA256:  ``62f7c64eafe19046ba974b3ef2d962a5597194d6fbbddde328a15a5e74110564  iperf-3.1.1.tar.gz``
@@ -53,7 +68,7 @@ in invalid JSON being emitted for UDP tests.
 This release fixes a few minor bugs.
 
 2015-10-16:  iperf3 Development Status
---------------------------------------
+......................................
 
 Beginning with the release of iperf 3.1, ESnet plans to support iperf3
 in "maintenance mode".  At this point, we have no definite plans for
@@ -70,7 +85,7 @@ and/or supporting the user base.
 
 
 2015-10-16:  iperf-3.1 released
--------------------------------
+...............................
 
 | URL:  http://downloads.es.net/pub/iperf/iperf-3.1.tar.gz
 | SHA256:  ``4385a32ece25cb09d4606b4c99316356b3d2cb03b318aa056b99cdb91c5ce656  iperf-3.1.tar.gz``
@@ -81,7 +96,7 @@ platforms, and a number of bug fixes.
 
 
 2015-01-09:  iperf-3.0.11 released
-----------------------------------
+..................................
 
 | URL:  http://downloads.es.net/pub/iperf/iperf-3.0.11.tar.gz
 | SHA256:  ``e01db5be6f47f67c987463095fe4f5b8b9ff891fb92c39104d042ad8fde97f6e  iperf-3.0.11.tar.gz``
@@ -89,9 +104,6 @@ platforms, and a number of bug fixes.
 This maintenance release adds a -1 flag to make the iperf3 execute a
 single test and exit, needed for an upcoming bwctl release.  A few
 other bugs are also fixed.
-
-Older News
-----------
 
 2014-12-16:  iperf-3.0.10 released
 ..................................

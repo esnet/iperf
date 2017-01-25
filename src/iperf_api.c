@@ -959,7 +959,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->settings->fqrate = 0;
 		client_flag = 1;
 #else /* HAVE_SO_MAX_PACING_RATE */
-		printf("Warning:  --no-fq-socket-pacing not supported on this platform, ignoring\n");
+		i_errno = IEUNIMP;
+		return -1;
 #endif
 		break;
 	    case OPT_FQ_RATE:
@@ -967,7 +968,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->settings->fqrate = unit_atof_rate(optarg);
 		client_flag = 1;
 #else /* HAVE_SO_MAX_PACING_RATE */
-		printf("Warning:  --fq-rate not supported on this platform, ignoring\n");
+		i_errno = IEUNIMP;
+		return -1;
 #endif
 		break;
             case 'h':

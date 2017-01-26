@@ -37,6 +37,7 @@ int getsock_tcp_mss(int inSock);
 int set_tcp_options(int sock, int no_delay, int mss);
 int setnonblocking(int fd, int nonblocking);
 int getsockdomain(int sock);
+int parse_qos(const char *tos);
 
 #define NET_SOFTERROR -1
 #define NET_HARDERROR -2

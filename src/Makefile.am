@@ -25,6 +25,7 @@ libiperf_la_SOURCES     = \
 	                iperf_sctp.h \
                         iperf_util.c \
                         iperf_util.h \
+			dscp.c \
                         net.c \
                         net.h \
 			portable_endian.h \

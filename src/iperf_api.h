@@ -346,8 +346,6 @@ enum {
     IESTREAMREAD = 206,     // Unable to read from stream (check perror)
     IESTREAMCLOSE = 207,    // Stream has closed unexpectedly
     IESTREAMID = 208,       // Stream has invalid ID
-    IESTREAMWRITE2 = 298,    // Unable to write to stream socket (check perror)
-    IESTREAMWRITE3 = 299,    // Unable to write to stream socket (check perror)
     /* Timer errors */
     IENEWTIMER = 300,       // Unable to create new timer (check perror)
     IEUPDATETIMER = 301,    // Unable to update timer (check perror)

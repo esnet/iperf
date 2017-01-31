@@ -317,14 +317,6 @@ iperf_strerror(int i_errno)
             snprintf(errstr, len, "unable to write to stream socket");
             perr = 1;
             break;
-        case IESTREAMWRITE2:
-            snprintf(errstr, len, "unable to write to stream socket (UDP server)");
-            perr = 1;
-            break;
-        case IESTREAMWRITE3:
-            snprintf(errstr, len, "unable to write to stream socket (UDP client)");
-            perr = 1;
-            break;
         case IESTREAMREAD:
             snprintf(errstr, len, "unable to read from stream socket");
             perr = 1;

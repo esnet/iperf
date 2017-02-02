@@ -1,6 +1,16 @@
 iperf3 Project News
 ===================
 
+2017-02-02:  iperf-3.1.6 released
+---------------------------------
+
+| URL:  http://downloads.es.net/pub/iperf/iperf-3.1.6.tar.gz
+| SHA256:  ``70f0c72d9e60c6ecb2c478ed17e4fd81d3b827d57896fee43bcd0c53abccb29d  iperf-3.1.6.tar.gz``
+
+This version of iperf3 contains two minor fixes.  Notably, one of them
+unbreaks JSON output with UDP tests.
+
+
 2017-01-12:  iperf-3.1.5 released
 ---------------------------------
 

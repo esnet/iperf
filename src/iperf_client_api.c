@@ -373,7 +373,9 @@ iperf_connect(struct iperf_test *test)
 	    else {
 		test->settings->blksize = DEFAULT_UDP_BLKSIZE;
 	    }
-	    printf("Setting UDP block size to %d\n", test->settings->blksize);
+	    if (test->verbose) {
+		printf("Setting UDP block size to %d\n", test->settings->blksize);
+	    }
 	}
 
 	/*
@@ -381,7 +383,10 @@ iperf_connect(struct iperf_test *test)
 	 * block size is larger than the MSS, print a warning.
 	 */
 	if (test->settings->blksize > test->ctrl_sck_mss) {
-	    printf("Warning:  UDP block size %d exceeds TCP MSS %d, may result in fragmentation / drops\n", test->settings->blksize, test->ctrl_sck_mss);
+	    char str[128];
+	    snprintf(str, sizeof(str),
+		     "Warning:  UDP block size %d exceeds TCP MSS %d, may result in fragmentation / drops", test->settings->blksize, test->ctrl_sck_mss);
+	    warning(str);
 	}
     }
 

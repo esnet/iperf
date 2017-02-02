@@ -1,3 +1,18 @@
+== iperf 3.1.6 2017-02-02 ==
+
+The release notes for iperf 3.1.6 describe changes, including bug
+fixes and new functionality, made since iperf 3.1.5.
+
+* User-visible changes
+
+  * Specifying --fq-rate or --no-fq-socket-pacing on a system where
+    these options are not supported now generate an error instead of a
+    warning.  This change makes diagnosing issues related to pacing
+    more apparent.
+
+  * Fixed a bug where two recently-added diagnostic messages spammed
+    the JSON output on UDP tests.
+
 == iperf 3.1.5 2017-01-12 ==
 
 The release notes for iperf 3.1.5 describe changes, including bug

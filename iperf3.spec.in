@@ -14,9 +14,10 @@ BuildRequires:  e2fsprogs-devel
 %endif
 
 %description
-Iperf is a tool to measure maximum TCP bandwidth, allowing the tuning of
-various parameters and UDP characteristics. Iperf reports bandwidth, delay
-jitter, data-gram loss.
+iperf3 is a tool for active measurements of the maximum achievable
+bandwidth between two IP hosts.  It supports tuning of various
+parameters related to timing, protocols, and buffers.  For each test,
+it reports the bandwidth, loss, and other parameters.
 
 %package        devel
 Summary:        Development files for %{name}

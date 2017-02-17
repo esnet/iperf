@@ -1,11 +1,15 @@
+#include "iperf_config.h"
+
+#if defined(HAVE_SSL)
+
 # include <openssl/bio.h>
 # include <openssl/pem.h>
-# include <string.h>
+# include "openssl/sha.h"
 # include <openssl/buffer.h>
+# include <string.h>
 # include <assert.h>
 # include <stdio.h>
 # include <time.h>
-# include "openssl/sha.h"
 
 void sha256(const char *string, char outputBuffer[65])
 {
@@ -238,4 +242,4 @@ int decode_auth_setting(const char *authtoken, const char *private_keyfile, char
     return (0);
 }
 
-    
+#endif //HAVE_SSL    

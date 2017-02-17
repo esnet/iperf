@@ -78,7 +78,9 @@
 #include "iperf_util.h"
 #include "iperf_locale.h"
 #include "version.h"
+#if defined(HAVE_SSL)
 #include "iperf_auth.h"
+#endif /* HAVE_SSL */
 
 /* Forwards. */
 static int send_parameters(struct iperf_test *test);
@@ -672,11 +674,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"get-server-output", no_argument, NULL, OPT_GET_SERVER_OUTPUT},
 	{"udp-counters-64bit", no_argument, NULL, OPT_UDP_COUNTERS_64BIT},
  	{"no-fq-socket-pacing", no_argument, NULL, OPT_NO_FQ_SOCKET_PACING},
+#if defined(HAVE_SSL)
     {"username", required_argument, NULL, OPT_CLIENT_USERNAME},
     {"password", no_argument, NULL, OPT_CLIENT_PASSWORD},
     {"rsa-public-key-path", required_argument, NULL, OPT_CLIENT_RSA_PUBLIC_KEY},
     {"rsa-private-key-path", required_argument, NULL, OPT_SERVER_RSA_PRIVATE_KEY},
     {"authorized-users-path", required_argument, NULL, OPT_SERVER_AUTHORIZED_USERS},
+#endif /* HAVE_SSL */
 	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
@@ -684,7 +688,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     };
     int flag;
     int blksize;
-    int server_flag, client_flag, rate_flag, duration_flag, ask_password;
+    int server_flag, client_flag, rate_flag, duration_flag;
     char *endptr;
 #if defined(HAVE_CPU_AFFINITY)
     char* comma;
@@ -693,8 +697,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     struct xbind_entry *xbe;
 
     blksize = 0;
-    server_flag = client_flag = rate_flag = duration_flag = 0, ask_password = 0;
+    server_flag = client_flag = rate_flag = duration_flag = 0;
+#if defined(HAVE_SSL)
+    int ask_password = 0;
     char *client_username = NULL, *client_rsa_public_key = NULL;
+#endif /* HAVE_SSL */
+
     while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
@@ -980,21 +988,23 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		return -1;
 #endif
 		break;
+#if defined(HAVE_SSL)
         case OPT_CLIENT_USERNAME:
-        client_username = strdup(optarg);
-        break;
+            client_username = strdup(optarg);
+            break;
         case OPT_CLIENT_PASSWORD:
             ask_password = 1;
-        break;
+            break;
         case OPT_CLIENT_RSA_PUBLIC_KEY:
-        client_rsa_public_key = strdup(optarg);
-        break;
+            client_rsa_public_key = strdup(optarg);
+            break;
         case OPT_SERVER_RSA_PRIVATE_KEY:
             test->server_rsa_private_key = strdup(optarg);
             break;
         case OPT_SERVER_AUTHORIZED_USERS:
             test->server_authorized_users = strdup(optarg);
             break;
+#endif /* HAVE_SSL */
         case 'h':
         default:
             usage_long();
@@ -1021,6 +1031,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         return -1;
     }
 
+#if defined(HAVE_SSL)
     if (test->role == 's' && (client_username || ask_password || client_rsa_public_key)){
         i_errno = IECLIENTONLY;
         return -1;
@@ -1054,8 +1065,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         i_errno = IESETSERVERAUTH;
         return -1;
     }
-
-
+#endif //HAVE_SSL
     if (!test->bind_address && test->bind_port) {
         i_errno = IEBIND;
         return -1;
@@ -1282,6 +1292,7 @@ iperf_create_send_timers(struct iperf_test * test)
     return 0;
 }
 
+#if defined(HAVE_SSL)
 int test_is_authorized(struct iperf_test *test){
     if ( !(test->server_rsa_private_key && test->server_authorized_users)) {
         return 0;
@@ -1302,6 +1313,7 @@ int test_is_authorized(struct iperf_test *test){
     }
     return -1;
 }
+#endif //HAVE_SSL
 
 /**
  * iperf_exchange_parameters - handles the param_Exchange part for client
@@ -1324,6 +1336,7 @@ iperf_exchange_parameters(struct iperf_test *test)
         if (get_parameters(test) < 0)
             return -1;
 
+#if defined(HAVE_SSL)
         if (test_is_authorized(test) < 0){
             if (iperf_set_send_state(test, SERVER_ERROR) != 0)
                 return -1;
@@ -1335,6 +1348,7 @@ iperf_exchange_parameters(struct iperf_test *test)
             }
             return -1;
         }
+#endif //HAVE_SSL
 
         if ((s = test->protocol->listen(test)) < 0) {
 	        if (iperf_set_send_state(test, SERVER_ERROR) != 0)
@@ -1446,9 +1460,10 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "get_server_output", iperf_get_test_get_server_output(test));
 	if (test->udp_counters_64bit)
 	    cJSON_AddNumberToObject(j, "udp_counters_64bit", iperf_get_test_udp_counters_64bit(test));
+#if defined(HAVE_SSL)
     if (test->settings->authtoken)
         cJSON_AddStringToObject(j, "authtoken", test->settings->authtoken);
-    
+#endif // HAVE_SSL
 	cJSON_AddStringToObject(j, "client_version", IPERF_VERSION);
 
 	if (test->debug) {
@@ -1530,9 +1545,10 @@ get_parameters(struct iperf_test *test)
 	    iperf_set_test_get_server_output(test, 1);
 	if ((j_p = cJSON_GetObjectItem(j, "udp_counters_64bit")) != NULL)
 	    iperf_set_test_udp_counters_64bit(test, 1);
+#if defined(HAVE_SSL)
 	if ((j_p = cJSON_GetObjectItem(j, "authtoken")) != NULL)
         test->settings->authtoken = strdup(j_p->valuestring);
-
+#endif //HAVE_SSL
 	if (test->sender && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    test->sender_has_retransmits = 1;
 	cJSON_Delete(j);

@@ -25,6 +25,7 @@
 
 # Initialize the autoconf system for the specified tool, version and mailing list
 AC_INIT(iperf, 3-CURRENT, https://github.com/esnet/iperf, iperf, http://software.es.net/iperf/)
+m4_include([ax_check_openssl.m4])
 AC_LANG(C)
 
 # Specify where the auxiliary files created by configure should go. The config
@@ -102,6 +103,14 @@ AC_CHECK_HEADERS([netinet/sctp.h],
 #include <sys/socket.h>
 #endif
 ])
+
+# Check for OPENSSL support
+AX_CHECK_OPENSSL(
+	AC_DEFINE([HAVE_SSL], [1], [OpenSSL Is Available])
+)
+LDFLAGS="$LDFLAGS $OPENSSL_LDFLAGS"
+LIBS="$OPENSSL_LIBS $LIBS"
+CPPFLAGS="$OPENSSL_INCLUDES $CPPFLAGS"
 
 # Check for TCP_CONGESTION sockopt (believed to be Linux and FreeBSD only)
 AC_CACHE_CHECK([TCP_CONGESTION socket option],

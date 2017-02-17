@@ -157,6 +157,9 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -T, --title str           prefix every output line with this string\n"
                            "  --get-server-output       get results from server\n"
                            "  --udp-counters-64bit      use 64-bit counters in UDP test packets\n"
+                           "  --username                username to access to the server test\n"
+                           "  --password                password to access to the server test\n"
+                           "  --rsa-public-key          path to the RSA public key used to encrypt authentication credentials\n" 
 
 #ifdef NOT_YET_SUPPORTED /* still working on these */
 #endif

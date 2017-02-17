@@ -77,6 +77,7 @@
 #include "iperf_util.h"
 #include "iperf_locale.h"
 #include "version.h"
+#include "iperf_auth.h"
 
 /* Forwards. */
 static int send_parameters(struct iperf_test *test);
@@ -670,6 +671,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"get-server-output", no_argument, NULL, OPT_GET_SERVER_OUTPUT},
 	{"udp-counters-64bit", no_argument, NULL, OPT_UDP_COUNTERS_64BIT},
  	{"no-fq-socket-pacing", no_argument, NULL, OPT_NO_FQ_SOCKET_PACING},
+    {"username", required_argument, NULL, OPT_CLIENT_USERNAME},
+    {"password", required_argument, NULL, OPT_CLIENT_PASSWORD},
+    {"rsa-public-key", required_argument, NULL, OPT_CLIENT_RSA_PUBLIC_KEY},
 	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
@@ -687,6 +691,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = 0;
+    char *client_username = NULL, *client_password = NULL, *client_rsa_public_key = NULL;
     while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
@@ -972,6 +977,15 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		return -1;
 #endif
 		break;
+        case OPT_CLIENT_USERNAME:
+        client_username = strdup(optarg);
+        break;
+        case OPT_CLIENT_PASSWORD:
+        client_password = strdup(optarg);
+        break;
+        case OPT_CLIENT_RSA_PUBLIC_KEY:
+        client_rsa_public_key = strdup(optarg);
+        break;
             case 'h':
             default:
                 usage_long();
@@ -981,21 +995,37 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     /* Set logging to a file if specified, otherwise use the default (stdout) */
     if (test->logfile) {
-	test->outfile = fopen(test->logfile, "a+");
-	if (test->outfile == NULL) {
-	    i_errno = IELOGFILE;
-	    return -1;
-	}
+        test->outfile = fopen(test->logfile, "a+");
+        if (test->outfile == NULL) {
+            i_errno = IELOGFILE;
+            return -1;
+        }
     }
 
     /* Check flag / role compatibility. */
     if (test->role == 'c' && server_flag) {
-	i_errno = IESERVERONLY;
-	return -1;
+        i_errno = IESERVERONLY;
+        return -1;
     }
     if (test->role == 's' && client_flag) {
-	i_errno = IECLIENTONLY;
-	return -1;
+        i_errno = IECLIENTONLY;
+        return -1;
+    }
+
+    if (test->role == 's' && (client_username || client_password || client_rsa_public_key)){
+        i_errno = IECLIENTONLY;
+        return -1;
+    } else if (test->role == 'c' && (client_username || client_password || client_rsa_public_key) && 
+        !(client_username && client_password && client_rsa_public_key)) {
+         i_errno = IESETCLIENTAUTH;
+        return -1;
+    } else if (test->role == 'c' && (client_username && client_password && client_rsa_public_key)){
+        if (strlen(client_username) >= 20 || strlen(client_password) >= 20){
+            i_errno = IESETCLIENTAUTH;
+            return -1;
+        } 
+
+        encode_auth_setting(client_username, client_password, client_rsa_public_key, &test->settings->authtoken);
     }
 
     if (!test->bind_address && test->bind_port) {

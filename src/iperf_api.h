@@ -53,6 +53,10 @@ struct iperf_stream;
 #define OPT_FORCEFLUSH 7
 #define OPT_NO_FQ_SOCKET_PACING 9 /* UNUSED */
 #define OPT_FQ_RATE 10
+#define OPT_CLIENT_USERNAME 11
+#define OPT_CLIENT_PASSWORD 12
+#define OPT_CLIENT_RSA_PUBLIC_KEY 13
+
 
 /* states */
 #define TEST_START 1
@@ -293,6 +297,7 @@ enum {
     IEBIND = 19,			// Local port specified with no local bind option
     IEUDPBLOCKSIZE = 20,    // Block size too large. Maximum value = %dMAX_UDP_BLOCKSIZE
     IEBADTOS = 21,	    // Bad TOS value
+    IESETCLIENTAUTH = 22,   // Bad configuration of client authentication
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

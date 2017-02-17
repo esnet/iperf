@@ -5,6 +5,22 @@
 # include <assert.h>
 # include <stdio.h>
 # include <time.h>
+#include "openssl/sha.h"
+
+void sha256(const char *string, char outputBuffer[65])
+{
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256_CTX sha256;
+    SHA256_Init(&sha256);
+    SHA256_Update(&sha256, string, strlen(string));
+    SHA256_Final(hash, &sha256);
+    int i = 0;
+    for(i = 0; i < SHA256_DIGEST_LENGTH; i++)
+    {
+        sprintf(outputBuffer + (i * 2), "%02x", hash[i]);
+    }
+    outputBuffer[64] = 0;
+}
 
 int check_authentication(const char *username, const char *password, const time_t ts, const char *filename){
     time_t t = time(NULL);
@@ -12,6 +28,9 @@ int check_authentication(const char *username, const char *password, const time_
     if ( (utc_seconds - ts) < 10 && (utc_seconds - ts) > 0 ){
         return 1;
     }
+
+    char passwordHash[65];
+    sha256(password, passwordHash);
 
     char *s_username, *s_password;
     int i;
@@ -37,7 +56,7 @@ int check_authentication(const char *username, const char *password, const time_
         s_username = strtok(buf, ",");
         s_password = strtok(NULL, ",");
 
-        if (strcmp( username, s_username ) == 0 && strcmp( password, s_password ) == 0){
+        if (strcmp( username, s_username ) == 0 && strcmp( passwordHash, s_password ) == 0){
             return 0;
         }
     }
@@ -192,11 +211,9 @@ int decode_auth_setting(const char *authtoken, const char *private_keyfile, char
     char s_username[20], s_password[20];
     time_t s_ts;
     sscanf (plaintext,"user: %s\npwd:  %s\nts:   %ld", s_username, s_password, &s_ts);
-    printf("%s %s %ld\n", s_username, s_password, s_ts);
     *username = &s_username[0]; 
     *password = &s_password[0]; 
     *ts = &s_ts;
-    printf("%s %s %ld\n", *username, *password, ts);
     return (0);
 }
 

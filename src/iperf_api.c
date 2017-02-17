@@ -1028,7 +1028,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
          i_errno = IESETCLIENTAUTH;
         return -1;
     } else if (test->role == 'c' && (client_username && client_password && client_rsa_public_key)){
-        if (strlen(client_username) >= 20 || strlen(client_password) >= 20){
+        if (strlen(client_username) > 20 || strlen(client_password) > 20){
             i_errno = IESETCLIENTAUTH;
             return -1;
         } 

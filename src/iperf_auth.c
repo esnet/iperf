@@ -30,7 +30,9 @@ int check_authentication(const char *username, const char *password, const time_
     }
 
     char passwordHash[65];
-    sha256(password, passwordHash);
+    char *salted;
+    asprintf(&salted, "{%s}%s", username, password);
+    sha256(salted, passwordHash);
 
     char *s_username, *s_password;
     int i;

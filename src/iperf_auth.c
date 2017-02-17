@@ -5,7 +5,7 @@
 # include <assert.h>
 # include <stdio.h>
 # include <time.h>
-#include "openssl/sha.h"
+# include "openssl/sha.h"
 
 void sha256(const char *string, char outputBuffer[65])
 {
@@ -138,6 +138,25 @@ EVP_PKEY *load_key(const char *file) {
     return (pkey);
 }
 
+
+int test_load_pubkey(const char *file){
+    EVP_PKEY *key = load_pubkey(file);
+    if (key == NULL){
+        return -1;
+    }
+    EVP_PKEY_free(key);
+    return 0;
+}
+
+int test_load_private_key(const char *file){
+    EVP_PKEY *key = load_key(file);
+    if (key == NULL){
+        return -1;
+    }
+    EVP_PKEY_free(key);
+    return 0;
+}
+
 int encrypt_rsa_message(const char *plaintext, const char *public_keyfile, unsigned char **encryptedtext) {
     EVP_PKEY *public_key = NULL;
     RSA *rsa = NULL;
@@ -188,7 +207,7 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
     return plaintext_len;
 }
 
-int encode_auth_setting(char *username, char *password, char *public_keyfile, char **authtoken){
+int encode_auth_setting(const char *username, const char *password, const char *public_keyfile, char **authtoken){
     time_t t = time(NULL);
     time_t utc_seconds = mktime(localtime(&t));
     char text[150];

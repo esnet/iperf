@@ -44,6 +44,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <pthread.h>
+#include <unistd.h>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
@@ -672,7 +673,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"udp-counters-64bit", no_argument, NULL, OPT_UDP_COUNTERS_64BIT},
  	{"no-fq-socket-pacing", no_argument, NULL, OPT_NO_FQ_SOCKET_PACING},
     {"username", required_argument, NULL, OPT_CLIENT_USERNAME},
-    {"password", required_argument, NULL, OPT_CLIENT_PASSWORD},
+    {"password", no_argument, NULL, OPT_CLIENT_PASSWORD},
     {"rsa-public-key-path", required_argument, NULL, OPT_CLIENT_RSA_PUBLIC_KEY},
     {"rsa-private-key-path", required_argument, NULL, OPT_SERVER_RSA_PRIVATE_KEY},
     {"authorized-users-path", required_argument, NULL, OPT_SERVER_AUTHORIZED_USERS},
@@ -683,7 +684,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     };
     int flag;
     int blksize;
-    int server_flag, client_flag, rate_flag, duration_flag;
+    int server_flag, client_flag, rate_flag, duration_flag, ask_password;
     char *endptr;
 #if defined(HAVE_CPU_AFFINITY)
     char* comma;
@@ -692,8 +693,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     struct xbind_entry *xbe;
 
     blksize = 0;
-    server_flag = client_flag = rate_flag = duration_flag = 0;
-    char *client_username = NULL, *client_password = NULL, *client_rsa_public_key = NULL;
+    server_flag = client_flag = rate_flag = duration_flag = 0, ask_password = 0;
+    char *client_username = NULL, *client_rsa_public_key = NULL;
     while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
@@ -983,7 +984,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         client_username = strdup(optarg);
         break;
         case OPT_CLIENT_PASSWORD:
-        client_password = strdup(optarg);
+            ask_password = 1;
         break;
         case OPT_CLIENT_RSA_PUBLIC_KEY:
         client_rsa_public_key = strdup(optarg);
@@ -1020,19 +1021,25 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         return -1;
     }
 
-    if (test->role == 's' && (client_username || client_password || client_rsa_public_key)){
+    if (test->role == 's' && (client_username || ask_password || client_rsa_public_key)){
         i_errno = IECLIENTONLY;
         return -1;
-    } else if (test->role == 'c' && (client_username || client_password || client_rsa_public_key) && 
-        !(client_username && client_password && client_rsa_public_key)) {
+    } else if (test->role == 'c' && (client_username || ask_password || client_rsa_public_key) && 
+        !(client_username && ask_password && client_rsa_public_key)) {
          i_errno = IESETCLIENTAUTH;
         return -1;
-    } else if (test->role == 'c' && (client_username && client_password && client_rsa_public_key)){
+    } else if (test->role == 'c' && (client_username && ask_password && client_rsa_public_key)){
+
+        char *client_password = getpass("Password: "); 
         if (strlen(client_username) > 20 || strlen(client_password) > 20){
             i_errno = IESETCLIENTAUTH;
             return -1;
-        } 
+        }
 
+        if (test_load_pubkey(client_rsa_public_key) < 0){
+            i_errno = IESETCLIENTAUTH;
+            return -1;
+        }
         encode_auth_setting(client_username, client_password, client_rsa_public_key, &test->settings->authtoken);
     }
 
@@ -1043,7 +1050,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         !(test->server_rsa_private_key && test->server_authorized_users)) {
          i_errno = IESETSERVERAUTH;
         return -1;
+    } else if (test->role == 's' && test->server_rsa_private_key && test_load_private_key(test->server_rsa_private_key) < 0){
+        i_errno = IESETSERVERAUTH;
+        return -1;
     }
+
 
     if (!test->bind_address && test->bind_port) {
         i_errno = IEBIND;

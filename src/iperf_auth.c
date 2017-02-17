@@ -6,6 +6,43 @@
 # include <stdio.h>
 # include <time.h>
 
+int check_authentication(const char *username, const char *password, const time_t ts, const char *filename){
+    time_t t = time(NULL);
+    time_t utc_seconds = mktime(localtime(&t));
+    if ( (utc_seconds - ts) < 10 && (utc_seconds - ts) > 0 ){
+        return 1;
+    }
+
+    char *s_username, *s_password;
+    int i;
+    FILE *ptr_file;
+    char buf[1000];
+
+    ptr_file =fopen(filename,"r");
+    if (!ptr_file)
+        return 2;
+
+    while (fgets(buf,1024, ptr_file)){
+        //strip the \n or \r\n chars
+        for (i = 0; buf[i] != '\0'; i++){
+            if (buf[i] == '\n' || buf[i] == '\r'){
+                buf[i] = '\0';
+                break;
+            }
+        }
+        //skip empty / not completed / comment lines
+        if (strlen(buf) == 0 || strchr(buf, ',') == NULL || buf[0] == '#'){
+            continue;
+        }
+        s_username = strtok(buf, ",");
+        s_password = strtok(NULL, ",");
+
+        if (strcmp( username, s_username ) == 0 && strcmp( password, s_password ) == 0){
+            return 0;
+        }
+    }
+    return 3;
+}
 
 
 int Base64Encode(const unsigned char* buffer, size_t length, char** b64text) { //Encodes a binary safe base 64 string
@@ -134,7 +171,7 @@ int encode_auth_setting(char *username, char *password, char *public_keyfile, ch
     time_t t = time(NULL);
     time_t utc_seconds = mktime(localtime(&t));
     char text[150];
-    sprintf (text, "user: %-20s\npwd:  %-20s\nts:   %ld", username, password, utc_seconds);
+    sprintf (text, "user: %s\npwd:  %s\nts:   %ld", username, password, utc_seconds);
     unsigned char *encrypted = NULL;
     int encrypted_len;
     encrypted_len = encrypt_rsa_message(text, public_keyfile, &encrypted);
@@ -142,45 +179,25 @@ int encode_auth_setting(char *username, char *password, char *public_keyfile, ch
     return (0); //success
 }
 
-/*
-int main(int argc, char *argv[]) {
-
-    time_t t = time(NULL);
-    time_t utc_seconds = mktime(localtime(&t));
-    char text[150];
-    sprintf (text, "user: %-20s\npwd:  %-20s\nts:   %ld", "mario", "pippo", utc_seconds);
-    char *public_keyfile = "public.pem";
-    
-    unsigned char *encrypted = NULL;
-    char *b64message = NULL;
-    int encrypted_len;
-    encrypted_len = encrypt_rsa_message(text, public_keyfile, &encrypted);
-    printf("--> %d\n",encrypted_len);            
-    
-    Base64Encode(encrypted, encrypted_len, &b64message);
-    printf("%s\n",b64message);
-
-
-
+int decode_auth_setting(const char *authtoken, const char *private_keyfile, char **username, char **password, time_t *ts){
     unsigned char *encrypted_b64 = NULL;
     size_t encrypted_len_b64;
-    Base64Decode(b64message, &encrypted_b64, &encrypted_len_b64);        
+    Base64Decode(authtoken, &encrypted_b64, &encrypted_len_b64);        
 
-    char *private_keyfile = "private_unencrypted.pem";
-    unsigned char *rsa_out_text = NULL;
-    int rsa_outlen_text;
-    rsa_outlen_text = decrypt_rsa_message(encrypted_b64, encrypted_len_b64, private_keyfile, &rsa_out_text);
-    rsa_out_text[rsa_outlen_text] = '\0';
+    unsigned char *plaintext = NULL;
+    int plaintext_len;
+    plaintext_len = decrypt_rsa_message(encrypted_b64, encrypted_len_b64, private_keyfile, &plaintext);
+    plaintext[plaintext_len] = '\0';
 
-    printf("%s\n",rsa_out_text);
-    printf("%d\n",rsa_outlen_text);
-    char user[20];
-    char pwd[20];
-    time_t ts;
-    sscanf (rsa_out_text,"user: %20s\npwd:  %20s\nts:   %ld",user,pwd,&ts);
-    printf("%ld\n",ts);
-    
+    char s_username[20], s_password[20];
+    time_t s_ts;
+    sscanf (plaintext,"user: %s\npwd:  %s\nts:   %ld", s_username, s_password, &s_ts);
+    printf("%s %s %ld\n", s_username, s_password, s_ts);
+    *username = &s_username[0]; 
+    *password = &s_password[0]; 
+    *ts = &s_ts;
+    printf("%s %s %ld\n", *username, *password, ts);
+    return (0);
 }
-*/
 
     

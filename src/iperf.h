@@ -234,6 +234,8 @@ struct iperf_test
     int       prot_listener;
 
     int	      ctrl_sck_mss;			/* MSS for the control channel */
+    char     *server_rsa_private_key;
+    char     *server_authorized_users;
 
     /* boolean variables for Options */
     int       daemon;                           /* -D option */

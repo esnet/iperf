@@ -673,7 +673,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
  	{"no-fq-socket-pacing", no_argument, NULL, OPT_NO_FQ_SOCKET_PACING},
     {"username", required_argument, NULL, OPT_CLIENT_USERNAME},
     {"password", required_argument, NULL, OPT_CLIENT_PASSWORD},
-    {"rsa-public-key", required_argument, NULL, OPT_CLIENT_RSA_PUBLIC_KEY},
+    {"rsa-public-key-path", required_argument, NULL, OPT_CLIENT_RSA_PUBLIC_KEY},
+    {"rsa-private-key-path", required_argument, NULL, OPT_SERVER_RSA_PRIVATE_KEY},
+    {"authorized-users-path", required_argument, NULL, OPT_SERVER_AUTHORIZED_USERS},
 	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
@@ -986,10 +988,16 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         case OPT_CLIENT_RSA_PUBLIC_KEY:
         client_rsa_public_key = strdup(optarg);
         break;
-            case 'h':
-            default:
-                usage_long();
-                exit(1);
+        case OPT_SERVER_RSA_PRIVATE_KEY:
+            test->server_rsa_private_key = strdup(optarg);
+            break;
+        case OPT_SERVER_AUTHORIZED_USERS:
+            test->server_authorized_users = strdup(optarg);
+            break;
+        case 'h':
+        default:
+            usage_long();
+            exit(1);
         }
     }
 
@@ -1026,6 +1034,15 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         } 
 
         encode_auth_setting(client_username, client_password, client_rsa_public_key, &test->settings->authtoken);
+    }
+
+    if (test->role == 'c' && (test->server_rsa_private_key || test->server_authorized_users)){
+        i_errno = IESERVERONLY;
+        return -1;
+    } else if (test->role == 's' && (test->server_rsa_private_key || test->server_authorized_users) && 
+        !(test->server_rsa_private_key && test->server_authorized_users)) {
+         i_errno = IESETSERVERAUTH;
+        return -1;
     }
 
     if (!test->bind_address && test->bind_port) {
@@ -1254,6 +1271,25 @@ iperf_create_send_timers(struct iperf_test * test)
     return 0;
 }
 
+int test_is_authorized(struct iperf_test *test){
+    if ( !(test->server_rsa_private_key && test->server_authorized_users)) {
+        return 0;
+    }
+
+    if (test->settings->authtoken){
+        char *username = NULL, *password = NULL;
+        time_t ts;
+        decode_auth_setting(test->settings->authtoken, test->server_rsa_private_key, &username, &password, &ts);
+        int ret = check_authentication(username, password, ts, test->server_authorized_users);
+        if (ret == 0){
+            return 0;
+        } else {
+            return -1;
+        }
+    }
+    return -1;
+}
+
 /**
  * iperf_exchange_parameters - handles the param_Exchange part for client
  *
@@ -1275,8 +1311,20 @@ iperf_exchange_parameters(struct iperf_test *test)
         if (get_parameters(test) < 0)
             return -1;
 
+        if (test_is_authorized(test) < 0){
+            if (iperf_set_send_state(test, SERVER_ERROR) != 0)
+                return -1;
+            i_errno = IEAUTHTEST;
+            err = htonl(i_errno);
+            if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
+                i_errno = IECTRLWRITE;
+                return -1;
+            }
+            return -1;
+        }
+
         if ((s = test->protocol->listen(test)) < 0) {
-	    if (iperf_set_send_state(test, SERVER_ERROR) != 0)
+	        if (iperf_set_send_state(test, SERVER_ERROR) != 0)
                 return -1;
             err = htonl(i_errno);
             if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
@@ -1385,7 +1433,9 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "get_server_output", iperf_get_test_get_server_output(test));
 	if (test->udp_counters_64bit)
 	    cJSON_AddNumberToObject(j, "udp_counters_64bit", iperf_get_test_udp_counters_64bit(test));
-
+    if (test->settings->authtoken)
+        cJSON_AddStringToObject(j, "authtoken", test->settings->authtoken);
+    
 	cJSON_AddStringToObject(j, "client_version", IPERF_VERSION);
 
 	if (test->debug) {
@@ -1467,7 +1517,9 @@ get_parameters(struct iperf_test *test)
 	    iperf_set_test_get_server_output(test, 1);
 	if ((j_p = cJSON_GetObjectItem(j, "udp_counters_64bit")) != NULL)
 	    iperf_set_test_udp_counters_64bit(test, 1);
-	
+	if ((j_p = cJSON_GetObjectItem(j, "authtoken")) != NULL)
+        test->settings->authtoken = strdup(j_p->valuestring);
+
 	if (test->sender && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    test->sender_has_retransmits = 1;
 	cJSON_Delete(j);

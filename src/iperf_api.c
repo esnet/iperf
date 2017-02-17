@@ -1282,8 +1282,10 @@ int test_is_authorized(struct iperf_test *test){
         decode_auth_setting(test->settings->authtoken, test->server_rsa_private_key, &username, &password, &ts);
         int ret = check_authentication(username, password, ts, test->server_authorized_users);
         if (ret == 0){
+            iperf_printf(test, report_authetication_successed, username, ts);
             return 0;
         } else {
+            iperf_printf(test, report_authetication_failed, username, ts);
             return -1;
         }
     }

@@ -254,6 +254,12 @@ const char report_time[] =
 const char report_connecting[] =
 "Connecting to host %s, port %d\n";
 
+const char report_authetication_successed[] =
+"Authentication successed for user '%s' ts %ld\n";
+
+const char report_authetication_failed[] =
+"Authentication failed for user '%s' ts %ld\n";
+
 const char report_reverse[] =
 "Reverse mode, remote host %s is sending\n";
 

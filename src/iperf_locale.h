@@ -54,6 +54,8 @@ extern const char report_reverse[] ;
 extern const char report_accepted[] ;
 extern const char report_cookie[] ;
 extern const char report_connected[] ;
+extern const char report_authetication_successed[] ;
+extern const char report_authetication_failed[] ;
 extern const char report_window[] ;
 extern const char report_autotune[] ;
 extern const char report_omit_done[] ;

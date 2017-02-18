@@ -110,7 +110,15 @@ the executable.
    
           -1, --one-off
                  handle one client connection, then exit.
-   
+
+          --rsa-private-key-path (if built with OpenSSL support) 
+                path  to  the  RSA private  key  used to  decrypt authentication 
+                credentials (not password protected) 
+          
+          --authorized-users-path (if built with OpenSSL support)
+                path to  the  configuration  file  containing  authorized  users 
+                credendientals to run iperf tests. File  is  a  comma  separated 
+                list of usernames and password hashes.
    
    CLIENT SPECIFIC OPTIONS
           -c, --client host
@@ -235,8 +243,52 @@ the executable.
                  will  be  in  human-readable format).  If the client is run with
                  --json, the server output is included in a JSON  object;  other-
                  wise  it is appended at the bottom of the human-readable output.
-   
-   
+
+          --username (if built with OpenSSL support)               
+                 username assigned by server adminitrators to access to the iperf
+                 service.
+          
+          --password (if built with OpenSSL support)               
+                 password assigned by server adminitrators to access to the iperf
+                 service.
+
+          --rsa-public-key-path (if built with OpenSSL support)    
+                 path  to  the  RSA  public  key  used to  encrypt authentication
+                 credentials
+
+   EXAMPLES
+
+          Authentication - RSA Keypair
+                
+                 Authentication feature requires a pair of public and private RSA 
+                 keys. The public  key  is  used  to  encrypt the  authentication
+                 token containing the user credentials, the private key  is  used
+                 to decrypt the authentication token.
+                 An example of linux command to generate correct keypair follows:
+        
+                  $> openssl genrsa -des3 -out private.pem 2048
+                  $> openssl rsa -in private.pem -outform PEM -pubout \ 
+                     -out public.pem
+                  $> openssl rsa -in private.pem -out private_not_protected.pem \ 
+                     -outform PEM  
+              
+           Authentication - Authorized users configuration file
+        
+                 A  simple  plaintext file  can  be  provided to iperf3 server in
+                 order to specify the authorized  user c redentials allowd to use
+                 iperf3 server. File  can  contain commented lines (starting with 
+                 # char)  and  is a  simple  list  of  comma  separated  pair  of 
+                 username  password  hash.  Password  hash  is  a  sha256 hash of 
+                 string "{$user}$password":
+         
+                  $> USERNAME=mario PASSWORD=rossi echo -ne \ 
+                         "{$USERNAME}$PASSWORD" | sha256sum | awk '{ print $1 }'
+
+                  $> cat credentials.csv
+                  # file format: username,sha256
+                  mario,44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c0....
+                  $>
+
    AUTHORS
           A list of the contributors to iperf3 can be found within the documenta-
           tion located at http://software.es.net/iperf/dev.html#authors.
@@ -247,7 +299,7 @@ the executable.
    
    
    
-   ESnet                            January 2017                        IPERF3(1)
+   ESnet                            Januar 2017                        IPERF3(1)
 
 The iperf3 manual page will typically be installed in manual
 section 1.

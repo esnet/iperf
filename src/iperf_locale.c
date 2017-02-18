@@ -118,7 +118,7 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  -I, --pidfile file        write PID file\n"
                            "  -1, --one-off             handle one client connection then exit\n"
 #if defined(HAVE_SSL)
-                           "  --rsa-private-key-path    path to the RSA public key used to encrypt authentication credentials\n" 
+                           "  --rsa-private-key-path    path to the RSA private key used to decrypt authentication credentials\n" 
                            "  --authorized-users-path   path to the configuration file containing user credendial authorized to use iperf server\n"
                            "                               file with username and password comma separated, one per line\n"
 #endif //HAVE_SSL

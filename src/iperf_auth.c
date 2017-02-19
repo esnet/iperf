@@ -1,15 +1,16 @@
 #include "iperf_config.h"
 
+# include <string.h>
+# include <assert.h>
+# include <time.h>
+
 #if defined(HAVE_SSL)
 
 # include <openssl/bio.h>
 # include <openssl/pem.h>
-# include "openssl/sha.h"
+# include <openssl/sha.h>
 # include <openssl/buffer.h>
-# include <string.h>
-# include <assert.h>
 # include <stdio.h>
-# include <time.h>
 
 void sha256(const char *string, char outputBuffer[65])
 {
@@ -34,14 +35,14 @@ int check_authentication(const char *username, const char *password, const time_
     }
 
     char passwordHash[65];
-    char *salted;
-    asprintf(&salted, "{%s}%s", username, password);
-    sha256(salted, passwordHash);
+    char salted[strlen(username) + strlen(password) + 3];
+    sprintf(salted, "{%s}%s", username, password);
+    sha256(&salted[0], passwordHash);
 
     char *s_username, *s_password;
     int i;
     FILE *ptr_file;
-    char buf[1000];
+    char buf[1024];
 
     ptr_file =fopen(filename,"r");
     if (!ptr_file)
@@ -70,7 +71,7 @@ int check_authentication(const char *username, const char *password, const time_
 }
 
 
-int Base64Encode(const unsigned char* buffer, size_t length, char** b64text) { //Encodes a binary safe base 64 string
+int Base64Encode(unsigned char* buffer, const size_t length, char** b64text) { //Encodes a binary safe base 64 string
     BIO *bio, *b64;
     BUF_MEM *bufferPtr;
 
@@ -223,7 +224,7 @@ int encode_auth_setting(const char *username, const char *password, const char *
     return (0); //success
 }
 
-int decode_auth_setting(const char *authtoken, const char *private_keyfile, char **username, char **password, time_t *ts){
+int decode_auth_setting(char *authtoken, const char *private_keyfile, char **username, char **password, time_t *ts){
     unsigned char *encrypted_b64 = NULL;
     size_t encrypted_len_b64;
     Base64Decode(authtoken, &encrypted_b64, &encrypted_len_b64);        
@@ -235,10 +236,10 @@ int decode_auth_setting(const char *authtoken, const char *private_keyfile, char
 
     char s_username[20], s_password[20];
     time_t s_ts;
-    sscanf (plaintext,"user: %s\npwd:  %s\nts:   %ld", s_username, s_password, &s_ts);
+    sscanf ((char *)plaintext,"user: %s\npwd:  %s\nts:   %ld", s_username, s_password, &s_ts);
     *username = &s_username[0]; 
     *password = &s_password[0]; 
-    *ts = &s_ts;
+    *ts = (time_t)&s_ts;
     return (0);
 }
 

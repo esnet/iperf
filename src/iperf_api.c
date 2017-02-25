@@ -44,7 +44,6 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <pthread.h>
-#include <unistd.h>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
@@ -1041,7 +1040,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         return -1;
     } else if (test->role == 'c' && (client_username && ask_password && client_rsa_public_key)){
 
-        char *client_password = getpass("Password: "); 
+        char *client_password = NULL;
+        if (iperf_getpass(&client_password, stdin) < 0){
+            return -1;
+        } 
+
         if (strlen(client_username) > 20 || strlen(client_password) > 20){
             i_errno = IESETCLIENTAUTH;
             return -1;

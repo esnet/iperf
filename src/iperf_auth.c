@@ -1,16 +1,18 @@
-#include "iperf_config.h"
+# include "iperf_config.h"
 
 # include <string.h>
 # include <assert.h>
 # include <time.h>
 
-#if defined(HAVE_SSL)
+# if defined(HAVE_SSL)
 
 # include <openssl/bio.h>
 # include <openssl/pem.h>
 # include <openssl/sha.h>
 # include <openssl/buffer.h>
 # include <stdio.h>
+# include <termios.h>
+
 
 void sha256(const char *string, char outputBuffer[65])
 {
@@ -243,4 +245,27 @@ int decode_auth_setting(char *authtoken, const char *private_keyfile, char **use
     return (0);
 }
 
-#endif //HAVE_SSL    
+#endif //HAVE_SSL
+
+ssize_t iperf_getpass (char **lineptr, FILE *stream) {
+    struct termios old, new;
+    int nread;
+    size_t n = 0;
+
+    /* Turn echoing off and fail if we can't. */
+    if (tcgetattr (fileno (stream), &old) != 0)
+        return -1;
+    new = old;
+    new.c_lflag &= ~ECHO;
+    if (tcsetattr (fileno (stream), TCSAFLUSH, &new) != 0)
+        return -1;
+
+    /* Read the password. */
+    printf("Password: ");
+    nread = getline (lineptr, &n, stream);
+
+    /* Restore terminal. */
+    (void) tcsetattr (fileno (stream), TCSAFLUSH, &old);
+
+    return nread;
+}

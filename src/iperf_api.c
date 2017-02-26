@@ -2858,8 +2858,16 @@ iperf_new_stream(struct iperf_test *test, int s)
     if (test->tmp_template) {
         snprintf(template, sizeof(template) / sizeof(char), "%s", test->tmp_template);
     } else {
-        char buf[] = "/tmp/iperf3.XXXXXX";
-        snprintf(template, sizeof(template) / sizeof(char), "%s", buf);
+        //find the system temporary dir *unix, windows, cygwin support
+        char* tempdir = getenv("TMPDIR");
+        if (tempdir == 0){
+            tempdir = getenv("TEMP");
+        }
+        if (tempdir == 0){
+            tempdir = getenv("TMP");
+        }
+        
+        snprintf(template, sizeof(template) / sizeof(char), "%s/iperf3.XXXXXX", tempdir);
     }
 
     h_errno = 0;

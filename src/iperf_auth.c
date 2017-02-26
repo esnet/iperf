@@ -64,7 +64,6 @@ int check_authentication(const char *username, const char *password, const time_
         }
         s_username = strtok(buf, ",");
         s_password = strtok(NULL, ",");
-
         if (strcmp( username, s_username ) == 0 && strcmp( passwordHash, s_password ) == 0){
             return 0;
         }
@@ -89,12 +88,12 @@ int Base64Encode(unsigned char* buffer, const size_t length, char** b64text) { /
     BIO_free_all(bio);
 
     *b64text=(*bufferPtr).data;
+    (*b64text)[(*bufferPtr).length] = '\0';
     return (0); //success
 }
 
 size_t calcDecodeLength(const char* b64input) { //Calculates the length of a decoded string
     size_t len = strlen(b64input), padding = 0;
-
     if (b64input[len-1] == '=' && b64input[len-2] == '=') //last two chars are =
         padding = 2;
     else if (b64input[len-1] == '=') //last char is =
@@ -237,20 +236,17 @@ int decode_auth_setting(char *authtoken, const char *private_keyfile, char **use
     plaintext[plaintext_len] = '\0';
 
     char s_username[20], s_password[20];
-    time_t s_ts;
-    sscanf ((char *)plaintext,"user: %s\npwd:  %s\nts:   %ld", s_username, s_password, &s_ts);
+    sscanf ((char *)plaintext,"user: %s\npwd:  %s\nts:   %ld", s_username, s_password, ts);
     *username = &s_username[0]; 
     *password = &s_password[0]; 
-    *ts = (time_t)&s_ts;
     return (0);
 }
 
 #endif //HAVE_SSL
 
-ssize_t iperf_getpass (char **lineptr, FILE *stream) {
+ssize_t iperf_getpass (char **lineptr, size_t *n, FILE *stream) {
     struct termios old, new;
-    int nread;
-    size_t n = 0;
+    ssize_t nread;
 
     /* Turn echoing off and fail if we can't. */
     if (tcgetattr (fileno (stream), &old) != 0)
@@ -262,10 +258,22 @@ ssize_t iperf_getpass (char **lineptr, FILE *stream) {
 
     /* Read the password. */
     printf("Password: ");
-    nread = getline (lineptr, &n, stream);
+    nread = getline (lineptr, n, stream);
 
     /* Restore terminal. */
     (void) tcsetattr (fileno (stream), TCSAFLUSH, &old);
 
+    //strip the \n or \r\n chars
+    char *buf = *lineptr;
+    int i;
+    for (i = 0; buf[i] != '\0'; i++){
+        if (buf[i] == '\n' || buf[i] == '\r'){
+            buf[i] = '\0';
+            break;
+        }
+    }
+
     return nread;
 }
+
+

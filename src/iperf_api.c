@@ -675,7 +675,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
  	{"no-fq-socket-pacing", no_argument, NULL, OPT_NO_FQ_SOCKET_PACING},
 #if defined(HAVE_SSL)
     {"username", required_argument, NULL, OPT_CLIENT_USERNAME},
-    {"password", no_argument, NULL, OPT_CLIENT_PASSWORD},
     {"rsa-public-key-path", required_argument, NULL, OPT_CLIENT_RSA_PUBLIC_KEY},
     {"rsa-private-key-path", required_argument, NULL, OPT_SERVER_RSA_PRIVATE_KEY},
     {"authorized-users-path", required_argument, NULL, OPT_SERVER_AUTHORIZED_USERS},
@@ -698,7 +697,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = 0;
 #if defined(HAVE_SSL)
-    int ask_password = 0;
     char *client_username = NULL, *client_rsa_public_key = NULL;
 #endif /* HAVE_SSL */
 
@@ -991,9 +989,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         case OPT_CLIENT_USERNAME:
             client_username = strdup(optarg);
             break;
-        case OPT_CLIENT_PASSWORD:
-            ask_password = 1;
-            break;
         case OPT_CLIENT_RSA_PUBLIC_KEY:
             client_rsa_public_key = strdup(optarg);
             break;
@@ -1031,17 +1026,19 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     }
 
 #if defined(HAVE_SSL)
-    if (test->role == 's' && (client_username || ask_password || client_rsa_public_key)){
+
+    if (test->role == 's' && (client_username || client_rsa_public_key)){
         i_errno = IECLIENTONLY;
         return -1;
-    } else if (test->role == 'c' && (client_username || ask_password || client_rsa_public_key) && 
-        !(client_username && ask_password && client_rsa_public_key)) {
-         i_errno = IESETCLIENTAUTH;
+    } else if (test->role == 'c' && (client_username || client_rsa_public_key) && 
+        !(client_username && client_rsa_public_key)) {
+        i_errno = IESETCLIENTAUTH;
         return -1;
-    } else if (test->role == 'c' && (client_username && ask_password && client_rsa_public_key)){
+    } else if (test->role == 'c' && (client_username && client_rsa_public_key)){
 
         char *client_password = NULL;
-        if (iperf_getpass(&client_password, stdin) < 0){
+        size_t s;
+        if (iperf_getpass(&client_password, &s, stdin) < 0){
             return -1;
         } 
 

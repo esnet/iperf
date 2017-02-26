@@ -281,8 +281,8 @@ the executable.
                  username  password  hash.  Password  hash  is  a  sha256 hash of 
                  string "{$user}$password":
          
-                  $> USERNAME=mario PASSWORD=rossi echo -ne \ 
-                         "{$USERNAME}$PASSWORD" | sha256sum | awk '{ print $1 }'
+                  $> S_USER=mario S_PASSWD=rossi
+                  $> echo -ne "{$S_USER}$S_PASSWD"|sha256sum|awk '{ print $1 }'
 
                   $> cat credentials.csv
                   # file format: username,sha256

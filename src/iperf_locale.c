@@ -164,7 +164,6 @@ const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
                            "  --udp-counters-64bit      use 64-bit counters in UDP test packets\n"
 #if defined(HAVE_SSL)
                            "  --username                username to access to the server test\n"
-                           "  --password                password to access to the server test\n"
                            "  --rsa-public-key-path     path to the RSA public key used to encrypt authentication credentials\n" 
 #endif //HAVESSL
     

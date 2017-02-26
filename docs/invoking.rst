@@ -248,10 +248,6 @@ the executable.
                  username assigned by server adminitrators to access to the iperf
                  service.
           
-          --password (if built with OpenSSL support)               
-                 password assigned by server adminitrators to access to the iperf
-                 service.
-
           --rsa-public-key-path (if built with OpenSSL support)    
                  path  to  the  RSA  public  key  used to  encrypt authentication
                  credentials

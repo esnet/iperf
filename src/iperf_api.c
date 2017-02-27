@@ -2866,7 +2866,8 @@ iperf_new_stream(struct iperf_test *test, int s)
         if (tempdir == 0){
             tempdir = getenv("TMP");
         }
-        
+
+        assert(tempdir != 0);
         snprintf(template, sizeof(template) / sizeof(char), "%s/iperf3.XXXXXX", tempdir);
     }
 

@@ -1,4 +1,5 @@
 # include <time.h>
+# include <sys/types.h>
 
 int test_load_pubkey(const char *public_keyfile);
 int test_load_private_key(const char *private_keyfile);

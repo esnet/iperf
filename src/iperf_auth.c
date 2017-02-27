@@ -3,6 +3,9 @@
 # include <string.h>
 # include <assert.h>
 # include <time.h>
+# include <sys/types.h>
+# include <stdio.h>
+# include <termios.h>
 
 # if defined(HAVE_SSL)
 
@@ -10,9 +13,6 @@
 # include <openssl/pem.h>
 # include <openssl/sha.h>
 # include <openssl/buffer.h>
-# include <stdio.h>
-# include <termios.h>
-
 
 void sha256(const char *string, char outputBuffer[65])
 {

@@ -225,7 +225,7 @@ int encode_auth_setting(const char *username, const char *password, const char *
     return (0); //success
 }
 
-int decode_auth_setting(char *authtoken, const char *private_keyfile, char **username, char **password, time_t *ts){
+int decode_auth_setting(int enable_debug, char *authtoken, const char *private_keyfile, char **username, char **password, time_t *ts){
     unsigned char *encrypted_b64 = NULL;
     size_t encrypted_len_b64;
     Base64Decode(authtoken, &encrypted_b64, &encrypted_len_b64);        
@@ -237,6 +237,10 @@ int decode_auth_setting(char *authtoken, const char *private_keyfile, char **use
 
     char s_username[20], s_password[20];
     sscanf ((char *)plaintext,"user: %s\npwd:  %s\nts:   %ld", s_username, s_password, ts);
+    if (enable_debug) {
+        printf("Auth Token Content:\n%s\n", plaintext);
+        printf("Auth Token Credentials:\n--> %s %s\n", s_username, s_password);
+    }
     *username = &s_username[0]; 
     *password = &s_password[0]; 
     return (0);

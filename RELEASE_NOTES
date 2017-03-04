@@ -1,3 +1,9 @@
+== iperf 3.1.7 2017-03-06 ==
+
+iperf 3.1.7 is functionally identical to iperf 3.1.6.  Its only
+changes consist of updated documentation files and text in the RPM
+spec file.
+
 == iperf 3.1.6 2017-02-02 ==
 
 The release notes for iperf 3.1.6 describe changes, including bug

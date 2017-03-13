@@ -2751,8 +2751,6 @@ iperf_new_stream(struct iperf_test *test, int s)
         snprintf(template, sizeof(template) / sizeof(char), "%s", buf);
     }
 
-    h_errno = 0;
-
     sp = (struct iperf_stream *) malloc(sizeof(struct iperf_stream));
     if (!sp) {
         i_errno = IECREATESTREAM;

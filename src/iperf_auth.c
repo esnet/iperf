@@ -1,18 +1,18 @@
-# include "iperf_config.h"
+#include "iperf_config.h"
 
-# include <string.h>
-# include <assert.h>
-# include <time.h>
-# include <sys/types.h>
-# include <stdio.h>
-# include <termios.h>
+#include <string.h>
+#include <assert.h>
+#include <time.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <termios.h>
 
-# if defined(HAVE_SSL)
+#if defined(HAVE_SSL)
 
-# include <openssl/bio.h>
-# include <openssl/pem.h>
-# include <openssl/sha.h>
-# include <openssl/buffer.h>
+#include <openssl/bio.h>
+#include <openssl/pem.h>
+#include <openssl/sha.h>
+#include <openssl/buffer.h>
 
 void sha256(const char *string, char outputBuffer[65])
 {

@@ -91,11 +91,11 @@ extern    "C"
  * usage
  * ------------------------------------------------------------------- */
 
-const char usage_shortstr[] = "Usage: iperf [-s|-c host] [options]\n"
-                           "Try `iperf --help' for more information.\n";
+const char usage_shortstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
+                           "Try `iperf3 --help' for more information.\n";
 
-const char usage_longstr[] = "Usage: iperf [-s|-c host] [options]\n"
-                           "       iperf [-h|--help] [-v|--version]\n\n"
+const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
+                           "       iperf3 [-h|--help] [-v|--version]\n\n"
                            "Server or Client:\n"
                            "  -p, --port      #         server port to listen on/connect to\n"
                            "  -f, --format    [kmgKMG]  format to report: Kbits, Mbits, KBytes, MBytes\n"

@@ -30,6 +30,7 @@
 #ifndef __TIMER_H
 #define __TIMER_H
 
+#include <stdint.h>
 #include <sys/time.h>
 
 /* TimerClientData is an opaque value that tags along with a timer.  The

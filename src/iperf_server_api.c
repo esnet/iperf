@@ -526,7 +526,7 @@ iperf_run_server(struct iperf_test *test)
 			    } 
 			}
 			{
-			    int len = TCP_CA_NAME_MAX;
+			    socklen_t len = TCP_CA_NAME_MAX;
 			    char ca[TCP_CA_NAME_MAX + 1];
 			    if (getsockopt(s, IPPROTO_TCP, TCP_CONGESTION, ca, &len) < 0) {
 				close(s);

@@ -253,7 +253,7 @@ pair of username password hash. Password hash is a sha256 hash of string
 .sp 1 
 .in +.5i $> S_USER=mario S_PASSWD=rossi
 .sp 0
-$> echo -ne "{$S_USER}$S_PASSWD" | sha256sum | awk '{ print $1 }'
+$> echo -n "{$S_USER}$S_PASSWD" | sha256sum | awk '{ print $1 }'
 .sp 0
 $> cat credentials.csv
 .sp 0

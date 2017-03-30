@@ -2459,7 +2459,11 @@ iperf_print_results(struct iperf_test *test)
 
 	if (sp->diskfile_fd >= 0) {
 	    if (fstat(sp->diskfile_fd, &sb) == 0) {
-		int percent = (int) ( ( (double) bytes_sent / (double) sb.st_size ) * 100.0 );
+		/* In the odd case that it's a zero-sized file, say it was all transferred. */
+		int percent = 100;
+		if (sb.st_size > 0) {
+		    percent = (int) ( ( (double) bytes_sent / (double) sb.st_size ) * 100.0 );
+		}
 		unit_snprintf(sbuf, UNIT_LEN, (double) sb.st_size, 'A');
 		if (test->json_output)
 		    cJSON_AddItemToObject(json_summary_stream, "diskfile", iperf_json_printf("sent: %d  size: %d  percent: %d  filename: %s", (int64_t) bytes_sent, (int64_t) sb.st_size, (int64_t) percent, test->diskfile_name));

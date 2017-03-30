@@ -80,6 +80,7 @@ struct iperf_interval_results
     TAILQ_ENTRY(iperf_interval_results) irlistentries;
     void     *custom_data;
     int rtt;
+    int rttvar;
 };
 
 struct iperf_stream_result

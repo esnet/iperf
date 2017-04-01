@@ -239,26 +239,6 @@ extern    "C"
     };
 
 /* -------------------------------------------------------------------
- * As unit_snrprintf, but do B instead of Byte and b instead of bit for
- * a bit more compact output.
- */
-    void short_unit_snprintf(char *s, int inLen,
-                               double inNum, char inFormat)
-    {
-       char *cp;
-
-       unit_snprintf(s, inLen, inNum, inFormat);
-       if ((cp = index(s, 'i')) != NULL) {
-           *cp = 0;
-       }
-       if ((cp = index(s, 'y')) != NULL) {
-           *cp = 0;
-       }
-    }
-
-
-
-/* -------------------------------------------------------------------
  * unit_snprintf
  *
  * Given a number in bytes and a format, converts the number and
@@ -350,6 +330,26 @@ extern    "C"
 	}
 	snprintf(s, inLen, format, inNum, suffix);
     }				/* end unit_snprintf */
+
+
+/* -------------------------------------------------------------------
+ * As unit_snrprintf, but do B instead of Byte and b instead of bit for
+ * a bit more compact output.
+ */
+    void short_unit_snprintf(char *s, int inLen,
+                               double inNum, char inFormat)
+    {
+       char *cp;
+
+       unit_snprintf(s, inLen, inNum, inFormat);
+       if ((cp = index(s, 'i')) != NULL) {
+           *cp = 0;
+       }
+       if ((cp = index(s, 'y')) != NULL) {
+           *cp = 0;
+       }
+    }
+
 
 #ifdef __cplusplus
 }				/* end extern "C" */

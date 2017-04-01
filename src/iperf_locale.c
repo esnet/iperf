@@ -288,7 +288,7 @@ const char report_bw_retrans_header[] =
 "[ ID] Interval           Transfer     Bandwidth       Retr\n";
 
 const char report_bw_retrans_cwnd_header[] =
-"[ ID] Interval           Transfer     Bandwidth       Retr  Cwnd\n";
+"[ ID] Interval        Transfer  Bandwidth   Retr  Cwnd      Swnd\n";
 
 const char report_bw_udp_header[] =
 "[ ID] Interval           Transfer     Bandwidth       Jitter    Lost/Total Datagrams\n";
@@ -303,7 +303,7 @@ const char report_bw_retrans_format[] =
 "[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec  %3u             %s\n";
 
 const char report_bw_retrans_cwnd_format[] =
-"[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec  %3u   %ss       %s\n";
+"[%3d] %6.2f-%-6.2f s  %s  %s/s  %3u   %s   %s   %s\n";
 
 const char report_bw_udp_format[] =
 "[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)  %s\n";

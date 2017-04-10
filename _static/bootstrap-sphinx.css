@@ -78,6 +78,7 @@ a.footnote-reference {
 }
 
 table.footnote td.label {
+  color: inherit;
   font-size: 100%;
   display: block;
   line-height: normal;

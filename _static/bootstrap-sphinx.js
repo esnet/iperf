@@ -97,7 +97,7 @@
 
       // Enlarge content if sidebar is larger.
       if ($sideBar.outerHeight(true) > $content.outerHeight(true)) {
-        $content.height($sideBar.outerHeight(true));
+        $content.minHeight($sideBar.outerHeight(true));
       }
 
       $sideBar

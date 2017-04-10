@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>iperf3 FAQ &#8212; iperf3 3.1.7 documentation</title>
+    
+    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/esnet/esnet.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.1.7',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="iperf3 Development" href="dev.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          <!-- LOGO: logo-esnet-ball-sm.png _static/logo-esnet-ball-sm.png --><img src="_static/logo-esnet-ball-sm.png">
+          iperf3</a>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Section <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="news.html">iperf3 Project News</a></li>
+<li class="toctree-l1"><a class="reference internal" href="obtaining.html">Obtaining iperf3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building iperf3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="invoking.html">Invoking iperf3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev.html">iperf3 Development</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">iperf3 FAQ</a></li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="dev.html" title="Previous Chapter: iperf3 Development">
+      <span class="glyphicon glyphicon-chevron-left"></span>
+      <span class="hidden-sm">
+        iperf3 Development
+      </span>
+    </a>
+  </li>
+              
+            
+            <li class="divider-vertical"></li>
+            
+                <li><a href="genindex.html">Index</a></li>
+                <li><a href="https://www.es.net">ESnet</a></li>
+            
+            <li><a href="https://github.com/esnet/iperf"><img src="_static/esnet/icon-github.png" height="20" width="20"></a></li>
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="_sources/faq.rst.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
+<li><a class="reference internal" href="#">iperf3 FAQ</a></li>
+</ul>
+
+        </div>
+      </div>
+    <div class="col-md-9">
+      
+  <div class="section" id="iperf3-faq">
+<h1>iperf3 FAQ<a class="headerlink" href="#iperf3-faq" title="Permalink to this headline">¶</a></h1>
+<dl class="docutils">
+<dt>What is the history of iperf3, and what is the difference between iperf2 and iperf3?</dt>
+<dd><p class="first">iperf2 was orphaned in the late 2000s at version 2.0.5, despite some
+known bugs and issues. After spending some time trying to fix
+iperf2&#8217;s problems, ESnet decided by 2010 that a new, simpler tool
+was needed, and began development of iperf3. The goal was make the
+tool as simple as possible, so others could contribute to the code
+base. For this reason, it was decided to make the tool single
+threaded, and not worry about backwards compatibility with
+iperf2. Many of the feature requests for iperf3 came from the
+perfSONAR project (<a class="reference external" href="http://www.perfsonar.net">http://www.perfsonar.net</a>).</p>
+<p>Then in 2014, Bob (Robert) McMahon from Broadcom restarted
+development of iperf2 (See
+<a class="reference external" href="https://sourceforge.net/projects/iperf2/">https://sourceforge.net/projects/iperf2/</a>). He fixed many of the
+problems with iperf2, and added a number of new features similar to
+iperf3. iperf2.0.8, released in 2015, made iperf2 a useful tool.</p>
+<p>As of this writing (2017), both iperf2 and iperf3 are being actively
+(although independently) developed.  We recommend being familiar with
+both tools, and use whichever tool’s features best match your needs.</p>
+<p class="last">A feature comparison of iperf2, iperf3, and nuttcp is available at:
+<a class="reference external" href="https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/throughput-tool-comparision/">https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/throughput-tool-comparision/</a></p>
+</dd>
+<dt>iperf3 parallel stream performance is much less than iperf2. Why?</dt>
+<dd>iperf3 is single threaded, and iperf2 is multi-threaded. We
+recommend using iperf2 for parallel streams.</dd>
+<dt>I’m trying to use iperf3 on Windows, but having trouble. What should I do?</dt>
+<dd><p class="first">iperf3 is not officially supported on Windows, but iperf2 is. We
+recommend you use iperf2.</p>
+<p class="last">Some people are using Cygwin to run iperf3 in Windows, but not all
+options will work.  Some community-provided binaries of iperf3 for
+Windows exist.</p>
+</dd>
+<dt>I&#8217;m seeing quite a bit of unexpected UDP loss. Why?</dt>
+<dd>First, confirm you are using iperf 3.1.5 or higher. There was an
+issue with the default UDP send size that was fixed in
+3.1.5. Second, try adding the flag <code class="docutils literal"><span class="pre">-w1M</span></code> to increase the socket
+buffer sizes. That seems to make a big difference on some hosts.</dd>
+<dt>iperf3 UDP does not seem to work at bandwidths less than 1Mbps. Why?</dt>
+<dd>The pacing algorithm used by iperf3 does not allow for send rates
+less than 1Mbps.</dd>
+<dt>What congestion control algorithms are supported?</dt>
+<dd><p class="first">On Linux, run this command to see the available congestion control
+algorithms (note that some algorithms are packaged as kernel
+modules, which must be loaded before they can be used):</p>
+<div class="last highlight-default"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">sbin</span><span class="o">/</span><span class="n">sysctl</span> <span class="n">net</span><span class="o">.</span><span class="n">ipv4</span><span class="o">.</span><span class="n">tcp_available_congestion_control</span>
+</pre></div>
+</div>
+</dd>
+<dt>I’m using the <code class="docutils literal"><span class="pre">--logfile</span></code> option. How do I see file output in real time?</dt>
+<dd>Use the <code class="docutils literal"><span class="pre">--forceflush</span></code> flag.</dd>
+<dt>Why can’t I run a UDP client with no server?</dt>
+<dd>This is potentially dangerous, and an attacker could use this for a
+denial of service attack.  We don&#8217;t want iperf3 to be an attack tool.</dd>
+<dt>I have a question regarding iperf3...what&#8217;s the best way to get help?</dt>
+<dd><p class="first">Searching on the Internet is a good first step.
+<a class="reference external" href="http://stackoverflow.com/">http://stackoverflow.com/</a> has a number of iperf3-related questions
+and answers, but a simple query into your favorite search engine can
+also yield some results.</p>
+<p>There is a mailing list nominally used for iperf3 development,
+<a class="reference external" href="mailto:iperf-dev&#37;&#52;&#48;googlegroups&#46;com">iperf-dev<span>&#64;</span>googlegroups<span>&#46;</span>com</a>.</p>
+<p class="last">We discourage the use of the iperf3 issue tracker on GitHub for
+support questions.  Actual bug reports, enhancement requests, or
+pull requests are encouraged, however.</p>
+</dd>
+</dl>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-1">
+        <a href="http://www.es.net/"><img src="_static/esnet/logo-esnet.png" alt="[ESnet]"></a>
+      </div>
+      <div class="col-md-11">
+        <p class="pull-right">
+        <a href="#">Back to top</a>
+        
+        </p>
+        <p>
+            &copy; Copyright 2014-2017, ESnet.<br/>
+          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.5.<br/>
+        </p>
+      </div>
+    </div>
+  </div>
+</footer>
+  </body>
+</html>

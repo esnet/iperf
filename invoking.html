@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Invoking iperf3 &#8212; iperf3 3.1.7 documentation</title>
+    <title>Invoking iperf3 &mdash; iperf3 3.1.7 documentation</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -19,8 +19,7 @@
         VERSION:     '3.1.7',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
+        HAS_SOURCE:  true
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
@@ -31,8 +30,7 @@
     <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="shortcut icon" href="_static/favicon.ico"/>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="iperf3 3.1.7 documentation" href="index.html" />
     <link rel="next" title="iperf3 Development" href="dev.html" />
     <link rel="prev" title="Building iperf3" href="building.html" />
 <meta charset='utf-8'>
@@ -72,7 +70,7 @@
 <li class="toctree-l1"><a class="reference internal" href="news.html">iperf3 Project News</a></li>
 <li class="toctree-l1"><a class="reference internal" href="obtaining.html">Obtaining iperf3</a></li>
 <li class="toctree-l1"><a class="reference internal" href="building.html">Building iperf3</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Invoking iperf3</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Invoking iperf3</a></li>
 <li class="toctree-l1"><a class="reference internal" href="dev.html">iperf3 Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">iperf3 FAQ</a></li>
 </ul>
@@ -94,7 +92,7 @@
   <li>
     <a href="dev.html" title="Next Chapter: iperf3 Development">
       <span class="hidden-sm">
-        iperf3 Development
+        iperf3 Develo...
       </span>
       <span class="glyphicon glyphicon-chevron-right"></span>
     </a>
@@ -112,7 +110,7 @@
             
               <li class="hidden-sm">
 <div id="sourcelink">
-  <a href="_sources/invoking.rst.txt"
+  <a href="_sources/invoking.txt"
      rel="nofollow">Source</a>
 </div></li>
             
@@ -164,228 +162,228 @@ and <code class="docutils literal"><span class="pre">-A</span></code> (<code cla
 It is presented here only for convenience; the authoritative iperf3
 manual page is included in the source tree and installed along with
 the executable.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">IPERF3</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>                        <span class="n">User</span> <span class="n">Manuals</span>                        <span class="n">IPERF3</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span>IPERF3(1)                        User Manuals                        IPERF3(1)
 
 
 
-<span class="n">NAME</span>
-       <span class="n">iperf3</span> <span class="o">-</span> <span class="n">perform</span> <span class="n">network</span> <span class="n">throughput</span> <span class="n">tests</span>
+NAME
+       iperf3 - perform network throughput tests
 
-<span class="n">SYNOPSIS</span>
-       <span class="n">iperf3</span> <span class="o">-</span><span class="n">s</span> <span class="p">[</span> <span class="n">options</span> <span class="p">]</span>
-       <span class="n">iperf3</span> <span class="o">-</span><span class="n">c</span> <span class="n">server</span> <span class="p">[</span> <span class="n">options</span> <span class="p">]</span>
-
-
-<span class="n">DESCRIPTION</span>
-       <span class="n">iperf3</span>  <span class="ow">is</span>  <span class="n">a</span>  <span class="n">tool</span> <span class="k">for</span> <span class="n">performing</span> <span class="n">network</span> <span class="n">throughput</span> <span class="n">measurements</span><span class="o">.</span>  <span class="n">It</span>
-       <span class="n">can</span> <span class="n">test</span> <span class="n">either</span> <span class="n">TCP</span> <span class="ow">or</span> <span class="n">UDP</span> <span class="n">throughput</span><span class="o">.</span>  <span class="n">To</span> <span class="n">perform</span> <span class="n">an</span> <span class="n">iperf3</span>  <span class="n">test</span>  <span class="n">the</span>
-       <span class="n">user</span> <span class="n">must</span> <span class="n">establish</span> <span class="n">both</span> <span class="n">a</span> <span class="n">server</span> <span class="ow">and</span> <span class="n">a</span> <span class="n">client</span><span class="o">.</span>
+SYNOPSIS
+       iperf3 -s [ options ]
+       iperf3 -c server [ options ]
 
 
-<span class="n">GENERAL</span> <span class="n">OPTIONS</span>
-       <span class="o">-</span><span class="n">p</span><span class="p">,</span> <span class="o">--</span><span class="n">port</span> <span class="n">n</span>
-              <span class="nb">set</span> <span class="n">server</span> <span class="n">port</span> <span class="n">to</span> <span class="n">listen</span> <span class="n">on</span><span class="o">/</span><span class="n">connect</span> <span class="n">to</span> <span class="n">to</span> <span class="n">n</span> <span class="p">(</span><span class="n">default</span> <span class="mi">5201</span><span class="p">)</span>
-
-       <span class="o">-</span><span class="n">f</span><span class="p">,</span> <span class="o">--</span><span class="nb">format</span>
-              <span class="p">[</span><span class="n">kmKM</span><span class="p">]</span>   <span class="nb">format</span> <span class="n">to</span> <span class="n">report</span><span class="p">:</span> <span class="n">Kbits</span><span class="p">,</span> <span class="n">Mbits</span><span class="p">,</span> <span class="n">KBytes</span><span class="p">,</span> <span class="n">MBytes</span>
-
-       <span class="o">-</span><span class="n">i</span><span class="p">,</span> <span class="o">--</span><span class="n">interval</span> <span class="n">n</span>
-              <span class="n">pause</span>  <span class="n">n</span>  <span class="n">seconds</span> <span class="n">between</span> <span class="n">periodic</span> <span class="n">bandwidth</span> <span class="n">reports</span><span class="p">;</span> <span class="n">default</span> <span class="ow">is</span>
-              <span class="mi">1</span><span class="p">,</span> <span class="n">use</span> <span class="mi">0</span> <span class="n">to</span> <span class="n">disable</span>
-
-       <span class="o">-</span><span class="n">F</span><span class="p">,</span> <span class="o">--</span><span class="n">file</span> <span class="n">name</span>
-              <span class="n">client</span><span class="o">-</span><span class="n">side</span><span class="p">:</span> <span class="n">read</span> <span class="kn">from</span>  <span class="nn">the</span>  <span class="n">file</span>  <span class="ow">and</span>  <span class="n">write</span>  <span class="n">to</span>  <span class="n">the</span>  <span class="n">network</span><span class="p">,</span>
-              <span class="n">instead</span> <span class="n">of</span> <span class="n">using</span> <span class="n">random</span> <span class="n">data</span><span class="p">;</span> <span class="n">server</span><span class="o">-</span><span class="n">side</span><span class="p">:</span> <span class="n">read</span> <span class="kn">from</span> <span class="nn">the</span> <span class="n">network</span>
-              <span class="ow">and</span> <span class="n">write</span> <span class="n">to</span> <span class="n">the</span> <span class="n">file</span><span class="p">,</span> <span class="n">instead</span> <span class="n">of</span> <span class="n">throwing</span> <span class="n">the</span> <span class="n">data</span> <span class="n">away</span>
-
-       <span class="o">-</span><span class="n">A</span><span class="p">,</span> <span class="o">--</span><span class="n">affinity</span> <span class="n">n</span><span class="o">/</span><span class="n">n</span><span class="p">,</span><span class="n">m</span>
-              <span class="n">Set</span> <span class="n">the</span> <span class="n">CPU</span> <span class="n">affinity</span><span class="p">,</span> <span class="k">if</span> <span class="n">possible</span> <span class="p">(</span><span class="n">Linux</span> <span class="ow">and</span> <span class="n">FreeBSD</span> <span class="n">only</span><span class="p">)</span><span class="o">.</span>   <span class="n">On</span>
-              <span class="n">both</span>  <span class="n">the</span>  <span class="n">client</span>  <span class="ow">and</span>  <span class="n">server</span> <span class="n">you</span> <span class="n">can</span> <span class="nb">set</span> <span class="n">the</span> <span class="n">local</span> <span class="n">affinity</span> <span class="n">by</span>
-              <span class="n">using</span> <span class="n">the</span> <span class="n">n</span> <span class="n">form</span> <span class="n">of</span> <span class="n">this</span> <span class="n">argument</span> <span class="p">(</span><span class="n">where</span> <span class="n">n</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">CPU</span> <span class="n">number</span><span class="p">)</span><span class="o">.</span>  <span class="n">In</span>
-              <span class="n">addition</span><span class="p">,</span>  <span class="n">on</span>  <span class="n">the</span>  <span class="n">client</span>  <span class="n">side</span>  <span class="n">you</span>  <span class="n">can</span> <span class="n">override</span> <span class="n">the</span> <span class="n">server</span><span class="s1">&#39;s</span>
-              <span class="n">affinity</span> <span class="k">for</span> <span class="n">just</span> <span class="n">that</span> <span class="n">one</span> <span class="n">test</span><span class="p">,</span> <span class="n">using</span> <span class="n">the</span> <span class="n">n</span><span class="p">,</span><span class="n">m</span> <span class="n">form</span> <span class="n">of</span> <span class="n">argument</span><span class="o">.</span>
-              <span class="n">Note</span>  <span class="n">that</span> <span class="n">when</span> <span class="n">using</span> <span class="n">this</span> <span class="n">feature</span><span class="p">,</span> <span class="n">a</span> <span class="n">process</span> <span class="n">will</span> <span class="n">only</span> <span class="n">be</span> <span class="n">bound</span>
-              <span class="n">to</span> <span class="n">a</span> <span class="n">single</span> <span class="n">CPU</span> <span class="p">(</span><span class="k">as</span> <span class="n">opposed</span> <span class="n">to</span> <span class="n">a</span> <span class="nb">set</span> <span class="n">containing</span> <span class="n">potentialy</span>  <span class="n">mul</span><span class="o">-</span>
-              <span class="n">tiple</span> <span class="n">CPUs</span><span class="p">)</span><span class="o">.</span>
-
-       <span class="o">-</span><span class="n">B</span><span class="p">,</span> <span class="o">--</span><span class="n">bind</span> <span class="n">host</span>
-              <span class="n">bind</span> <span class="n">to</span> <span class="n">a</span> <span class="n">specific</span> <span class="n">interface</span>
-
-       <span class="o">-</span><span class="n">V</span><span class="p">,</span> <span class="o">--</span><span class="n">verbose</span>
-              <span class="n">give</span> <span class="n">more</span> <span class="n">detailed</span> <span class="n">output</span>
-
-       <span class="o">-</span><span class="n">J</span><span class="p">,</span> <span class="o">--</span><span class="n">json</span>
-              <span class="n">output</span> <span class="ow">in</span> <span class="n">JSON</span> <span class="nb">format</span>
-
-       <span class="o">--</span><span class="n">logfile</span> <span class="n">file</span>
-              <span class="n">send</span> <span class="n">output</span> <span class="n">to</span> <span class="n">a</span> <span class="n">log</span> <span class="n">file</span><span class="o">.</span>
-
-       <span class="o">--</span><span class="n">forceflush</span>
-              <span class="n">force</span>  <span class="n">flushing</span> <span class="n">output</span> <span class="n">at</span> <span class="n">every</span> <span class="n">interval</span><span class="o">.</span>  <span class="n">Used</span> <span class="n">to</span> <span class="n">avoid</span> <span class="n">buffer</span><span class="o">-</span>
-              <span class="n">ing</span> <span class="n">when</span> <span class="n">sending</span> <span class="n">output</span> <span class="n">to</span> <span class="n">pipe</span><span class="o">.</span>
-
-       <span class="o">-</span><span class="n">d</span><span class="p">,</span> <span class="o">--</span><span class="n">debug</span>
-              <span class="n">emit</span> <span class="n">debugging</span> <span class="n">output</span><span class="o">.</span>  <span class="n">Primarily</span> <span class="p">(</span><span class="n">perhaps</span> <span class="n">exclusively</span><span class="p">)</span>  <span class="n">of</span>  <span class="n">use</span>
-              <span class="n">to</span> <span class="n">developers</span><span class="o">.</span>
-
-       <span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">version</span>
-              <span class="n">show</span> <span class="n">version</span> <span class="n">information</span> <span class="ow">and</span> <span class="n">quit</span>
-
-       <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>
-              <span class="n">show</span> <span class="n">a</span> <span class="n">help</span> <span class="n">synopsis</span>
+DESCRIPTION
+       iperf3  is  a  tool for performing network throughput measurements.  It
+       can test either TCP or UDP throughput.  To perform an iperf3  test  the
+       user must establish both a server and a client.
 
 
-<span class="n">SERVER</span> <span class="n">SPECIFIC</span> <span class="n">OPTIONS</span>
-       <span class="o">-</span><span class="n">s</span><span class="p">,</span> <span class="o">--</span><span class="n">server</span>
-              <span class="n">run</span> <span class="ow">in</span> <span class="n">server</span> <span class="n">mode</span>
+GENERAL OPTIONS
+       -p, --port n
+              set server port to listen on/connect to to n (default 5201)
 
-       <span class="o">-</span><span class="n">D</span><span class="p">,</span> <span class="o">--</span><span class="n">daemon</span>
-              <span class="n">run</span> <span class="n">the</span> <span class="n">server</span> <span class="ow">in</span> <span class="n">background</span> <span class="k">as</span> <span class="n">a</span> <span class="n">daemon</span>
+       -f, --format
+              [kmKM]   format to report: Kbits, Mbits, KBytes, MBytes
 
-       <span class="o">-</span><span class="n">I</span><span class="p">,</span> <span class="o">--</span><span class="n">pidfile</span> <span class="n">file</span>
-              <span class="n">write</span>  <span class="n">a</span> <span class="n">file</span> <span class="k">with</span> <span class="n">the</span> <span class="n">process</span> <span class="n">ID</span><span class="p">,</span> <span class="n">most</span> <span class="n">useful</span> <span class="n">when</span> <span class="n">running</span> <span class="k">as</span> <span class="n">a</span>
-              <span class="n">daemon</span><span class="o">.</span>
+       -i, --interval n
+              pause  n  seconds between periodic bandwidth reports; default is
+              1, use 0 to disable
 
-       <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">--</span><span class="n">one</span><span class="o">-</span><span class="n">off</span>
-              <span class="n">handle</span> <span class="n">one</span> <span class="n">client</span> <span class="n">connection</span><span class="p">,</span> <span class="n">then</span> <span class="n">exit</span><span class="o">.</span>
+       -F, --file name
+              client-side: read from  the  file  and  write  to  the  network,
+              instead of using random data; server-side: read from the network
+              and write to the file, instead of throwing the data away
 
+       -A, --affinity n/n,m
+              Set the CPU affinity, if possible (Linux and FreeBSD only).   On
+              both  the  client  and  server you can set the local affinity by
+              using the n form of this argument (where n is a CPU number).  In
+              addition,  on  the  client  side  you  can override the server&#39;s
+              affinity for just that one test, using the n,m form of argument.
+              Note  that when using this feature, a process will only be bound
+              to a single CPU (as opposed to a set containing potentialy  mul-
+              tiple CPUs).
 
-<span class="n">CLIENT</span> <span class="n">SPECIFIC</span> <span class="n">OPTIONS</span>
-       <span class="o">-</span><span class="n">c</span><span class="p">,</span> <span class="o">--</span><span class="n">client</span> <span class="n">host</span>
-              <span class="n">run</span> <span class="ow">in</span> <span class="n">client</span> <span class="n">mode</span><span class="p">,</span> <span class="n">connecting</span> <span class="n">to</span> <span class="n">the</span> <span class="n">specified</span> <span class="n">server</span>
+       -B, --bind host
+              bind to a specific interface
 
-       <span class="o">--</span><span class="n">sctp</span> <span class="n">use</span> <span class="n">SCTP</span> <span class="n">rather</span> <span class="n">than</span> <span class="n">TCP</span> <span class="p">(</span><span class="n">FreeBSD</span> <span class="ow">and</span> <span class="n">Linux</span><span class="p">)</span>
+       -V, --verbose
+              give more detailed output
 
-       <span class="o">-</span><span class="n">u</span><span class="p">,</span> <span class="o">--</span><span class="n">udp</span>
-              <span class="n">use</span> <span class="n">UDP</span> <span class="n">rather</span> <span class="n">than</span> <span class="n">TCP</span>
+       -J, --json
+              output in JSON format
 
-       <span class="o">-</span><span class="n">b</span><span class="p">,</span> <span class="o">--</span><span class="n">bandwidth</span> <span class="n">n</span><span class="p">[</span><span class="n">KM</span><span class="p">]</span>
-              <span class="nb">set</span> <span class="n">target</span> <span class="n">bandwidth</span> <span class="n">to</span> <span class="n">n</span> <span class="n">bits</span><span class="o">/</span><span class="n">sec</span> <span class="p">(</span><span class="n">default</span> <span class="mi">1</span> <span class="n">Mbit</span><span class="o">/</span><span class="n">sec</span> <span class="k">for</span>  <span class="n">UDP</span><span class="p">,</span>
-              <span class="n">unlimited</span>  <span class="k">for</span>  <span class="n">TCP</span><span class="p">)</span><span class="o">.</span>   <span class="n">If</span> <span class="n">there</span> <span class="n">are</span> <span class="n">multiple</span> <span class="n">streams</span> <span class="p">(</span><span class="o">-</span><span class="n">P</span> <span class="n">flag</span><span class="p">),</span>
-              <span class="n">the</span> <span class="n">bandwidth</span> <span class="n">limit</span> <span class="ow">is</span> <span class="n">applied</span> <span class="n">separately</span> <span class="n">to</span> <span class="n">each</span>  <span class="n">stream</span><span class="o">.</span>   <span class="n">You</span>
-              <span class="n">can</span>  <span class="n">also</span>  <span class="n">add</span>  <span class="n">a</span>  <span class="s1">&#39;/&#39;</span>  <span class="ow">and</span> <span class="n">a</span> <span class="n">number</span> <span class="n">to</span> <span class="n">the</span> <span class="n">bandwidth</span> <span class="n">specifier</span><span class="o">.</span>
-              <span class="n">This</span> <span class="ow">is</span> <span class="n">called</span> <span class="s2">&quot;burst mode&quot;</span><span class="o">.</span>  <span class="n">It</span> <span class="n">will</span> <span class="n">send</span> <span class="n">the</span> <span class="n">given</span>  <span class="n">number</span>  <span class="n">of</span>
-              <span class="n">packets</span>  <span class="n">without</span>  <span class="n">pausing</span><span class="p">,</span>  <span class="n">even</span> <span class="k">if</span> <span class="n">that</span> <span class="n">temporarily</span> <span class="n">exceeds</span> <span class="n">the</span>
-              <span class="n">specified</span> <span class="n">bandwidth</span> <span class="n">limit</span><span class="o">.</span>  <span class="n">Setting</span> <span class="n">the</span> <span class="n">target</span>  <span class="n">bandwidth</span>  <span class="n">to</span>  <span class="mi">0</span>
-              <span class="n">will</span>  <span class="n">disable</span>  <span class="n">bandwidth</span>  <span class="n">limits</span>  <span class="p">(</span><span class="n">particularly</span>  <span class="n">useful</span>  <span class="k">for</span> <span class="n">UDP</span>
-              <span class="n">tests</span><span class="p">)</span><span class="o">.</span>  <span class="n">This</span> <span class="n">bandwidth</span> <span class="n">limit</span> <span class="ow">is</span> <span class="n">implemented</span>  <span class="n">internally</span>  <span class="n">inside</span>
-              <span class="n">iperf3</span><span class="p">,</span>  <span class="ow">and</span>  <span class="ow">is</span>  <span class="n">available</span>  <span class="n">on</span> <span class="nb">all</span> <span class="n">platforms</span><span class="o">.</span>  <span class="n">Compare</span> <span class="k">with</span> <span class="n">the</span>
-              <span class="o">--</span><span class="n">fq</span><span class="o">-</span><span class="n">rate</span> <span class="n">flag</span><span class="o">.</span>
+       --logfile file
+              send output to a log file.
 
-       <span class="o">--</span><span class="n">fq</span><span class="o">-</span><span class="n">rate</span> <span class="n">n</span><span class="p">[</span><span class="n">KM</span><span class="p">]</span>
-              <span class="n">Set</span> <span class="n">a</span> <span class="n">rate</span> <span class="n">to</span> <span class="n">be</span> <span class="n">used</span> <span class="k">with</span> <span class="n">fair</span><span class="o">-</span><span class="n">queueing</span> <span class="n">based</span> <span class="n">socket</span><span class="o">-</span><span class="n">level</span> <span class="n">pac</span><span class="o">-</span>
-              <span class="n">ing</span><span class="p">,</span>  <span class="ow">in</span> <span class="n">bits</span> <span class="n">per</span> <span class="n">second</span><span class="o">.</span>  <span class="n">This</span> <span class="n">pacing</span> <span class="p">(</span><span class="k">if</span> <span class="n">specified</span><span class="p">)</span> <span class="n">will</span> <span class="n">be</span> <span class="ow">in</span>
-              <span class="n">addition</span> <span class="n">to</span> <span class="nb">any</span> <span class="n">pacing</span> <span class="n">due</span> <span class="n">to</span> <span class="n">iperf3</span><span class="s1">&#39;s internal bandwidth pacing</span>
-              <span class="p">(</span><span class="o">-</span><span class="n">b</span>  <span class="n">flag</span><span class="p">),</span>  <span class="ow">and</span>  <span class="n">both</span> <span class="n">can</span> <span class="n">be</span> <span class="n">specified</span> <span class="k">for</span> <span class="n">the</span> <span class="n">same</span> <span class="n">test</span><span class="o">.</span>  <span class="n">Only</span>
-              <span class="n">available</span> <span class="n">on</span> <span class="n">platforms</span> <span class="n">supporting</span> <span class="n">the</span> <span class="n">SO_MAX_PACING_RATE</span>  <span class="n">socket</span>
-              <span class="n">option</span>  <span class="p">(</span><span class="n">currently</span> <span class="n">only</span> <span class="n">Linux</span><span class="p">)</span><span class="o">.</span>  <span class="n">The</span> <span class="n">default</span> <span class="ow">is</span> <span class="n">no</span> <span class="n">fair</span><span class="o">-</span><span class="n">queueing</span>
-              <span class="n">based</span> <span class="n">pacing</span><span class="o">.</span>
+       --forceflush
+              force  flushing output at every interval.  Used to avoid buffer-
+              ing when sending output to pipe.
 
-       <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">fq</span><span class="o">-</span><span class="n">socket</span><span class="o">-</span><span class="n">pacing</span>
-              <span class="n">This</span> <span class="n">option</span> <span class="ow">is</span> <span class="n">deprecated</span> <span class="ow">and</span> <span class="n">will</span> <span class="n">be</span> <span class="n">removed</span><span class="o">.</span>  <span class="n">It</span> <span class="ow">is</span> <span class="n">equivalent</span>
-              <span class="n">to</span> <span class="n">specifying</span> <span class="o">--</span><span class="n">fq</span><span class="o">-</span><span class="n">rate</span><span class="o">=</span><span class="mf">0.</span>
+       -d, --debug
+              emit debugging output.  Primarily (perhaps exclusively)  of  use
+              to developers.
 
-       <span class="o">-</span><span class="n">t</span><span class="p">,</span> <span class="o">--</span><span class="n">time</span> <span class="n">n</span>
-              <span class="n">time</span> <span class="ow">in</span> <span class="n">seconds</span> <span class="n">to</span> <span class="n">transmit</span> <span class="k">for</span> <span class="p">(</span><span class="n">default</span> <span class="mi">10</span> <span class="n">secs</span><span class="p">)</span>
+       -v, --version
+              show version information and quit
 
-       <span class="o">-</span><span class="n">n</span><span class="p">,</span> <span class="o">--</span><span class="nb">bytes</span> <span class="n">n</span><span class="p">[</span><span class="n">KM</span><span class="p">]</span>
-              <span class="n">number</span> <span class="n">of</span> <span class="nb">bytes</span> <span class="n">to</span> <span class="n">transmit</span> <span class="p">(</span><span class="n">instead</span> <span class="n">of</span> <span class="o">-</span><span class="n">t</span><span class="p">)</span>
-
-       <span class="o">-</span><span class="n">k</span><span class="p">,</span> <span class="o">--</span><span class="n">blockcount</span> <span class="n">n</span><span class="p">[</span><span class="n">KM</span><span class="p">]</span>
-              <span class="n">number</span> <span class="n">of</span> <span class="n">blocks</span> <span class="p">(</span><span class="n">packets</span><span class="p">)</span> <span class="n">to</span> <span class="n">transmit</span> <span class="p">(</span><span class="n">instead</span> <span class="n">of</span> <span class="o">-</span><span class="n">t</span> <span class="ow">or</span> <span class="o">-</span><span class="n">n</span><span class="p">)</span>
-
-       <span class="o">-</span><span class="n">l</span><span class="p">,</span> <span class="o">--</span><span class="n">length</span> <span class="n">n</span><span class="p">[</span><span class="n">KM</span><span class="p">]</span>
-              <span class="n">length</span>  <span class="n">of</span>  <span class="n">buffer</span> <span class="n">to</span> <span class="n">read</span> <span class="ow">or</span> <span class="n">write</span><span class="o">.</span>  <span class="n">For</span> <span class="n">TCP</span> <span class="n">tests</span><span class="p">,</span> <span class="n">the</span> <span class="n">default</span>
-              <span class="n">value</span> <span class="ow">is</span> <span class="mi">128</span><span class="n">KB</span><span class="o">.</span>  <span class="n">In</span> <span class="n">the</span> <span class="n">case</span> <span class="n">of</span> <span class="n">UDP</span><span class="p">,</span> <span class="n">iperf3</span> <span class="n">tries</span> <span class="n">to</span> <span class="n">dynamically</span>
-              <span class="n">determine</span>  <span class="n">a</span>  <span class="n">reasonable</span>  <span class="n">sending</span> <span class="n">size</span> <span class="n">based</span> <span class="n">on</span> <span class="n">the</span> <span class="n">path</span> <span class="n">MTU</span><span class="p">;</span> <span class="k">if</span>
-              <span class="n">that</span> <span class="n">cannot</span> <span class="n">be</span> <span class="n">determined</span> <span class="n">it</span> <span class="n">uses</span> <span class="mi">1460</span> <span class="nb">bytes</span> <span class="k">as</span> <span class="n">a</span> <span class="n">sending</span>  <span class="n">size</span><span class="o">.</span>
-              <span class="n">For</span> <span class="n">SCTP</span> <span class="n">tests</span><span class="p">,</span> <span class="n">the</span> <span class="n">default</span> <span class="n">size</span> <span class="ow">is</span> <span class="mi">64</span><span class="n">KB</span><span class="o">.</span>
-
-       <span class="o">--</span><span class="n">cport</span> <span class="n">port</span>
-              <span class="n">bind</span>  <span class="n">data</span>  <span class="n">streams</span>  <span class="n">to</span>  <span class="n">a</span> <span class="n">specific</span> <span class="n">client</span> <span class="n">port</span> <span class="p">(</span><span class="k">for</span> <span class="n">TCP</span> <span class="ow">and</span> <span class="n">UDP</span>
-              <span class="n">only</span><span class="p">,</span> <span class="n">default</span> <span class="ow">is</span> <span class="n">to</span> <span class="n">use</span> <span class="n">an</span> <span class="n">ephemeral</span> <span class="n">port</span><span class="p">)</span>
-
-       <span class="o">-</span><span class="n">P</span><span class="p">,</span> <span class="o">--</span><span class="n">parallel</span> <span class="n">n</span>
-              <span class="n">number</span> <span class="n">of</span> <span class="n">parallel</span> <span class="n">client</span> <span class="n">streams</span> <span class="n">to</span> <span class="n">run</span>
-
-       <span class="o">-</span><span class="n">R</span><span class="p">,</span> <span class="o">--</span><span class="n">reverse</span>
-              <span class="n">run</span> <span class="ow">in</span> <span class="n">reverse</span> <span class="n">mode</span> <span class="p">(</span><span class="n">server</span> <span class="n">sends</span><span class="p">,</span> <span class="n">client</span> <span class="n">receives</span><span class="p">)</span>
-
-       <span class="o">-</span><span class="n">w</span><span class="p">,</span> <span class="o">--</span><span class="n">window</span> <span class="n">n</span><span class="p">[</span><span class="n">KM</span><span class="p">]</span>
-              <span class="n">window</span> <span class="n">size</span> <span class="o">/</span> <span class="n">socket</span> <span class="n">buffer</span> <span class="n">size</span> <span class="p">(</span><span class="n">this</span> <span class="n">gets</span> <span class="n">sent</span> <span class="n">to</span>  <span class="n">the</span>  <span class="n">server</span>
-              <span class="ow">and</span> <span class="n">used</span> <span class="n">on</span> <span class="n">that</span> <span class="n">side</span> <span class="n">too</span><span class="p">)</span>
-
-       <span class="o">-</span><span class="n">M</span><span class="p">,</span> <span class="o">--</span><span class="nb">set</span><span class="o">-</span><span class="n">mss</span> <span class="n">n</span>
-              <span class="nb">set</span> <span class="n">TCP</span><span class="o">/</span><span class="n">SCTP</span> <span class="n">maximum</span> <span class="n">segment</span> <span class="n">size</span> <span class="p">(</span><span class="n">MTU</span> <span class="o">-</span> <span class="mi">40</span> <span class="nb">bytes</span><span class="p">)</span>
-
-       <span class="o">-</span><span class="n">N</span><span class="p">,</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">delay</span>
-              <span class="nb">set</span> <span class="n">TCP</span><span class="o">/</span><span class="n">SCTP</span> <span class="n">no</span> <span class="n">delay</span><span class="p">,</span> <span class="n">disabling</span> <span class="n">Nagle</span><span class="s1">&#39;s Algorithm</span>
-
-       <span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="o">--</span><span class="n">version4</span>
-              <span class="n">only</span> <span class="n">use</span> <span class="n">IPv4</span>
-
-       <span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="o">--</span><span class="n">version6</span>
-              <span class="n">only</span> <span class="n">use</span> <span class="n">IPv6</span>
-
-       <span class="o">-</span><span class="n">S</span><span class="p">,</span> <span class="o">--</span><span class="n">tos</span> <span class="n">n</span>
-              <span class="nb">set</span> <span class="n">the</span> <span class="n">IP</span> <span class="s1">&#39;type of service&#39;</span>
-
-       <span class="o">-</span><span class="n">L</span><span class="p">,</span> <span class="o">--</span><span class="n">flowlabel</span> <span class="n">n</span>
-              <span class="nb">set</span> <span class="n">the</span> <span class="n">IPv6</span> <span class="n">flow</span> <span class="n">label</span> <span class="p">(</span><span class="n">currently</span> <span class="n">only</span> <span class="n">supported</span> <span class="n">on</span> <span class="n">Linux</span><span class="p">)</span>
-
-       <span class="o">-</span><span class="n">X</span><span class="p">,</span> <span class="o">--</span><span class="n">xbind</span> <span class="n">name</span>
-              <span class="n">Bind</span>  <span class="n">SCTP</span>  <span class="n">associations</span>  <span class="n">to</span>  <span class="n">a</span>  <span class="n">specific</span>  <span class="n">subset</span> <span class="n">of</span> <span class="n">links</span> <span class="n">using</span>
-              <span class="n">sctp_bindx</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span>  <span class="n">The</span> <span class="o">--</span><span class="n">B</span> <span class="n">flag</span> <span class="n">will</span> <span class="n">be</span> <span class="n">ignored</span>  <span class="k">if</span>  <span class="n">this</span>  <span class="n">flag</span>  <span class="ow">is</span>
-              <span class="n">specified</span><span class="o">.</span>  <span class="n">Normally</span> <span class="n">SCTP</span> <span class="n">will</span> <span class="n">include</span> <span class="n">the</span> <span class="n">protocol</span> <span class="n">addresses</span> <span class="n">of</span>
-              <span class="nb">all</span> <span class="n">active</span> <span class="n">links</span> <span class="n">on</span> <span class="n">the</span> <span class="n">local</span> <span class="n">host</span> <span class="n">when</span> <span class="n">setting</span> <span class="n">up</span>  <span class="n">an</span>  <span class="n">associa</span><span class="o">-</span>
-              <span class="n">tion</span><span class="o">.</span>  <span class="n">Specifying</span> <span class="n">at</span> <span class="n">least</span> <span class="n">one</span> <span class="o">--</span><span class="n">X</span> <span class="n">name</span> <span class="n">will</span> <span class="n">disable</span> <span class="n">this</span> <span class="n">behav</span><span class="o">-</span>
-              <span class="n">iour</span><span class="o">.</span>  <span class="n">This</span> <span class="n">flag</span> <span class="n">must</span> <span class="n">be</span> <span class="n">specified</span> <span class="k">for</span> <span class="n">each</span> <span class="n">link</span> <span class="n">to</span> <span class="n">be</span>  <span class="n">included</span>
-              <span class="ow">in</span>  <span class="n">the</span> <span class="n">association</span><span class="p">,</span> <span class="ow">and</span> <span class="ow">is</span> <span class="n">supported</span> <span class="k">for</span> <span class="n">both</span> <span class="n">iperf</span> <span class="n">servers</span> <span class="ow">and</span>
-              <span class="n">clients</span> <span class="p">(</span><span class="n">the</span> <span class="n">latter</span> <span class="n">are</span> <span class="n">supported</span> <span class="n">by</span> <span class="n">passing</span> <span class="n">the</span> <span class="n">first</span> <span class="o">--</span><span class="n">X</span> <span class="n">argu</span><span class="o">-</span>
-              <span class="n">ment</span>  <span class="n">to</span>  <span class="n">bind</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span>  <span class="n">Hostnames</span> <span class="n">are</span> <span class="n">accepted</span> <span class="k">as</span> <span class="n">arguments</span> <span class="ow">and</span> <span class="n">are</span>
-              <span class="n">resolved</span> <span class="n">using</span> <span class="n">getaddrinfo</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span>  <span class="n">If</span> <span class="n">the</span>  <span class="o">--</span><span class="mi">4</span>  <span class="ow">or</span>  <span class="o">--</span><span class="mi">6</span>  <span class="n">flags</span>  <span class="n">are</span>
-              <span class="n">specified</span><span class="p">,</span>  <span class="n">names</span>  <span class="n">which</span>  <span class="n">do</span> <span class="ow">not</span> <span class="n">resolve</span> <span class="n">to</span> <span class="n">addresses</span> <span class="n">within</span> <span class="n">the</span>
-              <span class="n">specified</span> <span class="n">protocol</span> <span class="n">family</span> <span class="n">will</span> <span class="n">be</span> <span class="n">ignored</span><span class="o">.</span>
-
-       <span class="o">--</span><span class="n">nstreams</span> <span class="n">n</span>
-              <span class="n">Set</span> <span class="n">number</span> <span class="n">of</span> <span class="n">SCTP</span> <span class="n">streams</span><span class="o">.</span>
-
-       <span class="o">-</span><span class="n">Z</span><span class="p">,</span> <span class="o">--</span><span class="n">zerocopy</span>
-              <span class="n">Use</span> <span class="n">a</span> <span class="s2">&quot;zero copy&quot;</span> <span class="n">method</span> <span class="n">of</span> <span class="n">sending</span> <span class="n">data</span><span class="p">,</span> <span class="n">such</span>  <span class="k">as</span>  <span class="n">sendfile</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
-              <span class="n">instead</span> <span class="n">of</span> <span class="n">the</span> <span class="n">usual</span> <span class="n">write</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span>
-
-       <span class="o">-</span><span class="n">O</span><span class="p">,</span> <span class="o">--</span><span class="n">omit</span> <span class="n">n</span>
-              <span class="n">Omit</span> <span class="n">the</span> <span class="n">first</span> <span class="n">n</span> <span class="n">seconds</span> <span class="n">of</span> <span class="n">the</span> <span class="n">test</span><span class="p">,</span> <span class="n">to</span> <span class="n">skip</span> <span class="n">past</span> <span class="n">the</span> <span class="n">TCP</span> <span class="n">slow</span><span class="o">-</span>
-              <span class="n">start</span> <span class="n">period</span><span class="o">.</span>
-
-       <span class="o">-</span><span class="n">T</span><span class="p">,</span> <span class="o">--</span><span class="n">title</span> <span class="nb">str</span>
-              <span class="n">Prefix</span> <span class="n">every</span> <span class="n">output</span> <span class="n">line</span> <span class="k">with</span> <span class="n">this</span> <span class="n">string</span><span class="o">.</span>
-
-       <span class="o">-</span><span class="n">C</span><span class="p">,</span> <span class="o">--</span><span class="n">congestion</span> <span class="n">algo</span>
-              <span class="n">Set</span> <span class="n">the</span> <span class="n">congestion</span> <span class="n">control</span> <span class="n">algorithm</span> <span class="p">(</span><span class="n">Linux</span> <span class="ow">and</span>  <span class="n">FreeBSD</span>  <span class="n">only</span><span class="p">)</span><span class="o">.</span>
-              <span class="n">An</span>  <span class="n">older</span>  <span class="o">--</span><span class="n">linux</span><span class="o">-</span><span class="n">congestion</span>  <span class="n">synonym</span> <span class="k">for</span> <span class="n">this</span> <span class="n">flag</span> <span class="ow">is</span> <span class="n">accepted</span>
-              <span class="n">but</span> <span class="ow">is</span> <span class="n">deprecated</span><span class="o">.</span>
-
-       <span class="o">--</span><span class="n">get</span><span class="o">-</span><span class="n">server</span><span class="o">-</span><span class="n">output</span>
-              <span class="n">Get</span> <span class="n">the</span> <span class="n">output</span> <span class="kn">from</span> <span class="nn">the</span> <span class="n">server</span><span class="o">.</span>  <span class="n">The</span> <span class="n">output</span> <span class="nb">format</span> <span class="ow">is</span> <span class="n">determined</span>
-              <span class="n">by</span> <span class="n">the</span> <span class="n">server</span> <span class="p">(</span><span class="ow">in</span> <span class="n">particular</span><span class="p">,</span> <span class="k">if</span> <span class="n">the</span> <span class="n">server</span> <span class="n">was</span> <span class="n">invoked</span> <span class="k">with</span> <span class="n">the</span>
-              <span class="o">--</span><span class="n">json</span> <span class="n">flag</span><span class="p">,</span> <span class="n">the</span> <span class="n">output</span> <span class="n">will</span> <span class="n">be</span> <span class="ow">in</span>  <span class="n">JSON</span>  <span class="nb">format</span><span class="p">,</span>  <span class="n">otherwise</span>  <span class="n">it</span>
-              <span class="n">will</span>  <span class="n">be</span>  <span class="ow">in</span>  <span class="n">human</span><span class="o">-</span><span class="n">readable</span> <span class="nb">format</span><span class="p">)</span><span class="o">.</span>  <span class="n">If</span> <span class="n">the</span> <span class="n">client</span> <span class="ow">is</span> <span class="n">run</span> <span class="k">with</span>
-              <span class="o">--</span><span class="n">json</span><span class="p">,</span> <span class="n">the</span> <span class="n">server</span> <span class="n">output</span> <span class="ow">is</span> <span class="n">included</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">JSON</span>  <span class="nb">object</span><span class="p">;</span>  <span class="n">other</span><span class="o">-</span>
-              <span class="n">wise</span>  <span class="n">it</span> <span class="ow">is</span> <span class="n">appended</span> <span class="n">at</span> <span class="n">the</span> <span class="n">bottom</span> <span class="n">of</span> <span class="n">the</span> <span class="n">human</span><span class="o">-</span><span class="n">readable</span> <span class="n">output</span><span class="o">.</span>
+       -h, --help
+              show a help synopsis
 
 
-<span class="n">AUTHORS</span>
-       <span class="n">A</span> <span class="nb">list</span> <span class="n">of</span> <span class="n">the</span> <span class="n">contributors</span> <span class="n">to</span> <span class="n">iperf3</span> <span class="n">can</span> <span class="n">be</span> <span class="n">found</span> <span class="n">within</span> <span class="n">the</span> <span class="n">documenta</span><span class="o">-</span>
-       <span class="n">tion</span> <span class="n">located</span> <span class="n">at</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">software</span><span class="o">.</span><span class="n">es</span><span class="o">.</span><span class="n">net</span><span class="o">/</span><span class="n">iperf</span><span class="o">/</span><span class="n">dev</span><span class="o">.</span><span class="n">html</span><span class="c1">#authors.</span>
+SERVER SPECIFIC OPTIONS
+       -s, --server
+              run in server mode
+
+       -D, --daemon
+              run the server in background as a daemon
+
+       -I, --pidfile file
+              write  a file with the process ID, most useful when running as a
+              daemon.
+
+       -1, --one-off
+              handle one client connection, then exit.
 
 
-<span class="n">SEE</span> <span class="n">ALSO</span>
-       <span class="n">libiperf</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">software</span><span class="o">.</span><span class="n">es</span><span class="o">.</span><span class="n">net</span><span class="o">/</span><span class="n">iperf</span>
+CLIENT SPECIFIC OPTIONS
+       -c, --client host
+              run in client mode, connecting to the specified server
+
+       --sctp use SCTP rather than TCP (FreeBSD and Linux)
+
+       -u, --udp
+              use UDP rather than TCP
+
+       -b, --bandwidth n[KM]
+              set target bandwidth to n bits/sec (default 1 Mbit/sec for  UDP,
+              unlimited  for  TCP).   If there are multiple streams (-P flag),
+              the bandwidth limit is applied separately to each  stream.   You
+              can  also  add  a  &#39;/&#39;  and a number to the bandwidth specifier.
+              This is called &quot;burst mode&quot;.  It will send the given  number  of
+              packets  without  pausing,  even if that temporarily exceeds the
+              specified bandwidth limit.  Setting the target  bandwidth  to  0
+              will  disable  bandwidth  limits  (particularly  useful  for UDP
+              tests).  This bandwidth limit is implemented  internally  inside
+              iperf3,  and  is  available  on all platforms.  Compare with the
+              --fq-rate flag.
+
+       --fq-rate n[KM]
+              Set a rate to be used with fair-queueing based socket-level pac-
+              ing,  in bits per second.  This pacing (if specified) will be in
+              addition to any pacing due to iperf3&#39;s internal bandwidth pacing
+              (-b  flag),  and  both can be specified for the same test.  Only
+              available on platforms supporting the SO_MAX_PACING_RATE  socket
+              option  (currently only Linux).  The default is no fair-queueing
+              based pacing.
+
+       --no-fq-socket-pacing
+              This option is deprecated and will be removed.  It is equivalent
+              to specifying --fq-rate=0.
+
+       -t, --time n
+              time in seconds to transmit for (default 10 secs)
+
+       -n, --bytes n[KM]
+              number of bytes to transmit (instead of -t)
+
+       -k, --blockcount n[KM]
+              number of blocks (packets) to transmit (instead of -t or -n)
+
+       -l, --length n[KM]
+              length  of  buffer to read or write.  For TCP tests, the default
+              value is 128KB.  In the case of UDP, iperf3 tries to dynamically
+              determine  a  reasonable  sending size based on the path MTU; if
+              that cannot be determined it uses 1460 bytes as a sending  size.
+              For SCTP tests, the default size is 64KB.
+
+       --cport port
+              bind  data  streams  to  a specific client port (for TCP and UDP
+              only, default is to use an ephemeral port)
+
+       -P, --parallel n
+              number of parallel client streams to run
+
+       -R, --reverse
+              run in reverse mode (server sends, client receives)
+
+       -w, --window n[KM]
+              window size / socket buffer size (this gets sent to  the  server
+              and used on that side too)
+
+       -M, --set-mss n
+              set TCP/SCTP maximum segment size (MTU - 40 bytes)
+
+       -N, --no-delay
+              set TCP/SCTP no delay, disabling Nagle&#39;s Algorithm
+
+       -4, --version4
+              only use IPv4
+
+       -6, --version6
+              only use IPv6
+
+       -S, --tos n
+              set the IP &#39;type of service&#39;
+
+       -L, --flowlabel n
+              set the IPv6 flow label (currently only supported on Linux)
+
+       -X, --xbind name
+              Bind  SCTP  associations  to  a  specific  subset of links using
+              sctp_bindx(3).  The --B flag will be ignored  if  this  flag  is
+              specified.  Normally SCTP will include the protocol addresses of
+              all active links on the local host when setting up  an  associa-
+              tion.  Specifying at least one --X name will disable this behav-
+              iour.  This flag must be specified for each link to be  included
+              in  the association, and is supported for both iperf servers and
+              clients (the latter are supported by passing the first --X argu-
+              ment  to  bind(2)).  Hostnames are accepted as arguments and are
+              resolved using getaddrinfo(3).  If the  --4  or  --6  flags  are
+              specified,  names  which  do not resolve to addresses within the
+              specified protocol family will be ignored.
+
+       --nstreams n
+              Set number of SCTP streams.
+
+       -Z, --zerocopy
+              Use a &quot;zero copy&quot; method of sending data, such  as  sendfile(2),
+              instead of the usual write(2).
+
+       -O, --omit n
+              Omit the first n seconds of the test, to skip past the TCP slow-
+              start period.
+
+       -T, --title str
+              Prefix every output line with this string.
+
+       -C, --congestion algo
+              Set the congestion control algorithm (Linux and  FreeBSD  only).
+              An  older  --linux-congestion  synonym for this flag is accepted
+              but is deprecated.
+
+       --get-server-output
+              Get the output from the server.  The output format is determined
+              by the server (in particular, if the server was invoked with the
+              --json flag, the output will be in  JSON  format,  otherwise  it
+              will  be  in  human-readable format).  If the client is run with
+              --json, the server output is included in a JSON  object;  other-
+              wise  it is appended at the bottom of the human-readable output.
+
+
+AUTHORS
+       A list of the contributors to iperf3 can be found within the documenta-
+       tion located at http://software.es.net/iperf/dev.html#authors.
+
+
+SEE ALSO
+       libiperf(3), http://software.es.net/iperf
 
 
 
-<span class="n">ESnet</span>                            <span class="n">January</span> <span class="mi">2017</span>                        <span class="n">IPERF3</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+ESnet                            January 2017                        IPERF3(1)
 </pre></div>
 </div>
 <p>The iperf3 manual page will typically be installed in manual
@@ -411,7 +409,7 @@ section 1.</p>
         </p>
         <p>
             &copy; Copyright 2014-2017, ESnet.<br/>
-          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.5.<br/>
+          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.5.<br/>
         </p>
       </div>
     </div>

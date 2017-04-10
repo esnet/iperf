@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>iperf3 Development &#8212; iperf3 3.1.7 documentation</title>
+    <title>iperf3 Development &mdash; iperf3 3.1.7 documentation</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -19,8 +19,7 @@
         VERSION:     '3.1.7',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
+        HAS_SOURCE:  true
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
@@ -31,8 +30,7 @@
     <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="shortcut icon" href="_static/favicon.ico"/>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="iperf3 3.1.7 documentation" href="index.html" />
     <link rel="next" title="iperf3 FAQ" href="faq.html" />
     <link rel="prev" title="Invoking iperf3" href="invoking.html" />
 <meta charset='utf-8'>
@@ -73,7 +71,7 @@
 <li class="toctree-l1"><a class="reference internal" href="obtaining.html">Obtaining iperf3</a></li>
 <li class="toctree-l1"><a class="reference internal" href="building.html">Building iperf3</a></li>
 <li class="toctree-l1"><a class="reference internal" href="invoking.html">Invoking iperf3</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">iperf3 Development</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">iperf3 Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">iperf3 FAQ</a></li>
 </ul>
 </ul>
@@ -112,7 +110,7 @@
             
               <li class="hidden-sm">
 <div id="sourcelink">
-  <a href="_sources/dev.rst.txt"
+  <a href="_sources/dev.txt"
      rel="nofollow">Source</a>
 </div></li>
             
@@ -181,30 +179,30 @@ will be ignored.</p>
 <h2>Changes from iperf 2.x<a class="headerlink" href="#changes-from-iperf-2-x" title="Permalink to this headline">¶</a></h2>
 <p>New options (not necessarily complete, please refer to the manual page
 for a complete list of iperf3 options):</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">V</span><span class="p">,</span> <span class="o">--</span><span class="n">verbose</span>             <span class="n">more</span> <span class="n">detailed</span> <span class="n">output</span> <span class="n">than</span> <span class="n">before</span>
-<span class="o">-</span><span class="n">J</span><span class="p">,</span> <span class="o">--</span><span class="n">json</span>                <span class="n">output</span> <span class="ow">in</span> <span class="n">JSON</span> <span class="nb">format</span>
-<span class="o">-</span><span class="n">Z</span><span class="p">,</span> <span class="o">--</span><span class="n">zerocopy</span>            <span class="n">use</span> <span class="n">a</span> <span class="s1">&#39;zero copy&#39;</span> <span class="n">sendfile</span><span class="p">()</span> <span class="n">method</span> <span class="n">of</span> <span class="n">sending</span> <span class="n">data</span>
-<span class="o">-</span><span class="n">O</span><span class="p">,</span> <span class="o">--</span><span class="n">omit</span> <span class="n">N</span>              <span class="n">omit</span> <span class="n">the</span> <span class="n">first</span> <span class="n">n</span> <span class="n">seconds</span> <span class="p">(</span><span class="n">to</span> <span class="n">ignore</span> <span class="n">slowstart</span><span class="p">)</span>
-<span class="o">-</span><span class="n">T</span><span class="p">,</span> <span class="o">--</span><span class="n">title</span> <span class="nb">str</span>           <span class="n">prefix</span> <span class="n">every</span> <span class="n">output</span> <span class="n">line</span> <span class="k">with</span> <span class="n">this</span> <span class="n">string</span>
-<span class="o">-</span><span class="n">F</span><span class="p">,</span> <span class="o">--</span><span class="n">file</span> <span class="n">name</span>           <span class="n">xmit</span><span class="o">/</span><span class="n">recv</span> <span class="n">the</span> <span class="n">specified</span> <span class="n">file</span>
-<span class="o">-</span><span class="n">A</span><span class="p">,</span> <span class="o">--</span><span class="n">affinity</span> <span class="n">n</span><span class="o">/</span><span class="n">n</span><span class="p">,</span><span class="n">m</span>      <span class="nb">set</span> <span class="n">CPU</span> <span class="n">affinity</span> <span class="p">(</span><span class="n">Linux</span> <span class="ow">and</span> <span class="n">FreeBSD</span> <span class="n">only</span><span class="p">)</span>
-<span class="o">-</span><span class="n">k</span><span class="p">,</span> <span class="o">--</span><span class="n">blockcount</span> <span class="c1">#[KMG]   number of blocks (packets) to transmit (instead</span>
-                          <span class="n">of</span> <span class="o">-</span><span class="n">t</span> <span class="ow">or</span> <span class="o">-</span><span class="n">n</span><span class="p">)</span>
-<span class="o">-</span><span class="n">L</span><span class="p">,</span> <span class="o">--</span><span class="n">flowlabel</span>           <span class="nb">set</span> <span class="n">IPv6</span> <span class="n">flow</span> <span class="n">label</span> <span class="p">(</span><span class="n">Linux</span> <span class="n">only</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span>-V, --verbose             more detailed output than before
+-J, --json                output in JSON format
+-Z, --zerocopy            use a &#39;zero copy&#39; sendfile() method of sending data
+-O, --omit N              omit the first n seconds (to ignore slowstart)
+-T, --title str           prefix every output line with this string
+-F, --file name           xmit/recv the specified file
+-A, --affinity n/n,m      set CPU affinity (Linux and FreeBSD only)
+-k, --blockcount #[KMG]   number of blocks (packets) to transmit (instead
+                          of -t or -n)
+-L, --flowlabel           set IPv6 flow label (Linux only)
 </pre></div>
 </div>
 <p>Changed flags:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">C</span><span class="p">,</span> <span class="o">--</span><span class="n">linux</span><span class="o">-</span><span class="n">congestion</span>    <span class="nb">set</span> <span class="n">congestion</span> <span class="n">control</span> <span class="n">algorithm</span> <span class="p">(</span><span class="n">Linux</span> <span class="n">only</span><span class="p">)</span>
-                          <span class="p">(</span><span class="o">-</span><span class="n">Z</span> <span class="ow">in</span> <span class="n">iperf2</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span>-C, --linux-congestion    set congestion control algorithm (Linux only)
+                          (-Z in iperf2)
 </pre></div>
 </div>
 <p>Deprecated flags (currently no plans to support):</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">d</span><span class="p">,</span> <span class="o">--</span><span class="n">dualtest</span>           <span class="n">Do</span> <span class="n">a</span> <span class="n">bidirectional</span> <span class="n">test</span> <span class="n">simultaneously</span>
-<span class="o">-</span><span class="n">r</span><span class="p">,</span> <span class="o">--</span><span class="n">tradeoff</span>           <span class="n">Do</span> <span class="n">a</span> <span class="n">bidirectional</span> <span class="n">test</span> <span class="n">individually</span>
-<span class="o">-</span><span class="n">T</span><span class="p">,</span> <span class="o">--</span><span class="n">ttl</span>                <span class="n">time</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">live</span><span class="p">,</span> <span class="k">for</span> <span class="n">multicast</span> <span class="p">(</span><span class="n">default</span> <span class="mi">1</span><span class="p">)</span>
-<span class="o">-</span><span class="n">x</span><span class="p">,</span> <span class="o">--</span><span class="n">reportexclude</span> <span class="p">[</span><span class="n">CDMSV</span><span class="p">]</span>   <span class="n">exclude</span> <span class="n">C</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span> <span class="n">D</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="n">M</span><span class="p">(</span><span class="n">multicast</span><span class="p">)</span>
-                              <span class="n">S</span><span class="p">(</span><span class="n">settings</span><span class="p">)</span> <span class="n">V</span><span class="p">(</span><span class="n">server</span><span class="p">)</span> <span class="n">reports</span>
-<span class="o">-</span><span class="n">y</span><span class="p">,</span> <span class="o">--</span><span class="n">reportstyle</span> <span class="n">C</span>      <span class="n">report</span> <span class="k">as</span> <span class="n">a</span> <span class="n">Comma</span><span class="o">-</span><span class="n">Separated</span> <span class="n">Values</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span>-d, --dualtest           Do a bidirectional test simultaneously
+-r, --tradeoff           Do a bidirectional test individually
+-T, --ttl                time-to-live, for multicast (default 1)
+-x, --reportexclude [CDMSV]   exclude C(connection) D(data) M(multicast)
+                              S(settings) V(server) reports
+-y, --reportstyle C      report as a Comma-Separated Values
 </pre></div>
 </div>
 <p>Also deprecated is the ability to set the options via environment
@@ -281,7 +279,7 @@ announcement can be used as a starting point.</p>
 <li><p class="first">Preferably starting from a clean source tree (be sure that <code class="docutils literal"><span class="pre">git</span>
 <span class="pre">status</span></code> emits no output), make the changes necessary to produce
 the new version, such as bumping version numbers:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>vi RELEASE_NOTES   # update version number and release date
+<div class="highlight-python"><div class="highlight"><pre><span></span>vi RELEASE_NOTES   # update version number and release date
 vi configure.ac    # update version parameter in AC_INIT
 vi src/iperf3.1    # update manpage revision date if needed
 vi src/libiperf.3  # update manpage revision date if needed
@@ -327,8 +325,8 @@ by other, non-email means.</p>
 <li><p class="first">At this point, the release can and should be considered
 finalized.  To commit the release-engineering-related changes to
 GitHub and make them public, push them out thusly:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">push</span>            <span class="c1"># Push version changes</span>
-<span class="n">git</span> <span class="n">push</span> <span class="o">--</span><span class="n">tags</span>     <span class="c1"># Push the new tag to the GitHub repo</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span>git push            # Push version changes
+git push --tags     # Push the new tag to the GitHub repo
 </pre></div>
 </div>
 </li>
@@ -359,9 +357,9 @@ documentation to GitHub Pages.</p>
 <li><p class="first">If an update to the on-line manual page is needed, it can be
 generated with this sequence of commands (tested on CentOS 7) and
 import the result into <code class="docutils literal"><span class="pre">invoking.rst</span></code>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">TERM</span><span class="o">=</span>
-<span class="n">export</span> <span class="n">TERM</span>
-<span class="n">nroff</span> <span class="o">-</span><span class="n">Tascii</span> <span class="o">-</span><span class="n">c</span> <span class="o">-</span><span class="n">man</span> <span class="n">src</span><span class="o">/</span><span class="n">iperf3</span><span class="o">.</span><span class="mi">1</span> <span class="o">|</span> <span class="n">ul</span> <span class="o">|</span> <span class="n">sed</span> <span class="s1">&#39;s/^/   /&#39;</span> <span class="o">&gt;</span> <span class="n">iperf3</span><span class="o">.</span><span class="n">txt</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span>TERM=
+export TERM
+nroff -Tascii -c -man src/iperf3.1 | ul | sed &#39;s/^/   /&#39; &gt; iperf3.txt
 </pre></div>
 </div>
 </li>
@@ -399,7 +397,7 @@ Jones, Feng Qin, Gerrit Renker, Ajay Tirumala, Alex Warshavsky.</p>
         </p>
         <p>
             &copy; Copyright 2014-2017, ESnet.<br/>
-          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.5.<br/>
+          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.5.<br/>
         </p>
       </div>
     </div>

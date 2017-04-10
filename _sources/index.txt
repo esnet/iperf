@@ -53,6 +53,7 @@ Contents
    building
    invoking
    dev
+   faq
 
 Indices and tables
 ------------------

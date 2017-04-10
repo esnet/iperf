@@ -40,12 +40,12 @@ I’m trying to use iperf3 on Windows, but having trouble. What should I do?
 I'm seeing quite a bit of unexpected UDP loss. Why?
   First, confirm you are using iperf 3.1.5 or higher. There was an
   issue with the default UDP send size that was fixed in
-  3.1.5. Second, try adding the flag ``-w1M`` to increase the socket
+  3.1.5. Second, try adding the flag ``-w2M`` to increase the socket
   buffer sizes. That seems to make a big difference on some hosts.
  
-iperf3 UDP does not seem to work at bandwidths less than 1Mbps. Why?
+iperf3 UDP does not seem to work at bandwidths less than 100Kbps. Why?
   The pacing algorithm used by iperf3 does not allow for send rates
-  less than 1Mbps.
+  less than 100Kbps. 
  
 What congestion control algorithms are supported?
   On Linux, run this command to see the available congestion control

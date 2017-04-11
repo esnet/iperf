@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, 2016, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, 2016, 2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -126,7 +126,7 @@ iperf_strerror(int i_errno)
             snprintf(errstr, len, "--bind must be specified to use --cport");
             break;
         case IEUDPBLOCKSIZE:
-            snprintf(errstr, len, "block size too large (maximum = %d bytes)", MAX_UDP_BLOCKSIZE);
+            snprintf(errstr, len, "block size invalid (minimum = %d bytes, maximum = %d bytes)", MIN_UDP_BLOCKSIZE, MAX_UDP_BLOCKSIZE);
             break;
 	case IEBADTOS:
 	    snprintf(errstr, len, "bad TOS value (must be between 0 and 255 inclusive)");

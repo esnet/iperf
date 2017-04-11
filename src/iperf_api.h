@@ -292,7 +292,7 @@ enum {
     IELOGFILE = 17,	    // Can't open log file
     IENOSCTP = 18,	    // No SCTP support available
     IEBIND = 19,			// Local port specified with no local bind option
-    IEUDPBLOCKSIZE = 20,    // Block size too large. Maximum value = %dMAX_UDP_BLOCKSIZE
+    IEUDPBLOCKSIZE = 20,    // Block size invalid
     IEBADTOS = 21,	    // Bad TOS value
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)

@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, 2016, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, 2016, 2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -518,10 +518,24 @@ iperf_run_server(struct iperf_test *test)
 		    if (test->protocol->id == Ptcp) {
 			if (test->congestion) {
 			    if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
-				close(s);
-				cleanup_server(test);
-				i_errno = IESETCONGESTION;
-				return -1;
+				/*
+				 * ENOENT means we tried to set the
+				 * congestion algorithm but the algorithm
+				 * specified doesn't exist.  This can happen
+				 * if the client and server have different
+				 * congestion algorithms available.  In this
+				 * case, print a warning, but otherwise
+				 * continue.
+				 */
+				if (errno == ENOENT) {
+				    warning("TCP congestion control algorithm not supported");
+				}
+				else {
+				    close(s);
+				    cleanup_server(test);
+				    i_errno = IESETCONGESTION;
+				    return -1;
+				}
 			    } 
 			}
 			{

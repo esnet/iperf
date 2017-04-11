@@ -157,7 +157,8 @@ both tools, and use whichever tool’s features best match your needs.</p>
 </dd>
 <dt>iperf3 parallel stream performance is much less than iperf2. Why?</dt>
 <dd>iperf3 is single threaded, and iperf2 is multi-threaded. We
-recommend using iperf2 for parallel streams.</dd>
+recommend using iperf2 for parallel streams.
+If you want to use multiple iperf3 streams use the method described <a class="reference external" href="https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/multi-stream-iperf3/">here</a>.</dd>
 <dt>I’m trying to use iperf3 on Windows, but having trouble. What should I do?</dt>
 <dd><p class="first">iperf3 is not officially supported on Windows, but iperf2 is. We
 recommend you use iperf2.</p>
@@ -168,11 +169,10 @@ Windows exist.</p>
 <dt>I&#8217;m seeing quite a bit of unexpected UDP loss. Why?</dt>
 <dd>First, confirm you are using iperf 3.1.5 or higher. There was an
 issue with the default UDP send size that was fixed in
-3.1.5. Second, try adding the flag <code class="docutils literal"><span class="pre">-w1M</span></code> to increase the socket
+3.1.5. Second, try adding the flag <code class="docutils literal"><span class="pre">-w2M</span></code> to increase the socket
 buffer sizes. That seems to make a big difference on some hosts.</dd>
-<dt>iperf3 UDP does not seem to work at bandwidths less than 1Mbps. Why?</dt>
-<dd>The pacing algorithm used by iperf3 does not allow for send rates
-less than 1Mbps.</dd>
+<dt>iperf3 UDP does not seem to work at bandwidths less than 100Kbps. Why?</dt>
+<dd>You&#8217;ll need to reduce the default packet length to get UDP rates of less that 100Kbps. Try <code class="docutils literal"><span class="pre">-l100</span></code>.</dd>
 <dt>What congestion control algorithms are supported?</dt>
 <dd><p class="first">On Linux, run this command to see the available congestion control
 algorithms (note that some algorithms are packaged as kernel
@@ -186,6 +186,15 @@ modules, which must be loaded before they can be used):</p>
 <dt>Why can’t I run a UDP client with no server?</dt>
 <dd>This is potentially dangerous, and an attacker could use this for a
 denial of service attack.  We don&#8217;t want iperf3 to be an attack tool.</dd>
+<dt>I&#8217;m trying to use iperf3 to test a 40G/100G link...What do I need to know?</dt>
+<dd><p class="first">See the following pages on fasterdata.es.net:</p>
+<blockquote class="last">
+<div><ul class="simple">
+<li><a class="reference external" href="https://fasterdata.es.net/host-tuning/100g-tuning/">https://fasterdata.es.net/host-tuning/100g-tuning/</a></li>
+<li><a class="reference external" href="https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/multi-stream-iperf3/">https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/multi-stream-iperf3/</a></li>
+</ul>
+</div></blockquote>
+</dd>
 <dt>I have a question regarding iperf3...what&#8217;s the best way to get help?</dt>
 <dd><p class="first">Searching on the Internet is a good first step.
 <a class="reference external" href="http://stackoverflow.com/">http://stackoverflow.com/</a> has a number of iperf3-related questions

@@ -168,8 +168,8 @@ created in the future.</p>
 <div class="section" id="bug-reports">
 <h2>Bug Reports<a class="headerlink" href="#bug-reports" title="Permalink to this headline">¶</a></h2>
 <p>Before submitting a bug report, try checking out the latest version of
-the code, and confirm that it&#8217;s not already fixed.  Then submit to the
-iperf3 issue tracker on GitHub:</p>
+the code, and confirm that it&#8217;s not already fixed. Also see the <a class="reference internal" href="faq.html"><em>iperf3 FAQ</em></a>.
+Then submit to the iperf3 issue tracker on GitHub:</p>
 <p><a class="reference external" href="https://github.com/esnet/iperf/issues">https://github.com/esnet/iperf/issues</a></p>
 <p><strong>Note:</strong> Issues submitted to the old iperf3 issue tracker on Google
 Code (or comments to existing issues on the Google Code issue tracker)
@@ -217,16 +217,6 @@ tracker.  These issues are either open (indicating no solution
 currently exists) or closed with the notation that no further attempts
 to solve the problem are currently being made:</p>
 <ul class="simple">
-<li>UDP performance: Some problems have been noticed with iperf3 on the
-ESnet 100G testbed at high UDP rates (above 10Gbps, sometimes at
-speeds above 1Gbps).  The symptom is that on any particular run of
-iperf3 the receiver reports a loss rate of about 20%, regardless of
-the <code class="docutils literal"><span class="pre">-b</span></code> option used on the client side.  This problem appears not
-to be iperf3-specific, and may be due to the placement of the iperf3
-process on a CPU and its relation to the inbound NIC.  In some cases
-this problem can be mitigated by increasing the socket buffer sizes
-with the <code class="docutils literal"><span class="pre">-w</span></code> option, or by an appropriate use of the CPU affinity
-(<code class="docutils literal"><span class="pre">-A</span></code>) option.</li>
 <li>The <code class="docutils literal"><span class="pre">-Z</span></code> flag sometimes causes the iperf3 client to hang on OSX.
 (Issue #129)</li>
 <li>When specifying the TCP buffer size using the <code class="docutils literal"><span class="pre">-w</span></code> flag on Linux,

@@ -28,6 +28,7 @@ What is the history of iperf3, and what is the difference between iperf2 and ipe
 iperf3 parallel stream performance is much less than iperf2. Why?
   iperf3 is single threaded, and iperf2 is multi-threaded. We
   recommend using iperf2 for parallel streams.
+  If you want to use multiple iperf3 streams use the method described `here <https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/multi-stream-iperf3/>`_.
  
 I’m trying to use iperf3 on Windows, but having trouble. What should I do?
   iperf3 is not officially supported on Windows, but iperf2 is. We
@@ -44,8 +45,7 @@ I'm seeing quite a bit of unexpected UDP loss. Why?
   buffer sizes. That seems to make a big difference on some hosts.
  
 iperf3 UDP does not seem to work at bandwidths less than 100Kbps. Why?
-  The pacing algorithm used by iperf3 does not allow for send rates
-  less than 100Kbps. 
+  You'll need to reduce the default packet length to get UDP rates of less that 100Kbps. Try ``-l100``.
  
 What congestion control algorithms are supported?
   On Linux, run this command to see the available congestion control
@@ -61,6 +61,12 @@ Why can’t I run a UDP client with no server?
   This is potentially dangerous, and an attacker could use this for a
   denial of service attack.  We don't want iperf3 to be an attack tool.
 
+I'm trying to use iperf3 to test a 40G/100G link...What do I need to know?
+  See the following pages on fasterdata.es.net:
+
+   - https://fasterdata.es.net/host-tuning/100g-tuning/
+   - https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/multi-stream-iperf3/
+
 I have a question regarding iperf3...what's the best way to get help?
   Searching on the Internet is a good first step.
   http://stackoverflow.com/ has a number of iperf3-related questions
@@ -73,3 +79,5 @@ I have a question regarding iperf3...what's the best way to get help?
   We discourage the use of the iperf3 issue tracker on GitHub for
   support questions.  Actual bug reports, enhancement requests, or
   pull requests are encouraged, however.
+
+

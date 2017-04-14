@@ -100,9 +100,9 @@ usage()
 
 
 void
-usage_long()
+usage_long(FILE *f)
 {
-    fprintf(stderr, usage_longstr, UDP_RATE / (1024*1024), DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE / 1024);
+    fprintf(f, usage_longstr, UDP_RATE / (1024*1024), DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE / 1024);
 }
 
 
@@ -973,8 +973,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif
 		break;
             case 'h':
+		usage_long(stdout);
+		exit(0);
             default:
-                usage_long();
+                usage_long(stderr);
                 exit(1);
         }
     }

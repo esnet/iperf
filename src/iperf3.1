@@ -171,7 +171,10 @@ only use IPv4
 only use IPv6
 .TP
 .BR -S ", " --tos " \fIn\fR"
-set the IP 'type of service'
+set the IP type of service
+.TP
+.BR "--dscp " \fIdscp\fR
+set the IP DSCP bits.  Both numeric and symbolic values are accepted.
 .TP
 .BR -L ", " --flowlabel " \fIn\fR"
 set the IPv6 flow label (currently only supported on Linux)

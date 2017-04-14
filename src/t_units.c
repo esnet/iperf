@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -45,20 +45,13 @@ main(int argc, char **argv)
     assert(1024.0 == unit_atof("1K"));
     assert(1024.0 * 1024.0 == unit_atof("1M"));
     assert(4.0 * 1024.0 * 1024.0 * 1024.0 == unit_atof("4G"));
+    assert(3.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 == unit_atof("3T"));
 
-#ifdef notdef
-    /* Obsolete - we no longer make a distinction between upper and lower
-    ** case.
-    */
-    assert(1000.0 * 0.5 == unit_atof("0.5k"));
-    assert(1000.0 == unit_atof("1k"));
-    assert(1000.0 * 1000.0 == unit_atof("1m"));
-    assert(4.0 * 1000.0 * 1000.0 * 1000.0 == unit_atof("4g"));
-#endif
     assert(1024.0 * 0.5 == unit_atof("0.5k"));
     assert(1024.0 == unit_atof("1k"));
     assert(1024.0 * 1024.0 == unit_atof("1m"));
     assert(4.0 * 1024.0 * 1024.0 * 1024.0 == unit_atof("4g"));
+    assert(3.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 == unit_atof("3t"));
 
     assert(1024 * 0.5 == unit_atoi("0.5K"));
     assert(1024 == unit_atoi("1K"));
@@ -66,22 +59,19 @@ main(int argc, char **argv)
     d = 4.0 * 1024 * 1024 * 1024;
     llu = (iperf_size_t) d;
     assert(llu == unit_atoi("4G"));
-
-#ifdef notdef
-    /* Also obsolete. */
-    assert(1000 * 0.5 == unit_atoi("0.5k"));
-    assert(1000 == unit_atoi("1k"));
-    assert(1000 * 1000 == unit_atoi("1m"));
-    d = 4.0 * 1000 * 1000 * 1000;
+    d = 3.0 * 1024 * 1024 * 1024 * 1024;
     llu = (iperf_size_t) d;
-    assert(llu == unit_atoi("4g"));
-#endif
+    assert(llu == unit_atoi("3T"));
+
     assert(1024 * 0.5 == unit_atoi("0.5k"));
     assert(1024 == unit_atoi("1k"));
     assert(1024 * 1024 == unit_atoi("1m"));
     d = 4.0 * 1024 * 1024 * 1024;
     llu = (iperf_size_t) d;
     assert(llu == unit_atoi("4g"));
+    d = 3.0 * 1024 * 1024 * 1024 * 1024;
+    llu = (iperf_size_t) d;
+    assert(llu == unit_atoi("3t"));
 
     unit_snprintf(s, 11, 1024.0, 'A');
     assert(strncmp(s, "1.00 KByte", 11) == 0);
@@ -101,6 +91,13 @@ main(int argc, char **argv)
 
     unit_snprintf(s, 11, d, 'a');
     assert(strncmp(s, "34.4 Gbit", 11) == 0);
+
+    d = 4.0 * 1024 * 1024 * 1024 * 1024;
+    unit_snprintf(s, 11, d, 'A');
+    assert(strncmp(s, "4.00 TByte", 11) == 0);
+
+    unit_snprintf(s, 11, d, 'a');
+    assert(strncmp(s, "35.2 Tbit", 11) == 0);
 
     return 0;
 }

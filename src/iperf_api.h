@@ -53,6 +53,7 @@ struct iperf_stream;
 #define OPT_FORCEFLUSH 7
 #define OPT_NO_FQ_SOCKET_PACING 9 /* UNUSED */
 #define OPT_FQ_RATE 10
+#define OPT_DSCP 11
 
 /* states */
 #define TEST_START 1

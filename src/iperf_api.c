@@ -645,6 +645,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"version4", no_argument, NULL, '4'},
         {"version6", no_argument, NULL, '6'},
         {"tos", required_argument, NULL, 'S'},
+        {"dscp", required_argument, NULL, '5'},
 #if defined(HAVE_FLOWLABEL)
         {"flowlabel", required_argument, NULL, 'L'},
 #endif /* HAVE_FLOWLABEL */
@@ -848,6 +849,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		    test->settings->tos > 255) {
 		    i_errno = IEBADTOS;
 		    return -1;
+		}
+		client_flag = 1;
+                break;
+	    case '5':
+                test->settings->tos = parse_qos(optarg);
+		if(test->settings->tos < 0) {
+			i_errno = IEBADTOS;
+			return -1;
 		}
 		client_flag = 1;
                 break;

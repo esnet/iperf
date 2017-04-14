@@ -1,4 +1,4 @@
-.TH IPERF3 1 "May 2016" ESnet "User Manuals"
+.TH IPERF3 1 "April 2017" ESnet "User Manuals"
 .SH NAME
 iperf3 \- perform network throughput tests
 .SH SYNOPSIS
@@ -89,7 +89,9 @@ handle one client connection, then exit.
 .SH "CLIENT SPECIFIC OPTIONS"
 .TP
 .BR -c ", " --client " \fIhost\fR"
-run in client mode, connecting to the specified server
+run in client mode, connecting to the specified server.
+By default, a test consists of sending data from the client to the
+server, unless the \-R flag is specified.
 .TP
 .BR --sctp
 use SCTP rather than TCP (FreeBSD and Linux)
@@ -150,7 +152,8 @@ default is to use an ephemeral port)
 number of parallel client streams to run
 .TP
 .BR -R ", " --reverse
-run in reverse mode (server sends, client receives)
+reverse the direction of a test, so that the server sends data to the
+client
 .TP
 .BR -w ", " --window " \fIn\fR[KM]"
 window size / socket buffer size (this gets sent to the server and used on that side too)

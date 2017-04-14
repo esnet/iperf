@@ -148,7 +148,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -N, --no-delay            set TCP/SCTP no delay, disabling Nagle's Algorithm\n"
                            "  -4, --version4            only use IPv4\n"
                            "  -6, --version6            only use IPv6\n"
-                           "  -S, --tos N               set the IP 'type of service'\n"
+                           "  -S, --tos N               set the IP 'type of service 0-255'\n"
+                           "    , --dscp N or dscp val  set the IP 'dscp value either 0-63 or symbolic'\n"
 #if defined(HAVE_FLOWLABEL)
                            "  -L, --flowlabel N         set the IPv6 flow label (only supported on Linux)\n"
 #endif /* HAVE_FLOWLABEL */

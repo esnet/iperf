@@ -2379,7 +2379,7 @@ iperf_print_results(struct iperf_test *test)
     struct iperf_stream *sp = NULL;
     iperf_size_t bytes_sent, total_sent = 0;
     iperf_size_t bytes_received, total_received = 0;
-    double start_time, end_time, avg_jitter = 0.0, lost_percent;
+    double start_time, end_time = 0.0, avg_jitter = 0.0, lost_percent;
     double bandwidth;
 
     /* print final summary for all intervals */

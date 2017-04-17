@@ -351,9 +351,9 @@ iperf_set_test_burst(struct iperf_test *ipt, int burst)
 }
 
 void
-iperf_set_test_server_port(struct iperf_test *ipt, int server_port)
+iperf_set_test_server_port(struct iperf_test *ipt, int srv_port)
 {
-    ipt->server_port = server_port;
+    ipt->server_port = srv_port;
 }
 
 void
@@ -442,9 +442,9 @@ iperf_set_test_unit_format(struct iperf_test *ipt, char unit_format)
 }
 
 void
-iperf_set_test_bind_address(struct iperf_test *ipt, char *bind_address)
+iperf_set_test_bind_address(struct iperf_test *ipt, char *bnd_address)
 {
-    ipt->bind_address = strdup(bind_address);
+    ipt->bind_address = strdup(bnd_address);
 }
 
 void

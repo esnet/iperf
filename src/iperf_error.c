@@ -82,7 +82,7 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
 int i_errno;
 
 char *
-iperf_strerror(int i_errno)
+iperf_strerror(int int_errno)
 {
     static char errstr[256];
     int len, perr, herr;
@@ -91,7 +91,7 @@ iperf_strerror(int i_errno)
     len = sizeof(errstr);
     memset(errstr, 0, len);
 
-    switch (i_errno) {
+    switch (int_errno) {
         case IENONE:
             snprintf(errstr, len, "no error");
             break;

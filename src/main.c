@@ -153,7 +153,6 @@ run(struct iperf_test *test)
 		    iperf_err(test, "error - %s", iperf_strerror(i_errno));
 		    if (rc < -1) {
 		        iperf_errexit(test, "exiting");
-			break;
 		    }
                 }
                 iperf_reset_test(test);

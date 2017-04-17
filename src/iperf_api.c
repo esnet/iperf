@@ -746,11 +746,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_SCTP)
                 set_protocol(test, Psctp);
                 client_flag = 1;
+                break;
 #else /* HAVE_SCTP */
                 i_errno = IEUNIMP;
                 return -1;
 #endif /* HAVE_SCTP */
-            break;
 
             case OPT_NUMSTREAMS:
 #if defined(linux) || defined(__FreeBSD__)

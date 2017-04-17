@@ -203,7 +203,7 @@ static unsigned parse_hex4(const char *str)
 static const unsigned char firstByteMark[7] = { 0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC };
 static const char *parse_string(cJSON *item,const char *str,const char **ep)
 {
-	const char *ptr=str+1,*end_ptr=str+1;char *ptr2;char *out;int len=0;unsigned uc,uc2;
+	const char *ptr,*end_ptr=str+1;char *ptr2;char *out;int len=0;unsigned uc,uc2;
 	if (*str!='\"') {*ep=str;return 0;}	/* not a string! */
 
 	while (*end_ptr!='\"' && *end_ptr && ++len)

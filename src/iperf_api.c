@@ -1511,6 +1511,7 @@ send_results(struct iperf_test *test)
 		}
 
 		cJSON_AddStringToObject(j, "server_output_text", output);
+        free(output);
 	    }
 	}
 

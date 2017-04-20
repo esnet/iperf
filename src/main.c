@@ -100,7 +100,7 @@ main(int argc, char **argv)
     if (iperf_parse_arguments(test, argc, argv) < 0) {
         iperf_err(test, "parameter error - %s", iperf_strerror(i_errno));
         fprintf(stderr, "\n");
-        usage_long();
+        usage_long(stdout);
         exit(1);
     }
 
@@ -115,7 +115,7 @@ main(int argc, char **argv)
 
 static jmp_buf sigend_jmp_buf;
 
-static void
+static void __attribute__ ((noreturn))
 sigend_handler(int sig)
 {
     longjmp(sigend_jmp_buf, 1);
@@ -153,7 +153,6 @@ run(struct iperf_test *test)
 		    iperf_err(test, "error - %s", iperf_strerror(i_errno));
 		    if (rc < -1) {
 		        iperf_errexit(test, "exiting");
-			break;
 		    }
                 }
                 iperf_reset_test(test);

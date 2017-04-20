@@ -434,6 +434,9 @@ cleanup_server(struct iperf_test *test)
 	tmr_cancel(test->omit_timer);
 	test->omit_timer = NULL;
     }
+    if (test->congestion_used != NULL) {
+        free(test->congestion_used);
+    }
 }
 
 

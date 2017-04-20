@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2016, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2016, 2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -294,6 +294,16 @@ get_optional_features(void)
 	sizeof(features) - strlen(features) - 1);
     numfeatures++;
 #endif /* HAVE_SO_MAX_PACING_RATE */
+
+#if defined(HAVE_SSL)
+    if (numfeatures > 0) {
+	strncat(features, ", ",
+		sizeof(features) - strlen(features) - 1);
+    }
+    strncat(features, "authentication",
+	sizeof(features) - strlen(features) - 1);
+    numfeatures++;
+#endif /* HAVE_SSL */
 
     if (numfeatures == 0) {
 	strncat(features, "None", 

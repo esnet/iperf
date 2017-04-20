@@ -128,9 +128,15 @@ iperf_strerror(int i_errno)
         case IEUDPBLOCKSIZE:
             snprintf(errstr, len, "block size invalid (minimum = %d bytes, maximum = %d bytes)", MIN_UDP_BLOCKSIZE, MAX_UDP_BLOCKSIZE);
             break;
-	case IEBADTOS:
-	    snprintf(errstr, len, "bad TOS value (must be between 0 and 255 inclusive)");
-	    break;
+        case IEBADTOS:
+            snprintf(errstr, len, "bad TOS value (must be between 0 and 255 inclusive)");
+            break;
+        case IESETCLIENTAUTH:
+             snprintf(errstr, len, "you must specify username (max 20 chars), password (max 20 chars) and a path to a valid public rsa client to be used");
+            break;
+        case IESETSERVERAUTH:
+             snprintf(errstr, len, "you must specify path to a valid private rsa server to be used and a user credential file");
+            break;
         case IEMSS:
             snprintf(errstr, len, "TCP MSS too large (maximum = %d bytes)", MAX_MSS);
             break;
@@ -167,6 +173,9 @@ iperf_strerror(int i_errno)
         case IEINITTEST:
             snprintf(errstr, len, "test initialization failed");
             perr = 1;
+            break;
+        case IEAUTHTEST:
+            snprintf(errstr, len, "test authorization failed");
             break;
         case IELISTEN:
             snprintf(errstr, len, "unable to start listener for connections");

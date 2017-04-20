@@ -117,6 +117,11 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -D, --daemon              run the server as a daemon\n"
                            "  -I, --pidfile file        write PID file\n"
                            "  -1, --one-off             handle one client connection then exit\n"
+#if defined(HAVE_SSL)
+                           "  --rsa-private-key-path    path to the RSA private key used to decrypt authentication credentials\n" 
+                           "  --authorized-users-path   path to the configuration file containing user credendial authorized to use iperf server\n"
+                           "                               file with username and password comma separated, one per line\n"
+#endif //HAVE_SSL
                            "Client specific:\n"
                            "  -c, --client    <host>    run in client mode, connecting to <host>\n"
 #if defined(HAVE_SCTP)
@@ -158,7 +163,11 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -T, --title str           prefix every output line with this string\n"
                            "  --get-server-output       get results from server\n"
                            "  --udp-counters-64bit      use 64-bit counters in UDP test packets\n"
-
+#if defined(HAVE_SSL)
+                           "  --username                username to access to the server test\n"
+                           "  --rsa-public-key-path     path to the RSA public key used to encrypt authentication credentials\n" 
+#endif //HAVESSL
+    
 #ifdef NOT_YET_SUPPORTED /* still working on these */
 #endif
 
@@ -248,6 +257,12 @@ const char report_time[] =
 
 const char report_connecting[] =
 "Connecting to host %s, port %d\n";
+
+const char report_authetication_successed[] =
+"Authentication successed for user '%s' ts %ld\n";
+
+const char report_authetication_failed[] =
+"Authentication failed for user '%s' ts %ld\n";
 
 const char report_reverse[] =
 "Reverse mode, remote host %s is sending\n";

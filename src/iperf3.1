@@ -85,7 +85,14 @@ write a file with the process ID, most useful when running as a daemon.
 .TP
 .BR -1 ", " --one-off
 handle one client connection, then exit.
-
+.TP
+.BR --rsa-private-key-path " \fIfile\fR" " (if built with OpenSSL support) 
+path to the RSA private key used to decrypt authentication credentials (not 
+password protected) 
+.TP          
+.BR --authorized-users-path " \fIfile\fR" " (if built with OpenSSL support)
+path to the configuration file containing authorized users credendientals to run 
+iperf tests. File is a comma separated list of usernames and password hashes.
 .SH "CLIENT SPECIFIC OPTIONS"
 .TP
 .BR -c ", " --client " \fIhost\fR"
@@ -101,7 +108,7 @@ use UDP rather than TCP
 .TP
 .BR -b ", " --bandwidth " \fIn\fR[KM]"
 set target bandwidth to \fIn\fR bits/sec (default 1 Mbit/sec for UDP, unlimited for TCP).
-If there are multiple streams (\-P flag), the bandwidth limit is applied
+If there are multiple streams (\-P flag), the bandwidth limit is applied 
 separately to each stream.
 You can also add a '/' and a number to the bandwidth specifier.
 This is called "burst mode".
@@ -222,6 +229,45 @@ JSON format, otherwise it will be in human-readable format).
 If the client is run with \fB--json\fR, the server output is included
 in a JSON object; otherwise it is appended at the bottom of the
 human-readable output.
+.TP
+.BR --username " \fIusername\fR" " (if built with OpenSSL support)               
+username assigned by server adminitrators to access to the iperf service.
+.TP
+.BR --rsa-public-key-path " \fIfile\fR" " (if built with OpenSSL support)    
+path to the RSA public key used to encrypt authentication credentials
+
+.SH EXAMPLES
+.TP
+.BR "Authentication - RSA Keypair"
+Authentication feature requires a pair of public and private RSA keys. The 
+public key is used to encrypt the authentication token containing the 
+user credentials, the private key is used to decrypt the authentication token.
+An example of linux command to generate correct keypair follows:
+.sp 1 
+.in +.5i $> openssl genrsa -des3 -out private.pem 2048
+.sp 0
+$> openssl rsa -in private.pem -outform PEM -pubout -out public.pem
+.sp 0
+$> openssl rsa -in private.pem -out private_not_protected.pem -outform PEM  
+.TP
+.BR "Authentication - Authorized users configuration file"
+A simple plaintext file can be provided to iperf3 server in order to specify 
+the authorized user credentials allowd to use iperf3 server. File can contain 
+commented lines (starting with # char) and is a simple list of comma separated
+pair of username password hash. Password hash is a sha256 hash of string 
+"{$user}$password":
+.sp 1 
+.in +.5i $> S_USER=mario S_PASSWD=rossi
+.sp 0
+$> echo -n "{$S_USER}$S_PASSWD" | sha256sum | awk '{ print $1 }'
+.sp 0
+$> cat credentials.csv
+.sp 0
+# file format: username,sha256
+.sp 0
+mario,44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c0....
+.sp 0
+$>
 
 .SH AUTHORS
 A list of the contributors to iperf3 can be found within the

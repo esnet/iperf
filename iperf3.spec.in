@@ -10,7 +10,9 @@ Source0: http://stats.es.net/software/iperf-%{version}.tar.gz
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
 %if 0%{?el5}
-BuildRequires:  e2fsprogs-devel
+BuildRequires: e2fsprogs-devel, openssl-devel
+%else
+BuildRequires: openssl-devel
 %endif
 
 %description

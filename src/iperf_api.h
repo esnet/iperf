@@ -54,6 +54,10 @@ struct iperf_stream;
 #define OPT_NO_FQ_SOCKET_PACING 9 /* UNUSED */
 #define OPT_FQ_RATE 10
 #define OPT_DSCP 11
+#define OPT_CLIENT_USERNAME 12
+#define OPT_CLIENT_RSA_PUBLIC_KEY 13
+#define OPT_SERVER_RSA_PRIVATE_KEY 14
+#define OPT_SERVER_AUTHORIZED_USERS 15
 
 /* states */
 #define TEST_START 1
@@ -295,6 +299,8 @@ enum {
     IEBIND = 19,			// Local port specified with no local bind option
     IEUDPBLOCKSIZE = 20,    // Block size invalid
     IEBADTOS = 21,	    // Bad TOS value
+    IESETCLIENTAUTH = 22,   // Bad configuration of client authentication
+    IESETSERVERAUTH = 23,   // Bad configuration of server authentication
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)
@@ -338,6 +344,7 @@ enum {
     IESETSCTPBINDX= 139,    // Unable to process sctp_bindx() parameters
     IESETPACING= 140,       // Unable to set socket pacing rate
     IESETBUF2= 141,	    // Socket buffer size incorrect (written value != read value)
+    IEAUTHTEST = 142,       // Test authorization failed
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

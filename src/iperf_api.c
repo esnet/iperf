@@ -77,6 +77,9 @@
 #include "iperf_util.h"
 #include "iperf_locale.h"
 #include "version.h"
+#if defined(HAVE_SSL)
+#include "iperf_auth.h"
+#endif /* HAVE_SSL */
 
 /* Forwards. */
 static int send_parameters(struct iperf_test *test);
@@ -671,6 +674,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"get-server-output", no_argument, NULL, OPT_GET_SERVER_OUTPUT},
 	{"udp-counters-64bit", no_argument, NULL, OPT_UDP_COUNTERS_64BIT},
  	{"no-fq-socket-pacing", no_argument, NULL, OPT_NO_FQ_SOCKET_PACING},
+#if defined(HAVE_SSL)
+    {"username", required_argument, NULL, OPT_CLIENT_USERNAME},
+    {"rsa-public-key-path", required_argument, NULL, OPT_CLIENT_RSA_PUBLIC_KEY},
+    {"rsa-private-key-path", required_argument, NULL, OPT_SERVER_RSA_PRIVATE_KEY},
+    {"authorized-users-path", required_argument, NULL, OPT_SERVER_AUTHORIZED_USERS},
+#endif /* HAVE_SSL */
 	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
@@ -688,6 +697,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = 0;
+#if defined(HAVE_SSL)
+    char *client_username = NULL, *client_rsa_public_key = NULL;
+#endif /* HAVE_SSL */
+
     while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
@@ -981,6 +994,20 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		return -1;
 #endif
 		break;
+#if defined(HAVE_SSL)
+        case OPT_CLIENT_USERNAME:
+            client_username = strdup(optarg);
+            break;
+        case OPT_CLIENT_RSA_PUBLIC_KEY:
+            client_rsa_public_key = strdup(optarg);
+            break;
+        case OPT_SERVER_RSA_PRIVATE_KEY:
+            test->server_rsa_private_key = strdup(optarg);
+            break;
+        case OPT_SERVER_AUTHORIZED_USERS:
+            test->server_authorized_users = strdup(optarg);
+            break;
+#endif /* HAVE_SSL */
             case 'h':
 		usage_long(stdout);
 		exit(0);
@@ -992,23 +1019,64 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     /* Set logging to a file if specified, otherwise use the default (stdout) */
     if (test->logfile) {
-	test->outfile = fopen(test->logfile, "a+");
-	if (test->outfile == NULL) {
-	    i_errno = IELOGFILE;
-	    return -1;
-	}
+        test->outfile = fopen(test->logfile, "a+");
+        if (test->outfile == NULL) {
+            i_errno = IELOGFILE;
+            return -1;
+        }
     }
 
     /* Check flag / role compatibility. */
     if (test->role == 'c' && server_flag) {
-	i_errno = IESERVERONLY;
-	return -1;
+        i_errno = IESERVERONLY;
+        return -1;
     }
     if (test->role == 's' && client_flag) {
-	i_errno = IECLIENTONLY;
-	return -1;
+        i_errno = IECLIENTONLY;
+        return -1;
     }
 
+#if defined(HAVE_SSL)
+
+    if (test->role == 's' && (client_username || client_rsa_public_key)){
+        i_errno = IECLIENTONLY;
+        return -1;
+    } else if (test->role == 'c' && (client_username || client_rsa_public_key) && 
+        !(client_username && client_rsa_public_key)) {
+        i_errno = IESETCLIENTAUTH;
+        return -1;
+    } else if (test->role == 'c' && (client_username && client_rsa_public_key)){
+
+        char *client_password = NULL;
+        size_t s;
+        if (iperf_getpass(&client_password, &s, stdin) < 0){
+            return -1;
+        } 
+
+        if (strlen(client_username) > 20 || strlen(client_password) > 20){
+            i_errno = IESETCLIENTAUTH;
+            return -1;
+        }
+
+        if (test_load_pubkey(client_rsa_public_key) < 0){
+            i_errno = IESETCLIENTAUTH;
+            return -1;
+        }
+        encode_auth_setting(client_username, client_password, client_rsa_public_key, &test->settings->authtoken);
+    }
+
+    if (test->role == 'c' && (test->server_rsa_private_key || test->server_authorized_users)){
+        i_errno = IESERVERONLY;
+        return -1;
+    } else if (test->role == 's' && (test->server_rsa_private_key || test->server_authorized_users) && 
+        !(test->server_rsa_private_key && test->server_authorized_users)) {
+         i_errno = IESETSERVERAUTH;
+        return -1;
+    } else if (test->role == 's' && test->server_rsa_private_key && test_load_private_key(test->server_rsa_private_key) < 0){
+        i_errno = IESETSERVERAUTH;
+        return -1;
+    }
+#endif //HAVE_SSL
     if (!test->bind_address && test->bind_port) {
         i_errno = IEBIND;
         return -1;
@@ -1235,6 +1303,29 @@ iperf_create_send_timers(struct iperf_test * test)
     return 0;
 }
 
+#if defined(HAVE_SSL)
+int test_is_authorized(struct iperf_test *test){
+    if ( !(test->server_rsa_private_key && test->server_authorized_users)) {
+        return 0;
+    }
+
+    if (test->settings->authtoken){
+        char *username = NULL, *password = NULL;
+        time_t ts;
+        decode_auth_setting(test->debug, test->settings->authtoken, test->server_rsa_private_key, &username, &password, &ts);
+        int ret = check_authentication(username, password, ts, test->server_authorized_users);
+        if (ret == 0){
+            iperf_printf(test, report_authetication_successed, username, ts);
+            return 0;
+        } else {
+            iperf_printf(test, report_authetication_failed, username, ts);
+            return -1;
+        }
+    }
+    return -1;
+}
+#endif //HAVE_SSL
+
 /**
  * iperf_exchange_parameters - handles the param_Exchange part for client
  *
@@ -1256,8 +1347,22 @@ iperf_exchange_parameters(struct iperf_test *test)
         if (get_parameters(test) < 0)
             return -1;
 
+#if defined(HAVE_SSL)
+        if (test_is_authorized(test) < 0){
+            if (iperf_set_send_state(test, SERVER_ERROR) != 0)
+                return -1;
+            i_errno = IEAUTHTEST;
+            err = htonl(i_errno);
+            if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
+                i_errno = IECTRLWRITE;
+                return -1;
+            }
+            return -1;
+        }
+#endif //HAVE_SSL
+
         if ((s = test->protocol->listen(test)) < 0) {
-	    if (iperf_set_send_state(test, SERVER_ERROR) != 0)
+	        if (iperf_set_send_state(test, SERVER_ERROR) != 0)
                 return -1;
             err = htonl(i_errno);
             if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
@@ -1366,7 +1471,10 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "get_server_output", iperf_get_test_get_server_output(test));
 	if (test->udp_counters_64bit)
 	    cJSON_AddNumberToObject(j, "udp_counters_64bit", iperf_get_test_udp_counters_64bit(test));
-
+#if defined(HAVE_SSL)
+    if (test->settings->authtoken)
+        cJSON_AddStringToObject(j, "authtoken", test->settings->authtoken);
+#endif // HAVE_SSL
 	cJSON_AddStringToObject(j, "client_version", IPERF_VERSION);
 
 	if (test->debug) {
@@ -1448,7 +1556,10 @@ get_parameters(struct iperf_test *test)
 	    iperf_set_test_get_server_output(test, 1);
 	if ((j_p = cJSON_GetObjectItem(j, "udp_counters_64bit")) != NULL)
 	    iperf_set_test_udp_counters_64bit(test, 1);
-	
+#if defined(HAVE_SSL)
+	if ((j_p = cJSON_GetObjectItem(j, "authtoken")) != NULL)
+        test->settings->authtoken = strdup(j_p->valuestring);
+#endif //HAVE_SSL
 	if (test->sender && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    test->sender_has_retransmits = 1;
 	cJSON_Delete(j);
@@ -2764,8 +2875,18 @@ iperf_new_stream(struct iperf_test *test, int s)
     if (test->tmp_template) {
         snprintf(template, sizeof(template) / sizeof(char), "%s", test->tmp_template);
     } else {
-        char buf[] = "/tmp/iperf3.XXXXXX";
-        snprintf(template, sizeof(template) / sizeof(char), "%s", buf);
+        //find the system temporary dir *unix, windows, cygwin support
+        char* tempdir = getenv("TMPDIR");
+        if (tempdir == 0){
+            tempdir = getenv("TEMP");
+        }
+        if (tempdir == 0){
+            tempdir = getenv("TMP");
+        }
+        if (tempdir == 0){
+            tempdir = "/tmp";
+        }
+        snprintf(template, sizeof(template) / sizeof(char), "%s/iperf3.XXXXXX", tempdir);
     }
 
     sp = (struct iperf_stream *) malloc(sizeof(struct iperf_stream));

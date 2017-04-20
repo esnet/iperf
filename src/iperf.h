@@ -123,6 +123,7 @@ struct iperf_settings
     iperf_size_t blocks;            /* number of blocks (packets) to send */
     char      unit_format;          /* -f */
     int       num_ostreams;         /* SCTP initmsg settings */
+    char      *authtoken;           /* Authentication token */
 };
 
 struct iperf_test;
@@ -235,6 +236,8 @@ struct iperf_test
     int       prot_listener;
 
     int	      ctrl_sck_mss;			/* MSS for the control channel */
+    char     *server_rsa_private_key;
+    char     *server_authorized_users;
 
     /* boolean variables for Options */
     int       daemon;                           /* -D option */

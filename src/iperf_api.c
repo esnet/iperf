@@ -354,9 +354,9 @@ iperf_set_test_burst(struct iperf_test *ipt, int burst)
 }
 
 void
-iperf_set_test_server_port(struct iperf_test *ipt, int server_port)
+iperf_set_test_server_port(struct iperf_test *ipt, int srv_port)
 {
-    ipt->server_port = server_port;
+    ipt->server_port = srv_port;
 }
 
 void
@@ -445,9 +445,9 @@ iperf_set_test_unit_format(struct iperf_test *ipt, char unit_format)
 }
 
 void
-iperf_set_test_bind_address(struct iperf_test *ipt, char *bind_address)
+iperf_set_test_bind_address(struct iperf_test *ipt, char *bnd_address)
 {
-    ipt->bind_address = strdup(bind_address);
+    ipt->bind_address = strdup(bnd_address);
 }
 
 void
@@ -759,11 +759,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_SCTP)
                 set_protocol(test, Psctp);
                 client_flag = 1;
+                break;
 #else /* HAVE_SCTP */
                 i_errno = IEUNIMP;
                 return -1;
 #endif /* HAVE_SCTP */
-            break;
 
             case OPT_NUMSTREAMS:
 #if defined(linux) || defined(__FreeBSD__)
@@ -1622,6 +1622,7 @@ send_results(struct iperf_test *test)
 		}
 
 		cJSON_AddStringToObject(j, "server_output_text", output);
+        free(output);
 	    }
 	}
 
@@ -2489,7 +2490,7 @@ iperf_print_results(struct iperf_test *test)
     struct iperf_stream *sp = NULL;
     iperf_size_t bytes_sent, total_sent = 0;
     iperf_size_t bytes_received, total_received = 0;
-    double start_time, end_time, avg_jitter = 0.0, lost_percent;
+    double start_time, end_time = 0.0, avg_jitter = 0.0, lost_percent;
     double bandwidth;
 
     /* print final summary for all intervals */

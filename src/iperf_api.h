@@ -169,7 +169,7 @@ void     iperf_reporter_callback(struct iperf_test * test);
  * returns NULL on failure
  *
  */
-struct iperf_test *iperf_new_test();
+struct iperf_test *iperf_new_test(void);
 
 int      iperf_defaults(struct iperf_test * testp);
 
@@ -222,8 +222,8 @@ int iperf_send(struct iperf_test *, fd_set *) /* __attribute__((hot)) */;
 int iperf_recv(struct iperf_test *, fd_set *);
 void iperf_catch_sigend(void (*handler)(int));
 void iperf_got_sigend(struct iperf_test *test) __attribute__ ((noreturn));
-void usage();
-void usage_long();
+void usage(void);
+void usage_long(FILE * f);
 void warning(char *);
 int iperf_exchange_results(struct iperf_test *);
 int iperf_init_test(struct iperf_test *);

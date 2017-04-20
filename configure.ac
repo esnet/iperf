@@ -25,7 +25,7 @@
 
 # Initialize the autoconf system for the specified tool, version and mailing list
 AC_INIT(iperf, 3-CURRENT, https://github.com/esnet/iperf, iperf, http://software.es.net/iperf/)
-m4_include([ax_check_openssl.m4])
+m4_include([config/ax_check_openssl.m4])
 AC_LANG(C)
 
 # Specify where the auxiliary files created by configure should go. The config

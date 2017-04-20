@@ -48,7 +48,7 @@
  * by Mark Gates <mgates@nlanr.net>
  * and Ajay Tirumalla <tirumala@ncsa.uiuc.edu>
  * -------------------------------------------------------------------
- * input and output numbers, converting with kilo, mega, giga
+ * input and output numbers, converting with kilo, mega, giga, tera
  * ------------------------------------------------------------------- */
 
 #include <stdio.h>
@@ -60,7 +60,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include <netinet/tcp.h>
 
 
 #include "iperf.h"
@@ -73,10 +72,12 @@ extern    "C"
     const long KILO_UNIT = 1024;
     const long MEGA_UNIT = 1024 * 1024;
     const long GIGA_UNIT = 1024 * 1024 * 1024;
+    const long TERA_UNIT = 1.0 * 1024 * 1024 * 1024 * 1024;
 
     const long KILO_RATE_UNIT = 1000;
     const long MEGA_RATE_UNIT = 1000 * 1000;
     const long GIGA_RATE_UNIT = 1000 * 1000 * 1000;
+    const long TERA_RATE_UNIT = 1.0 * 1000 * 1000 * 1000 * 1000;
 
 /* -------------------------------------------------------------------
  * unit_atof
@@ -96,9 +97,12 @@ extern    "C"
 	/* scan the number and any suffices */
 	          sscanf(s, "%lf%c", &n, &suffix);
 
-	/* convert according to [Gg Mm Kk] */
+	/* convert according to [Tt Gg Mm Kk] */
 	switch    (suffix)
 	{
+	case 't': case 'T':
+	    n *= TERA_UNIT;
+	    break;
 	case 'g': case 'G':
 	    n *= GIGA_UNIT;
 	    break;
@@ -132,9 +136,12 @@ extern    "C"
 	/* scan the number and any suffices */
 	          sscanf(s, "%lf%c", &n, &suffix);
 
-	/* convert according to [Gg Mm Kk] */
+	/* convert according to [Tt Gg Mm Kk] */
 	switch    (suffix)
 	{
+	case 't': case 'T':
+	    n *= TERA_RATE_UNIT;
+	    break;
 	case 'g': case 'G':
 	    n *= GIGA_RATE_UNIT;
 	    break;
@@ -157,7 +164,7 @@ extern    "C"
  *
  * Given a string of form #x where # is a number and x is a format
  * character listed below, this returns the interpreted integer.
- * Gg, Mm, Kk are giga, mega, kilo respectively
+ * Tt, Gg, Mm, Kk are tera, giga, mega, kilo respectively
  * ------------------------------------------------------------------- */
 
     iperf_size_t unit_atoi(const char *s)
@@ -170,9 +177,12 @@ extern    "C"
 	/* scan the number and any suffices */
 	          sscanf(s, "%lf%c", &n, &suffix);
 
-	/* convert according to [Gg Mm Kk] */
+	/* convert according to [Tt Gg Mm Kk] */
 	switch    (suffix)
 	{
+	case 't': case 'T':
+	    n *= TERA_UNIT;
+	    break;
 	case 'g': case 'G':
 	    n *= GIGA_UNIT;
 	    break;
@@ -198,7 +208,8 @@ extern    "C"
 	UNIT_CONV,
 	KILO_CONV,
 	MEGA_CONV,
-	GIGA_CONV
+	GIGA_CONV,
+	TERA_CONV
     };
 
 /* factor to multiply the number by */
@@ -207,7 +218,8 @@ extern    "C"
 	1.0,			/* unit */
 	1.0 / 1024,		/* kilo */
 	1.0 / 1024 / 1024,	/* mega */
-	1.0 / 1024 / 1024 / 1024/* giga */
+	1.0 / 1024 / 1024 / 1024, /* giga */
+	1.0 / 1024 / 1024 / 1024 / 1024 /* tera */
     };
 
 /* factor to multiply the number by for bits*/
@@ -216,26 +228,29 @@ extern    "C"
 	1.0,			/* unit */
 	1.0 / 1000,		/* kilo */
 	1.0 / 1000 / 1000,	/* mega */
-	1.0 / 1000 / 1000 / 1000/* giga */
+	1.0 / 1000 / 1000 / 1000, /* giga */
+	1.0 / 1000 / 1000 / 1000 / 1000 /* tera */
     };
 
 
-/* labels for Byte formats [KMG] */
+/* labels for Byte formats [KMGT] */
     const char *label_byte[] =
     {
 	"Byte",
 	"KByte",
 	"MByte",
-	"GByte"
+	"GByte",
+	"TByte"
     };
 
-/* labels for bit formats [kmg] */
+/* labels for bit formats [kmgt] */
     const char *label_bit[] =
     {
 	"bit",
 	"Kbit",
 	"Mbit",
-	"Gbit"
+	"Gbit",
+	"Tbit"
     };
 
 /* -------------------------------------------------------------------
@@ -276,6 +291,9 @@ extern    "C"
 	case 'G':
 	    conv = GIGA_CONV;
 	    break;
+	case 'T':
+	    conv = TERA_CONV;
+	    break;
 
 	default:
 	case 'A':
@@ -285,14 +303,14 @@ extern    "C"
 
 		if (isupper((int) inFormat))
 		{
-		    while (tmpNum >= 1024.0 && conv <= GIGA_CONV)
+		    while (tmpNum >= 1024.0 && conv <= TERA_CONV)
 		    {
 			tmpNum /= 1024.0;
 			conv++;
 		    }
 		} else
 		{
-		    while (tmpNum >= 1000.0 && conv <= GIGA_CONV)
+		    while (tmpNum >= 1000.0 && conv <= TERA_CONV)
 		    {
 			tmpNum /= 1000.0;
 			conv++;

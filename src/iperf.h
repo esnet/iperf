@@ -36,6 +36,7 @@
 #endif
 #include <sys/select.h>
 #include <sys/socket.h>
+#define _GNU_SOURCE
 #include <netinet/tcp.h>
 
 #if defined(HAVE_CPUSET_SETAFFINITY)
@@ -79,6 +80,7 @@ struct iperf_interval_results
     TAILQ_ENTRY(iperf_interval_results) irlistentries;
     void     *custom_data;
     int rtt;
+    int rttvar;
 };
 
 struct iperf_stream_result
@@ -322,6 +324,8 @@ struct iperf_test
 #define MB (1024 * 1024)
 #define MAX_TCP_BUFFER (512 * MB)
 #define MAX_BLOCKSIZE MB
+/* Minimum size UDP send is the size of two 32-bit ints followed by a 64-bit int */
+#define MIN_UDP_BLOCKSIZE (4 + 4 + 8)
 /* Maximum size UDP send is (64K - 1) - IP and UDP header sizes */
 #define MAX_UDP_BLOCKSIZE (65535 - 8 - 20)
 #define MIN_INTERVAL 0.1

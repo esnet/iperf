@@ -13,7 +13,7 @@ This version, sometimes referred to as iperf3, is a redesign of an
 original version developed at NLANR/DAST.  iperf3 is a new
 implementation from scratch, with the goal of a smaller, simpler code
 base, and a library version of the functionality that can be used in
-other programs. iperf3 also a number of features found in other tools
+other programs. iperf3 also has a number of features found in other tools
 such as nuttcp and netperf, but were missing from the original iperf.
 These include, for example, a zero-copy mode and optional JSON output.
 Note that iperf3 is *not* backwards compatible with the original iperf.
@@ -144,40 +144,9 @@ variables.
 Known Issues
 ------------
 
-* UDP performance: Some problems have been noticed with iperf3 on the
-ESnet 100G testbed at high UDP rates (above 10Gbps).  The symptom is
-that on any particular run of iperf3 the receiver reports a loss rate
-of about 20%, regardless of the -b option used on the client side.
-This problem appears not to be iperf3-specific, and may be due to the
-placement of the iperf3 process on a CPU and its relation to the
-inbound NIC.  In some cases this problem can be mitigated by an
-appropriate use of the CPU affinity (-A) option.  (Issue #55)
+A set of known issues is maintained on the iperf3 Web pages:
 
-* The -Z flag sometimes causes the iperf3 client to hang on OSX.
-(Issue #129)
-
-* When specifying the socket buffer size using the "-w" flag on Linux, Linux 
-doubles the value you pass in. (You can see this using iperf3's debug flag). 
-But then the CWND does not actually ramp up to the doubled value, but only
-to about 75% of the doubled value. This appears to be by design.
-
-* Although the "-w" flag is documented as setting the (TCP) window
-size, it is also used to set the socket buffer size.  This has been
-shown to be helpful with high-bitrate UDP tests.
-
-* On some platforms, it might be necessary to invoke "ldconfig" 
-manually after doing a "make install" before the iperf3 executable can 
-find its shared library.  (Issue #153)
-
-* The results printed on the server side at the end of a test do not
-correctly reflect the client-side measurements.  This is due to the
-ordering of computing and transferring results between the client
-and server.  (Issue #293)
-
-* The server could have a very short measurement reporting interval at
-the end of a test (particularly a UDP test), containing few or no
-packets.  This issue is due to an artifact of timing between the
-client and server.  (Issue #278)
+http://software.es.net/iperf/dev.html#known-issues
 
 Links
 -----

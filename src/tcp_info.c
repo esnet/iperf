@@ -48,7 +48,6 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/tcp.h>
 #include <string.h>
 #include <netinet/in.h>
 #include <errno.h>
@@ -157,6 +156,24 @@ get_rtt(struct iperf_interval_results *irp)
     return irp->tcpInfo.tcpi_rtt;
 #elif defined(__NetBSD__) && defined(TCP_INFO)
     return irp->tcpInfo.tcpi_rtt;
+#else
+    return -1;
+#endif
+}
+
+/*************************************************************/
+/*
+ * Return rttvar in usec.
+ */
+long
+get_rttvar(struct iperf_interval_results *irp)
+{
+#if defined(linux) && defined(TCP_MD5SIG)
+    return irp->tcpInfo.tcpi_rttvar;
+#elif defined(__FreeBSD__) && __FreeBSD_version >= 600000
+    return irp->tcpInfo.tcpi_rttvar;
+#elif defined(__NetBSD__) && defined(TCP_INFO)
+    return irp->tcpInfo.tcpi_rttvar;
 #else
     return -1;
 #endif

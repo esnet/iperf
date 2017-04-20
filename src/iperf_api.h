@@ -53,10 +53,11 @@ struct iperf_stream;
 #define OPT_FORCEFLUSH 7
 #define OPT_NO_FQ_SOCKET_PACING 9 /* UNUSED */
 #define OPT_FQ_RATE 10
-#define OPT_CLIENT_USERNAME 11
-#define OPT_CLIENT_RSA_PUBLIC_KEY 12
-#define OPT_SERVER_RSA_PRIVATE_KEY 13
-#define OPT_SERVER_AUTHORIZED_USERS 14
+#define OPT_DSCP 11
+#define OPT_CLIENT_USERNAME 12
+#define OPT_CLIENT_RSA_PUBLIC_KEY 13
+#define OPT_SERVER_RSA_PRIVATE_KEY 14
+#define OPT_SERVER_AUTHORIZED_USERS 15
 
 /* states */
 #define TEST_START 1
@@ -211,6 +212,7 @@ void save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp);
 long get_total_retransmits(struct iperf_interval_results *irp);
 long get_snd_cwnd(struct iperf_interval_results *irp);
 long get_rtt(struct iperf_interval_results *irp);
+long get_rttvar(struct iperf_interval_results *irp);
 void print_tcpinfo(struct iperf_test *test);
 void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 
@@ -295,7 +297,7 @@ enum {
     IELOGFILE = 17,	    // Can't open log file
     IENOSCTP = 18,	    // No SCTP support available
     IEBIND = 19,			// Local port specified with no local bind option
-    IEUDPBLOCKSIZE = 20,    // Block size too large. Maximum value = %dMAX_UDP_BLOCKSIZE
+    IEUDPBLOCKSIZE = 20,    // Block size invalid
     IEBADTOS = 21,	    // Bad TOS value
     IESETCLIENTAUTH = 22,   // Bad configuration of client authentication
     IESETSERVERAUTH = 23,   // Bad configuration of server authentication

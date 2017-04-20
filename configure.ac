@@ -70,12 +70,6 @@ echo "nanosleep() required for timing operations."
 exit 1
 ])
 
-# Solaris puts hstrerror in -lresolv
-AC_SEARCH_LIBS(hstrerror, [resolv], [], [
-echo "nanosleep() required for timing operations."
-exit 1
-])
-
 # On illumos we need -lsocket
 AC_SEARCH_LIBS(socket, [socket], [], [
 echo "socket()"

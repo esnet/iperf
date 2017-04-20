@@ -25,8 +25,8 @@ Bug Reports
 -----------
 
 Before submitting a bug report, try checking out the latest version of
-the code, and confirm that it's not already fixed.  Then submit to the
-iperf3 issue tracker on GitHub:
+the code, and confirm that it's not already fixed. Also see the :doc:`faq`. 
+Then submit to the iperf3 issue tracker on GitHub:
 
 https://github.com/esnet/iperf/issues
 
@@ -79,24 +79,6 @@ tracker.  These issues are either open (indicating no solution
 currently exists) or closed with the notation that no further attempts
 to solve the problem are currently being made:
 
-* UDP performance: Some problems have been noticed with iperf3 on the
-  ESnet 100G testbed at high UDP rates (above 10Gbps).  The symptom is
-  that on any particular run of iperf3 the receiver reports a loss
-  rate of about 20%, regardless of the ``-b`` option used on the client
-  side.  This problem appears not to be iperf3-specific, and may be
-  due to the placement of the iperf3 process on a CPU and its relation
-  to the inbound NIC.  In some cases this problem can be mitigated by
-  an appropriate use of the CPU affinity (``-A``) option.  (Issue #55)
-
-* Interval reports on high-loss networks: The way iperf3 is currently
-  implemented, the sender write command will block until the entire
-  block has been written. This means that it might take several
-  seconds to send a full block if the network has high loss, and the
-  interval reports will have widely varying interval times.  A
-  solution is being discussed, but in the meantime a work around is to
-  try using a small block size, for example ``-l 4K``.  (Issue #125,
-  a fix will be released in iperf 3.1)
-
 * The ``-Z`` flag sometimes causes the iperf3 client to hang on OSX.
   (Issue #129)
 
@@ -106,12 +88,26 @@ to solve the problem are currently being made:
   iperf3's ``--debug`` flag.)  However, CWND does not actually ramp up
   to the doubled value, but only to about 75% of the doubled
   value.  Some part of this behavior is documented in the tcp(7)
-  manual page.  (Issue #145)
+  manual page.
+
+* Although the ``-w`` flag is documented as setting the (TCP) window
+  size, it is also used to set the socket buffer size.  This has been
+  shown to be helpful with high-bitrate UDP tests.
 
 * On some platforms (observed on at least one version of Ubuntu
   Linux), it might be necessary to invoke ``ldconfig`` manually after
   doing a ``make install`` before the ``iperf3`` executable can find
   its shared library.  (Issue #153)
+
+* The results printed on the server side at the end of a test do not
+  correctly reflect the client-side measurements.  This is due to the
+  ordering of computing and transferring results between the client
+  and server.  (Issue #293)
+
+* The server could have a very short measurement reporting interval at
+  the end of a test (particularly a UDP test), containing few or no
+  packets.  This issue is due to an artifact of timing between the
+  client and server.  (Issue #278)
 
 There are, of course, many other open and closed issues in the issue
 tracker.

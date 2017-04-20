@@ -103,9 +103,9 @@ usage()
 
 
 void
-usage_long()
+usage_long(FILE *f)
 {
-    fprintf(stderr, usage_longstr, UDP_RATE / (1024*1024), DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE / 1024);
+    fprintf(f, usage_longstr, UDP_RATE / (1024*1024), DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE / 1024);
 }
 
 
@@ -648,6 +648,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"version4", no_argument, NULL, '4'},
         {"version6", no_argument, NULL, '6'},
         {"tos", required_argument, NULL, 'S'},
+        {"dscp", required_argument, NULL, OPT_DSCP},
 #if defined(HAVE_FLOWLABEL)
         {"flowlabel", required_argument, NULL, 'L'},
 #endif /* HAVE_FLOWLABEL */
@@ -864,6 +865,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		}
 		client_flag = 1;
                 break;
+	    case OPT_DSCP:
+                test->settings->tos = parse_qos(optarg);
+		if(test->settings->tos < 0) {
+			i_errno = IEBADTOS;
+			return -1;
+		}
+		client_flag = 1;
+                break;
             case 'L':
 #if defined(HAVE_FLOWLABEL)
                 test->settings->flowlabel = strtol(optarg, &endptr, 0);
@@ -999,10 +1008,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             test->server_authorized_users = strdup(optarg);
             break;
 #endif /* HAVE_SSL */
-        case 'h':
-        default:
-            usage_long();
-            exit(1);
+            case 'h':
+		usage_long(stdout);
+		exit(0);
+            default:
+                usage_long(stderr);
+                exit(1);
         }
     }
 
@@ -1084,7 +1095,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	return -1;
     }
     if (test->protocol->id == Pudp &&
-	blksize > MAX_UDP_BLOCKSIZE) {
+	(blksize < MIN_UDP_BLOCKSIZE || blksize > MAX_UDP_BLOCKSIZE)) {
 	i_errno = IEUDPBLOCKSIZE;
 	return -1;
     }
@@ -2328,6 +2339,8 @@ iperf_stats_callback(struct iperf_test *test)
 		    }
 		    rp->stream_sum_rtt += temp.rtt;
 		    rp->stream_count_rtt++;
+
+		    temp.rttvar = get_rttvar(&temp);
 		}
 	    }
 	} else {
@@ -2570,7 +2583,11 @@ iperf_print_results(struct iperf_test *test)
 
 	if (sp->diskfile_fd >= 0) {
 	    if (fstat(sp->diskfile_fd, &sb) == 0) {
-		int percent = (int) ( ( (double) bytes_sent / (double) sb.st_size ) * 100.0 );
+		/* In the odd case that it's a zero-sized file, say it was all transferred. */
+		int percent = 100;
+		if (sb.st_size > 0) {
+		    percent = (int) ( ( (double) bytes_sent / (double) sb.st_size ) * 100.0 );
+		}
 		unit_snprintf(sbuf, UNIT_LEN, (double) sb.st_size, 'A');
 		if (test->json_output)
 		    cJSON_AddItemToObject(json_summary_stream, "diskfile", iperf_json_printf("sent: %d  size: %d  percent: %d  filename: %s", (int64_t) bytes_sent, (int64_t) sb.st_size, (int64_t) percent, test->diskfile_name));
@@ -2789,7 +2806,7 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 	if (test->sender && test->sender_has_retransmits) {
 	    /* Interval, TCP with retransmits. */
 	    if (test->json_output)
-		cJSON_AddItemToArray(json_interval_streams, iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d  snd_cwnd:  %d  rtt:  %d  omitted: %b", (int64_t) sp->socket, (double) st, (double) et, (double) irp->interval_duration, (int64_t) irp->bytes_transferred, bandwidth * 8, (int64_t) irp->interval_retrans, (int64_t) irp->snd_cwnd, (int64_t) irp->rtt, irp->omitted));
+		cJSON_AddItemToArray(json_interval_streams, iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d  snd_cwnd:  %d  rtt:  %d  rttvar: %d  omitted: %b", (int64_t) sp->socket, (double) st, (double) et, (double) irp->interval_duration, (int64_t) irp->bytes_transferred, bandwidth * 8, (int64_t) irp->interval_retrans, (int64_t) irp->snd_cwnd, (int64_t) irp->rtt, (int64_t) irp->rttvar, irp->omitted));
 	    else {
 		unit_snprintf(cbuf, UNIT_LEN, irp->snd_cwnd, 'A');
 		iperf_printf(test, report_bw_retrans_cwnd_format, sp->socket, st, et, ubuf, nbuf, irp->interval_retrans, cbuf, irp->omitted?report_omitted:"");
@@ -2871,8 +2888,6 @@ iperf_new_stream(struct iperf_test *test, int s)
         }
         snprintf(template, sizeof(template) / sizeof(char), "%s/iperf3.XXXXXX", tempdir);
     }
-
-    h_errno = 0;
 
     sp = (struct iperf_stream *) malloc(sizeof(struct iperf_stream));
     if (!sp) {

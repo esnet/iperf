@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, 2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -41,10 +41,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
-#include <netinet/tcp.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -134,6 +130,9 @@ run(struct iperf_test *test)
     if (setjmp(sigend_jmp_buf))
 	iperf_got_sigend(test);
 
+    /* Ignore SIGPIPE to simplify error handling */
+    signal(SIGPIPE, SIG_IGN);
+
     switch (test->role) {
         case 's':
 	    if (test->daemon) {
@@ -173,6 +172,7 @@ run(struct iperf_test *test)
     }
 
     iperf_catch_sigend(SIG_DFL);
+    signal(SIGPIPE, SIG_DFL);
 
     return 0;
 }

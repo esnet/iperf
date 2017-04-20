@@ -19,9 +19,14 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   THE SOFTWARE.
 */
+#include "iperf_config.h"
 
 #ifndef cJSON__h
 #define cJSON__h
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
 
 #ifdef __cplusplus
 extern "C"

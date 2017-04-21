@@ -17,7 +17,8 @@ such enhancements or derivative works thereof, in binary and source code form.
 _The complete iperf3 license is available in the `LICENSE` file in the
 top directory of the iperf3 source tree._
 
-* Version of iperf (or development branch, such as `master` or `3.1-STABLE`):
+* Version of iperf3 (or development branch, such as `master` or
+  `3.1-STABLE`) to which this pull request applies:
 
 * Issues fixed (if any):
 

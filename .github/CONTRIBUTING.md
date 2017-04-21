@@ -20,12 +20,14 @@ have been asked (and maybe even answered) before.
 http://fasterdata.es.net/ has some information on the use of various
 bandwidth measurement tools, including iperf3.  The iperf3
 documentation Web site at http://software.es.net/iperf/ contains
-various bits of helpful information, including an FAQ.
+various bits of helpful information, including a list of
+[frequently-asked questions](http://software.es.net/iperf/faq.html).
 
 We specifically discourage the use of the issue tracker on the iperf3
 GitHub project page for asking questions.  Questions posted in the
 form of issues may go unanswered.  Please use a questions site
-such as Stack Overflow to ask questions of the community or
+such as [Stack Overflow](http://www.stackoverflow.com)
+to ask questions of the community or
 alternatively use the iperf3 mailing list at
 iperf-dev@googlegroups.com (posting requires joining the list).
 

@@ -6,7 +6,7 @@ question sites such as Stack Overflow (http://www.stackoverflow.com/)._
 
 # Context
 
-* Version of iperf:
+* Version of iperf3:
 
 * Hardware:
 

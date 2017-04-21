@@ -40,7 +40,8 @@ Before making any submission to the iperf3 project (whether it be code
 or documentation), we urge you to consult the iperf3 license, in
 particular the section quoted below:
 
-```You are under no obligation whatsoever to provide any bug fixes, patches, or
+```
+You are under no obligation whatsoever to provide any bug fixes, patches, or
 upgrades to the features, functionality or performance of the source code
 ("Enhancements") to anyone; however, if you choose to make your Enhancements
 available either publicly, or directly to Lawrence Berkeley National

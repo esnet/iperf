@@ -2,7 +2,8 @@ _PLEASE NOTE the following text from the iperf3 license.  Submitting a
 pull request to the iperf3 repository constitutes "[making]
 Enhancements available...publicly":_
 
-```You are under no obligation whatsoever to provide any bug fixes, patches, or
+```
+You are under no obligation whatsoever to provide any bug fixes, patches, or
 upgrades to the features, functionality or performance of the source code
 ("Enhancements") to anyone; however, if you choose to make your Enhancements
 available either publicly, or directly to Lawrence Berkeley National

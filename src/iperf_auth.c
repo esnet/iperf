@@ -268,8 +268,8 @@ int decode_auth_setting(int enable_debug, char *authtoken, const char *private_k
         printf("Auth Token Content:\n%s\n", plaintext);
         printf("Auth Token Credentials:\n--> %s %s\n", s_username, s_password);
     }
-    *username = (char *) calloc(21, sizeof(char *));
-    *password = (char *) calloc(21, sizeof(char *));
+    *username = (char *) calloc(21, sizeof(char));
+    *password = (char *) calloc(21, sizeof(char));
     strncpy(*username, s_username, 20);
     strncpy(*password, s_password, 20);
     return (0);

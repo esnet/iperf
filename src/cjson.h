@@ -19,9 +19,14 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   THE SOFTWARE.
 */
+#include "iperf_config.h"
 
 #ifndef cJSON__h
 #define cJSON__h
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -64,7 +69,7 @@ typedef struct cJSON
     /* The item's string, if type==cJSON_String  and type == cJSON_Raw */
     char *valuestring;
     /* writing to valueint is DEPRECATED, use cJSON_SetNumberValue instead */
-    int valueint;
+    int64_t valueint;
     /* The item's number, if type==cJSON_Number */
     double valuedouble;
 

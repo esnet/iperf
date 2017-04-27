@@ -241,13 +241,13 @@ const char wait_server_threads[] =
 "Waiting for server threads to complete. Interrupt again to force quit.\n";
 
 const char test_start_time[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %d second test\n";
+"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %d second test, tos %d\n";
 
 const char test_start_bytes[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %llu bytes to send\n";
+"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %llu bytes to send, tos %d\n";
 
 const char test_start_blocks[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %d blocks to send\n";
+"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %d blocks to send, tos %d\n";
 
 
 /* -------------------------------------------------------------------

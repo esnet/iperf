@@ -694,6 +694,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif /* HAVE_CPU_AFFINITY */
     char* slash;
     struct xbind_entry *xbe;
+    double farg;
 
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = 0;
@@ -824,11 +825,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'w':
                 // XXX: This is a socket buffer, not specific to TCP
-                test->settings->socket_bufsize = unit_atof(optarg);
-                if (test->settings->socket_bufsize > MAX_TCP_BUFFER) {
+		// Do sanity checks as double-precision floating point 
+		// to avoid possible integer overflows.
+                farg = unit_atof(optarg);
+                if (farg > (double) MAX_TCP_BUFFER) {
                     i_errno = IEBUFSIZE;
                     return -1;
                 }
+                test->settings->socket_bufsize = (int) farg;
 		client_flag = 1;
                 break;
             case 'B':

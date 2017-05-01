@@ -1099,7 +1099,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	return -1;
     }
     if (test->protocol->id == Pudp &&
-	(blksize < MIN_UDP_BLOCKSIZE || blksize > MAX_UDP_BLOCKSIZE)) {
+	(blksize > 0 &&
+	    (blksize < MIN_UDP_BLOCKSIZE || blksize > MAX_UDP_BLOCKSIZE))) {
 	i_errno = IEUDPBLOCKSIZE;
 	return -1;
     }

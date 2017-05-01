@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Invoking iperf3 &mdash; iperf3 3.1.7 documentation</title>
+    <title>Invoking iperf3 &#8212; iperf3 3.1.7 documentation</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -19,7 +19,8 @@
         VERSION:     '3.1.7',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
@@ -30,7 +31,8 @@
     <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="shortcut icon" href="_static/favicon.ico"/>
-    <link rel="top" title="iperf3 3.1.7 documentation" href="index.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="iperf3 Development" href="dev.html" />
     <link rel="prev" title="Building iperf3" href="building.html" />
 <meta charset='utf-8'>
@@ -70,7 +72,7 @@
 <li class="toctree-l1"><a class="reference internal" href="news.html">iperf3 Project News</a></li>
 <li class="toctree-l1"><a class="reference internal" href="obtaining.html">Obtaining iperf3</a></li>
 <li class="toctree-l1"><a class="reference internal" href="building.html">Building iperf3</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Invoking iperf3</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Invoking iperf3</a></li>
 <li class="toctree-l1"><a class="reference internal" href="dev.html">iperf3 Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">iperf3 FAQ</a></li>
 </ul>
@@ -92,7 +94,7 @@
   <li>
     <a href="dev.html" title="Next Chapter: iperf3 Development">
       <span class="hidden-sm">
-        iperf3 Develo...
+        iperf3 Development
       </span>
       <span class="glyphicon glyphicon-chevron-right"></span>
     </a>
@@ -104,13 +106,13 @@
                 <li><a href="genindex.html">Index</a></li>
                 <li><a href="https://www.es.net">ESnet</a></li>
             
-            <li><a href="https://github.com/esnet/iperf"><img src="_static/esnet/icon-github.png" height="20" width="20"></a></li>
+            <li><a href="https://github.com/esnet/iperf"><img src="_static/icon-github.png" height="20" width="20"></a></li>
             
             
             
               <li class="hidden-sm">
 <div id="sourcelink">
-  <a href="_sources/invoking.txt"
+  <a href="_sources/invoking.rst.txt"
      rel="nofollow">Source</a>
 </div></li>
             
@@ -162,7 +164,7 @@ and <code class="docutils literal"><span class="pre">-A</span></code> (<code cla
 It is presented here only for convenience; the authoritative iperf3
 manual page is included in the source tree and installed along with
 the executable.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span>IPERF3(1)                        User Manuals                        IPERF3(1)
+<div class="highlight-default"><div class="highlight"><pre><span></span>IPERF3(1)                        User Manuals                        IPERF3(1)
 
 
 
@@ -247,6 +249,14 @@ SERVER SPECIFIC OPTIONS
        -1, --one-off
               handle one client connection, then exit.
 
+       --rsa-private-key-path (if built with OpenSSL support)
+             path  to  the  RSA private  key  used to  decrypt authentication
+             credentials (not password protected)
+
+       --authorized-users-path (if built with OpenSSL support)
+             path to  the  configuration  file  containing  authorized  users
+             credendientals to run iperf tests. File  is  a  comma  separated
+             list of usernames and password hashes.
 
 CLIENT SPECIFIC OPTIONS
        -c, --client host
@@ -372,6 +382,46 @@ CLIENT SPECIFIC OPTIONS
               --json, the server output is included in a JSON  object;  other-
               wise  it is appended at the bottom of the human-readable output.
 
+       --username (if built with OpenSSL support)
+              username assigned by server adminitrators to access to the iperf
+              service.
+
+       --rsa-public-key-path (if built with OpenSSL support)
+              path  to  the  RSA  public  key  used to  encrypt authentication
+              credentials
+
+EXAMPLES
+
+       Authentication - RSA Keypair
+
+              Authentication feature requires a pair of public and private RSA
+              keys. The public  key  is  used  to  encrypt the  authentication
+              token containing the user credentials, the private key  is  used
+              to decrypt the authentication token.
+              An example of linux command to generate correct keypair follows:
+
+               $&gt; openssl genrsa -des3 -out private.pem 2048
+               $&gt; openssl rsa -in private.pem -outform PEM -pubout \
+                  -out public.pem
+               $&gt; openssl rsa -in private.pem -out private_not_protected.pem \
+                  -outform PEM
+
+        Authentication - Authorized users configuration file
+
+              A  simple  plaintext file  can  be  provided to iperf3 server in
+              order to specify the authorized  user c redentials allowd to use
+              iperf3 server. File  can  contain commented lines (starting with
+              # char)  and  is a  simple  list  of  comma  separated  pair  of
+              username  password  hash.  Password  hash  is  a  sha256 hash of
+              string &quot;{$user}$password&quot;:
+
+               $&gt; S_USER=mario S_PASSWD=rossi
+               $&gt; echo -ne &quot;{$S_USER}$S_PASSWD&quot;|sha256sum|awk &#39;{ print $1 }&#39;
+
+               $&gt; cat credentials.csv
+               # file format: username,sha256
+               mario,44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c0....
+               $&gt;
 
 AUTHORS
        A list of the contributors to iperf3 can be found within the documenta-
@@ -383,7 +433,7 @@ SEE ALSO
 
 
 
-ESnet                            January 2017                        IPERF3(1)
+ESnet                            Januar 2017                        IPERF3(1)
 </pre></div>
 </div>
 <p>The iperf3 manual page will typically be installed in manual
@@ -400,7 +450,7 @@ section 1.</p>
   <div class="container">
     <div class="row">
       <div class="col-md-1">
-        <a href="http://www.es.net/"><img src="_static/esnet/logo-esnet.png" alt="[ESnet]"></a>
+        <a href="http://www.es.net/"><img src="_static/logo-esnet.png" alt="[ESnet]"></a>
       </div>
       <div class="col-md-11">
         <p class="pull-right">
@@ -409,7 +459,7 @@ section 1.</p>
         </p>
         <p>
             &copy; Copyright 2014-2017, ESnet.<br/>
-          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.5.<br/>
+          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.5.<br/>
         </p>
       </div>
     </div>

@@ -2556,20 +2556,32 @@ iperf_print_results(struct iperf_test *test)
 	unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
 	if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 	    if (test->sender_has_retransmits) {
-		/* Summary, TCP with retransmits. */
+		/* Sender summary, TCP and SCTP with retransmits. */
 		if (test->json_output)
 		    cJSON_AddItemToObject(json_summary_stream, "sender", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d  max_snd_cwnd:  %d  max_rtt:  %d  min_rtt:  %d  mean_rtt:  %d", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8, (int64_t) sp->result->stream_retrans, (int64_t) sp->result->stream_max_snd_cwnd, (int64_t) sp->result->stream_max_rtt, (int64_t) sp->result->stream_min_rtt, (int64_t) ((sp->result->stream_count_rtt == 0) ? 0 : sp->result->stream_sum_rtt / sp->result->stream_count_rtt)));
 		else
-		    iperf_printf(test, report_bw_retrans_format, sp->socket, start_time, end_time, ubuf, nbuf, sp->result->stream_retrans, report_sender);
+		    if (test->role == 's' && !test->sender) {
+			if (test->verbose) 
+			    iperf_printf(test, report_sender_not_available_format, sp->socket);
+		    }
+		    else {
+			iperf_printf(test, report_bw_retrans_format, sp->socket, start_time, end_time, ubuf, nbuf, sp->result->stream_retrans, report_sender);
+		    }
 	    } else {
-		/* Summary, TCP without retransmits. */
+		/* Sender summary, TCP and SCTP without retransmits. */
 		if (test->json_output)
 		    cJSON_AddItemToObject(json_summary_stream, "sender", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8));
 		else
-		    iperf_printf(test, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf, report_sender);
+		    if (test->role == 's' && !test->sender) {
+			if (test->verbose)
+			    iperf_printf(test, report_sender_not_available_format, sp->socket);
+		    }
+		    else {
+			iperf_printf(test, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf, report_sender);
+		    }
 	    }
 	} else {
-	    /* Summary, UDP. */
+	    /* Sender summary, UDP. */
 	    if (sp->packet_count - sp->omitted_packet_count > 0) {
               lost_percent = 100.0 * (sp->cnt_error - sp->omitted_cnt_error) / (sp->packet_count - sp->omitted_packet_count);
 	    }
@@ -2577,11 +2589,28 @@ iperf_print_results(struct iperf_test *test)
 		lost_percent = 0.0;
 	    }
 	    if (test->json_output)
+		/* 
+		 * For hysterical raisins, we only emit one JSON
+		 * object for the UDP summary, and it contains
+		 * information for both the sender and receiver
+		 * side.
+		 */
               cJSON_AddItemToObject(json_summary_stream, "udp", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f  out_of_order: %d", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_sent, bandwidth * 8, (double) sp->jitter * 1000.0, (int64_t) (sp->cnt_error - sp->omitted_cnt_error), (int64_t) (sp->packet_count - sp->omitted_packet_count), (double) lost_percent, (int64_t) (sp->outoforder_packets - sp->omitted_outoforder_packets)));
 	    else {
-              iperf_printf(test, report_bw_udp_format, sp->socket, start_time, end_time, ubuf, nbuf, sp->jitter * 1000.0, (sp->cnt_error - sp->omitted_cnt_error), (sp->packet_count - sp->omitted_packet_count), lost_percent, "");
-		if (test->role == 'c')
-		    iperf_printf(test, report_datagrams, sp->socket, (sp->packet_count - sp->omitted_packet_count));
+		/*
+		 * Due to ordering of messages on the control channel,
+		 * the server cannot report on client-side summary
+		 * statistics.  If we're the server, omit one set of
+		 * summary statistics to avoid giving meaningless
+		 * results.
+		 */
+		if (test->role == 's' && !test->sender) {
+		    if (test->verbose) 
+			iperf_printf(test, report_sender_not_available_format, sp->socket);
+		}
+		else {
+		    iperf_printf(test, report_bw_udp_format, sp->socket, start_time, end_time, ubuf, nbuf, sp->jitter * 1000.0, 0, (sp->packet_count - sp->omitted_packet_count), (double) 0, report_sender);
+		}
 		if ((sp->outoforder_packets - sp->omitted_outoforder_packets) > 0)
                   iperf_printf(test, report_sum_outoforder, start_time, end_time, (sp->outoforder_packets - sp->omitted_outoforder_packets));
 	    }
@@ -2606,10 +2635,33 @@ iperf_print_results(struct iperf_test *test)
 	bandwidth = (double) bytes_received / (double) end_time;
 	unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
 	if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
+	    /* Receiver summary, TCP and SCTP */
 	    if (test->json_output)
 		cJSON_AddItemToObject(json_summary_stream, "receiver", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f", (int64_t) sp->socket, (double) start_time, (double) end_time, (double) end_time, (int64_t) bytes_received, bandwidth * 8));
 	    else
-		iperf_printf(test, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf, report_receiver);
+		if (test->role == 's' && test->sender) {
+		    if (test->verbose) 
+			iperf_printf(test, report_receiver_not_available_format, sp->socket);
+		}
+		else {
+		    iperf_printf(test, report_bw_format, sp->socket, start_time, end_time, ubuf, nbuf, report_receiver);
+		}
+	}
+	else {
+	    /* 
+	     * Receiver summary, UDP.  Note that JSON was emitted with
+	     * the sender summary, so we only deal with human-readable
+	     * data here.
+	     */
+	    if (! test->json_output) {
+		if (test->role == 's' && test->sender) {
+		    if (test->verbose)
+			iperf_printf(test, report_receiver_not_available_format, sp->socket);
+		}
+		else {
+		    iperf_printf(test, report_bw_udp_format, sp->socket, start_time, end_time, ubuf, nbuf, sp->jitter * 1000.0, (sp->cnt_error - sp->omitted_cnt_error), (sp->packet_count - sp->omitted_packet_count), lost_percent, report_receiver);
+		}
+	    }
 	}
     }
     }

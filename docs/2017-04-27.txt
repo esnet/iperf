@@ -1,0 +1,95 @@
+Subject:  iperf3 status, April 2017
+
+This is the first of a series of (maybe periodic?) updates about
+iperf3 development:
+
+State of the iperf3 World, as seen from ESnet...
+------------------------------------------------
+
+iperf3 was originally written to be a "better", more maintainable
+follow-on to iperf2.  This was seen to be necessary to fill the 
+requirements for the perfSONAR project (http://www.perfsonar.net).
+
+In the past few years, iperf2 development has been restarted by Bob
+McMahon of Broadcom.  He (and other contributors) have fixed a number
+of problems with iperf2 and added some new features
+(https://sourceforge.net/projects/iperf2/).  We're happy to observe
+that iperf2 is once again under active development, and we have
+started discussing ways in which these two projects could productively
+interact.
+
+We note that iperf3 lacks several features found in iperf2, for
+example multicast tests, bidirectional tests, multi-threading, and
+official Windows support.  Given the active state of iperf2
+development and maintenance, we feel that the needs of users requiring
+such functionality are best met by using a recent version of iperf2
+instead of waiting for them to be backported or reimplemented in
+iperf3.
+
+ESnet's main interest in iperf3 is for testing high-performance
+Research and Education (R&E) networks, especially as a part of the
+perfSONAR toolkit.  iperf3 can be useful in other circumstances as
+well, but high-speed R&E network performance testing will remain the
+primary use case.  (Much of iperf2's recent development
+has focused on the use of UDP for end-to-end latency testing on a
+broad range of platforms, although it too is useful for many other
+testing scenarios.)
+
+iperf3 Support
+--------------
+
+We're trying to work down the support backlog for iperf3.  To that
+end, we've been aggressively triaging iperf3 issues in the issue
+tracker on GitHub.  Over the past several weeks, we've gone from about
+180 open issues to less than 75.  A number of these issues were user
+questions, not bug reports or enhancement requests.  We're now
+discouraging the use of the iperf3 issue tracker for questions.
+Instead we'd like users to either use the mailing list
+(iperf-dev@google-groups.com) or to look to various question sites on
+the Internet such as Stack Overflow (http://www.stackoverflow.com).
+
+We're happy to accept enhancement requests, although it should be
+noted that ESnet's time commitments to iperf3 are somewhat limited and
+we need to prioritize our work to match our own requirements.  We have
+begun using the "Help Wanted" label in the issue tracker on GitHub to
+indicate requests we agree with (or at least don't object to), but
+which we don't have the time to work on ourselves.  These are good
+candidates for someone in the community to work on and submit as a
+pull request.
+
+Pull requests are still encouraged, as long as they're compatible with
+ESnet's goals and requirements for iperf3.  If you're contemplating a
+code change that would have a major, fundamental change on the iperf3
+architecture, we strongly encourage discussion with the iperf3
+maintainers before doing a significant amount of work.
+
+Some of the above considerations are now documented in GitHub
+templates that we've recently installed for new issues, pull requests,
+and contribution guidelines.
+
+To make it easier for new users with common questions, we have created
+a Frequently Asked Questions (FAQ) list, which is now available on the
+iperf3 Web site, at:
+
+http://software.es.net/iperf/faq.html
+
+Future Plans
+------------
+
+In the near-term, we're planning another iperf3 release that will
+include some recently added changes.  Because some of the changes are
+rather large, we're considering basing this release off the mainline
+which would make it the first 3.2 release, rather than try to backport
+these changes and make another "bugfix" 3.1 release.  No decisions
+have been made yet.
+
+The main changes (already on the master branch) are authentication
+(#517), a more fine-grained pacing timer (#460), and some portability
+fixes.  We'd appreciate any testing and feedback that users in the
+community could give on these.
+
+Thanks for your interest and support of iperf3,
+
+Bruce Mah
+Software Engineering Group
+ESnet

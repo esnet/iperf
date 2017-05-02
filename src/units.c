@@ -69,15 +69,15 @@ extern    "C"
 {
 #endif
 
-    const long KILO_UNIT = 1024;
-    const long MEGA_UNIT = 1024 * 1024;
-    const long GIGA_UNIT = 1024 * 1024 * 1024;
-    const long TERA_UNIT = 1.0 * 1024 * 1024 * 1024 * 1024;
+    const double KILO_UNIT = 1024.0;
+    const double MEGA_UNIT = 1024.0 * 1024.0;
+    const double GIGA_UNIT = 1024.0 * 1024.0 * 1024.0;
+    const double TERA_UNIT = 1024.0 * 1024.0 * 1024.0 * 1024.0;
 
-    const long KILO_RATE_UNIT = 1000;
-    const long MEGA_RATE_UNIT = 1000 * 1000;
-    const long GIGA_RATE_UNIT = 1000 * 1000 * 1000;
-    const long TERA_RATE_UNIT = 1.0 * 1000 * 1000 * 1000 * 1000;
+    const double KILO_RATE_UNIT = 1000.0;
+    const double MEGA_RATE_UNIT = 1000.0 * 1000.0;
+    const double GIGA_RATE_UNIT = 1000.0 * 1000.0 * 1000.0;
+    const double TERA_RATE_UNIT = 1000.0 * 1000.0 * 1000.0 * 1000.0;
 
 /* -------------------------------------------------------------------
  * unit_atof

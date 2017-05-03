@@ -92,32 +92,6 @@ iperf_server_listen(struct iperf_test *test)
 	iperf_printf(test, "Server listening on %d\n", test->server_port);
     }
 
-    // This needs to be changed to reflect if client has different window size
-    // make sure we got what we asked for
-    /* XXX: This needs to be moved to the stream listener
-    if ((x = get_tcp_windowsize(test->listener, SO_RCVBUF)) < 0) {
-        // Needs to set some sort of error number/message
-        perror("SO_RCVBUF");
-        return -1;
-    }
-    */
-
-    // XXX: This code needs to be moved to after parameter exhange
-    /*
-    char ubuf[UNIT_LEN];
-    int x;
-
-    if (test->protocol->id == Ptcp) {
-        if (test->settings->socket_bufsize > 0) {
-            unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A');
-	    if (!test->json_output) 
-		iperf_printf(test, report_window, ubuf);
-        } else {
-	    if (!test->json_output) 
-		iperf_printf(test, "%s", report_autotune);
-        }
-    }
-    */
     if (!test->json_output)
 	iperf_printf(test, "-----------------------------------------------------------\n");
 

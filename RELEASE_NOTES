@@ -9,9 +9,10 @@
     correct test durations for all protocols (#560, #238).
 
   * Application-level bandwidth pacing (--bandwidth option) is now
-    checked every millisecond, instead of of every tenth of a second,
-    to provide smoother traffic behavior when using application
-    pacing.  (#460)
+    checked every millisecond by default, instead of of every tenth of
+    a second, to provide smoother traffic behavior when using
+    application pacing.  (#460) The pacing can be tuned via the use of
+    the --pacing-timer option.
 
   * A new --dscp option allows specifying the DSCP value to be used
     for outgoing packets (#508).  The TOS byte value is now printed in

@@ -45,6 +45,7 @@
 #include "iperf_udp.h"
 #include "timer.h"
 #include "net.h"
+#include "cjson.h"
 #include "portable_endian.h"
 
 /* iperf_udp_recv
@@ -202,6 +203,7 @@ int
 iperf_udp_buffercheck(struct iperf_test *test, int s)
 {
     int rc = 0;
+    int sndbuf_actual, rcvbuf_actual;
 
     /*
      * Set socket buffer size if requested.  Do this for both sending and
@@ -222,48 +224,55 @@ iperf_udp_buffercheck(struct iperf_test *test, int s)
     }
 
     /* Read back and verify the sender socket buffer size */
-    optlen = sizeof(opt);
-    if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, &optlen) < 0) {
+    optlen = sizeof(sndbuf_actual);
+    if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &sndbuf_actual, &optlen) < 0) {
 	i_errno = IESETBUF;
 	return -1;
     }
     if (test->debug) {
-	printf("SNDBUF is %u, expecting %u\n", opt, test->settings->socket_bufsize);
+	printf("SNDBUF is %u, expecting %u\n", sndbuf_actual, test->settings->socket_bufsize);
     }
-    if (test->settings->socket_bufsize && test->settings->socket_bufsize > opt) {
+    if (test->settings->socket_bufsize && test->settings->socket_bufsize > sndbuf_actual) {
 	i_errno = IESETBUF2;
 	return -1;
     }
-    if (test->settings->blksize > opt) {
+    if (test->settings->blksize > sndbuf_actual) {
 	char str[80];
 	snprintf(str, sizeof(str),
 		 "Block size %d > sending socket buffer size %d",
-		 test->settings->blksize, opt);
+		 test->settings->blksize, sndbuf_actual);
 	warning(str);
 	rc = 1;
     }
 
     /* Read back and verify the receiver socket buffer size */
-    optlen = sizeof(opt);
-    if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, &optlen) < 0) {
+    optlen = sizeof(rcvbuf_actual);
+    if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, &rcvbuf_actual, &optlen) < 0) {
 	i_errno = IESETBUF;
 	return -1;
     }
     if (test->debug) {
-	printf("RCVBUF is %u, expecting %u\n", opt, test->settings->socket_bufsize);
+	printf("RCVBUF is %u, expecting %u\n", rcvbuf_actual, test->settings->socket_bufsize);
     }
-    if (test->settings->socket_bufsize && test->settings->socket_bufsize > opt) {
+    if (test->settings->socket_bufsize && test->settings->socket_bufsize > rcvbuf_actual) {
 	i_errno = IESETBUF2;
 	return -1;
     }
-    if (test->settings->blksize > opt) {
+    if (test->settings->blksize > rcvbuf_actual) {
 	char str[80];
 	snprintf(str, sizeof(str),
 		 "Block size %d > receiving socket buffer size %d",
-		 test->settings->blksize, opt);
+		 test->settings->blksize, rcvbuf_actual);
 	warning(str);
 	rc = 1;
     }
+
+    if (test->json_output) {
+	cJSON_AddNumberToObject(test->json_start, "sock_bufsize", test->settings->socket_bufsize);
+	cJSON_AddNumberToObject(test->json_start, "sndbuf_actual", sndbuf_actual);
+	cJSON_AddNumberToObject(test->json_start, "rcvbuf_actual", rcvbuf_actual);
+    }
+
     return rc;
 }
 

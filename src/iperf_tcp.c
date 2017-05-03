@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2016, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2016, 2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -42,6 +42,7 @@
 #include "iperf_api.h"
 #include "iperf_tcp.h"
 #include "net.h"
+#include "cjson.h"
 
 #if defined(HAVE_FLOWLABEL)
 #include "flowlabel.h"
@@ -138,7 +139,9 @@ iperf_tcp_listen(struct iperf_test *test)
     struct addrinfo hints, *res;
     char portstr[6];
     int s, opt;
+    socklen_t optlen;
     int saved_errno;
+    int rcvbuf_actual, sndbuf_actual;
 
     s = test->listener;
 
@@ -222,18 +225,6 @@ iperf_tcp_listen(struct iperf_test *test)
                 return -1;
             }
         }
-	if (test->debug) {
-	    socklen_t optlen = sizeof(opt);
-	    if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, &optlen) < 0) {
-		saved_errno = errno;
-		close(s);
-		freeaddrinfo(res);
-		errno = saved_errno;
-		i_errno = IESETBUF;
-		return -1;
-	    }
-	    printf("SO_SNDBUF is %u\n", opt);
-	}
 #if defined(HAVE_SO_MAX_PACING_RATE)
     /* If fq socket pacing is specified, enable it. */
     if (test->settings->fqrate) {
@@ -309,6 +300,48 @@ iperf_tcp_listen(struct iperf_test *test)
         test->listener = s;
     }
     
+    /* Read back and verify the sender socket buffer size */
+    optlen = sizeof(sndbuf_actual);
+    if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &sndbuf_actual, &optlen) < 0) {
+	saved_errno = errno;
+	close(s);
+	freeaddrinfo(res);
+	errno = saved_errno;
+	i_errno = IESETBUF;
+	return -1;
+    }
+    if (test->debug) {
+	printf("SNDBUF is %u, expecting %u\n", sndbuf_actual, test->settings->socket_bufsize);
+    }
+    if (test->settings->socket_bufsize && test->settings->socket_bufsize > sndbuf_actual) {
+	i_errno = IESETBUF2;
+	return -1;
+    }
+
+    /* Read back and verify the receiver socket buffer size */
+    optlen = sizeof(rcvbuf_actual);
+    if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, &rcvbuf_actual, &optlen) < 0) {
+	saved_errno = errno;
+	close(s);
+	freeaddrinfo(res);
+	errno = saved_errno;
+	i_errno = IESETBUF;
+	return -1;
+    }
+    if (test->debug) {
+	printf("RCVBUF is %u, expecting %u\n", rcvbuf_actual, test->settings->socket_bufsize);
+    }
+    if (test->settings->socket_bufsize && test->settings->socket_bufsize > rcvbuf_actual) {
+	i_errno = IESETBUF2;
+	return -1;
+    }
+
+    if (test->json_output) {
+	cJSON_AddNumberToObject(test->json_start, "sock_bufsize", test->settings->socket_bufsize);
+	cJSON_AddNumberToObject(test->json_start, "sndbuf_actual", sndbuf_actual);
+	cJSON_AddNumberToObject(test->json_start, "rcvbuf_actual", rcvbuf_actual);
+    }
+
     return s;
 }
 
@@ -325,6 +358,7 @@ iperf_tcp_connect(struct iperf_test *test)
     int s, opt;
     socklen_t optlen;
     int saved_errno;
+    int rcvbuf_actual, sndbuf_actual;
 
     if (test->bind_address) {
         memset(&hints, 0, sizeof(hints));
@@ -415,8 +449,8 @@ iperf_tcp_connect(struct iperf_test *test)
     }
 
     /* Read back and verify the sender socket buffer size */
-    optlen = sizeof(opt);
-    if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, &optlen) < 0) {
+    optlen = sizeof(sndbuf_actual);
+    if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &sndbuf_actual, &optlen) < 0) {
 	saved_errno = errno;
 	close(s);
 	freeaddrinfo(server_res);
@@ -425,16 +459,16 @@ iperf_tcp_connect(struct iperf_test *test)
 	return -1;
     }
     if (test->debug) {
-	printf("SNDBUF is %u, expecting %u\n", opt, test->settings->socket_bufsize);
+	printf("SNDBUF is %u, expecting %u\n", sndbuf_actual, test->settings->socket_bufsize);
     }
-    if (test->settings->socket_bufsize && test->settings->socket_bufsize > opt) {
+    if (test->settings->socket_bufsize && test->settings->socket_bufsize > sndbuf_actual) {
 	i_errno = IESETBUF2;
 	return -1;
     }
 
     /* Read back and verify the receiver socket buffer size */
-    optlen = sizeof(opt);
-    if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, &optlen) < 0) {
+    optlen = sizeof(rcvbuf_actual);
+    if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, &rcvbuf_actual, &optlen) < 0) {
 	saved_errno = errno;
 	close(s);
 	freeaddrinfo(server_res);
@@ -443,11 +477,17 @@ iperf_tcp_connect(struct iperf_test *test)
 	return -1;
     }
     if (test->debug) {
-	printf("RCVBUF is %u, expecting %u\n", opt, test->settings->socket_bufsize);
+	printf("RCVBUF is %u, expecting %u\n", rcvbuf_actual, test->settings->socket_bufsize);
     }
-    if (test->settings->socket_bufsize && test->settings->socket_bufsize > opt) {
+    if (test->settings->socket_bufsize && test->settings->socket_bufsize > rcvbuf_actual) {
 	i_errno = IESETBUF2;
 	return -1;
+    }
+
+    if (test->json_output) {
+	cJSON_AddNumberToObject(test->json_start, "sock_bufsize", test->settings->socket_bufsize);
+	cJSON_AddNumberToObject(test->json_start, "sndbuf_actual", sndbuf_actual);
+	cJSON_AddNumberToObject(test->json_start, "rcvbuf_actual", rcvbuf_actual);
     }
 
 #if defined(HAVE_FLOWLABEL)

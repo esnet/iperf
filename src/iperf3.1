@@ -124,6 +124,16 @@ This bandwidth limit is implemented internally inside iperf3, and is
 available on all platforms.
 Compare with the \--fq-rate flag.
 .TP
+.BR --pacing-timer " \fIn\fR[KMG]"
+set pacing timer interval in microseconds (default 1000 microseconds,
+or 1 ms).
+This controls iperf3's internal pacing timer for the -b/--bandwidth
+option.
+The timer fires at the interval set by this parameter.
+Smaller values of the pacing timer parameter smooth out the traffic
+emitted by iperf3, but potentially at the cost of performance due to
+more frequent timer processing.
+.TP
 .BR --fq-rate " \fIn\fR[KM]"
 Set a rate to be used with fair-queueing based socket-level pacing,
 in bits per second.

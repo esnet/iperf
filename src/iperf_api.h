@@ -58,6 +58,7 @@ struct iperf_stream;
 #define OPT_CLIENT_RSA_PUBLIC_KEY 13
 #define OPT_SERVER_RSA_PRIVATE_KEY 14
 #define OPT_SERVER_AUTHORIZED_USERS 15
+#define OPT_PACING_TIMER 16
 
 /* states */
 #define TEST_START 1

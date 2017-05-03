@@ -116,6 +116,7 @@ struct iperf_settings
     int       blksize;              /* size of read/writes (-l) */
     uint64_t  rate;                 /* target data rate for application pacing*/
     uint64_t  fqrate;               /* target data rate for FQ pacing*/
+    int	      pacing_timer;	    /* pacing timer in microseconds */
     int       burst;                /* packets per burst */
     int       mss;                  /* for TCP MSS */
     int       ttl;                  /* IP TTL option */

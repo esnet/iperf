@@ -681,6 +681,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     {"authorized-users-path", required_argument, NULL, OPT_SERVER_AUTHORIZED_USERS},
 #endif /* HAVE_SSL */
 	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
+	{"pacing-timer", required_argument, NULL, OPT_PACING_TIMER},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -1012,7 +1013,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             test->server_authorized_users = strdup(optarg);
             break;
 #endif /* HAVE_SSL */
-            case 'h':
+	    case OPT_PACING_TIMER:
+		test->settings->pacing_timer = unit_atoi(optarg);
+		client_flag = 1;
+		break;
+	    case 'h':
 		usage_long(stdout);
 		exit(0);
             default:
@@ -1298,7 +1303,7 @@ iperf_create_send_timers(struct iperf_test * test)
 	if (test->settings->rate != 0) {
 	    cd.p = sp;
 	    /* (Repeat every millisecond - arbitrary value to provide smooth pacing.) */
-	    sp->send_timer = tmr_create((struct timeval*) 0, send_timer_proc, cd, 1000L, 1);
+	    sp->send_timer = tmr_create((struct timeval*) 0, send_timer_proc, cd, test->settings->pacing_timer, 1);
 	    if (sp->send_timer == NULL) {
 		i_errno = IEINITTEST;
 		return -1;
@@ -1460,6 +1465,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "bandwidth", test->settings->rate);
 	if (test->settings->fqrate)
 	    cJSON_AddNumberToObject(j, "fqrate", test->settings->fqrate);
+	if (test->settings->pacing_timer)
+	    cJSON_AddNumberToObject(j, "pacing_timer", test->settings->pacing_timer);
 	if (test->settings->burst)
 	    cJSON_AddNumberToObject(j, "burst", test->settings->burst);
 	if (test->settings->tos)
@@ -1545,6 +1552,8 @@ get_parameters(struct iperf_test *test)
 	    test->settings->rate = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "fqrate")) != NULL)
 	    test->settings->fqrate = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "pacing_timer")) != NULL)
+	    test->settings->pacing_timer = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "burst")) != NULL)
 	    test->settings->burst = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "TOS")) != NULL)
@@ -2037,6 +2046,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->blksize = DEFAULT_TCP_BLKSIZE;
     testp->settings->rate = 0;
     testp->settings->fqrate = 0;
+    testp->settings->pacing_timer = 1000;
     testp->settings->burst = 0;
     testp->settings->mss = 0;
     testp->settings->bytes = 0;

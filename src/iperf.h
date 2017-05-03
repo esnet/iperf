@@ -102,6 +102,8 @@ struct iperf_stream_result
     struct timeval start_time;
     struct timeval end_time;
     struct timeval start_time_fixed;
+    double sender_time;
+    double receiver_time;
     TAILQ_HEAD(irlisthead, iperf_interval_results) interval_results;
     void     *data;
 };

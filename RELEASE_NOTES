@@ -1,3 +1,218 @@
+== iperf 3.2 2017-05-XX ==
+
+* User-visible changes
+
+  * Authentication via a username/password mechanism is now an
+    optional way of limiting access to an iperf3 server (#517).
+
+  * Ending statistics are less ambituous for UDP and also now use
+    correct test durations for all protocols (#560, #238).
+
+  * Application-level bandwidth pacing (--bandwidth option) is now
+    checked every millisecond, instead of of every tenth of a second,
+    to provide smoother traffic behavior when using application
+    pacing.  (#460)
+
+  * A new --dscp option allows specifying the DSCP value to be used
+    for outgoing packets (#508).  The TOS byte value is now printed in
+    the JSON output (#226).
+
+  * Congestion window data on FreeBSD is now computed correctly (#465,
+    #475, #338).
+
+  * The T/t suffixes for terabytes/terabits are now accepted for
+    quantities where suffixes are supported, such as --bandwidth
+    (#402).
+
+  * Sanity checks for UDP send sizes have been added (#390), and
+    existing checks on the --window option have been improved (#557).
+
+  * The TCP rttvar value is now available in the JSON (#534).
+
+* Developer-visible changes
+
+  * Various warnings and build fixes (#551, #518).
+
+  * Some dead code has been removed.
+
+== iperf 3.1.7 2017-03-06 ==
+
+iperf 3.1.7 is functionally identical to iperf 3.1.6.  Its only
+changes consist of updated documentation files and text in the RPM
+spec file.
+
+== iperf 3.1.6 2017-02-02 ==
+
+The release notes for iperf 3.1.6 describe changes, including bug
+fixes and new functionality, made since iperf 3.1.5.
+
+* User-visible changes
+
+  * Specifying --fq-rate or --no-fq-socket-pacing on a system where
+    these options are not supported now generate an error instead of a
+    warning.  This change makes diagnosing issues related to pacing
+    more apparent.
+
+  * Fixed a bug where two recently-added diagnostic messages spammed
+    the JSON output on UDP tests.
+
+== iperf 3.1.5 2017-01-12 ==
+
+The release notes for iperf 3.1.5 describe changes, including bug
+fixes and new functionality, made since iperf 3.1.4.
+
+Compatibility note: Fair-queueing is now specified differently in
+iperf 3.1.5 than in prior versions (which include 3.1.3 and 3.1.4).
+
+Compatibility note: UDP tests may yield different results from all
+prior versions of iperf3 (through 3.1.4) due to the new default UDP
+sending size.
+
+* User-visible changes
+
+  * The fair-queueing per-socket based pacing available on recent
+    Linux systems has been reimplemented with a different user
+    interface (#325, #467, #488).  The --bandwidth command-line flag
+    now controls only the application-level pacing, as was the case in
+    iperf 3.1.2 and all earlier versions.  Fair-queueing per-socket
+    based pacing is now controlled via a new --fq-rate command-line
+    flag.  Note that TCP and UDP tests may use --bandwidth, --fq-rate,
+    both flags, or neither flag.  SCTP tests currently support
+    --bandwidth only.  The --no-fq-socket-pacing flag, which was
+    introduced in iperf 3.1.3, has now been deprecated, and is
+    equivalent to --fq-rate=0.  iperf3 now reacts more gracefully if
+    --no-fq-socket-pacing or --fq-rate are specified on platforms that
+    don't support these options.
+
+    For UDP tests, note that the default --bandwidth is 1 Mbps.  Using
+    the fair-queueing-based pacing will probably require explicitly
+    setting both --bandwidth and --fq-rate, preferably to the same
+    value.  (While setting different values for --bandwidth and
+    --fq-rate can certainly be done, the results can range from
+    entertaining to perplexing.)
+
+  * iperf3 now chooses a more sane default UDP send size (#496, #498).
+    The former default (8KB) caused IP packet fragmentation on paths
+    having smaller MTUs (including any Ethernet network not configured
+    for jumbo frames).  This could have effects ranging from increased
+    burstiness, to packet loss, to complete failure of the test.
+    iperf3 now attempts to use the MSS of the control connection to
+    determine a default UDP send size if no sending length was
+    explicitly specified with --length.
+
+  * Several checks are now made when setting the socket buffer sizes
+    with the -w option, to verify that the settings have been applied
+    correctly.  The results of these checks can been seen when the
+    --debug flag is specified.  (#356)
+
+  * A --forceflush flag has been added to flush the output stream
+    after every statistics reporting interval.
+
+* Developer-visible changes
+
+  * A systemd service file has been added (#340, #430).
+
+== iperf 3.1.4 2016-10-31 ==
+
+The release notes for iperf 3.1.4 describe changes, including bug
+fixes and new functionality, made since iperf 3.1.3.
+
+* User-visible changes
+
+  * On systems that support setting the congestion control algorithm,
+    iperf3 now keeps track of the congestion control algorithm and
+    print it in the JSON output in the members sender_tcp_congestion
+    and receiver_tcp_congestion (issue #461).  A few bugs (probably
+    not user-visible) with setting the congestion control algorithm
+    were also fixed.
+
+* Developer-visible changes
+
+  * Fixed a buffer overflow in the cJSON library (issue #466).  It is
+    not believed that this bug created any security vulnerabilities in
+    the context of iperf3.
+
+  * Travis CI builds are now enabled on this codeline (pull request #424).
+
+  * Various bug fixes (issue #459, pull request #429, issue #388).
+
+== iperf 3.1.3 2016-06-08 ==
+
+The release notes for iperf 3.1.3 describe changes, including bug
+fixes and new functionality, made since iperf 3.1.2.
+
+* Security
+
+  * Fixed a buffer overflow / heap corruption issue that could occur
+    if a malformed JSON string was passed on the control channel.  In
+    theory, this vulnerability could be leveraged to create a heap
+    exploit.  This issue, present in the cJSON library, was already
+    fixed upstream, so was addressed in iperf3 by importing a newer
+    version of cJSON (plus local ESnet modifications).  Discovered and
+    reported by Dave McDaniel, Cisco Talos.  Cross-references:
+    TALOS-CAN-0164, ESNET-SECADV-2016-0001, CVE-2016-4303.
+
+* User-visible changes
+
+  * On supported platforms (recent Linux), iperf3 can use
+    fair-queueing-based per-socket pacing instead of its own
+    application-level pacing for the --bandwidth option.
+    Application-level pacing can be forced with the
+    -no-fq-socket-pacing flag.
+
+  * A bug that could show negative loss counters with --udp and --omit
+    has been fixed (issue #412, pull request #414).
+
+  * Error handling has been made slightly more robust.  Also, the
+    iperf3 server will no longer exit after five consecutive errors,
+    but will only exit for certain types of errors that prevent it
+    from participating in any tests at all.
+
+* Developer-visible changes
+
+  * Fixed the build on FreeBSD 11-CURRENT (issue #413).
+
+  * Fixed various coding errors (issue #423, issue #425).
+
+== iperf 3.1.2 2016-02-01 ==
+
+The release notes for iperf 3.1.2 describe changes, including bug
+fixes and new functionality, made since iperf 3.1.1.
+
+* User-visible changes
+
+  * Fixed a bug that caused nan values to be emitted (incorrectly)
+    into JSON, particularly at the end of UDP tests (issue #278).
+
+  * Fixed a bug that caused the wrong value to be printed for
+    out-of-order UDP packets (issue #329).
+
+  * Added a contrib/ directory containing a few submitted graphing
+    scripts.
+
+* Developer-visible changes
+
+== iperf 3.1.1 2015-11-19 ==
+
+The release notes for iperf 3.1.1 describe changes and new
+functionality in iperf 3.1.1, but not present in 3.1.
+
+* User-visible changes
+
+  * Some markup fixes have been made in the manpages for Debian
+    compatibility (issue #291).
+
+  * A bug where the -T title option was not being output correctly
+    in JSON output has been fixed (issue #292).
+
+  * Argument handling for some command-line options has been improved
+    (issue #316).
+
+* Developer-visible changes
+
+  * A regression with C++ compatibility in one of the iperf header
+    files has been fixed (issue #323).
+
 == iperf 3.1 2015-10-16 ==
 
 The release notes for iperf 3.1 describe changes and new

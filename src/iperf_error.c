@@ -137,6 +137,9 @@ iperf_strerror(int int_errno)
         case IESETSERVERAUTH:
              snprintf(errstr, len, "you must specify path to a valid private rsa server to be used and a user credential file");
             break;
+	case IEBADFORMAT:
+	    snprintf(errstr, len, "bad format specifier (valid formats are in the set [kmgtKMGT])");
+	    break;
         case IEMSS:
             snprintf(errstr, len, "TCP MSS too large (maximum = %d bytes)", MAX_MSS);
             break;

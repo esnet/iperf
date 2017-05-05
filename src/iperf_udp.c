@@ -108,7 +108,17 @@ iperf_udp_recv(struct iperf_stream *sp)
 	iperf_err(sp->test, "OUT OF ORDER - incoming packet = %zu and received packet = %d AND SP = %d", pcount, sp->packet_count, sp->socket);
     }
 
-    /* jitter measurement */
+    /*
+     * jitter measurement
+     *
+     * This computation is based on RFC 1889 (specifically
+     * sections 6.3.1 and A.8).
+     *
+     * Note that synchronized clocks are not required since
+     * the source packet delta times are known.  Also this
+     * computation does not require knowing the round-trip
+     * time.
+     */
     gettimeofday(&arrival_time, NULL);
 
     transit = timeval_diff(&sent_time, &arrival_time);
@@ -116,8 +126,6 @@ iperf_udp_recv(struct iperf_stream *sp)
     if (d < 0)
         d = -d;
     sp->prev_transit = transit;
-    // XXX: This is NOT the way to calculate jitter
-    //      J = |(R1 - S1) - (R0 - S0)| [/ number of packets, for average]
     sp->jitter += (d - sp->jitter) / 16.0;
 
     if (sp->test->debug) {

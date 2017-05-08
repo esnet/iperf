@@ -709,7 +709,25 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 test->server_port = atoi(optarg);
                 break;
             case 'f':
-                test->settings->unit_format = *optarg;
+		if (!optarg) {
+		    i_errno = IEBADFORMAT;
+		    return -1;
+		}
+		test->settings->unit_format = *optarg;
+		if (test->settings->unit_format == 'k' ||
+		    test->settings->unit_format == 'K' ||
+		    test->settings->unit_format == 'm' ||
+		    test->settings->unit_format == 'M' ||
+		    test->settings->unit_format == 'g' ||
+		    test->settings->unit_format == 'G' ||
+		    test->settings->unit_format == 't' ||
+		    test->settings->unit_format == 'T') {
+			break;
+		}
+		else {
+		    i_errno = IEBADFORMAT;
+		    return -1;
+		}
                 break;
             case 'i':
                 /* XXX: could potentially want separate stat collection and reporting intervals,

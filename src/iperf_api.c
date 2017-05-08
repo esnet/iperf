@@ -1793,7 +1793,11 @@ get_results(struct iperf_test *test)
 				if (test->sender) {
 				    sp->jitter = jitter;
 				    sp->cnt_error = cerror;
-				    sp->packet_count = pcount;
+/* XXX */
+				    if (test->debug) {
+					printf("old sp->packet_count %d new sp->packet_count %d\n", sp->packet_count, pcount);
+				    }
+				    sp->peer_packet_count = pcount;
 				    sp->result->bytes_received = bytes_transferred;
 				    /*
 				     * We have to handle the possibilty that
@@ -2547,6 +2551,7 @@ iperf_print_results(struct iperf_test *test)
     cJSON *json_summary_stream = NULL;
     int total_retransmits = 0;
     int total_packets = 0, lost_packets = 0;
+    int sender_packet_count = 0, receiver_packet_count = 0;
     char ubuf[UNIT_LEN];
     char nbuf[UNIT_LEN];
     struct stat sb;
@@ -2609,12 +2614,21 @@ iperf_print_results(struct iperf_test *test)
         total_sent += bytes_sent;
         total_received += bytes_received;
 
+	if (test->sender) {
+	    sender_packet_count = sp->packet_count;
+	    receiver_packet_count = sp->peer_packet_count;
+	}
+	else {
+	    sender_packet_count = sp->peer_packet_count;
+	    receiver_packet_count = sp->packet_count;
+	}
+	
         if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 	    if (test->sender_has_retransmits) {
 		total_retransmits += sp->result->stream_retrans;
 	    }
 	} else {
-            total_packets += (sp->packet_count - sp->omitted_packet_count);
+            total_packets += (sender_packet_count - sp->omitted_packet_count);
             lost_packets += (sp->cnt_error - sp->omitted_cnt_error);
             avg_jitter += sp->jitter;
         }
@@ -2650,8 +2664,8 @@ iperf_print_results(struct iperf_test *test)
 	    }
 	} else {
 	    /* Sender summary, UDP. */
-	    if (sp->packet_count - sp->omitted_packet_count > 0) {
-              lost_percent = 100.0 * (sp->cnt_error - sp->omitted_cnt_error) / (sp->packet_count - sp->omitted_packet_count);
+	    if (sender_packet_count - sp->omitted_packet_count > 0) {
+		lost_percent = 100.0 * (sp->cnt_error - sp->omitted_cnt_error) / (sender_packet_count - sp->omitted_packet_count);
 	    }
 	    else {
 		lost_percent = 0.0;
@@ -2677,7 +2691,7 @@ iperf_print_results(struct iperf_test *test)
 			iperf_printf(test, report_sender_not_available_format, sp->socket);
 		}
 		else {
-		    iperf_printf(test, report_bw_udp_format, sp->socket, start_time, sender_time, ubuf, nbuf, sp->jitter * 1000.0, 0, (sp->packet_count - sp->omitted_packet_count), (double) 0, report_sender);
+		    iperf_printf(test, report_bw_udp_format, sp->socket, start_time, sender_time, ubuf, nbuf, 0.0, 0, (sender_packet_count - sp->omitted_packet_count), (double) 0, report_sender);
 		}
 		if ((sp->outoforder_packets - sp->omitted_outoforder_packets) > 0)
                   iperf_printf(test, report_sum_outoforder, start_time, sender_time, (sp->outoforder_packets - sp->omitted_outoforder_packets));
@@ -2722,12 +2736,19 @@ iperf_print_results(struct iperf_test *test)
 	     * data here.
 	     */
 	    if (! test->json_output) {
+		if (receiver_packet_count - sp->omitted_packet_count > 0) {
+		    lost_percent = 100.0 * (sp->cnt_error - sp->omitted_cnt_error) / (receiver_packet_count - sp->omitted_packet_count);
+		}
+		else {
+		    lost_percent = 0.0;
+		}
+
 		if (test->role == 's' && test->sender) {
 		    if (test->verbose)
 			iperf_printf(test, report_receiver_not_available_format, sp->socket);
 		}
 		else {
-		    iperf_printf(test, report_bw_udp_format, sp->socket, start_time, receiver_time, ubuf, nbuf, sp->jitter * 1000.0, (sp->cnt_error - sp->omitted_cnt_error), (sp->packet_count - sp->omitted_packet_count), lost_percent, report_receiver);
+		    iperf_printf(test, report_bw_udp_format, sp->socket, start_time, receiver_time, ubuf, nbuf, sp->jitter * 1000.0, (sp->cnt_error - sp->omitted_cnt_error), (receiver_packet_count - sp->omitted_packet_count), lost_percent, report_receiver);
 		}
 	    }
 	}

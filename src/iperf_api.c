@@ -2551,7 +2551,8 @@ iperf_print_results(struct iperf_test *test)
     cJSON *json_summary_stream = NULL;
     int total_retransmits = 0;
     int total_packets = 0, lost_packets = 0;
-    int sender_packet_count = 0, receiver_packet_count = 0;
+    int sender_packet_count = 0, receiver_packet_count = 0; /* for this stream, this interval */
+    int sender_total_packets = 0, receiver_total_packets = 0; /* running total */
     char ubuf[UNIT_LEN];
     char nbuf[UNIT_LEN];
     struct stat sb;
@@ -2628,7 +2629,14 @@ iperf_print_results(struct iperf_test *test)
 		total_retransmits += sp->result->stream_retrans;
 	    }
 	} else {
-            total_packets += (sender_packet_count - sp->omitted_packet_count);
+	    /*
+	     * Running total of the total number of packets.  Use the sender packet count if we
+	     * have it, otherwise use the receiver packet count.
+	     */
+	    int packet_count = sender_packet_count ? sender_packet_count : receiver_packet_count;
+	    total_packets += (packet_count - sp->omitted_packet_count);
+	    sender_total_packets += (sender_packet_count - sp->omitted_packet_count);
+	    receiver_total_packets += (receiver_packet_count - sp->omitted_packet_count);
             lost_packets += (sp->cnt_error - sp->omitted_cnt_error);
             avg_jitter += sp->jitter;
         }
@@ -2670,14 +2678,26 @@ iperf_print_results(struct iperf_test *test)
 	    else {
 		lost_percent = 0.0;
 	    }
-	    if (test->json_output)
+	    if (test->json_output) {
 		/* 
 		 * For hysterical raisins, we only emit one JSON
 		 * object for the UDP summary, and it contains
 		 * information for both the sender and receiver
 		 * side.
+		 *
+		 * The JSON format as currently defined only includes one
+		 * value for the number of packets.  We usually want that
+		 * to be the sender's value (how many packets were sent
+		 * by the sender).  However this value might not be
+		 * available on the receiver in certain circumstances
+		 * specifically on the server side for a normal test or
+		 * the client side for a reverse-mode test.  If this
+		 * is the case, then use the receiver's count of packets
+		 * instead.
 		 */
-              cJSON_AddItemToObject(json_summary_stream, "udp", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f  out_of_order: %d", (int64_t) sp->socket, (double) start_time, (double) sender_time, (double) sender_time, (int64_t) bytes_sent, bandwidth * 8, (double) sp->jitter * 1000.0, (int64_t) (sp->cnt_error - sp->omitted_cnt_error), (int64_t) (sp->packet_count - sp->omitted_packet_count), (double) lost_percent, (int64_t) (sp->outoforder_packets - sp->omitted_outoforder_packets)));
+		int packet_count = sender_packet_count ? sender_packet_count : receiver_packet_count;
+		cJSON_AddItemToObject(json_summary_stream, "udp", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f  out_of_order: %d", (int64_t) sp->socket, (double) start_time, (double) sender_time, (double) sender_time, (int64_t) bytes_sent, bandwidth * 8, (double) sp->jitter * 1000.0, (int64_t) (sp->cnt_error - sp->omitted_cnt_error), (int64_t) (packet_count - sp->omitted_packet_count), (double) lost_percent, (int64_t) (sp->outoforder_packets - sp->omitted_outoforder_packets)));
+	    }
 	    else {
 		/*
 		 * Due to ordering of messages on the control channel,
@@ -2804,8 +2824,28 @@ iperf_print_results(struct iperf_test *test)
 	    }
 	    if (test->json_output)
 		cJSON_AddItemToObject(test->json_end, "sum", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f", (double) start_time, (double) end_time, (double) end_time, (int64_t) total_sent, bandwidth * 8, (double) avg_jitter * 1000.0, (int64_t) lost_packets, (int64_t) total_packets, (double) lost_percent));
-	    else
-		iperf_printf(test, report_sum_bw_udp_format, start_time, end_time, ubuf, nbuf, avg_jitter * 1000.0, lost_packets, total_packets, lost_percent, "");
+	    else {
+		/*
+		 * On the client we have both sender and receiver overall summary
+		 * stats.  On the server we have only the side that was on the
+		 * server.  Output whatever we have.
+		 */
+		if (! (test->role == 's' && !test->sender) ) {
+		    iperf_printf(test, report_sum_bw_udp_format, start_time, sender_time, ubuf, nbuf, 0.0, 0, sender_total_packets, 0.0, "sender");
+		}
+		if (! (test->role == 's' && test->sender) ) {
+
+		    /* Compute received bandwidth. */
+		    if (end_time > 0.0) {
+			bandwidth = (double) total_received / (double) receiver_time;
+		    }
+		    else {
+			bandwidth = 0.0;
+		    }
+		    unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
+		    iperf_printf(test, report_sum_bw_udp_format, start_time, receiver_time, ubuf, nbuf, avg_jitter * 1000.0, lost_packets, receiver_total_packets, lost_percent, "receiver");
+		}
+	    }
         }
     }
 

@@ -2561,7 +2561,7 @@ iperf_print_results(struct iperf_test *test)
     iperf_size_t bytes_sent, total_sent = 0;
     iperf_size_t bytes_received, total_received = 0;
     double start_time, end_time = 0.0, avg_jitter = 0.0, lost_percent = 0.0;
-    double sender_time, receiver_time;
+    double sender_time = 0.0, receiver_time = 0.0;
     double bandwidth;
 
     /* print final summary for all intervals */

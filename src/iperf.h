@@ -157,6 +157,7 @@ struct iperf_stream
      * stream can have a pointer to this
      */
     int       packet_count;
+    int	      peer_packet_count;
     int       omitted_packet_count;
     double    jitter;
     double    prev_transit;

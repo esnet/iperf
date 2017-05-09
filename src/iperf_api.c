@@ -1815,6 +1815,7 @@ get_results(struct iperf_test *test)
 					sp->result->receiver_time = 0.0;
 				    }
 				} else {
+				    sp->peer_packet_count = pcount;
 				    sp->result->bytes_sent = bytes_transferred;
 				    sp->result->stream_retrans = retransmits;
 				    if (j_start_time && j_end_time) {
@@ -2831,10 +2832,12 @@ iperf_print_results(struct iperf_test *test)
 		 * server.  Output whatever we have.
 		 */
 		if (! (test->role == 's' && !test->sender) ) {
+		    unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
 		    iperf_printf(test, report_sum_bw_udp_format, start_time, sender_time, ubuf, nbuf, 0.0, 0, sender_total_packets, 0.0, "sender");
 		}
 		if (! (test->role == 's' && test->sender) ) {
 
+		    unit_snprintf(ubuf, UNIT_LEN, (double) total_received, 'A');
 		    /* Compute received bandwidth. */
 		    if (end_time > 0.0) {
 			bandwidth = (double) total_received / (double) receiver_time;

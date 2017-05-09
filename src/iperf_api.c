@@ -1793,10 +1793,6 @@ get_results(struct iperf_test *test)
 				if (test->sender) {
 				    sp->jitter = jitter;
 				    sp->cnt_error = cerror;
-/* XXX */
-				    if (test->debug) {
-					printf("old sp->packet_count %d new sp->packet_count %d\n", sp->packet_count, pcount);
-				    }
 				    sp->peer_packet_count = pcount;
 				    sp->result->bytes_received = bytes_transferred;
 				    /*

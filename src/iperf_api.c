@@ -2639,7 +2639,12 @@ iperf_print_results(struct iperf_test *test)
         }
 
 	unit_snprintf(ubuf, UNIT_LEN, (double) bytes_sent, 'A');
-	bandwidth = (double) bytes_sent / (double) sender_time;
+	if (sender_time > 0.0) {
+	    bandwidth = (double) bytes_sent / (double) sender_time;
+	}
+	else {
+	    bandwidth = 0.0;
+	}
 	unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
 	if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 	    if (test->sender_has_retransmits) {
@@ -2731,7 +2736,12 @@ iperf_print_results(struct iperf_test *test)
 	}
 
 	unit_snprintf(ubuf, UNIT_LEN, (double) bytes_received, 'A');
-	bandwidth = (double) bytes_received / (double) receiver_time;
+	if (receiver_time > 0) {
+	    bandwidth = (double) bytes_received / (double) receiver_time;
+	}
+	else {
+	    bandwidth = 0.0;
+	}
 	unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
 	if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 	    /* Receiver summary, TCP and SCTP */
@@ -2774,9 +2784,9 @@ iperf_print_results(struct iperf_test *test)
 
     if (test->num_streams > 1 || test->json_output) {
         unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
-	/* If no tests were run, arbitrariliy set bandwidth to 0. */
-	if (end_time > 0.0) {
-	    bandwidth = (double) total_sent / (double) end_time;
+	/* If no tests were run, arbitrarily set bandwidth to 0. */
+	if (sender_time > 0.0) {
+	    bandwidth = (double) total_sent / (double) sender_time;
 	}
 	else {
 	    bandwidth = 0.0;
@@ -2786,29 +2796,47 @@ iperf_print_results(struct iperf_test *test)
 	    if (test->sender_has_retransmits) {
 		/* Summary sum, TCP with retransmits. */
 		if (test->json_output)
-		    cJSON_AddItemToObject(test->json_end, "sum_sent", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d", (double) start_time, (double) end_time, (double) end_time, (int64_t) total_sent, bandwidth * 8, (int64_t) total_retransmits));
+		    cJSON_AddItemToObject(test->json_end, "sum_sent", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d", (double) start_time, (double) sender_time, (double) sender_time, (int64_t) total_sent, bandwidth * 8, (int64_t) total_retransmits));
 		else
-		    iperf_printf(test, report_sum_bw_retrans_format, start_time, end_time, ubuf, nbuf, total_retransmits, report_sender);
+		    if (test->role == 's' && !test->sender) {
+		        if (test->verbose)
+			    iperf_printf(test, report_sender_not_available_format, sp->socket);
+		    }
+		    else {
+		      iperf_printf(test, report_sum_bw_retrans_format, start_time, sender_time, ubuf, nbuf, total_retransmits, report_sender);
+		    }
 	    } else {
 		/* Summary sum, TCP without retransmits. */
 		if (test->json_output)
-		    cJSON_AddItemToObject(test->json_end, "sum_sent", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f", (double) start_time, (double) end_time, (double) end_time, (int64_t) total_sent, bandwidth * 8));
+		    cJSON_AddItemToObject(test->json_end, "sum_sent", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f", (double) start_time, (double) sender_time, (double) sender_time, (int64_t) total_sent, bandwidth * 8));
 		else
-		    iperf_printf(test, report_sum_bw_format, start_time, end_time, ubuf, nbuf, report_sender);
+		    if (test->role == 's' && !test->sender) {
+		        if (test->verbose) 
+			    iperf_printf(test, report_sender_not_available_format, sp->socket);
+		    }
+		    else {
+		        iperf_printf(test, report_sum_bw_format, start_time, sender_time, ubuf, nbuf, report_sender);
+		    }
 	    }
             unit_snprintf(ubuf, UNIT_LEN, (double) total_received, 'A');
 	    /* If no tests were run, set received bandwidth to 0 */
-	    if (end_time > 0.0) {
-		bandwidth = (double) total_received / (double) end_time;
+	    if (receiver_time > 0.0) {
+		bandwidth = (double) total_received / (double) receiver_time;
 	    }
 	    else {
 		bandwidth = 0.0;
 	    }
             unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
 	    if (test->json_output)
-		cJSON_AddItemToObject(test->json_end, "sum_received", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f", (double) start_time, (double) end_time, (double) end_time, (int64_t) total_received, bandwidth * 8));
+		cJSON_AddItemToObject(test->json_end, "sum_received", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f", (double) start_time, (double) receiver_time, (double) receiver_time, (int64_t) total_received, bandwidth * 8));
 	    else
-		iperf_printf(test, report_sum_bw_format, start_time, end_time, ubuf, nbuf, report_receiver);
+	        if (test->role == 's' && test->sender) {
+		    if (test->verbose) 
+		        iperf_printf(test, report_receiver_not_available_format, sp->socket);
+		}
+		else {
+		    iperf_printf(test, report_sum_bw_format, start_time, receiver_time, ubuf, nbuf, report_receiver);
+	        }
         } else {
 	    /* Summary sum, UDP. */
             avg_jitter /= test->num_streams;
@@ -2820,7 +2848,7 @@ iperf_print_results(struct iperf_test *test)
 		lost_percent = 0.0;
 	    }
 	    if (test->json_output)
-		cJSON_AddItemToObject(test->json_end, "sum", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f", (double) start_time, (double) end_time, (double) end_time, (int64_t) total_sent, bandwidth * 8, (double) avg_jitter * 1000.0, (int64_t) lost_packets, (int64_t) total_packets, (double) lost_percent));
+		cJSON_AddItemToObject(test->json_end, "sum", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f", (double) start_time, (double) receiver_time, (double) receiver_time, (int64_t) total_sent, bandwidth * 8, (double) avg_jitter * 1000.0, (int64_t) lost_packets, (int64_t) total_packets, (double) lost_percent));
 	    else {
 		/*
 		 * On the client we have both sender and receiver overall summary

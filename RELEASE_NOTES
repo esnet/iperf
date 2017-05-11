@@ -6,13 +6,15 @@
     optional way of limiting access to an iperf3 server (#517).
 
   * Ending statistics are less ambituous for UDP and also now use
-    correct test durations for all protocols (#560, #238).
+    correct test durations for all protocols (#560, #238).  Many fixes
+    have been made in statistics printing code, generally for
+    human-readable output (#562, #575, #252).
 
   * Application-level bandwidth pacing (--bandwidth option) is now
     checked every millisecond by default, instead of of every tenth of
     a second, to provide smoother traffic behavior when using
-    application pacing.  (#460) The pacing can be tuned via the use of
-    the --pacing-timer option.
+    application pacing (#460).  The pacing can be tuned via the use of
+    the --pacing-timer option (#563).
 
   * A new --dscp option allows specifying the DSCP value to be used
     for outgoing packets (#508).  The TOS byte value is now printed in
@@ -28,11 +30,21 @@
   * Sanity checks for UDP send sizes have been added (#390), and
     existing checks on the --window option have been improved (#557).
 
-  * The TCP rttvar value is now available in the JSON (#534).
+  * The TCP rttvar value is now available in the JSON output (#534), as are
+    the socket buffer sizes (#558).
+
+  * Error handling and documentation have been improved for the
+    -f/--format options (#568).
 
 * Developer-visible changes
 
-  * Various warnings and build fixes (#551, #518).
+  * Various warnings and build fixes (#551, #564, #518).
+
+  * Some improvements have been made for increased compatibility on
+    IRIX (#368).
+
+  * cJSON has been updated to 1.5.2 (#573), bringing in a number of
+    bugfixes.
 
   * Some dead code has been removed.
 

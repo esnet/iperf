@@ -81,6 +81,7 @@ struct iperf_interval_results
     void     *custom_data;
     int rtt;
     int rttvar;
+    int pmtu;
 };
 
 struct iperf_stream_result

@@ -2588,14 +2588,26 @@ iperf_print_results(struct iperf_test *test)
      * we were running the tests and print out some statistics about
      * the streams.  It's possible to not have any streams at all
      * if the client got interrupted before it got to do anything.
+     *
+     * Also note that we try to keep seperate values for the sender
+     * and receiver ending times.  Earlier iperf (3.1 and earlier)
+     * servers didn't send that to the clients, so in this case we fall
+     * back to using the client's ending timestamp.  The fallback is
+     * basically emulating what iperf 3.1 did.
      */
     if (sp) {
     end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
     if (test->sender) {
 	sp->result->sender_time = end_time;
+	if (sp->result->receiver_time == 0.0) {
+	    sp->result->receiver_time = sp->result->sender_time;
+	}
     }
     else {
 	sp->result->receiver_time = end_time;
+	if (sp->result->sender_time == 0.0) {
+	    sp->result->sender_time = sp->result->receiver_time;
+	}
     }
     sender_time = sp->result->sender_time;
     receiver_time = sp->result->receiver_time;

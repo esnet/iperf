@@ -753,7 +753,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 test->json_output = 1;
                 break;
             case 'v':
-                printf("%s\n%s\n%s\n", version, get_system_info(), 
+                printf("%s (cJSON %s)\n%s\n%s\n", version, cJSON_Version(), get_system_info(),
 		       get_optional_features());
                 exit(0);
             case 's':

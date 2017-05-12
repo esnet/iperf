@@ -136,8 +136,6 @@ iperf_tcp_accept(struct iperf_test * test)
 int
 iperf_tcp_listen(struct iperf_test *test)
 {
-    struct addrinfo hints, *res;
-    char portstr[6];
     int s, opt;
     socklen_t optlen;
     int saved_errno;
@@ -155,6 +153,9 @@ iperf_tcp_listen(struct iperf_test *test)
      * It's not clear whether this is a requirement or a convenience.
      */
     if (test->no_delay || test->settings->mss || test->settings->socket_bufsize) {
+	struct addrinfo hints, *res;
+	char portstr[6];
+
         FD_CLR(s, &test->read_set);
         close(s);
 
@@ -305,7 +306,6 @@ iperf_tcp_listen(struct iperf_test *test)
     if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &sndbuf_actual, &optlen) < 0) {
 	saved_errno = errno;
 	close(s);
-	freeaddrinfo(res);
 	errno = saved_errno;
 	i_errno = IESETBUF;
 	return -1;
@@ -323,7 +323,6 @@ iperf_tcp_listen(struct iperf_test *test)
     if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, &rcvbuf_actual, &optlen) < 0) {
 	saved_errno = errno;
 	close(s);
-	freeaddrinfo(res);
 	errno = saved_errno;
 	i_errno = IESETBUF;
 	return -1;

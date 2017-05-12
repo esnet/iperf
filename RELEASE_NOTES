@@ -8,7 +8,7 @@
   * Ending statistics are less ambituous for UDP and also now use
     correct test durations for all protocols (#560, #238).  Many fixes
     have been made in statistics printing code, generally for
-    human-readable output (#562, #575, #252).
+    human-readable output (#562, #575, #252, #443, #236).
 
   * Application-level bandwidth pacing (--bandwidth option) is now
     checked every millisecond by default, instead of of every tenth of

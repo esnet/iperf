@@ -129,7 +129,7 @@ get_total_retransmits(struct iperf_interval_results *irp)
 /*
  * Return snd_cwnd in octets.
  */
-long
+unsigned long
 get_snd_cwnd(struct iperf_interval_results *irp)
 {
 #if defined(linux) && defined(TCP_MD5SIG)
@@ -138,6 +138,24 @@ get_snd_cwnd(struct iperf_interval_results *irp)
     return irp->tcpInfo.tcpi_snd_cwnd;
 #elif defined(__NetBSD__) && defined(TCP_INFO)
     return irp->tcpInfo.tcpi_snd_cwnd * irp->tcpInfo.tcpi_snd_mss;
+#else
+    return -1;
+#endif
+}
+
+/*************************************************************/
+/*
+ * Return rcv_space in octets.
+ */
+unsigned int
+get_rcv_space(struct iperf_interval_results *irp)
+{
+#if defined(linux) && defined(TCP_MD5SIG)
+    return irp->tcpInfo.tcpi_rcv_space;
+#elif defined(__FreeBSD__) && __FreeBSD_version >= 600000
+    return irp->tcpInfo.tcpi_rcv_space;
+#elif defined(__NetBSD__) && defined(TCP_INFO)
+    return irp->tcpInfo.tcpi_rcv_space;
 #else
     return -1;
 #endif

@@ -2408,6 +2408,7 @@ iperf_stats_callback(struct iperf_test *test)
 
 		    temp.rttvar = get_rttvar(&temp);
 		    temp.pmtu = get_pmtu(&temp);
+		    temp.rcv_space = get_rcv_space(&temp);
 		}
 	    }
 	} else {

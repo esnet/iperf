@@ -80,7 +80,7 @@ timeout_connect(int s, const struct sockaddr *name, socklen_t namelen,
 	if (timeout != -1) {
 		flags = fcntl(s, F_GETFL, 0);
 		if (fcntl(s, F_SETFL, flags | O_NONBLOCK) == -1)
-			err(1, "set non-blocking mode");
+			return -1;
 	}
 
 	if ((ret = connect(s, name, namelen)) != 0 && errno == EINPROGRESS) {
@@ -97,11 +97,11 @@ timeout_connect(int s, const struct sockaddr *name, socklen_t namelen,
 			errno = ETIMEDOUT;
 			ret = -1;
 		} else
-			err(1, "poll failed");
+			ret = -1;
 	}
 
 	if (timeout != -1 && fcntl(s, F_SETFL, flags) == -1)
-		err(1, "restoring flags");
+		ret = -1;
 
 	return (ret);
 }

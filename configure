@@ -12583,6 +12583,20 @@ $as_echo "#define const /**/" >>confdefs.h
 fi
 
 
+# Check for poll.h (it's in POSIX so everyone should have it?)
+for ac_header in poll.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "poll.h" "ac_cv_header_poll_h" "$ac_includes_default"
+if test "x$ac_cv_header_poll_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_POLL_H 1
+_ACEOF
+
+fi
+
+done
+
+
 # Check for SCTP support
 for ac_header in sys/socket.h
 do :

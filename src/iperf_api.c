@@ -682,6 +682,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif /* HAVE_SSL */
 	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
 	{"pacing-timer", required_argument, NULL, OPT_PACING_TIMER},
+	{"connect-timeout", required_argument, NULL, OPT_CONNECT_TIMEOUT},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -1033,6 +1034,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif /* HAVE_SSL */
 	    case OPT_PACING_TIMER:
 		test->settings->pacing_timer = unit_atoi(optarg);
+		client_flag = 1;
+		break;
+	    case OPT_CONNECT_TIMEOUT:
+		test->settings->connect_timeout = unit_atoi(optarg);
 		client_flag = 1;
 		break;
 	    case 'h':
@@ -2070,6 +2075,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->mss = 0;
     testp->settings->bytes = 0;
     testp->settings->blocks = 0;
+    testp->settings->connect_timeout = -1;
     memset(testp->cookie, 0, COOKIE_SIZE);
 
     testp->multisend = 10;	/* arbitrary */

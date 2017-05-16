@@ -1,4 +1,4 @@
-# iperf, Copyright (c) 2014, 2015, 2016, The Regents of the University of
+# iperf, Copyright (c) 2014, 2015, 2016, 2017, The Regents of the University of
 # California, through Lawrence Berkeley National Laboratory (subject
 # to receipt of any required approvals from the U.S. Dept. of
 # Energy).  All rights reserved.
@@ -84,6 +84,9 @@ exit 1
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
+
+# Check for poll.h (it's in POSIX so everyone should have it?)
+AC_CHECK_HEADERS([poll.h])
 
 # Check for SCTP support
 AC_CHECK_HEADERS([sys/socket.h])

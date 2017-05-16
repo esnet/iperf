@@ -110,6 +110,14 @@ use SCTP rather than TCP (FreeBSD and Linux)
 .BR -u ", " --udp
 use UDP rather than TCP
 .TP
+.BR --connect-timeout " \fIn\fR"
+set timeout for establishing the initial control connection to the
+server, in milliseconds.
+The default behavior is the operating system's timeout for TCP
+connection establishment.
+Providing a shorter value may speed up detection of a down iperf3
+server.
+.TP
 .BR -b ", " --bandwidth " \fIn\fR[KM]"
 set target bandwidth to \fIn\fR bits/sec (default 1 Mbit/sec for UDP, unlimited for TCP).
 If there are multiple streams (\-P flag), the bandwidth limit is applied 

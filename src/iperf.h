@@ -83,6 +83,7 @@ struct iperf_interval_results
     int rtt;
     int rttvar;
     int pmtu;
+    int retrans;		/* tcpi_retrans */
 };
 
 struct iperf_stream_result

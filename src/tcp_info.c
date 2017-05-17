@@ -199,6 +199,20 @@ get_rttvar(struct iperf_interval_results *irp)
 
 /*************************************************************/
 /*
+ * Return tcpi_retrans
+ */
+long
+get_retrans(struct iperf_interval_results *irp)
+{
+#if defined(linux) && defined(TCP_MD5SIG)
+    return irp->tcpInfo.tcpi_retrans;
+#else
+    return -1;
+#endif
+}
+
+/*************************************************************/
+/*
  * Return PMTU in bytes.
  */
 long

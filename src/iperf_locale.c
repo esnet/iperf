@@ -131,6 +131,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  --nstreams      #         number of SCTP streams\n"
 #endif /* HAVE_SCTP */
                            "  -u, --udp                 use UDP rather than TCP\n"
+                           "  --connect-timeout #       timeout for control connection setup (ms)\n"
                            "  -b, --bandwidth #[KMG][/#] target bandwidth in bits/sec (0 for unlimited)\n"
                            "                            (default %d Mbit/sec for UDP, unlimited for TCP)\n"
                            "                            (optional slash and packet count for burst mode)\n"

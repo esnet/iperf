@@ -128,6 +128,7 @@ struct iperf_settings
     char      unit_format;          /* -f */
     int       num_ostreams;         /* SCTP initmsg settings */
     char      *authtoken;           /* Authentication token */
+    int	      connect_timeout;	    /* socket connection timeout, in ms */
 };
 
 struct iperf_test;

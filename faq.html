@@ -150,7 +150,9 @@ perfSONAR project (<a class="reference external" href="http://www.perfsonar.net"
 development of iperf2 (See
 <a class="reference external" href="https://sourceforge.net/projects/iperf2/">https://sourceforge.net/projects/iperf2/</a>). He fixed many of the
 problems with iperf2, and added a number of new features similar to
-iperf3. iperf2.0.8, released in 2015, made iperf2 a useful tool.</p>
+iperf3. iperf2.0.8, released in 2015, made iperf2 a useful tool. iperf2&#8217;s
+current development is focused is on using UDP for latency testing, as well
+as broad platform support.</p>
 <p>As of this writing (2017), both iperf2 and iperf3 are being actively
 (although independently) developed.  We recommend being familiar with
 both tools, and use whichever tool’s features best match your needs.</p>
@@ -185,6 +187,10 @@ modules, which must be loaded before they can be used):</p>
 </dd>
 <dt>I’m using the <code class="docutils literal"><span class="pre">--logfile</span></code> option. How do I see file output in real time?</dt>
 <dd>Use the <code class="docutils literal"><span class="pre">--forceflush</span></code> flag.</dd>
+<dt>I&#8217;m using the &#8211;fq-rate flag, but it does not seem to be working. Why?</dt>
+<dd>You need to add &#8216;net.core.default_qdisc = fq&#8217; to /etc/sysctl.conf for that option to work.</dd>
+<dt>I&#8217;m having trouble getting iperf3 to work on Windows, Android, etc. Where can I get help?</dt>
+<dd>iperf3 only supports Linux, FreeBSD, and OSX. For other platforms we recommend using iperf2.</dd>
 <dt>Why can’t I run a UDP client with no server?</dt>
 <dd>This is potentially dangerous, and an attacker could use this for a
 denial of service attack.  We don&#8217;t want iperf3 to be an attack tool.</dd>

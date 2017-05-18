@@ -131,7 +131,8 @@ Release Engineering Checklist
 -----------------------------
 
 1. Update the ``README`` and ``RELEASE_NOTES`` files to be accurate. Make sure
-   that the "Known Issues" section of the ``README`` file is up to date.
+   that the "Known Issues" section of the ``README`` file and in this document
+   are up to date.
 
 2. Compose a release announcement.  Most of the release announcement
    can be written before tagging.  Usually the previous version's

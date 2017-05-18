@@ -16,7 +16,9 @@ What is the history of iperf3, and what is the difference between iperf2 and ipe
   development of iperf2 (See
   https://sourceforge.net/projects/iperf2/). He fixed many of the
   problems with iperf2, and added a number of new features similar to
-  iperf3. iperf2.0.8, released in 2015, made iperf2 a useful tool.
+  iperf3. iperf2.0.8, released in 2015, made iperf2 a useful tool. iperf2's 
+  current development is focused is on using UDP for latency testing, as well
+  as broad platform support.
  
   As of this writing (2017), both iperf2 and iperf3 are being actively
   (although independently) developed.  We recommend being familiar with
@@ -56,7 +58,13 @@ What congestion control algorithms are supported?
  
 I’m using the ``--logfile`` option. How do I see file output in real time?
   Use the ``--forceflush`` flag.
- 
+
+I'm using the --fq-rate flag, but it does not seem to be working. Why?
+  You need to add 'net.core.default_qdisc = fq' to /etc/sysctl.conf for that option to work.
+
+I'm having trouble getting iperf3 to work on Windows, Android, etc. Where can I get help?
+  iperf3 only supports Linux, FreeBSD, and OSX. For other platforms we recommend using iperf2.
+
 Why can’t I run a UDP client with no server?
   This is potentially dangerous, and an attacker could use this for a
   denial of service attack.  We don't want iperf3 to be an attack tool.

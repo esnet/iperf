@@ -29,6 +29,9 @@
 
 #include "cjson.h"
 #include <sys/select.h>
+#include <stddef.h>
+
+int readentropy(void *out, size_t outsize);
 
 void make_cookie(char *);
 

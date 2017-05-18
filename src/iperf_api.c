@@ -3169,9 +3169,6 @@ iperf_new_stream(struct iperf_test *test, int s)
         free(sp);
         return NULL;
     }
-    srandom(time(NULL));
-    for (i = 0; i < test->settings->blksize; ++i)
-        sp->buffer[i] = random();
 
     /* Set socket */
     sp->socket = s;
@@ -3196,7 +3193,8 @@ iperf_new_stream(struct iperf_test *test, int s)
         sp->diskfile_fd = -1;
 
     /* Initialize stream */
-    if (iperf_init_stream(sp, test) < 0) {
+    if ((readentropy(sp->buffer, test->settings->blksize) < 0) ||
+        (iperf_init_stream(sp, test) < 0)) {
         close(sp->buffer_fd);
         munmap(sp->buffer, sp->test->settings->blksize);
         free(sp->result);

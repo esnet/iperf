@@ -118,24 +118,27 @@ connection establishment.
 Providing a shorter value may speed up detection of a down iperf3
 server.
 .TP
-.BR -b ", " --bandwidth " \fIn\fR[KM]"
-set target bandwidth to \fIn\fR bits/sec (default 1 Mbit/sec for UDP, unlimited for TCP).
-If there are multiple streams (\-P flag), the bandwidth limit is applied 
+.BR -b ", " --bitrate " \fIn\fR[KM]"
+set target bitrate to \fIn\fR bits/sec (default 1 Mbit/sec for UDP,
+unlimited for TCP/SCTP).
+If there are multiple streams (\-P flag), the throughput limit is applied
 separately to each stream.
-You can also add a '/' and a number to the bandwidth specifier.
+You can also add a '/' and a number to the bitrate specifier.
 This is called "burst mode".
 It will send the given number of packets without pausing, even if that
-temporarily exceeds the specified bandwidth limit.
-Setting the target bandwidth to 0 will disable bandwidth limits
+temporarily exceeds the specified throughput limit.
+Setting the target bitrate to 0 will disable bitrate limits
 (particularly useful for UDP tests).
-This bandwidth limit is implemented internally inside iperf3, and is
+This throughput limit is implemented internally inside iperf3, and is
 available on all platforms.
 Compare with the \--fq-rate flag.
+This option replaces the \--bandwidth flag, which is now deprecated
+but (at least for now) still accepted.
 .TP
 .BR --pacing-timer " \fIn\fR[KMG]"
 set pacing timer interval in microseconds (default 1000 microseconds,
 or 1 ms).
-This controls iperf3's internal pacing timer for the -b/--bandwidth
+This controls iperf3's internal pacing timer for the \-b/\--bitrate
 option.
 The timer fires at the interval set by this parameter.
 Smaller values of the pacing timer parameter smooth out the traffic
@@ -146,7 +149,7 @@ more frequent timer processing.
 Set a rate to be used with fair-queueing based socket-level pacing,
 in bits per second.
 This pacing (if specified) will be in addition to any pacing due to
-iperf3's internal bandwidth pacing (\-b flag), and both can be
+iperf3's internal throughput pacing (\-b/\--bitrate flag), and both can be
 specified for the same test.
 Only available on platforms supporting the
 \fCSO_MAX_PACING_RATE\fR socket option (currently only Linux).

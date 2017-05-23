@@ -7,7 +7,7 @@ Summary
 iperf is a tool for active measurements of the maximum achievable
 bandwidth on IP networks.  It supports tuning of various parameters
 related to timing, protocols, and buffers.  For each test it reports
-the bandwidth, loss, and other parameters.
+the measured throughput / bitrate, loss, and other parameters.
 
 This version, sometimes referred to as iperf3, is a redesign of an
 original version developed at NLANR/DAST.  iperf3 is a new

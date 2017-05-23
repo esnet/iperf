@@ -321,7 +321,7 @@ iperf_sctp_connect(struct iperf_test *test)
             i_errno = IESETMSS;
             return -1;
         }
-#endif HAVE_STRUCT_SCTP_ASSOC_VALUE
+#endif /* HAVE_STRUCT_SCTP_ASSOC_VALUE */
     }
 
     if (test->settings->num_ostreams > 0) {

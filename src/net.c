@@ -77,6 +77,7 @@ timeout_connect(int s, const struct sockaddr *name, socklen_t namelen,
 	int flags, optval;
 	int ret;
 
+	flags = 0;
 	if (timeout != -1) {
 		flags = fcntl(s, F_GETFL, 0);
 		if (fcntl(s, F_SETFL, flags | O_NONBLOCK) == -1)

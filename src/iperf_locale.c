@@ -99,7 +99,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "Server or Client:\n"
                            "  -p, --port      #         server port to listen on/connect to\n"
                            "  -f, --format   [kmgtKMGT] format to report: Kbits, Mbits, Gbits, Tbits\n"
-                           "  -i, --interval  #         seconds between periodic bandwidth reports\n"
+                           "  -i, --interval  #         seconds between periodic throughput reports\n"
                            "  -F, --file name           xmit/recv the specified file\n"
 #if defined(HAVE_CPU_AFFINITY)
                            "  -A, --affinity n/n,m      set CPU affinity\n"
@@ -132,7 +132,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 #endif /* HAVE_SCTP */
                            "  -u, --udp                 use UDP rather than TCP\n"
                            "  --connect-timeout #       timeout for control connection setup (ms)\n"
-                           "  -b, --bandwidth #[KMG][/#] target bandwidth in bits/sec (0 for unlimited)\n"
+                           "  -b, --bitrate #[KMG][/#]  target bitrate in bits/sec (0 for unlimited)\n"
                            "                            (default %d Mbit/sec for UDP, unlimited for TCP)\n"
                            "                            (optional slash and packet count for burst mode)\n"
 			   "  --pacing-timer #[KMG]     set the timing for pacing, in microseconds (default 1000)\n"
@@ -302,19 +302,19 @@ const char report_read_length_times[] =
 "[%3d] %5d bytes read %5d times (%.3g%%)\n";
 
 const char report_bw_header[] =
-"[ ID] Interval           Transfer     Bandwidth\n";
+"[ ID] Interval           Transfer     Bitrate\n";
 
 const char report_bw_retrans_header[] =
-"[ ID] Interval           Transfer     Bandwidth       Retr\n";
+"[ ID] Interval           Transfer     Bitrate         Retr\n";
 
 const char report_bw_retrans_cwnd_header[] =
-"[ ID] Interval           Transfer     Bandwidth       Retr  Cwnd\n";
+"[ ID] Interval           Transfer     Bitrate         Retr  Cwnd\n";
 
 const char report_bw_udp_header[] =
-"[ ID] Interval           Transfer     Bandwidth       Jitter    Lost/Total Datagrams\n";
+"[ ID] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams\n";
 
 const char report_bw_udp_sender_header[] =
-"[ ID] Interval           Transfer     Bandwidth       Total Datagrams\n";
+"[ ID] Interval           Transfer     Bitrate         Total Datagrams\n";
 
 const char report_bw_format[] =
 "[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec                  %s\n";

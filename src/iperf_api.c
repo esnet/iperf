@@ -3101,7 +3101,6 @@ iperf_free_stream(struct iperf_stream *sp)
 struct iperf_stream *
 iperf_new_stream(struct iperf_test *test, int s)
 {
-    int i;
     struct iperf_stream *sp;
     
     char template[1024];

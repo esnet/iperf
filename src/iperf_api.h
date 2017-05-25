@@ -29,6 +29,14 @@
 
 #include <sys/time.h>
 #include <setjmp.h>
+#include <stdio.h>
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+#ifdef __cplusplus
+extern "C" { /* open extern "C" */
+#endif
+
 
 struct iperf_test;
 struct iperf_stream_result;
@@ -359,5 +367,11 @@ enum {
     IENEWTIMER = 300,       // Unable to create new timer (check perror)
     IEUPDATETIMER = 301,    // Unable to update timer (check perror)
 };
+
+
+#ifdef __cplusplus
+} /* close extern "C" */
+#endif
+
 
 #endif /* !__IPERF_API_H */

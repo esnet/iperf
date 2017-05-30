@@ -153,6 +153,7 @@ struct iperf_stream
     int       buffer_fd;	/* data to send, file descriptor */
     char      *buffer;		/* data to send, mmapped */
     int       diskfile_fd;	/* file to send, file descriptor */
+    int	      diskfile_left;	/* remaining file data on disk */
 
     /*
      * for udp measurements - This can be a structure outside stream, and

@@ -2743,15 +2743,22 @@ iperf_print_results(struct iperf_test *test)
 	if (sp->diskfile_fd >= 0) {
 	    if (fstat(sp->diskfile_fd, &sb) == 0) {
 		/* In the odd case that it's a zero-sized file, say it was all transferred. */
-		int percent = 100;
+		int percent_sent = 100, percent_received = 100;
 		if (sb.st_size > 0) {
-		    percent = (int) ( ( (double) bytes_sent / (double) sb.st_size ) * 100.0 );
+		    percent_sent = (int) ( ( (double) bytes_sent / (double) sb.st_size ) * 100.0 );
+		    percent_received = (int) ( ( (double) bytes_received / (double) sb.st_size ) * 100.0 );
 		}
 		unit_snprintf(sbuf, UNIT_LEN, (double) sb.st_size, 'A');
 		if (test->json_output)
-		    cJSON_AddItemToObject(json_summary_stream, "diskfile", iperf_json_printf("sent: %d  size: %d  percent: %d  filename: %s", (int64_t) bytes_sent, (int64_t) sb.st_size, (int64_t) percent, test->diskfile_name));
+		    cJSON_AddItemToObject(json_summary_stream, "diskfile", iperf_json_printf("sent: %d  received: %d  size: %d  percent_sent: %d  percent_received: %d  filename: %s", (int64_t) bytes_sent, (int64_t) bytes_received, (int64_t) sb.st_size, (int64_t) percent_sent, (int64_t) percent_received, test->diskfile_name));
 		else
-		    iperf_printf(test, report_diskfile, ubuf, sbuf, percent, test->diskfile_name);
+		    if (test->sender) {
+			iperf_printf(test, report_diskfile, ubuf, sbuf, percent_sent, test->diskfile_name);
+		    }
+		    else {
+			unit_snprintf(ubuf, UNIT_LEN, (double) bytes_received, 'A');
+			iperf_printf(test, report_diskfile, ubuf, sbuf, percent_received, test->diskfile_name);
+		    }
 	    }
 	}
 
@@ -3281,12 +3288,44 @@ static int
 diskfile_send(struct iperf_stream *sp)
 {
     int r;
+    static int rtot;
 
-    r = read(sp->diskfile_fd, sp->buffer, sp->test->settings->blksize);
-    if (r == 0)
-        sp->test->done = 1;
-    else
-	r = sp->snd2(sp);
+    /* if needed, read enough data from the disk to fill up the buffer */
+    if (sp->diskfile_left < sp->test->settings->blksize && !sp->test->done) {
+	r = read(sp->diskfile_fd, sp->buffer, sp->test->settings->blksize -
+		 sp->diskfile_left);
+	rtot += r;
+	if (sp->test->debug) {
+	    printf("read %d bytes from file, %d total\n", r, rtot);
+	    if (r != sp->test->settings->blksize - sp->diskfile_left)
+		printf("possible eof\n");
+	}
+	/* If there's no data left in the file or in the buffer, we're done */
+	if (r == 0 && sp->diskfile_left == 0) {
+	    sp->test->done = 1;
+	    if (sp->test->debug)
+		printf("done\n");
+	}
+    }
+
+    r = sp->snd2(sp);
+    if (r < 0) {
+	return r;
+    }
+    /*
+     * Compute how much data is in the buffer but didn't get sent.
+     * If there are bytes that got left behind, slide them to the
+     * front of the buffer so they can hopefully go out on the next
+     * pass.
+     */
+    sp->diskfile_left = sp->test->settings->blksize - r;
+    if (sp->diskfile_left && sp->diskfile_left < sp->test->settings->blksize) {
+	memcpy(sp->buffer,
+	       sp->buffer + (sp->test->settings->blksize - sp->diskfile_left),
+	       sp->diskfile_left);
+	if (sp->test->debug)
+	    printf("Shifting %d bytes by %d\n", sp->diskfile_left, (sp->test->settings->blksize - sp->diskfile_left));
+    }
     return r;
 }
 

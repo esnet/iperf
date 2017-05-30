@@ -30,10 +30,13 @@ pause \fIn\fR seconds between periodic throughput reports;
 default is 1, use 0 to disable
 .TP
 .BR -F ", " --file " \fIname\fR"
-client-side: read from the file and write to the network, instead
-of using random data;
-server-side: read from the network and write to the file, instead
-of throwing the data away
+Use a file as the source (on the sender) or sink (on the receiver) of
+data, rather than just generating random data or throwing it away.
+This feature is used for finding whether or not the storage subsystem
+is the bottleneck for file transfers.
+It does not turn iperf3 into a file transfer tool.
+The length, attributes, and in some cases contents of the received
+file may not match those of the original file.
 .TP
 .BR -A ", " --affinity " \fIn/n,m\fR"
 Set the CPU affinity, if possible (Linux and FreeBSD only).

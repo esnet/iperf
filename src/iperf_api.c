@@ -3301,7 +3301,7 @@ diskfile_send(struct iperf_stream *sp)
 		printf("possible eof\n");
 	}
 	/* If there's no data left in the file or in the buffer, we're done */
-	if (r == 0 && sp->diskfile_left) {
+	if (r == 0 && sp->diskfile_left == 0) {
 	    sp->test->done = 1;
 	    if (sp->test->debug)
 		printf("done\n");

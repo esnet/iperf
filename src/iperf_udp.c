@@ -97,6 +97,9 @@ iperf_udp_recv(struct iperf_stream *sp)
 	sent_time.tv_usec = usec;
     }
 
+    if (sp->test->debug)
+	fprintf(stderr, "pcount %zu packet_count %d\n", pcount, sp->packet_count);
+
     /*
      * Try to handle out of order packets.  The way we do this
      * uses a constant amount of storage but might not be
@@ -137,7 +140,8 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    sp->cnt_error--;
 	
 	/* Log the out-of-order packet */
-	iperf_err(sp->test, "OUT OF ORDER - incoming packet sequence %zu but expected sequence %d on stream %d", pcount, sp->packet_count, sp->socket);
+	if (sp->test->debug) 
+	    fprintf(stderr, "OUT OF ORDER - incoming packet sequence %zu but expected sequence %d on stream %d", pcount, sp->packet_count, sp->socket);
     }
 
     /*
@@ -159,10 +163,6 @@ iperf_udp_recv(struct iperf_stream *sp)
         d = -d;
     sp->prev_transit = transit;
     sp->jitter += (d - sp->jitter) / 16.0;
-
-    if (sp->test->debug) {
-	fprintf(stderr, "packet_count %d\n", sp->packet_count);
-    }
 
     return r;
 }

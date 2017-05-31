@@ -97,15 +97,47 @@ iperf_udp_recv(struct iperf_stream *sp)
 	sent_time.tv_usec = usec;
     }
 
-    /* Out of order packets */
+    /*
+     * Try to handle out of order packets.  The way we do this
+     * uses a constant amount of storage but might not be
+     * correct in all cases.  In particular we seem to have the
+     * assumption that packets can't be duplicated in the network,
+     * because duplicate packets will possibly cause some problems here.
+     *
+     * First figure out if the sequence numbers are going forward.
+     * Note that pcount is the sequence number read from the packet,
+     * and sp->packet_count is the highest sequence number seen so
+     * far (so we're expecting to see the packet with sequence number
+     * sp->packet_count + 1 arrive next).
+     */
     if (pcount >= sp->packet_count + 1) {
+
+	/* Forward, but is there a gap in sequence numbers? */
         if (pcount > sp->packet_count + 1) {
+	    /* There's a gap so count that as a loss. */
             sp->cnt_error += (pcount - 1) - sp->packet_count;
         }
+	/* Update the highest sequence number seen so far. */
         sp->packet_count = pcount;
     } else {
+
+	/* 
+	 * Sequence number went backward (or was stationary?!?).
+	 * This counts as an out-of-order packet.
+	 */
         sp->outoforder_packets++;
-	iperf_err(sp->test, "OUT OF ORDER - incoming packet = %zu and received packet = %d AND SP = %d", pcount, sp->packet_count, sp->socket);
+
+	/*
+	 * If we have lost packets, then the fact that we are now
+	 * seeing an out-of-order packet offsets a prior sequence
+	 * number gap that was counted as a loss.  So we can take
+	 * away a loss.
+	 */
+	if (sp->cnt_error > 0)
+	    sp->cnt_error--;
+	
+	/* Log the out-of-order packet */
+	iperf_err(sp->test, "OUT OF ORDER - incoming packet sequence %zu but expected sequence %d on stream %d", pcount, sp->packet_count, sp->socket);
     }
 
     /*

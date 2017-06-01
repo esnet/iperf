@@ -1,4 +1,4 @@
-== iperf 3.2 2017-05-XX ==
+== iperf 3.2 2017-06-XX ==
 
 * User-visible changes
 
@@ -10,7 +10,16 @@
     have been made in statistics printing code, generally for
     human-readable output (#562, #575, #252, #443, #236).
 
-  * Application-level bandwidth pacing (--bandwidth option) is now
+  * Several problems with the -F/--file options have been fixed.
+    Documentation has been improved to note some ways in which this
+    feature might not behave as expected (#588).
+
+  * iperf3 now uses the correct "bitrate" phraseology rather than
+    "bandwidth" when describing measurement results.  The --bandwidth
+    option has been renamed --bitrate, although --bandwidth is still
+    accepted for backwards compatibility (#583).
+
+  * Application-level bandwidth pacing (--bitrate option) is now
     checked every millisecond by default, instead of of every tenth of
     a second, to provide smoother traffic behavior when using
     application pacing (#460).  The pacing can be tuned via the use of
@@ -36,12 +45,21 @@
   * Error handling and documentation have been improved for the
     -f/--format options (#568).
 
+  * A new --connect-timeout option on the client allows specifying a
+    length of time that the client will attempt to connect to the
+    server, in milliseconds (#216).
+
+  * The hostname and current timestamp are no longer used in the
+    cookie used to associate the client and server.  Instead, random
+    data is used.  Note that iperf3 now requires the /dev/urandom
+    device (#582).
+
 * Developer-visible changes
 
   * Various warnings and build fixes (#551, #564, #518).
 
   * Some improvements have been made for increased compatibility on
-    IRIX (#368).
+    IRIX (#368) and with C++ (#587).
 
   * cJSON has been updated to 1.5.2 (#573), bringing in a number of
     bugfixes.

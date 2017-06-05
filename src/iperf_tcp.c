@@ -90,7 +90,7 @@ iperf_tcp_send(struct iperf_stream *sp)
     sp->result->bytes_sent_this_interval += r;
 
     if (sp->test->debug)
-	printf("sent %d bytes of %d, total %lu\n", r, sp->settings->blksize, sp->result->bytes_sent);
+	printf("sent %d bytes of %d, total %llu\n", r, sp->settings->blksize, sp->result->bytes_sent);
 
     return r;
 }

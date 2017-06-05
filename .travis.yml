@@ -2,6 +2,8 @@ language: c
 compiler:
    - gcc
    - clang
-os: linux
+os:
+   - linux
+   - osx
  
 script: ./configure && make && make check

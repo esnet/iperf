@@ -2,10 +2,11 @@
 
 * User-visible changes
 
-  * Authentication via a username/password mechanism is now an
-    optional way of limiting access to an iperf3 server (#517).
+  * Authentication via a username/password mechanism, coupled with a
+    public-key pair, is now an optional way of limiting access to an
+    iperf3 server (#517).
 
-  * Ending statistics are less ambituous for UDP and also now use
+  * Ending statistics are less ambiguous for UDP and also now use
     correct test durations for all protocols (#560, #238).  Many fixes
     have been made in statistics printing code, generally for
     human-readable output (#562, #575, #252, #443, #236).
@@ -53,6 +54,18 @@
     cookie used to associate the client and server.  Instead, random
     data is used.  Note that iperf3 now requires the /dev/urandom
     device (#582).
+
+  * Prior versions of iperf3 doing UDP tests used to overcount packet
+    losses in the presence of packet reordering.  This has been
+    (partially) fixed by try to not count the sequence number gaps
+    resulting from out-of-order packets as actual losses (#457).
+
+  * iperf3 no longer prints results from very small intervals (10% of
+    the statistics reporting interval) at the end of the test run if
+    they contain no data.  This can happen due to timing difference or
+    network queueing on the path between the client and server.  This
+    is primarily a cosmetic change to prevent these fairly meaningless
+    intervals from showing up in the output (#278).
 
 * Developer-visible changes
 

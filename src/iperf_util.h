@@ -31,7 +31,10 @@
 #include <sys/select.h>
 #include <stddef.h>
 
+extern FILE *frandom;
+
 int readentropy(void *out, size_t outsize);
+void entropycleanup();
 
 void make_cookie(char *);
 

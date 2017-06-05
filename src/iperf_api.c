@@ -2459,6 +2459,50 @@ iperf_print_intermediate(struct iperf_test *test)
     int total_packets = 0, lost_packets = 0;
     double avg_jitter = 0.0, lost_percent;
 
+    /*
+     * Due to timing oddities, there can be cases, especially on the
+     * server side, where at the end of a test there is a fairly short
+     * interval with no data transferred.  This could caused by
+     * the control and data flows sharing the same path in the network,
+     * and having the control messages for stopping the test being
+     * queued behind the data packets.
+     *
+     * We'd like to try to omit that last interval when it happens, to
+     * avoid cluttering data and output with useless stuff.
+     * So we're going to try to ignore very short intervals (less than
+     * 10% of the interval time) that have no data.
+     */
+    int interval_ok = 0;
+    SLIST_FOREACH(sp, &test->streams, streams) {
+	irp = TAILQ_LAST(&sp->result->interval_results, irlisthead);
+	if (irp) {
+	    double interval_len = timeval_diff(&irp->interval_start_time,
+					       &irp->interval_end_time);
+	    if (test->debug) {
+		printf("interval_len %f bytes_transferred %lu\n", interval_len, irp->bytes_transferred);
+	    }
+
+	    /*
+	     * If the interval is at least 10% the normal interval
+	     * length, or if there were actual bytes transferrred,
+	     * then we want to keep this interval.
+	     */
+	    if (interval_len >= test->stats_interval * 0.10 ||
+		irp->bytes_transferred > 0) {
+		interval_ok = 1;
+		if (test->debug) {
+		    printf("interval forces keep\n");
+		}
+	    }
+	}
+    }
+    if (!interval_ok) {
+	if (test->debug) {
+	    printf("ignoring short interval with no data\n");
+	}
+	return;
+    }
+
     if (test->json_output) {
         json_interval = cJSON_CreateObject();
 	if (json_interval == NULL)

@@ -75,6 +75,25 @@ I'm trying to use iperf3 to test a 40G/100G link...What do I need to know?
    - https://fasterdata.es.net/host-tuning/100g-tuning/
    - https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/multi-stream-iperf3/
 
+My receiver didn't get all the bytes that got sent but there was no loss.  Huh?
+  iperf3 uses a control connection between the client and server to
+  manage the start and end of each test.  Sometimes the commands on
+  the control connection can be received and acted upon before all of
+  the test data has been processed.  Thus the test ends with data
+  still in flight.  This effect can be significant for short (a few
+  seconds) tests, but is probably negligible for longer tests.
+
+A file sent using the ``-F`` option got corrupted...what happened?
+  The ``-F`` option to iperf3 is not a file transfer utility.  It's a
+  way of testing the end-to-end performance of a file transfer,
+  including filesystem and disk overheads.  So while the test will
+  mimic an actual file transfer, the data stored to disk may not be
+  the same as what was sent.  In particular, the file size will be
+  rounded up to the next larger multiple of the transfer block size,
+  and for UDP tests, iperf's metadata (containing timestamps and
+  sequence numbers) will overwrite the start of every UDP packet
+  payload.
+
 I have a question regarding iperf3...what's the best way to get help?
   Searching on the Internet is a good first step.
   http://stackoverflow.com/ has a number of iperf3-related questions

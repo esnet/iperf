@@ -203,6 +203,23 @@ denial of service attack.  We don&#8217;t want iperf3 to be an attack tool.</dd>
 </ul>
 </div></blockquote>
 </dd>
+<dt>My receiver didn&#8217;t get all the bytes that got sent but there was no loss.  Huh?</dt>
+<dd>iperf3 uses a control connection between the client and server to
+manage the start and end of each test.  Sometimes the commands on
+the control connection can be received and acted upon before all of
+the test data has been processed.  Thus the test ends with data
+still in flight.  This effect can be significant for short (a few
+seconds) tests, but is probably negligible for longer tests.</dd>
+<dt>A file sent using the <code class="docutils literal"><span class="pre">-F</span></code> option got corrupted...what happened?</dt>
+<dd>The <code class="docutils literal"><span class="pre">-F</span></code> option to iperf3 is not a file transfer utility.  It&#8217;s a
+way of testing the end-to-end performance of a file transfer,
+including filesystem and disk overheads.  So while the test will
+mimic an actual file transfer, the data stored to disk may not be
+the same as what was sent.  In particular, the file size will be
+rounded up to the next larger multiple of the transfer block size,
+and for UDP tests, iperf&#8217;s metadata (containing timestamps and
+sequence numbers) will overwrite the start of every UDP packet
+payload.</dd>
 <dt>I have a question regarding iperf3...what&#8217;s the best way to get help?</dt>
 <dd><p class="first">Searching on the Internet is a good first step.
 <a class="reference external" href="http://stackoverflow.com/">http://stackoverflow.com/</a> has a number of iperf3-related questions

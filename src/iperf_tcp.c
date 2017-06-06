@@ -144,6 +144,7 @@ iperf_tcp_listen(struct iperf_test *test)
     int saved_errno;
     int rcvbuf_actual, sndbuf_actual;
 
+    res = NULL;
     s = test->listener;
 
     /*

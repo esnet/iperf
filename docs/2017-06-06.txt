@@ -1,0 +1,43 @@
+Subject:  iperf3 status, June 2017
+
+iperf 3.2 Release Plans
+-----------------------
+
+We've done quite a bit of work the past few weeks getting the master
+branch in shape to cut a new release, which will be the first of the
+3.2.x series.  These changes include fixes for a number of
+long-standing bugs (such as some of the statistics computation, and
+fixes for --file), as well as new features (for example optional
+authentication and a configurable client connection timeout) and
+general improvements (better timing for the --bitrate/--bandwidth
+options).
+
+We'd like to encourage users in the community who are comfortable
+compiling iperf3 from GitHub sources, to checkout / clone the iperf3
+master branch from GitHub and try it out in their environments.  (No
+tarballs will be produced until the official 3.2 release, although I'd
+say we're basically in "release candidate" stage now.)
+
+There is a mostly-final set of release notes in the RELEASE_NOTES file
+on master, so you can see what's new, changed, fixed, and so on.
+
+Assuming no serious problems, we're aiming for an official release in
+mid- to late-June (2017!).
+
+iperf3 Support
+--------------
+
+After a lot of issue triage, we're down to 38 issues in the issue
+tracker (plus three outstanding pull requests).  As mentioned in an
+earlier update, a lot of the issues we closed were user questions, not
+bug reports or enhancement requests.  We'd like to direct user
+questions to either the mailing lists or to look on various question
+sites such as Stack Overflow.  For bug reports (where you think iperf3
+is doing something wrong) and enhancement requests (what can it do
+better), please file an issue.
+
+Thanks for your interest and support of iperf3,
+
+Bruce Mah
+Software Engineering Group
+ESnet

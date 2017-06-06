@@ -1,6 +1,12 @@
 iperf3 Project News
 ===================
 
+2017-06-06:  iperf3 update, June 2017
+--------------------------------------
+
+https://raw.githubusercontent.com/esnet/iperf/master/docs/2017-06-06.txt
+
+
 2017-04-27:  iperf3 update, April 2017
 --------------------------------------
 

@@ -32,7 +32,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_GETOPT_H
 #include <getopt.h>
+#else
+#include "missing_getopt.h"
+#endif /* HAVE_GETOPT_H */
 #include <errno.h>
 #include <signal.h>
 #include <unistd.h>
@@ -705,7 +709,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     char *client_username = NULL, *client_rsa_public_key = NULL;
 #endif /* HAVE_SSL */
 
-    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
+    char optstring[] = "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:";
+#ifdef HAVE_GETOPT_H
+    while ((flag = getopt_long(argc, argv, optstring, longopts, NULL)) != -1) {
+#else
+    while ((flag = netbsd_getopt_long(argc, argv, optstring, longopts, NULL)) != -1) {
+#endif /* HAVE_GETOPT_H */
         switch (flag) {
             case 'p':
                 test->server_port = atoi(optarg);

@@ -148,6 +148,9 @@ AC_CHECK_FUNCS([cpuset_setaffinity sched_setaffinity],
 	       AC_DEFINE([HAVE_CPU_AFFINITY], [1], 
 	 	         [Have CPU affinity support.]))
 
+# Check for daemon().  Most systems have this but a few (IRIX) don't.
+AC_CHECK_FUNCS([daemon])
+
 # Check for sendfile support.  FreeBSD, Linux, and MacOS all support
 # this system call, but they're all different in terms of what headers
 # it needs and what arguments it expects.

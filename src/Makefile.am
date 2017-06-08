@@ -28,6 +28,8 @@ libiperf_la_SOURCES     = \
                         iperf_util.c \
                         iperf_util.h \
 			dscp.c \
+                        missing_getopt.c \
+                        missing_getopt.h \
                         net.c \
                         net.h \
 			portable_endian.h \

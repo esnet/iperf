@@ -12597,6 +12597,20 @@ fi
 done
 
 
+# Check for getopt.h
+for ac_header in getopt.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "getopt.h" "ac_cv_header_getopt_h" "$ac_includes_default"
+if test "x$ac_cv_header_getopt_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_GETOPT_H 1
+_ACEOF
+
+fi
+
+done
+
+
 # Check for SCTP support
 for ac_header in sys/socket.h
 do :

@@ -88,6 +88,9 @@ AC_C_CONST
 # Check for poll.h (it's in POSIX so everyone should have it?)
 AC_CHECK_HEADERS([poll.h])
 
+# Check for getopt.h
+AC_CHECK_HEADERS([getopt.h])
+
 # Check for SCTP support
 AC_CHECK_HEADERS([sys/socket.h])
 AC_CHECK_HEADERS([netinet/sctp.h],

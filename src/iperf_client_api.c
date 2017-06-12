@@ -407,6 +407,10 @@ iperf_client_end(struct iperf_test *test)
     /* show final summary */
     test->reporter_callback(test);
 
+    /* Close control socket */
+    if (test->ctrl_sck)
+        close(test->ctrl_sck);
+
     if (iperf_set_send_state(test, IPERF_DONE) != 0)
         return -1;
 

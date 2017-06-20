@@ -1,4 +1,4 @@
-.TH IPERF3 1 "May 2017" ESnet "User Manuals"
+.TH IPERF3 1 "June 2017" ESnet "User Manuals"
 .SH NAME
 iperf3 \- perform network throughput tests
 .SH SYNOPSIS
@@ -13,10 +13,98 @@ iperf3 \- perform network throughput tests
 .B ]
 
 .SH DESCRIPTION
-iperf3 is a tool for performing network throughput measurements.  It can test
-either TCP or UDP throughput.  To perform an iperf3 test the user must
-establish both a server and a client.
-
+iperf3 is a tool for performing network throughput measurements.
+It can test TCP, UDP, or SCTP throughput.
+To perform an iperf3 test the user must establish both a server and a
+client.
+.PP
+The iperf3 executable contains both client and server functionality.
+An iperf3 server can be started using either of the -s or
+--server command-line parameters, for example:
+.IP
+\fCiperf3 -s\fR
+.IP
+\fCiperf3 --server \fR
+.PP
+Note that many iperf3 parameters have both short (-s) and long
+(--server) forms.
+In this section we will generally use the short form of command-line
+flags, unless only the long form of a flag is available.
+.PP
+By default, the iperf3 server listens on TCP port 5201 for connections
+from an iperf3 client.
+A custom port can be specified by using the -p flag, for
+example:
+.IP
+\fCiperf3 -s -p 5002\fR
+.PP
+After the server is started, it will listen for connections from
+iperf3 clients (in other words, the iperf3 program run in client
+mode).
+The client mode can be started using the -c command-line option,
+which also requires a host to which iperf3 should connect.
+The host can by specified by hostname, IPv4 literal, or IPv6 literal:
+.IP
+\fCiperf3 -c iperf3.example.com\fR
+.IP
+\fCiperf3 -c 192.0.2.1\fR
+.IP
+\fCiperf3 -c 2001:db8::1\fR
+.PP
+If the iperf3 server is running on a non-default TCP port, that port
+number needs to be specified on the client as well:
+.IP
+\fCiperf3 -c iperf3.example.com -p 5002\fR
+.PP
+The initial TCP connection is used to exchange test parameters,
+control the start and end of the test, and to exchange test results.
+This is sometimes referred to as the "control connection".
+The actual test data is sent over a separate TCP connection, as a
+separate flow of UDP packets, or as an independent SCTP connection,
+depending on what protocol was specified by the client.
+.PP
+Normally, the test data is sent from the client to the server, and
+measures the upload speed of the client.
+Measuring the download speed from the server can be done by specifying
+the -R flag on the client.
+This causes data to be sent from the server to the client.
+.IP
+\fCiperf3 -c iperf3.example.com -p 5202 -R
+.PP
+Results are displayed on both the client and server.
+There will be at least one line of output per measurement interval (by
+default a measurement interval lasts for one second, but this can be
+changed by the -i option).
+Each line of output includes (at least) the time since the start of
+the test, amount of data transfered during the interval, and the
+average bitrate over that interval.
+Note that the values for each measurement interval are taken from the
+point of view of the endpoint process emitting that output (in other
+words, the output on the client shows the measurement interval data for
+the client.
+.PP
+At the end of the test is a set of statistics that shows (at
+least as much as possible) a summary of the test as seen by both the
+sender and the receiver, with lines tagged accordingly.
+Recall that by default the client is the sender and the server is the
+receiver, although as indicated above, use of the \fC-R\fR flag will
+reverse these roles.
+.PP
+The client can be made to retrieve the server-side output for a given
+test by specifying the --get-server-output flag.
+.PP
+Either the client or the server can produce its output in a JSON
+structure, useful for integration with other programs, by passing it
+the -J flag.
+Because the contents of the JSON structure are only competely known
+after the test has finished, no JSON output will be emitted until the
+end of the test.
+.PP
+iperf3 has a (overly) large set of command-line options that can be
+used to set the parameters of a test.
+They are given in the "GENERAL OPTIONS" section of the manual page
+below, as well as summarized in iperf3's help output, which can be
+viewed by running iperf3 with the -h flag.
 .SH "GENERAL OPTIONS"
 .TP
 .BR -p ", " --port " \fIn\fR"

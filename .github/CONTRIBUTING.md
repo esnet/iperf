@@ -17,7 +17,7 @@ and/or running iperf3 on Windows, iOS, or Android.
 Before asking for help, please use your favorite search engine or
 questions site (such as Stack Overflow) to see if your question might
 have been asked (and maybe even answered) before.
-http://fasterdata.es.net/ has some information on the use of various
+https://fasterdata.es.net/ has some information on the use of various
 bandwidth measurement tools, including iperf3.  The iperf3
 documentation Web site at http://software.es.net/iperf/ contains
 various bits of helpful information, including a list of

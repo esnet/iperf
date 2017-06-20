@@ -6,7 +6,7 @@ The manual page is the most up-to-date reference to the various flags and parame
 
 For sample command line usage, see: 
 
-http://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf-and-iperf3/
+https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/
 
 Using the default options, iperf3 is meant to show typical well
 designed application performance.  "Typical well designed application"

@@ -56,3 +56,13 @@ cJSON* iperf_json_printf(const char *format, ...);
 void iperf_dump_fdset(FILE *fp, char *str, int nfds, fd_set *fds);
 
 #endif
+
+/* Fallback getline() for OSX <= 10.6 */
+#ifdef __APPLE__
+#include <Availability.h>
+#if __MAC_OS_X_VERSION_MIN_REQUIRED <= 1060
+
+ssize_t
+getline (char **lineptr, size_t *n, FILE *stream);
+#endif
+#endif

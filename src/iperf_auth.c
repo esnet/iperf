@@ -34,6 +34,8 @@
 #include <stdio.h>
 #include <termios.h>
 
+#include "iperf_util.h"
+
 #if defined(HAVE_SSL)
 
 #include <openssl/bio.h>

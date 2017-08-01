@@ -363,8 +363,7 @@ extern    "C"
        unit_snprintf(s, inLen, inNum, inFormat);
        if ((cp = index(s, 'i')) != NULL) {
            *cp = 0;
-       }
-       if ((cp = index(s, 'y')) != NULL) {
+       } else if ((cp = index(s, 'y')) != NULL) {
            *cp = 0;
        }
     }

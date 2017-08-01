@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2016, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2016, 2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -45,6 +45,37 @@
 #include <errno.h>
 
 #include "cjson.h"
+#include "iperf.h"
+#include "iperf_api.h"
+
+/*
+ * Read entropy from /dev/urandom
+ * Errors are fatal.
+ * Returns 0 on success.
+ */
+int readentropy(void *out, size_t outsize)
+{
+    static FILE *frandom;
+    static const char rndfile[] = "/dev/urandom";
+
+    if (!outsize) return 0;
+
+    if (frandom == NULL) {
+        frandom = fopen(rndfile, "rb");
+        if (frandom == NULL) {
+            iperf_errexit(NULL, "error - failed to open %s: %s\n",
+                          rndfile, strerror(errno));
+        }
+        setbuf(frandom, NULL);
+    }
+    if (fread(out, 1, outsize, frandom) != outsize) {
+        iperf_errexit(NULL, "error - failed to read %s: %s\n",
+                      rndfile,
+                      feof(frandom) ? "EOF" : strerror(errno));
+    }
+    return 0;
+}
+
 
 /* make_cookie
  *
@@ -53,27 +84,21 @@
  * Iperf uses this function to create test "cookies" which
  * server as unique test identifiers. These cookies are also
  * used for the authentication of stream connections.
+ * Assumes cookie has size (COOKIE_SIZE + 1) char's.
  */
 
 void
 make_cookie(char *cookie)
 {
-    static int randomized = 0;
-    char hostname[500];
-    struct timeval tv;
-    char temp[1000];
+    unsigned char *out = (unsigned char*)cookie;
+    size_t pos;
+    static const unsigned char rndchars[] = "abcdefghijklmnopqrstuvwxyz234567";
 
-    if ( ! randomized )
-        srandom((int) time(0) ^ getpid());
-
-    /* Generate a string based on hostname, time, randomness, and filler. */
-    (void) gethostname(hostname, sizeof(hostname));
-    (void) gettimeofday(&tv, 0);
-    (void) snprintf(temp, sizeof(temp), "%s.%ld.%06ld.%08lx%08lx.%s", hostname, (unsigned long int) tv.tv_sec, (unsigned long int) tv.tv_usec, (unsigned long int) random(), (unsigned long int) random(), "1234567890123456789012345678901234567890");
-
-    /* Now truncate it to 36 bytes and terminate. */
-    memcpy(cookie, temp, 36);
-    cookie[36] = '\0';
+    readentropy(out, COOKIE_SIZE);
+    for (pos = 0; pos < (COOKIE_SIZE - 1); pos++) {
+        out[pos] = rndchars[out[pos] % (sizeof(rndchars) - 1)];
+    }
+    out[pos] = '\0';
 }
 
 
@@ -294,6 +319,16 @@ get_optional_features(void)
 	sizeof(features) - strlen(features) - 1);
     numfeatures++;
 #endif /* HAVE_SO_MAX_PACING_RATE */
+
+#if defined(HAVE_SSL)
+    if (numfeatures > 0) {
+	strncat(features, ", ",
+		sizeof(features) - strlen(features) - 1);
+    }
+    strncat(features, "authentication",
+	sizeof(features) - strlen(features) - 1);
+    numfeatures++;
+#endif /* HAVE_SSL */
 
     if (numfeatures == 0) {
 	strncat(features, "None", 

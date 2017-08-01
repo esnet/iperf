@@ -29,6 +29,14 @@
 
 #include <sys/time.h>
 #include <setjmp.h>
+#include <stdio.h>
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+#ifdef __cplusplus
+extern "C" { /* open extern "C" */
+#endif
+
 
 struct iperf_test;
 struct iperf_stream_result;
@@ -53,6 +61,13 @@ struct iperf_stream;
 #define OPT_FORCEFLUSH 7
 #define OPT_NO_FQ_SOCKET_PACING 9 /* UNUSED */
 #define OPT_FQ_RATE 10
+#define OPT_DSCP 11
+#define OPT_CLIENT_USERNAME 12
+#define OPT_CLIENT_RSA_PUBLIC_KEY 13
+#define OPT_SERVER_RSA_PRIVATE_KEY 14
+#define OPT_SERVER_AUTHORIZED_USERS 15
+#define OPT_PACING_TIMER 16
+#define OPT_CONNECT_TIMEOUT 17
 
 /* states */
 #define TEST_START 1
@@ -164,7 +179,7 @@ void     iperf_reporter_callback(struct iperf_test * test);
  * returns NULL on failure
  *
  */
-struct iperf_test *iperf_new_test();
+struct iperf_test *iperf_new_test(void);
 
 int      iperf_defaults(struct iperf_test * testp);
 
@@ -209,6 +224,7 @@ long get_snd_cwnd(struct iperf_interval_results *irp);
 long get_snd_wnd(struct iperf_interval_results *irp);
 long get_rtt(struct iperf_interval_results *irp);
 long get_rttvar(struct iperf_interval_results *irp);
+long get_pmtu(struct iperf_interval_results *irp);
 void print_tcpinfo(struct iperf_test *test);
 void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 
@@ -218,8 +234,8 @@ int iperf_send(struct iperf_test *, fd_set *) /* __attribute__((hot)) */;
 int iperf_recv(struct iperf_test *, fd_set *);
 void iperf_catch_sigend(void (*handler)(int));
 void iperf_got_sigend(struct iperf_test *test) __attribute__ ((noreturn));
-void usage();
-void usage_long();
+void usage(void);
+void usage_long(FILE * f);
 void warning(char *);
 int iperf_exchange_results(struct iperf_test *);
 int iperf_init_test(struct iperf_test *);
@@ -293,8 +309,11 @@ enum {
     IELOGFILE = 17,	    // Can't open log file
     IENOSCTP = 18,	    // No SCTP support available
     IEBIND = 19,			// Local port specified with no local bind option
-    IEUDPBLOCKSIZE = 20,    // Block size too large. Maximum value = %dMAX_UDP_BLOCKSIZE
+    IEUDPBLOCKSIZE = 20,    // Block size invalid
     IEBADTOS = 21,	    // Bad TOS value
+    IESETCLIENTAUTH = 22,   // Bad configuration of client authentication
+    IESETSERVERAUTH = 23,   // Bad configuration of server authentication
+    IEBADFORMAT = 24,	    // Bad format argument to -f
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)
@@ -338,6 +357,7 @@ enum {
     IESETSCTPBINDX= 139,    // Unable to process sctp_bindx() parameters
     IESETPACING= 140,       // Unable to set socket pacing rate
     IESETBUF2= 141,	    // Socket buffer size incorrect (written value != read value)
+    IEAUTHTEST = 142,       // Test authorization failed
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)
@@ -352,5 +372,11 @@ enum {
     IENEWTIMER = 300,       // Unable to create new timer (check perror)
     IEUPDATETIMER = 301,    // Unable to update timer (check perror)
 };
+
+
+#ifdef __cplusplus
+} /* close extern "C" */
+#endif
+
 
 #endif /* !__IPERF_API_H */

@@ -1,4 +1,4 @@
-# iperf, Copyright (c) 2014, 2015, 2016, The Regents of the University of
+# iperf, Copyright (c) 2014, 2015, 2016, 2017, The Regents of the University of
 # California, through Lawrence Berkeley National Laboratory (subject
 # to receipt of any required approvals from the U.S. Dept. of
 # Energy).  All rights reserved.
@@ -25,6 +25,7 @@
 
 # Initialize the autoconf system for the specified tool, version and mailing list
 AC_INIT(iperf, 3-CURRENT, https://github.com/esnet/iperf, iperf, http://software.es.net/iperf/)
+m4_include([config/ax_check_openssl.m4])
 AC_LANG(C)
 
 # Specify where the auxiliary files created by configure should go. The config
@@ -84,6 +85,9 @@ exit 1
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 
+# Check for poll.h (it's in POSIX so everyone should have it?)
+AC_CHECK_HEADERS([poll.h])
+
 # Check for SCTP support
 AC_CHECK_HEADERS([sys/socket.h])
 AC_CHECK_HEADERS([netinet/sctp.h],
@@ -96,6 +100,14 @@ AC_CHECK_HEADERS([netinet/sctp.h],
 #include <sys/socket.h>
 #endif
 ])
+
+# Check for OPENSSL support
+AX_CHECK_OPENSSL(
+	AC_DEFINE([HAVE_SSL], [1], [OpenSSL Is Available])
+)
+LDFLAGS="$LDFLAGS $OPENSSL_LDFLAGS"
+LIBS="$OPENSSL_LIBS $LIBS"
+CPPFLAGS="$OPENSSL_INCLUDES $CPPFLAGS"
 
 # Check for TCP_CONGESTION sockopt (believed to be Linux and FreeBSD only)
 AC_CACHE_CHECK([TCP_CONGESTION socket option],

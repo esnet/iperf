@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, 2016, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, 2016, 2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -82,7 +82,7 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
 int i_errno;
 
 char *
-iperf_strerror(int i_errno)
+iperf_strerror(int int_errno)
 {
     static char errstr[256];
     int len, perr, herr;
@@ -91,7 +91,7 @@ iperf_strerror(int i_errno)
     len = sizeof(errstr);
     memset(errstr, 0, len);
 
-    switch (i_errno) {
+    switch (int_errno) {
         case IENONE:
             snprintf(errstr, len, "no error");
             break;
@@ -126,10 +126,19 @@ iperf_strerror(int i_errno)
             snprintf(errstr, len, "--bind must be specified to use --cport");
             break;
         case IEUDPBLOCKSIZE:
-            snprintf(errstr, len, "block size too large (maximum = %d bytes)", MAX_UDP_BLOCKSIZE);
+            snprintf(errstr, len, "block size invalid (minimum = %d bytes, maximum = %d bytes)", MIN_UDP_BLOCKSIZE, MAX_UDP_BLOCKSIZE);
             break;
-	case IEBADTOS:
-	    snprintf(errstr, len, "bad TOS value (must be between 0 and 255 inclusive)");
+        case IEBADTOS:
+            snprintf(errstr, len, "bad TOS value (must be between 0 and 255 inclusive)");
+            break;
+        case IESETCLIENTAUTH:
+             snprintf(errstr, len, "you must specify username (max 20 chars), password (max 20 chars) and a path to a valid public rsa client to be used");
+            break;
+        case IESETSERVERAUTH:
+             snprintf(errstr, len, "you must specify path to a valid private rsa server to be used and a user credential file");
+            break;
+	case IEBADFORMAT:
+	    snprintf(errstr, len, "bad format specifier (valid formats are in the set [kmgtKMGT])");
 	    break;
         case IEMSS:
             snprintf(errstr, len, "TCP MSS too large (maximum = %d bytes)", MAX_MSS);
@@ -167,6 +176,9 @@ iperf_strerror(int i_errno)
         case IEINITTEST:
             snprintf(errstr, len, "test initialization failed");
             perr = 1;
+            break;
+        case IEAUTHTEST:
+            snprintf(errstr, len, "test authorization failed");
             break;
         case IELISTEN:
             snprintf(errstr, len, "unable to start listener for connections");

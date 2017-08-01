@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, 2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -100,7 +100,7 @@ main(int argc, char **argv)
     if (iperf_parse_arguments(test, argc, argv) < 0) {
         iperf_err(test, "parameter error - %s", iperf_strerror(i_errno));
         fprintf(stderr, "\n");
-        usage_long();
+        usage_long(stdout);
         exit(1);
     }
 
@@ -115,7 +115,7 @@ main(int argc, char **argv)
 
 static jmp_buf sigend_jmp_buf;
 
-static void
+static void __attribute__ ((noreturn))
 sigend_handler(int sig)
 {
     longjmp(sigend_jmp_buf, 1);
@@ -129,6 +129,9 @@ run(struct iperf_test *test)
     iperf_catch_sigend(sigend_handler);
     if (setjmp(sigend_jmp_buf))
 	iperf_got_sigend(test);
+
+    /* Ignore SIGPIPE to simplify error handling */
+    signal(SIGPIPE, SIG_IGN);
 
     switch (test->role) {
         case 's':
@@ -150,7 +153,6 @@ run(struct iperf_test *test)
 		    iperf_err(test, "error - %s", iperf_strerror(i_errno));
 		    if (rc < -1) {
 		        iperf_errexit(test, "exiting");
-			break;
 		    }
                 }
                 iperf_reset_test(test);
@@ -169,6 +171,7 @@ run(struct iperf_test *test)
     }
 
     iperf_catch_sigend(SIG_DFL);
+    signal(SIGPIPE, SIG_DFL);
 
     return 0;
 }

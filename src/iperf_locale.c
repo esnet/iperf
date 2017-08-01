@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------- 
- * iperf, Copyright (c) 2014, 2016, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2016, 2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -98,8 +98,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "       iperf3 [-h|--help] [-v|--version]\n\n"
                            "Server or Client:\n"
                            "  -p, --port      #         server port to listen on/connect to\n"
-                           "  -f, --format    [kmgKMG]  format to report: Kbits, Mbits, KBytes, MBytes\n"
-                           "  -i, --interval  #         seconds between periodic bandwidth reports\n"
+                           "  -f, --format   [kmgtKMGT] format to report: Kbits, Mbits, Gbits, Tbits\n"
+                           "  -i, --interval  #         seconds between periodic throughput reports\n"
                            "  -F, --file name           xmit/recv the specified file\n"
 #if defined(HAVE_CPU_AFFINITY)
                            "  -A, --affinity n/n,m      set CPU affinity\n"
@@ -117,6 +117,12 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -D, --daemon              run the server as a daemon\n"
                            "  -I, --pidfile file        write PID file\n"
                            "  -1, --one-off             handle one client connection then exit\n"
+#if defined(HAVE_SSL)
+                           "  --rsa-private-key-path    path to the RSA private key used to decrypt\n"
+			   "                            authentication credentials\n"
+                           "  --authorized-users-path   path to the configuration file containing user\n"
+                           "                            credentials\n"
+#endif //HAVE_SSL
                            "Client specific:\n"
                            "  -c, --client    <host>    run in client mode, connecting to <host>\n"
 #if defined(HAVE_SCTP)
@@ -125,9 +131,11 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  --nstreams      #         number of SCTP streams\n"
 #endif /* HAVE_SCTP */
                            "  -u, --udp                 use UDP rather than TCP\n"
-                           "  -b, --bandwidth #[KMG][/#] target bandwidth in bits/sec (0 for unlimited)\n"
+                           "  --connect-timeout #       timeout for control connection setup (ms)\n"
+                           "  -b, --bitrate #[KMG][/#]  target bitrate in bits/sec (0 for unlimited)\n"
                            "                            (default %d Mbit/sec for UDP, unlimited for TCP)\n"
                            "                            (optional slash and packet count for burst mode)\n"
+			   "  --pacing-timer #[KMG]     set the timing for pacing, in microseconds (default 1000)\n"
 #if defined(HAVE_SO_MAX_PACING_RATE)
                            "  --fq-rate #[KMG]          enable fair-queuing based socket pacing in\n"
 			   "                            bits/sec (Linux only)\n"
@@ -148,7 +156,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -N, --no-delay            set TCP/SCTP no delay, disabling Nagle's Algorithm\n"
                            "  -4, --version4            only use IPv4\n"
                            "  -6, --version6            only use IPv6\n"
-                           "  -S, --tos N               set the IP 'type of service'\n"
+                           "  -S, --tos N               set the IP type of service, 0-255\n"
+                           "  --dscp N or --dscp val    set the IP dscp value, either 0-63 or symbolic\n"
 #if defined(HAVE_FLOWLABEL)
                            "  -L, --flowlabel N         set the IPv6 flow label (only supported on Linux)\n"
 #endif /* HAVE_FLOWLABEL */
@@ -157,7 +166,12 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -T, --title str           prefix every output line with this string\n"
                            "  --get-server-output       get results from server\n"
                            "  --udp-counters-64bit      use 64-bit counters in UDP test packets\n"
-
+#if defined(HAVE_SSL)
+                           "  --username                username for authentication\n"
+                           "  --rsa-public-key-path     path to the RSA public key used to encrypt\n"
+                           "                            authentication credentials\n"
+#endif //HAVESSL
+    
 #ifdef NOT_YET_SUPPORTED /* still working on these */
 #endif
 
@@ -229,13 +243,13 @@ const char wait_server_threads[] =
 "Waiting for server threads to complete. Interrupt again to force quit.\n";
 
 const char test_start_time[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %d second test\n";
+"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %d second test, tos %d\n";
 
 const char test_start_bytes[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %llu bytes to send\n";
+"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %llu bytes to send, tos %d\n";
 
 const char test_start_blocks[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %d blocks to send\n";
+"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %d blocks to send, tos %d\n";
 
 
 /* -------------------------------------------------------------------
@@ -247,6 +261,12 @@ const char report_time[] =
 
 const char report_connecting[] =
 "Connecting to host %s, port %d\n";
+
+const char report_authetication_successed[] =
+"Authentication successed for user '%s' ts %ld\n";
+
+const char report_authetication_failed[] =
+"Authentication failed for user '%s' ts %ld\n";
 
 const char report_reverse[] =
 "Reverse mode, remote host %s is sending\n";
@@ -282,19 +302,19 @@ const char report_read_length_times[] =
 "[%3d] %5d bytes read %5d times (%.3g%%)\n";
 
 const char report_bw_header[] =
-"[ ID] Interval           Transfer     Bandwidth\n";
+"[ ID] Interval           Transfer     Bitrate\n";
 
 const char report_bw_retrans_header[] =
-"[ ID] Interval           Transfer     Bandwidth       Retr\n";
+"[ ID] Interval           Transfer     Bitrate         Retr\n";
 
 const char report_bw_retrans_cwnd_header[] =
 "[ ID] Interval        Transfer  Bandwidth   Retr  Cwnd      Swnd\n";
 
 const char report_bw_udp_header[] =
-"[ ID] Interval           Transfer     Bandwidth       Jitter    Lost/Total Datagrams\n";
+"[ ID] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams\n";
 
 const char report_bw_udp_sender_header[] =
-"[ ID] Interval           Transfer     Bandwidth       Total Datagrams\n";
+"[ ID] Interval           Transfer     Bitrate         Total Datagrams\n";
 
 const char report_bw_format[] =
 "[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec                  %s\n";
@@ -365,6 +385,8 @@ const char report_local[] = "local";
 const char report_remote[] = "remote";
 const char report_sender[] = "sender";
 const char report_receiver[] = "receiver";
+const char report_sender_not_available_format[] = "[%3d] (sender statistics not available)\n";
+const char report_receiver_not_available_format[] = "[%3d] (receiver statistics not available)\n";
 
 #if defined(linux)
 const char report_tcpInfo[] =

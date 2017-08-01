@@ -1,6 +1,26 @@
 iperf3 Project News
 ===================
 
+2017-06-26:  iperf-3.2 released
+-------------------------------
+
+| URL:  http://downloads.es.net/pub/iperf/iperf-3.2.tar.gz
+| SHA256:  ``f207b36f861485845dbdf09f909c62f3d2222a3cf3d2682095aede8213cd9c1d  iperf-3.2.tar.gz``
+
+New minor release of iperf 3.2, with new features, bugfixes, and enhancements.
+
+2017-06-06:  iperf3 update, June 2017
+--------------------------------------
+
+https://raw.githubusercontent.com/esnet/iperf/master/docs/2017-06-06.txt
+
+
+2017-04-27:  iperf3 update, April 2017
+--------------------------------------
+
+https://raw.githubusercontent.com/esnet/iperf/master/docs/2017-04-27.txt
+
+
 2017-03-06:  iperf-3.1.7 released
 ---------------------------------
 

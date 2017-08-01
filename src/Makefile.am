@@ -13,6 +13,8 @@ libiperf_la_SOURCES     = \
                         iperf_api.c \
                         iperf_api.h \
                         iperf_error.c \
+                        iperf_auth.h \
+                        iperf_auth.c \
 			iperf_client_api.c \
                         iperf_locale.c \
                         iperf_locale.h \
@@ -25,6 +27,7 @@ libiperf_la_SOURCES     = \
 	                iperf_sctp.h \
                         iperf_util.c \
                         iperf_util.h \
+			dscp.c \
                         net.c \
                         net.h \
 			portable_endian.h \

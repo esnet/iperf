@@ -10,14 +10,16 @@ Source0: http://stats.es.net/software/iperf-%{version}.tar.gz
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
 %if 0%{?el5}
-BuildRequires:  e2fsprogs-devel
+BuildRequires: e2fsprogs-devel, openssl-devel
+%else
+BuildRequires: openssl-devel
 %endif
 
 %description
 iperf3 is a tool for active measurements of the maximum achievable
 bandwidth between two IP hosts.  It supports tuning of various
 parameters related to timing, protocols, and buffers.  For each test,
-it reports the bandwidth, loss, and other parameters.
+it reports the throughput, loss, and other parameters.
 
 %package        devel
 Summary:        Development files for %{name}

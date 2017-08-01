@@ -6,7 +6,10 @@ Obtaining iperf3
 Binary Distributions
 --------------------
 
-Binary packages are available for several supported operating systems:
+Note that ESnet does not distribute binary packages of iperf3.  All of
+the packages listed in this section are provided by third parties, who
+are solely responsible for their contents.  This is an incomplete list
+of binary packages:
 
 * FreeBSD:  `benchmarks/iperf3
   <http://freshports.org/benchmarks/iperf3>`_ in the FreeBSD Ports Collection
@@ -14,7 +17,16 @@ Binary packages are available for several supported operating systems:
   <https://apps.fedoraproject.org/packages/iperf3/>`_ and
   `iperf3-devel
   <https://apps.fedoraproject.org/packages/iperf3-devel>`_ in Fedora
-  19 and 20 and in Fedora EPEL 5, 6, and 7.
+  19 and 20 and in Fedora EPEL 5, 6, and 7.  iperf3 is included as a
+  part of RedHat Enterprise Linux 7.3 and later (as well as CentOS 7.3
+  and later).
+* Ubuntu:  `iperf3 <https://launchpad.net/ubuntu/+source/iperf3>`_,
+  is available in Trusty (backports), and as a part of the main
+  release in Vivid and newer.
+* macOS:  via HomeBrew.
+* Windows:  `iperf3 binaries for Windows
+  <https://iperf.fr/iperf-download.php#windows>`_ are available from
+  iperf.fr (and other sources).
 
 Source Distributions
 --------------------
@@ -56,7 +68,7 @@ GitHub using:
 
 ``git clone https://github.com/esnet/iperf.git``
 
-Primary development for iperf3 takes place on CentOS 6 Linux, FreeBSD 10,
-and MacOS X 10.8. At this time, these are the only officially supported
+Primary development for iperf3 takes place on CentOS 7 Linux, FreeBSD 11,
+and macOS 10.12. At this time, these are the only officially supported
 platforms, however there have been some reports of success with
-OpenBSD, Android, and other Linux distributions.
+NetBSD, OpenBSD, Windows, Solaris, Android, and iOS.

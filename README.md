@@ -7,7 +7,7 @@ Summary
 iperf is a tool for active measurements of the maximum achievable
 bandwidth on IP networks.  It supports tuning of various parameters
 related to timing, protocols, and buffers.  For each test it reports
-the bandwidth, loss, and other parameters.
+the measured throughput / bitrate, loss, and other parameters.
 
 This version, sometimes referred to as iperf3, is a redesign of an
 original version developed at NLANR/DAST.  iperf3 is a new
@@ -19,19 +19,12 @@ These include, for example, a zero-copy mode and optional JSON output.
 Note that iperf3 is *not* backwards compatible with the original iperf.
 
 Primary development for iperf3 takes place on CentOS Linux, FreeBSD,
-and MacOS X.  At this time, these are the only officially supported
+and macOS.  At this time, these are the only officially supported
 platforms, however there have been some reports of success with
 OpenBSD, NetBSD, Android, Solaris, and other Linux distributions.
 
 iperf3 is principally developed by ESnet / Lawrence Berkeley National
 Laboratory.  It is released under a three-clause BSD license.
-
-Note that at this point, ESnet plans to support iperf3 in "maintenance
-mode".  At this point, there are no definite plans for further iperf3
-releases, and ESnet will be providing a very limited amount of
-resources for support and development, going forward.  However, ESnet
-could issue new iperf3 releases to deal with security issues or
-high-impact bug fixes.
 
 For more information see: http://software.es.net/iperf
 
@@ -69,13 +62,13 @@ The manual page is the most up-to-date reference to the various flags and parame
 
 For sample command line usage, see: 
 
-http://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf-and-iperf3/
+https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/
 
 Using the default options, iperf is meant to show typical well
-designed application performance.  'Typical well designed application'
+designed application performance.  "Typical well designed application"
 means avoiding artificial enhancements that work only for testing
 (such as splice()'ing the data to /dev/null).  iperf does also have
-flags for 'extreme best case' optimizations but they must be
+flags for "extreme best case" optimizations, but they must be
 explicitly activated.
 
 These flags include:

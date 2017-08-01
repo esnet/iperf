@@ -25,8 +25,8 @@ Bug Reports
 -----------
 
 Before submitting a bug report, try checking out the latest version of
-the code, and confirm that it's not already fixed.  Then submit to the
-iperf3 issue tracker on GitHub:
+the code, and confirm that it's not already fixed. Also see the :doc:`faq`. 
+Then submit to the iperf3 issue tracker on GitHub:
 
 https://github.com/esnet/iperf/issues
 
@@ -78,17 +78,6 @@ users, and for which issues have already been filed in the issue
 tracker.  These issues are either open (indicating no solution
 currently exists) or closed with the notation that no further attempts
 to solve the problem are currently being made:
-
-* UDP performance: Some problems have been noticed with iperf3 on the
-  ESnet 100G testbed at high UDP rates (above 10Gbps, sometimes at
-  speeds above 1Gbps).  The symptom is that on any particular run of
-  iperf3 the receiver reports a loss rate of about 20%, regardless of
-  the ``-b`` option used on the client side.  This problem appears not
-  to be iperf3-specific, and may be due to the placement of the iperf3
-  process on a CPU and its relation to the inbound NIC.  In some cases
-  this problem can be mitigated by increasing the socket buffer sizes
-  with the ``-w`` option, or by an appropriate use of the CPU affinity
-  (``-A``) option.
 
 * The ``-Z`` flag sometimes causes the iperf3 client to hang on OSX.
   (Issue #129)
@@ -142,7 +131,8 @@ Release Engineering Checklist
 -----------------------------
 
 1. Update the ``README`` and ``RELEASE_NOTES`` files to be accurate. Make sure
-   that the "Known Issues" section of the ``README`` file is up to date.
+   that the "Known Issues" section of the ``README`` file and in this document
+   are up to date.
 
 2. Compose a release announcement.  Most of the release announcement
    can be written before tagging.  Usually the previous version's

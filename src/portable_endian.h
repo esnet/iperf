@@ -63,6 +63,15 @@
 
 #	include <sys/endian.h>
 
+#elif defined(__sgi)
+
+#  include <sys/endian.h>
+#  include <netinet/in.h>
+#  include <inttypes.h>
+
+#  define be64toh(x) (x)
+#  define htobe64(x) (x)
+
 #elif defined(__sun) && defined(__SVR4)
 
 #	include <sys/types.h>

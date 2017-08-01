@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, 2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -56,9 +56,56 @@
 #endif
 #endif /* HAVE_SENDFILE */
 
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif /* HAVE_POLL_H */
+
 #include "iperf_util.h"
 #include "net.h"
 #include "timer.h"
+
+/*
+ * timeout_connect adapted from netcat, via OpenBSD and FreeBSD
+ * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
+ */
+int
+timeout_connect(int s, const struct sockaddr *name, socklen_t namelen,
+    int timeout)
+{
+	struct pollfd pfd;
+	socklen_t optlen;
+	int flags, optval;
+	int ret;
+
+	flags = 0;
+	if (timeout != -1) {
+		flags = fcntl(s, F_GETFL, 0);
+		if (fcntl(s, F_SETFL, flags | O_NONBLOCK) == -1)
+			return -1;
+	}
+
+	if ((ret = connect(s, name, namelen)) != 0 && errno == EINPROGRESS) {
+		pfd.fd = s;
+		pfd.events = POLLOUT;
+		if ((ret = poll(&pfd, 1, timeout)) == 1) {
+			optlen = sizeof(optval);
+			if ((ret = getsockopt(s, SOL_SOCKET, SO_ERROR,
+			    &optval, &optlen)) == 0) {
+				errno = optval;
+				ret = optval == 0 ? 0 : -1;
+			}
+		} else if (ret == 0) {
+			errno = ETIMEDOUT;
+			ret = -1;
+		} else
+			ret = -1;
+	}
+
+	if (timeout != -1 && fcntl(s, F_SETFL, flags) == -1)
+		ret = -1;
+
+	return (ret);
+}
 
 /* netdial and netannouce code comes from libtask: http://swtch.com/libtask/
  * Copyright: http://swtch.com/libtask/COPYRIGHT
@@ -66,7 +113,7 @@
 
 /* make connection to server */
 int
-netdial(int domain, int proto, char *local, int local_port, char *server, int port)
+netdial(int domain, int proto, char *local, int local_port, char *server, int port, int timeout)
 {
     struct addrinfo hints, *local_res, *server_res;
     int s;
@@ -111,7 +158,7 @@ netdial(int domain, int proto, char *local, int local_port, char *server, int po
     }
 
     ((struct sockaddr_in *) server_res->ai_addr)->sin_port = htons(port);
-    if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS) {
+    if (timeout_connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen, timeout) < 0 && errno != EINPROGRESS) {
 	close(s);
 	freeaddrinfo(server_res);
         return -1;

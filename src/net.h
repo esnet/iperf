@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -27,7 +27,8 @@
 #ifndef __NET_H
 #define __NET_H
 
-int netdial(int domain, int proto, char *local, int local_port, char *server, int port);
+int timeout_connect(int s, const struct sockaddr *name, socklen_t namelen, int timeout);
+int netdial(int domain, int proto, char *local, int local_port, char *server, int port, int timeout);
 int netannounce(int domain, int proto, char *local, int port);
 int Nread(int fd, char *buf, size_t count, int prot);
 int Nwrite(int fd, const char *buf, size_t count, int prot) /* __attribute__((hot)) */;
@@ -37,6 +38,7 @@ int getsock_tcp_mss(int inSock);
 int set_tcp_options(int sock, int no_delay, int mss);
 int setnonblocking(int fd, int nonblocking);
 int getsockdomain(int sock);
+int parse_qos(const char *tos);
 
 #define NET_SOFTERROR -1
 #define NET_HARDERROR -2

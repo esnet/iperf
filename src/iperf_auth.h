@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014-2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -21,38 +21,16 @@
  * prepare derivative works, distribute copies to the public, perform
  * publicly and display publicly, and to permit others to do so.
  *
- * This code is distributed under a BSD style license, see the LICENSE
- * file for complete information.
+ * This code is distributed under a BSD style license, see the LICENSE file
+ * for complete information.
  */
-#ifndef __IPERF_UTIL_H
-#define __IPERF_UTIL_H
 
-#include "cjson.h"
-#include <sys/select.h>
-#include <stddef.h>
+#include <time.h>
+#include <sys/types.h>
 
-int readentropy(void *out, size_t outsize);
-
-void make_cookie(char *);
-
-int is_closed(int);
-
-double timeval_to_double(struct timeval *tv);
-
-int timeval_equals(struct timeval *tv0, struct timeval *tv1);
-
-double timeval_diff(struct timeval *tv0, struct timeval *tv1);
-
-int delay(int64_t ns);
-
-void cpu_util(double pcpu[3]);
-
-const char* get_system_info(void);
-
-const char* get_optional_features(void);
-
-cJSON* iperf_json_printf(const char *format, ...);
-
-void iperf_dump_fdset(FILE *fp, char *str, int nfds, fd_set *fds);
-
-#endif
+int test_load_pubkey(const char *public_keyfile);
+int test_load_private_key(const char *private_keyfile);
+int encode_auth_setting(const char *username, const char *password, const char *public_keyfile, char **authtoken);
+int decode_auth_setting(int enable_debug, const char *authtoken, const char *private_keyfile, char **username, char **password, time_t *ts);
+int check_authentication(const char *username, const char *password, const time_t ts, const char *filename);
+ssize_t iperf_getpass (char **lineptr, size_t *n, FILE *stream);

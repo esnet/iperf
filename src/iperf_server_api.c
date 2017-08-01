@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, 2016, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, 2016, 2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -92,32 +92,6 @@ iperf_server_listen(struct iperf_test *test)
 	iperf_printf(test, "Server listening on %d\n", test->server_port);
     }
 
-    // This needs to be changed to reflect if client has different window size
-    // make sure we got what we asked for
-    /* XXX: This needs to be moved to the stream listener
-    if ((x = get_tcp_windowsize(test->listener, SO_RCVBUF)) < 0) {
-        // Needs to set some sort of error number/message
-        perror("SO_RCVBUF");
-        return -1;
-    }
-    */
-
-    // XXX: This code needs to be moved to after parameter exhange
-    /*
-    char ubuf[UNIT_LEN];
-    int x;
-
-    if (test->protocol->id == Ptcp) {
-        if (test->settings->socket_bufsize > 0) {
-            unit_snprintf(ubuf, UNIT_LEN, (double) x, 'A');
-	    if (!test->json_output) 
-		iperf_printf(test, report_window, ubuf);
-        } else {
-	    if (!test->json_output) 
-		iperf_printf(test, "%s", report_autotune);
-        }
-    }
-    */
     if (!test->json_output)
 	iperf_printf(test, "-----------------------------------------------------------\n");
 
@@ -316,6 +290,26 @@ iperf_test_reset(struct iperf_test *test)
 }
 
 static void
+server_timer_proc(TimerClientData client_data, struct timeval *nowP)
+{
+    struct iperf_test *test = client_data.p;
+    struct iperf_stream *sp;
+
+    test->timer = NULL;
+    if (test->done)
+        return;
+    test->done = 1;
+    /* Free streams */
+    while (!SLIST_EMPTY(&test->streams)) {
+        sp = SLIST_FIRST(&test->streams);
+        SLIST_REMOVE_HEAD(&test->streams, streams);
+        close(sp->socket);
+        iperf_free_stream(sp);
+    }
+    close(test->ctrl_sck);
+}
+
+static void
 server_stats_timer_proc(TimerClientData client_data, struct timeval *nowP)
 {
     struct iperf_test *test = client_data.p;
@@ -348,6 +342,16 @@ create_server_timers(struct iperf_test * test)
 	return -1;
     }
     cd.p = test;
+    test->timer = test->stats_timer = test->reporter_timer = NULL;
+    if (test->duration != 0 ) {
+        test->done = 0;
+        test->timer = tmr_create(&now, server_timer_proc, cd, (test->duration + test->omit + 5) * SEC_TO_US, 0);
+        if (test->timer == NULL) {
+            i_errno = IEINITTEST;
+            return -1;
+        }
+    }
+
     test->stats_timer = test->reporter_timer = NULL;
     if (test->stats_interval != 0) {
         test->stats_timer = tmr_create(&now, server_stats_timer_proc, cd, test->stats_interval * SEC_TO_US, 1);
@@ -434,6 +438,14 @@ cleanup_server(struct iperf_test *test)
 	tmr_cancel(test->omit_timer);
 	test->omit_timer = NULL;
     }
+    if (test->congestion_used != NULL) {
+        free(test->congestion_used);
+	test->congestion_used = NULL;
+    }
+    if (test->timer != NULL) {
+        tmr_cancel(test->timer);
+        test->timer = NULL;
+    }
 }
 
 
@@ -518,10 +530,24 @@ iperf_run_server(struct iperf_test *test)
 		    if (test->protocol->id == Ptcp) {
 			if (test->congestion) {
 			    if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
-				close(s);
-				cleanup_server(test);
-				i_errno = IESETCONGESTION;
-				return -1;
+				/*
+				 * ENOENT means we tried to set the
+				 * congestion algorithm but the algorithm
+				 * specified doesn't exist.  This can happen
+				 * if the client and server have different
+				 * congestion algorithms available.  In this
+				 * case, print a warning, but otherwise
+				 * continue.
+				 */
+				if (errno == ENOENT) {
+				    warning("TCP congestion control algorithm not supported");
+				}
+				else {
+				    close(s);
+				    cleanup_server(test);
+				    i_errno = IESETCONGESTION;
+				    return -1;
+				}
 			    } 
 			}
 			{

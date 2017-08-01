@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -152,7 +152,7 @@ get_snd_cwnd(struct iperf_interval_results *irp)
 #if defined(linux) && defined(TCP_MD5SIG)
     return irp->tcpInfo.tcpi_snd_cwnd * irp->tcpInfo.tcpi_snd_mss;
 #elif defined(__FreeBSD__) && __FreeBSD_version >= 600000
-    return irp->tcpInfo.tcpi_snd_cwnd * irp->tcpInfo.tcpi_snd_mss;
+    return irp->tcpInfo.tcpi_snd_cwnd;
 #elif defined(__NetBSD__) && defined(TCP_INFO)
     return irp->tcpInfo.tcpi_snd_cwnd * irp->tcpInfo.tcpi_snd_mss;
 #else
@@ -191,6 +191,20 @@ get_rttvar(struct iperf_interval_results *irp)
     return irp->tcpInfo.tcpi_rttvar;
 #elif defined(__NetBSD__) && defined(TCP_INFO)
     return irp->tcpInfo.tcpi_rttvar;
+#else
+    return -1;
+#endif
+}
+
+/*************************************************************/
+/*
+ * Return PMTU in bytes.
+ */
+long
+get_pmtu(struct iperf_interval_results *irp)
+{
+#if defined(linux) && defined(TCP_MD5SIG)
+    return irp->tcpInfo.tcpi_pmtu;
 #else
     return -1;
 #endif

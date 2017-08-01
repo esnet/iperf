@@ -36,6 +36,7 @@
 
 #if defined(HAVE_SSL)
 
+#include <openssl/rsa.h>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
 #include <openssl/sha.h>

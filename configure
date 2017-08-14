@@ -12750,7 +12750,11 @@ fi
 done
 
 
-# Check for OPENSSL support
+if test "x$with_openssl" = "xno"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Building without OpenSSL; disabling iperf_auth functionality. " >&5
+$as_echo "$as_me: WARNING: Building without OpenSSL; disabling iperf_auth functionality. " >&2;}
+else
+    # Check for OPENSSL support
 
     found=false
 
@@ -12939,11 +12943,14 @@ $as_echo "yes" >&6; }
 $as_echo "#define HAVE_SSL 1" >>confdefs.h
 
 
-
 else
 
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
+             { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "--with-openssl was given, but test for openssl failed
+See \`config.log' for more details" "$LINENO" 5; }
 
 
 fi
@@ -12957,9 +12964,10 @@ rm -f core conftest.err conftest.$ac_objext \
 
 
 
-LDFLAGS="$LDFLAGS $OPENSSL_LDFLAGS"
-LIBS="$OPENSSL_LIBS $LIBS"
-CPPFLAGS="$OPENSSL_INCLUDES $CPPFLAGS"
+    LDFLAGS="$LDFLAGS $OPENSSL_LDFLAGS"
+    LIBS="$OPENSSL_LIBS $LIBS"
+    CPPFLAGS="$OPENSSL_INCLUDES $CPPFLAGS"
+fi
 
 # Check for TCP_CONGESTION sockopt (believed to be Linux and FreeBSD only)
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking TCP_CONGESTION socket option" >&5

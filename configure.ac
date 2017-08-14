@@ -101,13 +101,18 @@ AC_CHECK_HEADERS([netinet/sctp.h],
 #endif
 ])
 
-# Check for OPENSSL support
-AX_CHECK_OPENSSL(
-	AC_DEFINE([HAVE_SSL], [1], [OpenSSL Is Available])
-)
-LDFLAGS="$LDFLAGS $OPENSSL_LDFLAGS"
-LIBS="$OPENSSL_LIBS $LIBS"
-CPPFLAGS="$OPENSSL_INCLUDES $CPPFLAGS"
+if test "x$with_openssl" = "xno"; then
+    AC_MSG_WARN( [Building without OpenSSL; disabling iperf_auth functionality.] )
+else
+    # Check for OPENSSL support
+    AX_CHECK_OPENSSL(
+        [ AC_DEFINE([HAVE_SSL], [1], [OpenSSL Is Available]) ],
+	[ AC_MSG_FAILURE([--with-openssl was given, but test for openssl failed]) ]
+    )
+    LDFLAGS="$LDFLAGS $OPENSSL_LDFLAGS"
+    LIBS="$OPENSSL_LIBS $LIBS"
+    CPPFLAGS="$OPENSSL_INCLUDES $CPPFLAGS"
+fi
 
 # Check for TCP_CONGESTION sockopt (believed to be Linux and FreeBSD only)
 AC_CACHE_CHECK([TCP_CONGESTION socket option],

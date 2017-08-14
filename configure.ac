@@ -101,7 +101,9 @@ AC_CHECK_HEADERS([netinet/sctp.h],
 #endif
 ])
 
-if test "x$with_openssl" != "xno"; then
+if test "x$with_openssl" = "xno"; then
+    AC_MSG_WARN( [Building without OpenSSL; disabling iperf_auth functionality.] )
+else
     # Check for OPENSSL support
     AX_CHECK_OPENSSL(
         [ AC_DEFINE([HAVE_SSL], [1], [OpenSSL Is Available]) ],

@@ -48,6 +48,7 @@
 #include "iperf.h"
 #include "iperf_api.h"
 
+static FILE *frandom = NULL;
 /*
  * Read entropy from /dev/urandom
  * Errors are fatal.
@@ -55,7 +56,6 @@
  */
 int readentropy(void *out, size_t outsize)
 {
-    static FILE *frandom;
     static const char rndfile[] = "/dev/urandom";
 
     if (!outsize) return 0;
@@ -74,6 +74,13 @@ int readentropy(void *out, size_t outsize)
                       feof(frandom) ? "EOF" : strerror(errno));
     }
     return 0;
+}
+void entropycleanup()
+{
+    if (frandom != NULL) {
+        fclose(frandom);
+        frandom = NULL;
+    }
 }
 
 

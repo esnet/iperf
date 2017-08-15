@@ -44,6 +44,7 @@
 
 #include "iperf.h"
 #include "iperf_api.h"
+#include "iperf_util.h"
 #include "units.h"
 #include "iperf_locale.h"
 #include "net.h"
@@ -159,6 +160,8 @@ run(struct iperf_test *test)
                 if (iperf_get_test_one_off(test))
                     break;
             }
+	    entropycleanup();
+	    tmr_destroy();
 	    iperf_delete_pidfile(test);
             break;
 	case 'c':

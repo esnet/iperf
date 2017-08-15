@@ -107,7 +107,9 @@ else
     # Check for OPENSSL support
     AX_CHECK_OPENSSL(
         [ AC_DEFINE([HAVE_SSL], [1], [OpenSSL Is Available]) ],
-	[ AC_MSG_FAILURE([--with-openssl was given, but test for openssl failed]) ]
+	[ if test "x$with_openssl" != "x"; then
+	  AC_MSG_FAILURE([--with-openssl was given, but test for OpenSSL failed])
+	  fi ]
     )
     LDFLAGS="$LDFLAGS $OPENSSL_LDFLAGS"
     LIBS="$OPENSSL_LIBS $LIBS"

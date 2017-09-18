@@ -382,10 +382,11 @@ iperf_connect(struct iperf_test *test)
 	 * Regardless of whether explicitly or implicitly set, if the
 	 * block size is larger than the MSS, print a warning.
 	 */
-	if (test->settings->blksize > test->ctrl_sck_mss) {
+	if (test->settings->blksize > test->ctrl_sck_mss &&
+	    test->ctrl_sck_mss > 0) {
 	    char str[128];
 	    snprintf(str, sizeof(str),
-		     "Warning:  UDP block size %d exceeds TCP MSS %d, may result in fragmentation / drops", test->settings->blksize, test->ctrl_sck_mss);
+		     "UDP block size %d exceeds TCP MSS %d, may result in fragmentation / drops", test->settings->blksize, test->ctrl_sck_mss);
 	    warning(str);
 	}
     }

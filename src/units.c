@@ -316,6 +316,7 @@ extern    "C"
 			conv++;
 		    }
 		}
+		if (conv > TERA_CONV) conv = TERA_CONV;
 		break;
 	    }
 	}

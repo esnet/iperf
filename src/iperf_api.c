@@ -1326,7 +1326,6 @@ iperf_create_send_timers(struct iperf_test * test)
         sp->green_light = 1;
 	if (test->settings->rate != 0) {
 	    cd.p = sp;
-	    /* (Repeat every millisecond - arbitrary value to provide smooth pacing.) */
 	    sp->send_timer = tmr_create((struct timeval*) 0, send_timer_proc, cd, test->settings->pacing_timer, 1);
 	    if (sp->send_timer == NULL) {
 		i_errno = IEINITTEST;

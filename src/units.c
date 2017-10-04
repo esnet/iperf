@@ -303,14 +303,14 @@ extern    "C"
 
 		if (isupper((int) inFormat))
 		{
-		    while (tmpNum >= 1024.0 && conv <= TERA_CONV)
+		    while (tmpNum >= 1024.0 && conv < TERA_CONV)
 		    {
 			tmpNum /= 1024.0;
 			conv++;
 		    }
 		} else
 		{
-		    while (tmpNum >= 1000.0 && conv <= TERA_CONV)
+		    while (tmpNum >= 1000.0 && conv < TERA_CONV)
 		    {
 			tmpNum /= 1000.0;
 			conv++;

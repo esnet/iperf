@@ -99,5 +99,12 @@ main(int argc, char **argv)
     unit_snprintf(s, 11, d, 'a');
     assert(strncmp(s, "35.2 Tbit", 11) == 0);
 
+    d = 4.0 * 1024 * 1024 * 1024 * 1024 * 1024;
+    unit_snprintf(s, 11, d, 'A');
+    assert(strncmp(s, "4096 TByte", 11) == 0);
+
+    unit_snprintf(s, 11, d, 'a');
+    assert(strncmp(s, "36029 Tbit", 11) == 0);
+
     return 0;
 }

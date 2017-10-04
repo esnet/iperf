@@ -1467,8 +1467,7 @@ send_parameters(struct iperf_test *test)
 	cJSON_AddNumberToObject(j, "omit", test->omit);
 	if (test->server_affinity != -1)
 	    cJSON_AddNumberToObject(j, "server_affinity", test->server_affinity);
-	if (test->duration)
-	    cJSON_AddNumberToObject(j, "time", test->duration);
+	cJSON_AddNumberToObject(j, "time", test->duration);
 	if (test->settings->bytes)
 	    cJSON_AddNumberToObject(j, "num", test->settings->bytes);
 	if (test->settings->blocks)

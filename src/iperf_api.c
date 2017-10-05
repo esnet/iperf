@@ -2305,6 +2305,7 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->rate = 0;
     test->settings->burst = 0;
     test->settings->mss = 0;
+    test->settings->tos = 0;
     memset(test->cookie, 0, COOKIE_SIZE);
     test->multisend = 10;	/* arbitrary */
     test->udp_counters_64bit = 0;

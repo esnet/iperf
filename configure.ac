@@ -151,7 +151,7 @@ fi
 # FreeBSD uses cpuset_setaffinity while Linux uses sched_setaffinity.
 # Define HAVE_CPU_AFFINITY to indicate the CPU affinity setting as a
 # generic concept is available.
-AC_CHECK_FUNCS([cpuset_setaffinity sched_setaffinity],
+AC_CHECK_FUNCS([cpuset_setaffinity sched_setaffinity SetProcessAffinityMask],
 	       AC_DEFINE([HAVE_CPU_AFFINITY], [1], 
 	 	         [Have CPU affinity support.]))
 

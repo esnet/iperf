@@ -61,6 +61,10 @@
 #include <sys/cpuset.h>
 #endif /* HAVE_CPUSET_SETAFFINITY */
 
+#if defined(HAVE_SETPROCESSAFFINITYMASK)
+#include <Windows.h>
+#endif /* HAVE_SETPROCESSAFFINITYMASK */
+
 #include "net.h"
 #include "iperf.h"
 #include "iperf_api.h"
@@ -3542,6 +3546,15 @@ iperf_setaffinity(struct iperf_test *test, int affinity)
         return -1;
     }
     return 0;
+#elif defined(HAVE_SETPROCESSAFFINITYMASK)
+	HANDLE process = GetCurrentProcess();
+	DWORD_PTR processAffinityMask = 1 << affinity;
+
+	if (SetProcessAffinityMask(process, processAffinityMask) == 0) {
+		i_errno = IEAFFINITY;
+		return -1;
+	}
+	return 0;
 #else /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY */
     i_errno = IEAFFINITY;
     return -1;
@@ -3570,6 +3583,17 @@ iperf_clearaffinity(struct iperf_test *test)
         return -1;
     }
     return 0;
+#elif defined(HAVE_SETPROCESSAFFINITYMASK)
+	HANDLE process = GetCurrentProcess();
+	DWORD_PTR processAffinityMask;
+	DWORD_PTR lpSystemAffinityMask;
+
+	if (GetProcessAffinityMask(process, &processAffinityMask, &lpSystemAffinityMask) == 0
+			|| SetProcessAffinityMask(process, lpSystemAffinityMask) == 0) {
+		i_errno = IEAFFINITY;
+		return -1;
+	}
+	return 0;
 #else /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY */
     i_errno = IEAFFINITY;
     return -1;

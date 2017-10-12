@@ -1467,8 +1467,7 @@ send_parameters(struct iperf_test *test)
 	cJSON_AddNumberToObject(j, "omit", test->omit);
 	if (test->server_affinity != -1)
 	    cJSON_AddNumberToObject(j, "server_affinity", test->server_affinity);
-	if (test->duration)
-	    cJSON_AddNumberToObject(j, "time", test->duration);
+	cJSON_AddNumberToObject(j, "time", test->duration);
 	if (test->settings->bytes)
 	    cJSON_AddNumberToObject(j, "num", test->settings->bytes);
 	if (test->settings->blocks)
@@ -2305,6 +2304,8 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->rate = 0;
     test->settings->burst = 0;
     test->settings->mss = 0;
+    test->settings->tos = 0;
+    test->settings->authtoken = NULL;
     memset(test->cookie, 0, COOKIE_SIZE);
     test->multisend = 10;	/* arbitrary */
     test->udp_counters_64bit = 0;

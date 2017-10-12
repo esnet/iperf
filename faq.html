@@ -170,6 +170,29 @@ recommend you use iperf2.</p>
 options will work.  Some community-provided binaries of iperf3 for
 Windows exist.</p>
 </dd>
+<dt>How can I build a statically-linked executable of iperf3?</dt>
+<dd><p class="first">There are a number of reasons for building an iperf3 executable with
+no dependencies on any shared libraries.  Unfortunately this isn&#8217;t
+quite a straight-forward process.</p>
+<p>The steps below have nominally been tested on CentOS 7.4, but
+can probably be adapted for use with other Linux distributions:</p>
+<ol class="arabic simple">
+<li>If necessary, install the static C libraries; for CentOS this is
+the <code class="docutils literal"><span class="pre">glibc-static</span></code> package.</li>
+<li>If OpenSSL is installed, be sure that its static libraries are
+also installed, from the <code class="docutils literal"><span class="pre">openssl-static</span></code> package.</li>
+<li>Be sure that <code class="docutils literal"><span class="pre">lksctp-*</span></code> packages are not installed, because
+as of this writing, there do not appear to be any static
+libraries available for SCTP.</li>
+<li>Configure iperf3 thusly: <code class="docutils literal"><span class="pre">configure</span> <span class="pre">&quot;LDFLAGS=--static&quot;</span>
+<span class="pre">--disable-shared</span></code> These options are necessary to disable the
+generation of shared libraries and link the executable
+statically.</li>
+<li>Compile as normal.</li>
+</ol>
+<p class="last">It appears that for FreeBSD (tested on FreeBSD 11.1-RELEASE), only
+the last two steps are needed to produce a static executable.</p>
+</dd>
 <dt>I&#8217;m seeing quite a bit of unexpected UDP loss. Why?</dt>
 <dd>First, confirm you are using iperf 3.1.5 or higher. There was an
 issue with the default UDP send size that was fixed in

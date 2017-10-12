@@ -40,6 +40,34 @@ I’m trying to use iperf3 on Windows, but having trouble. What should I do?
   options will work.  Some community-provided binaries of iperf3 for
   Windows exist.
  
+How can I build a statically-linked executable of iperf3?
+  There are a number of reasons for building an iperf3 executable with
+  no dependencies on any shared libraries.  Unfortunately this isn't
+  quite a straight-forward process.
+
+  The steps below have nominally been tested on CentOS 7.4, but
+  can probably be adapted for use with other Linux distributions:
+
+  #.  If necessary, install the static C libraries; for CentOS this is
+      the ``glibc-static`` package.
+
+  #.  If OpenSSL is installed, be sure that its static libraries are
+      also installed, from the ``openssl-static`` package.
+
+  #.  Be sure that ``lksctp-*`` packages are not installed, because
+      as of this writing, there do not appear to be any static
+      libraries available for SCTP.
+
+  #.  Configure iperf3 thusly: ``configure "LDFLAGS=--static"
+      --disable-shared`` These options are necessary to disable the
+      generation of shared libraries and link the executable
+      statically.
+
+  #.  Compile as normal.
+
+  It appears that for FreeBSD (tested on FreeBSD 11.1-RELEASE), only
+  the last two steps are needed to produce a static executable.
+
 I'm seeing quite a bit of unexpected UDP loss. Why?
   First, confirm you are using iperf 3.1.5 or higher. There was an
   issue with the default UDP send size that was fixed in

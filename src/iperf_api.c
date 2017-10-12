@@ -2305,7 +2305,10 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->burst = 0;
     test->settings->mss = 0;
     test->settings->tos = 0;
-    test->settings->authtoken = NULL;
+    if (test->settings->authtoken) {
+	free(test->settings->authtoken);
+	test->settings->authtoken = NULL;
+    }
     memset(test->cookie, 0, COOKIE_SIZE);
     test->multisend = 10;	/* arbitrary */
     test->udp_counters_64bit = 0;

@@ -2398,6 +2398,7 @@ iperf_stats_callback(struct iperf_test *test)
 		    rp->stream_prev_total_retrans = total_retrans;
 
 		    temp.snd_cwnd = get_snd_cwnd(&temp);
+		    temp.snd_wnd = get_snd_wnd(&temp);
 		    if (temp.snd_cwnd > rp->stream_max_snd_cwnd) {
 			rp->stream_max_snd_cwnd = temp.snd_cwnd;
 		    }
@@ -2544,9 +2545,9 @@ iperf_print_intermediate(struct iperf_test *test)
 	if (sp) {
         irp = TAILQ_LAST(&sp->result->interval_results, irlisthead);    /* use 1st stream for timing info */
 
-        unit_snprintf(ubuf, UNIT_LEN, (double) bytes, 'A');
+	short_unit_snprintf(ubuf, UNIT_LEN, (double) bytes, 'A');
 	bandwidth = (double) bytes / (double) irp->interval_duration;
-        unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
+	short_unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
 
         start_time = timeval_diff(&sp->result->start_time,&irp->interval_start_time);
         end_time = timeval_diff(&sp->result->start_time,&irp->interval_end_time);
@@ -3042,6 +3043,7 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
     char ubuf[UNIT_LEN];
     char nbuf[UNIT_LEN];
     char cbuf[UNIT_LEN];
+    char wbuf[UNIT_LEN];
     double st = 0., et = 0.;
     struct iperf_interval_results *irp = NULL;
     double bandwidth, lost_percent;
@@ -3075,14 +3077,14 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 	}
     }
 
-    unit_snprintf(ubuf, UNIT_LEN, (double) (irp->bytes_transferred), 'A');
+    short_unit_snprintf(ubuf, UNIT_LEN, (double) (irp->bytes_transferred), 'A');
     if (irp->interval_duration > 0.0) {
 	bandwidth = (double) irp->bytes_transferred / (double) irp->interval_duration;
     }
     else {
 	bandwidth = 0.0;
     }
-    unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
+    short_unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
     
     st = timeval_diff(&sp->result->start_time, &irp->interval_start_time);
     et = timeval_diff(&sp->result->start_time, &irp->interval_end_time);
@@ -3091,10 +3093,11 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 	if (test->sender && test->sender_has_retransmits) {
 	    /* Interval, TCP with retransmits. */
 	    if (test->json_output)
-		cJSON_AddItemToArray(json_interval_streams, iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d  snd_cwnd:  %d  rtt:  %d  rttvar: %d  pmtu: %d  omitted: %b", (int64_t) sp->socket, (double) st, (double) et, (double) irp->interval_duration, (int64_t) irp->bytes_transferred, bandwidth * 8, (int64_t) irp->interval_retrans, (int64_t) irp->snd_cwnd, (int64_t) irp->rtt, (int64_t) irp->rttvar, (int64_t) irp->pmtu, irp->omitted));
+		cJSON_AddItemToArray(json_interval_streams, iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d  snd_cwnd:  %d  snd_wnd:  %d  rtt:  %d  rttvar: %d  pmtu: %d  omitted: %b", (int64_t) sp->socket, (double) st, (double) et, (double) irp->interval_duration, (int64_t) irp->bytes_transferred, bandwidth * 8, (int64_t) irp->interval_retrans, (int64_t) irp->snd_cwnd, (int64_t) irp->snd_wnd, (int64_t) irp->rtt, (int64_t) irp->rttvar, (int64_t) irp->pmtu, irp->omitted));
 	    else {
-		unit_snprintf(cbuf, UNIT_LEN, irp->snd_cwnd, 'A');
-		iperf_printf(test, report_bw_retrans_cwnd_format, sp->socket, st, et, ubuf, nbuf, irp->interval_retrans, cbuf, irp->omitted?report_omitted:"");
+		short_unit_snprintf(cbuf, UNIT_LEN, irp->snd_cwnd, 'A');
+		short_unit_snprintf(wbuf, UNIT_LEN, irp->snd_wnd, 'A');
+		iperf_printf(test, report_bw_retrans_cwnd_format, sp->socket, st, et, ubuf, nbuf, irp->interval_retrans, cbuf, wbuf, irp->omitted?report_omitted:"");
 	    }
 	} else {
 	    /* Interval, TCP without retransmits. */

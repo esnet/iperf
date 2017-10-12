@@ -77,6 +77,7 @@ struct iperf_interval_results
     int interval_retrans;
     int interval_sacks;
     int snd_cwnd;
+    int snd_wnd;
     TAILQ_ENTRY(iperf_interval_results) irlistentries;
     void     *custom_data;
     int rtt;

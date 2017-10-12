@@ -57,6 +57,7 @@
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
+#include <strings.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -348,6 +349,25 @@ extern    "C"
 	}
 	snprintf(s, inLen, format, inNum, suffix);
     }				/* end unit_snprintf */
+
+
+/* -------------------------------------------------------------------
+ * As unit_snrprintf, but do B instead of Byte and b instead of bit for
+ * a bit more compact output.
+ */
+    void short_unit_snprintf(char *s, int inLen,
+                               double inNum, char inFormat)
+    {
+       char *cp;
+
+       unit_snprintf(s, inLen, inNum, inFormat);
+       if ((cp = index(s, 'i')) != NULL) {
+           *cp = 0;
+       } else if ((cp = index(s, 'y')) != NULL) {
+           *cp = 0;
+       }
+    }
+
 
 #ifdef __cplusplus
 }				/* end extern "C" */

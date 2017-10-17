@@ -214,6 +214,14 @@ modules, which must be loaded before they can be used):</p>
 <dd>You need to add &#8216;net.core.default_qdisc = fq&#8217; to /etc/sysctl.conf for that option to work.</dd>
 <dt>I&#8217;m having trouble getting iperf3 to work on Windows, Android, etc. Where can I get help?</dt>
 <dd>iperf3 only supports Linux, FreeBSD, and OSX. For other platforms we recommend using iperf2.</dd>
+<dt>I managed to get a Windows executable built, but why do I get a BSOD on Windows 7?</dt>
+<dd><p class="first">There seems to be a bug in Windows 7 where running iperf3 from a
+network filesystem can cause a system crash (in other words Blue
+Screen of Death, or BSOD).  This is a Windows bug addressed in kb2839149:</p>
+<p><a class="reference external" href="https://support.microsoft.com/en-us/help/2839149/stop-error-0x00000027-in-the-rdbss-sys-process-in-windows-7-or-windows">https://support.microsoft.com/en-us/help/2839149/stop-error-0x00000027-in-the-rdbss-sys-process-in-windows-7-or-windows</a></p>
+<p>A hotfix is available under kb2732673:</p>
+<p class="last"><a class="reference external" href="https://support.microsoft.com/en-us/help/2732673/-delayed-write-failed-error-message-when--pst-files-are-stored-on-a-ne">https://support.microsoft.com/en-us/help/2732673/-delayed-write-failed-error-message-when&#8211;pst-files-are-stored-on-a-ne</a></p>
+</dd>
 <dt>Why can’t I run a UDP client with no server?</dt>
 <dd>This is potentially dangerous, and an attacker could use this for a
 denial of service attack.  We don&#8217;t want iperf3 to be an attack tool.</dd>

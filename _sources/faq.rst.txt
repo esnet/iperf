@@ -93,6 +93,17 @@ I'm using the --fq-rate flag, but it does not seem to be working. Why?
 I'm having trouble getting iperf3 to work on Windows, Android, etc. Where can I get help?
   iperf3 only supports Linux, FreeBSD, and OSX. For other platforms we recommend using iperf2.
 
+I managed to get a Windows executable built, but why do I get a BSOD on Windows 7?
+  There seems to be a bug in Windows 7 where running iperf3 from a
+  network filesystem can cause a system crash (in other words Blue
+  Screen of Death, or BSOD).  This is a Windows bug addressed in kb2839149:
+
+  https://support.microsoft.com/en-us/help/2839149/stop-error-0x00000027-in-the-rdbss-sys-process-in-windows-7-or-windows
+
+  A hotfix is available under kb2732673:
+
+  https://support.microsoft.com/en-us/help/2732673/-delayed-write-failed-error-message-when--pst-files-are-stored-on-a-ne
+
 Why can’t I run a UDP client with no server?
   This is potentially dangerous, and an attacker could use this for a
   denial of service attack.  We don't want iperf3 to be an attack tool.

@@ -1,3 +1,23 @@
+== iperf 3.3 2017-10-?? ==
+
+* Notable user-visible changes
+
+  * iperf3 can now be built --without-openssl on systems where OpenSSL
+    is present (#624, #633).
+
+  * A bug with printing very large numbers has been fixed (#642).
+
+  * A bug where the server would, under certain circumstances, halt a
+    test after exactly fifteen seconds has been fixed (#645).
+
+  * The --tos parameter is no longer "sticky" between tests when doing
+    --reverse tests (#639).
+
+  * The authentication token on the server is properly reset between
+    tests (#650).
+
+* Notable developer-visible changes
+
 == iperf 3.2 2017-06-26 ==
 
 * User-visible changes

@@ -18,7 +18,7 @@ of binary packages:
   `iperf3-devel
   <https://apps.fedoraproject.org/packages/iperf3-devel>`_ in Fedora
   19 and 20 and in Fedora EPEL 5, 6, and 7.  iperf3 is included as a
-  part of RedHat Enterprise Linux 7.3 and later (as well as CentOS 7.3
+  part of RedHat Enterprise Linux 7.4 and later (as well as CentOS 7.4
   and later).
 * Ubuntu:  `iperf3 <https://launchpad.net/ubuntu/+source/iperf3>`_,
   is available in Trusty (backports), and as a part of the main

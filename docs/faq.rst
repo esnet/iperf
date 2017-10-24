@@ -40,6 +40,34 @@ I’m trying to use iperf3 on Windows, but having trouble. What should I do?
   options will work.  Some community-provided binaries of iperf3 for
   Windows exist.
  
+How can I build a statically-linked executable of iperf3?
+  There are a number of reasons for building an iperf3 executable with
+  no dependencies on any shared libraries.  Unfortunately this isn't
+  quite a straight-forward process.
+
+  The steps below have nominally been tested on CentOS 7.4, but
+  can probably be adapted for use with other Linux distributions:
+
+  #.  If necessary, install the static C libraries; for CentOS this is
+      the ``glibc-static`` package.
+
+  #.  If OpenSSL is installed, be sure that its static libraries are
+      also installed, from the ``openssl-static`` package.
+
+  #.  Be sure that ``lksctp-*`` packages are not installed, because
+      as of this writing, there do not appear to be any static
+      libraries available for SCTP.
+
+  #.  Configure iperf3 thusly: ``configure "LDFLAGS=--static"
+      --disable-shared`` These options are necessary to disable the
+      generation of shared libraries and link the executable
+      statically.
+
+  #.  Compile as normal.
+
+  It appears that for FreeBSD (tested on FreeBSD 11.1-RELEASE), only
+  the last two steps are needed to produce a static executable.
+
 I'm seeing quite a bit of unexpected UDP loss. Why?
   First, confirm you are using iperf 3.1.5 or higher. There was an
   issue with the default UDP send size that was fixed in
@@ -64,6 +92,17 @@ I'm using the --fq-rate flag, but it does not seem to be working. Why?
 
 I'm having trouble getting iperf3 to work on Windows, Android, etc. Where can I get help?
   iperf3 only supports Linux, FreeBSD, and OSX. For other platforms we recommend using iperf2.
+
+I managed to get a Windows executable built, but why do I get a BSOD on Windows 7?
+  There seems to be a bug in Windows 7 where running iperf3 from a
+  network filesystem can cause a system crash (in other words Blue
+  Screen of Death, or BSOD).  This is a Windows bug addressed in kb2839149:
+
+  https://support.microsoft.com/en-us/help/2839149/stop-error-0x00000027-in-the-rdbss-sys-process-in-windows-7-or-windows
+
+  A hotfix is available under kb2732673:
+
+  https://support.microsoft.com/en-us/help/2732673/-delayed-write-failed-error-message-when--pst-files-are-stored-on-a-ne
 
 Why can’t I run a UDP client with no server?
   This is potentially dangerous, and an attacker could use this for a

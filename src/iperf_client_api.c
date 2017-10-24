@@ -367,7 +367,7 @@ iperf_connect(struct iperf_test *test)
      */
     if (test->protocol->id == Pudp) {
 	if (test->settings->blksize == 0) {
-	    if (test->ctrl_sck_mss) {
+	    if (test->ctrl_sck_mss > 0 && test->ctrl_sck_mss < MAX_UDP_BLOCKSIZE) {
 		test->settings->blksize = test->ctrl_sck_mss;
 	    }
 	    else {

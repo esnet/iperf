@@ -16,6 +16,9 @@
   * The authentication token on the server is properly reset between
     tests (#650).
 
+  * A bug that could cause iperf3 to overwrite the PID file of an
+    already-existing iperf3 process has been fixed (#623).
+
 * Notable developer-visible changes
 
 == iperf 3.2 2017-06-26 ==

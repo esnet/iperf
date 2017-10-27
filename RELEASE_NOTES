@@ -19,6 +19,12 @@
   * A bug that could cause iperf3 to overwrite the PID file of an
     already-existing iperf3 process has been fixed (#623).
 
+  * iperf3 will now ignore nonsensical TCP MSS values (from the TCP
+    control connection) when trying to determine a reasonable block
+    size for UDP tests.  This condition primarily affected users on
+    Windows, but potentially improves robustness for all
+    platforms. (#659)
+
 * Notable developer-visible changes
 
 == iperf 3.2 2017-06-26 ==

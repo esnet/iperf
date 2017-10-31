@@ -1,6 +1,14 @@
 iperf3 Project News
 ===================
 
+2017-10-31:  iperf-3.3 released
+-------------------------------
+
+| URL:  http://downloads.es.net/pub/iperf/iperf-3.3.tar.gz
+| SHA256:  ``6f596271251056bffc11bbb8f17d4244ad9a7d4a317c2459fdbb853ae51284d8  iperf-3.3.tar.gz``
+
+New minor release of iperf 3.3, fixing a number of minor bugs.
+
 2017-06-26:  iperf-3.2 released
 -------------------------------
 

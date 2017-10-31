@@ -9,6 +9,9 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
+/* Define to 1 if you have the <endian.h> header file. */
+#undef HAVE_ENDIAN_H
+
 /* Have IPv6 flowlabel support. */
 #undef HAVE_FLOWLABEL
 
@@ -53,6 +56,9 @@
 
 /* Define to 1 if the system has the type `struct sctp_assoc_value'. */
 #undef HAVE_STRUCT_SCTP_ASSOC_VALUE
+
+/* Define to 1 if you have the <sys/endian.h> header file. */
+#undef HAVE_SYS_ENDIAN_H
 
 /* Define to 1 if you have the <sys/socket.h> header file. */
 #undef HAVE_SYS_SOCKET_H

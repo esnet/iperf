@@ -24,7 +24,9 @@
  * This code is distributed under a BSD style license, see the LICENSE file
  * for complete information.
  */
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
 #define __USE_GNU
 
 #include "iperf_config.h"

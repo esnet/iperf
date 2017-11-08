@@ -12750,6 +12750,29 @@ fi
 done
 
 
+ac_fn_c_check_header_mongrel "$LINENO" "endian.h" "ac_cv_header_endian_h" "$ac_includes_default"
+if test "x$ac_cv_header_endian_h" = xyes; then :
+
+$as_echo "#define HAVE_ENDIAN_H 1" >>confdefs.h
+
+else
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/endian.h" "ac_cv_header_sys_endian_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_endian_h" = xyes; then :
+
+$as_echo "#define HAVE_SYS_ENDIAN_H 1" >>confdefs.h
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Couldn't find endian.h or sys/endian.h files: doing compile-time tests." >&5
+$as_echo "$as_me: WARNING: Couldn't find endian.h or sys/endian.h files: doing compile-time tests." >&2;}
+
+fi
+
+
+
+fi
+
+
+
 if test "x$with_openssl" = "xno"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Building without OpenSSL; disabling iperf_auth functionality. " >&5
 $as_echo "$as_me: WARNING: Building without OpenSSL; disabling iperf_auth functionality. " >&2;}

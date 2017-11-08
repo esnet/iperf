@@ -101,6 +101,14 @@ AC_CHECK_HEADERS([netinet/sctp.h],
 #endif
 ])
 
+AC_CHECK_HEADER([endian.h],
+		AC_DEFINE([HAVE_ENDIAN_H], [1], [Define to 1 if you have the <endian.h> header file.]),
+		AC_CHECK_HEADER([sys/endian.h],
+				AC_DEFINE([HAVE_SYS_ENDIAN_H], [1], [Define to 1 if you have the <sys/endian.h> header file.]),
+				AC_MSG_WARN([Couldn't find endian.h or sys/endian.h files: doing compile-time tests.])
+				)
+		)
+
 if test "x$with_openssl" = "xno"; then
     AC_MSG_WARN( [Building without OpenSSL; disabling iperf_auth functionality.] )
 else

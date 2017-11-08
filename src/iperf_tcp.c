@@ -24,8 +24,6 @@
  * This code is distributed under a BSD style license, see the LICENSE
  * file for complete information.
  */
-#include "iperf_config.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,6 +41,12 @@
 #include "iperf_tcp.h"
 #include "net.h"
 #include "cjson.h"
+
+#if defined(HAVE_INTTYPES_H)
+# include <inttypes.h>
+#else
+# define PRIu64		"llu"
+#endif
 
 #if defined(HAVE_FLOWLABEL)
 #include "flowlabel.h"
@@ -90,7 +94,7 @@ iperf_tcp_send(struct iperf_stream *sp)
     sp->result->bytes_sent_this_interval += r;
 
     if (sp->test->debug)
-	printf("sent %d bytes of %d, total %llu\n", r, sp->settings->blksize, sp->result->bytes_sent);
+	printf("sent %d bytes of %d, total %" PRIu64 "\n", r, sp->settings->blksize, sp->result->bytes_sent);
 
     return r;
 }

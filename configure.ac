@@ -168,6 +168,10 @@ AC_CHECK_FUNCS([cpuset_setaffinity sched_setaffinity],
 # it needs and what arguments it expects.
 AC_CHECK_FUNCS([sendfile])
 
+# Check for getline support, used as a part of authenticated
+# connections.
+AC_CHECK_FUNCS([getline])
+
 # Check for packet pacing socket option (Linux only for now).
 AC_CACHE_CHECK([SO_MAX_PACING_RATE socket option],
 [iperf3_cv_header_so_max_pacing_rate],

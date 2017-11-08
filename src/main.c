@@ -137,11 +137,7 @@ run(struct iperf_test *test)
         case 's':
 	    if (test->daemon) {
 		int rc;
-#ifdef HAVE_DAEMON
 		rc = daemon(0, 0);
-#else
-		rc = missing_daemon(0, 0);
-#endif /* HAVE_DAEMON */
 		if (rc < 0) {
 		    i_errno = IEDAEMON;
 		    iperf_errexit(test, "error - %s", iperf_strerror(i_errno));

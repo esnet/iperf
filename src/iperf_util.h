@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014-2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -27,6 +27,7 @@
 #ifndef __IPERF_UTIL_H
 #define __IPERF_UTIL_H
 
+#include "iperf_config.h"
 #include "cjson.h"
 #include <sys/select.h>
 #include <stddef.h>
@@ -55,4 +56,7 @@ cJSON* iperf_json_printf(const char *format, ...);
 
 void iperf_dump_fdset(FILE *fp, char *str, int nfds, fd_set *fds);
 
+#ifndef HAVE_DAEMON
+extern int daemon(int nochdir, int noclose);
+#endif
 #endif

@@ -74,7 +74,6 @@
 
 #include "cjson.h"
 #include "units.h"
-#include "tcp_window_size.h"
 #include "iperf_util.h"
 #include "iperf_locale.h"
 #include "version.h"

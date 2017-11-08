@@ -13095,6 +13095,20 @@ fi
 done
 
 
+# Check for getline support, used as a part of authenticated
+# connections.
+for ac_func in getline
+do :
+  ac_fn_c_check_func "$LINENO" "getline" "ac_cv_func_getline"
+if test "x$ac_cv_func_getline" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_GETLINE 1
+_ACEOF
+
+fi
+done
+
+
 # Check for packet pacing socket option (Linux only for now).
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking SO_MAX_PACING_RATE socket option" >&5
 $as_echo_n "checking SO_MAX_PACING_RATE socket option... " >&6; }

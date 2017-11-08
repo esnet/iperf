@@ -15,6 +15,9 @@
 /* Have IPv6 flowlabel support. */
 #undef HAVE_FLOWLABEL
 
+/* Define to 1 if you have the `getline' function. */
+#undef HAVE_GETLINE
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 

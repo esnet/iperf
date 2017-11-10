@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014-2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -54,5 +54,9 @@ const char* get_optional_features(void);
 cJSON* iperf_json_printf(const char *format, ...);
 
 void iperf_dump_fdset(FILE *fp, char *str, int nfds, fd_set *fds);
+
+#ifndef HAVE_GETLINE
+ssize_t getline(char **buf, size_t *bufsiz, FILE *fp);
+#endif /* HAVE_GETLINE */
 
 #endif

@@ -58,5 +58,5 @@ void iperf_dump_fdset(FILE *fp, char *str, int nfds, fd_set *fds);
 
 #ifndef HAVE_DAEMON
 extern int daemon(int nochdir, int noclose);
-#endif
+#endif /* HAVE_DAEMON */
 #endif

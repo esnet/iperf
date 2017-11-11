@@ -13080,6 +13080,19 @@ fi
 done
 
 
+# Check for daemon().  Most systems have this but a few (IRIX) don't.
+for ac_func in daemon
+do :
+  ac_fn_c_check_func "$LINENO" "daemon" "ac_cv_func_daemon"
+if test "x$ac_cv_func_daemon" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_DAEMON 1
+_ACEOF
+
+fi
+done
+
+
 # Check for sendfile support.  FreeBSD, Linux, and MacOS all support
 # this system call, but they're all different in terms of what headers
 # it needs and what arguments it expects.

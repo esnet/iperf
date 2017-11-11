@@ -27,6 +27,7 @@
 #ifndef __IPERF_UTIL_H
 #define __IPERF_UTIL_H
 
+#include "iperf_config.h"
 #include "cjson.h"
 #include <sys/select.h>
 #include <stddef.h>
@@ -54,6 +55,10 @@ const char* get_optional_features(void);
 cJSON* iperf_json_printf(const char *format, ...);
 
 void iperf_dump_fdset(FILE *fp, char *str, int nfds, fd_set *fds);
+
+#ifndef HAVE_DAEMON
+extern int daemon(int nochdir, int noclose);
+#endif /* HAVE_DAEMON */
 
 #ifndef HAVE_GETLINE
 ssize_t getline(char **buf, size_t *bufsiz, FILE *fp);

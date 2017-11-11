@@ -136,7 +136,8 @@ run(struct iperf_test *test)
     switch (test->role) {
         case 's':
 	    if (test->daemon) {
-		int rc = daemon(0, 0);
+		int rc;
+		rc = daemon(0, 0);
 		if (rc < 0) {
 		    i_errno = IEDAEMON;
 		    iperf_errexit(test, "error - %s", iperf_strerror(i_errno));

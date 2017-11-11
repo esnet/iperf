@@ -64,12 +64,6 @@ echo "floor()"
 exit 1
 ])
 
-# Solaris puts nanosleep in -lrt
-AC_SEARCH_LIBS(nanosleep, [rt], [], [
-echo "nanosleep() required for timing operations."
-exit 1
-])
-
 # On illumos we need -lsocket
 AC_SEARCH_LIBS(socket, [socket], [], [
 echo "socket()"

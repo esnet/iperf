@@ -33,8 +33,6 @@ libiperf_la_SOURCES     = \
 			portable_endian.h \
                         queue.h \
                         tcp_info.c \
-                        tcp_window_size.c \
-                        tcp_window_size.h \
                         timer.c \
                         timer.h \
                         units.c \

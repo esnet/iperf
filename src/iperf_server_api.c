@@ -40,7 +40,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <pthread.h>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
@@ -57,7 +56,6 @@
 #include "timer.h"
 #include "net.h"
 #include "units.h"
-#include "tcp_window_size.h"
 #include "iperf_util.h"
 #include "iperf_locale.h"
 

@@ -164,43 +164,6 @@ timeval_diff(struct timeval * tv0, struct timeval * tv1)
     return time1;
 }
 
-
-int
-delay(int64_t ns)
-{
-    struct timespec req, rem;
-
-    req.tv_sec = 0;
-
-    while (ns >= 1000000000L) {
-        ns -= 1000000000L;
-        req.tv_sec += 1;
-    }
-
-    req.tv_nsec = ns;
-
-    while (nanosleep(&req, &rem) == -1)
-        if (EINTR == errno)
-            memcpy(&req, &rem, sizeof(rem));
-        else
-            return -1;
-    return 0;
-}
-
-# ifdef DELAY_SELECT_METHOD
-int
-delay(int us)
-{
-    struct timeval tv;
-
-    tv.tv_sec = 0;
-    tv.tv_usec = us;
-    (void) select(1, (fd_set *) 0, (fd_set *) 0, (fd_set *) 0, &tv);
-    return 1;
-}
-#endif
-
-
 void
 cpu_util(double pcpu[3])
 {

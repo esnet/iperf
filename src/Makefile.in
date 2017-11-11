@@ -141,8 +141,7 @@ libiperf_la_LIBADD =
 am_libiperf_la_OBJECTS = cjson.lo iperf_api.lo iperf_error.lo \
 	iperf_auth.lo iperf_client_api.lo iperf_locale.lo \
 	iperf_server_api.lo iperf_tcp.lo iperf_udp.lo iperf_sctp.lo \
-	iperf_util.lo dscp.lo net.lo tcp_info.lo tcp_window_size.lo \
-	timer.lo units.lo
+	iperf_util.lo dscp.lo net.lo tcp_info.lo timer.lo units.lo
 libiperf_la_OBJECTS = $(am_libiperf_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -168,7 +167,6 @@ am__objects_1 = iperf3_profile-cjson.$(OBJEXT) \
 	iperf3_profile-iperf_util.$(OBJEXT) \
 	iperf3_profile-dscp.$(OBJEXT) iperf3_profile-net.$(OBJEXT) \
 	iperf3_profile-tcp_info.$(OBJEXT) \
-	iperf3_profile-tcp_window_size.$(OBJEXT) \
 	iperf3_profile-timer.$(OBJEXT) iperf3_profile-units.$(OBJEXT)
 am_iperf3_profile_OBJECTS = iperf3_profile-main.$(OBJEXT) \
 	$(am__objects_1)
@@ -601,8 +599,6 @@ libiperf_la_SOURCES = \
 			portable_endian.h \
                         queue.h \
                         tcp_info.c \
-                        tcp_window_size.c \
-                        tcp_window_size.h \
                         timer.c \
                         timer.h \
                         units.c \
@@ -831,7 +827,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-net.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-tcp_info.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-tcp_window_size.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-timer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-units.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_api.Plo@am__quote@
@@ -849,7 +844,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_units-t_units.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_uuid-t_uuid.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcp_info.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcp_window_size.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/units.Plo@am__quote@
 
@@ -1097,20 +1091,6 @@ iperf3_profile-tcp_info.obj: tcp_info.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tcp_info.c' object='iperf3_profile-tcp_info.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-tcp_info.obj `if test -f 'tcp_info.c'; then $(CYGPATH_W) 'tcp_info.c'; else $(CYGPATH_W) '$(srcdir)/tcp_info.c'; fi`
-
-iperf3_profile-tcp_window_size.o: tcp_window_size.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-tcp_window_size.o -MD -MP -MF $(DEPDIR)/iperf3_profile-tcp_window_size.Tpo -c -o iperf3_profile-tcp_window_size.o `test -f 'tcp_window_size.c' || echo '$(srcdir)/'`tcp_window_size.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/iperf3_profile-tcp_window_size.Tpo $(DEPDIR)/iperf3_profile-tcp_window_size.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tcp_window_size.c' object='iperf3_profile-tcp_window_size.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-tcp_window_size.o `test -f 'tcp_window_size.c' || echo '$(srcdir)/'`tcp_window_size.c
-
-iperf3_profile-tcp_window_size.obj: tcp_window_size.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-tcp_window_size.obj -MD -MP -MF $(DEPDIR)/iperf3_profile-tcp_window_size.Tpo -c -o iperf3_profile-tcp_window_size.obj `if test -f 'tcp_window_size.c'; then $(CYGPATH_W) 'tcp_window_size.c'; else $(CYGPATH_W) '$(srcdir)/tcp_window_size.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/iperf3_profile-tcp_window_size.Tpo $(DEPDIR)/iperf3_profile-tcp_window_size.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tcp_window_size.c' object='iperf3_profile-tcp_window_size.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-tcp_window_size.obj `if test -f 'tcp_window_size.c'; then $(CYGPATH_W) 'tcp_window_size.c'; else $(CYGPATH_W) '$(srcdir)/tcp_window_size.c'; fi`
 
 iperf3_profile-timer.o: timer.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-timer.o -MD -MP -MF $(DEPDIR)/iperf3_profile-timer.Tpo -c -o iperf3_profile-timer.o `test -f 'timer.c' || echo '$(srcdir)/'`timer.c

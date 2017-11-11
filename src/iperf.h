@@ -36,7 +36,9 @@
 #endif
 #include <sys/select.h>
 #include <sys/socket.h>
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
 #include <netinet/tcp.h>
 
 #if defined(HAVE_CPUSET_SETAFFINITY)

@@ -24,7 +24,7 @@
 # file for complete information.
 
 # Initialize the autoconf system for the specified tool, version and mailing list
-AC_INIT(iperf, 3-CURRENT, https://github.com/esnet/iperf, iperf, http://software.es.net/iperf/)
+AC_INIT(iperf, 3.3, https://github.com/esnet/iperf, iperf, http://software.es.net/iperf/)
 m4_include([config/ax_check_openssl.m4])
 AC_LANG(C)
 
@@ -101,13 +101,28 @@ AC_CHECK_HEADERS([netinet/sctp.h],
 #endif
 ])
 
-# Check for OPENSSL support
-AX_CHECK_OPENSSL(
-	AC_DEFINE([HAVE_SSL], [1], [OpenSSL Is Available])
-)
-LDFLAGS="$LDFLAGS $OPENSSL_LDFLAGS"
-LIBS="$OPENSSL_LIBS $LIBS"
-CPPFLAGS="$OPENSSL_INCLUDES $CPPFLAGS"
+AC_CHECK_HEADER([endian.h],
+		AC_DEFINE([HAVE_ENDIAN_H], [1], [Define to 1 if you have the <endian.h> header file.]),
+		AC_CHECK_HEADER([sys/endian.h],
+				AC_DEFINE([HAVE_SYS_ENDIAN_H], [1], [Define to 1 if you have the <sys/endian.h> header file.]),
+				AC_MSG_WARN([Couldn't find endian.h or sys/endian.h files: doing compile-time tests.])
+				)
+		)
+
+if test "x$with_openssl" = "xno"; then
+    AC_MSG_WARN( [Building without OpenSSL; disabling iperf_auth functionality.] )
+else
+    # Check for OPENSSL support
+    AX_CHECK_OPENSSL(
+        [ AC_DEFINE([HAVE_SSL], [1], [OpenSSL Is Available]) ],
+	[ if test "x$with_openssl" != "x"; then
+	  AC_MSG_FAILURE([--with-openssl was given, but test for OpenSSL failed])
+	  fi ]
+    )
+    LDFLAGS="$LDFLAGS $OPENSSL_LDFLAGS"
+    LIBS="$OPENSSL_LIBS $LIBS"
+    CPPFLAGS="$OPENSSL_INCLUDES $CPPFLAGS"
+fi
 
 # Check for TCP_CONGESTION sockopt (believed to be Linux and FreeBSD only)
 AC_CACHE_CHECK([TCP_CONGESTION socket option],
@@ -155,6 +170,10 @@ AC_CHECK_FUNCS([daemon])
 # this system call, but they're all different in terms of what headers
 # it needs and what arguments it expects.
 AC_CHECK_FUNCS([sendfile])
+
+# Check for getline support, used as a part of authenticated
+# connections.
+AC_CHECK_FUNCS([getline])
 
 # Check for packet pacing socket option (Linux only for now).
 AC_CACHE_CHECK([SO_MAX_PACING_RATE socket option],

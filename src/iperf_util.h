@@ -59,4 +59,9 @@ void iperf_dump_fdset(FILE *fp, char *str, int nfds, fd_set *fds);
 #ifndef HAVE_DAEMON
 extern int daemon(int nochdir, int noclose);
 #endif /* HAVE_DAEMON */
+
+#ifndef HAVE_GETLINE
+ssize_t getline(char **buf, size_t *bufsiz, FILE *fp);
+#endif /* HAVE_GETLINE */
+
 #endif

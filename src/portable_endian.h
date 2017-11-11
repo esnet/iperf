@@ -10,17 +10,36 @@
 
 #endif
 
-// GLIBC / Linux with endian(3) support, which was added in glibc 2.9.
-// Intended to support CentOS 6 and newer.
-#if defined(__linux__) && \
-    ((__GLIBC__ > 3) || \
-     (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 9))
+#if defined(__CYGWIN__)
 
 #	include <endian.h>
 
-#elif defined(__CYGWIN__)
-
+#elif defined(HAVE_ENDIAN_H)
 #	include <endian.h>
+
+#elif defined(HAVE_SYS_ENDIAN_H)
+#	include <sys/endian.h>
+
+#	if defined(__OpenBSD__)
+
+#		define be16toh(x) betoh16(x)
+#		define le16toh(x) letoh16(x)
+
+#		define be32toh(x) betoh32(x)
+#		define le32toh(x) letoh32(x)
+
+#		define be64toh(x) betoh64(x)
+#		define le64toh(x) letoh64(x)
+
+#	elif defined(__sgi)
+
+#		include <netinet/in.h>
+#		include <inttypes.h>
+
+#		define be64toh(x) (x)
+#		define htobe64(x) (x)
+
+#	endif
 
 #elif defined(__APPLE__)
 
@@ -45,32 +64,6 @@
 #	define __BIG_ENDIAN    BIG_ENDIAN
 #	define __LITTLE_ENDIAN LITTLE_ENDIAN
 #	define __PDP_ENDIAN    PDP_ENDIAN
-
-#elif defined(__OpenBSD__)
-
-#	include <sys/endian.h>
-
-#	define be16toh(x) betoh16(x)
-#	define le16toh(x) letoh16(x)
-
-#	define be32toh(x) betoh32(x)
-#	define le32toh(x) letoh32(x)
-
-#	define be64toh(x) betoh64(x)
-#	define le64toh(x) letoh64(x)
-
-#elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
-
-#	include <sys/endian.h>
-
-#elif defined(__sgi)
-
-#  include <sys/endian.h>
-#  include <netinet/in.h>
-#  include <inttypes.h>
-
-#  define be64toh(x) (x)
-#  define htobe64(x) (x)
 
 #elif defined(__sun) && defined(__SVR4)
 

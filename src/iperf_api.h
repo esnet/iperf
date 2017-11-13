@@ -265,7 +265,6 @@ int iperf_run_server(struct iperf_test *);
 int iperf_server_listen(struct iperf_test *);
 int iperf_accept(struct iperf_test *);
 int iperf_handle_message_server(struct iperf_test *);
-void iperf_test_reset(struct iperf_test *);
 int iperf_create_pidfile(struct iperf_test *);
 int iperf_delete_pidfile(struct iperf_test *);
 

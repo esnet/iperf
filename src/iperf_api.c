@@ -852,17 +852,17 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     return -1;
                 }
                 test->settings->socket_bufsize = (int) farg;
-		comma = strchr(optarg, ',');
-				if (comma != NULL) {
-					test->settings->server_socket_bufsize = unit_atof(comma + 1);
-					if (test->settings->server_socket_bufsize > (double)MAX_TCP_BUFFER) {
-						i_errno = IEBUFSIZE;
-						return -1;
-					}
-				}
-				else {
-					test->settings->server_socket_bufsize = test->settings->socket_bufsize;
-				}
+                comma = strchr(optarg, ',');
+                if (comma != NULL) {
+                    test->settings->server_socket_bufsize = unit_atof(comma + 1);
+                    if (test->settings->server_socket_bufsize > (double)MAX_TCP_BUFFER) {
+                        i_errno = IEBUFSIZE;
+                        return -1;
+                    }
+                }
+                else {
+                    test->settings->server_socket_bufsize = test->settings->socket_bufsize;
+                }
 		client_flag = 1;
                 break;
             case 'B':

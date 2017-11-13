@@ -1,3 +1,21 @@
+== iperf 3.4 ==
+
+* Notable user-visible changes
+
+  * The -A (set processor affinity) command-line flag is now supported
+    on Windows (#665).
+
+  * iperf3 now builds on macOS systems older than 10.7 (#607).
+
+  * iperf3 now builds on systems lacking a daemon(3) library call
+    (#369).
+
+* Notable developer-visible changes
+
+  * Some unused code and header inclusions were eliminated (#667).
+    Also some code was cleaned up to eliminate (or at least reduce)
+    compiler warnings (#664).
+
 == iperf 3.3 2017-10-31 ==
 
 * Notable user-visible changes

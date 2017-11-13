@@ -3547,7 +3547,7 @@ iperf_json_finish(struct iperf_test *test)
 }
 
 
-/* CPU affinity stuff - Linux and FreeBSD only. */
+/* CPU affinity stuff - Linux, FreeBSD, and Windows only. */
 
 int
 iperf_setaffinity(struct iperf_test *test, int affinity)
@@ -3589,10 +3589,10 @@ iperf_setaffinity(struct iperf_test *test, int affinity)
 		return -1;
 	}
 	return 0;
-#else /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY */
+#else /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY nor HAVE_SETPROCESSAFFINITYMASK */
     i_errno = IEAFFINITY;
     return -1;
-#endif /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY */
+#endif /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY nor HAVE_SETPROCESSAFFINITYMASK */
 }
 
 int
@@ -3628,10 +3628,10 @@ iperf_clearaffinity(struct iperf_test *test)
 		return -1;
 	}
 	return 0;
-#else /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY */
+#else /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY nor HAVE_SETPROCESSAFFINITYMASK */
     i_errno = IEAFFINITY;
     return -1;
-#endif /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY */
+#endif /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY nor HAVE_SETPROCESSAFFINITYMASK */
 }
 
 int

@@ -85,6 +85,12 @@
 #include "iperf_auth.h"
 #endif /* HAVE_SSL */
 
+#if defined(HAVE_INTTYPES_H)
+# include <inttypes.h>
+#else
+# define PRIu64		"llu"
+#endif
+
 /* Forwards. */
 static int send_parameters(struct iperf_test *test);
 static int get_parameters(struct iperf_test *test);
@@ -2486,7 +2492,7 @@ iperf_print_intermediate(struct iperf_test *test)
 	    double interval_len = timeval_diff(&irp->interval_start_time,
 					       &irp->interval_end_time);
 	    if (test->debug) {
-		printf("interval_len %f bytes_transferred %lu\n", interval_len, irp->bytes_transferred);
+		printf("interval_len %f bytes_transferred %" PRIu64 "\n", interval_len, irp->bytes_transferred);
 	    }
 
 	    /*

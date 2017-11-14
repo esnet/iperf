@@ -437,6 +437,7 @@ iperf_sctp_bindx(struct iperf_test *test, int s, int is_server)
     int nxaddrs;
     int retval;
     int domain;
+    int saved_errno;
 
     domain = test->settings->domain;
     xbe0 = NULL;

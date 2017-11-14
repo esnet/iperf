@@ -115,7 +115,7 @@ int
 netdial(int domain, int proto, char *local, int local_port, char *server, int port, int timeout)
 {
     struct addrinfo hints, *local_res, *server_res;
-    int s;
+    int s, saved_errno;
 
     if (local) {
         memset(&hints, 0, sizeof(hints));
@@ -148,9 +148,11 @@ netdial(int domain, int proto, char *local, int local_port, char *server, int po
         }
 
         if (bind(s, (struct sockaddr *) local_res->ai_addr, local_res->ai_addrlen) < 0) {
+	    saved_errno = errno;
 	    close(s);
 	    freeaddrinfo(local_res);
 	    freeaddrinfo(server_res);
+	    errno = saved_errno;
             return -1;
 	}
         freeaddrinfo(local_res);
@@ -158,8 +160,10 @@ netdial(int domain, int proto, char *local, int local_port, char *server, int po
 
     ((struct sockaddr_in *) server_res->ai_addr)->sin_port = htons(port);
     if (timeout_connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen, timeout) < 0 && errno != EINPROGRESS) {
+	saved_errno = errno;
 	close(s);
 	freeaddrinfo(server_res);
+	errno = saved_errno;
         return -1;
     }
 
@@ -174,7 +178,7 @@ netannounce(int domain, int proto, char *local, int port)
 {
     struct addrinfo hints, *res;
     char portstr[6];
-    int s, opt;
+    int s, opt, saved_errno;
 
     snprintf(portstr, 6, "%d", port);
     memset(&hints, 0, sizeof(hints));
@@ -210,8 +214,10 @@ netannounce(int domain, int proto, char *local, int port)
     opt = 1;
     if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, 
 		   (char *) &opt, sizeof(opt)) < 0) {
+	saved_errno = errno;
 	close(s);
 	freeaddrinfo(res);
+	errno = saved_errno;
 	return -1;
     }
     /*
@@ -230,16 +236,20 @@ netannounce(int domain, int proto, char *local, int port)
 	    opt = 1;
 	if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, 
 		       (char *) &opt, sizeof(opt)) < 0) {
+	    saved_errno = errno;
 	    close(s);
 	    freeaddrinfo(res);
+	    errno = saved_errno;
 	    return -1;
 	}
     }
 #endif /* IPV6_V6ONLY */
 
     if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0) {
+        saved_errno = errno;
         close(s);
 	freeaddrinfo(res);
+        errno = saved_errno;
         return -1;
     }
 
@@ -247,7 +257,9 @@ netannounce(int domain, int proto, char *local, int port)
     
     if (proto == SOCK_STREAM) {
         if (listen(s, 5) < 0) {
+	    saved_errno = errno;
 	    close(s);
+	    errno = saved_errno;
             return -1;
         }
     }

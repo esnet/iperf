@@ -450,7 +450,7 @@ cleanup_server(struct iperf_test *test)
 int
 iperf_run_server(struct iperf_test *test)
 {
-    int result, s, streams_accepted;
+    int result, s, streams_accepted, saved_errno;
     fd_set read_set, write_set;
     struct iperf_stream *sp;
     struct timeval now;
@@ -541,8 +541,10 @@ iperf_run_server(struct iperf_test *test)
 				    warning("TCP congestion control algorithm not supported");
 				}
 				else {
+				    saved_errno = errno;
 				    close(s);
 				    cleanup_server(test);
+				    errno = saved_errno;
 				    i_errno = IESETCONGESTION;
 				    return -1;
 				}
@@ -552,8 +554,10 @@ iperf_run_server(struct iperf_test *test)
 			    socklen_t len = TCP_CA_NAME_MAX;
 			    char ca[TCP_CA_NAME_MAX + 1];
 			    if (getsockopt(s, IPPROTO_TCP, TCP_CONGESTION, ca, &len) < 0) {
+				saved_errno = errno;
 				close(s);
 				cleanup_server(test);
+				errno = saved_errno;
 				i_errno = IESETCONGESTION;
 				return -1;
 			    }

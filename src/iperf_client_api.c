@@ -53,7 +53,7 @@
 int
 iperf_create_streams(struct iperf_test *test)
 {
-    int i, s;
+    int i, s, saved_errno;
     struct iperf_stream *sp;
 
     int orig_bind_port = test->bind_port;
@@ -69,7 +69,9 @@ iperf_create_streams(struct iperf_test *test)
 	if (test->protocol->id == Ptcp) {
 	    if (test->congestion) {
 		if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
+		    saved_errno = errno;
 		    close(s);
+		    errno = saved_errno;
 		    i_errno = IESETCONGESTION;
 		    return -1;
 		} 
@@ -78,7 +80,9 @@ iperf_create_streams(struct iperf_test *test)
 		socklen_t len = TCP_CA_NAME_MAX;
 		char ca[TCP_CA_NAME_MAX + 1];
 		if (getsockopt(s, IPPROTO_TCP, TCP_CONGESTION, ca, &len) < 0) {
+		    saved_errno = errno;
 		    close(s);
+		    errno = saved_errno;
 		    i_errno = IESETCONGESTION;
 		    return -1;
 		}

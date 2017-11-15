@@ -85,12 +85,6 @@
 #include "iperf_auth.h"
 #endif /* HAVE_SSL */
 
-#if defined(HAVE_INTTYPES_H)
-# include <inttypes.h>
-#else
-# define PRIu64		"llu"
-#endif
-
 /* Forwards. */
 static int send_parameters(struct iperf_test *test);
 static int get_parameters(struct iperf_test *test);

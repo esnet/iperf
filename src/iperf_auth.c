@@ -31,6 +31,8 @@
 #include <assert.h>
 #include <time.h>
 #include <sys/types.h>
+/* FreeBSD needs _WITH_GETLINE to enable the getline() declaration */
+#define _WITH_GETLINE
 #include <stdio.h>
 #include <termios.h>
 

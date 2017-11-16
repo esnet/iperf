@@ -53,7 +53,10 @@
 int
 iperf_create_streams(struct iperf_test *test)
 {
-    int i, s, saved_errno;
+    int i, s;
+#if defined(HAVE_TCP_CONGESTION)
+    int saved_errno;
+#endif /* HAVE_TCP_CONGESTION */
     struct iperf_stream *sp;
 
     int orig_bind_port = test->bind_port;

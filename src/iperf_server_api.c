@@ -385,7 +385,10 @@ cleanup_server(struct iperf_test *test)
 int
 iperf_run_server(struct iperf_test *test)
 {
-    int result, s, streams_accepted, saved_errno;
+    int result, s, streams_accepted;
+#if defined(HAVE_TCP_CONGESTION)
+    int saved_errno;
+#endif /* HAVE_TCP_CONGESTION */
     fd_set read_set, write_set;
     struct iperf_stream *sp;
     struct timeval now;

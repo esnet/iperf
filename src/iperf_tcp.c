@@ -42,12 +42,6 @@
 #include "net.h"
 #include "cjson.h"
 
-#if defined(HAVE_INTTYPES_H)
-# include <inttypes.h>
-#else
-# define PRIu64		"llu"
-#endif
-
 #if defined(HAVE_FLOWLABEL)
 #include "flowlabel.h"
 #endif /* HAVE_FLOWLABEL */

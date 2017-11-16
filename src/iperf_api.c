@@ -2486,7 +2486,7 @@ iperf_print_intermediate(struct iperf_test *test)
 	    double interval_len = timeval_diff(&irp->interval_start_time,
 					       &irp->interval_end_time);
 	    if (test->debug) {
-		printf("interval_len %f bytes_transferred %lu\n", interval_len, irp->bytes_transferred);
+		printf("interval_len %f bytes_transferred %" PRIu64 "\n", interval_len, irp->bytes_transferred);
 	    }
 
 	    /*

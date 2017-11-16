@@ -160,7 +160,9 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "                            The usual prefixes for octal and hex can be used,\n"
                            "                            i.e. 52, 064 and 0x34 all specify the same value.\n"
 
-                           "  --dscp N or --dscp val    set the IP dscp value, either 0-63 or symbolic\n"
+                           "  --dscp N or --dscp val    set the IP dscp value, either 0-63 or symbolic.\n"
+                           "                            Numeric values can be specified in decimal,\n"
+                           "                            octal and hex (see --tos above).\n"
 #if defined(HAVE_FLOWLABEL)
                            "  -L, --flowlabel N         set the IPv6 flow label (only supported on Linux)\n"
 #endif /* HAVE_FLOWLABEL */

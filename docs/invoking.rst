@@ -292,9 +292,10 @@ the executable.
                  reverse  the  direction of a test, so that the server sends data
                  to the client
    
-          -w, --window n[KM]
+          -w, --window n[KM]/n[KM],m[KM]
                  window size / socket buffer size (this gets sent to  the  server
-                 and used on that side too)
+                 and used  on that side too).    You can set different values for
+                 client / server side.
    
           -M, --set-mss n
                  set TCP/SCTP maximum segment size (MTU - 40 bytes)

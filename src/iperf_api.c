@@ -696,9 +696,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     int blksize;
     int server_flag, client_flag, rate_flag, duration_flag;
     char *endptr;
-#if defined(HAVE_CPU_AFFINITY)
     char* comma;
-#endif /* HAVE_CPU_AFFINITY */
     char* slash;
     struct xbind_entry *xbe;
     double farg;
@@ -858,6 +856,17 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     return -1;
                 }
                 test->settings->socket_bufsize = (int) farg;
+                comma = strchr(optarg, ',');
+                if (comma != NULL) {
+                    test->settings->server_socket_bufsize = unit_atof(comma + 1);
+                    if (test->settings->server_socket_bufsize > (double)MAX_TCP_BUFFER) {
+                        i_errno = IEBUFSIZE;
+                        return -1;
+                    }
+                }
+                else {
+                    test->settings->server_socket_bufsize = test->settings->socket_bufsize;
+                }
 		client_flag = 1;
                 break;
             case 'B':
@@ -1484,7 +1493,7 @@ send_parameters(struct iperf_test *test)
 	if (test->reverse)
 	    cJSON_AddTrueToObject(j, "reverse");
 	if (test->settings->socket_bufsize)
-	    cJSON_AddNumberToObject(j, "window", test->settings->socket_bufsize);
+	    cJSON_AddNumberToObject(j, "window", test->settings->server_socket_bufsize);
 	if (test->settings->blksize)
 	    cJSON_AddNumberToObject(j, "len", test->settings->blksize);
 	if (test->settings->rate)

@@ -109,7 +109,7 @@ usage()
 void
 usage_long(FILE *f)
 {
-    fprintf(f, usage_longstr, UDP_RATE / (1024*1024), DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE / 1024);
+    fprintf(f, usage_longstr, UDP_RATE / (1024*1024), DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE);
 }
 
 

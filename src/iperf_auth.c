@@ -62,7 +62,7 @@ void sha256(const char *string, char outputBuffer[65])
 int check_authentication(const char *username, const char *password, const time_t ts, const char *filename){
     time_t t = time(NULL);
     time_t utc_seconds = mktime(localtime(&t));
-    if ( (utc_seconds - ts) < 10 && (utc_seconds - ts) > 0 ){
+    if ( (utc_seconds - ts) > 10 || (utc_seconds - ts) < -10 ) {
         return 1;
     }
 

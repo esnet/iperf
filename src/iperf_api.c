@@ -84,6 +84,7 @@
 #if defined(HAVE_SSL)
 #include "iperf_auth.h"
 #endif /* HAVE_SSL */
+#include "iperf_test_set.h"
 
 /* Forwards. */
 static int send_parameters(struct iperf_test *test);
@@ -687,6 +688,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif /* HAVE_SSL */
 	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
 	{"pacing-timer", required_argument, NULL, OPT_PACING_TIMER},
+	{"test-set", required_argument, NULL, OPT_TEST_SET},
 	{"connect-timeout", required_argument, NULL, OPT_CONNECT_TIMEOUT},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
@@ -1054,6 +1056,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->settings->connect_timeout = unit_atoi(optarg);
 		client_flag = 1;
 		break;
+        case OPT_TEST_SET:
+            ts_run_bulk_test(optarg);
+            break;
 	    case 'h':
 		usage_long(stdout);
 		exit(0);

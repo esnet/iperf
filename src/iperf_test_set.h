@@ -29,7 +29,7 @@ int ts_parse_file(struct test_set &ts);
 
 int ts_run_test(struct test_unit &tu);
 
-int ts_run_bulk_test(const char* path);
+int ts_run_bulk_test(const struct iperf_test *test);
 
 
 #endif

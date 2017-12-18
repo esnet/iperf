@@ -84,7 +84,6 @@
 #if defined(HAVE_SSL)
 #include "iperf_auth.h"
 #endif /* HAVE_SSL */
-#include "iperf_test_set.h"
 
 /* Forwards. */
 static int send_parameters(struct iperf_test *test);
@@ -1057,7 +1056,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
 		break;
         case OPT_TEST_SET:
-            ts_run_bulk_test(optarg);
+			test->test_set_file = strdup(optarg);
             break;
 	    case 'h':
 		usage_long(stdout);
@@ -2206,6 +2205,8 @@ iperf_free_test(struct iperf_test *test)
 	free(test->congestion_used);
     if (test->remote_congestion_used)
 	free(test->remote_congestion_used);
+	if (test->test_set_file)
+	free(test->test_set_file);
     if (test->omit_timer != NULL)
 	tmr_cancel(test->omit_timer);
     if (test->timer != NULL)

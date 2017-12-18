@@ -1,9 +1,11 @@
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
+//#include <sys/types.h>
+//#include <sys/ipc.h>
+//#include <sys/shm.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
+#include <stdlib.h>
+
 
 #include "iperf_test_set.h"
 #include "iperf_api.h"
@@ -22,8 +24,11 @@ ts_run_test(test_unit & tu)
 	int port;
 	struct iperf_test *child_test;
 
-	pid_t pid;
-	int *shared; /* pointer to the shm */
+	//pid_t pid;
+	//int *shared; /* pointer to the shm */
+	//int shmid;
+
+	//shmid = shmget(IPC_PRIVATE, sizeof(int), IPC_CREAT | 0666);
 
 	iperf_set_test_role(child_test, 'c'); //take from parent's process or add to argv
 	iperf_set_test_server_hostname(child_test, host);
@@ -44,10 +49,29 @@ ts_run_test(test_unit & tu)
 }
 
 int 
-ts_run_bulk_test(const char* path)
+ts_run_bulk_test(const struct iperf_test *test)
 {
 	struct test_set t_set;
 	int i;
+	long size = 0;
+	char *str;
+	FILE * inputFile = fopen(test->test_set_file, "r");
+	cJSON json;
+
+	if (!inputFile)
+		return -1;
+	else
+	{
+		fseek(inputFile, 0, SEEK_END);
+		size = ftell(inputFile);
+		fseek(inputFile, 0, SEEK_SET);
+	}
+
+	str = malloc(size + 1);
+	fread(str, size, 1, inputFile);
+	str[size] = '\n';
+
+	json = cJSON_Parse(str);
 
 	pid_t pid;
 	int *shared; /* pointer to the shm */

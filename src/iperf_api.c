@@ -29,6 +29,8 @@
 #endif
 #define __USE_GNU
 
+#define OPT_TEST_SET 101
+
 #include "iperf_config.h"
 
 #include <stdio.h>
@@ -654,6 +656,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"version6", no_argument, NULL, '6'},
         {"tos", required_argument, NULL, 'S'},
         {"dscp", required_argument, NULL, OPT_DSCP},
+		{"test-set", required_argument, NULL, OPT_TEST_SET},
 #if defined(HAVE_FLOWLABEL)
         {"flowlabel", required_argument, NULL, 'L'},
 #endif /* HAVE_FLOWLABEL */
@@ -687,7 +690,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif /* HAVE_SSL */
 	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
 	{"pacing-timer", required_argument, NULL, OPT_PACING_TIMER},
-	{"test-set", required_argument, NULL, OPT_TEST_SET},
 	{"connect-timeout", required_argument, NULL, OPT_CONNECT_TIMEOUT},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
@@ -1057,6 +1059,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		break;
         case OPT_TEST_SET:
 			test->test_set_file = strdup(optarg);
+			printf("ololo");
             break;
 	    case 'h':
 		usage_long(stdout);

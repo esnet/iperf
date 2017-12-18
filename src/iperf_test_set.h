@@ -3,8 +3,11 @@
 #define __IPERF_TEST_SET_H
 
 #include "cjson.h"
+#include "iperf.h"
 
 #define OPT_TEST_SET 101
+
+struct iperf_test;
     
 struct test_unit
 {
@@ -25,11 +28,10 @@ struct test_set
 };
 
 
-int ts_parse_file(struct test_set &ts);
 
-int ts_run_test(struct test_unit &tu);
+int ts_run_test(struct test_unit* tu);
 
-int ts_run_bulk_test(const struct iperf_test *test);
+int ts_run_bulk_test(struct iperf_test* test);
 
 
 #endif

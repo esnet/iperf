@@ -10,15 +10,8 @@
 #include "iperf_test_set.h"
 #include "iperf_api.h"
 
-
-int
-ts_parse_file(struct test_set &ts)
-{
-	return 0;
-}
-
 int 
-ts_run_test(test_unit & tu)
+ts_run_test(struct test_unit* tu)
 {
 	char* host;
 	int port;
@@ -34,10 +27,10 @@ ts_run_test(test_unit & tu)
 	iperf_set_test_server_hostname(child_test, host);
 	iperf_set_test_server_port(child_test, port);
 
-	iperf_parse_arguments(child_test, tu.op_count, tu.args);
+	iperf_parse_arguments(child_test, tu->op_count, tu->args);
 
 	if (iperf_run_client(child_test) < 0) {
-		fprintf(stderr, "%s: error - %s\n", argv0, iperf_strerror(i_errno));
+		//fprintf(stderr, "%s: error - %s\n", argv0, iperf_strerror(i_errno));
 		exit(EXIT_FAILURE);
 	}
 
@@ -49,14 +42,14 @@ ts_run_test(test_unit & tu)
 }
 
 int 
-ts_run_bulk_test(const struct iperf_test *test)
+ts_run_bulk_test(struct iperf_test* test)
 {
 	struct test_set t_set;
 	int i;
 	long size = 0;
 	char *str;
 	FILE * inputFile = fopen(test->test_set_file, "r");
-	cJSON json;
+	cJSON *json;
 
 	if (!inputFile)
 		return -1;
@@ -78,16 +71,14 @@ ts_run_bulk_test(const struct iperf_test *test)
 
 	t_set.res = 0;
 	t_set.test_count = 0;
-	t_set.path = strdup(path);
+	//t_set.path = strdup(path);
 
-	if (ts_parse_file(t_set) == -1)
-		return -1;
 	
 	for (i = 0; i < t_set.test_count; ++i)
 	{
-		ts_run_test(t_set.suite[i]);
+		//ts_run_test(t_set->&suite[i]);
 	}
 
-	free(t_set.path);
+	//free(t_set.path);
 	return 0; //add correct completion of the test to the errors(?)
 }

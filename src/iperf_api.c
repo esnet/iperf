@@ -1059,7 +1059,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		break;
         case OPT_TEST_SET:
 			test->test_set_file = strdup(optarg);
-			printf("ololo");
             break;
 	    case 'h':
 		usage_long(stdout);

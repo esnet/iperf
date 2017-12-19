@@ -16,7 +16,8 @@ int
 ts_parse_args(struct test_unit* tu)
 {
 	cJSON* options = cJSON_GetObjectItemCaseSensitive(tu->json_test_case, "options");
-	char str[] = "-t 10 -i 5";
+	char *str = options->valuestring;
+	printf("%s\n", str);
 	char **argvs = NULL;
 	char *tmp = strtok(str, " ");
 	printf("parsing \n");
@@ -53,19 +54,24 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 	iperf_set_test_role(child_test, 'c'); 
 	iperf_set_test_server_hostname(child_test, main_test->server_hostname);
 	iperf_set_test_server_port(child_test, main_test->server_port);
-	iperf_set_test_json_output(child_test, 1);
+	//iperf_set_test_json_output(child_test, 1);
 
 	ts_parse_args(tu);
 
 	iperf_parse_arguments(child_test, tu->argcs, tu->argvs);
 
+	printf("duration %d\n", child_test->duration);
+
 	if (iperf_run_client(child_test) < 0) {
+		printf("Warning \n");
+		printf("%s\n", strerror(i_errno));
 		exit(EXIT_FAILURE);
 	}
-	else 		printf("Running clint \n");
+	else 
+		printf("Running clint \n");
 
 	if (iperf_get_test_json_output_string(child_test)) {
-		printf("%s\n", iperf_get_test_json_output_string(child_test));
+		//printf("%s\n", iperf_get_test_json_output_string(child_test));
 	}
 
 	printf("Finished \n");

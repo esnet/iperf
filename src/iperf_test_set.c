@@ -74,6 +74,8 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 		//printf("%s\n", iperf_get_test_json_output_string(child_test));
 	}
 
+	iperf_free_test(child_test);
+
 	printf("Finished \n");
 	return 0;
 }
@@ -154,6 +156,10 @@ ts_run_bulk_test(struct iperf_test* test)
 
 	/*delete argvs*/
 
+	for (i = 0; i < t_set.test_count; ++i)
+	{
+		free(t_set.suite[i]);
+	}
 
 	cJSON_Delete(json);
 	free(t_set.suite);

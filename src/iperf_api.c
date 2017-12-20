@@ -29,8 +29,6 @@
 #endif
 #define __USE_GNU
 
-#define OPT_TEST_SET 101
-
 #include "iperf_config.h"
 
 #include <stdio.h>

@@ -21,7 +21,7 @@ ts_parse_args(struct test_unit* tu)
 	char **argvs = NULL;
 	char *tmp = strtok(str, " ");
 	printf("parsing \n");
-	int count = 0, i = 0;
+	int count = 1, i = 0;
 
 	while (tmp)
 	{
@@ -34,8 +34,9 @@ ts_parse_args(struct test_unit* tu)
 		tmp = strtok(NULL, " ");
 	}
 
-	for (i = 0; i < (count); ++i)
+	for (i = 0; i < (count); ++i)	//debug
 		printf("res[%d] = %s\n", i, argvs[i]);
+
 	tu->argcs = count;
 	tu->argvs = argvs;
 	return 0;
@@ -62,10 +63,10 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 
 	printf("duration %d\n", child_test->duration);
 
+	printf("Test %s started \n", "name"); //add name
+
 	if (iperf_run_client(child_test) < 0)
-		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
-	else 
-		printf("Running clint \n");
+		iperf_errexit(child_test, "error - %s", iperf_strerror(i_errno));
 
 	if (iperf_get_test_json_output_string(child_test)) {
 		//printf("%s\n", iperf_get_test_json_output_string(child_test));
@@ -116,19 +117,19 @@ ts_run_bulk_test(struct iperf_test* test)
 
 	i = 0;
 
-	do
+	while (node && cJSON_GetObjectItem(node, "options"))
 	{
 		++i;
 		node = node->next;
-	} while (node);
+	}
 
 	t_set.test_count = i;
 
 
+	if (test->debug)
+		printf("%s\n", cJSON_Print(json));
 
-	printf("%s\n", cJSON_Print(json));
-
-	printf("%d \n", i);
+	printf("Test count : %d \n", i);
 
 	//parsing
 	t_set.suite = malloc(sizeof(struct test_unit*) * i);
@@ -165,7 +166,7 @@ ts_run_bulk_test(struct iperf_test* test)
 }
 
 int 
-ts_create_tests(test_unit * tu)
+ts_create_tests(struct test_unit * tu)
 {
 	return 0;
 }

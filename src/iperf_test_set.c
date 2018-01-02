@@ -62,11 +62,8 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 
 	printf("duration %d\n", child_test->duration);
 
-	if (iperf_run_client(child_test) < 0) {
-		printf("Warning \n");
-		printf("%s\n", strerror(i_errno));
-		exit(EXIT_FAILURE);
-	}
+	if (iperf_run_client(child_test) < 0)
+		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 	else 
 		printf("Running clint \n");
 
@@ -165,4 +162,10 @@ ts_run_bulk_test(struct iperf_test* test)
 	free(t_set.suite);
 
 	return 0; //add correct completion of the test to the errors(?)
+}
+
+int 
+ts_create_tests(test_unit * tu)
+{
+	return 0;
 }

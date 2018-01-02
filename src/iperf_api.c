@@ -654,7 +654,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"version6", no_argument, NULL, '6'},
         {"tos", required_argument, NULL, 'S'},
         {"dscp", required_argument, NULL, OPT_DSCP},
-		{"test-set", required_argument, NULL, OPT_TEST_SET},
+        {"test-set", required_argument, NULL, OPT_TEST_SET},
 #if defined(HAVE_FLOWLABEL)
         {"flowlabel", required_argument, NULL, 'L'},
 #endif /* HAVE_FLOWLABEL */

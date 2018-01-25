@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2016, 2017, The Regents of the University of
+ * iperf, Copyright (c) 2014-2018, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -509,7 +509,7 @@ iperf_tcp_connect(struct iperf_test *test)
             freq->flr_label = htonl(test->settings->flowlabel & IPV6_FLOWINFO_FLOWLABEL);
             freq->flr_action = IPV6_FL_A_GET;
             freq->flr_flags = IPV6_FL_F_CREATE;
-            freq->flr_share = IPV6_FL_F_CREATE | IPV6_FL_S_EXCL;
+            freq->flr_share = IPV6_FL_S_ANY;
             memcpy(&freq->flr_dst, &sa6P->sin6_addr, 16);
 
             if (setsockopt(s, IPPROTO_IPV6, IPV6_FLOWLABEL_MGR, freq, freq_len) < 0) {

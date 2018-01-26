@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2017, The Regents of the University of
+ * iperf, Copyright (c) 2014-2018, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -2879,7 +2879,7 @@ iperf_print_results(struct iperf_test *test)
 		else
 		    if (test->role == 's' && !test->sender) {
 		        if (test->verbose)
-			    iperf_printf(test, report_sender_not_available_format, sp->socket);
+			    iperf_printf(test, report_sender_not_available_summary_format, "SUM");
 		    }
 		    else {
 		      iperf_printf(test, report_sum_bw_retrans_format, start_time, sender_time, ubuf, nbuf, total_retransmits, report_sender);
@@ -2891,7 +2891,7 @@ iperf_print_results(struct iperf_test *test)
 		else
 		    if (test->role == 's' && !test->sender) {
 		        if (test->verbose) 
-			    iperf_printf(test, report_sender_not_available_format, sp->socket);
+			    iperf_printf(test, report_sender_not_available_summary_format, "SUM");
 		    }
 		    else {
 		        iperf_printf(test, report_sum_bw_format, start_time, sender_time, ubuf, nbuf, report_sender);

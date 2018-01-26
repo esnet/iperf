@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2017, The Regents of the University of
+ * iperf, Copyright (c) 2014-2018, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -96,6 +96,7 @@ extern const char report_remote[] ;
 extern const char report_sender[] ;
 extern const char report_receiver[] ;
 extern const char report_sender_not_available_format[];
+extern const char report_sender_not_available_summary_format[];
 extern const char report_receiver_not_available_format[];
 
 extern const char report_tcpInfo[] ;

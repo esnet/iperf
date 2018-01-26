@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------- 
- * iperf, Copyright (c) 2014, 2016, 2017, The Regents of the University of
+ * iperf, Copyright (c) 2014-2018, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -391,6 +391,7 @@ const char report_remote[] = "remote";
 const char report_sender[] = "sender";
 const char report_receiver[] = "receiver";
 const char report_sender_not_available_format[] = "[%3d] (sender statistics not available)\n";
+const char report_sender_not_available_summary_format[] = "[%3s] (sender statistics not available)\n";
 const char report_receiver_not_available_format[] = "[%3d] (receiver statistics not available)\n";
 
 #if defined(linux)

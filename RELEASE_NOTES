@@ -5,16 +5,30 @@
   * The -A (set processor affinity) command-line flag is now supported
     on Windows (#665).
 
-  * iperf3 now builds on macOS systems older than 10.7 (#607).
-
   * iperf3 now builds on systems lacking a daemon(3) library call
     (#369).
 
+  * A bug in time skew checking under authentication was fixed (#674).
+
+  * IPv6 flow labels now work with multplie parallel streams (#694).
+
+  * The client no longer closes  its control connection before sending
+    end-of-test  statistics  to  the  server  (#677). This  fixes  a
+    regression introduced in iperf-3.2.
+
+  * Sending output to stdout now makes errors go to stderr, as per
+    UNIX convention (#695).
+
+  * A server side crash in verbose output with a client running
+    multiple parallel connections has been fixed (#686).
+
 * Notable developer-visible changes
 
-  * Some unused code and header inclusions were eliminated (#667).
-    Also some code was cleaned up to eliminate (or at least reduce)
-    compiler warnings (#664).
+  * iperf3 now builds on (some) macOS systems older than 10.7 (#607).
+
+  * Some unused code and header inclusions were eliminated (#667,
+    #668).  Also some code was cleaned up to eliminate (or at least
+    reduce) compiler warnings (#664, #671).
 
 == iperf 3.3 2017-10-31 ==
 

@@ -17,6 +17,7 @@ struct test_unit
     char      *json_output_string;
     cJSON     *json_test_case;
     cJSON     *json_output;
+	struct iperf_test *current_test;
 };
 
 struct test_set

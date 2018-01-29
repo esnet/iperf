@@ -253,7 +253,7 @@ struct iperf_test
     char     *logfile;				/* --logfile option */
     FILE     *outfile;
 
-	char     *test_set_file;		/* file with test for --*/
+	char     *test_set_file;		/* file with test for --test-set*/
 
     int       ctrl_sck;
     int       listener;

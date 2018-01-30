@@ -106,8 +106,8 @@ main(int argc, char **argv)
     }
 
     if (test->test_set_file)
-		ts_run_bulk_test(test);
-	else
+        ts_run_bulk_test(test);
+    else
         if (run(test) < 0)
             iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 

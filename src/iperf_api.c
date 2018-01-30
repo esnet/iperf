@@ -1055,9 +1055,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->settings->connect_timeout = unit_atoi(optarg);
 		client_flag = 1;
 		break;
-        case OPT_TEST_SET:
+	    case OPT_TEST_SET:
 			test->test_set_file = strdup(optarg);
-            break;
+		break;
 	    case 'h':
 		usage_long(stdout);
 		exit(0);
@@ -2205,7 +2205,7 @@ iperf_free_test(struct iperf_test *test)
 	free(test->congestion_used);
     if (test->remote_congestion_used)
 	free(test->remote_congestion_used);
-	if (test->test_set_file)
+    if (test->test_set_file)
 	free(test->test_set_file);
     if (test->omit_timer != NULL)
 	tmr_cancel(test->omit_timer);

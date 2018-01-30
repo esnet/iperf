@@ -69,6 +69,8 @@ struct iperf_stream;
 #define OPT_PACING_TIMER 16
 #define OPT_CONNECT_TIMEOUT 17
 
+#define OPT_TEST_SET 101
+
 /* states */
 #define TEST_START 1
 #define TEST_RUNNING 2

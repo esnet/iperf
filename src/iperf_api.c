@@ -654,6 +654,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"version6", no_argument, NULL, '6'},
         {"tos", required_argument, NULL, 'S'},
         {"dscp", required_argument, NULL, OPT_DSCP},
+        {"test-set", required_argument, NULL, OPT_TEST_SET},
 #if defined(HAVE_FLOWLABEL)
         {"flowlabel", required_argument, NULL, 'L'},
 #endif /* HAVE_FLOWLABEL */
@@ -1053,6 +1054,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	    case OPT_CONNECT_TIMEOUT:
 		test->settings->connect_timeout = unit_atoi(optarg);
 		client_flag = 1;
+		break;
+	    case OPT_TEST_SET:
+		test->test_set_file = strdup(optarg);
 		break;
 	    case 'h':
 		usage_long(stdout);
@@ -2201,6 +2205,8 @@ iperf_free_test(struct iperf_test *test)
 	free(test->congestion_used);
     if (test->remote_congestion_used)
 	free(test->remote_congestion_used);
+    if (test->test_set_file)
+	free(test->test_set_file);
     if (test->omit_timer != NULL)
 	tmr_cancel(test->omit_timer);
     if (test->timer != NULL)

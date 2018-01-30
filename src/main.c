@@ -47,6 +47,7 @@
 #include "units.h"
 #include "iperf_locale.h"
 #include "net.h"
+#include "iperf_test_set.h"
 
 
 static int run(struct iperf_test *test);
@@ -104,8 +105,11 @@ main(int argc, char **argv)
         exit(1);
     }
 
-    if (run(test) < 0)
-        iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
+    if (test->test_set_file)
+        ts_run_bulk_test(test);
+    else
+        if (run(test) < 0)
+            iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 
     iperf_free_test(test);
 

@@ -57,7 +57,7 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 	iperf_set_test_server_port(child_test, main_test->server_port);
 	//iperf_set_test_json_output(child_test, 1);
 
-	printf("Test %s started \n", "name"); //add name
+	printf("Test %d started \n", tu->id); //add name
 
 	ts_parse_args(tu);
 
@@ -81,18 +81,45 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 int 
 ts_run_bulk_test(struct iperf_test* test)
 {
-	struct test_set t_set;
+	struct test_set* t_set = ts_new_test_set(test->test_set_file);
+	int i;
+	
+
+	for (i = 0; i < t_set->test_count; ++i)
+	{
+		ts_run_test(t_set->suite[i], test);
+	}
+
+
+
+	/*delete argvs*/
+
+	for (i = 0; i < t_set->test_count; ++i)
+	{
+		free(t_set->suite[i]);
+	}
+
+	free(t_set->suite);
+	//cJSON_Delete(json);
+
+	return 0; //add correct completion of the test to the errors(?)
+}
+
+struct test_set *
+ts_new_test_set(char* path)
+{
+	struct test_set* t_set = malloc(sizeof(struct test_set));
 	int i;
 	long size = 0;
 	char *str;
-	FILE * inputFile = fopen(test->test_set_file, "r");
+	FILE * inputFile = fopen(path, "r");
 	cJSON *json;
 	cJSON *node;
 
 	if (!inputFile)
-	{ 
+	{
 		printf("File is not exist");
-		return -1;
+		return NULL;
 	}
 	else
 	{
@@ -107,6 +134,7 @@ ts_run_bulk_test(struct iperf_test* test)
 	str[size] = '\n';
 
 	json = cJSON_Parse(str);
+	t_set->json_file = json;
 
 	fclose(inputFile);
 	free(str);
@@ -123,50 +151,33 @@ ts_run_bulk_test(struct iperf_test* test)
 		node = node->next;
 	}
 
-	t_set.test_count = i;
+	t_set->test_count = i;
 
 
-	if (test->debug)
-		printf("%s\n", cJSON_Print(json));
+	//if (test->debug)
+	//	printf("%s\n", cJSON_Print(json));
 
 	printf("Test count : %d \n", i);
 
 	//parsing
-	t_set.suite = malloc(sizeof(struct test_unit*) * i);
+	t_set->suite = malloc(sizeof(struct test_unit*) * i);
 
 	node = json->child;
 
-	for (i = 0; i < t_set.test_count; ++i)
+	for (i = 0; i < t_set->test_count; ++i)
 	{
 		struct test_unit* unit = malloc(sizeof(struct test_unit));
 		unit->id = i;
 		unit->json_test_case = node;
-		t_set.suite[i] = unit;
+		t_set->suite[i] = unit;
 		node = node->next;
 	}
 
-	for (i = 0; i < t_set.test_count; ++i)
-	{
-		ts_run_test(t_set.suite[i], test);
-	}
-
-
-
-	/*delete argvs*/
-
-	for (i = 0; i < t_set.test_count; ++i)
-	{
-		free(t_set.suite[i]);
-	}
-
-	cJSON_Delete(json);
-	free(t_set.suite);
-
-	return 0; //add correct completion of the test to the errors(?)
+	return t_set;
 }
 
 int 
-ts_create_tests(struct test_unit * tu)
+ts_free_test_unit(struct test_set* t_set)
 {
 	return 0;
 }

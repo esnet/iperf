@@ -24,7 +24,7 @@ struct test_set
     int res;
     int test_count;
     char *path;
-	cJSON *json_file;
+    cJSON *json_file;
     struct test_unit **suite;
 };
 

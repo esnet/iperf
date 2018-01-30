@@ -90,18 +90,6 @@ ts_run_bulk_test(struct iperf_test* test)
 		ts_run_test(t_set->suite[i], test);
 	}
 
-
-
-	/*delete argvs*/
-
-	for (i = 0; i < t_set->test_count; ++i)
-	{
-		free(t_set->suite[i]);
-	}
-
-	free(t_set->suite);
-	//cJSON_Delete(json);
-
 	return 0; //add correct completion of the test to the errors(?)
 }
 
@@ -179,5 +167,17 @@ ts_new_test_set(char* path)
 int 
 ts_free_test_unit(struct test_set* t_set)
 {
+	int i;
+	/*delete argvs*/
+
+	for (i = 0; i < t_set->test_count; ++i)
+	{
+		free(t_set->suite[i]);
+	}
+
+	free(t_set->suite);
+	cJSON_Delete(t_set->json_file);
+	free(t_set);
+
 	return 0;
 }

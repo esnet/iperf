@@ -36,7 +36,7 @@ int ts_run_bulk_test(struct iperf_test* test);
 
 struct test_set * ts_new_test_set(char* path);
 
-int ts_free_test_unit(struct test_set* t_set);
+int ts_free_test_set(struct test_set* t_set);
 
 
 #endif

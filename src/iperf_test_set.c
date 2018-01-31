@@ -18,24 +18,20 @@ ts_parse_args(struct test_unit* tu)
 	cJSON* options = cJSON_GetObjectItemCaseSensitive(tu->json_test_case, "options");
 	char *str = options->valuestring;
 	printf("options : %s\n", str);
-	char **argvs = NULL;
+	char **argvs = NULL;	//array of args
 	char *tmp = strtok(str, " ");
-	//printf("parsing \n");
-	int count = 1, i = 0;
+	int count = 1;
 
 	while (tmp)
 	{
 		argvs = realloc(argvs, sizeof(char *) * ++count);
 
 		if (argvs == NULL)
-			exit(-1);
+			return -1;
 		argvs[count - 1] = tmp;
 
 		tmp = strtok(NULL, " ");
 	}
-
-	for (i = 1; i < (count); ++i)	//debug
-		printf("res[%d] = %s\n", i, argvs[i]);
 
 	tu->argcs = count;
 	tu->argvs = argvs;
@@ -59,22 +55,23 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 
 	printf("Test %d started \n", tu->id); //add name
 
-	ts_parse_args(tu);
+	if (ts_parse_args(tu))
+		return -1;
 
 	iperf_parse_arguments(child_test, tu->argcs, tu->argvs);
 
 	if (iperf_run_client(child_test) < 0)
 		iperf_errexit(child_test, "error - %s", iperf_strerror(i_errno));
 
-	if (iperf_get_test_json_output_string(child_test)) {
-		//printf("%s\n", iperf_get_test_json_output_string(child_test));
-	}
+	//if (iperf_get_test_json_output_string(child_test)) {
+	//	printf("%s\n", iperf_get_test_json_output_string(child_test));
+	//}
 
 	tu->current_test = child_test;
 
 	//iperf_free_test(child_test);
 
-	printf("Finished \n");
+	printf("Test %d finished. \n \n", tu->id);
 	return 0;
 }
 
@@ -83,12 +80,14 @@ ts_run_bulk_test(struct iperf_test* test)
 {
 	struct test_set* t_set = ts_new_test_set(test->test_set_file);
 	int i;
-	
 
 	for (i = 0; i < t_set->test_count; ++i)
 	{
-		ts_run_test(t_set->suite[i], test);
+		if (ts_run_test(t_set->suite[i], test))
+			return -1;
 	}
+
+	ts_free_test_set(t_set);
 
 	return 0; //add correct completion of the test to the errors(?)
 }
@@ -165,14 +164,21 @@ ts_new_test_set(char* path)
 }
 
 int 
-ts_free_test_unit(struct test_set* t_set)
+ts_free_test_set(struct test_set* t_set)
 {
 	int i;
+	struct test_unit * tmp_unit;
+
 	/*delete argvs*/
 
 	for (i = 0; i < t_set->test_count; ++i)
 	{
-		free(t_set->suite[i]);
+		tmp_unit = t_set->suite[i];
+		iperf_free_test(tmp_unit->current_test);
+
+		free(tmp_unit->argvs);
+
+		free(tmp_unit);
 	}
 
 	free(t_set->suite);

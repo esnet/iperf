@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2017, The Regents of the University of
+ * iperf, Copyright (c) 2014-2018, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -306,7 +306,7 @@ enum {
     IEENDCONDITIONS = 16,   // Only one test end condition (-t, -n, -k) may be specified
     IELOGFILE = 17,	    // Can't open log file
     IENOSCTP = 18,	    // No SCTP support available
-    IEBIND = 19,			// Local port specified with no local bind option
+    IEBIND = 19,	    // UNUSED:  Local port specified with no local bind option
     IEUDPBLOCKSIZE = 20,    // Block size invalid
     IEBADTOS = 21,	    // Bad TOS value
     IESETCLIENTAUTH = 22,   // Bad configuration of client authentication

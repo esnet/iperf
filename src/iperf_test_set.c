@@ -17,7 +17,9 @@ ts_parse_args(struct test_unit* tu)
 {
 	cJSON* options = cJSON_GetObjectItemCaseSensitive(tu->json_test_case, "options");
 	char *str = options->valuestring;
-	printf("options : %s\n", str);
+
+	/*printf("options : %s\n", str);*/
+
 	char **argvs = NULL;	//array of args
 	char *tmp = strtok(str, " ");
 	int count = 1;
@@ -51,9 +53,15 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 	iperf_set_test_role(child_test, 'c'); 
 	iperf_set_test_server_hostname(child_test, main_test->server_hostname);
 	iperf_set_test_server_port(child_test, main_test->server_port);
-	//iperf_set_test_json_output(child_test, 1);
 
-	printf("Test %d started \n", tu->id); //add name
+	if (main_test->json_output)
+		iperf_set_test_json_output(child_test, 1);
+
+	if (main_test->debug)
+		child_test->debug = 1;
+	
+	if (!main_test->json_output)
+		printf("Test %d started \n", tu->id); //add name
 
 	if (ts_parse_args(tu))
 		return -1;
@@ -63,15 +71,11 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 	if (iperf_run_client(child_test) < 0)
 		iperf_errexit(child_test, "error - %s", iperf_strerror(i_errno));
 
-	//if (iperf_get_test_json_output_string(child_test)) {
-	//	printf("%s\n", iperf_get_test_json_output_string(child_test));
-	//}
-
 	tu->current_test = child_test;
 
-	//iperf_free_test(child_test);
+	if (!main_test->json_output)
+		printf("Test %d finished. \n \n", tu->id);
 
-	printf("Test %d finished. \n \n", tu->id);
 	return 0;
 }
 
@@ -80,6 +84,10 @@ ts_run_bulk_test(struct iperf_test* test)
 {
 	struct test_set* t_set = ts_new_test_set(test->test_set_file);
 	int i;
+
+	if(!test->json_output)
+		printf("Test count : %d \n", t_set->test_count);
+
 
 	for (i = 0; i < t_set->test_count; ++i)
 	{
@@ -143,8 +151,6 @@ ts_new_test_set(char* path)
 
 	//if (test->debug)
 	//	printf("%s\n", cJSON_Print(json));
-
-	printf("Test count : %d \n", i);
 
 	//parsing
 	t_set->suite = malloc(sizeof(struct test_unit*) * i);

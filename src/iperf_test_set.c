@@ -61,7 +61,7 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 		child_test->debug = 1;
 	
 	if (!main_test->json_output)
-		printf("Test %d started \n", tu->id); //add name
+		printf("Test %s started \n", tu->test_name); //add name
 
 	if (ts_parse_args(tu))
 		return -1;
@@ -74,7 +74,7 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 	tu->current_test = child_test;
 
 	if (!main_test->json_output)
-		printf("Test %d finished. \n \n", tu->id);
+		printf("Test %s finished. \n \n", tu->test_name);
 
 	return 0;
 }
@@ -161,6 +161,7 @@ ts_new_test_set(char* path)
 	{
 		struct test_unit* unit = malloc(sizeof(struct test_unit));
 		unit->id = i;
+		unit->test_name = node->string;
 		unit->json_test_case = node;
 		t_set->suite[i] = unit;
 		node = node->next;

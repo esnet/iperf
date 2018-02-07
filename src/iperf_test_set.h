@@ -12,9 +12,9 @@ struct iperf_test;
 struct test_unit
 {
     int       id;
+    char      *test_name;
     int       argcs;
     char      **argvs;
-    char      *json_output_string;
     cJSON     *json_test_case;
     struct iperf_test *current_test;
 };

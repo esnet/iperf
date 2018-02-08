@@ -61,7 +61,7 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 		child_test->debug = 1;
 	
 	if (!main_test->json_output)
-		printf("Test %s started \n", tu->test_name); //add name
+		printf("Test %s started \n", tu->test_name);
 
 	if (ts_parse_args(tu))
 		return -1;
@@ -97,7 +97,7 @@ ts_run_bulk_test(struct iperf_test* test)
 
 	ts_free_test_set(t_set);
 
-	return 0; //add correct completion of the test to the errors(?)
+	return 0;
 }
 
 struct test_set *

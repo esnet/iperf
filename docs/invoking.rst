@@ -369,6 +369,11 @@ the executable.
                  path  to  the RSA public key used to encrypt authentication cre-
                  dentials (if built with OpenSSL support)
    
+          --test-set file
+                 sequentially run several test suites, described in script  file.
+                 The server address and port values are inherited from  the  main
+                 test. Tests are described in a JSON format.
+   
    
    EXAMPLES
       Authentication - RSA Keypair

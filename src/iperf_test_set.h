@@ -13,13 +13,16 @@ struct test_unit
 {
     int       id;
     char      *test_name;
+
     int       argcs;
     char      **argvs;
+
     cJSON     *json_test_case;
+
     char      *description;
+
     int       test_count;
-//    struct iperf_test **current_test;
-    struct iperf_test *current_test;
+    struct iperf_test **unit_tests;
 };
 
 struct test_set

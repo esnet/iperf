@@ -44,38 +44,52 @@ int
 ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 {
 	struct iperf_test *child_test;
-	child_test = iperf_new_test();
+	int i;
 
-	if (!child_test)
-		iperf_errexit(NULL, "create new test error - %s", iperf_strerror(i_errno));
-	iperf_defaults(child_test);	/* sets defaults */
-
-	iperf_set_test_role(child_test, 'c'); 
-	iperf_set_test_server_hostname(child_test, main_test->server_hostname);
-	iperf_set_test_server_port(child_test, main_test->server_port);
-
-	if (main_test->json_output)
-		iperf_set_test_json_output(child_test, 1);
-
-	if (main_test->debug)
-		child_test->debug = 1;
-	
 	if (!main_test->json_output)
 		printf("Case %s started \n", tu->test_name);
+
+	if (tu->description)
+		if (!main_test->json_output)
+			printf("description: \"%s\" \n", tu->description);
+
+	if (!tu->test_count)
+	{
+		if (!main_test->json_output)
+			printf("Case is disabled\n");
+		return 0;
+	}
+
+	tu->unit_tests = malloc(sizeof(struct iperf_test*) * tu->test_count);
 
 	if (ts_parse_args(tu))
 		return -1;
 
-	iperf_parse_arguments(child_test, tu->argcs, tu->argvs);
+	for (i = 0; i < tu->test_count; ++i)
+	{
+		child_test = iperf_new_test();
 
-	if (tu->description)
-		if (!main_test->json_output)
-			printf("description: %s \n", tu->description);
+		if (!child_test)
+			iperf_errexit(NULL, "create new test error - %s", iperf_strerror(i_errno));
+		iperf_defaults(child_test);	/* sets defaults */
 
-	if (iperf_run_client(child_test) < 0)
-		iperf_errexit(child_test, "error - %s", iperf_strerror(i_errno));
+		iperf_set_test_role(child_test, 'c');
+		iperf_set_test_server_hostname(child_test, main_test->server_hostname);
+		iperf_set_test_server_port(child_test, main_test->server_port);
 
-	tu->current_test = child_test;
+		if (main_test->json_output)
+			iperf_set_test_json_output(child_test, 1);
+
+		if (main_test->debug)
+			child_test->debug = 1;
+
+		iperf_parse_arguments(child_test, tu->argcs, tu->argvs);
+
+		if (iperf_run_client(child_test) < 0)
+			iperf_errexit(child_test, "error - %s", iperf_strerror(i_errno));
+
+		tu->unit_tests[i] = child_test;
+	}
 
 	if (!main_test->json_output)
 		printf("Case %s finished. \n \n", tu->test_name);
@@ -153,10 +167,6 @@ ts_new_test_set(char* path)
 
 	t_set->unit_count = i;
 
-
-	//if (test->debug)
-	//	printf("%s\n", cJSON_Print(json));
-
 	//parsing
 	t_set->suite = malloc(sizeof(struct test_unit*) * i);
 
@@ -204,6 +214,7 @@ int
 ts_free_test_set(struct test_set* t_set)
 {
 	int i;
+	int j;
 	struct test_unit * tmp_unit;
 
 	/*delete argvs*/
@@ -211,9 +222,15 @@ ts_free_test_set(struct test_set* t_set)
 	for (i = 0; i < t_set->unit_count; ++i)
 	{
 		tmp_unit = t_set->suite[i];
-		iperf_free_test(tmp_unit->current_test);
 
-		free(tmp_unit->argvs);
+		for (j = 0; j < tmp_unit->test_count; ++j)
+			iperf_free_test(tmp_unit->unit_tests[j]);
+
+		if (tmp_unit->test_count)
+		{
+			free(tmp_unit->argvs);
+			free(tmp_unit->unit_tests);
+		}
 
 		free(tmp_unit);
 	}

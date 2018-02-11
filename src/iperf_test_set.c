@@ -61,12 +61,16 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 		child_test->debug = 1;
 	
 	if (!main_test->json_output)
-		printf("Test %s started \n", tu->test_name);
+		printf("Case %s started \n", tu->test_name);
 
 	if (ts_parse_args(tu))
 		return -1;
 
 	iperf_parse_arguments(child_test, tu->argcs, tu->argvs);
+
+	if (tu->description)
+		if (!main_test->json_output)
+			printf("description: %s \n", tu->description);
 
 	if (iperf_run_client(child_test) < 0)
 		iperf_errexit(child_test, "error - %s", iperf_strerror(i_errno));
@@ -74,7 +78,7 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 	tu->current_test = child_test;
 
 	if (!main_test->json_output)
-		printf("Test %s finished. \n \n", tu->test_name);
+		printf("Case %s finished. \n \n", tu->test_name);
 
 	return 0;
 }
@@ -86,10 +90,10 @@ ts_run_bulk_test(struct iperf_test* test)
 	int i;
 
 	if(!test->json_output)
-		printf("Test count : %d \n", t_set->test_count);
+		printf("Case count : %d \n", t_set->unit_count);
 
 
-	for (i = 0; i < t_set->test_count; ++i)
+	for (i = 0; i < t_set->unit_count; ++i)
 	{
 		if (ts_run_test(t_set->suite[i], test))
 			return -1;
@@ -110,6 +114,7 @@ ts_new_test_set(char* path)
 	FILE * inputFile = fopen(path, "r");
 	cJSON *json;
 	cJSON *node;
+	cJSON *tmp_node;
 
 	if (!inputFile)
 	{
@@ -146,7 +151,7 @@ ts_new_test_set(char* path)
 		node = node->next;
 	}
 
-	t_set->test_count = i;
+	t_set->unit_count = i;
 
 
 	//if (test->debug)
@@ -157,12 +162,37 @@ ts_new_test_set(char* path)
 
 	node = json->child;
 
-	for (i = 0; i < t_set->test_count; ++i)
+	for (i = 0; i < t_set->unit_count; ++i)
 	{
 		struct test_unit* unit = malloc(sizeof(struct test_unit));
 		unit->id = i;
 		unit->test_name = node->string;
 		unit->json_test_case = node;
+
+		tmp_node = cJSON_GetObjectItem(node, "description");
+		if (tmp_node)
+			unit->description = tmp_node->valuestring;
+		else
+			unit->description = NULL;
+
+		tmp_node = cJSON_GetObjectItem(node, "repeat");
+		if (tmp_node)
+		{
+			if (tmp_node->valuedouble > 0)
+				unit->test_count = tmp_node->valuedouble;
+			else
+				unit->test_count = 0;
+		}
+		else
+			unit->test_count = 1;
+
+		tmp_node = cJSON_GetObjectItem(node, "active");
+		if (tmp_node)
+		{
+			if (tmp_node->type == cJSON_False)
+				unit->test_count = 0;
+		}
+
 		t_set->suite[i] = unit;
 		node = node->next;
 	}
@@ -178,7 +208,7 @@ ts_free_test_set(struct test_set* t_set)
 
 	/*delete argvs*/
 
-	for (i = 0; i < t_set->test_count; ++i)
+	for (i = 0; i < t_set->unit_count; ++i)
 	{
 		tmp_unit = t_set->suite[i];
 		iperf_free_test(tmp_unit->current_test);

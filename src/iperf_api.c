@@ -1115,10 +1115,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         return -1;
     }
 #endif //HAVE_SSL
-    if (!test->bind_address && test->bind_port) {
-        i_errno = IEBIND;
-        return -1;
-    }
     if (blksize == 0) {
 	if (test->protocol->id == Pudp)
 	    blksize = 0;	/* try to dynamically determine from MSS */

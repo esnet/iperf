@@ -122,7 +122,7 @@ iperf_strerror(int int_errno)
         case IEINTERVAL:
             snprintf(errstr, len, "invalid report interval (min = %g, max = %g seconds)", MIN_INTERVAL, MAX_INTERVAL);
             break;
-        case IEBIND:
+    case IEBIND: /* UNUSED */
             snprintf(errstr, len, "--bind must be specified to use --cport");
             break;
         case IEUDPBLOCKSIZE:

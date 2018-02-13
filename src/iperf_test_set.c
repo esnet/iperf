@@ -62,6 +62,11 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 
 	tu->unit_tests = malloc(sizeof(struct iperf_test*) * tu->test_count);
 
+	tu->test_err = malloc(sizeof(int) * tu->test_count);
+
+	for (i = 0; i < tu->test_count; ++i)
+		tu->test_err[i] = 0;
+
 	if (ts_parse_args(tu))
 		return -1;
 
@@ -70,7 +75,7 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 		child_test = iperf_new_test();
 
 		if (!child_test)
-			iperf_errexit(NULL, "create new test error - %s", iperf_strerror(i_errno));
+			tu->test_err[i] = i_errno;
 		iperf_defaults(child_test);	/* sets defaults */
 
 		iperf_set_test_role(child_test, 'c');
@@ -86,7 +91,8 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 		iperf_parse_arguments(child_test, tu->argcs, tu->argvs);
 
 		if (iperf_run_client(child_test) < 0)
-			iperf_errexit(child_test, "error - %s", iperf_strerror(i_errno));
+			tu->test_err[i] = i_errno;
+			//iperf_errexit(child_test, "error - %s", iperf_strerror(i_errno));
 
 		tu->unit_tests[i] = child_test;
 	}
@@ -217,8 +223,6 @@ ts_free_test_set(struct test_set* t_set)
 	int j;
 	struct test_unit * tmp_unit;
 
-	/*delete argvs*/
-
 	for (i = 0; i < t_set->unit_count; ++i)
 	{
 		tmp_unit = t_set->suite[i];
@@ -230,6 +234,7 @@ ts_free_test_set(struct test_set* t_set)
 		{
 			free(tmp_unit->argvs);
 			free(tmp_unit->unit_tests);
+			free(tmp_unit->test_err);
 		}
 
 		free(tmp_unit);

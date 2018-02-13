@@ -23,6 +23,8 @@ struct test_unit
 
     int       test_count;
     struct iperf_test **unit_tests;
+
+    int       *test_err;
 };
 
 struct test_set

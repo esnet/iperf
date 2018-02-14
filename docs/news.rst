@@ -1,7 +1,7 @@
 iperf3 Project News
 ===================
 
-2018-02-14:  iperf-3.3 released
+2018-02-14:  iperf-3.4 released
 -------------------------------
 
 | URL:  http://downloads.es.net/pub/iperf/iperf-3.4.tar.gz

@@ -98,7 +98,7 @@ the executable.
           least one line of output per measurement interval (by  default  a  mea-
           surement  interval lasts for one second, but this can be changed by the
           -i option).  Each line of output includes (at least) the time since the
-          start  of  the test, amount of data transfered during the interval, and
+          start  of the test, amount of data transferred during the interval, and
           the average bitrate over that interval.  Note that the values for  each
           measurement  interval  are taken from the point of view of the endpoint
           process emitting that output (in other words, the output on the  client
@@ -146,14 +146,14 @@ the executable.
                  not match those of the original file.
    
           -A, --affinity n/n,m
-                 Set  the CPU affinity, if possible (Linux and FreeBSD only).  On
-                 both the client and server you can set  the  local  affinity  by
-                 using the n form of this argument (where n is a CPU number).  In
-                 addition, on the client  side  you  can  override  the  server's
-                 affinity for just that one test, using the n,m form of argument.
-                 Note that when using this feature, a process will only be  bound
-                 to  a single CPU (as opposed to a set containing potentialy mul-
-                 tiple CPUs).
+                 Set  the  CPU affinity, if possible (Linux, FreeBSD, and Windows
+                 only).  On both the client and server  you  can  set  the  local
+                 affinity  by using the n form of this argument (where n is a CPU
+                 number).  In addition, on the client side you can  override  the
+                 server's  affinity for just that one test, using the n,m form of
+                 argument.  Note that when using this  feature,  a  process  will
+                 only  be  bound  to a single CPU (as opposed to a set containing
+                 potentialy multiple CPUs).
    
           -B, --bind host
                  bind to a specific interface. If the host  has  multiple  inter-
@@ -309,11 +309,13 @@ the executable.
                  only use IPv6
    
           -S, --tos n
-                 set the IP type of service
+                 set the IP type of service. The usual prefixes for octal and hex
+                 can be used, i.e. 52, 064 and 0x34 all specify the same value.
    
           --dscp dscp
-                 set  the  IP  DSCP  bits.   Both numeric and symbolic values are
-                 accepted.
+                 set the IP DSCP bits.  Both  numeric  and  symbolic  values  are
+                 accepted.  Numeric values can be specified in decimal, octal and
+                 hex (see --tos above).
    
           -L, --flowlabel n
                  set the IPv6 flow label (currently only supported on Linux)
@@ -323,14 +325,14 @@ the executable.
                  sctp_bindx(3).   The  --B  flag  will be ignored if this flag is
                  specified.  Normally SCTP will include the protocol addresses of
                  all  active  links on the local host when setting up an associa-
-                 tion. Specifying  at  least  one  --X  name  will  disable  this
-                 behaviour.   This  flag  must  be  specified for each link to be
-                 included in the association, and is  supported  for  both  iperf
-                 servers  and  clients  (the  latter are supported by passing the
-                 first --X argument to bind(2)).  Hostnames are accepted as argu-
-                 ments  and are resolved using getaddrinfo(3).  If the --4 or --6
-                 flags are specified, names which do  not  resolve  to  addresses
-                 within the specified protocol family will be ignored.
+                 tion. Specifying at least one --X name will disable this  behav-
+                 iour.   This flag must be specified for each link to be included
+                 in the association, and is supported for both iperf servers  and
+                 clients (the latter are supported by passing the first --X argu-
+                 ment to bind(2)).  Hostnames are accepted as arguments  and  are
+                 resolved  using  getaddrinfo(3).   If  the  --4 or --6 flags are
+                 specified, names which do not resolve to  addresses  within  the
+                 specified protocol family will be ignored.
    
           --nstreams n
                  Set number of SCTP streams.
@@ -357,7 +359,7 @@ the executable.
                  --json  flag,  the  output  will be in JSON format, otherwise it
                  will be in human-readable format).  If the client  is  run  with
                  --json,  the  server output is included in a JSON object; other-
-                 wise it is appended at the bottom of the human-readable  output.
+                 wise it is appended at the bottom of the human-readable output.
    
           --username username
                  username to use for authentication to the iperf server (if built
@@ -365,7 +367,7 @@ the executable.
                  actively when the test is run.
    
           --rsa-public-key-path file
-                 path  to  the RSA public key used to encrypt authentication cre-
+                 path to the RSA public key used to encrypt  authentication  cre-
                  dentials (if built with OpenSSL support)
    
    
@@ -373,8 +375,8 @@ the executable.
       Authentication - RSA Keypair
           The authentication feature of requires an RSA public keypair.  The pub-
           lic key is used to encrypt the authentication token containing the user
-          credentials, while the private key is used to decrypt  the  authentica-
-          tion  token.   An  example  of a set of UNIX/Linux commands to generate
+          credentials,  while  the private key is used to decrypt the authentica-
+          tion token.  An example of a set of  UNIX/Linux  commands  to  generate
           correct keypair follows:
    
                > openssl genrsa -des3 -out private.pem 2048
@@ -416,7 +418,7 @@ the executable.
    
    
    
-   ESnet                              June 2017                         IPERF3(1)
+   ESnet                            February 2018                       IPERF3(1)
 
 The iperf3 manual page will typically be installed in manual
 section 1.

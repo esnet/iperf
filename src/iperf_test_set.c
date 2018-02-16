@@ -75,7 +75,11 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 		child_test = iperf_new_test();
 
 		if (!child_test)
+		{
 			tu->test_err[i] = i_errno;
+			tu->unit_tests[i] = NULL;
+			continue;
+		}
 		iperf_defaults(child_test);	/* sets defaults */
 
 		iperf_set_test_role(child_test, 'c');
@@ -221,14 +225,33 @@ ts_free_test_set(struct test_set* t_set)
 {
 	int i;
 	int j;
+	int case_error;
 	struct test_unit * tmp_unit;
+
+	printf("Error output: \n");  //add json 
 
 	for (i = 0; i < t_set->unit_count; ++i)
 	{
+		case_error = 0;
 		tmp_unit = t_set->suite[i];
 
+		printf("Case %s:", tmp_unit->test_name);
+
 		for (j = 0; j < tmp_unit->test_count; ++j)
-			iperf_free_test(tmp_unit->unit_tests[j]);
+		{
+			if (!tmp_unit->unit_tests[j])
+				iperf_free_test(tmp_unit->unit_tests[j]);
+			if (tmp_unit->test_err[j])
+			{
+				case_error = tmp_unit->test_err[j];
+				printf("\n	run %d: error - %s", j, iperf_strerror(i_errno));
+			}
+		}
+
+		if (!case_error)
+			printf(" OK\n");
+		else
+			printf("\n");
 
 		if (tmp_unit->test_count)
 		{

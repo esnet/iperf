@@ -156,8 +156,9 @@ the executable.
                  potentialy multiple CPUs).
    
           -B, --bind host
-                 bind to a specific interface. If the host  has  multiple  inter-
-                 faces, it will use the first interface by default.
+                 bind  to the specific interface  associated with address <host>.
+                 If the host  has  multiple  interfaces, it  will use  the  first
+                 interface by default.
    
           -V, --verbose
                  give more detailed output

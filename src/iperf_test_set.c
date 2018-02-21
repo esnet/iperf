@@ -123,6 +123,9 @@ ts_run_bulk_test(struct iperf_test* test)
 			return -1;
 	}
 
+	if (!test->json_output)
+		ts_err_printf(t_set);
+
 	ts_free_test_set(t_set);
 
 	return 0;
@@ -225,33 +228,18 @@ ts_free_test_set(struct test_set* t_set)
 {
 	int i;
 	int j;
-	int case_error;
 	struct test_unit * tmp_unit;
 
-	printf("Error output: \n");  //add json 
 
 	for (i = 0; i < t_set->unit_count; ++i)
 	{
-		case_error = 0;
 		tmp_unit = t_set->suite[i];
-
-		printf("Case %s:", tmp_unit->test_name);
 
 		for (j = 0; j < tmp_unit->test_count; ++j)
 		{
-			if (!tmp_unit->unit_tests[j])
+			if (tmp_unit->unit_tests[j])
 				iperf_free_test(tmp_unit->unit_tests[j]);
-			if (tmp_unit->test_err[j])
-			{
-				case_error = tmp_unit->test_err[j];
-				printf("\n	run %d: error - %s", j, iperf_strerror(i_errno));
-			}
 		}
-
-		if (!case_error)
-			printf(" OK\n");
-		else
-			printf("\n");
 
 		if (tmp_unit->test_count)
 		{
@@ -266,6 +254,42 @@ ts_free_test_set(struct test_set* t_set)
 	free(t_set->suite);
 	cJSON_Delete(t_set->json_file);
 	free(t_set);
+
+	return 0;
+}
+
+int
+ts_err_printf(struct test_set* t_set)
+{
+	int case_error;
+	int i;
+	int j;
+	struct test_unit * tmp_unit;
+
+	printf("\n- - - - - - - - - - - - - - - - - - - - - - - - -\n");
+	printf("Errors output: \n");
+
+	for (i = 0; i < t_set->unit_count; ++i)
+	{
+		case_error = 0;
+
+		tmp_unit = t_set->suite[i];
+		printf("Case %s:", tmp_unit->test_name);
+
+		for (j = 0; j < tmp_unit->test_count; ++j)
+		{
+			if (tmp_unit->test_err[j])
+			{
+				case_error = tmp_unit->test_err[j];
+				printf("\n	run %d: error - %s", j, iperf_strerror(i_errno));
+			}
+		}
+
+		if (!case_error)
+			printf(" OK\n");
+		else
+			printf("\n");
+	}
 
 	return 0;
 }

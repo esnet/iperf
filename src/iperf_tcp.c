@@ -60,8 +60,15 @@ iperf_tcp_recv(struct iperf_stream *sp)
     if (r < 0)
         return r;
 
-    sp->result->bytes_received += r;
-    sp->result->bytes_received_this_interval += r;
+    /* Only count bytes received while we're in the correct state. */
+    if (sp->test->state == TEST_RUNNING) {
+	sp->result->bytes_received += r;
+	sp->result->bytes_received_this_interval += r;
+    }
+    else {
+	if (sp->test->debug)
+	    printf("Late receive, state = %d\n", sp->test->state);
+    }
 
     return r;
 }

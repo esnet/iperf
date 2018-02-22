@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2017, The Regents of the University of
+ * iperf, Copyright (c) 2014-2018, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -98,6 +98,7 @@ int check_authentication(const char *username, const char *password, const time_
             return 0;
         }
     }
+    fclose(ptr_file);
     return 3;
 }
 

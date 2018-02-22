@@ -72,12 +72,12 @@ struct iperf_stream;
 /* states */
 #define TEST_START 1
 #define TEST_RUNNING 2
-#define RESULT_REQUEST 3
+#define RESULT_REQUEST 3 /* not used */
 #define TEST_END 4
-#define STREAM_BEGIN 5
-#define STREAM_RUNNING 6
-#define STREAM_END 7
-#define ALL_STREAMS_END 8
+#define STREAM_BEGIN 5 /* not used */
+#define STREAM_RUNNING 6 /* not used */
+#define STREAM_END 7 /* not used */
+#define ALL_STREAMS_END 8 /* not used */
 #define PARAM_EXCHANGE 9
 #define CREATE_STREAMS 10
 #define SERVER_TERMINATE 11

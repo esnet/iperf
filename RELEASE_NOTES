@@ -1,3 +1,17 @@
+== iperf 3.5 2018-03-?? ==
+
+* Notable user-visible changes
+
+  * iperf3 no longer counts data received after the end of a test in
+    the bytecounts.  This fixes a bug that could, under some
+    conditions, artificially inflate the transfer size and measured
+    bitrate.  This bug was most noticeable on reverse direction
+    transfers on short tests over high-latency or buffer-bloated
+    paths.  Many thanks to @FuzzyLogic for providing access to a test
+    environment for diagnosing this issue (#692).
+
+* Notable developer-visible changes
+
 == iperf 3.4 2018-02-14 ==
 
 * Notable user-visible changes

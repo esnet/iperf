@@ -1,4 +1,4 @@
-== iperf 3.5 2018-03-?? ==
+== iperf 3.5 2018-03-02 ==
 
 * Notable user-visible changes
 
@@ -7,7 +7,7 @@
     conditions, artificially inflate the transfer size and measured
     bitrate.  This bug was most noticeable on reverse direction
     transfers on short tests over high-latency or buffer-bloated
-    paths.  Many thanks to @FuzzyLogic for providing access to a test
+    paths.  Many thanks to @FuzzyStatic for providing access to a test
     environment for diagnosing this issue (#692).
 
 * Notable developer-visible changes

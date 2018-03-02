@@ -1,6 +1,15 @@
 iperf3 Project News
 ===================
 
+2018-03-02:  iperf-3.5 released
+-------------------------------
+
+| URL:  http://downloads.es.net/pub/iperf/iperf-3.5.tar.gz
+| SHA256:  ``539bd9ecdca1b8c1157ff85b70ed09b3c75242e69886fc16b54883b399f72cd5  iperf-3.5.tar.gz``
+
+iperf 3.5 fixes a bug that could over-count data transfers (and hence
+measured bitrate).
+
 2018-02-14:  iperf-3.4 released
 -------------------------------
 

@@ -1,28 +1,16 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>iperf3 Development &#8212; iperf3 3.4 documentation</title>
-    
-    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <title>iperf3 Development &#8212; iperf3 3.5 documentation</title>
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/esnet/esnet.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '3.4',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -40,8 +28,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body role="document">
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -170,7 +157,7 @@ created in the future.</p>
 <div class="section" id="bug-reports">
 <h2>Bug Reports<a class="headerlink" href="#bug-reports" title="Permalink to this headline">¶</a></h2>
 <p>Before submitting a bug report, try checking out the latest version of
-the code, and confirm that it&#8217;s not already fixed. Also see the <a class="reference internal" href="faq.html"><span class="doc">iperf3 FAQ</span></a>.
+the code, and confirm that it’s not already fixed. Also see the <a class="reference internal" href="faq.html"><span class="doc">iperf3 FAQ</span></a>.
 Then submit to the iperf3 issue tracker on GitHub:</p>
 <p><a class="reference external" href="https://github.com/esnet/iperf/issues">https://github.com/esnet/iperf/issues</a></p>
 <p><strong>Note:</strong> Issues submitted to the old iperf3 issue tracker on Google
@@ -181,7 +168,7 @@ will be ignored.</p>
 <h2>Changes from iperf 2.x<a class="headerlink" href="#changes-from-iperf-2-x" title="Permalink to this headline">¶</a></h2>
 <p>New options (not necessarily complete, please refer to the manual page
 for a complete list of iperf3 options):</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">V</span><span class="p">,</span> <span class="o">--</span><span class="n">verbose</span>             <span class="n">more</span> <span class="n">detailed</span> <span class="n">output</span> <span class="n">than</span> <span class="n">before</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">V</span><span class="p">,</span> <span class="o">--</span><span class="n">verbose</span>             <span class="n">more</span> <span class="n">detailed</span> <span class="n">output</span> <span class="n">than</span> <span class="n">before</span>
 <span class="o">-</span><span class="n">J</span><span class="p">,</span> <span class="o">--</span><span class="n">json</span>                <span class="n">output</span> <span class="ow">in</span> <span class="n">JSON</span> <span class="nb">format</span>
 <span class="o">-</span><span class="n">Z</span><span class="p">,</span> <span class="o">--</span><span class="n">zerocopy</span>            <span class="n">use</span> <span class="n">a</span> <span class="s1">&#39;zero copy&#39;</span> <span class="n">sendfile</span><span class="p">()</span> <span class="n">method</span> <span class="n">of</span> <span class="n">sending</span> <span class="n">data</span>
 <span class="o">-</span><span class="n">O</span><span class="p">,</span> <span class="o">--</span><span class="n">omit</span> <span class="n">N</span>              <span class="n">omit</span> <span class="n">the</span> <span class="n">first</span> <span class="n">n</span> <span class="n">seconds</span> <span class="p">(</span><span class="n">to</span> <span class="n">ignore</span> <span class="n">slowstart</span><span class="p">)</span>
@@ -194,12 +181,12 @@ for a complete list of iperf3 options):</p>
 </pre></div>
 </div>
 <p>Changed flags:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">C</span><span class="p">,</span> <span class="o">--</span><span class="n">linux</span><span class="o">-</span><span class="n">congestion</span>    <span class="nb">set</span> <span class="n">congestion</span> <span class="n">control</span> <span class="n">algorithm</span> <span class="p">(</span><span class="n">Linux</span> <span class="n">only</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">C</span><span class="p">,</span> <span class="o">--</span><span class="n">linux</span><span class="o">-</span><span class="n">congestion</span>    <span class="nb">set</span> <span class="n">congestion</span> <span class="n">control</span> <span class="n">algorithm</span> <span class="p">(</span><span class="n">Linux</span> <span class="n">only</span><span class="p">)</span>
                           <span class="p">(</span><span class="o">-</span><span class="n">Z</span> <span class="ow">in</span> <span class="n">iperf2</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Deprecated flags (currently no plans to support):</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">d</span><span class="p">,</span> <span class="o">--</span><span class="n">dualtest</span>           <span class="n">Do</span> <span class="n">a</span> <span class="n">bidirectional</span> <span class="n">test</span> <span class="n">simultaneously</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">d</span><span class="p">,</span> <span class="o">--</span><span class="n">dualtest</span>           <span class="n">Do</span> <span class="n">a</span> <span class="n">bidirectional</span> <span class="n">test</span> <span class="n">simultaneously</span>
 <span class="o">-</span><span class="n">r</span><span class="p">,</span> <span class="o">--</span><span class="n">tradeoff</span>           <span class="n">Do</span> <span class="n">a</span> <span class="n">bidirectional</span> <span class="n">test</span> <span class="n">individually</span>
 <span class="o">-</span><span class="n">T</span><span class="p">,</span> <span class="o">--</span><span class="n">ttl</span>                <span class="n">time</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">live</span><span class="p">,</span> <span class="k">for</span> <span class="n">multicast</span> <span class="p">(</span><span class="n">default</span> <span class="mi">1</span><span class="p">)</span>
 <span class="o">-</span><span class="n">x</span><span class="p">,</span> <span class="o">--</span><span class="n">reportexclude</span> <span class="p">[</span><span class="n">CDMSV</span><span class="p">]</span>   <span class="n">exclude</span> <span class="n">C</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span> <span class="n">D</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="n">M</span><span class="p">(</span><span class="n">multicast</span><span class="p">)</span>
@@ -219,21 +206,21 @@ tracker.  These issues are either open (indicating no solution
 currently exists) or closed with the notation that no further attempts
 to solve the problem are currently being made:</p>
 <ul class="simple">
-<li>The <code class="docutils literal"><span class="pre">-Z</span></code> flag sometimes causes the iperf3 client to hang on OSX.
+<li>The <code class="docutils literal notranslate"><span class="pre">-Z</span></code> flag sometimes causes the iperf3 client to hang on OSX.
 (Issue #129)</li>
-<li>When specifying the TCP buffer size using the <code class="docutils literal"><span class="pre">-w</span></code> flag on Linux,
+<li>When specifying the TCP buffer size using the <code class="docutils literal notranslate"><span class="pre">-w</span></code> flag on Linux,
 the Linux kernel automatically doubles the value passed in to
 compensate for overheads.  (This can be observed by using
-iperf3&#8217;s <code class="docutils literal"><span class="pre">--debug</span></code> flag.)  However, CWND does not actually ramp up
+iperf3’s <code class="docutils literal notranslate"><span class="pre">--debug</span></code> flag.)  However, CWND does not actually ramp up
 to the doubled value, but only to about 75% of the doubled
 value.  Some part of this behavior is documented in the tcp(7)
 manual page.</li>
-<li>Although the <code class="docutils literal"><span class="pre">-w</span></code> flag is documented as setting the (TCP) window
+<li>Although the <code class="docutils literal notranslate"><span class="pre">-w</span></code> flag is documented as setting the (TCP) window
 size, it is also used to set the socket buffer size.  This has been
 shown to be helpful with high-bitrate UDP tests.</li>
 <li>On some platforms (observed on at least one version of Ubuntu
-Linux), it might be necessary to invoke <code class="docutils literal"><span class="pre">ldconfig</span></code> manually after
-doing a <code class="docutils literal"><span class="pre">make</span> <span class="pre">install</span></code> before the <code class="docutils literal"><span class="pre">iperf3</span></code> executable can find
+Linux), it might be necessary to invoke <code class="docutils literal notranslate"><span class="pre">ldconfig</span></code> manually after
+doing a <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">install</span></code> before the <code class="docutils literal notranslate"><span class="pre">iperf3</span></code> executable can find
 its shared library.  (Issue #153)</li>
 <li>The results printed on the server side at the end of a test do not
 correctly reflect the client-side measurements.  This is due to the
@@ -261,18 +248,18 @@ three parts:  <em>MAJOR.MINOR.PATCH</em></p>
 <div class="section" id="release-engineering-checklist">
 <h2>Release Engineering Checklist<a class="headerlink" href="#release-engineering-checklist" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic">
-<li><p class="first">Update the <code class="docutils literal"><span class="pre">README</span></code> and <code class="docutils literal"><span class="pre">RELEASE_NOTES</span></code> files to be accurate. Make sure
-that the &#8220;Known Issues&#8221; section of the <code class="docutils literal"><span class="pre">README</span></code> file and in this document
+<li><p class="first">Update the <code class="docutils literal notranslate"><span class="pre">README</span></code> and <code class="docutils literal notranslate"><span class="pre">RELEASE_NOTES</span></code> files to be accurate. Make sure
+that the “Known Issues” section of the <code class="docutils literal notranslate"><span class="pre">README</span></code> file and in this document
 are up to date.</p>
 </li>
 <li><p class="first">Compose a release announcement.  Most of the release announcement
-can be written before tagging.  Usually the previous version&#8217;s
+can be written before tagging.  Usually the previous version’s
 announcement can be used as a starting point.</p>
 </li>
-<li><p class="first">Preferably starting from a clean source tree (be sure that <code class="docutils literal"><span class="pre">git</span>
+<li><p class="first">Preferably starting from a clean source tree (be sure that <code class="docutils literal notranslate"><span class="pre">git</span>
 <span class="pre">status</span></code> emits no output), make the changes necessary to produce
 the new version, such as bumping version numbers:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>vi RELEASE_NOTES   # update version number and release date
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>vi RELEASE_NOTES   # update version number and release date
 vi configure.ac    # update version parameter in AC_INIT
 vi src/iperf3.1    # update manpage revision date if needed
 vi src/libiperf.3  # update manpage revision date if needed
@@ -293,7 +280,7 @@ older and probably should be avoided.</p>
 pre-testing.</p>
 </li>
 <li><p class="first">Stage the tarball (and a file containing the SHA256 hash) to the
-download site.  Currently this is located on <code class="docutils literal"><span class="pre">downloads.es.net</span></code>.</p>
+download site.  Currently this is located on <code class="docutils literal notranslate"><span class="pre">downloads.es.net</span></code>.</p>
 </li>
 <li><p class="first">From another host, test the link in the release announcement by
 downloading a fresh copy of the file and verifying the SHA256
@@ -309,7 +296,7 @@ platforms.</p>
 </li>
 <li><p class="first">Plug the SHA256 checksum into the release announcement.</p>
 </li>
-<li><p class="first">PGP-sign the release announcement text using <code class="docutils literal"><span class="pre">gpg</span> <span class="pre">--clearsign</span></code>.
+<li><p class="first">PGP-sign the release announcement text using <code class="docutils literal notranslate"><span class="pre">gpg</span> <span class="pre">--clearsign</span></code>.
 The signed announcement will be sent out in a subsequent emails,
 but could also be archived.  Decoupling the signing from emailing
 allows a signed release announcement to be resent via email or sent
@@ -318,7 +305,7 @@ by other, non-email means.</p>
 <li><p class="first">At this point, the release can and should be considered
 finalized.  To commit the release-engineering-related changes to
 GitHub and make them public, push them out thusly:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">push</span>            <span class="c1"># Push version changes</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">push</span>            <span class="c1"># Push version changes</span>
 <span class="n">git</span> <span class="n">push</span> <span class="o">--</span><span class="n">tags</span>     <span class="c1"># Push the new tag to the GitHub repo</span>
 </pre></div>
 </div>
@@ -326,7 +313,7 @@ GitHub and make them public, push them out thusly:</p>
 <li><p class="first">Send the PGP-signed release announcement to the following
 addresses.  Remember to turn off signing in the MUA, if
 applicable.  Remember to check the source address when posting to
-lists, as &#8220;closed&#8221; list will reject posting from all from
+lists, as “closed” list will reject posting from all from
 registered email addresses.</p>
 <ul class="simple">
 <li><a class="reference external" href="mailto:iperf-dev&#37;&#52;&#48;googlegroups&#46;com">iperf-dev<span>&#64;</span>googlegroups<span>&#46;</span>com</a></li>
@@ -343,14 +330,14 @@ sending process by sending a copy to oneself first and attempting
 to verify the signature is highly encouraged.</p>
 </li>
 <li><p class="first">Update the iperf3 Project News section of the documentation site
-to announce the new release (see <code class="docutils literal"><span class="pre">docs/news.rst</span></code> and
-<code class="docutils literal"><span class="pre">docs/conf.py</span></code> in the source tree) and deploy a new build of the
+to announce the new release (see <code class="docutils literal notranslate"><span class="pre">docs/news.rst</span></code> and
+<code class="docutils literal notranslate"><span class="pre">docs/conf.py</span></code> in the source tree) and deploy a new build of the
 documentation to GitHub Pages.</p>
 </li>
 <li><p class="first">If an update to the on-line manual page is needed, it can be
 generated with this sequence of commands (tested on CentOS 7) and
-import the result into <code class="docutils literal"><span class="pre">invoking.rst</span></code>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">TERM</span><span class="o">=</span>
+import the result into <code class="docutils literal notranslate"><span class="pre">invoking.rst</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">TERM</span><span class="o">=</span>
 <span class="n">export</span> <span class="n">TERM</span>
 <span class="n">nroff</span> <span class="o">-</span><span class="n">Tascii</span> <span class="o">-</span><span class="n">c</span> <span class="o">-</span><span class="n">man</span> <span class="n">src</span><span class="o">/</span><span class="n">iperf3</span><span class="o">.</span><span class="mi">1</span> <span class="o">|</span> <span class="n">ul</span> <span class="o">|</span> <span class="n">sed</span> <span class="s1">&#39;s/^/   /&#39;</span> <span class="o">&gt;</span> <span class="n">iperf3</span><span class="o">.</span><span class="n">txt</span>
 </pre></div>
@@ -390,7 +377,7 @@ Jones, Feng Qin, Gerrit Renker, Ajay Tirumala, Alex Warshavsky.</p>
         </p>
         <p>
             &copy; Copyright 2014-2018, ESnet.<br/>
-          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.5.<br/>
+          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.7.1.<br/>
         </p>
       </div>
     </div>

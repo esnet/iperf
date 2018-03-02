@@ -1,28 +1,16 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>iperf3 FAQ &#8212; iperf3 3.4 documentation</title>
-    
-    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <title>iperf3 FAQ &#8212; iperf3 3.5 documentation</title>
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/esnet/esnet.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '3.4',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -39,8 +27,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body role="document">
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -139,7 +126,7 @@
 <dt>What is the history of iperf3, and what is the difference between iperf2 and iperf3?</dt>
 <dd><p class="first">iperf2 was orphaned in the late 2000s at version 2.0.5, despite some
 known bugs and issues. After spending some time trying to fix
-iperf2&#8217;s problems, ESnet decided by 2010 that a new, simpler tool
+iperf2’s problems, ESnet decided by 2010 that a new, simpler tool
 was needed, and began development of iperf3. The goal was make the
 tool as simple as possible, so others could contribute to the code
 base. For this reason, it was decided to make the tool single
@@ -150,7 +137,7 @@ perfSONAR project (<a class="reference external" href="http://www.perfsonar.net"
 development of iperf2 (See
 <a class="reference external" href="https://sourceforge.net/projects/iperf2/">https://sourceforge.net/projects/iperf2/</a>). He fixed many of the
 problems with iperf2, and added a number of new features similar to
-iperf3. iperf2.0.8, released in 2015, made iperf2 a useful tool. iperf2&#8217;s
+iperf3. iperf2.0.8, released in 2015, made iperf2 a useful tool. iperf2’s
 current development is focused is on using UDP for latency testing, as well
 as broad platform support.</p>
 <p>As of this writing (2017), both iperf2 and iperf3 are being actively
@@ -172,19 +159,19 @@ Windows exist.</p>
 </dd>
 <dt>How can I build a statically-linked executable of iperf3?</dt>
 <dd><p class="first">There are a number of reasons for building an iperf3 executable with
-no dependencies on any shared libraries.  Unfortunately this isn&#8217;t
+no dependencies on any shared libraries.  Unfortunately this isn’t
 quite a straight-forward process.</p>
 <p>The steps below have nominally been tested on CentOS 7.4, but
 can probably be adapted for use with other Linux distributions:</p>
 <ol class="arabic simple">
 <li>If necessary, install the static C libraries; for CentOS this is
-the <code class="docutils literal"><span class="pre">glibc-static</span></code> package.</li>
+the <code class="docutils literal notranslate"><span class="pre">glibc-static</span></code> package.</li>
 <li>If OpenSSL is installed, be sure that its static libraries are
-also installed, from the <code class="docutils literal"><span class="pre">openssl-static</span></code> package.</li>
-<li>Be sure that <code class="docutils literal"><span class="pre">lksctp-*</span></code> packages are not installed, because
+also installed, from the <code class="docutils literal notranslate"><span class="pre">openssl-static</span></code> package.</li>
+<li>Be sure that <code class="docutils literal notranslate"><span class="pre">lksctp-*</span></code> packages are not installed, because
 as of this writing, there do not appear to be any static
 libraries available for SCTP.</li>
-<li>Configure iperf3 thusly: <code class="docutils literal"><span class="pre">configure</span> <span class="pre">&quot;LDFLAGS=--static&quot;</span>
+<li>Configure iperf3 thusly: <code class="docutils literal notranslate"><span class="pre">configure</span> <span class="pre">&quot;LDFLAGS=--static&quot;</span>
 <span class="pre">--disable-shared</span></code> These options are necessary to disable the
 generation of shared libraries and link the executable
 statically.</li>
@@ -193,26 +180,26 @@ statically.</li>
 <p class="last">It appears that for FreeBSD (tested on FreeBSD 11.1-RELEASE), only
 the last two steps are needed to produce a static executable.</p>
 </dd>
-<dt>I&#8217;m seeing quite a bit of unexpected UDP loss. Why?</dt>
+<dt>I’m seeing quite a bit of unexpected UDP loss. Why?</dt>
 <dd>First, confirm you are using iperf 3.1.5 or higher. There was an
 issue with the default UDP send size that was fixed in
-3.1.5. Second, try adding the flag <code class="docutils literal"><span class="pre">-w2M</span></code> to increase the socket
+3.1.5. Second, try adding the flag <code class="docutils literal notranslate"><span class="pre">-w2M</span></code> to increase the socket
 buffer sizes. That seems to make a big difference on some hosts.</dd>
 <dt>iperf3 UDP does not seem to work at bandwidths less than 100Kbps. Why?</dt>
-<dd>You&#8217;ll need to reduce the default packet length to get UDP rates of less that 100Kbps. Try <code class="docutils literal"><span class="pre">-l100</span></code>.</dd>
+<dd>You’ll need to reduce the default packet length to get UDP rates of less that 100Kbps. Try <code class="docutils literal notranslate"><span class="pre">-l100</span></code>.</dd>
 <dt>What congestion control algorithms are supported?</dt>
 <dd><p class="first">On Linux, run this command to see the available congestion control
 algorithms (note that some algorithms are packaged as kernel
 modules, which must be loaded before they can be used):</p>
-<div class="last highlight-default"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">sbin</span><span class="o">/</span><span class="n">sysctl</span> <span class="n">net</span><span class="o">.</span><span class="n">ipv4</span><span class="o">.</span><span class="n">tcp_available_congestion_control</span>
+<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">sbin</span><span class="o">/</span><span class="n">sysctl</span> <span class="n">net</span><span class="o">.</span><span class="n">ipv4</span><span class="o">.</span><span class="n">tcp_available_congestion_control</span>
 </pre></div>
 </div>
 </dd>
-<dt>I’m using the <code class="docutils literal"><span class="pre">--logfile</span></code> option. How do I see file output in real time?</dt>
-<dd>Use the <code class="docutils literal"><span class="pre">--forceflush</span></code> flag.</dd>
-<dt>I&#8217;m using the &#8211;fq-rate flag, but it does not seem to be working. Why?</dt>
-<dd>You need to add &#8216;net.core.default_qdisc = fq&#8217; to /etc/sysctl.conf for that option to work.</dd>
-<dt>I&#8217;m having trouble getting iperf3 to work on Windows, Android, etc. Where can I get help?</dt>
+<dt>I’m using the <code class="docutils literal notranslate"><span class="pre">--logfile</span></code> option. How do I see file output in real time?</dt>
+<dd>Use the <code class="docutils literal notranslate"><span class="pre">--forceflush</span></code> flag.</dd>
+<dt>I’m using the –fq-rate flag, but it does not seem to be working. Why?</dt>
+<dd>You need to add ‘net.core.default_qdisc = fq’ to /etc/sysctl.conf for that option to work.</dd>
+<dt>I’m having trouble getting iperf3 to work on Windows, Android, etc. Where can I get help?</dt>
 <dd>iperf3 only supports Linux, FreeBSD, and OSX. For other platforms we recommend using iperf2.</dd>
 <dt>I managed to get a Windows executable built, but why do I get a BSOD on Windows 7?</dt>
 <dd><p class="first">There seems to be a bug in Windows 7 where running iperf3 from a
@@ -220,12 +207,12 @@ network filesystem can cause a system crash (in other words Blue
 Screen of Death, or BSOD).  This is a Windows bug addressed in kb2839149:</p>
 <p><a class="reference external" href="https://support.microsoft.com/en-us/help/2839149/stop-error-0x00000027-in-the-rdbss-sys-process-in-windows-7-or-windows">https://support.microsoft.com/en-us/help/2839149/stop-error-0x00000027-in-the-rdbss-sys-process-in-windows-7-or-windows</a></p>
 <p>A hotfix is available under kb2732673:</p>
-<p class="last"><a class="reference external" href="https://support.microsoft.com/en-us/help/2732673/-delayed-write-failed-error-message-when--pst-files-are-stored-on-a-ne">https://support.microsoft.com/en-us/help/2732673/-delayed-write-failed-error-message-when&#8211;pst-files-are-stored-on-a-ne</a></p>
+<p class="last"><a class="reference external" href="https://support.microsoft.com/en-us/help/2732673/-delayed-write-failed-error-message-when--pst-files-are-stored-on-a-ne">https://support.microsoft.com/en-us/help/2732673/-delayed-write-failed-error-message-when–pst-files-are-stored-on-a-ne</a></p>
 </dd>
 <dt>Why can’t I run a UDP client with no server?</dt>
 <dd>This is potentially dangerous, and an attacker could use this for a
-denial of service attack.  We don&#8217;t want iperf3 to be an attack tool.</dd>
-<dt>I&#8217;m trying to use iperf3 to test a 40G/100G link...What do I need to know?</dt>
+denial of service attack.  We don’t want iperf3 to be an attack tool.</dd>
+<dt>I’m trying to use iperf3 to test a 40G/100G link…What do I need to know?</dt>
 <dd><p class="first">See the following pages on fasterdata.es.net:</p>
 <blockquote class="last">
 <div><ul class="simple">
@@ -234,24 +221,24 @@ denial of service attack.  We don&#8217;t want iperf3 to be an attack tool.</dd>
 </ul>
 </div></blockquote>
 </dd>
-<dt>My receiver didn&#8217;t get all the bytes that got sent but there was no loss.  Huh?</dt>
+<dt>My receiver didn’t get all the bytes that got sent but there was no loss.  Huh?</dt>
 <dd>iperf3 uses a control connection between the client and server to
 manage the start and end of each test.  Sometimes the commands on
 the control connection can be received and acted upon before all of
 the test data has been processed.  Thus the test ends with data
 still in flight.  This effect can be significant for short (a few
 seconds) tests, but is probably negligible for longer tests.</dd>
-<dt>A file sent using the <code class="docutils literal"><span class="pre">-F</span></code> option got corrupted...what happened?</dt>
-<dd>The <code class="docutils literal"><span class="pre">-F</span></code> option to iperf3 is not a file transfer utility.  It&#8217;s a
+<dt>A file sent using the <code class="docutils literal notranslate"><span class="pre">-F</span></code> option got corrupted…what happened?</dt>
+<dd>The <code class="docutils literal notranslate"><span class="pre">-F</span></code> option to iperf3 is not a file transfer utility.  It’s a
 way of testing the end-to-end performance of a file transfer,
 including filesystem and disk overheads.  So while the test will
 mimic an actual file transfer, the data stored to disk may not be
 the same as what was sent.  In particular, the file size will be
 rounded up to the next larger multiple of the transfer block size,
-and for UDP tests, iperf&#8217;s metadata (containing timestamps and
+and for UDP tests, iperf’s metadata (containing timestamps and
 sequence numbers) will overwrite the start of every UDP packet
 payload.</dd>
-<dt>I have a question regarding iperf3...what&#8217;s the best way to get help?</dt>
+<dt>I have a question regarding iperf3…what’s the best way to get help?</dt>
 <dd><p class="first">Searching on the Internet is a good first step.
 <a class="reference external" href="http://stackoverflow.com/">http://stackoverflow.com/</a> has a number of iperf3-related questions
 and answers, but a simple query into your favorite search engine can
@@ -283,7 +270,7 @@ pull requests are encouraged, however.</p>
         </p>
         <p>
             &copy; Copyright 2014-2018, ESnet.<br/>
-          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.5.<br/>
+          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.7.1.<br/>
         </p>
       </div>
     </div>

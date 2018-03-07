@@ -124,7 +124,7 @@ ts_run_bulk_test(struct iperf_test* test)
 	}
 
 	if (!test->json_output)
-		ts_err_printf(t_set);
+		ts_err_output(t_set);
 
 	ts_free_test_set(t_set);
 
@@ -259,36 +259,53 @@ ts_free_test_set(struct test_set* t_set)
 }
 
 int
-ts_err_printf(struct test_set* t_set)
+ts_err_output(struct test_set* t_set)
 {
-	int case_error;
 	int i;
 	int j;
+	int errorIsPrinted = 0;
 	struct test_unit * tmp_unit;
-
-	printf("\n- - - - - - - - - - - - - - - - - - - - - - - - -\n");
-	printf("Errors output: \n");
 
 	for (i = 0; i < t_set->unit_count; ++i)
 	{
-		case_error = 0;
-
 		tmp_unit = t_set->suite[i];
-		printf("Case %s:", tmp_unit->test_name);
+
+		for (j = 0; j < tmp_unit->test_count; ++j)
+			if (tmp_unit->test_err[j])
+			{
+				if (tmp_unit->unit_tests && tmp_unit->unit_tests[0]->outfile) {
+					if (!errorIsPrinted)
+					{
+						fprintf(tmp_unit->unit_tests[0]->outfile, "\n- - - - - - - - - - - - - - - - - - - - - - - - -\n");
+						fprintf(tmp_unit->unit_tests[0]->outfile, "Errors output: \n");
+						errorIsPrinted = 1;
+					}
+					fprintf(tmp_unit->unit_tests[0]->outfile, "Case %s:\n", tmp_unit->test_name);
+				}
+				else {
+					if (!errorIsPrinted)
+					{
+						fprintf(stderr, "\n- - - - - - - - - - - - - - - - - - - - - - - - -\n");
+						fprintf(stderr, "Errors output: \n");
+						errorIsPrinted = 1;
+					}
+					fprintf(stderr, "Case %s:\n", tmp_unit->test_name);
+				}
+				break;
+			}
 
 		for (j = 0; j < tmp_unit->test_count; ++j)
 		{
 			if (tmp_unit->test_err[j])
 			{
-				case_error = tmp_unit->test_err[j];
-				printf("\n	run %d: error - %s", j, iperf_strerror(i_errno));
+				if (tmp_unit->unit_tests && tmp_unit->unit_tests[0]->outfile) {
+					fprintf(tmp_unit->unit_tests[0]->outfile, "    run %d: error - %s\n", j, iperf_strerror(tmp_unit->test_err[j]));
+				}
+				else {
+					fprintf(stderr, "    run %d: error - %s\n", j, iperf_strerror(tmp_unit->test_err[j]));
+				}
 			}
 		}
-
-		if (!case_error)
-			printf(" OK\n");
-		else
-			printf("\n");
 	}
 
 	return 0;

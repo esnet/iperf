@@ -103,7 +103,7 @@ int check_authentication(const char *username, const char *password, const time_
 }
 
 
-int Base64Encode(unsigned char* buffer, const size_t length, char** b64text) { //Encodes a binary safe base 64 string
+int Base64Encode(const unsigned char* buffer, const size_t length, char** b64text) { //Encodes a binary safe base 64 string
     BIO *bio, *b64;
     BUF_MEM *bufferPtr;
 
@@ -133,7 +133,7 @@ size_t calcDecodeLength(const char* b64input) { //Calculates the length of a dec
     return (len*3)/4 - padding;
 }
 
-int Base64Decode(char* b64message, unsigned char** buffer, size_t* length) { //Decodes a base64 encoded string
+int Base64Decode(const char* b64message, unsigned char** buffer, size_t* length) { //Decodes a base64 encoded string
     BIO *bio, *b64;
 
     int decodeLen = calcDecodeLength(b64message);
@@ -153,7 +153,7 @@ int Base64Decode(char* b64message, unsigned char** buffer, size_t* length) { //D
 }
 
 
-EVP_PKEY *load_pubkey(const char *file) {
+EVP_PKEY *load_pubkey_from_file(const char *file) {
     BIO *key = NULL;
     EVP_PKEY *pkey = NULL;
 
@@ -164,7 +164,18 @@ EVP_PKEY *load_pubkey(const char *file) {
     return (pkey);
 }   
 
-EVP_PKEY *load_key(const char *file) {
+EVP_PKEY *load_pubkey_from_base64(const char *buffer) {
+    unsigned char *key = NULL;
+    size_t key_len;
+    Base64Decode(buffer, &key, &key_len);
+
+    BIO* bio = BIO_new(BIO_s_mem());
+    BIO_write(bio, key, key_len);
+    EVP_PKEY *pkey = PEM_read_bio_PUBKEY(bio, NULL, NULL, NULL);
+    return (pkey);
+}
+
+EVP_PKEY *load_privkey_from_file(const char *file) {
     BIO *key = NULL;
     EVP_PKEY *pkey = NULL;
 
@@ -176,8 +187,8 @@ EVP_PKEY *load_key(const char *file) {
 }
 
 
-int test_load_pubkey(const char *file){
-    EVP_PKEY *key = load_pubkey(file);
+int test_load_pubkey_from_file(const char *file){
+    EVP_PKEY *key = load_pubkey_from_file(file);
     if (key == NULL){
         return -1;
     }
@@ -185,8 +196,8 @@ int test_load_pubkey(const char *file){
     return 0;
 }
 
-int test_load_private_key(const char *file){
-    EVP_PKEY *key = load_key(file);
+int test_load_private_key_from_file(const char *file){
+    EVP_PKEY *key = load_privkey_from_file(file);
     if (key == NULL){
         return -1;
     }
@@ -194,17 +205,14 @@ int test_load_private_key(const char *file){
     return 0;
 }
 
-int encrypt_rsa_message(const char *plaintext, const char *public_keyfile, unsigned char **encryptedtext) {
-    EVP_PKEY *public_key = NULL;
+int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned char **encryptedtext) {
     RSA *rsa = NULL;
     unsigned char *rsa_buffer = NULL, pad = RSA_PKCS1_PADDING;
     int keysize, encryptedtext_len, rsa_buffer_len;
 
-    public_key = load_pubkey(public_keyfile);
     rsa = EVP_PKEY_get1_RSA(public_key);
-    EVP_PKEY_free(public_key);
-
     keysize = RSA_size(rsa);
+
     rsa_buffer  = OPENSSL_malloc(keysize * 2);
     *encryptedtext = (unsigned char*)OPENSSL_malloc(keysize);
 
@@ -219,15 +227,12 @@ int encrypt_rsa_message(const char *plaintext, const char *public_keyfile, unsig
     return encryptedtext_len;  
 }
 
-int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedtext_len, const char *private_keyfile, unsigned char **plaintext) {
-    EVP_PKEY *private_key = NULL;
+int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedtext_len, EVP_PKEY *private_key, unsigned char **plaintext) {
     RSA *rsa = NULL;
     unsigned char *rsa_buffer = NULL, pad = RSA_PKCS1_PADDING;
     int plaintext_len, rsa_buffer_len, keysize;
     
-    private_key = load_key(private_keyfile);
     rsa = EVP_PKEY_get1_RSA(private_key);
-    EVP_PKEY_free(private_key);
 
     keysize = RSA_size(rsa);
     rsa_buffer  = OPENSSL_malloc(keysize * 2);
@@ -244,26 +249,26 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
     return plaintext_len;
 }
 
-int encode_auth_setting(const char *username, const char *password, const char *public_keyfile, char **authtoken){
+int encode_auth_setting(const char *username, const char *password, EVP_PKEY *public_key, char **authtoken){
     time_t t = time(NULL);
     time_t utc_seconds = mktime(localtime(&t));
     char text[150];
     sprintf (text, "user: %s\npwd:  %s\nts:   %ld", username, password, utc_seconds);
     unsigned char *encrypted = NULL;
     int encrypted_len;
-    encrypted_len = encrypt_rsa_message(text, public_keyfile, &encrypted);
+    encrypted_len = encrypt_rsa_message(text, public_key, &encrypted);
     Base64Encode(encrypted, encrypted_len, authtoken);
     return (0); //success
 }
 
-int decode_auth_setting(int enable_debug, char *authtoken, const char *private_keyfile, char **username, char **password, time_t *ts){
+int decode_auth_setting(int enable_debug, char *authtoken, EVP_PKEY *private_key, char **username, char **password, time_t *ts){
     unsigned char *encrypted_b64 = NULL;
     size_t encrypted_len_b64;
     Base64Decode(authtoken, &encrypted_b64, &encrypted_len_b64);        
 
     unsigned char *plaintext = NULL;
     int plaintext_len;
-    plaintext_len = decrypt_rsa_message(encrypted_b64, encrypted_len_b64, private_keyfile, &plaintext);
+    plaintext_len = decrypt_rsa_message(encrypted_b64, encrypted_len_b64, private_key, &plaintext);
     plaintext[plaintext_len] = '\0';
 
     char s_username[20], s_password[20];

@@ -83,6 +83,7 @@
 #include "iperf_locale.h"
 #include "version.h"
 #if defined(HAVE_SSL)
+#include <openssl/bio.h>
 #include "iperf_auth.h"
 #endif /* HAVE_SSL */
 
@@ -449,6 +450,26 @@ iperf_set_test_unit_format(struct iperf_test *ipt, char unit_format)
     ipt->settings->unit_format = unit_format;
 }
 
+#if defined(HAVE_SSL)
+void
+iperf_set_test_client_username(struct iperf_test *ipt, char *client_username)
+{
+    ipt->settings->client_username = client_username;
+}
+
+void
+iperf_set_test_client_password(struct iperf_test *ipt, char *client_password)
+{
+    ipt->settings->client_password = client_password;
+}
+
+void
+iperf_set_test_client_rsa_pubkey(struct iperf_test *ipt, char *client_rsa_pubkey_base64)
+{
+    ipt->settings->client_rsa_pubkey = load_pubkey_from_base64(client_rsa_pubkey_base64);
+}
+#endif // HAVE_SSL
+
 void
 iperf_set_test_bind_address(struct iperf_test *ipt, char *bnd_address)
 {
@@ -707,7 +728,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = 0;
 #if defined(HAVE_SSL)
-    char *client_username = NULL, *client_rsa_public_key = NULL;
+    char *client_username = NULL, *client_rsa_public_key = NULL, *server_rsa_private_key = NULL;
 #endif /* HAVE_SSL */
 
     while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
@@ -1032,7 +1053,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             client_rsa_public_key = strdup(optarg);
             break;
         case OPT_SERVER_RSA_PRIVATE_KEY:
-            test->server_rsa_private_key = strdup(optarg);
+            server_rsa_private_key = strdup(optarg);
             break;
         case OPT_SERVER_AUTHORIZED_USERS:
             test->server_authorized_users = strdup(optarg);
@@ -1096,24 +1117,30 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             return -1;
         }
 
-        if (test_load_pubkey(client_rsa_public_key) < 0){
+        if (test_load_pubkey_from_file(client_rsa_public_key) < 0){
             i_errno = IESETCLIENTAUTH;
             return -1;
         }
-        encode_auth_setting(client_username, client_password, client_rsa_public_key, &test->settings->authtoken);
+
+        test->settings->client_username = client_username;
+        test->settings->client_password = client_password;
+        test->settings->client_rsa_pubkey = load_pubkey_from_file(client_rsa_public_key);
     }
 
-    if (test->role == 'c' && (test->server_rsa_private_key || test->server_authorized_users)){
+    if (test->role == 'c' && (server_rsa_private_key || test->server_authorized_users)){
         i_errno = IESERVERONLY;
         return -1;
-    } else if (test->role == 's' && (test->server_rsa_private_key || test->server_authorized_users) && 
-        !(test->server_rsa_private_key && test->server_authorized_users)) {
+    } else if (test->role == 's' && (server_rsa_private_key || test->server_authorized_users) && 
+        !(server_rsa_private_key && test->server_authorized_users)) {
          i_errno = IESETSERVERAUTH;
         return -1;
-    } else if (test->role == 's' && test->server_rsa_private_key && test_load_private_key(test->server_rsa_private_key) < 0){
+    } else if (test->role == 's' && server_rsa_private_key && test_load_private_key_from_file(server_rsa_private_key) < 0){
         i_errno = IESETSERVERAUTH;
         return -1;
+    } else {
+        test->server_rsa_private_key = load_privkey_from_file(server_rsa_private_key);
     }
+
 #endif //HAVE_SSL
     if (blksize == 0) {
 	if (test->protocol->id == Pudp)
@@ -1507,8 +1534,10 @@ send_parameters(struct iperf_test *test)
 	if (test->udp_counters_64bit)
 	    cJSON_AddNumberToObject(j, "udp_counters_64bit", iperf_get_test_udp_counters_64bit(test));
 #if defined(HAVE_SSL)
-    if (test->settings->authtoken)
+    if (test->settings->client_username && test->settings->client_password && test->settings->client_rsa_pubkey){
+        encode_auth_setting(test->settings->client_username, test->settings->client_password, test->settings->client_rsa_pubkey, &test->settings->authtoken);
         cJSON_AddStringToObject(j, "authtoken", test->settings->authtoken);
+    }
 #endif // HAVE_SSL
 	cJSON_AddStringToObject(j, "client_version", IPERF_VERSION);
 
@@ -2306,10 +2335,26 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->burst = 0;
     test->settings->mss = 0;
     test->settings->tos = 0;
+
+#if defined(HAVE_SSL)
     if (test->settings->authtoken) {
-	free(test->settings->authtoken);
-	test->settings->authtoken = NULL;
+        free(test->settings->authtoken);
+        test->settings->authtoken = NULL;
     }
+    if (test->settings->client_username) {
+        free(test->settings->client_username);
+        test->settings->client_username = NULL;
+    }
+    if (test->settings->client_password) {
+        free(test->settings->client_password);
+        test->settings->client_password = NULL;
+    }
+    if (test->settings->client_rsa_pubkey) {
+        EVP_PKEY_free(test->settings->client_rsa_pubkey);
+        test->settings->client_rsa_pubkey = NULL;
+    }
+#endif /* HAVE_SSL */
+
     memset(test->cookie, 0, COOKIE_SIZE);
     test->multisend = 10;	/* arbitrary */
     test->udp_counters_64bit = 0;

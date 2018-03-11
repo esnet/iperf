@@ -142,6 +142,12 @@ void	iperf_set_test_bind_address( struct iperf_test* ipt, char *bind_address );
 void	iperf_set_test_udp_counters_64bit( struct iperf_test* ipt, int udp_counters_64bit );
 void	iperf_set_test_one_off( struct iperf_test* ipt, int one_off );
 
+#if defined(HAVE_SSL)
+void    iperf_set_test_client_username(struct iperf_test *ipt, char *client_username);
+void    iperf_set_test_client_password(struct iperf_test *ipt, char *client_password);
+void    iperf_set_test_client_rsa_pubkey(struct iperf_test *ipt, char *client_rsa_pubkey_base64);
+#endif // HAVE_SSL
+
 /**
  * exchange_parameters - handles the param_Exchange part for client
  *

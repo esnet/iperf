@@ -165,7 +165,16 @@ iperf_sctp_listen(struct iperf_test *test)
    
     snprintf(portstr, 6, "%d", test->server_port);
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = (test->settings->domain == AF_UNSPEC ? AF_INET6 : test->settings->domain);
+    /*
+     * If binding to the wildcard address with no explicit address
+     * family specified, then force us to get an AF_INET6 socket.
+     * More details in the comments in netanounce().
+     */
+    if (test->settings->domain == AF_UNSPEC && !test->bind_address) {
+        hints.ai_family = AF_INET6;
+    } else {
+        hints.ai_family = test->settings->domain;
+    }
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
     if (getaddrinfo(test->bind_address, portstr, &hints, &res) != 0) {
@@ -180,10 +189,11 @@ iperf_sctp_listen(struct iperf_test *test)
     }
 
 #if defined(IPV6_V6ONLY) && !defined(__OpenBSD__)
-    if (test->settings->domain == AF_UNSPEC || test->settings->domain == AF_INET6) {
+    if (res->ai_family == AF_INET6 && (test->settings->domain == AF_UNSPEC || 
+        test->settings->domain == AF_INET6)) {
         if (test->settings->domain == AF_UNSPEC)
             opt = 0;
-        else if (test->settings->domain == AF_INET6)
+        else
             opt = 1;
         if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, 
 		       (char *) &opt, sizeof(opt)) < 0) {

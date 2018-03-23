@@ -290,6 +290,12 @@ iperf_get_test_one_off(struct iperf_test *ipt)
     return ipt->one_off;
 }
 
+int
+iperf_get_test_tos(struct iperf_test *ipt)
+{
+    return ipt->settings->tos;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -465,6 +471,12 @@ void
 iperf_set_test_one_off(struct iperf_test *ipt, int one_off)
 {
     ipt->one_off = one_off;
+}
+
+void
+iperf_set_test_tos(struct iperf_test *ipt, int tos)
+{
+    ipt->settings->tos = tos;
 }
 
 /********************** Get/set test protocol structure ***********************/

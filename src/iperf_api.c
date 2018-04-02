@@ -3217,12 +3217,14 @@ iperf_new_stream(struct iperf_test *test, int s)
         free(sp);
         return NULL;
     }
+#if 0
     if (unlink(template) < 0) {
         i_errno = IECREATESTREAM;
         free(sp->result);
         free(sp);
         return NULL;
     }
+#endif
     if (ftruncate(sp->buffer_fd, test->settings->blksize) < 0) {
         i_errno = IECREATESTREAM;
         free(sp->result);

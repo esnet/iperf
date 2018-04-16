@@ -68,6 +68,7 @@ struct iperf_stream;
 #define OPT_SERVER_AUTHORIZED_USERS 15
 #define OPT_PACING_TIMER 16
 #define OPT_CONNECT_TIMEOUT 17
+#define OPT_REPEATING_PAYLOAD 18
 
 /* states */
 #define TEST_START 1

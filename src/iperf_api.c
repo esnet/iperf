@@ -673,6 +673,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"zerocopy", no_argument, NULL, 'Z'},
         {"omit", required_argument, NULL, 'O'},
         {"file", required_argument, NULL, 'F'},
+        {"repeating-payload", no_argument, NULL, OPT_REPEATING_PAYLOAD},
 #if defined(HAVE_CPU_AFFINITY)
         {"affinity", required_argument, NULL, 'A'},
 #endif /* HAVE_CPU_AFFINITY */
@@ -950,6 +951,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 }
                 test->zerocopy = 1;
 		client_flag = 1;
+                break;
+            case OPT_REPEATING_PAYLOAD:
+                test->repeating_payload = 1;
+                client_flag = 1;
                 break;
             case 'O':
                 test->omit = atoi(optarg);
@@ -3170,7 +3175,8 @@ struct iperf_stream *
 iperf_new_stream(struct iperf_test *test, int s)
 {
     struct iperf_stream *sp;
-    
+    int ret = 0;
+
     char template[1024];
     if (test->tmp_template) {
         snprintf(template, sizeof(template) / sizeof(char), "%s", test->tmp_template);
@@ -3260,8 +3266,12 @@ iperf_new_stream(struct iperf_test *test, int s)
         sp->diskfile_fd = -1;
 
     /* Initialize stream */
-    if ((readentropy(sp->buffer, test->settings->blksize) < 0) ||
-        (iperf_init_stream(sp, test) < 0)) {
+    if (test->repeating_payload)
+        fill_with_repeating_pattern(sp->buffer, test->settings->blksize);
+    else
+        ret = readentropy(sp->buffer, test->settings->blksize);
+
+    if ((ret < 0) || (iperf_init_stream(sp, test) < 0)) {
         close(sp->buffer_fd);
         munmap(sp->buffer, sp->test->settings->blksize);
         free(sp->result);

@@ -171,6 +171,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -T, --title str           prefix every output line with this string\n"
                            "  --get-server-output       get results from server\n"
                            "  --udp-counters-64bit      use 64-bit counters in UDP test packets\n"
+                           "  --repeating-payload       use repeating pattern in payload, instead of\n"
+                           "                            randomized payload (like in iperf2)\n"
 #if defined(HAVE_SSL)
                            "  --username                username for authentication\n"
                            "  --rsa-public-key-path     path to the RSA public key used to encrypt\n"

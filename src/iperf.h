@@ -273,6 +273,7 @@ struct iperf_test
     int	      udp_counters_64bit;		/* --use-64-bit-udp-counters */
     int       forceflush; /* --forceflush - flushing output at every interval */
     int	      multisend;
+    int	      repeating_payload;                /* --repeating-payload */
 
     char     *json_output_string; /* rendered JSON output if json_output is set */
     /* Select related parameters */

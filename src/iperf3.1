@@ -350,6 +350,13 @@ If the client is run with \fB--json\fR, the server output is included
 in a JSON object; otherwise it is appended at the bottom of the
 human-readable output.
 .TP
+.BR --repeating-payload
+Use repeating pattern in payload, instead of random bytes.
+The same payload is used in iperf2 (ASCII '0..9' repeating).
+It might help to test and reveal problems in networking gear with hardware
+compression (including some WiFi access points), where iperf2 and iperf3
+perform differently, just based on payload entropy.
+.TP
 .BR --username " \fIusername\fR" 
 username to use for authentication to the iperf server (if built with
 OpenSSL support).

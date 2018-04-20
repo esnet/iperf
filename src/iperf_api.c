@@ -1179,7 +1179,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     /* Show warning if JSON output is used with explicit report format */
     if ((test->json_output) && (test->settings->unit_format != 'a')) {
-        warning("Report format'-f' is ignored within JSON output '-J'\n");
+        warning("Report format (-f) flag ignored with JSON output (-J)");
     }
 
     return 0;

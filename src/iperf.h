@@ -64,6 +64,7 @@
 
 #if defined(HAVE_SSL)
 #include <openssl/bio.h>
+#include <openssl/evp.h>
 #endif // HAVE_SSL
 
 typedef uint64_t iperf_size_t;

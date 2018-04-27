@@ -35,6 +35,12 @@ Setting test parameters:
     void iperf_set_test_zerocopy( struct iperf_test* t, int zerocopy );
     void iperf_set_test_tos( struct iperf_test* t, int tos );
 .fi
+Authentication functions:
+.nf
+    void iperf_set_test_client_username(struct iperf_test *ipt, char *client_username)
+    void iperf_set_test_client_password(struct iperf_test *ipt, char *client_password)
+    void iperf_set_test_client_rsa_pubkey(struct iperf_test *ipt, char *client_rsa_pubkey_base64)
+.fi
 Running a test:
 .nf
     int iperf_run_client(struct iperf_test *);

@@ -70,6 +70,40 @@ How can I build a statically-linked executable of iperf3?
   It appears that for FreeBSD (tested on FreeBSD 11.1-RELEASE), only
   the last two steps are needed to produce a static executable.
 
+How can I build on a system that doesn't support profiled executables?
+  This problem has been noted by users attempting to build iperf3 for
+  Android systems.  There are three workarounds. In order from least
+  effort to most effort:
+
+  #. At the time the linking of the iperf3 profiled executable fails,
+     the "normal" iperf3 executable is probably already created. So if
+     you are willing to accept the error exit from the make process
+     (and a little bit of wasted work on the build host), you might
+     not need to do anything.
+
+  #. After the configure step, there will be a definition in
+     ``src/Makefile`` that looks like this::
+
+       noinst_PROGRAMS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT) \
+         iperf3_profile$(EXEEXT)
+
+     If you edit it to look like this, it will disable the build of the profiled iperf3::
+
+       noinst_PROGRAMS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT)
+
+  #. Similar to item 2 above, but more permanent...if you edit
+     ``src/Makefile.am`` and change the line reading like this::
+
+       noinst_PROGRAMS         = t_timer t_units t_uuid iperf3_profile
+
+     To look like this::
+
+       noinst_PROGRAMS         = t_timer t_units t_uuid
+
+     And then run ``./bootstrap.sh``, that will regenerate the project
+     Makefiles to make the exclusion of the profiled iperf3 executable
+     permanant (within that source tree).
+
 I'm seeing quite a bit of unexpected UDP loss. Why?
   First, confirm you are using iperf 3.1.5 or higher. There was an
   issue with the default UDP send size that was fixed in
@@ -85,6 +119,10 @@ What congestion control algorithms are supported?
   modules, which must be loaded before they can be used)::
     
     /sbin/sysctl net.ipv4.tcp_available_congestion_control
+
+  On FreeBSD, the equivalent command is::
+
+    /sbin/sysctl net.inet.tcp.cc.available
  
 I’m using the ``--logfile`` option. How do I see file output in real time?
   Use the ``--forceflush`` flag.
@@ -113,8 +151,8 @@ Why can’t I run a UDP client with no server?
 I'm trying to use iperf3 to test a 40G/100G link...What do I need to know?
   See the following pages on fasterdata.es.net:
 
-   - https://fasterdata.es.net/host-tuning/100g-tuning/
-   - https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/multi-stream-iperf3/
+  - https://fasterdata.es.net/host-tuning/100g-tuning/
+  - https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/multi-stream-iperf3/
 
 My receiver didn't get all the bytes that got sent but there was no loss.  Huh?
   iperf3 uses a control connection between the client and server to

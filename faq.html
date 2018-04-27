@@ -180,6 +180,42 @@ statically.</li>
 <p class="last">It appears that for FreeBSD (tested on FreeBSD 11.1-RELEASE), only
 the last two steps are needed to produce a static executable.</p>
 </dd>
+<dt>How can I build on a system that doesn’t support profiled executables?</dt>
+<dd><p class="first">There are three workarounds for this problem. In order from least
+effort to most effort:</p>
+<ol class="last arabic">
+<li><p class="first">At the time the linking of the iperf3 profiled executable fails,
+the “normal” iperf3 executable is probably already created. So if
+you are willing to accept the error exit from the make process
+(and a little bit of wasted work on the build host), you might
+not need to do anything.</p>
+</li>
+<li><p class="first">After the configure step, there will be a definition in
+<code class="docutils literal notranslate"><span class="pre">src/Makefile</span></code> that looks like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>noinst_PROGRAMS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT) \
+  iperf3_profile$(EXEEXT)
+</pre></div>
+</div>
+<p>If you edit it to look like this, it will disable the build of the profiled iperf3:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>noinst_PROGRAMS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT)
+</pre></div>
+</div>
+</li>
+<li><p class="first">Similar to item 2 above, but more permanent…if you edit
+<code class="docutils literal notranslate"><span class="pre">src/Makefile.am</span></code> and change the line reading like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">noinst_PROGRAMS</span>         <span class="o">=</span> <span class="n">t_timer</span> <span class="n">t_units</span> <span class="n">t_uuid</span> <span class="n">iperf3_profile</span>
+</pre></div>
+</div>
+<p>To look like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">noinst_PROGRAMS</span>         <span class="o">=</span> <span class="n">t_timer</span> <span class="n">t_units</span> <span class="n">t_uuid</span>
+</pre></div>
+</div>
+<p>And then run <code class="docutils literal notranslate"><span class="pre">./bootstrap.sh</span></code>, that will regenerate the project
+Makefiles to make the exclusion of the profiled iperf3 executable
+permanant (within that source tree).</p>
+</li>
+</ol>
+</dd>
 <dt>I’m seeing quite a bit of unexpected UDP loss. Why?</dt>
 <dd>First, confirm you are using iperf 3.1.5 or higher. There was an
 issue with the default UDP send size that was fixed in
@@ -191,7 +227,11 @@ buffer sizes. That seems to make a big difference on some hosts.</dd>
 <dd><p class="first">On Linux, run this command to see the available congestion control
 algorithms (note that some algorithms are packaged as kernel
 modules, which must be loaded before they can be used):</p>
-<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">sbin</span><span class="o">/</span><span class="n">sysctl</span> <span class="n">net</span><span class="o">.</span><span class="n">ipv4</span><span class="o">.</span><span class="n">tcp_available_congestion_control</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">sbin</span><span class="o">/</span><span class="n">sysctl</span> <span class="n">net</span><span class="o">.</span><span class="n">ipv4</span><span class="o">.</span><span class="n">tcp_available_congestion_control</span>
+</pre></div>
+</div>
+<p>On FreeBSD, the equivalent command is:</p>
+<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">sbin</span><span class="o">/</span><span class="n">sysctl</span> <span class="n">net</span><span class="o">.</span><span class="n">inet</span><span class="o">.</span><span class="n">tcp</span><span class="o">.</span><span class="n">cc</span><span class="o">.</span><span class="n">available</span>
 </pre></div>
 </div>
 </dd>
@@ -214,12 +254,10 @@ Screen of Death, or BSOD).  This is a Windows bug addressed in kb2839149:</p>
 denial of service attack.  We don’t want iperf3 to be an attack tool.</dd>
 <dt>I’m trying to use iperf3 to test a 40G/100G link…What do I need to know?</dt>
 <dd><p class="first">See the following pages on fasterdata.es.net:</p>
-<blockquote class="last">
-<div><ul class="simple">
+<ul class="last simple">
 <li><a class="reference external" href="https://fasterdata.es.net/host-tuning/100g-tuning/">https://fasterdata.es.net/host-tuning/100g-tuning/</a></li>
 <li><a class="reference external" href="https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/multi-stream-iperf3/">https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/multi-stream-iperf3/</a></li>
 </ul>
-</div></blockquote>
 </dd>
 <dt>My receiver didn’t get all the bytes that got sent but there was no loss.  Huh?</dt>
 <dd>iperf3 uses a control connection between the client and server to

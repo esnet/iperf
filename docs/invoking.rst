@@ -374,11 +374,11 @@ the executable.
    
    EXAMPLES
       Authentication - RSA Keypair
-          The authentication feature of requires an RSA public keypair.  The pub-
-          lic key is used to encrypt the authentication token containing the user
-          credentials, while the private key is used to decrypt  the  authentica-
-          tion  token.   An  example  of a set of UNIX/Linux commands to generate
-          correct keypair follows:
+          The authentication feature of iperf3 requires an RSA  public  keypair.
+          The public key is used to encrypt the authentication  token containing
+          the user credentials, while the private key is used to decrypt the au-
+          thentication token.  An example of a set of UNIX/Linux commands to ge-
+          nerate correct keypair follows:
    
                > openssl genrsa -des3 -out private.pem 2048
                > openssl rsa -in private.pem -outform PEM -pubout -out public.pem

@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, 2016, 2017, The Regents of the University of
+ * iperf, Copyright (c) 2014-2018, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -254,6 +254,7 @@ struct iperf_test
     cpuset_t cpumask;
 #endif /* HAVE_CPUSET_SETAFFINITY */
     char     *title;				/* -T option */
+    char     *extra_data;			/* --extra-data */
     char     *congestion;			/* -C option */
     char     *congestion_used;			/* what was actually used */
     char     *remote_congestion_used;		/* what the other side used */

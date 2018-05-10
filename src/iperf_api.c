@@ -297,6 +297,12 @@ iperf_get_test_tos(struct iperf_test *ipt)
     return ipt->settings->tos;
 }
 
+char *
+iperf_get_test_extra_data(struct iperf_test *ipt)
+{
+    return ipt->extra_data;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -500,6 +506,12 @@ iperf_set_test_tos(struct iperf_test *ipt, int tos)
     ipt->settings->tos = tos;
 }
 
+void
+iperf_set_test_extra_data(struct iperf_test *ipt, char *dat)
+{
+    ipt->extra_data = dat;
+}
+
 /********************** Get/set test protocol structure ***********************/
 
 struct protocol *
@@ -688,6 +700,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"version6", no_argument, NULL, '6'},
         {"tos", required_argument, NULL, 'S'},
         {"dscp", required_argument, NULL, OPT_DSCP},
+	{"extra-data", required_argument, NULL, OPT_EXTRA_DATA},
 #if defined(HAVE_FLOWLABEL)
         {"flowlabel", required_argument, NULL, 'L'},
 #endif /* HAVE_FLOWLABEL */
@@ -937,6 +950,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		}
 		client_flag = 1;
                 break;
+	    case OPT_EXTRA_DATA:
+		test->extra_data = strdup(optarg);
+		client_flag = 1;
+	        break;
             case 'L':
 #if defined(HAVE_FLOWLABEL)
                 test->settings->flowlabel = strtol(optarg, &endptr, 0);
@@ -1547,6 +1564,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "flowlabel", test->settings->flowlabel);
 	if (test->title)
 	    cJSON_AddStringToObject(j, "title", test->title);
+	if (test->extra_data)
+	    cJSON_AddStringToObject(j, "extra_data", test->extra_data);
 	if (test->congestion)
 	    cJSON_AddStringToObject(j, "congestion", test->congestion);
 	if (test->congestion_used)
@@ -1636,6 +1655,8 @@ get_parameters(struct iperf_test *test)
 	    test->settings->flowlabel = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "title")) != NULL)
 	    test->title = strdup(j_p->valuestring);
+	if ((j_p = cJSON_GetObjectItem(j, "extra_data")) != NULL)
+	    test->extra_data = strdup(j_p->valuestring);
 	if ((j_p = cJSON_GetObjectItem(j, "congestion")) != NULL)
 	    test->congestion = strdup(j_p->valuestring);
 	if ((j_p = cJSON_GetObjectItem(j, "congestion_used")) != NULL)
@@ -2102,6 +2123,7 @@ iperf_defaults(struct iperf_test *testp)
     CPU_ZERO(&testp->cpumask);
 #endif /* HAVE_CPUSET_SETAFFINITY */
     testp->title = NULL;
+    testp->extra_data = NULL;
     testp->congestion = NULL;
     testp->congestion_used = NULL;
     testp->remote_congestion_used = NULL;
@@ -2234,6 +2256,8 @@ iperf_free_test(struct iperf_test *test)
     free(test->settings);
     if (test->title)
 	free(test->title);
+    if (test->extra_data)
+	free(test->extra_data);
     if (test->congestion)
 	free(test->congestion);
     if (test->congestion_used)
@@ -2383,6 +2407,10 @@ iperf_reset_test(struct iperf_test *test)
     if (test->title) {
 	free(test->title);
 	test->title = NULL;
+    }
+    if (test->extra_data) {
+	free(test->extra_data);
+	test->extra_data = NULL;
     }
 
     /* Free output line buffers, if any (on the server only) */
@@ -3598,6 +3626,8 @@ iperf_json_finish(struct iperf_test *test)
 {
     if (test->title)
 	cJSON_AddStringToObject(test->json_top, "title", test->title);
+    if (test->extra_data)
+	cJSON_AddStringToObject(test->json_top, "extra_data", test->extra_data);
     /* Include server output */
     if (test->json_server_output) {
 	cJSON_AddItemToObject(test->json_top, "server_output_json", test->json_server_output);

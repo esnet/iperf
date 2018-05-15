@@ -48,4 +48,8 @@ int ts_free_test_set(struct test_set* t_set);
 
 int ts_err_output(struct test_set* t_set);
 
+int ts_get_averaged(struct test_set* t_set);
+
+int ts_result_averaging(struct test_unit* t_unit);
+
 #endif

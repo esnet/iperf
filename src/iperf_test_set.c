@@ -128,6 +128,8 @@ ts_run_bulk_test(struct iperf_test* test)
 			return -1;
 	}
 
+	ts_get_averaged(t_set);
+
 	if (!test->json_output)
 		ts_err_output(t_set);
 
@@ -329,11 +331,10 @@ ts_get_averaged(struct test_set* t_set)
 		{
 			if (cJSON_IsTrue(tmp_node))
 			{
-				printf("Mark1 \n");
 				ts_result_averaging(t_set->suite[i]);
+				printf(cJSON_Print(t_set->suite[i]->avaraged_results));
 			}
 		}
-		// if (json ...)
 	}
 
 	return 0;
@@ -346,7 +347,6 @@ ts_result_averaging(struct test_unit* t_unit)
 
 	struct iperf_test* test;
 
-	cJSON *json_summary_stream = NULL;
 	int total_retransmits = 0;
 	int total_packets = 0, lost_packets = 0;
 	int sender_packet_count = 0, receiver_packet_count = 0; /* for this stream, this interval */
@@ -367,22 +367,10 @@ ts_result_averaging(struct test_unit* t_unit)
 	{
 		test = t_unit->unit_tests[j]; /* !used struct! */
 
-		/* print final summary for all intervals */
 
 		start_time = 0.;
 		sp = SLIST_FIRST(&test->streams);
-		/*
-		* If there is at least one stream, then figure out the length of time
-		* we were running the tests and print out some statistics about
-		* the streams.  It's possible to not have any streams at all
-		* if the client got interrupted before it got to do anything.
-		*
-		* Also note that we try to keep seperate values for the sender
-		* and receiver ending times.  Earlier iperf (3.1 and earlier)
-		* servers didn't send that to the clients, so in this case we fall
-		* back to using the client's ending timestamp.  The fallback is
-		* basically emulating what iperf 3.1 did.
-		*/
+
 		if (sp) {
 			end_time += timeval_diff(&sp->result->start_time, &sp->result->end_time);
 			if (test->sender) {
@@ -421,10 +409,6 @@ ts_result_averaging(struct test_unit* t_unit)
 					}
 				}
 				else {
-					/*
-					* Running total of the total number of packets.  Use the sender packet count if we
-					* have it, otherwise use the receiver packet count.
-					*/
 					int packet_count = sender_packet_count ? sender_packet_count : receiver_packet_count;
 					total_packets += (packet_count - sp->omitted_packet_count);
 					sender_total_packets += (sender_packet_count - sp->omitted_packet_count);
@@ -435,11 +419,10 @@ ts_result_averaging(struct test_unit* t_unit)
 			}
 		}
 	}
-	
 
 	//!!
 
-	if (test->num_streams > 1 || test->json_output) {
+	if (1) {
 		cJSON *value;
 		cJSON *obj;
 		/* If no tests were run, arbitrarily set bandwidth to 0. */
@@ -451,7 +434,6 @@ ts_result_averaging(struct test_unit* t_unit)
 		}
 
 		if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
-
 			// sent
 			obj = cJSON_CreateObject();
 
@@ -569,7 +551,6 @@ ts_result_averaging(struct test_unit* t_unit)
 		}
 	}
 
-
 	/* Is it need? 
 	if (test->json_output) { 
 		cJSON_AddItemToObject(test->json_end, "cpu_utilization_percent", iperf_json_printf("host_total: %f  host_user: %f  host_system: %f  remote_total: %f  remote_user: %f  remote_system: %f", (double)test->cpu_util[0], (double)test->cpu_util[1], (double)test->cpu_util[2], (double)test->remote_cpu_util[0], (double)test->remote_cpu_util[1], (double)test->remote_cpu_util[2]));
@@ -593,9 +574,6 @@ ts_result_averaging(struct test_unit* t_unit)
 	}
 	*/
 
-
-	//!!
-
 	/*
 	* This part is creation cJSON object for
 	* further use.
@@ -605,14 +583,16 @@ ts_result_averaging(struct test_unit* t_unit)
 
 	if (test->protocol->id == Ptcp)
 	{
-		cJSON_AddItemToObject(result, "protocol", "TCP");
+		cJSON *value = cJSON_CreateString("TCP");
+		cJSON_AddItemToObject(result, "protocol", value);
 	}
 	else // UDP
 	{
-		cJSON_AddItemToObject(result, "protocol", "UDP");
+		cJSON *value = cJSON_CreateString("UDP");
+		cJSON_AddItemToObject(result, "protocol", value);
 	}
 
-	t_unit->avaraged_results = result;
+	t_unit->avaraged_results = result;;
 
 	return 0;
 }

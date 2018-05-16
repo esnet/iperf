@@ -351,9 +351,6 @@ ts_result_averaging(struct test_unit* t_unit)
 	int total_packets = 0, lost_packets = 0;
 	int sender_packet_count = 0, receiver_packet_count = 0; /* for this stream, this interval */
 	int sender_total_packets = 0, receiver_total_packets = 0; /* running total */
-	char ubuf[UNIT_LEN];
-	char nbuf[UNIT_LEN];
-	char sbuf[UNIT_LEN];
 	struct iperf_stream *sp = NULL;
 	iperf_size_t bytes_sent, total_sent = 0;
 	iperf_size_t bytes_received, total_received = 0;

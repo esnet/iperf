@@ -320,10 +320,19 @@ int
 ts_get_averaged(struct test_set* t_set)
 {
 	int i;
+	cJSON *tmp_node;
 
 	for (i = 0; i < t_set->unit_count; ++i)
 	{
-		ts_result_averaging(t_set->suite[i]);
+		tmp_node = cJSON_GetObjectItemCaseSensitive(t_set->suite[i]->json_test_case, "averaging");
+		if (tmp_node)
+		{
+			if (cJSON_IsTrue(tmp_node))
+			{
+				printf("Mark1 \n");
+				ts_result_averaging(t_set->suite[i]);
+			}
+		}
 		// if (json ...)
 	}
 
@@ -391,8 +400,8 @@ ts_result_averaging(struct test_unit* t_unit)
 					sp->result->sender_time = sp->result->receiver_time;
 				}
 			}
-			sender_time = sp->result->sender_time;
-			receiver_time = sp->result->receiver_time;
+			sender_time += sp->result->sender_time;
+			receiver_time += sp->result->receiver_time;
 			SLIST_FOREACH(sp, &test->streams, streams) {
 
 				bytes_sent = sp->result->bytes_sent - sp->result->bytes_sent_omit;
@@ -434,7 +443,8 @@ ts_result_averaging(struct test_unit* t_unit)
 	//!!
 
 	if (test->num_streams > 1 || test->json_output) {
-		cJSON *obj = cJSON_CreateObject();
+		cJSON *value;
+		cJSON *obj;
 		/* If no tests were run, arbitrarily set bandwidth to 0. */
 		if (sender_time > 0.0) {
 			bandwidth = (double)total_sent / (double)sender_time;
@@ -443,47 +453,60 @@ ts_result_averaging(struct test_unit* t_unit)
 			bandwidth = 0.0;
 		}
 
-		cJSON_AddItemToObject(obj, "start_time", "0.");
-
-		cJSON_AddItemToObject(result, "sum_send", obj);
-		unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
 		if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
-			if (test->sender_has_retransmits) {
-				/* Summary sum, TCP with retransmits. */
-				if (test->json_output)
-					cJSON_AddItemToObject(test->json_end, "sum_sent", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d", (double)start_time, (double)sender_time, (double)sender_time, (int64_t)total_sent, bandwidth * 8, (int64_t)total_retransmits));
-				else
-					if (test->role == 's' && !test->sender) {
-						if (test->verbose)
-							iperf_printf(test, report_sender_not_available_format, sp->socket);
-					}
-					else {
-						iperf_printf(test, report_sum_bw_retrans_format, start_time, sender_time, ubuf, nbuf, total_retransmits, report_sender);
-					}
+
+			// sent
+			obj = cJSON_CreateObject();
+
+			value = cJSON_CreateNumber(start_time);
+			cJSON_AddItemToObject(obj, "start", value);
+
+			value = cJSON_CreateNumber((double)sender_time / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "end", value);
+
+			value = cJSON_CreateNumber((double)total_sent / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "bytes", value);
+
+			value = cJSON_CreateNumber((double)bandwidth * 8 / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "bits_per_second", value);
+
+			if (total_retransmits) {
+				value = cJSON_CreateNumber(total_retransmits / t_unit->test_count);
+				cJSON_AddItemToObject(obj, "retransmits", value);
 			}
 
-			/* If no tests were run, set received bandwidth to 0 */
+			cJSON_AddItemToObject(result, "sum_sent(avg)", obj);
+
+
+			// received
+
 			if (receiver_time > 0.0) {
 				bandwidth = (double)total_received / (double)receiver_time;
 			}
 			else {
 				bandwidth = 0.0;
 			}
-			unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
-			if (test->json_output)
-				cJSON_AddItemToObject(test->json_end, "sum_received", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f", (double)start_time, (double)receiver_time, (double)receiver_time, (int64_t)total_received, bandwidth * 8));
-			else
-				if (test->role == 's' && test->sender) {
-					if (test->verbose)
-						iperf_printf(test, report_receiver_not_available_format, sp->socket);
-				}
-				else {
-					iperf_printf(test, report_sum_bw_format, start_time, receiver_time, ubuf, nbuf, report_receiver);
-				}
+
+			obj = cJSON_CreateObject();
+
+			value = cJSON_CreateNumber(start_time);
+			cJSON_AddItemToObject(obj, "start", value);
+
+			value = cJSON_CreateNumber((double)receiver_time / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "end", value);
+
+			value = cJSON_CreateNumber((double)total_received / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "bytes", value);
+
+			value = cJSON_CreateNumber((double)bandwidth * 8 / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "bits_per_second", value);
+
+			cJSON_AddItemToObject(result, "sum_received(avg)", obj);
+
 		}
 		else {
 			/* Summary sum, UDP. */
-			avg_jitter /= test->num_streams; /* !fix it! */
+			avg_jitter /= test->num_streams; 
 			/* If no packets were sent, arbitrarily set loss percentage to 0. */
 			if (total_packets > 0) {
 				lost_percent = 100.0 * lost_packets / total_packets;
@@ -491,32 +514,61 @@ ts_result_averaging(struct test_unit* t_unit)
 			else {
 				lost_percent = 0.0;
 			}
-			if (test->json_output)
-				cJSON_AddItemToObject(test->json_end, "sum", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f", (double)start_time, (double)receiver_time, (double)receiver_time, (int64_t)total_sent, bandwidth * 8, (double)avg_jitter * 1000.0, (int64_t)lost_packets, (int64_t)total_packets, (double)lost_percent));
-			else {
-				/*
-				* On the client we have both sender and receiver overall summary
-				* stats.  On the server we have only the side that was on the
-				* server.  Output whatever we have.
-				*/
-				if (!(test->role == 's' && !test->sender)) {
-					unit_snprintf(ubuf, UNIT_LEN, (double)total_sent, 'A');
-					iperf_printf(test, report_sum_bw_udp_format, start_time, sender_time, ubuf, nbuf, 0.0, 0, sender_total_packets, 0.0, "sender");
-				}
-				if (!(test->role == 's' && test->sender)) {
 
-					unit_snprintf(ubuf, UNIT_LEN, (double)total_received, 'A');
-					/* Compute received bandwidth. */
-					if (end_time > 0.0) {
-						bandwidth = (double)total_received / (double)receiver_time;
-					}
-					else {
-						bandwidth = 0.0;
-					}
-					unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
-					iperf_printf(test, report_sum_bw_udp_format, start_time, receiver_time, ubuf, nbuf, avg_jitter * 1000.0, lost_packets, receiver_total_packets, lost_percent, "receiver");
-				}
-			}
+			obj = cJSON_CreateObject();
+
+			value = cJSON_CreateNumber(start_time);
+			cJSON_AddItemToObject(obj, "start", value);
+
+			value = cJSON_CreateNumber((double)receiver_time / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "end", value);
+
+			value = cJSON_CreateNumber((double)total_sent / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "bytes", value);
+
+			value = cJSON_CreateNumber((double)bandwidth * 8 / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "bits_per_second", value);
+
+			value = cJSON_CreateNumber((double)avg_jitter * 1000.0 / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "jitter_ms", value);
+
+			value = cJSON_CreateNumber((double)lost_packets / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "lost_packets", value);
+
+			value = cJSON_CreateNumber((double)total_packets / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "packets", value);
+
+			value = cJSON_CreateNumber((double)lost_percent / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "lost_percent", value);
+
+			cJSON_AddItemToObject(result, "sum(avg)", obj);
+
+			//if (test->json_output)
+			//	cJSON_AddItemToObject(test->json_end, "sum", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f", (double)start_time, (double)receiver_time, (double)receiver_time, (int64_t)total_sent, bandwidth * 8, (double)avg_jitter * 1000.0, (int64_t)lost_packets, (int64_t)total_packets, (double)lost_percent));
+			//else {
+			//	/*
+			//	* On the client we have both sender and receiver overall summary
+			//	* stats.  On the server we have only the side that was on the
+			//	* server.  Output whatever we have.
+			//	*/
+			//	if (!(test->role == 's' && !test->sender)) {
+			//		unit_snprintf(ubuf, UNIT_LEN, (double)total_sent, 'A');
+			//		iperf_printf(test, report_sum_bw_udp_format, start_time, sender_time, ubuf, nbuf, 0.0, 0, sender_total_packets, 0.0, "sender");
+			//	}
+			//	if (!(test->role == 's' && test->sender)) {
+
+			//		unit_snprintf(ubuf, UNIT_LEN, (double)total_received, 'A');
+			//		/* Compute received bandwidth. */
+			//		if (end_time > 0.0) {
+			//			bandwidth = (double)total_received / (double)receiver_time;
+			//		}
+			//		else {
+			//			bandwidth = 0.0;
+			//		}
+			//		unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
+			//		iperf_printf(test, report_sum_bw_udp_format, start_time, receiver_time, ubuf, nbuf, avg_jitter * 1000.0, lost_packets, receiver_total_packets, lost_percent, "receiver");
+			//	}
+			//}
 		}
 	}
 

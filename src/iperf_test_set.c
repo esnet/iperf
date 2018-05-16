@@ -354,12 +354,14 @@ ts_result_averaging(struct test_unit* t_unit)
 	struct iperf_stream *sp = NULL;
 	iperf_size_t bytes_sent, total_sent = 0;
 	iperf_size_t bytes_received, total_received = 0;
-	double start_time, end_time = 0.0, avg_jitter = 0.0, lost_percent = 0.0;
+	double start_time, avg_jitter = 0.0, lost_percent = 0.0;
 	double sender_time = 0.0, receiver_time = 0.0;
 	double bandwidth;
 
+	cJSON *value;
 	cJSON *result = cJSON_CreateObject();
 
+	cJSON_AddStringToObject(result, "type" , "averaged_result");
 	/* print final summary for all intervals */
 
 
@@ -406,6 +408,23 @@ ts_result_averaging(struct test_unit* t_unit)
 			}
 		}
 	}
+
+
+	/*
+	* This part is creation cJSON object for
+	* further use.
+	*/
+	
+	value = cJSON_CreateString(t_unit->test_name);
+	cJSON_AddItemToObject(result, "test_name", value);
+
+	if (test->protocol->id == Ptcp)
+		value = cJSON_CreateString("TCP");
+	else // UDP
+		value = cJSON_CreateString("UDP");
+
+	cJSON_AddItemToObject(result, "protocol", value);
+
 
 	if (1) {
 		cJSON *value;
@@ -558,22 +577,6 @@ ts_result_averaging(struct test_unit* t_unit)
 		}
 	}
 	*/
-
-	/*
-	* This part is creation cJSON object for
-	* further use.
-	*/
-
-	if (test->protocol->id == Ptcp)
-	{
-		cJSON *value = cJSON_CreateString("TCP");
-		cJSON_AddItemToObject(result, "protocol", value);
-	}
-	else // UDP
-	{
-		cJSON *value = cJSON_CreateString("UDP");
-		cJSON_AddItemToObject(result, "protocol", value);
-	}
 
 	t_unit->avaraged_results = result;;
 

@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, The Regents of the University of
+ * iperf, Copyright (c) 2014-2018, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -24,60 +24,26 @@
  * This code is distributed under a BSD style license, see the LICENSE
  * file for complete information.
  */
-#include "iperf_config.h"
+#ifndef __IPERF_TIME_H
+#define __IPERF_TIME_H
 
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
+
+struct iperf_time {
+    uint32_t secs;
+    uint32_t usecs;
+};
+
+int iperf_time_now(struct iperf_time *time1);
+
+void iperf_time_add_usecs(struct iperf_time *time1, uint64_t usecs);
+
+int iperf_time_compare(struct iperf_time *time1, struct iperf_time *time2);
+
+int iperf_time_diff(struct iperf_time *time1, struct iperf_time *time2, struct iperf_time *diff);
+
+uint64_t iperf_time_in_usecs(struct iperf_time *time);
+
+double iperf_time_in_secs(struct iperf_time *time);
+
 #endif
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/time.h>
-
-#include "timer.h"
-#include "iperf_time.h"
-
-
-static int flag;
-
-
-static void
-timer_proc( TimerClientData client_data, struct iperf_time* nowP )
-{
-    flag = 1;
-}
-
-
-int 
-main(int argc, char **argv)
-{
-    Timer *tp;
-
-    flag = 0;
-    tp = tmr_create(NULL, timer_proc, JunkClientData, 3000000, 0);
-    if (!tp)
-    {
-	printf("failed to create timer\n");
-	exit(-1);
-    }
-
-    sleep(2);
-
-    tmr_run(NULL);
-    if (flag)
-    {
-	printf("timer should not have expired\n");
-	exit(-1);
-    }
-    sleep(1);
-
-    tmr_run(NULL);
-    if (!flag)
-    {
-	printf("timer should have expired\n");
-	exit(-2);
-    }
-
-    tmr_destroy();
-    exit(0);
-}

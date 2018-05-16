@@ -182,5 +182,9 @@ if test "x$iperf3_cv_header_so_max_pacing_rate" = "xyes"; then
     AC_DEFINE([HAVE_SO_MAX_PACING_RATE], [1], [Have SO_MAX_PACING_RATE sockopt.])
 fi
 
+# Check if we need -lrt for clock_gettime
+AC_SEARCH_LIBS(clock_gettime, [rt posix4])
+# Check for clock_gettime support
+AC_CHECK_FUNCS([clock_gettime])
 
 AC_OUTPUT([Makefile src/Makefile src/version.h examples/Makefile iperf3.spec])

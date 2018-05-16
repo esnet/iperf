@@ -12,6 +12,7 @@
 #include "iperf_locale.h"
 #include "iperf_test_set.h"
 #include "iperf_api.h"
+#include "iperf_util.h"
 
 #include "iperf_tcp.h"
 #include "iperf_udp.h"
@@ -159,7 +160,7 @@ ts_new_test_set(char* path)
 		fseek(inputFile, 0, SEEK_SET);
 	}
 
-	//creating json file
+	// creating json file
 	str = malloc(size + 1);
 	fread(str, size, 1, inputFile);
 	str[size] = '\n';
@@ -171,7 +172,7 @@ ts_new_test_set(char* path)
 	free(str);
 
 
-	//test counting
+	// test counting
 	node = json->child;
 
 	i = 0;
@@ -184,7 +185,7 @@ ts_new_test_set(char* path)
 
 	t_set->unit_count = i;
 
-	//parsing
+	// parsing
 	t_set->suite = malloc(sizeof(struct test_unit*) * i);
 
 	node = json->child;
@@ -334,11 +335,8 @@ ts_result_averaging(struct test_unit* t_unit)
 {
 	int j;
 
-	struct test_unit unit;
-
 	struct iperf_test* test;
 
-	cJSON *json_summary_streams = NULL;
 	cJSON *json_summary_stream = NULL;
 	int total_retransmits = 0;
 	int total_packets = 0, lost_packets = 0;
@@ -351,12 +349,14 @@ ts_result_averaging(struct test_unit* t_unit)
 	double sender_time = 0.0, receiver_time = 0.0;
 	double bandwidth;
 
+	cJSON *result = NULL;
+
 	/* print final summary for all intervals */
 
 
 	for (j = 0; j < t_unit->test_count; ++j)
 	{
-		test = t_unit->unit_tests[j]; //подстраиваюсь под ту струтуру
+		test = t_unit->unit_tests[j]; /* !used struct! */
 
 		start_time = 0.;
 		sp = SLIST_FIRST(&test->streams);
@@ -505,29 +505,6 @@ ts_result_averaging(struct test_unit* t_unit)
 
 				/* !Is it necessary that below?! */
 
-
-				if (sp->diskfile_fd >= 0) {
-					if (fstat(sp->diskfile_fd, &sb) == 0) {
-						/* In the odd case that it's a zero-sized file, say it was all transferred. */
-						int percent_sent = 100, percent_received = 100;
-						if (sb.st_size > 0) {
-							percent_sent = (int)(((double)bytes_sent / (double)sb.st_size) * 100.0);
-							percent_received = (int)(((double)bytes_received / (double)sb.st_size) * 100.0);
-						}
-						unit_snprintf(sbuf, UNIT_LEN, (double)sb.st_size, 'A');
-						if (test->json_output)
-							cJSON_AddItemToObject(json_summary_stream, "diskfile", iperf_json_printf("sent: %d  received: %d  size: %d  percent_sent: %d  percent_received: %d  filename: %s", (int64_t)bytes_sent, (int64_t)bytes_received, (int64_t)sb.st_size, (int64_t)percent_sent, (int64_t)percent_received, test->diskfile_name));
-						else
-							if (test->sender) {
-								iperf_printf(test, report_diskfile, ubuf, sbuf, percent_sent, test->diskfile_name);
-							}
-							else {
-								unit_snprintf(ubuf, UNIT_LEN, (double)bytes_received, 'A');
-								iperf_printf(test, report_diskfile, ubuf, sbuf, percent_received, test->diskfile_name);
-							}
-					}
-				}
-
 				unit_snprintf(ubuf, UNIT_LEN, (double)bytes_received, 'A');
 				if (receiver_time > 0) {
 					bandwidth = (double)bytes_received / (double)receiver_time;
@@ -580,5 +557,21 @@ ts_result_averaging(struct test_unit* t_unit)
 		}
 	}
 	
+	/*
+	* This part is creation cJSON object for
+	* further use.
+	*/
+
+	if (test->protocol->id == Ptcp)
+	{
+
+	}
+	else // Pudp
+	{
+
+	}
+
+	t_unit->avaraged_results = result;
+
 	return 0;
 }

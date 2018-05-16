@@ -25,6 +25,8 @@ struct test_unit
     struct iperf_test **unit_tests;
 
     int       *test_err;
+
+    cJSON     *avaraged_results;
 };
 
 struct test_set

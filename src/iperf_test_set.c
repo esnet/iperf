@@ -344,22 +344,10 @@ ts_result_averaging(struct test_unit* t_unit)
 	int sender_total_packets = 0, receiver_total_packets = 0; /* running total */
 	char ubuf[UNIT_LEN];
 	char nbuf[UNIT_LEN];
-	struct stat sb;
 	char sbuf[UNIT_LEN];
 	struct iperf_stream *sp = NULL;
 	iperf_size_t bytes_sent, total_sent = 0;
 	iperf_size_t bytes_received, total_received = 0;
-	double start_time, end_time = 0.0, avg_jitter = 0.0, lost_percent = 0.0;
-	double sender_time = 0.0, receiver_time = 0.0;
-	double bandwidth;
-
-	// common variables for averaging
-	int c_total_retransmits = 0;
-	int c_total_packets = 0, lost_packets = 0;
-	int c_sender_packet_count = 0, c_receiver_packet_count = 0; /* for this stream, this interval */
-	int c_sender_total_packets = 0, c_receiver_total_packets = 0; /* running total */
-	iperf_size_t c_bytes_sent, c_total_sent = 0;
-	iperf_size_t c_bytes_received, c_total_received = 0;
 	double start_time, end_time = 0.0, avg_jitter = 0.0, lost_percent = 0.0;
 	double sender_time = 0.0, receiver_time = 0.0;
 	double bandwidth;
@@ -390,7 +378,7 @@ ts_result_averaging(struct test_unit* t_unit)
 		* basically emulating what iperf 3.1 did.
 		*/
 		if (sp) {
-			end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
+			end_time += timeval_diff(&sp->result->start_time, &sp->result->end_time);
 			if (test->sender) {
 				sp->result->sender_time = end_time;
 				if (sp->result->receiver_time == 0.0) {
@@ -446,6 +434,7 @@ ts_result_averaging(struct test_unit* t_unit)
 	//!!
 
 	if (test->num_streams > 1 || test->json_output) {
+		cJSON *obj = cJSON_CreateObject();
 		/* If no tests were run, arbitrarily set bandwidth to 0. */
 		if (sender_time > 0.0) {
 			bandwidth = (double)total_sent / (double)sender_time;
@@ -453,6 +442,10 @@ ts_result_averaging(struct test_unit* t_unit)
 		else {
 			bandwidth = 0.0;
 		}
+
+		cJSON_AddItemToObject(obj, "start_time", "0.");
+
+		cJSON_AddItemToObject(result, "sum_send", obj);
 		unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
 		if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 			if (test->sender_has_retransmits) {
@@ -468,20 +461,7 @@ ts_result_averaging(struct test_unit* t_unit)
 						iperf_printf(test, report_sum_bw_retrans_format, start_time, sender_time, ubuf, nbuf, total_retransmits, report_sender);
 					}
 			}
-			else {
-				/* Summary sum, TCP without retransmits. */
-				if (test->json_output)
-					cJSON_AddItemToObject(test->json_end, "sum_sent", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f", (double)start_time, (double)sender_time, (double)sender_time, (int64_t)total_sent, bandwidth * 8));
-				else
-					if (test->role == 's' && !test->sender) {
-						if (test->verbose)
-							iperf_printf(test, report_sender_not_available_format, sp->socket);
-					}
-					else {
-						iperf_printf(test, report_sum_bw_format, start_time, sender_time, ubuf, nbuf, report_sender);
-					}
-			}
-			unit_snprintf(ubuf, UNIT_LEN, (double)total_received, 'A');
+
 			/* If no tests were run, set received bandwidth to 0 */
 			if (receiver_time > 0.0) {
 				bandwidth = (double)total_received / (double)receiver_time;
@@ -503,7 +483,7 @@ ts_result_averaging(struct test_unit* t_unit)
 		}
 		else {
 			/* Summary sum, UDP. */
-			avg_jitter /= test->num_streams;
+			avg_jitter /= test->num_streams; /* !fix it! */
 			/* If no packets were sent, arbitrarily set loss percentage to 0. */
 			if (total_packets > 0) {
 				lost_percent = 100.0 * lost_packets / total_packets;
@@ -540,7 +520,9 @@ ts_result_averaging(struct test_unit* t_unit)
 		}
 	}
 
-	if (test->json_output) {
+
+	/* Is it need? 
+	if (test->json_output) { 
 		cJSON_AddItemToObject(test->json_end, "cpu_utilization_percent", iperf_json_printf("host_total: %f  host_user: %f  host_system: %f  remote_total: %f  remote_user: %f  remote_system: %f", (double)test->cpu_util[0], (double)test->cpu_util[1], (double)test->cpu_util[2], (double)test->remote_cpu_util[0], (double)test->remote_cpu_util[1], (double)test->remote_cpu_util[2]));
 		if (test->protocol->id == Ptcp) {
 			char *snd_congestion = NULL, *rcv_congestion = NULL;
@@ -560,42 +542,7 @@ ts_result_averaging(struct test_unit* t_unit)
 			}
 		}
 	}
-	else {
-		if (test->verbose) {
-			iperf_printf(test, report_cpu, report_local, test->sender ? report_sender : report_receiver, test->cpu_util[0], test->cpu_util[1], test->cpu_util[2], report_remote, test->sender ? report_receiver : report_sender, test->remote_cpu_util[0], test->remote_cpu_util[1], test->remote_cpu_util[2]);
-
-			if (test->protocol->id == Ptcp) {
-				char *snd_congestion = NULL, *rcv_congestion = NULL;
-				if (test->sender) {
-					snd_congestion = test->congestion_used;
-					rcv_congestion = test->remote_congestion_used;
-				}
-				else {
-					snd_congestion = test->remote_congestion_used;
-					rcv_congestion = test->congestion_used;
-				}
-				if (snd_congestion) {
-					iperf_printf(test, "snd_tcp_congestion %s\n", snd_congestion);
-				}
-				if (rcv_congestion) {
-					iperf_printf(test, "rcv_tcp_congestion %s\n", rcv_congestion);
-				}
-			}
-		}
-
-		/* Print server output if we're on the client and it was requested/provided */
-		if (test->role == 'c' && iperf_get_test_get_server_output(test)) {
-			if (test->json_server_output) {
-				iperf_printf(test, "\nServer JSON output:\n%s\n", cJSON_Print(test->json_server_output));
-				cJSON_Delete(test->json_server_output);
-				test->json_server_output = NULL;
-			}
-			if (test->server_output_text) {
-				iperf_printf(test, "\nServer output:\n%s\n", test->server_output_text);
-				test->server_output_text = NULL;
-			}
-		}
-	}
+	*/
 
 
 	//!!
@@ -605,15 +552,15 @@ ts_result_averaging(struct test_unit* t_unit)
 	* further use.
 	*/
 
-	cJSON_AddItemToObject(result, "time", end_time);
+
 
 	if (test->protocol->id == Ptcp)
 	{
-		
+		cJSON_AddItemToObject(result, "protocol", "TCP");
 	}
 	else // UDP
 	{
-
+		cJSON_AddItemToObject(result, "protocol", "UDP");
 	}
 
 	t_unit->avaraged_results = result;

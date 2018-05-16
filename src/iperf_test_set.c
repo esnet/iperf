@@ -372,19 +372,6 @@ ts_result_averaging(struct test_unit* t_unit)
 		sp = SLIST_FIRST(&test->streams);
 
 		if (sp) {
-			end_time += timeval_diff(&sp->result->start_time, &sp->result->end_time);
-			if (test->sender) {
-				sp->result->sender_time = end_time;
-				if (sp->result->receiver_time == 0.0) {
-					sp->result->receiver_time = sp->result->sender_time;
-				}
-			}
-			else {
-				sp->result->receiver_time = end_time;
-				if (sp->result->sender_time == 0.0) {
-					sp->result->sender_time = sp->result->receiver_time;
-				}
-			}
 			sender_time += sp->result->sender_time;
 			receiver_time += sp->result->receiver_time;
 			SLIST_FOREACH(sp, &test->streams, streams) {
@@ -419,8 +406,6 @@ ts_result_averaging(struct test_unit* t_unit)
 			}
 		}
 	}
-
-	//!!
 
 	if (1) {
 		cJSON *value;
@@ -578,8 +563,6 @@ ts_result_averaging(struct test_unit* t_unit)
 	* This part is creation cJSON object for
 	* further use.
 	*/
-
-
 
 	if (test->protocol->id == Ptcp)
 	{

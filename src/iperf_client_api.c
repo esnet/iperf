@@ -363,8 +363,9 @@ iperf_connect(struct iperf_test *test)
 		}
 	}
 
-    if (test->verbose) {
-	printf("Control connection MSS %d\n", test->ctrl_sck_mss);
+    // Now it will not print control connection message when using JSON output
+    if (test->verbose && !test->json_output) {
+	    printf("Control connection MSS %d\n", test->ctrl_sck_mss);
     }
 
     /*

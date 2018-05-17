@@ -105,7 +105,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -A, --affinity n/n,m      set CPU affinity\n"
 #endif /* HAVE_CPU_AFFINITY */
                            "  -B, --bind      <host>    bind to the interface associated with the address <host>\n"
-                           "  -V, --verbose             more detailed output\n"
+                           "  -V, --verbose             more detailed output, turned off when using JSON output(-J)\n"
                            "  -J, --json                output in JSON format\n"
                            "  --logfile f               send output to a log file\n"
                            "  --forceflush              force flushing output at every interval\n"

@@ -54,4 +54,6 @@ int ts_get_averaged(struct test_set* t_set);
 
 int ts_result_averaging(struct test_unit* t_unit);
 
+int ts_run_benchmark(int type);
+
 #endif

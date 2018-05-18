@@ -96,8 +96,7 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 		iperf_parse_arguments(child_test, tu->argcs, tu->argvs);
 
 		if (iperf_run_client(child_test) < 0)
-			tu->test_err[i] = i_errno;
-			//iperf_errexit(child_test, "error - %s", iperf_strerror(i_errno));
+			tu->test_err[i] = i_errno; 			// may be added: iperf_errexit(child_test, "error - %s", iperf_strerror(i_errno));
 
 		tu->unit_tests[i] = child_test;
 	}
@@ -574,6 +573,18 @@ ts_result_averaging(struct test_unit* t_unit)
 	*/
 
 	t_unit->avaraged_results = result;;
+
+	return 0;
+}
+
+int
+ts_run_benchmark(int type)
+{
+	switch (type)
+	{
+	default:
+		break;
+	}
 
 	return 0;
 }

@@ -152,7 +152,7 @@ ts_new_test_set(char* path)
 
 	if (!inputFile)
 	{
-		printf("File is not exist");
+		fprintf(stderr, "File is not exist");
 		return NULL;
 	}
 	else
@@ -362,7 +362,6 @@ ts_result_averaging(struct test_unit* t_unit)
 	cJSON *result = cJSON_CreateObject();
 
 	cJSON_AddStringToObject(result, "type" , "averaged_result");
-	/* print final summary for all intervals */
 
 
 	for (j = 0; j < t_unit->test_count; ++j)

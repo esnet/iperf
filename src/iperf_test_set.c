@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-//#include <sys/socket.h>
-
 #include "iperf_locale.h"
 #include "iperf_test_set.h"
 #include "iperf_api.h"
@@ -22,8 +20,6 @@ ts_parse_args(struct test_unit* tu)
 {
 	cJSON* options = cJSON_GetObjectItemCaseSensitive(tu->json_test_case, "options");
 	char *str = options->valuestring;
-
-	/*printf("options : %s\n", str);*/
 
 	char **argvs = NULL;	//array of args
 	char *tmp = strtok(str, " ");

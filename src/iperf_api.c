@@ -1231,6 +1231,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         warning("Report format (-f) flag ignored with JSON output (-J)");
     }
 
+    /* Show warning if JSON output is used with verbose or debug flags */
+    if (test->json_output && test->verbose) {
+        warning("Verbose output (-v) may interfere with JSON output (-J)");
+    }
+    if (test->json_output && test->debug) {
+        warning("Debug output (-d) may interfere with JSON output (-J)");
+    }
+
     return 0;
 }
 

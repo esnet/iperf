@@ -166,6 +166,24 @@ iperf_get_test_fqrate(struct iperf_test *ipt)
 }
 
 int
+iperf_get_test_pacing_timer(struct iperf_test *ipt)
+{
+    return ipt->settings->pacing_timer;
+}
+
+uint64_t
+iperf_get_test_bytes(struct iperf_test *ipt)
+{
+    return (iperf_size_t) ipt->settings->bytes;
+}
+
+uint64_t
+iperf_get_test_blocks(struct iperf_test *ipt)
+{
+    return (iperf_size_t) ipt->settings->blocks;
+}
+
+int
 iperf_get_test_burst(struct iperf_test *ipt)
 {
     return ipt->settings->burst;
@@ -363,6 +381,24 @@ void
 iperf_set_test_fqrate(struct iperf_test *ipt, uint64_t fqrate)
 {
     ipt->settings->fqrate = fqrate;
+}
+
+void
+iperf_set_test_pacing_timer(struct iperf_test *ipt, int pacing_timer)
+{
+    ipt->settings->pacing_timer = pacing_timer;
+}
+
+void
+iperf_set_test_bytes(struct iperf_test *ipt, uint64_t bytes)
+{
+    ipt->settings->bytes = (iperf_size_t) bytes;
+}
+
+void
+iperf_set_test_blocks(struct iperf_test *ipt, uint64_t blocks)
+{
+    ipt->settings->blocks = (iperf_size_t) blocks;
 }
 
 void

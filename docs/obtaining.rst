@@ -34,7 +34,7 @@ Source Distributions
 Source distributions of iperf are available as compressed (gzip)
 tarballs at:
 
-http://downloads.es.net/pub/iperf/
+https://downloads.es.net/pub/iperf/
 
 **Note:**  Due to a software packaging error, the 3.0.2 release
 tarball was not compressed, even though its filename had a ``.tar.gz``

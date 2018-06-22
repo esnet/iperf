@@ -41,13 +41,13 @@ Links for the Impatient
 -----------------------
 
 Project homepage and documentation hosted on GitHub Pages:
-http://software.es.net/iperf/
+https://software.es.net/iperf/
 
 Project site (source code repository, issue tracker) hosted on GitHub:
 https://github.com/esnet/iperf
 
 Source code downloads:
-http://downloads.es.net/pub/iperf/
+https://downloads.es.net/pub/iperf/
 
 Contents
 --------

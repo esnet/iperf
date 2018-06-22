@@ -18,6 +18,10 @@
    debug and/or verbose modes with --json output (#737) and a fix for
    JSON output on CentOS 6 (#727 / #744).
 
+ * software.es.net and downloads.es.net now support HTTPS, so URLs in
+   documentation that refer to those two hosts now use https://
+   instead of http:// URLs. (#759)
+
 * Notable developer-visible changes
 
  * Functions related to authenticated iperf3 connections have been

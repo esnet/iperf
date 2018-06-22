@@ -3,7 +3,7 @@
 * Notable user-visible changes
 
  * A new --extra-data option can be used to fill in a user-defined
-   string field that appears in JSON output.  (#600)
+   string field that appears in JSON output.  (#600 / #729)
 
  * A new --repeating-payload option makes iperf3 use a payload pattern
    similar to that used by iperf2, which could help in recreating
@@ -13,6 +13,10 @@
  * -B now works properly with SCTP tests.  (#678 / #715)
 
  * A compile fix for Solaris 10 was added.  (#711)
+
+ * Some minor bug fixes for JSON output.  In particular, warnings for
+   debug and/or verbose modes with --json output (#737) and a fix for
+   JSON output on CentOS 6 (#727 / #744).
 
 * Notable developer-visible changes
 

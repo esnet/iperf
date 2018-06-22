@@ -593,7 +593,7 @@ PACKAGE_TARNAME='iperf'
 PACKAGE_VERSION='3.5+'
 PACKAGE_STRING='iperf 3.5+'
 PACKAGE_BUGREPORT='https://github.com/esnet/iperf'
-PACKAGE_URL='http://software.es.net/iperf/'
+PACKAGE_URL='https://software.es.net/iperf/'
 
 # Factoring default headers for most tests.
 ac_includes_default="\
@@ -1443,7 +1443,7 @@ Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
 
 Report bugs to <https://github.com/esnet/iperf>.
-iperf home page: <http://software.es.net/iperf/>.
+iperf home page: <https://software.es.net/iperf/>.
 _ACEOF
 ac_status=$?
 fi
@@ -13687,7 +13687,7 @@ Configuration commands:
 $config_commands
 
 Report bugs to <https://github.com/esnet/iperf>.
-iperf home page: <http://software.es.net/iperf/>."
+iperf home page: <https://software.es.net/iperf/>."
 
 _ACEOF
 cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1

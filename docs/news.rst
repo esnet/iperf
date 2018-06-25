@@ -1,6 +1,15 @@
 iperf3 Project News
 ===================
 
+2018-06-25:  iperf-3.6 released
+-------------------------------
+
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.6.tar.gz
+| SHA256:  ``de5d51e46dc460cc590fb4d44f95e7cad54b74fea1eba7d6ebd6f8887d75946e  iperf-3.6.tar.gz``
+
+iperf 3.6 adds the ``--extra-data`` and ``--repeating-payload``
+options and fixes some minor bugs.
+
 2018-03-02:  iperf-3.5 released
 -------------------------------
 

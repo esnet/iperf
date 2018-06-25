@@ -349,18 +349,30 @@ the executable.
           -T, --title str
                  Prefix every output line with this string.
    
+          --extra-data str
+                 Specify an extra data string field to be included in  JSON  out-
+                 put.
+   
           -C, --congestion algo
-                 Set the congestion control algorithm (Linux and  FreeBSD  only).
-                 An  older  --linux-congestion  synonym for this flag is accepted
+                 Set  the  congestion control algorithm (Linux and FreeBSD only).
+                 An older --linux-congestion synonym for this  flag  is  accepted
                  but is deprecated.
    
           --get-server-output
                  Get the output from the server.  The output format is determined
                  by the server (in particular, if the server was invoked with the
-                 --json flag, the output will be in  JSON  format,  otherwise  it
-                 will  be  in  human-readable format).  If the client is run with
-                 --json, the server output is included in a JSON  object;  other-
-                 wise it is appended at the bottom of the human-readable output.
+                 --json  flag,  the  output  will be in JSON format, otherwise it
+                 will be in human-readable format).  If the client  is  run  with
+                 --json,  the  server output is included in a JSON object; other-
+                 wise it is appended at the bottom of the human-readable  output.
+   
+          --repeating-payload
+                 Use  repeating pattern in payload, instead of random bytes.  The
+                 same payload is used in iperf2  (ASCII  '0..9'  repeating).   It
+                 might  help  to test and reveal problems in networking gear with
+                 hardware compression (including some WiFi access points),  where
+                 iperf2  and  iperf3  perform  differently, just based on payload
+                 entropy.
    
           --username username
                  username to use for authentication to the iperf server (if built
@@ -368,17 +380,17 @@ the executable.
                  actively when the test is run.
    
           --rsa-public-key-path file
-                 path  to  the RSA public key used to encrypt authentication cre-
+                 path to the RSA public key used to encrypt  authentication  cre-
                  dentials (if built with OpenSSL support)
    
    
    EXAMPLES
       Authentication - RSA Keypair
-          The authentication feature of requires an RSA public keypair.  The pub-
-          lic key is used to encrypt the authentication token containing the user
-          credentials, while the private key is used to decrypt  the  authentica-
-          tion  token.   An  example  of a set of UNIX/Linux commands to generate
-          correct keypair follows:
+          The  authentication  feature  of iperf3 requires an RSA public keypair.
+          The public key is used to encrypt the authentication  token  containing
+          the  user  credentials,  while  the  private key is used to decrypt the
+          authentication token.  An example of a set of  UNIX/Linux  commands  to
+          generate correct keypair follows:
    
                > openssl genrsa -des3 -out private.pem 2048
                > openssl rsa -in private.pem -outform PEM -pubout -out public.pem
@@ -411,15 +423,15 @@ the executable.
    
    AUTHORS
           A list of the contributors to iperf3 can be found within the documenta-
-          tion located at http://software.es.net/iperf/dev.html#authors.
+          tion located at https://software.es.net/iperf/dev.html#authors.
    
    
    SEE ALSO
-          libiperf(3), http://software.es.net/iperf
+          libiperf(3), https://software.es.net/iperf
    
    
    
-   ESnet                             March 2018                         IPERF3(1)
+   ESnet                              June 2018                         IPERF3(1)
 
 The iperf3 manual page will typically be installed in manual
 section 1.

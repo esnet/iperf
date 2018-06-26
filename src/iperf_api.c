@@ -174,13 +174,13 @@ iperf_get_test_pacing_timer(struct iperf_test *ipt)
 uint64_t
 iperf_get_test_bytes(struct iperf_test *ipt)
 {
-    return (iperf_size_t) ipt->settings->bytes;
+    return (uint64_t) ipt->settings->bytes;
 }
 
 uint64_t
 iperf_get_test_blocks(struct iperf_test *ipt)
 {
-    return (iperf_size_t) ipt->settings->blocks;
+    return (uint64_t) ipt->settings->blocks;
 }
 
 int

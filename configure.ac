@@ -34,7 +34,7 @@ AC_CONFIG_AUX_DIR(config)
 
 
 # Initialize the automake system
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([foreign])
 AM_MAINTAINER_MODE
 AM_CONFIG_HEADER(src/iperf_config.h)
 
@@ -51,6 +51,13 @@ AC_PROG_LIBTOOL
 if test "x$GCC" = "xyes"; then
   CFLAGS="$CFLAGS -Wall"
 fi
+
+# Check if profiling must be disabled
+AC_ARG_ENABLE([profiling],
+    AS_HELP_STRING([--disable-profiling], [Disable (gprof) profiling]),
+    [:],
+    [enable_profiling=yes])
+AM_CONDITIONAL([ENABLE_PROFILING], [test x$enable_profiling = xyes])
 
 # Checks for header files.
 AC_HEADER_STDC

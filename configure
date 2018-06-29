@@ -639,6 +639,8 @@ OPENSSL_LDFLAGS
 OPENSSL_LIBS
 OPENSSL_INCLUDES
 PKG_CONFIG
+ENABLE_PROFILING_FALSE
+ENABLE_PROFILING_TRUE
 CPP
 LT_SYS_LIBRARY_PATH
 OTOOL64
@@ -769,6 +771,7 @@ with_aix_soname
 with_gnu_ld
 with_sysroot
 enable_libtool_lock
+enable_profiling
 with_openssl
 '
       ac_precious_vars='build_alias
@@ -1413,6 +1416,7 @@ Optional Features:
   --enable-fast-install[=PKGS]
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
+  --disable-profiling     Disable iperf profiling binary
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -12131,6 +12135,23 @@ if test "x$GCC" = "xyes"; then
   CFLAGS="$CFLAGS -Wall"
 fi
 
+# Check if profiling must be disabled
+# Check whether --enable-profiling was given.
+if test "${enable_profiling+set}" = set; then :
+  enableval=$enable_profiling; :
+else
+  enable_profiling=yes
+fi
+
+ if test x$enable_profiling = xyes; then
+  ENABLE_PROFILING_TRUE=
+  ENABLE_PROFILING_FALSE='#'
+else
+  ENABLE_PROFILING_TRUE='#'
+  ENABLE_PROFILING_FALSE=
+fi
+
+
 # Checks for header files.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ANSI C header files" >&5
 $as_echo_n "checking for ANSI C header files... " >&6; }
@@ -13227,6 +13248,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_PROFILING_TRUE}" && test -z "${ENABLE_PROFILING_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_PROFILING\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

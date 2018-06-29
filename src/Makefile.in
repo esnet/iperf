@@ -91,8 +91,11 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = iperf3$(EXEEXT)
-noinst_PROGRAMS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT) \
-	iperf3_profile$(EXEEXT)
+@ENABLE_PROFILING_FALSE@noinst_PROGRAMS = t_timer$(EXEEXT) \
+@ENABLE_PROFILING_FALSE@	t_units$(EXEEXT) t_uuid$(EXEEXT)
+@ENABLE_PROFILING_TRUE@noinst_PROGRAMS = t_timer$(EXEEXT) \
+@ENABLE_PROFILING_TRUE@	t_units$(EXEEXT) t_uuid$(EXEEXT) \
+@ENABLE_PROFILING_TRUE@	iperf3_profile$(EXEEXT)
 TESTS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -154,6 +157,13 @@ iperf3_DEPENDENCIES = libiperf.la
 iperf3_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(iperf3_CFLAGS) $(CFLAGS) \
 	$(iperf3_LDFLAGS) $(LDFLAGS) -o $@
+am__iperf3_profile_SOURCES_DIST = main.c cjson.c cjson.h flowlabel.h \
+	iperf.h iperf_api.c iperf_api.h iperf_error.c iperf_auth.h \
+	iperf_auth.c iperf_client_api.c iperf_locale.c iperf_locale.h \
+	iperf_server_api.c iperf_tcp.c iperf_tcp.h iperf_udp.c \
+	iperf_udp.h iperf_sctp.c iperf_sctp.h iperf_util.c \
+	iperf_util.h dscp.c net.c net.h portable_endian.h queue.h \
+	tcp_info.c timer.c timer.h units.c units.h version.h
 am__objects_1 = iperf3_profile-cjson.$(OBJEXT) \
 	iperf3_profile-iperf_api.$(OBJEXT) \
 	iperf3_profile-iperf_error.$(OBJEXT) \
@@ -168,10 +178,11 @@ am__objects_1 = iperf3_profile-cjson.$(OBJEXT) \
 	iperf3_profile-dscp.$(OBJEXT) iperf3_profile-net.$(OBJEXT) \
 	iperf3_profile-tcp_info.$(OBJEXT) \
 	iperf3_profile-timer.$(OBJEXT) iperf3_profile-units.$(OBJEXT)
-am_iperf3_profile_OBJECTS = iperf3_profile-main.$(OBJEXT) \
-	$(am__objects_1)
+@ENABLE_PROFILING_TRUE@am_iperf3_profile_OBJECTS =  \
+@ENABLE_PROFILING_TRUE@	iperf3_profile-main.$(OBJEXT) \
+@ENABLE_PROFILING_TRUE@	$(am__objects_1)
 iperf3_profile_OBJECTS = $(am_iperf3_profile_OBJECTS)
-iperf3_profile_DEPENDENCIES = libiperf.la
+@ENABLE_PROFILING_TRUE@iperf3_profile_DEPENDENCIES = libiperf.la
 iperf3_profile_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(iperf3_profile_CFLAGS) $(CFLAGS) $(iperf3_profile_LDFLAGS) \
@@ -258,7 +269,7 @@ SOURCES = $(libiperf_la_SOURCES) $(iperf3_SOURCES) \
 	$(iperf3_profile_SOURCES) $(t_timer_SOURCES) \
 	$(t_units_SOURCES) $(t_uuid_SOURCES)
 DIST_SOURCES = $(libiperf_la_SOURCES) $(iperf3_SOURCES) \
-	$(iperf3_profile_SOURCES) $(t_timer_SOURCES) \
+	$(am__iperf3_profile_SOURCES_DIST) $(t_timer_SOURCES) \
 	$(t_units_SOURCES) $(t_uuid_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
@@ -594,7 +605,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libiperf.la                                   # Build and install an iperf library
-include_HEADERS = iperf_api.h # Defines the headers that get installed with the program
+include_HEADERS = iperf_api.h                                   # Defines the headers that get installed with the program
 
 # Specify the source files and flags for the iperf library
 libiperf_la_SOURCES = \
@@ -607,7 +618,7 @@ libiperf_la_SOURCES = \
                         iperf_error.c \
                         iperf_auth.h \
                         iperf_auth.c \
-			iperf_client_api.c \
+                        iperf_client_api.c \
                         iperf_locale.c \
                         iperf_locale.h \
                         iperf_server_api.c \
@@ -615,14 +626,14 @@ libiperf_la_SOURCES = \
                         iperf_tcp.h \
                         iperf_udp.c \
                         iperf_udp.h \
-			iperf_sctp.c \
-	                iperf_sctp.h \
+                        iperf_sctp.c \
+                        iperf_sctp.h \
                         iperf_util.c \
                         iperf_util.h \
-			dscp.c \
+                        dscp.c \
                         net.c \
                         net.h \
-			portable_endian.h \
+                        portable_endian.h \
                         queue.h \
                         tcp_info.c \
                         timer.c \
@@ -638,14 +649,15 @@ iperf3_CFLAGS = -g
 iperf3_LDADD = libiperf.la
 iperf3_LDFLAGS = -g
 
+# If the iperf-profiled-binary is enabled (and this condition is true by default)
 # Specify the sources and various flags for the profiled iperf binary. This
 # binary recompiles all the source files to make sure they are all profiled.
-iperf3_profile_SOURCES = main.c \
-						  $(libiperf_la_SOURCES)
+@ENABLE_PROFILING_TRUE@iperf3_profile_SOURCES = main.c \
+@ENABLE_PROFILING_TRUE@                          $(libiperf_la_SOURCES)
 
-iperf3_profile_CFLAGS = -pg -g
-iperf3_profile_LDADD = libiperf.la
-iperf3_profile_LDFLAGS = -pg -g
+@ENABLE_PROFILING_TRUE@iperf3_profile_CFLAGS = -pg -g
+@ENABLE_PROFILING_TRUE@iperf3_profile_LDADD = libiperf.la
+@ENABLE_PROFILING_TRUE@iperf3_profile_LDFLAGS = -pg -g
 
 # Specify the sources and various flags for the test cases
 t_timer_SOURCES = t_timer.c

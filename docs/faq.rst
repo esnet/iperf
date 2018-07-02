@@ -72,8 +72,12 @@ How can I build a statically-linked executable of iperf3?
 
 How can I build on a system that doesn't support profiled executables?
   This problem has been noted by users attempting to build iperf3 for
-  Android systems.  There are three workarounds. In order from least
+  Android systems.  There are several workarounds. In order from least
   effort to most effort:
+
+  #. Beginning with iperf-3.6, the ``--disable-profiling`` flag can be
+     passed to ``configure`` to disable the building of profiled
+     object files and the profiled executable.
 
   #. At the time the linking of the iperf3 profiled executable fails,
      the "normal" iperf3 executable is probably already created. So if

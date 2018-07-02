@@ -182,9 +182,13 @@ the last two steps are needed to produce a static executable.</p>
 </dd>
 <dt>How can I build on a system that doesn’t support profiled executables?</dt>
 <dd><p class="first">This problem has been noted by users attempting to build iperf3 for
-Android systems.  There are three workarounds. In order from least
+Android systems.  There are several workarounds. In order from least
 effort to most effort:</p>
 <ol class="last arabic">
+<li><p class="first">Beginning with iperf-3.6, the <code class="docutils literal notranslate"><span class="pre">--disable-profiling</span></code> flag can be
+passed to <code class="docutils literal notranslate"><span class="pre">configure</span></code> to disable the building of profiled
+object files and the profiled executable.</p>
+</li>
 <li><p class="first">At the time the linking of the iperf3 profiled executable fails,
 the “normal” iperf3 executable is probably already created. So if
 you are willing to accept the error exit from the make process

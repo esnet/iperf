@@ -46,6 +46,7 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 {
 	struct iperf_test *child_test;
 	int i;
+	int repeated = 0;
 
 	if (!main_test->json_output)
 		printf("Case %s started \n", tu->test_name);
@@ -95,10 +96,23 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 
 		iperf_parse_arguments(child_test, tu->argcs, tu->argvs);
 
+
+
 		if (iperf_run_client(child_test) < 0)
-			tu->test_err[i] = i_errno; 			// may be added: iperf_errexit(child_test, "error - %s", iperf_strerror(i_errno));
+		{
+			if (!repeated)
+			{
+				--i;
+				repeated = 1;
+				usleep(500000);
+				continue;
+			}
+			else
+				tu->test_err[i] = i_errno; 			// may be added: iperf_errexit(child_test, "error - %s", iperf_strerror(i_errno));
+		}
 
 		tu->unit_tests[i] = child_test;
+		usleep(100000);
 	}
 
 	if (!main_test->json_output)
@@ -328,6 +342,7 @@ ts_get_averaged(struct test_set* t_set)
 			{
 				ts_result_averaging(t_set->suite[i]);
 				printf(cJSON_Print(t_set->suite[i]->avaraged_results));
+				printf("\n");
 			}
 		}
 	}

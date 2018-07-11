@@ -15,6 +15,10 @@
 #include "iperf_tcp.h"
 #include "iperf_udp.h"
 
+#define BENCHMARK_ONE 1
+#define BENCHMARK_TWO 2
+#define BENCHMARK_THREE 3
+
 int
 ts_parse_args(struct test_unit* tu)
 {
@@ -332,6 +336,7 @@ ts_get_averaged(struct test_set* t_set)
 {
 	int i;
 	cJSON *tmp_node;
+	cJSON *root = cJSON_CreateArray();
 
 	for (i = 0; i < t_set->unit_count; ++i)
 	{
@@ -341,11 +346,14 @@ ts_get_averaged(struct test_set* t_set)
 			if (cJSON_IsTrue(tmp_node))
 			{
 				ts_result_averaging(t_set->suite[i]);
-				printf(cJSON_Print(t_set->suite[i]->avaraged_results));
-				printf("\n");
+				cJSON_AddItemToArray(root, t_set->suite[i]->avaraged_results);
+
 			}
 		}
 	}
+
+	printf(cJSON_Print(root));
+	printf("\n");
 
 	return 0;
 }
@@ -597,7 +605,18 @@ ts_run_benchmark(int type)
 {
 	switch (type)
 	{
+	case BENCHMARK_ONE:
+	{
+
+		break;
+	}
+	case BENCHMARK_TWO:
+	{
+
+		break;
+	}
 	default:
+		fprintf(stderr, "Wrong benchmark type");
 		break;
 	}
 

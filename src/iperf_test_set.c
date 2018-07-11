@@ -104,19 +104,25 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 
 		if (iperf_run_client(child_test) < 0)
 		{
-			if (!repeated)
+			if (!repeated) /* If test was failed we repeat it one time*/
 			{
 				--i;
 				repeated = 1;
+				iperf_free_test(child_test);
 				usleep(500000);
 				continue;
 			}
 			else
-				tu->test_err[i] = i_errno; 			// may be added: iperf_errexit(child_test, "error - %s", iperf_strerror(i_errno));
+			{
+				repeated = 0;
+				tu->test_err[i] = i_errno;
+			}
 		}
+		else
+			repeated = 0;
 
 		tu->unit_tests[i] = child_test;
-		usleep(100000);
+		usleep(10000);
 	}
 
 	if (!main_test->json_output)

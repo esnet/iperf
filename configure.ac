@@ -1,4 +1,4 @@
-# iperf, Copyright (c) 2014, 2015, 2016, 2017, The Regents of the University of
+# iperf, Copyright (c) 2014-2018, The Regents of the University of
 # California, through Lawrence Berkeley National Laboratory (subject
 # to receipt of any required approvals from the U.S. Dept. of
 # Energy).  All rights reserved.
@@ -24,7 +24,7 @@
 # file for complete information.
 
 # Initialize the autoconf system for the specified tool, version and mailing list
-AC_INIT(iperf, 3-CURRENT, https://github.com/esnet/iperf, iperf, http://software.es.net/iperf/)
+AC_INIT(iperf, 3.6+, https://github.com/esnet/iperf, iperf, https://software.es.net/iperf/)
 m4_include([config/ax_check_openssl.m4])
 AC_LANG(C)
 
@@ -34,7 +34,7 @@ AC_CONFIG_AUX_DIR(config)
 
 
 # Initialize the automake system
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([foreign])
 AM_MAINTAINER_MODE
 AM_CONFIG_HEADER(src/iperf_config.h)
 
@@ -51,6 +51,13 @@ AC_PROG_LIBTOOL
 if test "x$GCC" = "xyes"; then
   CFLAGS="$CFLAGS -Wall"
 fi
+
+# Check if profiling must be disabled
+AC_ARG_ENABLE([profiling],
+    AS_HELP_STRING([--disable-profiling], [Disable iperf profiling binary]),
+    [:],
+    [enable_profiling=yes])
+AM_CONDITIONAL([ENABLE_PROFILING], [test x$enable_profiling = xyes])
 
 # Checks for header files.
 AC_HEADER_STDC

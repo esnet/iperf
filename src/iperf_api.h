@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2017, The Regents of the University of
+ * iperf, Copyright (c) 2014-2018, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -68,18 +68,20 @@ struct iperf_stream;
 #define OPT_SERVER_AUTHORIZED_USERS 15
 #define OPT_PACING_TIMER 16
 #define OPT_CONNECT_TIMEOUT 17
+#define OPT_REPEATING_PAYLOAD 18
+#define OPT_EXTRA_DATA 19
 
 #define OPT_TEST_SET 101
 
 /* states */
 #define TEST_START 1
 #define TEST_RUNNING 2
-#define RESULT_REQUEST 3
+#define RESULT_REQUEST 3 /* not used */
 #define TEST_END 4
-#define STREAM_BEGIN 5
-#define STREAM_RUNNING 6
-#define STREAM_END 7
-#define ALL_STREAMS_END 8
+#define STREAM_BEGIN 5 /* not used */
+#define STREAM_RUNNING 6 /* not used */
+#define STREAM_END 7 /* not used */
+#define ALL_STREAMS_END 8 /* not used */
 #define PARAM_EXCHANGE 9
 #define CREATE_STREAMS 10
 #define SERVER_TERMINATE 11
@@ -101,6 +103,9 @@ int	iperf_get_test_reverse( struct iperf_test* ipt );
 int	iperf_get_test_blksize( struct iperf_test* ipt );
 FILE*	iperf_get_test_outfile( struct iperf_test* ipt );
 uint64_t iperf_get_test_rate( struct iperf_test* ipt );
+int iperf_get_test_pacing_timer( struct iperf_test* ipt );
+uint64_t iperf_get_test_bytes( struct iperf_test* ipt );
+uint64_t iperf_get_test_blocks( struct iperf_test* ipt );
 int     iperf_get_test_burst( struct iperf_test* ipt );
 int	iperf_get_test_socket_bufsize( struct iperf_test* ipt );
 double	iperf_get_test_reporter_interval( struct iperf_test* ipt );
@@ -117,6 +122,8 @@ int	iperf_get_test_get_server_output( struct iperf_test* ipt );
 char*	iperf_get_test_bind_address ( struct iperf_test* ipt );
 int	iperf_get_test_udp_counters_64bit( struct iperf_test* ipt );
 int	iperf_get_test_one_off( struct iperf_test* ipt );
+int iperf_get_test_tos( struct iperf_test* ipt );
+char*	iperf_get_extra_data( struct iperf_test* ipt );
 
 /* Setter routines for some fields inside iperf_test. */
 void	iperf_set_verbose( struct iperf_test* ipt, int verbose );
@@ -128,6 +135,9 @@ void	iperf_set_test_stats_interval( struct iperf_test* ipt, double stats_interva
 void	iperf_set_test_state( struct iperf_test* ipt, signed char state );
 void	iperf_set_test_blksize( struct iperf_test* ipt, int blksize );
 void	iperf_set_test_rate( struct iperf_test* ipt, uint64_t rate );
+void    iperf_set_test_pacing_timer( struct iperf_test* ipt, int pacing_timer );
+void    iperf_set_test_bytes( struct iperf_test* ipt, uint64_t bytes );
+void    iperf_set_test_blocks( struct iperf_test* ipt, uint64_t blocks );
 void	iperf_set_test_burst( struct iperf_test* ipt, int burst );
 void	iperf_set_test_server_port( struct iperf_test* ipt, int server_port );
 void	iperf_set_test_socket_bufsize( struct iperf_test* ipt, int socket_bufsize );
@@ -143,6 +153,14 @@ void	iperf_set_test_get_server_output( struct iperf_test* ipt, int get_server_ou
 void	iperf_set_test_bind_address( struct iperf_test* ipt, char *bind_address );
 void	iperf_set_test_udp_counters_64bit( struct iperf_test* ipt, int udp_counters_64bit );
 void	iperf_set_test_one_off( struct iperf_test* ipt, int one_off );
+void    iperf_set_test_tos( struct iperf_test* ipt, int tos );
+void	iperf_set_extra_data( struct iperf_test* ipt, char *dat);
+
+#if defined(HAVE_SSL)
+void    iperf_set_test_client_username(struct iperf_test *ipt, char *client_username);
+void    iperf_set_test_client_password(struct iperf_test *ipt, char *client_password);
+void    iperf_set_test_client_rsa_pubkey(struct iperf_test *ipt, char *client_rsa_pubkey_base64);
+#endif // HAVE_SSL
 
 /**
  * exchange_parameters - handles the param_Exchange part for client
@@ -308,7 +326,7 @@ enum {
     IEENDCONDITIONS = 16,   // Only one test end condition (-t, -n, -k) may be specified
     IELOGFILE = 17,	    // Can't open log file
     IENOSCTP = 18,	    // No SCTP support available
-    IEBIND = 19,			// Local port specified with no local bind option
+    IEBIND = 19,	    // UNUSED:  Local port specified with no local bind option
     IEUDPBLOCKSIZE = 20,    // Block size invalid
     IEBADTOS = 21,	    // Bad TOS value
     IESETCLIENTAUTH = 22,   // Bad configuration of client authentication

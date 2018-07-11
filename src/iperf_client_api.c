@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2017, The Regents of the University of
+ * iperf, Copyright (c) 2014-2018, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -346,22 +346,22 @@ iperf_connect(struct iperf_test *test)
     socklen_t len;
 
     len = sizeof(opt);
-	if (getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_MAXSEG, &opt, &len) < 0) {
-		test->ctrl_sck_mss = 0;
-	}
-	else {
-		if (opt > 0 && opt <= MAX_UDP_BLOCKSIZE) {
-			test->ctrl_sck_mss = opt;
-		}
-		else {
-			char str[128];
-			snprintf(str, sizeof(str),
-				"Ignoring nonsense TCP MSS %d", opt);
-			warning(str);
+    if (getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_MAXSEG, &opt, &len) < 0) {
+        test->ctrl_sck_mss = 0;
+    }
+    else {
+        if (opt > 0 && opt <= MAX_UDP_BLOCKSIZE) {
+            test->ctrl_sck_mss = opt;
+        }
+        else {
+            char str[128];
+            snprintf(str, sizeof(str),
+                     "Ignoring nonsense TCP MSS %d", opt);
+            warning(str);
 
-			test->ctrl_sck_mss = 0;
-		}
-	}
+            test->ctrl_sck_mss = 0;
+        }
+    }
 
     if (test->verbose) {
 	printf("Control connection MSS %d\n", test->ctrl_sck_mss);
@@ -425,12 +425,12 @@ iperf_client_end(struct iperf_test *test)
     /* show final summary */
     test->reporter_callback(test);
 
+    if (iperf_set_send_state(test, IPERF_DONE) != 0)
+        return -1;
+
     /* Close control socket */
     if (test->ctrl_sck)
         close(test->ctrl_sck);
-
-    if (iperf_set_send_state(test, IPERF_DONE) != 0)
-        return -1;
 
     return 0;
 }

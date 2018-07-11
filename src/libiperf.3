@@ -1,4 +1,4 @@
-.TH LIBIPERF 3 "September 2015" ESnet "User Manuals"
+.TH LIBIPERF 3 "June 2018" ESnet "User Manuals"
 .SH NAME
 libiperf \- API for iperf3 network throughput tester
 
@@ -33,6 +33,13 @@ Setting test parameters:
     void iperf_set_test_json_output( struct iperf_test *t, int json_output );
     int iperf_has_zerocopy( void );
     void iperf_set_test_zerocopy( struct iperf_test* t, int zerocopy );
+    void iperf_set_test_tos( struct iperf_test* t, int tos );
+.fi
+Authentication functions:
+.nf
+    void iperf_set_test_client_username(struct iperf_test *ipt, char *client_username)
+    void iperf_set_test_client_password(struct iperf_test *ipt, char *client_password)
+    void iperf_set_test_client_rsa_pubkey(struct iperf_test *ipt, char *client_rsa_pubkey_base64)
 .fi
 Running a test:
 .nf
@@ -99,8 +106,8 @@ of the iperf3 source tree.
 .SH AUTHORS
 A list of the contributors to iperf3 can be found within the
 documentation located at
-\fChttp://software.es.net/iperf/dev.html#authors\fR.
+\fChttps://software.es.net/iperf/dev.html#authors\fR.
 
 .SH "SEE ALSO"
 iperf3(1),
-http://software.es.net/iperf/
+https://software.es.net/iperf/

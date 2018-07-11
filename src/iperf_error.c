@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, 2016, 2017, The Regents of the University of
+ * iperf, Copyright (c) 2014-2018, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -45,7 +45,7 @@ iperf_err(struct iperf_test *test, const char *format, ...)
     if (test != NULL && test->json_output && test->json_top != NULL)
 	cJSON_AddStringToObject(test->json_top, "error", str);
     else
-	if (test && test->outfile) {
+	if (test && test->outfile && test->outfile != stdout) {
 	    fprintf(test->outfile, "iperf3: %s\n", str);
 	}
 	else {
@@ -67,7 +67,7 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
 	cJSON_AddStringToObject(test->json_top, "error", str);
 	iperf_json_finish(test);
     } else
-	if (test && test->outfile) {
+	if (test && test->outfile && test->outfile != stdout) {
 	    fprintf(test->outfile, "iperf3: %s\n", str);
 	}
 	else {
@@ -122,7 +122,7 @@ iperf_strerror(int int_errno)
         case IEINTERVAL:
             snprintf(errstr, len, "invalid report interval (min = %g, max = %g seconds)", MIN_INTERVAL, MAX_INTERVAL);
             break;
-        case IEBIND:
+    case IEBIND: /* UNUSED */
             snprintf(errstr, len, "--bind must be specified to use --cport");
             break;
         case IEUDPBLOCKSIZE:

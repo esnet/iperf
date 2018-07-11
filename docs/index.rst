@@ -22,8 +22,8 @@ original iperf.  These include, for example, a zero-copy mode and
 optional JSON output.  Note that iperf3 is *not* backwards compatible
 with the original iperf.
 
-Primary development for iperf3 takes place on CentOS 7 Linux, FreeBSD
-10, and MacOS 10.12.  At this time, these are the only officially
+Primary development for iperf3 takes place on CentOS Linux, FreeBSD,
+and macOS.  At this time, these are the only officially
 supported platforms, however there have been some reports of success
 with OpenBSD, Android, and other Linux distributions.
 
@@ -41,13 +41,13 @@ Links for the Impatient
 -----------------------
 
 Project homepage and documentation hosted on GitHub Pages:
-http://software.es.net/iperf/
+https://software.es.net/iperf/
 
 Project site (source code repository, issue tracker) hosted on GitHub:
 https://github.com/esnet/iperf
 
 Source code downloads:
-http://downloads.es.net/pub/iperf/
+https://downloads.es.net/pub/iperf/
 
 Contents
 --------

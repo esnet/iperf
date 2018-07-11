@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, 2016, 2017, The Regents of the University of
+ * iperf, Copyright (c) 2014-2018, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -61,6 +61,11 @@
 #include "timer.h"
 #include "queue.h"
 #include "cjson.h"
+
+#if defined(HAVE_SSL)
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+#endif // HAVE_SSL
 
 typedef uint64_t iperf_size_t;
 
@@ -142,7 +147,12 @@ struct iperf_settings
     iperf_size_t blocks;            /* number of blocks (packets) to send */
     char      unit_format;          /* -f */
     int       num_ostreams;         /* SCTP initmsg settings */
+#if defined(HAVE_SSL)
     char      *authtoken;           /* Authentication token */
+    char      *client_username;
+    char      *client_password;
+    EVP_PKEY  *client_rsa_pubkey;
+#endif // HAVE_SSL
     int	      connect_timeout;	    /* socket connection timeout, in ms */
 };
 
@@ -245,6 +255,7 @@ struct iperf_test
     cpuset_t cpumask;
 #endif /* HAVE_CPUSET_SETAFFINITY */
     char     *title;				/* -T option */
+    char     *extra_data;			/* --extra-data */
     char     *congestion;			/* -C option */
     char     *congestion_used;			/* what was actually used */
     char     *remote_congestion_used;		/* what the other side used */
@@ -260,8 +271,11 @@ struct iperf_test
     int       prot_listener;
 
     int	      ctrl_sck_mss;			/* MSS for the control channel */
-    char     *server_rsa_private_key;
-    char     *server_authorized_users;
+
+#if defined(HAVE_SSL)
+    char      *server_authorized_users;
+    EVP_PKEY  *server_rsa_private_key;
+#endif // HAVE_SSL
 
     /* boolean variables for Options */
     int       daemon;                           /* -D option */
@@ -276,6 +290,7 @@ struct iperf_test
     int	      udp_counters_64bit;		/* --use-64-bit-udp-counters */
     int       forceflush; /* --forceflush - flushing output at every interval */
     int	      multisend;
+    int	      repeating_payload;                /* --repeating-payload */
 
     char     *json_output_string; /* rendered JSON output if json_output is set */
     /* Select related parameters */

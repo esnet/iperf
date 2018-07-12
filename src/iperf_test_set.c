@@ -50,7 +50,10 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 	int repeated = 0;
 
 	if (!main_test->json_output)
+	{
+		printf("\n- - - - - - - - - - - - - - - - - - - - - - - - -\n");
 		printf("Case %s started \n", tu->test_name);
+	}
 
 	if (tu->description)
 		if (!main_test->json_output)
@@ -85,6 +88,7 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 		}
 		iperf_defaults(child_test);	/* sets defaults */
 
+		/*Copying settings from main_test*/
 		iperf_set_test_role(child_test, 'c');
 		iperf_set_test_server_hostname(child_test, main_test->server_hostname);
 		iperf_set_test_server_port(child_test, main_test->server_port);
@@ -95,13 +99,13 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 		if (main_test->debug)
 			child_test->debug = 1;
 
+
 		iperf_parse_arguments(child_test, tu->argcs, tu->argvs);
-
-
 
 		if (iperf_run_client(child_test) < 0)
 		{
-			if (!repeated) /* If test was failed we repeat it one time*/
+			/* If test was failed we restart it one time*/
+			if (!repeated)
 			{
 				--i;
 				repeated = 1;
@@ -195,6 +199,8 @@ ts_new_test_set(char* path)
 
 	i = 0;
 
+	/* Counting nodes while it has item options.
+	 * All nodes following after incorrect are ignored.*/
 	while (node && cJSON_GetObjectItem(node, "options"))
 	{
 		++i;

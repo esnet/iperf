@@ -184,7 +184,8 @@ ts_new_test_set(char* path)
 
 	// creating json file
 	str = malloc(size + 1);
-	fread(str, size, 1, inputFile);
+	if (fread(str, size, 1, inputFile) != size)
+		printf("Error");
 	str[size] = '\n';
 
 	json = cJSON_Parse(str);
@@ -361,8 +362,7 @@ ts_get_averaged(struct test_set* t_set)
 		}
 	}
 
-	printf(cJSON_Print(root));
-	printf("\n");
+	printf("%s\n",cJSON_Print(root));
 
 	return 0;
 }
@@ -372,7 +372,7 @@ ts_result_averaging(struct test_unit* t_unit)
 {
 	int j;
 
-	struct iperf_test* test;
+	struct iperf_test* test = NULL;
 
 	int total_retransmits = 0;
 	int total_packets = 0, lost_packets = 0;
@@ -396,7 +396,6 @@ ts_result_averaging(struct test_unit* t_unit)
 	for (j = 0; j < t_unit->test_count; ++j)
 	{
 		test = t_unit->unit_tests[j]; /* !used struct! */
-
 
 		start_time = 0.;
 		sp = SLIST_FIRST(&test->streams);

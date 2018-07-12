@@ -533,7 +533,7 @@ ts_result_averaging(struct test_unit* t_unit)
 		value = cJSON_CreateNumber((double)total_sent / t_unit->test_count);
 		cJSON_AddItemToObject(obj, "bytes", value);
 
-		value = cJSON_CreateNumber((double)bandwidth * 8 / t_unit->test_count);
+		value = cJSON_CreateNumber((double)bandwidth * 8);
 		cJSON_AddItemToObject(obj, "bits_per_second", value);
 
 		value = cJSON_CreateNumber((double)avg_jitter * 1000.0 / t_unit->test_count);

@@ -59,7 +59,7 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 	if (!tu->test_count)
 	{
 		if (!main_test->json_output)
-			printf("Case is disabled\n");
+			printf("Case disabled\n\n");
 		return 0;
 	}
 
@@ -379,6 +379,8 @@ ts_result_averaging(struct test_unit* t_unit)
 	double sender_time = 0.0, receiver_time = 0.0;
 	double bandwidth;
 
+	cJSON *obj;
+
 	cJSON *value;
 	cJSON *result = cJSON_CreateObject();
 
@@ -446,106 +448,103 @@ ts_result_averaging(struct test_unit* t_unit)
 	cJSON_AddItemToObject(result, "protocol", value);
 
 
-	if (1) {
-		cJSON *value;
-		cJSON *obj;
-		/* If no tests were run, arbitrarily set bandwidth to 0. */
-		if (sender_time > 0.0) {
-			bandwidth = (double)total_sent / (double)sender_time;
+	/* Build result to JSON */
+	/* If no tests were run, arbitrarily set bandwidth to 0. */
+	if (sender_time > 0.0) {
+		bandwidth = (double)total_sent / (double)sender_time;
+	}
+	else {
+		bandwidth = 0.0;
+	}
+
+	if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
+		// sent
+		obj = cJSON_CreateObject();
+
+		value = cJSON_CreateNumber(start_time);
+		cJSON_AddItemToObject(obj, "start", value);
+
+		value = cJSON_CreateNumber((double)sender_time / t_unit->test_count);
+		cJSON_AddItemToObject(obj, "end", value);
+
+		value = cJSON_CreateNumber((double)total_sent / t_unit->test_count);
+		cJSON_AddItemToObject(obj, "bytes", value);
+
+		value = cJSON_CreateNumber((double)bandwidth * 8 / t_unit->test_count);
+		cJSON_AddItemToObject(obj, "bits_per_second", value);
+
+		if (total_retransmits) {
+			value = cJSON_CreateNumber(total_retransmits / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "retransmits", value);
+		}
+
+		cJSON_AddItemToObject(result, "sum_sent(avg)", obj);
+
+
+		// received
+
+		if (receiver_time > 0.0) {
+			bandwidth = (double)total_received / (double)receiver_time;
 		}
 		else {
 			bandwidth = 0.0;
 		}
 
-		if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
-			// sent
-			obj = cJSON_CreateObject();
+		obj = cJSON_CreateObject();
 
-			value = cJSON_CreateNumber(start_time);
-			cJSON_AddItemToObject(obj, "start", value);
+		value = cJSON_CreateNumber(start_time);
+		cJSON_AddItemToObject(obj, "start", value);
 
-			value = cJSON_CreateNumber((double)sender_time / t_unit->test_count);
-			cJSON_AddItemToObject(obj, "end", value);
+		value = cJSON_CreateNumber((double)receiver_time / t_unit->test_count);
+		cJSON_AddItemToObject(obj, "end", value);
 
-			value = cJSON_CreateNumber((double)total_sent / t_unit->test_count);
-			cJSON_AddItemToObject(obj, "bytes", value);
+		value = cJSON_CreateNumber((double)total_received / t_unit->test_count);
+		cJSON_AddItemToObject(obj, "bytes", value);
 
-			value = cJSON_CreateNumber((double)bandwidth * 8 / t_unit->test_count);
-			cJSON_AddItemToObject(obj, "bits_per_second", value);
+		value = cJSON_CreateNumber((double)bandwidth * 8 / t_unit->test_count);
+		cJSON_AddItemToObject(obj, "bits_per_second", value);
 
-			if (total_retransmits) {
-				value = cJSON_CreateNumber(total_retransmits / t_unit->test_count);
-				cJSON_AddItemToObject(obj, "retransmits", value);
-			}
+		cJSON_AddItemToObject(result, "sum_received(avg)", obj);
 
-			cJSON_AddItemToObject(result, "sum_sent(avg)", obj);
-
-
-			// received
-
-			if (receiver_time > 0.0) {
-				bandwidth = (double)total_received / (double)receiver_time;
-			}
-			else {
-				bandwidth = 0.0;
-			}
-
-			obj = cJSON_CreateObject();
-
-			value = cJSON_CreateNumber(start_time);
-			cJSON_AddItemToObject(obj, "start", value);
-
-			value = cJSON_CreateNumber((double)receiver_time / t_unit->test_count);
-			cJSON_AddItemToObject(obj, "end", value);
-
-			value = cJSON_CreateNumber((double)total_received / t_unit->test_count);
-			cJSON_AddItemToObject(obj, "bytes", value);
-
-			value = cJSON_CreateNumber((double)bandwidth * 8 / t_unit->test_count);
-			cJSON_AddItemToObject(obj, "bits_per_second", value);
-
-			cJSON_AddItemToObject(result, "sum_received(avg)", obj);
-
+	}
+	else {
+		/* Summary sum, UDP. */
+		avg_jitter /= test->num_streams;
+		/* If no packets were sent, arbitrarily set loss percentage to 0. */
+		if (total_packets > 0) {
+			lost_percent = 100.0 * lost_packets / total_packets;
 		}
 		else {
-			/* Summary sum, UDP. */
-			avg_jitter /= test->num_streams;
-			/* If no packets were sent, arbitrarily set loss percentage to 0. */
-			if (total_packets > 0) {
-				lost_percent = 100.0 * lost_packets / total_packets;
-			}
-			else {
-				lost_percent = 0.0;
-			}
-
-			obj = cJSON_CreateObject();
-
-			value = cJSON_CreateNumber(start_time);
-			cJSON_AddItemToObject(obj, "start", value);
-
-			value = cJSON_CreateNumber((double)receiver_time / t_unit->test_count);
-			cJSON_AddItemToObject(obj, "end", value);
-
-			value = cJSON_CreateNumber((double)total_sent / t_unit->test_count);
-			cJSON_AddItemToObject(obj, "bytes", value);
-
-			value = cJSON_CreateNumber((double)bandwidth * 8 / t_unit->test_count);
-			cJSON_AddItemToObject(obj, "bits_per_second", value);
-
-			value = cJSON_CreateNumber((double)avg_jitter * 1000.0 / t_unit->test_count);
-			cJSON_AddItemToObject(obj, "jitter_ms", value);
-
-			value = cJSON_CreateNumber((double)lost_packets / t_unit->test_count);
-			cJSON_AddItemToObject(obj, "lost_packets", value);
-
-			value = cJSON_CreateNumber((double)total_packets / t_unit->test_count);
-			cJSON_AddItemToObject(obj, "packets", value);
-
-			value = cJSON_CreateNumber((double)lost_percent / t_unit->test_count);
-			cJSON_AddItemToObject(obj, "lost_percent", value);
-
-			cJSON_AddItemToObject(result, "sum(avg)", obj);
+			lost_percent = 0.0;
 		}
+
+		obj = cJSON_CreateObject();
+
+		value = cJSON_CreateNumber(start_time);
+		cJSON_AddItemToObject(obj, "start", value);
+
+		value = cJSON_CreateNumber((double)receiver_time / t_unit->test_count);
+		cJSON_AddItemToObject(obj, "end", value);
+
+		value = cJSON_CreateNumber((double)total_sent / t_unit->test_count);
+		cJSON_AddItemToObject(obj, "bytes", value);
+
+		value = cJSON_CreateNumber((double)bandwidth * 8 / t_unit->test_count);
+		cJSON_AddItemToObject(obj, "bits_per_second", value);
+
+		value = cJSON_CreateNumber((double)avg_jitter * 1000.0 / t_unit->test_count);
+		cJSON_AddItemToObject(obj, "jitter_ms", value);
+
+		value = cJSON_CreateNumber((double)lost_packets / t_unit->test_count);
+		cJSON_AddItemToObject(obj, "lost_packets", value);
+
+		value = cJSON_CreateNumber((double)total_packets / t_unit->test_count);
+		cJSON_AddItemToObject(obj, "packets", value);
+
+		value = cJSON_CreateNumber((double)lost_percent / t_unit->test_count);
+		cJSON_AddItemToObject(obj, "lost_percent", value);
+
+		cJSON_AddItemToObject(result, "sum(avg)", obj);
 	}
 
 	/* Is it need? 

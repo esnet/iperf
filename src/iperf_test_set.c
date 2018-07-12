@@ -381,6 +381,9 @@ ts_result_averaging(struct test_unit* t_unit)
 	double sender_time = 0.0, receiver_time = 0.0;
 	double bandwidth;
 
+	double benchmark = 0.0;
+	struct benchmark_coefs* b_coefs = ts_get_benchmark_coefs();
+
 	cJSON *obj;
 
 	cJSON *value;
@@ -462,6 +465,7 @@ ts_result_averaging(struct test_unit* t_unit)
 	}
 
 	if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
+
 		// sent
 		obj = cJSON_CreateObject();
 
@@ -484,9 +488,10 @@ ts_result_averaging(struct test_unit* t_unit)
 
 		cJSON_AddItemToObject(result, "sum_sent(avg)", obj);
 
+		// benchmark
+		benchmark += bandwidth * 8 / 1024 / 10 * b_coefs->bps_sent;
 
 		// received
-
 		if (receiver_time > 0.0) {
 			bandwidth = (double)total_received / (double)receiver_time;
 		}
@@ -510,6 +515,10 @@ ts_result_averaging(struct test_unit* t_unit)
 
 		cJSON_AddItemToObject(result, "sum_received(avg)", obj);
 
+		// benchmark
+		benchmark += bandwidth * 8 / 1024 / 10 * b_coefs->bps_received;
+		benchmark += (b_coefs->max_retransmits - total_retransmits) > 0 ?
+				((b_coefs->max_retransmits - total_retransmits) * b_coefs->retransmits) : 0;
 	}
 	else {
 		/* Summary sum, UDP. */
@@ -549,7 +558,15 @@ ts_result_averaging(struct test_unit* t_unit)
 		cJSON_AddItemToObject(obj, "lost_percent", value);
 
 		cJSON_AddItemToObject(result, "sum(avg)", obj);
+
+		// benchmark
+		benchmark += bandwidth * 8 / 1024 / 10 * b_coefs->bps + total_packets * b_coefs->packets;
+		benchmark += (b_coefs->max_lost_percent - lost_percent) > 0 ?
+						(b_coefs->max_lost_percent - lost_percent) * b_coefs->lost_percent : 0;
 	}
+
+	value = cJSON_CreateNumber((int)benchmark);
+	cJSON_AddItemToObject(result, "benchmark_score", value);
 
 	/* Is it need? 
 	if (test->json_output) { 
@@ -580,8 +597,30 @@ ts_result_averaging(struct test_unit* t_unit)
 }
 
 
-int
-ts_run_benchmark()
+struct benchmark_coefs *
+ts_get_benchmark_coefs()
 {
-	return 0;
+	cJSON* j_coefs = NULL;
+	struct benchmark_coefs* coefs = malloc(sizeof(struct benchmark_coefs));
+
+	if (j_coefs)
+	{
+
+	}
+	else {
+		// TCP
+		coefs->bps_received = 1;
+		coefs->bps_sent = 1;
+		coefs->retransmits = 1;
+		coefs->max_retransmits = 100;
+
+
+		// UDP
+		coefs->bps = 1;
+		coefs->max_lost_percent = 20;
+		coefs->lost_percent = 10;
+		coefs->packets = 1;
+		coefs->jitter = 10;
+	}
+	return coefs;
 }

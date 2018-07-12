@@ -38,6 +38,22 @@ struct test_set
     struct test_unit **suite;
 };
 
+struct benchmark_coefs
+{
+	// TCP
+	double bps_sent;      // bits per second sent
+	double bps_received;  // bits per second received
+	int max_retransmits;  // max retransmits
+	double retransmits;   // retransmits
+
+	// UDP
+	double bps;           // bits per second
+	double jitter;        // jitter
+	double packets;       // packets
+	int max_lost_percent; // max lost percent
+	double lost_percent;  // lost percent
+};
+
 int ts_parse_args(struct test_unit* tu);
 
 int ts_run_test(struct test_unit* tu, struct iperf_test* main_test);
@@ -54,6 +70,6 @@ int ts_get_averaged(struct test_set* t_set);
 
 int ts_result_averaging(struct test_unit* t_unit);
 
-int ts_run_benchmark();
+struct benchmark_coefs * ts_get_benchmark_coefs();
 
 #endif

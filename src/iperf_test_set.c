@@ -1,6 +1,3 @@
-//#include <sys/types.h>
-//#include <sys/ipc.h>
-//#include <sys/shm.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
@@ -512,7 +509,7 @@ ts_result_averaging(struct test_unit* t_unit)
 		}
 		else {
 			/* Summary sum, UDP. */
-			avg_jitter /= test->num_streams; 
+			avg_jitter /= test->num_streams;
 			/* If no packets were sent, arbitrarily set loss percentage to 0. */
 			if (total_packets > 0) {
 				lost_percent = 100.0 * lost_packets / total_packets;

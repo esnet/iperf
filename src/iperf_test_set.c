@@ -182,10 +182,11 @@ ts_new_test_set(char* path)
 		fseek(inputFile, 0, SEEK_SET);
 	}
 
-	// creating json file
+
+	/* Parse input file to JSON object */
 	str = malloc(size + 1);
-	if (fread(str, size, 1, inputFile) != size)
-		printf("Error");
+	if (fread(str, size, 1, inputFile) != 1)
+		printf("Error\n");
 	str[size] = '\n';
 
 	json = cJSON_Parse(str);
@@ -195,22 +196,20 @@ ts_new_test_set(char* path)
 	free(str);
 
 
-	// test counting
-	node = json->child;
-
-	i = 0;
-
 	/* Counting nodes while it has item options.
 	 * All nodes following after incorrect are ignored.*/
+	node = json->child;
+	i = 0;
+
 	while (node && cJSON_GetObjectItem(node, "options"))
 	{
 		++i;
 		node = node->next;
 	}
-
 	t_set->unit_count = i;
 
-	// parsing
+
+	/* Parsing JSON file to test_set */
 	t_set->suite = malloc(sizeof(struct test_unit*) * i);
 
 	node = json->child;

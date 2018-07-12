@@ -394,7 +394,7 @@ ts_result_averaging(struct test_unit* t_unit)
 
 	for (j = 0; j < t_unit->test_count; ++j)
 	{
-		test = t_unit->unit_tests[j]; /* !used struct! */
+		test = t_unit->unit_tests[j];
 
 		start_time = 0.;
 		sp = SLIST_FIRST(&test->streams);
@@ -438,8 +438,7 @@ ts_result_averaging(struct test_unit* t_unit)
 
 	/*
 	* This part is creation cJSON object for
-	* further use.
-	*/
+	* further use. */
 	value = cJSON_CreateNumber(t_unit->id);
 	cJSON_AddItemToObject(result, "id", value);
 	
@@ -603,24 +602,27 @@ ts_get_benchmark_coefs()
 	cJSON* j_coefs = NULL;
 	struct benchmark_coefs* coefs = malloc(sizeof(struct benchmark_coefs));
 
+
+	/* Set default */
+
+	// TCP
+	coefs->bps_received = 1;
+	coefs->bps_sent = 1;
+	coefs->retransmits = 1;
+	coefs->max_retransmits = 100;
+
+	// UDP
+	coefs->bps = 1;
+	coefs->max_lost_percent = 20;
+	coefs->lost_percent = 10;
+	coefs->packets = 1;
+	coefs->jitter = 10;
+
+
 	if (j_coefs)
 	{
 
 	}
-	else {
-		// TCP
-		coefs->bps_received = 1;
-		coefs->bps_sent = 1;
-		coefs->retransmits = 1;
-		coefs->max_retransmits = 100;
 
-
-		// UDP
-		coefs->bps = 1;
-		coefs->max_lost_percent = 20;
-		coefs->lost_percent = 10;
-		coefs->packets = 1;
-		coefs->jitter = 10;
-	}
 	return coefs;
 }

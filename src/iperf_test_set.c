@@ -440,6 +440,8 @@ ts_result_averaging(struct test_unit* t_unit)
 	* This part is creation cJSON object for
 	* further use.
 	*/
+	value = cJSON_CreateNumber(t_unit->id);
+	cJSON_AddItemToObject(result, "id", value);
 	
 	value = cJSON_CreateString(t_unit->test_name);
 	cJSON_AddItemToObject(result, "test_name", value);
@@ -453,6 +455,7 @@ ts_result_averaging(struct test_unit* t_unit)
 
 
 	/* Build result to JSON */
+
 	/* If no tests were run, arbitrarily set bandwidth to 0. */
 	if (sender_time > 0.0) {
 		bandwidth = (double)total_sent / (double)sender_time;

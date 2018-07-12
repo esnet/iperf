@@ -346,7 +346,7 @@ ts_get_averaged(struct test_set* t_set)
 		tmp_node = cJSON_GetObjectItemCaseSensitive(t_set->suite[i]->json_test_case, "averaging");
 		if (tmp_node)
 		{
-			if (cJSON_IsTrue(tmp_node))
+			if (cJSON_IsTrue(tmp_node) && t_set->suite[i]->test_count)
 			{
 				ts_result_averaging(t_set->suite[i]);
 				cJSON_AddItemToArray(root, t_set->suite[i]->avaraged_results);

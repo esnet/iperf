@@ -474,7 +474,7 @@ ts_result_averaging(struct test_unit* t_unit)
 		value = cJSON_CreateNumber((double)total_sent / t_unit->test_count);
 		cJSON_AddItemToObject(obj, "bytes", value);
 
-		value = cJSON_CreateNumber((double)bandwidth * 8 / t_unit->test_count);
+		value = cJSON_CreateNumber((double)bandwidth * 8);
 		cJSON_AddItemToObject(obj, "bits_per_second", value);
 
 		if (total_retransmits) {
@@ -505,7 +505,7 @@ ts_result_averaging(struct test_unit* t_unit)
 		value = cJSON_CreateNumber((double)total_received / t_unit->test_count);
 		cJSON_AddItemToObject(obj, "bytes", value);
 
-		value = cJSON_CreateNumber((double)bandwidth * 8 / t_unit->test_count);
+		value = cJSON_CreateNumber((double)bandwidth * 8);
 		cJSON_AddItemToObject(obj, "bits_per_second", value);
 
 		cJSON_AddItemToObject(result, "sum_received(avg)", obj);

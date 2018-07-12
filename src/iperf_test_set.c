@@ -12,10 +12,6 @@
 #include "iperf_tcp.h"
 #include "iperf_udp.h"
 
-#define BENCHMARK_ONE 1
-#define BENCHMARK_TWO 2
-#define BENCHMARK_THREE 3
-
 int
 ts_parse_args(struct test_unit* tu)
 {
@@ -135,6 +131,7 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 int 
 ts_run_bulk_test(struct iperf_test* test)
 {
+
 	struct test_set* t_set = ts_new_test_set(test->test_set_file);
 	int i;
 
@@ -582,25 +579,9 @@ ts_result_averaging(struct test_unit* t_unit)
 	return 0;
 }
 
+
 int
-ts_run_benchmark(int type)
+ts_run_benchmark()
 {
-	switch (type)
-	{
-	case BENCHMARK_ONE:
-	{
-
-		break;
-	}
-	case BENCHMARK_TWO:
-	{
-
-		break;
-	}
-	default:
-		fprintf(stderr, "Wrong benchmark type");
-		break;
-	}
-
 	return 0;
 }

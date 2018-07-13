@@ -158,9 +158,10 @@ ts_run_bulk_test(struct iperf_test* test)
 }
 
 struct test_unit *
-ts_new_test_unit(int id, cJSON* node)
+ts_new_test_unit(int id, cJSON* node, cJSON* def)
 {
 	cJSON *tmp_node;
+	cJSON *tmp_def;
 
 	struct test_unit* unit = malloc(sizeof(struct test_unit));
 	unit->id = id;
@@ -174,6 +175,7 @@ ts_new_test_unit(int id, cJSON* node)
 		unit->description = NULL;
 
 	tmp_node = cJSON_GetObjectItem(node, "repeat");
+	tmp_def = cJSON_GetObjectItem(def, "repeat");
 	if (tmp_node)
 	{
 		if (tmp_node->valuedouble > 0)
@@ -181,14 +183,31 @@ ts_new_test_unit(int id, cJSON* node)
 		else
 			unit->test_count = 0;
 	}
-	else
-		unit->test_count = 1;
+	else {
+		if (tmp_def)
+		{
+			if (tmp_def->valuedouble > 0)
+						unit->test_count = tmp_def->valuedouble;
+					else
+						unit->test_count = 0;
+		}
+		else
+			unit->test_count = 1;
+	}
+
 
 	tmp_node = cJSON_GetObjectItem(node, "active");
+	tmp_def = cJSON_GetObjectItem(def, "active");
 	if (tmp_node)
 	{
 		if (tmp_node->type == cJSON_False)
 			unit->test_count = 0;
+	}
+	else
+	{
+		if (tmp_def)
+			if (tmp_def->type == cJSON_False)
+					unit->test_count = 0;
 	}
 
 	return unit;
@@ -204,6 +223,7 @@ ts_new_test_set(char* path)
 	FILE * inputFile = fopen(path, "r");
 	cJSON *json;
 	cJSON *node;
+	cJSON *def;
 
 	if (!inputFile)
 	{
@@ -251,11 +271,13 @@ ts_new_test_set(char* path)
 	node = json->child;
 	i = 0;
 
+	def = cJSON_GetObjectItem(json, "default");
+
 	while (node)
 	{
 		if (cJSON_GetObjectItem(node, "options"))
 		{
-			t_set->suite[i] = ts_new_test_unit(i, node);
+			t_set->suite[i] = ts_new_test_unit(i, node, def);
 			++i;
 		}
 		node = node->next;
@@ -462,6 +484,9 @@ ts_result_averaging(struct test_unit* t_unit, struct benchmark_coefs* b_coefs)
 	
 	value = cJSON_CreateString(t_unit->test_name);
 	cJSON_AddItemToObject(result, "test_name", value);
+
+	value = cJSON_CreateNumber(t_unit->test_count);
+	cJSON_AddItemToObject(result, "repeat", value);
 
 	if (test->protocol->id == Ptcp)
 		value = cJSON_CreateString("TCP");

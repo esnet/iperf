@@ -58,8 +58,6 @@ struct benchmark_coefs
 	/* If max_lost_percent > lost_percent then
 	 * bench_score += (max_lost_percent - lost_percent then) * lost_percent_coef
 	 */
-
-
 };
 
 int ts_parse_args(struct test_unit* tu);
@@ -68,7 +66,7 @@ int ts_run_test(struct test_unit* tu, struct iperf_test* main_test);
 
 int ts_run_bulk_test(struct iperf_test* test);
 
-struct test_unit * ts_new_test_unit(int id, cJSON* node);
+struct test_unit * ts_new_test_unit(int id, cJSON* node, cJSON* def);
 
 struct test_set * ts_new_test_set(char* path);
 

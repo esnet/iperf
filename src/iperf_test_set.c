@@ -236,9 +236,10 @@ ts_new_test_set(char* path)
 	node = json->child;
 	i = 0;
 
-	while (node && cJSON_GetObjectItem(node, "options"))
+	while (node)
 	{
-		++i;
+		if (cJSON_GetObjectItem(node, "options"))
+			++i;
 		node = node->next;
 	}
 	t_set->unit_count = i;
@@ -248,12 +249,23 @@ ts_new_test_set(char* path)
 	t_set->suite = malloc(sizeof(struct test_unit*) * i);
 
 	node = json->child;
+	i = 0;
 
-	for (i = 0; i < t_set->unit_count; ++i)
+	while (node)
 	{
-		t_set->suite[i] = ts_new_test_unit(i, node);
+		if (cJSON_GetObjectItem(node, "options"))
+		{
+			t_set->suite[i] = ts_new_test_unit(i, node);
+			++i;
+		}
 		node = node->next;
 	}
+
+//	for (i = 0; i < t_set->unit_count; ++i)
+//	{
+//		t_set->suite[i] = ts_new_test_unit(i, node);
+//		node = node->next;
+//	}
 
 	return t_set;
 }
@@ -351,6 +363,7 @@ ts_get_averaged(struct test_set* t_set)
 {
 	int i;
 	cJSON *tmp_node;
+	cJSON *coefs = cJSON_GetObjectItem(t_set->json_file, "coefficients");;
 	cJSON *root = cJSON_CreateArray();
 
 	for (i = 0; i < t_set->unit_count; ++i)
@@ -391,7 +404,7 @@ ts_result_averaging(struct test_unit* t_unit)
 	double bandwidth;
 
 	unsigned long int benchmark = 0;
-	struct benchmark_coefs* b_coefs = ts_get_benchmark_coefs();
+	struct benchmark_coefs* b_coefs = ts_get_benchmark_coefs(NULL);
 
 	cJSON *obj;
 
@@ -528,7 +541,7 @@ ts_result_averaging(struct test_unit* t_unit)
 		benchmark += bandwidth * 8 / 1024 / 10 * b_coefs->bps_received;
 		benchmark /= 2;
 		benchmark += (b_coefs->max_retransmits - total_retransmits) > 0 ?
-				((b_coefs->max_retransmits - total_retransmits) * b_coefs->retransmits) : 0;
+				((b_coefs->max_retransmits - total_retransmits) * b_coefs->retransmits_coef) : 0;
 	}
 	else {
 		/* Summary sum, UDP. */
@@ -570,10 +583,13 @@ ts_result_averaging(struct test_unit* t_unit)
 		cJSON_AddItemToObject(result, "sum(avg)", obj);
 
 		// benchmark
-		benchmark += bandwidth * 8 / 1024 / 10 * b_coefs->bps + total_packets * b_coefs->packets;
+		benchmark += bandwidth * 8 / 1024 / 10 * b_coefs->bps + total_packets * b_coefs->packets_coef;
 		benchmark += (b_coefs->max_lost_percent - lost_percent) > 0 ?
-						(b_coefs->max_lost_percent - lost_percent) * b_coefs->lost_percent : 0;
+						(b_coefs->max_lost_percent - lost_percent) * b_coefs->lost_percent_coef : 0;
 	}
+
+	if (!(sender_time > 0))
+		benchmark = 0;
 
 	value = cJSON_CreateNumber(benchmark);
 	cJSON_AddItemToObject(result, "benchmark_score", value);
@@ -610,30 +626,88 @@ ts_result_averaging(struct test_unit* t_unit)
 
 
 struct benchmark_coefs *
-ts_get_benchmark_coefs()
+ts_get_benchmark_coefs(cJSON* j_coefs)
 {
-	cJSON* j_coefs = NULL;
+	cJSON* tmp_node;
 	struct benchmark_coefs* coefs = malloc(sizeof(struct benchmark_coefs));
 
 
 	/* Set default */
 
 	// TCP
-	coefs->bps_received = 1;
 	coefs->bps_sent = 1;
-	coefs->retransmits = 10;
+	coefs->bps_received = 1;
 	coefs->max_retransmits = 100;
+	coefs->retransmits_coef = 10;
+
 
 	// UDP
 	coefs->bps = 1;
+	coefs->jitter_coef = 10;
+	coefs->packets_coef = 1;
 	coefs->max_lost_percent = 20;
-	coefs->lost_percent = 100;
-	coefs->packets = 1;
-	coefs->jitter = 10;
+	coefs->lost_percent_coef = 100;
+
+
 
 
 	if (j_coefs)
 	{
+		/* TCP */
+		// bits per second received
+		tmp_node = cJSON_GetObjectItem(j_coefs, "bps_received");
+		if (tmp_node)
+			if (tmp_node->valuedouble > 0)
+				coefs->bps_received = tmp_node->valuedouble;
+
+		// bits per second sent
+		tmp_node = cJSON_GetObjectItem(j_coefs, "bps_sent");
+		if (tmp_node)
+			if (tmp_node->valuedouble > 0)
+				coefs->bps_sent = tmp_node->valuedouble;
+
+		// max retransmits
+		tmp_node = cJSON_GetObjectItem(j_coefs, "retransmits_coef");
+		if (tmp_node)
+			if (tmp_node->valuedouble > 0)
+				coefs->retransmits_coef = tmp_node->valuedouble;
+
+		// retransmits coefficient
+		tmp_node = cJSON_GetObjectItem(j_coefs, "retransmits_coef");
+		if (tmp_node)
+			if (tmp_node->valuedouble > 0)
+				coefs->retransmits_coef = tmp_node->valuedouble;
+
+		/* UDP */
+		// bits per second
+		tmp_node = cJSON_GetObjectItem(j_coefs, "bps");
+		if (tmp_node)
+			if (tmp_node->valuedouble > 0)
+				coefs->bps = tmp_node->valuedouble;
+
+		// jitter coefficient
+		tmp_node = cJSON_GetObjectItem(j_coefs, "jitter_coef");
+		if (tmp_node)
+			if (tmp_node->valuedouble > 0)
+				coefs->jitter_coef = tmp_node->valuedouble;
+
+		// packets coefficient
+		tmp_node = cJSON_GetObjectItem(j_coefs, "packets_coef");
+		if (tmp_node)
+			if (tmp_node->valuedouble > 0)
+				coefs->packets_coef = tmp_node->valuedouble;
+
+		// max lost percent
+		tmp_node = cJSON_GetObjectItem(j_coefs, "max_lost_percent");
+		if (tmp_node)
+			if (tmp_node->valuedouble > 0)
+				coefs->max_lost_percent = tmp_node->valuedouble;
+
+		// lost percent coefficient
+		tmp_node = cJSON_GetObjectItem(j_coefs, "lost_percent_coef");
+		if (tmp_node)
+			if (tmp_node->valuedouble > 0)
+				coefs->lost_percent_coef = tmp_node->valuedouble;
 
 	}
 

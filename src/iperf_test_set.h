@@ -41,17 +41,25 @@ struct test_set
 struct benchmark_coefs
 {
 	// TCP
-	double bps_sent;      // bits per second sent
-	double bps_received;  // bits per second received
-	int max_retransmits;  // max retransmits
-	double retransmits;   // retransmits
+	double bps_sent;          // bits per second sent
+	double bps_received;      // bits per second received
+	double max_retransmits;   // max retransmits
+	double retransmits_coef;  // retransmits coef
+	/* If max_retransmits > retransmits then
+	 * bench_score += (max_retransmits - retransmits) * retransmits_coef
+	 */
 
 	// UDP
-	double bps;           // bits per second
-	double jitter;        // jitter
-	double packets;       // packets
-	int max_lost_percent; // max lost percent
-	double lost_percent;  // lost percent
+	double bps;               // bits per second
+	double jitter_coef;       // jitter
+	double packets_coef;      // packets
+	double max_lost_percent;  // max lost percent
+	double lost_percent_coef; // lost percent
+	/* If max_lost_percent > lost_percent then
+	 * bench_score += (max_lost_percent - lost_percent then) * lost_percent_coef
+	 */
+
+
 };
 
 int ts_parse_args(struct test_unit* tu);
@@ -72,6 +80,6 @@ int ts_get_averaged(struct test_set* t_set);
 
 int ts_result_averaging(struct test_unit* t_unit);
 
-struct benchmark_coefs * ts_get_benchmark_coefs();
+struct benchmark_coefs * ts_get_benchmark_coefs(cJSON* j_coefs);
 
 #endif

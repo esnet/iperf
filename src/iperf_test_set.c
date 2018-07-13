@@ -535,8 +535,8 @@ ts_result_averaging(struct test_unit* t_unit, struct benchmark_coefs* b_coefs)
 		// benchmark
 		benchmark += bandwidth * 8 / 1024 / 10 * b_coefs->bps_received;
 		benchmark /= 2;
-		benchmark += (b_coefs->max_retransmits - total_retransmits) > 0 ?
-				((b_coefs->max_retransmits - total_retransmits) * b_coefs->retransmits_coef) : 0;
+		benchmark += (b_coefs->max_retransmits - total_retransmits / sender_time) > 0 ?
+				((b_coefs->max_retransmits - total_retransmits / sender_time) * b_coefs->retransmits_coef) : 0;
 	}
 	else {
 		/* Summary sum, UDP. */
@@ -578,7 +578,8 @@ ts_result_averaging(struct test_unit* t_unit, struct benchmark_coefs* b_coefs)
 		cJSON_AddItemToObject(result, "sum(avg)", obj);
 
 		// benchmark
-		benchmark += bandwidth * 8 / 1024 / 10 * b_coefs->bps + total_packets * b_coefs->packets_coef;
+		benchmark += bandwidth * 8 / 1024 / 10 * b_coefs->bps;
+		benchmark += total_packets / receiver_time * b_coefs->packets_coef;
 		benchmark += (b_coefs->max_lost_percent - lost_percent) > 0 ?
 						(b_coefs->max_lost_percent - lost_percent) * b_coefs->lost_percent_coef : 0;
 	}
@@ -640,9 +641,6 @@ ts_get_benchmark_coefs(cJSON* j_coefs)
 	coefs->packets_coef = 1;
 	coefs->max_lost_percent = 20;
 	coefs->lost_percent_coef = 100;
-
-
-
 
 	if (j_coefs)
 	{

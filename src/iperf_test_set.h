@@ -43,10 +43,10 @@ struct benchmark_coefs
 	// TCP
 	double bps_sent;          // bits per second sent
 	double bps_received;      // bits per second received
-	double max_retransmits;   // max retransmits
+	double max_retransmits;   // max retransmits per second
 	double retransmits_coef;  // retransmits coefficient
-	/* If max_retransmits > retransmits then
-	 * bench_score += (max_retransmits - retransmits) * retransmits_coef
+	/* If max_retransmits > retransmits_per_second then
+	 * bench_score += (max_retransmits - retransmits_per_second) * retransmits_coef
 	 */
 
 	// UDP

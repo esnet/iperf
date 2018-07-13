@@ -624,29 +624,6 @@ ts_result_averaging(struct test_unit* t_unit, struct benchmark_coefs* b_coefs)
 	value = cJSON_CreateNumber(benchmark);
 	cJSON_AddItemToObject(result, "benchmark_score", value);
 
-	/* Is it need? 
-	if (test->json_output) { 
-		cJSON_AddItemToObject(test->json_end, "cpu_utilization_percent", iperf_json_printf("host_total: %f  host_user: %f  host_system: %f  remote_total: %f  remote_user: %f  remote_system: %f", (double)test->cpu_util[0], (double)test->cpu_util[1], (double)test->cpu_util[2], (double)test->remote_cpu_util[0], (double)test->remote_cpu_util[1], (double)test->remote_cpu_util[2]));
-		if (test->protocol->id == Ptcp) {
-			char *snd_congestion = NULL, *rcv_congestion = NULL;
-			if (test->sender) {
-				snd_congestion = test->congestion_used;
-				rcv_congestion = test->remote_congestion_used;
-			}
-			else {
-				snd_congestion = test->remote_congestion_used;
-				rcv_congestion = test->congestion_used;
-			}
-			if (snd_congestion) {
-				cJSON_AddStringToObject(test->json_end, "sender_tcp_congestion", snd_congestion);
-			}
-			if (rcv_congestion) {
-				cJSON_AddStringToObject(test->json_end, "receiver_tcp_congestion", rcv_congestion);
-			}
-		}
-	}
-	*/
-
 	t_unit->avaraged_results = result;;
 
 	return 0;

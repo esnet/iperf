@@ -157,6 +157,43 @@ ts_run_bulk_test(struct iperf_test* test)
 	return 0;
 }
 
+struct test_unit *
+ts_new_test_unit(int id, cJSON* node)
+{
+	cJSON *tmp_node;
+
+	struct test_unit* unit = malloc(sizeof(struct test_unit));
+	unit->id = id;
+	unit->test_name = node->string;
+	unit->json_test_case = node;
+
+	tmp_node = cJSON_GetObjectItem(node, "description");
+	if (tmp_node)
+		unit->description = tmp_node->valuestring;
+	else
+		unit->description = NULL;
+
+	tmp_node = cJSON_GetObjectItem(node, "repeat");
+	if (tmp_node)
+	{
+		if (tmp_node->valuedouble > 0)
+			unit->test_count = tmp_node->valuedouble;
+		else
+			unit->test_count = 0;
+	}
+	else
+		unit->test_count = 1;
+
+	tmp_node = cJSON_GetObjectItem(node, "active");
+	if (tmp_node)
+	{
+		if (tmp_node->type == cJSON_False)
+			unit->test_count = 0;
+	}
+
+	return unit;
+}
+
 struct test_set *
 ts_new_test_set(char* path)
 {
@@ -167,7 +204,6 @@ ts_new_test_set(char* path)
 	FILE * inputFile = fopen(path, "r");
 	cJSON *json;
 	cJSON *node;
-	cJSON *tmp_node;
 
 	if (!inputFile)
 	{
@@ -215,36 +251,7 @@ ts_new_test_set(char* path)
 
 	for (i = 0; i < t_set->unit_count; ++i)
 	{
-		struct test_unit* unit = malloc(sizeof(struct test_unit));
-		unit->id = i;
-		unit->test_name = node->string;
-		unit->json_test_case = node;
-
-		tmp_node = cJSON_GetObjectItem(node, "description");
-		if (tmp_node)
-			unit->description = tmp_node->valuestring;
-		else
-			unit->description = NULL;
-
-		tmp_node = cJSON_GetObjectItem(node, "repeat");
-		if (tmp_node)
-		{
-			if (tmp_node->valuedouble > 0)
-				unit->test_count = tmp_node->valuedouble;
-			else
-				unit->test_count = 0;
-		}
-		else
-			unit->test_count = 1;
-
-		tmp_node = cJSON_GetObjectItem(node, "active");
-		if (tmp_node)
-		{
-			if (tmp_node->type == cJSON_False)
-				unit->test_count = 0;
-		}
-
-		t_set->suite[i] = unit;
+		t_set->suite[i] = ts_new_test_unit(i, node);
 		node = node->next;
 	}
 
@@ -383,7 +390,7 @@ ts_result_averaging(struct test_unit* t_unit)
 	double sender_time = 0.0, receiver_time = 0.0;
 	double bandwidth;
 
-	double benchmark = 0.0;
+	unsigned long int benchmark = 0;
 	struct benchmark_coefs* b_coefs = ts_get_benchmark_coefs();
 
 	cJSON *obj;
@@ -519,6 +526,7 @@ ts_result_averaging(struct test_unit* t_unit)
 
 		// benchmark
 		benchmark += bandwidth * 8 / 1024 / 10 * b_coefs->bps_received;
+		benchmark /= 2;
 		benchmark += (b_coefs->max_retransmits - total_retransmits) > 0 ?
 				((b_coefs->max_retransmits - total_retransmits) * b_coefs->retransmits) : 0;
 	}
@@ -567,7 +575,7 @@ ts_result_averaging(struct test_unit* t_unit)
 						(b_coefs->max_lost_percent - lost_percent) * b_coefs->lost_percent : 0;
 	}
 
-	value = cJSON_CreateNumber((int)benchmark);
+	value = cJSON_CreateNumber(benchmark);
 	cJSON_AddItemToObject(result, "benchmark_score", value);
 
 	/* Is it need? 
@@ -613,13 +621,13 @@ ts_get_benchmark_coefs()
 	// TCP
 	coefs->bps_received = 1;
 	coefs->bps_sent = 1;
-	coefs->retransmits = 1;
+	coefs->retransmits = 10;
 	coefs->max_retransmits = 100;
 
 	// UDP
 	coefs->bps = 1;
 	coefs->max_lost_percent = 20;
-	coefs->lost_percent = 10;
+	coefs->lost_percent = 100;
 	coefs->packets = 1;
 	coefs->jitter = 10;
 

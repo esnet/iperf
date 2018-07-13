@@ -60,6 +60,8 @@ int ts_run_test(struct test_unit* tu, struct iperf_test* main_test);
 
 int ts_run_bulk_test(struct iperf_test* test);
 
+struct test_unit * ts_new_test_unit(int id, cJSON* node);
+
 struct test_set * ts_new_test_set(char* path);
 
 int ts_free_test_set(struct test_set* t_set);

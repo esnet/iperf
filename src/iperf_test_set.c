@@ -53,7 +53,7 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 
 	if (tu->description)
 		if (!main_test->json_output)
-			printf("description: \"%s\"\n", tu->description);
+			printf("Description: \"%s\"\n", tu->description);
 
 	if (!tu->test_count)
 	{
@@ -357,8 +357,8 @@ ts_get_averaged(struct test_set* t_set)
 {
 	int i;
 	cJSON *tmp_node;
-	cJSON *coefs = cJSON_GetObjectItem(t_set->json_file, "coefficients");;
 	cJSON *root = cJSON_CreateArray();
+	struct benchmark_coefs* b_coefs = ts_get_benchmark_coefs(cJSON_GetObjectItem(t_set->json_file, "coefficients"));
 
 	for (i = 0; i < t_set->unit_count; ++i)
 	{
@@ -367,7 +367,7 @@ ts_get_averaged(struct test_set* t_set)
 		{
 			if (cJSON_IsTrue(tmp_node) && t_set->suite[i]->test_count)
 			{
-				ts_result_averaging(t_set->suite[i]);
+				ts_result_averaging(t_set->suite[i], b_coefs);
 				cJSON_AddItemToArray(root, t_set->suite[i]->avaraged_results);
 
 			}
@@ -376,11 +376,13 @@ ts_get_averaged(struct test_set* t_set)
 
 	printf("%s\n",cJSON_Print(root));
 
+	free(b_coefs);
+
 	return 0;
 }
 
 int
-ts_result_averaging(struct test_unit* t_unit)
+ts_result_averaging(struct test_unit* t_unit, struct benchmark_coefs* b_coefs)
 {
 	int j;
 
@@ -398,7 +400,6 @@ ts_result_averaging(struct test_unit* t_unit)
 	double bandwidth;
 
 	unsigned long int benchmark = 0;
-	struct benchmark_coefs* b_coefs = ts_get_benchmark_coefs(NULL);
 
 	cJSON *obj;
 
@@ -613,8 +614,6 @@ ts_result_averaging(struct test_unit* t_unit)
 
 	t_unit->avaraged_results = result;;
 
-	free(b_coefs);
-
 	return 0;
 }
 
@@ -702,7 +701,6 @@ ts_get_benchmark_coefs(cJSON* j_coefs)
 		if (tmp_node)
 			if (tmp_node->valuedouble > 0)
 				coefs->lost_percent_coef = tmp_node->valuedouble;
-
 	}
 
 	return coefs;

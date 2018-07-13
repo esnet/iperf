@@ -78,7 +78,7 @@ int ts_err_output(struct test_set* t_set);
 
 int ts_get_averaged(struct test_set* t_set);
 
-int ts_result_averaging(struct test_unit* t_unit);
+int ts_result_averaging(struct test_unit* t_unit, struct benchmark_coefs* b_coefs);
 
 struct benchmark_coefs * ts_get_benchmark_coefs(cJSON* j_coefs);
 

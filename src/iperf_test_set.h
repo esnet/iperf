@@ -31,7 +31,6 @@ struct test_unit
 
 struct test_set
 {
-    int res;
     int unit_count;
     char *path;
     cJSON *json_file;

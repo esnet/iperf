@@ -114,10 +114,16 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 			{
 				repeated = 0;
 				tu->test_err[i] = i_errno;
+				if (!child_test->json_output)
+					printf("\n");
 			}
 		}
 		else
+		{
 			repeated = 0;
+			if (!child_test->json_output)
+				printf("\n");
+		}
 
 		tu->unit_tests[i] = child_test;
 		/* Sleep between tests */
@@ -136,6 +142,9 @@ ts_run_bulk_test(struct iperf_test* test)
 
 	struct test_set* t_set = ts_new_test_set(test->test_set_file);
 	int i;
+
+	if (!t_set)
+		return -1;
 
 	if(!test->json_output)
 		printf("Case count : %d \n", t_set->unit_count);
@@ -227,7 +236,7 @@ ts_new_test_set(char* path)
 
 	if (!inputFile)
 	{
-		fprintf(stderr, "File is not exist");
+		fprintf(stderr, "File \"%s\" is not exist.\n", path);
 		return NULL;
 	}
 	else

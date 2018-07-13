@@ -44,17 +44,17 @@ struct benchmark_coefs
 	double bps_sent;          // bits per second sent
 	double bps_received;      // bits per second received
 	double max_retransmits;   // max retransmits
-	double retransmits_coef;  // retransmits coef
+	double retransmits_coef;  // retransmits coefficient
 	/* If max_retransmits > retransmits then
 	 * bench_score += (max_retransmits - retransmits) * retransmits_coef
 	 */
 
 	// UDP
 	double bps;               // bits per second
-	double jitter_coef;       // jitter
-	double packets_coef;      // packets
+	double jitter_coef;       // jitter coefficient
+	double packets_coef;      // packets coefficient
 	double max_lost_percent;  // max lost percent
-	double lost_percent_coef; // lost percent
+	double lost_percent_coef; // lost percent coefficient
 	/* If max_lost_percent > lost_percent then
 	 * bench_score += (max_lost_percent - lost_percent then) * lost_percent_coef
 	 */

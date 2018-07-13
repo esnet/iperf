@@ -231,8 +231,8 @@ ts_new_test_set(char* path)
 	free(str);
 
 
-	/* Counting nodes while it has item options.
-	 * All nodes following after incorrect are ignored.*/
+	/* Counting nodes with item options.
+	 * All nodes without options are ignored.*/
 	node = json->child;
 	i = 0;
 
@@ -260,12 +260,6 @@ ts_new_test_set(char* path)
 		}
 		node = node->next;
 	}
-
-//	for (i = 0; i < t_set->unit_count; ++i)
-//	{
-//		t_set->suite[i] = ts_new_test_unit(i, node);
-//		node = node->next;
-//	}
 
 	return t_set;
 }

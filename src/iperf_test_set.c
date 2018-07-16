@@ -670,10 +670,10 @@ ts_get_benchmark_coefs(cJSON* j_coefs)
 				coefs->bps_sent = tmp_node->valuedouble;
 
 		// max retransmits
-		tmp_node = cJSON_GetObjectItem(j_coefs, "retransmits_coef");
+		tmp_node = cJSON_GetObjectItem(j_coefs, "max_retransmits");
 		if (tmp_node)
 			if (tmp_node->valuedouble > 0)
-				coefs->retransmits_coef = tmp_node->valuedouble;
+				coefs->max_retransmits = tmp_node->valuedouble;
 
 		// retransmits coefficient
 		tmp_node = cJSON_GetObjectItem(j_coefs, "retransmits_coef");

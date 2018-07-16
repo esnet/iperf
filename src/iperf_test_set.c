@@ -126,6 +126,7 @@ ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 		}
 
 		tu->unit_tests[i] = child_test;
+
 		/* Sleep between tests */
 		usleep(10000);
 	}

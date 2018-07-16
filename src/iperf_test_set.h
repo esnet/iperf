@@ -1,4 +1,3 @@
-
 #ifndef __IPERF_TEST_SET_H 
 #define __IPERF_TEST_SET_H
 
@@ -8,33 +7,31 @@
 #define OPT_TEST_SET 101
 
 struct iperf_test;
-    
+
+/* Structure for containing test's settings*/
 struct test_unit
 {
-    int       id;
-    char      *test_name;
+    int       id;                    // id, set automatic
+    cJSON     *json_test_case;       // JSON contained test
+    char      *test_name;            // name from JSON
+    char      *description;          // descriptions from JSON
 
-    int       argcs;
-    char      **argvs;
+    int       argcs;                 // argc of test
+    char      **argvs;               // argv of test
 
-    cJSON     *json_test_case;
+    int       test_count;            // repeat from JSON
+    struct iperf_test **unit_tests;  // iperf_test for each repeat
+    int       *test_err;             // errors of each tests
 
-    char      *description;
-
-    int       test_count;
-    struct iperf_test **unit_tests;
-
-    int       *test_err;
-
-    cJSON     *avaraged_results;
+    cJSON     *avaraged_results;     // averaging
 };
 
 struct test_set
 {
-    int unit_count;
-    char *path;
-    cJSON *json_file;
-    struct test_unit **suite;
+    int unit_count;                  // units count from JSON file
+    char *path;                      // path of JSON file
+    cJSON *json_file;                // file in JSON format
+    struct test_unit **suite;        // test_unit container
 };
 
 struct benchmark_coefs

@@ -607,7 +607,7 @@ ts_result_averaging(struct test_unit* t_unit, struct benchmark_coefs* b_coefs)
 		value = cJSON_CreateNumber((double)total_packets / t_unit->test_count);
 		cJSON_AddItemToObject(obj, "packets", value);
 
-		value = cJSON_CreateNumber((double)lost_percent / t_unit->test_count);
+		value = cJSON_CreateNumber((double)lost_percent);
 		cJSON_AddItemToObject(obj, "lost_percent", value);
 
 		cJSON_AddItemToObject(result, "sum(avg)", obj);

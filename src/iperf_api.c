@@ -2492,7 +2492,7 @@ iperf_reset_stats(struct iperf_test *test)
         rp->bytes_sent_omit = rp->bytes_sent;
         rp->bytes_received = 0;
         rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;
-	if (test->sender && test->sender_has_retransmits) {
+	if (test->sender_has_retransmits == 1) {
 	    struct iperf_interval_results ir; /* temporary results structure */
 	    save_tcpinfo(sp, &ir);
 	    rp->stream_prev_total_retrans = get_total_retransmits(&ir);
@@ -2536,7 +2536,7 @@ iperf_stats_callback(struct iperf_test *test)
 	if (test->protocol->id == Ptcp) {
 	    if ( has_tcpinfo()) {
 		save_tcpinfo(sp, &temp);
-		if (test->sender && test->sender_has_retransmits) {
+		if (test->sender_has_retransmits == 1) {
 		    long total_retrans = get_total_retransmits(&temp);
 		    temp.interval_retrans = total_retrans - rp->stream_prev_total_retrans;
 		    rp->stream_retrans += temp.interval_retrans;
@@ -2672,7 +2672,7 @@ iperf_print_intermediate(struct iperf_test *test)
 	}
         bytes += irp->bytes_transferred;
 	if (test->protocol->id == Ptcp) {
-	    if (test->sender && test->sender_has_retransmits) {
+	    if (test->sender_has_retransmits == 1) {
 		retransmits += irp->interval_retrans;
 	    }
 	} else {
@@ -2696,7 +2696,7 @@ iperf_print_intermediate(struct iperf_test *test)
         start_time = timeval_diff(&sp->result->start_time,&irp->interval_start_time);
         end_time = timeval_diff(&sp->result->start_time,&irp->interval_end_time);
 	if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
-	    if (test->sender && test->sender_has_retransmits) {
+	    if (test->sender_has_retransmits == 1) {
 		/* Interval sum, TCP with retransmits. */
 		if (test->json_output)
 		    cJSON_AddItemToObject(json_interval, "sum", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d  omitted: %b", (double) start_time, (double) end_time, (double) irp->interval_duration, (int64_t) bytes, bandwidth * 8, (int64_t) retransmits, irp->omitted)); /* XXX irp->omitted or test->omitting? */
@@ -3205,7 +3205,7 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 	    */
 	    if (timeval_equals(&sp->result->start_time, &irp->interval_start_time)) {
 		if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
-		    if (test->sender && test->sender_has_retransmits)
+		    if (test->sender_has_retransmits == 1)
 			iperf_printf(test, "%s", report_bw_retrans_cwnd_header);
 		    else
 			iperf_printf(test, "%s", report_bw_header);
@@ -3233,7 +3233,7 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
     et = timeval_diff(&sp->result->start_time, &irp->interval_end_time);
     
     if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
-	if (test->sender && test->sender_has_retransmits) {
+	if (test->sender_has_retransmits == 1) {
 	    /* Interval, TCP with retransmits. */
 	    if (test->json_output)
 		cJSON_AddItemToArray(json_interval_streams, iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d  snd_cwnd:  %d  rtt:  %d  rttvar: %d  pmtu: %d  omitted: %b", (int64_t) sp->socket, (double) st, (double) et, (double) irp->interval_duration, (int64_t) irp->bytes_transferred, bandwidth * 8, (int64_t) irp->interval_retrans, (int64_t) irp->snd_cwnd, (int64_t) irp->rtt, (int64_t) irp->rttvar, (int64_t) irp->pmtu, irp->omitted));

@@ -12,17 +12,27 @@ struct iperf_test;
 struct test_unit
 {
     int       id;
+    char      *test_name;
+
     int       argcs;
     char      **argvs;
-    char      *json_output_string;
+
     cJSON     *json_test_case;
-    struct iperf_test *current_test;
+
+    char      *description;
+
+    int       test_count;
+    struct iperf_test **unit_tests;
+
+    int       *test_err;
+
+    cJSON     *avaraged_results;
 };
 
 struct test_set
 {
     int res;
-    int test_count;
+    int unit_count;
     char *path;
     cJSON *json_file;
     struct test_unit **suite;
@@ -36,7 +46,14 @@ int ts_run_bulk_test(struct iperf_test* test);
 
 struct test_set * ts_new_test_set(char* path);
 
-int ts_free_test_unit(struct test_set* t_set);
+int ts_free_test_set(struct test_set* t_set);
 
+int ts_err_output(struct test_set* t_set);
+
+int ts_get_averaged(struct test_set* t_set);
+
+int ts_result_averaging(struct test_unit* t_unit);
+
+int ts_run_benchmark(int type);
 
 #endif

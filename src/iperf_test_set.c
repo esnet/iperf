@@ -7,35 +7,34 @@
 #include <stdlib.h>
 #include <string.h>
 
-
+#include "iperf_locale.h"
 #include "iperf_test_set.h"
 #include "iperf_api.h"
+#include "iperf_util.h"
 
+#include "iperf_tcp.h"
+#include "iperf_udp.h"
 
 int
 ts_parse_args(struct test_unit* tu)
 {
 	cJSON* options = cJSON_GetObjectItemCaseSensitive(tu->json_test_case, "options");
 	char *str = options->valuestring;
-	printf("options : %s\n", str);
-	char **argvs = NULL;
+
+	char **argvs = NULL;	//array of args
 	char *tmp = strtok(str, " ");
-	//printf("parsing \n");
-	int count = 1, i = 0;
+	int count = 1;
 
 	while (tmp)
 	{
 		argvs = realloc(argvs, sizeof(char *) * ++count);
 
 		if (argvs == NULL)
-			exit(-1);
+			return -1;
 		argvs[count - 1] = tmp;
 
 		tmp = strtok(NULL, " ");
 	}
-
-	for (i = 1; i < (count); ++i)	//debug
-		printf("res[%d] = %s\n", i, argvs[i]);
 
 	tu->argcs = count;
 	tu->argvs = argvs;
@@ -46,35 +45,65 @@ int
 ts_run_test(struct test_unit* tu, struct iperf_test* main_test)
 {
 	struct iperf_test *child_test;
-	child_test = iperf_new_test();
+	int i;
 
-	if (!child_test)
-		iperf_errexit(NULL, "create new test error - %s", iperf_strerror(i_errno));
-	iperf_defaults(child_test);	/* sets defaults */
+	if (!main_test->json_output)
+		printf("Case %s started \n", tu->test_name);
 
-	iperf_set_test_role(child_test, 'c'); 
-	iperf_set_test_server_hostname(child_test, main_test->server_hostname);
-	iperf_set_test_server_port(child_test, main_test->server_port);
-	//iperf_set_test_json_output(child_test, 1);
+	if (tu->description)
+		if (!main_test->json_output)
+			printf("description: \"%s\" \n", tu->description);
 
-	printf("Test %d started \n", tu->id); //add name
-
-	ts_parse_args(tu);
-
-	iperf_parse_arguments(child_test, tu->argcs, tu->argvs);
-
-	if (iperf_run_client(child_test) < 0)
-		iperf_errexit(child_test, "error - %s", iperf_strerror(i_errno));
-
-	if (iperf_get_test_json_output_string(child_test)) {
-		//printf("%s\n", iperf_get_test_json_output_string(child_test));
+	if (!tu->test_count)
+	{
+		if (!main_test->json_output)
+			printf("Case is disabled\n");
+		return 0;
 	}
 
-	tu->current_test = child_test;
+	tu->unit_tests = malloc(sizeof(struct iperf_test*) * tu->test_count);
 
-	//iperf_free_test(child_test);
+	tu->test_err = malloc(sizeof(int) * tu->test_count);
 
-	printf("Finished \n");
+	for (i = 0; i < tu->test_count; ++i)
+		tu->test_err[i] = 0;
+
+	if (ts_parse_args(tu))
+		return -1;
+
+	for (i = 0; i < tu->test_count; ++i)
+	{
+		child_test = iperf_new_test();
+
+		if (!child_test)
+		{
+			tu->test_err[i] = i_errno;
+			tu->unit_tests[i] = NULL;
+			continue;
+		}
+		iperf_defaults(child_test);	/* sets defaults */
+
+		iperf_set_test_role(child_test, 'c');
+		iperf_set_test_server_hostname(child_test, main_test->server_hostname);
+		iperf_set_test_server_port(child_test, main_test->server_port);
+
+		if (main_test->json_output)
+			iperf_set_test_json_output(child_test, 1);
+
+		if (main_test->debug)
+			child_test->debug = 1;
+
+		iperf_parse_arguments(child_test, tu->argcs, tu->argvs);
+
+		if (iperf_run_client(child_test) < 0)
+			tu->test_err[i] = i_errno; 			// may be added: iperf_errexit(child_test, "error - %s", iperf_strerror(i_errno));
+
+		tu->unit_tests[i] = child_test;
+	}
+
+	if (!main_test->json_output)
+		printf("Case %s finished. \n \n", tu->test_name);
+
 	return 0;
 }
 
@@ -83,14 +112,25 @@ ts_run_bulk_test(struct iperf_test* test)
 {
 	struct test_set* t_set = ts_new_test_set(test->test_set_file);
 	int i;
-	
 
-	for (i = 0; i < t_set->test_count; ++i)
+	if(!test->json_output)
+		printf("Case count : %d \n", t_set->unit_count);
+
+
+	for (i = 0; i < t_set->unit_count; ++i)
 	{
-		ts_run_test(t_set->suite[i], test);
+		if (ts_run_test(t_set->suite[i], test))
+			return -1;
 	}
 
-	return 0; //add correct completion of the test to the errors(?)
+	ts_get_averaged(t_set);
+
+	if (!test->json_output)
+		ts_err_output(t_set);
+
+	ts_free_test_set(t_set);
+
+	return 0;
 }
 
 struct test_set *
@@ -103,10 +143,11 @@ ts_new_test_set(char* path)
 	FILE * inputFile = fopen(path, "r");
 	cJSON *json;
 	cJSON *node;
+	cJSON *tmp_node;
 
 	if (!inputFile)
 	{
-		printf("File is not exist");
+		fprintf(stderr, "File is not exist");
 		return NULL;
 	}
 	else
@@ -116,7 +157,7 @@ ts_new_test_set(char* path)
 		fseek(inputFile, 0, SEEK_SET);
 	}
 
-	//creating json file
+	// creating json file
 	str = malloc(size + 1);
 	fread(str, size, 1, inputFile);
 	str[size] = '\n';
@@ -128,7 +169,7 @@ ts_new_test_set(char* path)
 	free(str);
 
 
-	//test counting
+	// test counting
 	node = json->child;
 
 	i = 0;
@@ -139,24 +180,44 @@ ts_new_test_set(char* path)
 		node = node->next;
 	}
 
-	t_set->test_count = i;
+	t_set->unit_count = i;
 
-
-	//if (test->debug)
-	//	printf("%s\n", cJSON_Print(json));
-
-	printf("Test count : %d \n", i);
-
-	//parsing
+	// parsing
 	t_set->suite = malloc(sizeof(struct test_unit*) * i);
 
 	node = json->child;
 
-	for (i = 0; i < t_set->test_count; ++i)
+	for (i = 0; i < t_set->unit_count; ++i)
 	{
 		struct test_unit* unit = malloc(sizeof(struct test_unit));
 		unit->id = i;
+		unit->test_name = node->string;
 		unit->json_test_case = node;
+
+		tmp_node = cJSON_GetObjectItem(node, "description");
+		if (tmp_node)
+			unit->description = tmp_node->valuestring;
+		else
+			unit->description = NULL;
+
+		tmp_node = cJSON_GetObjectItem(node, "repeat");
+		if (tmp_node)
+		{
+			if (tmp_node->valuedouble > 0)
+				unit->test_count = tmp_node->valuedouble;
+			else
+				unit->test_count = 0;
+		}
+		else
+			unit->test_count = 1;
+
+		tmp_node = cJSON_GetObjectItem(node, "active");
+		if (tmp_node)
+		{
+			if (tmp_node->type == cJSON_False)
+				unit->test_count = 0;
+		}
+
 		t_set->suite[i] = unit;
 		node = node->next;
 	}
@@ -165,19 +226,365 @@ ts_new_test_set(char* path)
 }
 
 int 
-ts_free_test_unit(struct test_set* t_set)
+ts_free_test_set(struct test_set* t_set)
 {
 	int i;
-	/*delete argvs*/
+	int j;
+	struct test_unit * tmp_unit;
 
-	for (i = 0; i < t_set->test_count; ++i)
+
+	for (i = 0; i < t_set->unit_count; ++i)
 	{
-		free(t_set->suite[i]);
+		tmp_unit = t_set->suite[i];
+
+		for (j = 0; j < tmp_unit->test_count; ++j)
+		{
+			if (tmp_unit->unit_tests[j])
+				iperf_free_test(tmp_unit->unit_tests[j]);
+		}
+
+		if (tmp_unit->test_count)
+		{
+			free(tmp_unit->argvs);
+			free(tmp_unit->unit_tests);
+			free(tmp_unit->test_err);
+		}
+
+		free(tmp_unit);
 	}
 
 	free(t_set->suite);
 	cJSON_Delete(t_set->json_file);
 	free(t_set);
+
+	return 0;
+}
+
+int
+ts_err_output(struct test_set* t_set)
+{
+	int i;
+	int j;
+	int errorIsPrinted = 0;
+	struct test_unit * tmp_unit;
+
+	for (i = 0; i < t_set->unit_count; ++i)
+	{
+		tmp_unit = t_set->suite[i];
+
+		for (j = 0; j < tmp_unit->test_count; ++j)
+			if (tmp_unit->test_err[j])
+			{
+				if (tmp_unit->unit_tests && tmp_unit->unit_tests[0]->outfile) {
+					if (!errorIsPrinted)
+					{
+						fprintf(tmp_unit->unit_tests[0]->outfile, "\n- - - - - - - - - - - - - - - - - - - - - - - - -\n");
+						fprintf(tmp_unit->unit_tests[0]->outfile, "Errors output: \n");
+						errorIsPrinted = 1;
+					}
+					fprintf(tmp_unit->unit_tests[0]->outfile, "Case %s:\n", tmp_unit->test_name);
+				}
+				else {
+					if (!errorIsPrinted)
+					{
+						fprintf(stderr, "\n- - - - - - - - - - - - - - - - - - - - - - - - -\n");
+						fprintf(stderr, "Errors output: \n");
+						errorIsPrinted = 1;
+					}
+					fprintf(stderr, "Case %s:\n", tmp_unit->test_name);
+				}
+				break;
+			}
+
+		for (j = 0; j < tmp_unit->test_count; ++j)
+		{
+			if (tmp_unit->test_err[j])
+			{
+				if (tmp_unit->unit_tests && tmp_unit->unit_tests[0]->outfile) {
+					fprintf(tmp_unit->unit_tests[0]->outfile, "    run %d: error - %s\n", j, iperf_strerror(tmp_unit->test_err[j]));
+				}
+				else {
+					fprintf(stderr, "    run %d: error - %s\n", j, iperf_strerror(tmp_unit->test_err[j]));
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+int
+ts_get_averaged(struct test_set* t_set)
+{
+	int i;
+	cJSON *tmp_node;
+
+	for (i = 0; i < t_set->unit_count; ++i)
+	{
+		tmp_node = cJSON_GetObjectItemCaseSensitive(t_set->suite[i]->json_test_case, "averaging");
+		if (tmp_node)
+		{
+			if (cJSON_IsTrue(tmp_node))
+			{
+				ts_result_averaging(t_set->suite[i]);
+				printf(cJSON_Print(t_set->suite[i]->avaraged_results));
+			}
+		}
+	}
+
+	return 0;
+}
+
+int
+ts_result_averaging(struct test_unit* t_unit)
+{
+	int j;
+
+	struct iperf_test* test;
+
+	int total_retransmits = 0;
+	int total_packets = 0, lost_packets = 0;
+	int sender_packet_count = 0, receiver_packet_count = 0; /* for this stream, this interval */
+	int sender_total_packets = 0, receiver_total_packets = 0; /* running total */
+	struct iperf_stream *sp = NULL;
+	iperf_size_t bytes_sent, total_sent = 0;
+	iperf_size_t bytes_received, total_received = 0;
+	double start_time, avg_jitter = 0.0, lost_percent = 0.0;
+	double sender_time = 0.0, receiver_time = 0.0;
+	double bandwidth;
+
+	cJSON *value;
+	cJSON *result = cJSON_CreateObject();
+
+	cJSON_AddStringToObject(result, "type" , "averaged_result");
+
+
+	for (j = 0; j < t_unit->test_count; ++j)
+	{
+		test = t_unit->unit_tests[j]; /* !used struct! */
+
+
+		start_time = 0.;
+		sp = SLIST_FIRST(&test->streams);
+
+		if (sp) {
+			sender_time += sp->result->sender_time;
+			receiver_time += sp->result->receiver_time;
+			SLIST_FOREACH(sp, &test->streams, streams) {
+
+				bytes_sent = sp->result->bytes_sent - sp->result->bytes_sent_omit;
+				bytes_received = sp->result->bytes_received;
+				total_sent += bytes_sent;
+				total_received += bytes_received;
+
+				if (test->sender) {
+					sender_packet_count = sp->packet_count;
+					receiver_packet_count = sp->peer_packet_count;
+				}
+				else {
+					sender_packet_count = sp->peer_packet_count;
+					receiver_packet_count = sp->packet_count;
+				}
+
+				if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
+					if (test->sender_has_retransmits) {
+						total_retransmits += sp->result->stream_retrans;
+					}
+				}
+				else {
+					int packet_count = sender_packet_count ? sender_packet_count : receiver_packet_count;
+					total_packets += (packet_count - sp->omitted_packet_count);
+					sender_total_packets += (sender_packet_count - sp->omitted_packet_count);
+					receiver_total_packets += (receiver_packet_count - sp->omitted_packet_count);
+					lost_packets += (sp->cnt_error - sp->omitted_cnt_error);
+					avg_jitter += sp->jitter;
+				}
+			}
+		}
+	}
+
+
+	/*
+	* This part is creation cJSON object for
+	* further use.
+	*/
+	
+	value = cJSON_CreateString(t_unit->test_name);
+	cJSON_AddItemToObject(result, "test_name", value);
+
+	if (test->protocol->id == Ptcp)
+		value = cJSON_CreateString("TCP");
+	else // UDP
+		value = cJSON_CreateString("UDP");
+
+	cJSON_AddItemToObject(result, "protocol", value);
+
+
+	if (1) {
+		cJSON *value;
+		cJSON *obj;
+		/* If no tests were run, arbitrarily set bandwidth to 0. */
+		if (sender_time > 0.0) {
+			bandwidth = (double)total_sent / (double)sender_time;
+		}
+		else {
+			bandwidth = 0.0;
+		}
+
+		if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
+			// sent
+			obj = cJSON_CreateObject();
+
+			value = cJSON_CreateNumber(start_time);
+			cJSON_AddItemToObject(obj, "start", value);
+
+			value = cJSON_CreateNumber((double)sender_time / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "end", value);
+
+			value = cJSON_CreateNumber((double)total_sent / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "bytes", value);
+
+			value = cJSON_CreateNumber((double)bandwidth * 8 / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "bits_per_second", value);
+
+			if (total_retransmits) {
+				value = cJSON_CreateNumber(total_retransmits / t_unit->test_count);
+				cJSON_AddItemToObject(obj, "retransmits", value);
+			}
+
+			cJSON_AddItemToObject(result, "sum_sent(avg)", obj);
+
+
+			// received
+
+			if (receiver_time > 0.0) {
+				bandwidth = (double)total_received / (double)receiver_time;
+			}
+			else {
+				bandwidth = 0.0;
+			}
+
+			obj = cJSON_CreateObject();
+
+			value = cJSON_CreateNumber(start_time);
+			cJSON_AddItemToObject(obj, "start", value);
+
+			value = cJSON_CreateNumber((double)receiver_time / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "end", value);
+
+			value = cJSON_CreateNumber((double)total_received / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "bytes", value);
+
+			value = cJSON_CreateNumber((double)bandwidth * 8 / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "bits_per_second", value);
+
+			cJSON_AddItemToObject(result, "sum_received(avg)", obj);
+
+		}
+		else {
+			/* Summary sum, UDP. */
+			avg_jitter /= test->num_streams; 
+			/* If no packets were sent, arbitrarily set loss percentage to 0. */
+			if (total_packets > 0) {
+				lost_percent = 100.0 * lost_packets / total_packets;
+			}
+			else {
+				lost_percent = 0.0;
+			}
+
+			obj = cJSON_CreateObject();
+
+			value = cJSON_CreateNumber(start_time);
+			cJSON_AddItemToObject(obj, "start", value);
+
+			value = cJSON_CreateNumber((double)receiver_time / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "end", value);
+
+			value = cJSON_CreateNumber((double)total_sent / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "bytes", value);
+
+			value = cJSON_CreateNumber((double)bandwidth * 8 / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "bits_per_second", value);
+
+			value = cJSON_CreateNumber((double)avg_jitter * 1000.0 / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "jitter_ms", value);
+
+			value = cJSON_CreateNumber((double)lost_packets / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "lost_packets", value);
+
+			value = cJSON_CreateNumber((double)total_packets / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "packets", value);
+
+			value = cJSON_CreateNumber((double)lost_percent / t_unit->test_count);
+			cJSON_AddItemToObject(obj, "lost_percent", value);
+
+			cJSON_AddItemToObject(result, "sum(avg)", obj);
+
+			//if (test->json_output)
+			//	cJSON_AddItemToObject(test->json_end, "sum", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f", (double)start_time, (double)receiver_time, (double)receiver_time, (int64_t)total_sent, bandwidth * 8, (double)avg_jitter * 1000.0, (int64_t)lost_packets, (int64_t)total_packets, (double)lost_percent));
+			//else {
+			//	/*
+			//	* On the client we have both sender and receiver overall summary
+			//	* stats.  On the server we have only the side that was on the
+			//	* server.  Output whatever we have.
+			//	*/
+			//	if (!(test->role == 's' && !test->sender)) {
+			//		unit_snprintf(ubuf, UNIT_LEN, (double)total_sent, 'A');
+			//		iperf_printf(test, report_sum_bw_udp_format, start_time, sender_time, ubuf, nbuf, 0.0, 0, sender_total_packets, 0.0, "sender");
+			//	}
+			//	if (!(test->role == 's' && test->sender)) {
+
+			//		unit_snprintf(ubuf, UNIT_LEN, (double)total_received, 'A');
+			//		/* Compute received bandwidth. */
+			//		if (end_time > 0.0) {
+			//			bandwidth = (double)total_received / (double)receiver_time;
+			//		}
+			//		else {
+			//			bandwidth = 0.0;
+			//		}
+			//		unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
+			//		iperf_printf(test, report_sum_bw_udp_format, start_time, receiver_time, ubuf, nbuf, avg_jitter * 1000.0, lost_packets, receiver_total_packets, lost_percent, "receiver");
+			//	}
+			//}
+		}
+	}
+
+	/* Is it need? 
+	if (test->json_output) { 
+		cJSON_AddItemToObject(test->json_end, "cpu_utilization_percent", iperf_json_printf("host_total: %f  host_user: %f  host_system: %f  remote_total: %f  remote_user: %f  remote_system: %f", (double)test->cpu_util[0], (double)test->cpu_util[1], (double)test->cpu_util[2], (double)test->remote_cpu_util[0], (double)test->remote_cpu_util[1], (double)test->remote_cpu_util[2]));
+		if (test->protocol->id == Ptcp) {
+			char *snd_congestion = NULL, *rcv_congestion = NULL;
+			if (test->sender) {
+				snd_congestion = test->congestion_used;
+				rcv_congestion = test->remote_congestion_used;
+			}
+			else {
+				snd_congestion = test->remote_congestion_used;
+				rcv_congestion = test->congestion_used;
+			}
+			if (snd_congestion) {
+				cJSON_AddStringToObject(test->json_end, "sender_tcp_congestion", snd_congestion);
+			}
+			if (rcv_congestion) {
+				cJSON_AddStringToObject(test->json_end, "receiver_tcp_congestion", rcv_congestion);
+			}
+		}
+	}
+	*/
+
+	t_unit->avaraged_results = result;;
+
+	return 0;
+}
+
+int
+ts_run_benchmark(int type)
+{
+	switch (type)
+	{
+	default:
+		break;
+	}
 
 	return 0;
 }

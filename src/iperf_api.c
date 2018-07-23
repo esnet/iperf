@@ -428,10 +428,8 @@ iperf_set_test_num_streams(struct iperf_test *ipt, int num_streams)
 static void
 check_sender_has_retransmits(struct iperf_test *ipt)
 {
-    if (ipt->sender && ipt->protocol->id == Ptcp && has_tcpinfo_retransmits())
-	ipt->sender_has_retransmits = 1;
-    else
-	ipt->sender_has_retransmits = 0;
+    if (ipt->sender && ipt->protocol->id == Ptcp)
+	ipt->sender_has_retransmits = has_tcpinfo_retransmits();
 }
 
 void
@@ -463,6 +461,10 @@ void
 iperf_set_test_reverse(struct iperf_test *ipt, int reverse)
 {
     ipt->reverse = reverse;
+    if (ipt->role == 'c')
+        ipt->sender = 1;
+    else
+        ipt->sender = 0;
     if (ipt->reverse)
         ipt->sender = ! ipt->sender;
     check_sender_has_retransmits(ipt);

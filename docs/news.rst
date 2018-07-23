@@ -1,6 +1,32 @@
 iperf3 Project News
 ===================
 
+2018-06-25:  iperf-3.6 released
+-------------------------------
+
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.6.tar.gz
+| SHA256:  ``de5d51e46dc460cc590fb4d44f95e7cad54b74fea1eba7d6ebd6f8887d75946e  iperf-3.6.tar.gz``
+
+iperf 3.6 adds the ``--extra-data`` and ``--repeating-payload``
+options and fixes some minor bugs.
+
+2018-03-02:  iperf-3.5 released
+-------------------------------
+
+| URL:  http://downloads.es.net/pub/iperf/iperf-3.5.tar.gz
+| SHA256:  ``539bd9ecdca1b8c1157ff85b70ed09b3c75242e69886fc16b54883b399f72cd5  iperf-3.5.tar.gz``
+
+iperf 3.5 fixes a bug that could over-count data transfers (and hence
+measured bitrate).
+
+2018-02-14:  iperf-3.4 released
+-------------------------------
+
+| URL:  http://downloads.es.net/pub/iperf/iperf-3.4.tar.gz
+| SHA256:  ``71528332d751df85e046d1944d9a0269773cadd6e51840aecdeed30925f79111  iperf-3.4.tar.gz``
+
+iperf 3.4 fixes a number of minor bugs and adds a few enhancements.
+
 2017-10-31:  iperf-3.3 released
 -------------------------------
 

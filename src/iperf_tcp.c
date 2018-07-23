@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2016, 2017, The Regents of the University of
+ * iperf, Copyright (c) 2014-2018, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -60,8 +60,15 @@ iperf_tcp_recv(struct iperf_stream *sp)
     if (r < 0)
         return r;
 
-    sp->result->bytes_received += r;
-    sp->result->bytes_received_this_interval += r;
+    /* Only count bytes received while we're in the correct state. */
+    if (sp->test->state == TEST_RUNNING) {
+	sp->result->bytes_received += r;
+	sp->result->bytes_received_this_interval += r;
+    }
+    else {
+	if (sp->test->debug)
+	    printf("Late receive, state = %d\n", sp->test->state);
+    }
 
     return r;
 }
@@ -349,6 +356,9 @@ iperf_tcp_listen(struct iperf_test *test)
 /* iperf_tcp_connect
  *
  * connect to a TCP stream listener
+ * This function is roughly similar to netdial(), and may indeed have
+ * been derived from it at some point, but it sets many TCP-specific
+ * options between socket creation and connection.
  */
 int
 iperf_tcp_connect(struct iperf_test *test)
@@ -389,11 +399,14 @@ iperf_tcp_connect(struct iperf_test *test)
         return -1;
     }
 
+    /*
+     * Various ways to bind the local end of the connection.
+     * 1.  --bind (with or without --cport).
+     */
     if (test->bind_address) {
         struct sockaddr_in *lcladdr;
         lcladdr = (struct sockaddr_in *)local_res->ai_addr;
         lcladdr->sin_port = htons(test->bind_port);
-        local_res->ai_addr = (struct sockaddr *)lcladdr;
 
         if (bind(s, (struct sockaddr *) local_res->ai_addr, local_res->ai_addrlen) < 0) {
 	    saved_errno = errno;
@@ -405,6 +418,46 @@ iperf_tcp_connect(struct iperf_test *test)
             return -1;
         }
         freeaddrinfo(local_res);
+    }
+    /* --cport, no --bind */
+    else if (test->bind_port) {
+	size_t addrlen;
+	struct sockaddr_storage lcl;
+
+	/* IPv4 */
+	if (server_res->ai_family == AF_INET) {
+	    struct sockaddr_in *lcladdr = (struct sockaddr_in *) &lcl;
+	    lcladdr->sin_family = AF_INET;
+	    lcladdr->sin_port = htons(test->bind_port);
+	    lcladdr->sin_addr.s_addr = INADDR_ANY;
+	    addrlen = sizeof(struct sockaddr_in);
+	}
+	/* IPv6 */
+	else if (server_res->ai_family == AF_INET6) {
+	    struct sockaddr_in6 *lcladdr = (struct sockaddr_in6 *) &lcl;
+	    lcladdr->sin6_family = AF_INET6;
+	    lcladdr->sin6_port = htons(test->bind_port);
+	    lcladdr->sin6_addr = in6addr_any;
+	    addrlen = sizeof(struct sockaddr_in6);
+	}
+	/* Unknown protocol */
+	else {
+	    saved_errno = errno;
+	    close(s);
+	    freeaddrinfo(server_res);
+	    errno = saved_errno;
+            i_errno = IEPROTOCOL;
+            return -1;
+	}
+
+        if (bind(s, (struct sockaddr *) &lcl, addrlen) < 0) {
+	    saved_errno = errno;
+	    close(s);
+	    freeaddrinfo(server_res);
+	    errno = saved_errno;
+            i_errno = IESTREAMCONNECT;
+            return -1;
+        }
     }
 
     /* Set socket options */
@@ -509,7 +562,7 @@ iperf_tcp_connect(struct iperf_test *test)
             freq->flr_label = htonl(test->settings->flowlabel & IPV6_FLOWINFO_FLOWLABEL);
             freq->flr_action = IPV6_FL_A_GET;
             freq->flr_flags = IPV6_FL_F_CREATE;
-            freq->flr_share = IPV6_FL_F_CREATE | IPV6_FL_S_EXCL;
+            freq->flr_share = IPV6_FL_S_ANY;
             memcpy(&freq->flr_dst, &sa6P->sin6_addr, 16);
 
             if (setsockopt(s, IPPROTO_IPV6, IPV6_FLOWLABEL_MGR, freq, freq_len) < 0) {

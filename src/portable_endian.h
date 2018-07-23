@@ -71,6 +71,16 @@
 #	include <netinet/in.h>
 #	include <inttypes.h>
 
+#	if !defined (ntohll) || !defined(htonll)
+#		ifdef _BIG_ENDIAN
+#			define    htonll(x)   (x)
+#			define    ntohll(x)   (x)
+#		else
+#			define    htonll(x)   ((((uint64_t)htonl(x)) << 32) + htonl((uint64_t)(x) >> 32))
+#			define    ntohll(x)   ((((uint64_t)ntohl(x)) << 32) + ntohl((uint64_t)(x) >> 32))
+#		endif
+#	endif
+
 #	define be64toh(x) ntohll(x)
 #	define htobe64(x) htonll(x)
 

@@ -1,4 +1,4 @@
-.TH IPERF3 1 "June 2017" ESnet "User Manuals"
+.TH IPERF3 1 "June 2018" ESnet "User Manuals"
 .SH NAME
 iperf3 \- perform network throughput tests
 .SH SYNOPSIS
@@ -138,7 +138,9 @@ to a single CPU (as opposed to a set containing potentialy multiple
 CPUs).
 .TP
 .BR -B ", " --bind " \fIhost\fR"
-bind to a specific interface. If the host has multiple interfaces, it will use the first interface by default.
+bind to the specific interface associated with address \fIhost\fR.
+If the host has multiple interfaces, it will use the first interface
+by default.
 .TP
 .BR -V ", " --verbose " "
 give more detailed output 
@@ -333,6 +335,9 @@ period.
 .BR -T ", " --title " \fIstr\fR"
 Prefix every output line with this string.
 .TP
+.BR --extra-data " \fIstr\fR"
+Specify an extra data string field to be included in JSON output.
+.TP
 .BR -C ", " --congestion " \fIalgo\fR"
 Set the congestion control algorithm (Linux and FreeBSD only).  An
 older
@@ -348,6 +353,13 @@ If the client is run with \fB--json\fR, the server output is included
 in a JSON object; otherwise it is appended at the bottom of the
 human-readable output.
 .TP
+.BR --repeating-payload
+Use repeating pattern in payload, instead of random bytes.
+The same payload is used in iperf2 (ASCII '0..9' repeating).
+It might help to test and reveal problems in networking gear with hardware
+compression (including some WiFi access points), where iperf2 and iperf3
+perform differently, just based on payload entropy.
+.TP
 .BR --username " \fIusername\fR" 
 username to use for authentication to the iperf server (if built with
 OpenSSL support).
@@ -359,7 +371,7 @@ path to the RSA public key used to encrypt authentication credentials
 
 .SH EXAMPLES
 .SS "Authentication - RSA Keypair"
-The authentication feature of requires an RSA public keypair.
+The authentication feature of iperf3 requires an RSA public keypair.
 The public key is used to encrypt the authentication token containing the 
 user credentials, while the private key is used to decrypt the authentication token.
 An example of a set of UNIX/Linux commands to generate correct keypair follows:
@@ -407,8 +419,8 @@ mario,bf7a49a846d44b454a5d11e7acfaf13d138bbe0b7483aa3e050879700572709b
 .SH AUTHORS
 A list of the contributors to iperf3 can be found within the
 documentation located at
-\fChttp://software.es.net/iperf/dev.html#authors\fR.
+\fChttps://software.es.net/iperf/dev.html#authors\fR.
 
 .SH "SEE ALSO"
 libiperf(3),
-http://software.es.net/iperf
+https://software.es.net/iperf

@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, 2017, The Regents of the University of
+ * iperf, Copyright (c) 2014-2018, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -37,6 +37,7 @@
 #include <netdb.h>
 #include <string.h>
 #include <fcntl.h>
+#include <limits.h>
 
 #ifdef HAVE_SENDFILE
 #ifdef linux
@@ -139,12 +140,12 @@ netdial(int domain, int proto, char *local, int local_port, char *server, int po
         return -1;
     }
 
+    /* Bind the local address if given a name (with or without --cport) */
     if (local) {
         if (local_port) {
             struct sockaddr_in *lcladdr;
             lcladdr = (struct sockaddr_in *)local_res->ai_addr;
             lcladdr->sin_port = htons(local_port);
-            local_res->ai_addr = (struct sockaddr *)lcladdr;
         }
 
         if (bind(s, (struct sockaddr *) local_res->ai_addr, local_res->ai_addrlen) < 0) {
@@ -156,6 +157,41 @@ netdial(int domain, int proto, char *local, int local_port, char *server, int po
             return -1;
 	}
         freeaddrinfo(local_res);
+    }
+    /* No local name, but --cport given */
+    else if (local_port) {
+	size_t addrlen;
+	struct sockaddr_storage lcl;
+
+	/* IPv4 */
+	if (server_res->ai_family == AF_INET) {
+	    struct sockaddr_in *lcladdr = (struct sockaddr_in *) &lcl;
+	    lcladdr->sin_family = AF_INET;
+	    lcladdr->sin_port = htons(local_port);
+	    lcladdr->sin_addr.s_addr = INADDR_ANY;
+	    addrlen = sizeof(struct sockaddr_in);
+	}
+	/* IPv6 */
+	else if (server_res->ai_family == AF_INET6) {
+	    struct sockaddr_in6 *lcladdr = (struct sockaddr_in6 *) &lcl;
+	    lcladdr->sin6_family = AF_INET6;
+	    lcladdr->sin6_port = htons(local_port);
+	    lcladdr->sin6_addr = in6addr_any;
+	    addrlen = sizeof(struct sockaddr_in6);
+	}
+	/* Unknown protocol */
+	else {
+	    errno = EAFNOSUPPORT;
+            return -1;
+	}
+
+        if (bind(s, (struct sockaddr *) &lcl, addrlen) < 0) {
+	    saved_errno = errno;
+	    close(s);
+	    freeaddrinfo(server_res);
+	    errno = saved_errno;
+            return -1;
+        }
     }
 
     ((struct sockaddr_in *) server_res->ai_addr)->sin_port = htons(port);
@@ -256,7 +292,7 @@ netannounce(int domain, int proto, char *local, int port)
     freeaddrinfo(res);
     
     if (proto == SOCK_STREAM) {
-        if (listen(s, 5) < 0) {
+        if (listen(s, INT_MAX) < 0) {
 	    saved_errno = errno;
 	    close(s);
 	    errno = saved_errno;

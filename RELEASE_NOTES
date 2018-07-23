@@ -1,20 +1,84 @@
-== iperf 3.4 ==
+== iperf 3.6 2018-06-25 ==
+
+* Notable user-visible changes
+
+ * A new --extra-data option can be used to fill in a user-defined
+   string field that appears in JSON output.  (#600 / #729)
+
+ * A new --repeating-payload option makes iperf3 use a payload pattern
+   similar to that used by iperf2, which could help in recreating
+   results that might be affected by payload entropy (for example,
+   compression).  (#726)
+
+ * -B now works properly with SCTP tests.  (#678 / #715)
+
+ * A compile fix for Solaris 10 was added.  (#711)
+
+ * Some minor bug fixes for JSON output.  In particular, warnings for
+   debug and/or verbose modes with --json output (#737) and a fix for
+   JSON output on CentOS 6 (#727 / #744).
+
+ * software.es.net and downloads.es.net now support HTTPS, so URLs in
+   documentation that refer to those two hosts now use https://
+   instead of http:// URLs. (#759)
+
+* Notable developer-visible changes
+
+ * Functions related to authenticated iperf3 connections have been
+   exposed via libiperf.  (#712 / #713)
+
+ * The ToS byte is now exposed in the libiperf API. (#719)
+
+== iperf 3.5 2018-03-02 ==
+
+* Notable user-visible changes
+
+  * iperf3 no longer counts data received after the end of a test in
+    the bytecounts.  This fixes a bug that could, under some
+    conditions, artificially inflate the transfer size and measured
+    bitrate.  This bug was most noticeable on reverse direction
+    transfers on short tests over high-latency or buffer-bloated
+    paths.  Many thanks to @FuzzyStatic for providing access to a test
+    environment for diagnosing this issue (#692).
+
+== iperf 3.4 2018-02-14 ==
 
 * Notable user-visible changes
 
   * The -A (set processor affinity) command-line flag is now supported
     on Windows (#665).
 
-  * iperf3 now builds on macOS systems older than 10.7 (#607).
-
   * iperf3 now builds on systems lacking a daemon(3) library call
     (#369).
 
+  * A bug in time skew checking under authentication was fixed (#674).
+
+  * IPv6 flow labels now work correctly with multiple parallel streams
+    (#694).
+
+  * The client no longer closes its control connection before sending
+    end-of-test statistics to the server (#677). This fixes a
+    regression introduced in iperf-3.2.
+
+  * Sending output to stdout now makes errors go to stderr, as per
+    UNIX convention (#695).
+
+  * A server side crash in verbose output with a client running
+    multiple parallel connections has been fixed (#686).
+
+  * The --cport option can now be specified without the --bind option.
+    Using the --cport option on Linux can eliminate a problem with
+    ephemeral port number allocation that can make multi-stream iperf3
+    tests perform very poorly on LAGG links.  Also, the --cport option
+    now works on SCTP tests (#697).
+
 * Notable developer-visible changes
 
-  * Some unused code and header inclusions were eliminated (#667).
-    Also some code was cleaned up to eliminate (or at least reduce)
-    compiler warnings (#664).
+  * iperf3 now builds on (some) macOS systems older than 10.7 (#607).
+
+  * Some unused code and header inclusions were eliminated (#667,
+    #668).  Also some code was cleaned up to eliminate (or at least
+    reduce) compiler warnings (#664, #671).
 
 == iperf 3.3 2017-10-31 ==
 

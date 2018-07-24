@@ -428,8 +428,10 @@ iperf_set_test_num_streams(struct iperf_test *ipt, int num_streams)
 static void
 check_sender_has_retransmits(struct iperf_test *ipt)
 {
-    if (ipt->sender && ipt->protocol->id == Ptcp)
-	ipt->sender_has_retransmits = has_tcpinfo_retransmits();
+    if (ipt->sender && ipt->protocol->id == Ptcp && has_tcpinfo_retransmits())
+	ipt->sender_has_retransmits = 1;
+    else
+	ipt->sender_has_retransmits = 0;
 }
 
 void

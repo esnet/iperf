@@ -166,6 +166,7 @@ struct iperf_stream
     int       remote_port;
     int       socket;
     int       id;
+    int       role;
 	/* XXX: is settings just a pointer to the same struct in iperf_test? if not, 
 		should it be? */
     struct iperf_settings *settings;	/* pointer to structure settings */
@@ -233,10 +234,16 @@ struct xbind_entry {
     TAILQ_ENTRY(xbind_entry) link;
 };
 
+enum iperf_part {
+	SENDER = 1,
+	RECEIVER = 0,
+	BIDIRECTIONAL = -1
+};
+
 struct iperf_test
 {
     char      role;                             /* 'c' lient or 's' erver */
-    int       sender;                           /* client & !reverse or server & reverse */
+    enum iperf_part part;
     int       sender_has_retransmits;
     struct protocol *protocol;
     signed char state;

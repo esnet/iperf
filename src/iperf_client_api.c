@@ -51,7 +51,7 @@
 #endif /* HAVE_TCP_CONGESTION */
 
 int
-iperf_create_streams(struct iperf_test *test)
+iperf_create_streams(struct iperf_test *test, int part)
 {
     int i, s;
 #if defined(HAVE_TCP_CONGESTION)
@@ -97,7 +97,7 @@ iperf_create_streams(struct iperf_test *test)
 	}
 #endif /* HAVE_TCP_CONGESTION */
 
-	if (test->sender)
+	if (part)
 	    FD_SET(s, &test->write_set);
 	else
 	    FD_SET(s, &test->read_set);
@@ -251,7 +251,14 @@ iperf_handle_message_client(struct iperf_test *test)
                 test->on_connect(test);
             break;
         case CREATE_STREAMS:
-            if (iperf_create_streams(test) < 0)
+            if (test->part == BIDIRECTIONAL)
+            {
+                if (iperf_create_streams(test, 1) < 0)
+                    return -1;
+                if (iperf_create_streams(test, 0) < 0)
+                    return -1;
+            }
+            else if (iperf_create_streams(test, test->part) < 0)
                 return -1;
             break;
         case TEST_START:

@@ -428,7 +428,7 @@ iperf_set_test_num_streams(struct iperf_test *ipt, int num_streams)
 static void
 check_sender_has_retransmits(struct iperf_test *ipt)
 {
-    if (ipt->sender && ipt->protocol->id == Ptcp && has_tcpinfo_retransmits())
+    if (ipt->part != RECEIVER && ipt->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	ipt->sender_has_retransmits = 1;
     else
 	ipt->sender_has_retransmits = 0;
@@ -439,11 +439,11 @@ iperf_set_test_role(struct iperf_test *ipt, char role)
 {
     ipt->role = role;
     if (role == 'c')
-	ipt->sender = 1;
+	ipt->part = SENDER;
     else if (role == 's')
-	ipt->sender = 0;
+	ipt->part = RECEIVER;
     if (ipt->reverse)
-        ipt->sender = ! ipt->sender;
+        ipt->part = ! ipt->part;
     check_sender_has_retransmits(ipt);
 }
 
@@ -464,11 +464,11 @@ iperf_set_test_reverse(struct iperf_test *ipt, int reverse)
 {
     ipt->reverse = reverse;
     if (ipt->role == 'c')
-        ipt->sender = 1;
+        ipt->part = SENDER;
     else
-        ipt->sender = 0;
+        ipt->part = RECEIVER;
     if (ipt->reverse)
-        ipt->sender = ! ipt->sender;
+        ipt->part = ! ipt->part;
     check_sender_has_retransmits(ipt);
 }
 
@@ -1717,7 +1717,7 @@ get_parameters(struct iperf_test *test)
 	if ((j_p = cJSON_GetObjectItem(j, "authtoken")) != NULL)
         test->settings->authtoken = strdup(j_p->valuestring);
 #endif //HAVE_SSL
-	if (test->sender && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
+	if (test->part && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    test->sender_has_retransmits = 1;
 	cJSON_Delete(j);
     }
@@ -1747,7 +1747,7 @@ send_results(struct iperf_test *test)
 	cJSON_AddNumberToObject(j, "cpu_util_total", test->cpu_util[0]);
 	cJSON_AddNumberToObject(j, "cpu_util_user", test->cpu_util[1]);
 	cJSON_AddNumberToObject(j, "cpu_util_system", test->cpu_util[2]);
-	if ( ! test->sender )
+	if ( test->part == RECEIVER )
 	    sender_has_retransmits = -1;
 	else
 	    sender_has_retransmits = test->sender_has_retransmits;
@@ -1877,7 +1877,7 @@ get_results(struct iperf_test *test)
 	    test->remote_cpu_util[1] = j_cpu_util_user->valuedouble;
 	    test->remote_cpu_util[2] = j_cpu_util_system->valuedouble;
 	    result_has_retransmits = j_sender_has_retransmits->valueint;
-	    if (! test->sender)
+	    if ( test->part == RECEIVER )
 		test->sender_has_retransmits = result_has_retransmits;
 	    j_streams = cJSON_GetObjectItem(j, "streams");
 	    if (j_streams == NULL) {
@@ -1915,7 +1915,7 @@ get_results(struct iperf_test *test)
 				i_errno = IESTREAMID;
 				r = -1;
 			    } else {
-				if (test->sender) {
+				if (sp->role) {
 				    sp->jitter = jitter;
 				    sp->cnt_error = cerror;
 				    sp->peer_packet_count = pcount;
@@ -2399,7 +2399,7 @@ iperf_reset_test(struct iperf_test *test)
     SLIST_INIT(&test->streams);
 
     test->role = 's';
-    test->sender = 0;
+    test->part = RECEIVER;
     test->sender_has_retransmits = 0;
     set_protocol(test, Ptcp);
     test->omit = OMIT;
@@ -3120,7 +3120,8 @@ iperf_print_results(struct iperf_test *test)
 
 	    if (test->protocol->id == Ptcp) {
 		char *snd_congestion = NULL, *rcv_congestion = NULL;
-		if (test->sender) {
+		// FIXME: may be must divide to SENDER and BIDIRECTIONAL
+		if (test->part) {
 		    snd_congestion = test->congestion_used;
 		    rcv_congestion = test->remote_congestion_used;
 		}

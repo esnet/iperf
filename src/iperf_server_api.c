@@ -385,8 +385,9 @@ cleanup_server(struct iperf_test *test)
 int
 iperf_run_server(struct iperf_test *test)
 {
-    int result, s, streams_accepted;
+    int result, s;
     int send_streams_accepted, rec_streams_accepted;
+    int streams_to_send, streams_to_rec;
 #if defined(HAVE_TCP_CONGESTION)
     int saved_errno;
 #endif /* HAVE_TCP_CONGESTION */
@@ -395,6 +396,17 @@ iperf_run_server(struct iperf_test *test)
     struct timeval now;
     struct timeval* timeout;
 
+    if (test->part == BIDIRECTIONAL)
+    {
+        streams_to_send = test->num_streams;
+        streams_to_rec = test->num_streams;
+    } else if (test->part == RECEIVER) {
+        streams_to_rec = test->num_streams;
+        streams_to_send = 0;
+    } else {
+        streams_to_send = test->num_streams;
+        streams_to_rec = 0;
+    }
 
     if (test->affinity != -1) 
 	if (iperf_setaffinity(test, test->affinity) != 0)
@@ -423,7 +435,8 @@ iperf_run_server(struct iperf_test *test)
     cpu_util(NULL);
 
     test->state = IPERF_START;
-    streams_accepted = 0;
+    send_streams_accepted = 0;
+    rec_streams_accepted = 0;
 
     while (test->state != IPERF_DONE) {
 
@@ -510,37 +523,74 @@ iperf_run_server(struct iperf_test *test)
 #endif /* HAVE_TCP_CONGESTION */
 
                     if (!is_closed(s)) {
-                        sp = iperf_new_stream(test, s);
-                        if (!sp) {
-			    cleanup_server(test);
-                            return -1;
-			}
 
-			if (test->sender)
-			    FD_SET(s, &test->write_set);
-			else
-			    FD_SET(s, &test->read_set);
-			if (s > test->max_fd) test->max_fd = s;
+                        if (rec_streams_accepted != streams_to_rec)
+                        {
+                            sp = iperf_new_stream(test, s, 0);
+                            if (!sp) {
+                                cleanup_server(test);
+                                return -1;
+                            }
 
-			/* 
-			 * If the protocol isn't UDP, or even if it is but
-			 * we're the receiver, set nonblocking sockets.
-			 * We need this to allow a server receiver to
-			 * maintain interactivity with the control channel.
-			 */
-			if (test->protocol->id != Pudp ||
-			    !test->sender) {
-			    setnonblocking(s, 1);
-			}
+                            if (sp->role)
+                                FD_SET(s, &test->write_set);
+                            else
+                                FD_SET(s, &test->read_set);
+                            if (s > test->max_fd) test->max_fd = s;
 
-                        streams_accepted++;
-                        if (test->on_new_stream)
-                            test->on_new_stream(sp);
+                            /*
+                             * If the protocol isn't UDP, or even if it is but
+                             * we're the receiver, set nonblocking sockets.
+                             * We need this to allow a server receiver to
+                             * maintain interactivity with the control channel.
+                             */
+                            if (test->protocol->id != Pudp ||
+                                !sp->role) {
+                                setnonblocking(s, 1);
+                            }
+
+                            rec_streams_accepted++;
+                            if (test->on_new_stream)
+                                test->on_new_stream(sp);
+                        }
+
+                        // FIXME: DOUBLE CODE
+
+                        if (send_streams_accepted != streams_to_send)
+                        {
+                            sp = iperf_new_stream(test, s, 1);
+                            if (!sp) {
+                                cleanup_server(test);
+                                return -1;
+                            }
+
+                            if (sp->role)
+                                FD_SET(s, &test->write_set);
+                            else
+                                FD_SET(s, &test->read_set);
+                            if (s > test->max_fd) test->max_fd = s;
+
+                            /*
+                             * If the protocol isn't UDP, or even if it is but
+                             * we're the receiver, set nonblocking sockets.
+                             * We need this to allow a server receiver to
+                             * maintain interactivity with the control channel.
+                             */
+                            if (test->protocol->id != Pudp ||
+                                !sp->role) {
+                                setnonblocking(s, 1);
+                            }
+
+                            send_streams_accepted++;
+                            if (test->on_new_stream)
+                                test->on_new_stream(sp);
+                        }
+
                     }
                     FD_CLR(test->prot_listener, &read_set);
                 }
 
-                if (streams_accepted == test->num_streams) {
+                if (rec_streams_accepted == streams_to_rec && send_streams_accepted == streams_to_send) {
                     if (test->protocol->id != Ptcp) {
                         FD_CLR(test->prot_listener, &test->read_set);
                         close(test->prot_listener);
@@ -591,11 +641,11 @@ iperf_run_server(struct iperf_test *test)
             if (test->state == TEST_RUNNING) {
                 if (test->part == BIDIRECTIONAL)
                 {
-                    if (iperf_send(test, &write_set) < 0) {
+                    if (iperf_recv(test, &read_set) < 0) {
                         cleanup_server(test);
                         return -1;
                     }
-                    if (iperf_recv(test, &read_set) < 0) {
+                    if (iperf_send(test, &write_set) < 0) {
                         cleanup_server(test);
                         return -1;
                     }

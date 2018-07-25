@@ -214,7 +214,7 @@ void      iperf_free_test(struct iperf_test * testp);
  * returns NULL on failure
  *
  */
-struct iperf_stream *iperf_new_stream(struct iperf_test *, int);
+struct iperf_stream *iperf_new_stream(struct iperf_test *, int, int);
 
 /**
  * iperf_add_stream -- add a stream to a test

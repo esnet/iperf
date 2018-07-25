@@ -103,7 +103,7 @@ iperf_create_streams(struct iperf_test *test, int part)
 	    FD_SET(s, &test->read_set);
 	if (s > test->max_fd) test->max_fd = s;
 
-        sp = iperf_new_stream(test, s);
+        sp = iperf_new_stream(test, s, part);
         if (!sp)
             return -1;
 
@@ -268,7 +268,7 @@ iperf_handle_message_client(struct iperf_test *test)
                 return -1;
             if (create_client_omit_timer(test) < 0)
                 return -1;
-	    if (!test->reverse)
+	    if (test->part)
 		if (iperf_create_send_timers(test) < 0)
 		    return -1;
             break;
@@ -512,7 +512,7 @@ iperf_run_client(struct iperf_test * test)
 		}
 	    }
 
-	    if (test->reverse) {
+	    if (!test->part) {
 		// Reverse mode. Client receives.
 		if (iperf_recv(test, &read_set) < 0)
 		    return -1;
@@ -552,7 +552,7 @@ iperf_run_client(struct iperf_test * test)
 	// deadlock where the server side fills up its pipe(s)
 	// and gets blocked, so it can't receive state changes
 	// from the client side.
-	else if (test->reverse && test->state == TEST_END) {
+	else if (test->part == RECEIVER && test->state == TEST_END) {
 	    if (iperf_recv(test, &read_set) < 0)
 		return -1;
 	}

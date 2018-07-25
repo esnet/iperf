@@ -3299,7 +3299,7 @@ iperf_free_stream(struct iperf_stream *sp)
 
 /**************************************************************************/
 struct iperf_stream *
-iperf_new_stream(struct iperf_test *test, int s)
+iperf_new_stream(struct iperf_test *test, int s, int part)
 {
     struct iperf_stream *sp;
     int ret = 0;
@@ -3330,6 +3330,7 @@ iperf_new_stream(struct iperf_test *test, int s)
 
     memset(sp, 0, sizeof(struct iperf_stream));
 
+    sp->role = part;
     sp->test = test;
     sp->settings = test->settings;
     sp->result = (struct iperf_stream_result *) malloc(sizeof(struct iperf_stream_result));
@@ -3377,7 +3378,7 @@ iperf_new_stream(struct iperf_test *test, int s)
     sp->rcv = test->protocol->recv;
 
     if (test->diskfile_name != (char*) 0) {
-	sp->diskfile_fd = open(test->diskfile_name, test->sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC), S_IRUSR|S_IWUSR);
+	sp->diskfile_fd = open(test->diskfile_name, part ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC), S_IRUSR|S_IWUSR);
 	if (sp->diskfile_fd == -1) {
 	    i_errno = IEFILE;
             munmap(sp->buffer, sp->test->settings->blksize);

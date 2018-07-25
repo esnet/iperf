@@ -386,6 +386,7 @@ int
 iperf_run_server(struct iperf_test *test)
 {
     int result, s, streams_accepted;
+    int send_streams_accepted, rec_streams_accepted;
 #if defined(HAVE_TCP_CONGESTION)
     int saved_errno;
 #endif /* HAVE_TCP_CONGESTION */
@@ -393,6 +394,7 @@ iperf_run_server(struct iperf_test *test)
     struct iperf_stream *sp;
     struct timeval now;
     struct timeval* timeout;
+
 
     if (test->affinity != -1) 
 	if (iperf_setaffinity(test, test->affinity) != 0)
@@ -574,7 +576,7 @@ iperf_run_server(struct iperf_test *test)
 			cleanup_server(test);
                         return -1;
 		    }
-		    if (test->reverse)
+		    if (test->part != RECEIVER)
 			if (iperf_create_send_timers(test) < 0) {
 			    cleanup_server(test);
 			    return -1;
@@ -587,7 +589,17 @@ iperf_run_server(struct iperf_test *test)
             }
 
             if (test->state == TEST_RUNNING) {
-                if (test->reverse) {
+                if (test->part == BIDIRECTIONAL)
+                {
+                    if (iperf_send(test, &write_set) < 0) {
+                        cleanup_server(test);
+                        return -1;
+                    }
+                    if (iperf_recv(test, &read_set) < 0) {
+                        cleanup_server(test);
+                        return -1;
+                    }
+                } else if (test->part == SENDER) {
                     // Reverse mode. Server sends.
                     if (iperf_send(test, &write_set) < 0) {
 			cleanup_server(test);

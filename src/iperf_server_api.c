@@ -396,18 +396,6 @@ iperf_run_server(struct iperf_test *test)
     struct timeval now;
     struct timeval* timeout;
 
-    if (test->part == BIDIRECTIONAL)
-    {
-        streams_to_send = test->num_streams;
-        streams_to_rec = test->num_streams;
-    } else if (test->part == RECEIVER) {
-        streams_to_rec = test->num_streams;
-        streams_to_send = 0;
-    } else {
-        streams_to_send = test->num_streams;
-        streams_to_rec = 0;
-    }
-
     if (test->affinity != -1) 
 	if (iperf_setaffinity(test, test->affinity) != 0)
 	    return -2;
@@ -459,6 +447,19 @@ iperf_run_server(struct iperf_test *test)
                         return -1;
                     }
                     FD_CLR(test->listener, &read_set);
+
+                    // Set streams number
+                    if (test->part == BIDIRECTIONAL)
+                    {
+                        streams_to_send = test->num_streams;
+                        streams_to_rec = test->num_streams;
+                    } else if (test->part == RECEIVER) {
+                        streams_to_rec = test->num_streams;
+                        streams_to_send = 0;
+                    } else {
+                        streams_to_send = test->num_streams;
+                        streams_to_rec = 0;
+                    }
                 }
             }
             if (FD_ISSET(test->ctrl_sck, &read_set)) {

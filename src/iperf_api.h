@@ -70,6 +70,7 @@ struct iperf_stream;
 #define OPT_CONNECT_TIMEOUT 17
 #define OPT_REPEATING_PAYLOAD 18
 #define OPT_EXTRA_DATA 19
+#define OPT_BIDIRECTIONAL 20
 
 /* states */
 #define TEST_START 1
@@ -153,6 +154,7 @@ void	iperf_set_test_udp_counters_64bit( struct iperf_test* ipt, int udp_counters
 void	iperf_set_test_one_off( struct iperf_test* ipt, int one_off );
 void    iperf_set_test_tos( struct iperf_test* ipt, int tos );
 void	iperf_set_extra_data( struct iperf_test* ipt, char *dat);
+void    iperf_set_test_bidirectional( struct iperf_test* ipt, int bidirectional);
 
 #if defined(HAVE_SSL)
 void    iperf_set_test_client_username(struct iperf_test *ipt, char *client_username);

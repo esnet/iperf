@@ -552,6 +552,16 @@ iperf_set_test_extra_data(struct iperf_test *ipt, char *dat)
     ipt->extra_data = dat;
 }
 
+void
+iperf_set_test_bidirectional(struct iperf_test* ipt, int bidirectional)
+{
+    ipt->bidirectional = bidirectional;
+    if (bidirectional)
+        ipt->part = BIDIRECTIONAL;
+    else
+        iperf_set_test_reverse(ipt, ipt->reverse);
+}
+
 /********************** Get/set test protocol structure ***********************/
 
 struct protocol *
@@ -731,6 +741,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"length", required_argument, NULL, 'l'},
         {"parallel", required_argument, NULL, 'P'},
         {"reverse", no_argument, NULL, 'R'},
+        {"bidirectional", no_argument, NULL, OPT_BIDIRECTIONAL},
         {"window", required_argument, NULL, 'w'},
         {"bind", required_argument, NULL, 'B'},
         {"cport", required_argument, NULL, OPT_CLIENT_PORT},
@@ -856,7 +867,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     return -1;
                 }
 		iperf_set_test_role(test, 's');
-		//test->part = BIDIRECTIONAL; // FIXME
                 break;
             case 'c':
                 if (test->role == 's') {
@@ -865,7 +875,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 }
 		iperf_set_test_role(test, 'c');
 		iperf_set_test_server_hostname(test, optarg);
-                //test->part = BIDIRECTIONAL; // FIXME
                 break;
             case 'u':
                 set_protocol(test, Pudp);
@@ -937,6 +946,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             case 'R':
 		iperf_set_test_reverse(test, 1);
 		client_flag = 1;
+                break;
+            case OPT_BIDIRECTIONAL:
+                if (test->reverse)
+                    /* TODO: Add err */
+                    return -1;
+                iperf_set_test_bidirectional(test, 1);
+                client_flag = 1;
                 break;
             case 'w':
                 // XXX: This is a socket buffer, not specific to TCP
@@ -1596,6 +1612,8 @@ send_parameters(struct iperf_test *test)
 	cJSON_AddNumberToObject(j, "parallel", test->num_streams);
 	if (test->reverse)
 	    cJSON_AddTrueToObject(j, "reverse");
+	if (test->bidirectional)
+	            cJSON_AddTrueToObject(j, "bidirectional");
 	if (test->settings->socket_bufsize)
 	    cJSON_AddNumberToObject(j, "window", test->settings->socket_bufsize);
 	if (test->settings->blksize)
@@ -1687,6 +1705,8 @@ get_parameters(struct iperf_test *test)
 	    test->num_streams = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "reverse")) != NULL)
 	    iperf_set_test_reverse(test, 1);
+        if ((j_p = cJSON_GetObjectItem(j, "bidirectional")) != NULL)
+            iperf_set_test_bidirectional(test, 1);
 	if ((j_p = cJSON_GetObjectItem(j, "window")) != NULL)
 	    test->settings->socket_bufsize = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "len")) != NULL)

@@ -512,15 +512,23 @@ iperf_run_client(struct iperf_test * test)
 		}
 	    }
 
-	    if (!test->part) {
-		// Reverse mode. Client receives.
-		if (iperf_recv(test, &read_set) < 0)
-		    return -1;
+
+	    if (test->part == BIDIRECTIONAL)
+	    {
+                if (iperf_send(test, &write_set) < 0)
+                    return -1;
+                if (iperf_recv(test, &read_set) < 0)
+                    return -1;
+	    } if (test->part == SENDER) {
+                // Regular mode. Client sends.
+                if (iperf_send(test, &write_set) < 0)
+                    return -1;
 	    } else {
-		// Regular mode. Client sends.
-		if (iperf_send(test, &write_set) < 0)
-		    return -1;
+                // Reverse mode. Client receives.
+                if (iperf_recv(test, &read_set) < 0)
+                    return -1;
 	    }
+
 
             /* Run the timers. */
             (void) gettimeofday(&now, NULL);

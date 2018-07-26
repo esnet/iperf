@@ -519,7 +519,7 @@ iperf_run_client(struct iperf_test * test)
                     return -1;
                 if (iperf_recv(test, &read_set) < 0)
                     return -1;
-	    } if (test->part == SENDER) {
+	    } else if (test->part == SENDER) {
                 // Regular mode. Client sends.
                 if (iperf_send(test, &write_set) < 0)
                     return -1;

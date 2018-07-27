@@ -597,8 +597,6 @@ iperf_run_server(struct iperf_test *test)
                     FD_CLR(test->prot_listener, &read_set);
                 }
 
-                printf("Debug: rec: %d, send: %d\n", rec_streams_accepted, send_streams_accepted);
-                printf("StrTo: rec: %d, send: %d\n", streams_to_rec, streams_to_send);
 
                 if (rec_streams_accepted == streams_to_rec && send_streams_accepted == streams_to_send) {
                     if (test->protocol->id != Ptcp) {

@@ -395,6 +395,7 @@ iperf_run_server(struct iperf_test *test)
     struct iperf_stream *sp;
     struct timeval now;
     struct timeval* timeout;
+    int flag;
 
     if (test->affinity != -1) 
 	if (iperf_setaffinity(test, test->affinity) != 0)
@@ -427,6 +428,7 @@ iperf_run_server(struct iperf_test *test)
     rec_streams_accepted = 0;
 
     while (test->state != IPERF_DONE) {
+        flag = 0;
 
         memcpy(&read_set, &test->read_set, sizeof(fd_set));
         memcpy(&write_set, &test->write_set, sizeof(fd_set));
@@ -525,7 +527,7 @@ iperf_run_server(struct iperf_test *test)
 
                     if (!is_closed(s)) {
 
-                        if (rec_streams_accepted != streams_to_rec)
+                        if (rec_streams_accepted != streams_to_rec && !flag)
                         {
                             sp = iperf_new_stream(test, s, 0);
                             if (!sp) {
@@ -553,11 +555,13 @@ iperf_run_server(struct iperf_test *test)
                             rec_streams_accepted++;
                             if (test->on_new_stream)
                                 test->on_new_stream(sp);
+
+                            flag = 1;
                         }
 
                         // FIXME: DOUBLE CODE
 
-                        if (send_streams_accepted != streams_to_send)
+                        if (send_streams_accepted != streams_to_send && !flag)
                         {
                             sp = iperf_new_stream(test, s, 1);
                             if (!sp) {
@@ -585,6 +589,8 @@ iperf_run_server(struct iperf_test *test)
                             send_streams_accepted++;
                             if (test->on_new_stream)
                                 test->on_new_stream(sp);
+
+                            flag = 1;
                         }
 
                     }

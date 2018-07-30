@@ -1350,7 +1350,7 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 	    gettimeofday(&now, NULL);
 	streams_active = 0;
 	SLIST_FOREACH(sp, &test->streams, streams) {
-	    if ((sp->green_light &&
+	    if ((sp->green_light && sp->role &&
 		 (write_setP == NULL || FD_ISSET(sp->socket, write_setP)))) {
 		if ((r = sp->snd(sp)) < 0) {
 		    if (r == NET_SOFTERROR)
@@ -1392,7 +1392,7 @@ iperf_recv(struct iperf_test *test, fd_set *read_setP)
     struct iperf_stream *sp;
 
     SLIST_FOREACH(sp, &test->streams, streams) {
-	if (FD_ISSET(sp->socket, read_setP)) {
+	if (FD_ISSET(sp->socket, read_setP) && !sp->role) {
 	    if ((r = sp->rcv(sp)) < 0) {
 		i_errno = IESTREAMREAD;
 		return r;

@@ -428,7 +428,6 @@ iperf_run_server(struct iperf_test *test)
     rec_streams_accepted = 0;
 
     while (test->state != IPERF_DONE) {
-        flag = 0;
 
         memcpy(&read_set, &test->read_set, sizeof(fd_set));
         memcpy(&write_set, &test->write_set, sizeof(fd_set));
@@ -527,20 +526,25 @@ iperf_run_server(struct iperf_test *test)
 
                     if (!is_closed(s)) {
 
-                        if (rec_streams_accepted != streams_to_rec && !flag)
-                        {
-                            sp = iperf_new_stream(test, s, 0);
+                        if (rec_streams_accepted != streams_to_rec) {
+                            flag = 0;
+                            ++rec_streams_accepted;
+                        } else if (send_streams_accepted != streams_to_send) {
+                            flag = 1;
+                            ++send_streams_accepted;
+                        }
+
+                        if (flag != -1) {
+                            sp = iperf_new_stream(test, s, flag);
                             if (!sp) {
                                 cleanup_server(test);
                                 return -1;
                             }
 
-//                            if (sp->role)
-//                                FD_SET(s, &test->write_set);
-//                            else
-//                                FD_SET(s, &test->read_set);
-
-                            FD_SET(s, &test->read_set);
+                            if (sp->role)
+                                FD_SET(s, &test->write_set);
+                            else
+                                FD_SET(s, &test->read_set);
 
                             if (s > test->max_fd) test->max_fd = s;
 
@@ -555,50 +559,11 @@ iperf_run_server(struct iperf_test *test)
                                 setnonblocking(s, 1);
                             }
 
-                            rec_streams_accepted++;
                             if (test->on_new_stream)
                                 test->on_new_stream(sp);
 
-                            flag = 1;
+                            flag = -1;
                         }
-
-                        // FIXME: DOUBLE CODE
-
-                        if (send_streams_accepted != streams_to_send && !flag)
-                        {
-                            sp = iperf_new_stream(test, s, 1);
-                            if (!sp) {
-                                cleanup_server(test);
-                                return -1;
-                            }
-
-//                            if (sp->role)
-//                                FD_SET(s, &test->write_set);
-//                            else
-//                                FD_SET(s, &test->read_set);
-
-                            FD_SET(s, &test->write_set);
-
-                            if (s > test->max_fd) test->max_fd = s;
-
-                            /*
-                             * If the protocol isn't UDP, or even if it is but
-                             * we're the receiver, set nonblocking sockets.
-                             * We need this to allow a server receiver to
-                             * maintain interactivity with the control channel.
-                             */
-                            if (test->protocol->id != Pudp ||
-                                !sp->role) {
-                                setnonblocking(s, 1);
-                            }
-
-                            send_streams_accepted++;
-                            if (test->on_new_stream)
-                                test->on_new_stream(sp);
-
-                            flag = 1;
-                        }
-
                     }
                     FD_CLR(test->prot_listener, &read_set);
                 }

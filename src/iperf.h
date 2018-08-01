@@ -322,6 +322,10 @@ struct iperf_test
 
     iperf_size_t bytes_sent;
     iperf_size_t blocks_sent;
+
+    iperf_size_t bytes_received;
+    iperf_size_t blocks_received;
+
     char      cookie[COOKIE_SIZE];
 //    struct iperf_stream *streams;               /* pointer to list of struct stream */
     SLIST_HEAD(slisthead, iperf_stream) streams;

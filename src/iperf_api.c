@@ -2693,7 +2693,7 @@ iperf_print_intermediate(struct iperf_test *test)
             upper_role = 1;
         }
     } else {
-        lower_role = test->role;
+        lower_role = test->part;
         upper_role = lower_role;
     }
 

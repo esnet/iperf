@@ -2685,7 +2685,11 @@ iperf_print_intermediate(struct iperf_test *test)
 
     /*
      * We must to sum streams separately.
-     *
+     * For bidirectional mode we must to display
+     * information about sender and receiver streams.
+     * For client side we must handle sender streams
+     * firstly and receiver streams for server side.
+     * The following design allows us to do this.
      */
 
     if (test->mode == BIDIRECTIONAL) {
@@ -2714,16 +2718,18 @@ iperf_print_intermediate(struct iperf_test *test)
 
         int total_packets = 0, lost_packets = 0;
         double avg_jitter = 0.0, lost_percent;
-        int absa = lower_role * lower_role;
+        int stream_must_be_sender = lower_role * lower_role;
+
+        /*  Print stream role just for bidirectional mode. */
 
         if (test->mode == BIDIRECTIONAL) {
-            sprintf(mbuf, "[%s-%s]", absa?"TX":"RX", test->role == 'c'?"C":"S");
+            sprintf(mbuf, "[%s-%s]", stream_must_be_sender?"TX":"RX", test->role == 'c'?"C":"S");
         } else {
             mbuf[0] = '\0';
         }
 
         SLIST_FOREACH(sp, &test->streams, streams) {
-            if (sp->sender == absa) {
+            if (sp->sender == stream_must_be_sender) {
                 print_interval_results(test, sp, json_interval_streams);
                 /* sum up all streams */
                 irp = TAILQ_LAST(&sp->result->interval_results, irlisthead);
@@ -2841,18 +2847,13 @@ iperf_print_results(struct iperf_test *test)
 	}
     }
 
-
-    /* 
-     * If there is at least one stream, then figure out the length of time
-     * we were running the tests and print out some statistics about
-     * the streams.  It's possible to not have any streams at all
-     * if the client got interrupted before it got to do anything.
-     *
-     * Also note that we try to keep seperate values for the sender
-     * and receiver ending times.  Earlier iperf (3.1 and earlier)
-     * servers didn't send that to the clients, so in this case we fall
-     * back to using the client's ending timestamp.  The fallback is
-     * basically emulating what iperf 3.1 did.
+    /*
+     * We must to sum streams separately.
+     * For bidirectional mode we must to display
+     * information about sender and receiver streams.
+     * For client side we must handle sender streams
+     * firstly and receiver streams for server side.
+     * The following design allows us to do this.
      */
 
     if (test->mode == BIDIRECTIONAL) {
@@ -2887,17 +2888,32 @@ iperf_print_results(struct iperf_test *test)
         double bandwidth;
 
         char mbuf[UNIT_LEN];
-        int absa = lower_role * lower_role;
+        int stream_must_be_sender = lower_role * lower_role;
 
+
+        /*  Print stream role just for bidirectional mode. */
 
         if (test->mode == BIDIRECTIONAL) {
-            sprintf(mbuf, "[%s-%s]", absa?"TX":"RX", test->role == 'c'?"C":"S");
+            sprintf(mbuf, "[%s-%s]", stream_must_be_sender?"TX":"RX", test->role == 'c'?"C":"S");
         } else {
             mbuf[0] = '\0';
         }
 
         start_time = 0.;
         sp = SLIST_FIRST(&test->streams);
+
+        /*
+         * If there is at least one stream, then figure out the length of time
+         * we were running the tests and print out some statistics about
+         * the streams.  It's possible to not have any streams at all
+         * if the client got interrupted before it got to do anything.
+         *
+         * Also note that we try to keep seperate values for the sender
+         * and receiver ending times.  Earlier iperf (3.1 and earlier)
+         * servers didn't send that to the clients, so in this case we fall
+         * back to using the client's ending timestamp.  The fallback is
+         * basically emulating what iperf 3.1 did.
+         */
 
         if (sp) {
         end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
@@ -2916,7 +2932,7 @@ iperf_print_results(struct iperf_test *test)
         sender_time = sp->result->sender_time;
         receiver_time = sp->result->receiver_time;
         SLIST_FOREACH(sp, &test->streams, streams) {
-            if (sp->sender == absa) {
+            if (sp->sender == stream_must_be_sender) {
                 if (test->json_output) {
                     json_summary_stream = cJSON_CreateObject();
                     if (json_summary_stream == NULL)
@@ -3180,11 +3196,11 @@ iperf_print_results(struct iperf_test *test)
                      * stats.  On the server we have only the side that was on the
                      * server.  Output whatever we have.
                      */
-                    if (! (test->role == 's' && !absa) ) {
+                    if (! (test->role == 's' && !stream_must_be_sender) ) {
                         unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
                         iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, sender_time, ubuf, nbuf, 0.0, 0, sender_total_packets, 0.0, "sender");
                     }
-                    if (! (test->role == 's' && absa) ) {
+                    if (! (test->role == 's' && stream_must_be_sender) ) {
 
                         unit_snprintf(ubuf, UNIT_LEN, (double) total_received, 'A');
                         /* Compute received bandwidth. */

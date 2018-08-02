@@ -387,7 +387,7 @@ iperf_run_server(struct iperf_test *test)
 {
     int result, s;
     int send_streams_accepted, rec_streams_accepted;
-    int streams_to_send, streams_to_rec;
+    int streams_to_send = 0, streams_to_rec = 0;
 #if defined(HAVE_TCP_CONGESTION)
     int saved_errno;
 #endif /* HAVE_TCP_CONGESTION */
@@ -541,7 +541,7 @@ iperf_run_server(struct iperf_test *test)
                                 return -1;
                             }
 
-                            if (sp->role)
+                            if (sp->sender)
                                 FD_SET(s, &test->write_set);
                             else
                                 FD_SET(s, &test->read_set);
@@ -555,7 +555,7 @@ iperf_run_server(struct iperf_test *test)
                              * maintain interactivity with the control channel.
                              */
                             if (test->protocol->id != Pudp ||
-                                !sp->role) {
+                                !sp->sender) {
                                 setnonblocking(s, 1);
                             }
 

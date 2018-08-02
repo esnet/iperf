@@ -2971,7 +2971,7 @@ iperf_print_results(struct iperf_test *test)
 		 * summary statistics to avoid giving meaningless
 		 * results.
 		 */
-		if (test->role == 's' && !test->part) {
+		if (test->role == 's' && !sp->role) {
 		    if (test->verbose) 
 			iperf_printf(test, report_sender_not_available_format, sp->socket);
 		}

@@ -251,14 +251,14 @@ iperf_handle_message_client(struct iperf_test *test)
                 test->on_connect(test);
             break;
         case CREATE_STREAMS:
-            if (test->part == BIDIRECTIONAL)
+            if (test->mode == BIDIRECTIONAL)
             {
                 if (iperf_create_streams(test, 1) < 0)
                     return -1;
                 if (iperf_create_streams(test, 0) < 0)
                     return -1;
             }
-            else if (iperf_create_streams(test, test->part) < 0)
+            else if (iperf_create_streams(test, test->mode) < 0)
                 return -1;
             break;
         case TEST_START:
@@ -268,7 +268,7 @@ iperf_handle_message_client(struct iperf_test *test)
                 return -1;
             if (create_client_omit_timer(test) < 0)
                 return -1;
-	    if (test->part)
+	    if (test->mode)
 		if (iperf_create_send_timers(test) < 0)
 		    return -1;
             break;
@@ -513,13 +513,13 @@ iperf_run_client(struct iperf_test * test)
 	    }
 
 
-	    if (test->part == BIDIRECTIONAL)
+	    if (test->mode == BIDIRECTIONAL)
 	    {
                 if (iperf_send(test, &write_set) < 0)
                     return -1;
                 if (iperf_recv(test, &read_set) < 0)
                     return -1;
-	    } else if (test->part == SENDER) {
+	    } else if (test->mode == SENDER) {
                 // Regular mode. Client sends.
                 if (iperf_send(test, &write_set) < 0)
                     return -1;
@@ -560,7 +560,7 @@ iperf_run_client(struct iperf_test * test)
 	// deadlock where the server side fills up its pipe(s)
 	// and gets blocked, so it can't receive state changes
 	// from the client side.
-	else if (test->part == RECEIVER && test->state == TEST_END) {
+	else if (test->mode == RECEIVER && test->state == TEST_END) {
 	    if (iperf_recv(test, &read_set) < 0)
 		return -1;
 	}

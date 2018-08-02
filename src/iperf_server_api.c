@@ -450,11 +450,11 @@ iperf_run_server(struct iperf_test *test)
                     FD_CLR(test->listener, &read_set);
 
                     // Set streams number
-                    if (test->part == BIDIRECTIONAL)
+                    if (test->mode == BIDIRECTIONAL)
                     {
                         streams_to_send = test->num_streams;
                         streams_to_rec = test->num_streams;
-                    } else if (test->part == RECEIVER) {
+                    } else if (test->mode == RECEIVER) {
                         streams_to_rec = test->num_streams;
                         streams_to_send = 0;
                     } else {
@@ -605,7 +605,7 @@ iperf_run_server(struct iperf_test *test)
 			cleanup_server(test);
                         return -1;
 		    }
-		    if (test->part != RECEIVER)
+		    if (test->mode != RECEIVER)
 			if (iperf_create_send_timers(test) < 0) {
 			    cleanup_server(test);
 			    return -1;
@@ -618,7 +618,7 @@ iperf_run_server(struct iperf_test *test)
             }
 
             if (test->state == TEST_RUNNING) {
-                if (test->part == BIDIRECTIONAL)
+                if (test->mode == BIDIRECTIONAL)
                 {
                     if (iperf_recv(test, &read_set) < 0) {
                         cleanup_server(test);
@@ -628,7 +628,7 @@ iperf_run_server(struct iperf_test *test)
                         cleanup_server(test);
                         return -1;
                     }
-                } else if (test->part == SENDER) {
+                } else if (test->mode == SENDER) {
                     // Reverse mode. Server sends.
                     if (iperf_send(test, &write_set) < 0) {
 			cleanup_server(test);

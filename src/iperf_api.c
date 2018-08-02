@@ -428,7 +428,7 @@ iperf_set_test_num_streams(struct iperf_test *ipt, int num_streams)
 static void
 check_sender_has_retransmits(struct iperf_test *ipt)
 {
-    if (ipt->part != RECEIVER && ipt->protocol->id == Ptcp && has_tcpinfo_retransmits())
+    if (ipt->mode != RECEIVER && ipt->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	ipt->sender_has_retransmits = 1;
     else
 	ipt->sender_has_retransmits = 0;
@@ -439,11 +439,11 @@ iperf_set_test_role(struct iperf_test *ipt, char role)
 {
     ipt->role = role;
     if (role == 'c')
-	ipt->part = SENDER;
+	ipt->mode = SENDER;
     else if (role == 's')
-	ipt->part = RECEIVER;
+	ipt->mode = RECEIVER;
     if (ipt->reverse)
-        ipt->part = ! ipt->part;
+        ipt->mode = ! ipt->mode;
     check_sender_has_retransmits(ipt);
 }
 
@@ -464,11 +464,11 @@ iperf_set_test_reverse(struct iperf_test *ipt, int reverse)
 {
     ipt->reverse = reverse;
     if (ipt->role == 'c')
-        ipt->part = SENDER;
+        ipt->mode = SENDER;
     else
-        ipt->part = RECEIVER;
+        ipt->mode = RECEIVER;
     if (ipt->reverse)
-        ipt->part = ! ipt->part;
+        ipt->mode = ! ipt->mode;
     check_sender_has_retransmits(ipt);
 }
 
@@ -557,7 +557,7 @@ iperf_set_test_bidirectional(struct iperf_test* ipt, int bidirectional)
 {
     ipt->bidirectional = bidirectional;
     if (bidirectional)
-        ipt->part = BIDIRECTIONAL;
+        ipt->mode = BIDIRECTIONAL;
     else
         iperf_set_test_reverse(ipt, ipt->reverse);
 }
@@ -1739,7 +1739,7 @@ get_parameters(struct iperf_test *test)
 	if ((j_p = cJSON_GetObjectItem(j, "authtoken")) != NULL)
         test->settings->authtoken = strdup(j_p->valuestring);
 #endif //HAVE_SSL
-	if (test->part && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
+	if (test->mode && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    test->sender_has_retransmits = 1;
 	cJSON_Delete(j);
     }
@@ -1769,7 +1769,7 @@ send_results(struct iperf_test *test)
 	cJSON_AddNumberToObject(j, "cpu_util_total", test->cpu_util[0]);
 	cJSON_AddNumberToObject(j, "cpu_util_user", test->cpu_util[1]);
 	cJSON_AddNumberToObject(j, "cpu_util_system", test->cpu_util[2]);
-	if ( test->part == RECEIVER )
+	if ( test->mode == RECEIVER )
 	    sender_has_retransmits = -1;
 	else
 	    sender_has_retransmits = test->sender_has_retransmits;
@@ -1899,7 +1899,7 @@ get_results(struct iperf_test *test)
 	    test->remote_cpu_util[1] = j_cpu_util_user->valuedouble;
 	    test->remote_cpu_util[2] = j_cpu_util_system->valuedouble;
 	    result_has_retransmits = j_sender_has_retransmits->valueint;
-	    if ( test->part == RECEIVER )
+	    if ( test->mode == RECEIVER )
 		test->sender_has_retransmits = result_has_retransmits;
 	    j_streams = cJSON_GetObjectItem(j, "streams");
 	    if (j_streams == NULL) {
@@ -2421,7 +2421,7 @@ iperf_reset_test(struct iperf_test *test)
     SLIST_INIT(&test->streams);
 
     test->role = 's';
-    test->part = RECEIVER;
+    test->mode = RECEIVER;
     test->sender_has_retransmits = 0;
     set_protocol(test, Ptcp);
     test->omit = OMIT;
@@ -2683,9 +2683,12 @@ iperf_print_intermediate(struct iperf_test *test)
         json_interval_streams = NULL;
     }
 
-    // FIXME: controversial issue. Need fix or add comments
+    /*
+     * We must to sum streams separately.
+     *
+     */
 
-    if (test->part == BIDIRECTIONAL) {
+    if (test->mode == BIDIRECTIONAL) {
         if (test->role == 'c') {
             lower_role = -1;
             upper_role = 0;
@@ -2694,7 +2697,7 @@ iperf_print_intermediate(struct iperf_test *test)
             upper_role = 1;
         }
     } else {
-        lower_role = test->part;
+        lower_role = test->mode;
         upper_role = lower_role;
     }
 
@@ -2713,7 +2716,7 @@ iperf_print_intermediate(struct iperf_test *test)
         double avg_jitter = 0.0, lost_percent;
         int absa = lower_role * lower_role;
 
-        if (test->part == BIDIRECTIONAL) {
+        if (test->mode == BIDIRECTIONAL) {
             sprintf(mbuf, "[%s-%s]", absa?"TX":"RX", test->role == 'c'?"C":"S");
         } else {
             mbuf[0] = '\0';
@@ -2771,7 +2774,7 @@ iperf_print_intermediate(struct iperf_test *test)
                     }
                 } else {
                     /* Interval sum, UDP. */
-                    if (test->part) {
+                    if (test->mode) {
                         if (test->json_output)
                             cJSON_AddItemToObject(json_interval, "sum", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  packets: %d  omitted: %b", (double) start_time, (double) end_time, (double) irp->interval_duration, (int64_t) bytes, bandwidth * 8, (int64_t) total_packets, test->omitting));
                         else
@@ -2852,7 +2855,7 @@ iperf_print_results(struct iperf_test *test)
      * basically emulating what iperf 3.1 did.
      */
 
-    if (test->part == BIDIRECTIONAL) {
+    if (test->mode == BIDIRECTIONAL) {
         if (test->role == 'c') {
             lower_role = -1;
             upper_role = 0;
@@ -2861,7 +2864,7 @@ iperf_print_results(struct iperf_test *test)
             upper_role = 1;
         }
     } else {
-        lower_role = test->part;
+        lower_role = test->mode;
         upper_role = lower_role;
     }
 
@@ -2887,7 +2890,7 @@ iperf_print_results(struct iperf_test *test)
         int absa = lower_role * lower_role;
 
 
-        if (test->part == BIDIRECTIONAL) {
+        if (test->mode == BIDIRECTIONAL) {
             sprintf(mbuf, "[%s-%s]", absa?"TX":"RX", test->role == 'c'?"C":"S");
         } else {
             mbuf[0] = '\0';
@@ -3046,7 +3049,7 @@ iperf_print_results(struct iperf_test *test)
                         if (test->json_output)
                             cJSON_AddItemToObject(json_summary_stream, "diskfile", iperf_json_printf("sent: %d  received: %d  size: %d  percent_sent: %d  percent_received: %d  filename: %s", (int64_t) bytes_sent, (int64_t) bytes_received, (int64_t) sb.st_size, (int64_t) percent_sent, (int64_t) percent_received, test->diskfile_name));
                         else
-                            if (test->part) {
+                            if (test->mode) {
                                 iperf_printf(test, report_diskfile, ubuf, sbuf, percent_sent, test->diskfile_name);
                             }
                             else {
@@ -3120,7 +3123,7 @@ iperf_print_results(struct iperf_test *test)
                     if (test->json_output)
                         cJSON_AddItemToObject(test->json_end, "sum_sent", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d", (double) start_time, (double) sender_time, (double) sender_time, (int64_t) total_sent, bandwidth * 8, (int64_t) total_retransmits));
                     else
-                        if (test->role == 's' && !test->part) {
+                        if (test->role == 's' && !test->mode) {
                             if (test->verbose)
                                 iperf_printf(test, report_sender_not_available_summary_format, "SUM");
                         }
@@ -3132,7 +3135,7 @@ iperf_print_results(struct iperf_test *test)
                     if (test->json_output)
                         cJSON_AddItemToObject(test->json_end, "sum_sent", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f", (double) start_time, (double) sender_time, (double) sender_time, (int64_t) total_sent, bandwidth * 8));
                     else
-                        if (test->role == 's' && !test->part) {
+                        if (test->role == 's' && !test->mode) {
                             if (test->verbose)
                                 iperf_printf(test, report_sender_not_available_summary_format, "SUM");
                         }
@@ -3152,7 +3155,7 @@ iperf_print_results(struct iperf_test *test)
                 if (test->json_output)
                     cJSON_AddItemToObject(test->json_end, "sum_received", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f", (double) start_time, (double) receiver_time, (double) receiver_time, (int64_t) total_received, bandwidth * 8));
                 else
-                    if (test->role == 's' && test->part) {
+                    if (test->role == 's' && test->mode) {
                         if (test->verbose)
                             iperf_printf(test, report_receiver_not_available_format, sp->socket);
                     }
@@ -3202,7 +3205,7 @@ iperf_print_results(struct iperf_test *test)
             cJSON_AddItemToObject(test->json_end, "cpu_utilization_percent", iperf_json_printf("host_total: %f  host_user: %f  host_system: %f  remote_total: %f  remote_user: %f  remote_system: %f", (double) test->cpu_util[0], (double) test->cpu_util[1], (double) test->cpu_util[2], (double) test->remote_cpu_util[0], (double) test->remote_cpu_util[1], (double) test->remote_cpu_util[2]));
             if (test->protocol->id == Ptcp) {
                 char *snd_congestion = NULL, *rcv_congestion = NULL;
-                if (test->part) {
+                if (test->mode) {
                     snd_congestion = test->congestion_used;
                     rcv_congestion = test->remote_congestion_used;
                 }
@@ -3220,11 +3223,11 @@ iperf_print_results(struct iperf_test *test)
         }
         else {
             if (test->verbose) {
-                iperf_printf(test, report_cpu, report_local, test->part?report_sender:report_receiver, test->cpu_util[0], test->cpu_util[1], test->cpu_util[2], report_remote, test->part?report_receiver:report_sender, test->remote_cpu_util[0], test->remote_cpu_util[1], test->remote_cpu_util[2]);
+                iperf_printf(test, report_cpu, report_local, test->mode?report_sender:report_receiver, test->cpu_util[0], test->cpu_util[1], test->cpu_util[2], report_remote, test->mode?report_receiver:report_sender, test->remote_cpu_util[0], test->remote_cpu_util[1], test->remote_cpu_util[2]);
 
                 if (test->protocol->id == Ptcp) {
                     char *snd_congestion = NULL, *rcv_congestion = NULL;
-                    if (test->part) {
+                    if (test->mode) {
                         snd_congestion = test->congestion_used;
                         rcv_congestion = test->remote_congestion_used;
                     }
@@ -3299,7 +3302,7 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
     struct iperf_interval_results *irp = NULL;
     double bandwidth, lost_percent;
 
-    if (test->part == BIDIRECTIONAL) {
+    if (test->mode == BIDIRECTIONAL) {
         sprintf(mbuf, "[%s-%s]", sp->sender?"TX":"RX", test->role == 'c'?"C":"S");
     } else {
         mbuf[0] = '\0';
@@ -3332,7 +3335,7 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 	                    iperf_printf(test, "%s", report_bw_header);
 	            }
 		} else {
-		    if (test->part) {
+		    if (test->mode) {
 		        if (test->bidirectional)
 		            iperf_printf(test, "%s", report_bw_udp_sender_header_bidir);
 		        else

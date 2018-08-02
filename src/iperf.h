@@ -234,7 +234,7 @@ struct xbind_entry {
     TAILQ_ENTRY(xbind_entry) link;
 };
 
-enum iperf_part {
+enum iperf_mode {
 	SENDER = 1,
 	RECEIVER = 0,
 	BIDIRECTIONAL = -1
@@ -243,7 +243,7 @@ enum iperf_part {
 struct iperf_test
 {
     char      role;                             /* 'c' lient or 's' erver */
-    enum iperf_part part;
+    enum iperf_mode mode;
     int       sender_has_retransmits;
     struct protocol *protocol;
     signed char state;

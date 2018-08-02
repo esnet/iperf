@@ -51,7 +51,7 @@
 #endif /* HAVE_TCP_CONGESTION */
 
 int
-iperf_create_streams(struct iperf_test *test, int part)
+iperf_create_streams(struct iperf_test *test, int sender)
 {
     int i, s;
 #if defined(HAVE_TCP_CONGESTION)
@@ -97,13 +97,13 @@ iperf_create_streams(struct iperf_test *test, int part)
 	}
 #endif /* HAVE_TCP_CONGESTION */
 
-	if (part)
+	if (sender)
 	    FD_SET(s, &test->write_set);
 	else
 	    FD_SET(s, &test->read_set);
 	if (s > test->max_fd) test->max_fd = s;
 
-        sp = iperf_new_stream(test, s, part);
+        sp = iperf_new_stream(test, s, sender);
         if (!sp)
             return -1;
 

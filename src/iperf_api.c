@@ -2442,6 +2442,7 @@ iperf_reset_test(struct iperf_test *test)
     test->blocks_received = 0;
 
     test->reverse = 0;
+    test->bidirectional = 0;
     test->no_delay = 0;
 
     FD_ZERO(&test->read_set);

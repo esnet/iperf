@@ -332,6 +332,7 @@ enum {
     IESETCLIENTAUTH = 22,   // Bad configuration of client authentication
     IESETSERVERAUTH = 23,   // Bad configuration of server authentication
     IEBADFORMAT = 24,	    // Bad format argument to -f
+    IEREVERSEBIDIR = 25,    // Iperf cannot be both reverse and bidirectional
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

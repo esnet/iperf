@@ -2821,7 +2821,6 @@ iperf_print_results(struct iperf_test *test)
     cJSON *json_summary_streams = NULL;
 
     int lower_role, upper_role;
-    int cpu_util_printed = 0;
 
     /* print final summary for all intervals */
 
@@ -3225,7 +3224,7 @@ iperf_print_results(struct iperf_test *test)
             }
         }
 
-        if (test->json_output && !cpu_util_printed) {
+        if (test->json_output && lower_role == upper_role) {
             cJSON_AddItemToObject(test->json_end, "cpu_utilization_percent", iperf_json_printf("host_total: %f  host_user: %f  host_system: %f  remote_total: %f  remote_user: %f  remote_system: %f", (double) test->cpu_util[0], (double) test->cpu_util[1], (double) test->cpu_util[2], (double) test->remote_cpu_util[0], (double) test->remote_cpu_util[1], (double) test->remote_cpu_util[2]));
             if (test->protocol->id == Ptcp) {
                 char *snd_congestion = NULL, *rcv_congestion = NULL;
@@ -3244,7 +3243,6 @@ iperf_print_results(struct iperf_test *test)
                     cJSON_AddStringToObject(test->json_end, "receiver_tcp_congestion", rcv_congestion);
                 }
             }
-            cpu_util_printed = 1;
         }
         else {
             if (test->verbose) {

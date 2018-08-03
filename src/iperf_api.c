@@ -438,12 +438,17 @@ void
 iperf_set_test_role(struct iperf_test *ipt, char role)
 {
     ipt->role = role;
-    if (role == 'c')
-	ipt->mode = SENDER;
-    else if (role == 's')
-	ipt->mode = RECEIVER;
-    if (ipt->reverse)
-        ipt->mode = ! ipt->mode;
+    if (!ipt->reverse) {
+        if (role == 'c')
+            ipt->mode = SENDER;
+        else if (role == 's')
+            ipt->mode = RECEIVER;
+    } else {
+        if (role == 'c')
+            ipt->mode = RECEIVER;
+        else if (role == 's')
+            ipt->mode = SENDER;
+    }
     check_sender_has_retransmits(ipt);
 }
 
@@ -463,12 +468,17 @@ void
 iperf_set_test_reverse(struct iperf_test *ipt, int reverse)
 {
     ipt->reverse = reverse;
-    if (ipt->role == 'c')
-        ipt->mode = SENDER;
-    else
-        ipt->mode = RECEIVER;
-    if (ipt->reverse)
-        ipt->mode = ! ipt->mode;
+    if (!ipt->reverse) {
+        if (ipt->role == 'c')
+            ipt->mode = SENDER;
+        else if (ipt->role == 's')
+            ipt->mode = RECEIVER;
+    } else {
+        if (ipt->role == 'c')
+            ipt->mode = RECEIVER;
+        else if (ipt->role == 's')
+            ipt->mode = SENDER;
+    }
     check_sender_has_retransmits(ipt);
 }
 
@@ -741,7 +751,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"length", required_argument, NULL, 'l'},
         {"parallel", required_argument, NULL, 'P'},
         {"reverse", no_argument, NULL, 'R'},
-        {"bidirectional", no_argument, NULL, OPT_BIDIRECTIONAL},
+        {"bidir", no_argument, NULL, OPT_BIDIRECTIONAL},
         {"window", required_argument, NULL, 'w'},
         {"bind", required_argument, NULL, 'B'},
         {"cport", required_argument, NULL, OPT_CLIENT_PORT},

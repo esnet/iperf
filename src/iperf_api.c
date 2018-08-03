@@ -3189,8 +3189,8 @@ iperf_print_results(struct iperf_test *test)
                     cJSON_AddItemToObject(test->json_end, "sum_received", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f sender: %b", (double) start_time, (double) receiver_time, (double) receiver_time, (int64_t) total_received, bandwidth * 8, stream_must_be_sender));
                 else
                     if (test->role == 's' && stream_must_be_sender) {
-                        if (test->verbose && sp)
-                            iperf_printf(test, report_receiver_not_available_format, sp->socket);
+                        if (test->verbose)
+                            iperf_printf(test, report_receiver_not_available_summary_format, "SUM");
                     }
                     else {
                         iperf_printf(test, report_sum_bw_format, mbuf, start_time, receiver_time, ubuf, nbuf, report_receiver);

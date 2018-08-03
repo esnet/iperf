@@ -3082,7 +3082,7 @@ iperf_print_results(struct iperf_test *test)
                         if (test->json_output)
                             cJSON_AddItemToObject(json_summary_stream, "diskfile", iperf_json_printf("sent: %d  received: %d  size: %d  percent_sent: %d  percent_received: %d  filename: %s", (int64_t) bytes_sent, (int64_t) bytes_received, (int64_t) sb.st_size, (int64_t) percent_sent, (int64_t) percent_received, test->diskfile_name));
                         else
-                            if (test->mode) {
+                            if (stream_must_be_sender) {
                                 iperf_printf(test, report_diskfile, ubuf, sbuf, percent_sent, test->diskfile_name);
                             }
                             else {
@@ -3156,7 +3156,7 @@ iperf_print_results(struct iperf_test *test)
                     if (test->json_output)
                         cJSON_AddItemToObject(test->json_end, "sum_sent", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d sender: %b", (double) start_time, (double) sender_time, (double) sender_time, (int64_t) total_sent, bandwidth * 8, (int64_t) total_retransmits, stream_must_be_sender));
                     else
-                        if (test->role == 's' && !test->mode) {
+                        if (test->role == 's' && !stream_must_be_sender) {
                             if (test->verbose)
                                 iperf_printf(test, report_sender_not_available_summary_format, "SUM");
                         }
@@ -3168,7 +3168,7 @@ iperf_print_results(struct iperf_test *test)
                     if (test->json_output)
                         cJSON_AddItemToObject(test->json_end, "sum_sent", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f sender: %b", (double) start_time, (double) sender_time, (double) sender_time, (int64_t) total_sent, bandwidth * 8, stream_must_be_sender));
                     else
-                        if (test->role == 's' && !test->mode) {
+                        if (test->role == 's' && !stream_must_be_sender) {
                             if (test->verbose)
                                 iperf_printf(test, report_sender_not_available_summary_format, "SUM");
                         }
@@ -3188,7 +3188,7 @@ iperf_print_results(struct iperf_test *test)
                 if (test->json_output)
                     cJSON_AddItemToObject(test->json_end, "sum_received", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f sender: %b", (double) start_time, (double) receiver_time, (double) receiver_time, (int64_t) total_received, bandwidth * 8, stream_must_be_sender));
                 else
-                    if (test->role == 's' && test->mode) {
+                    if (test->role == 's' && stream_must_be_sender) {
                         if (test->verbose)
                             iperf_printf(test, report_receiver_not_available_format, sp->socket);
                     }
@@ -3238,7 +3238,7 @@ iperf_print_results(struct iperf_test *test)
             cJSON_AddItemToObject(test->json_end, "cpu_utilization_percent", iperf_json_printf("host_total: %f  host_user: %f  host_system: %f  remote_total: %f  remote_user: %f  remote_system: %f", (double) test->cpu_util[0], (double) test->cpu_util[1], (double) test->cpu_util[2], (double) test->remote_cpu_util[0], (double) test->remote_cpu_util[1], (double) test->remote_cpu_util[2]));
             if (test->protocol->id == Ptcp) {
                 char *snd_congestion = NULL, *rcv_congestion = NULL;
-                if (test->mode) {
+                if (stream_must_be_sender) {
                     snd_congestion = test->congestion_used;
                     rcv_congestion = test->remote_congestion_used;
                 }
@@ -3256,8 +3256,9 @@ iperf_print_results(struct iperf_test *test)
         }
         else {
             if (test->verbose) {
+                // TODO: bidirectional
                 if (stream_must_be_sender)
-                    iperf_printf(test, report_cpu, report_local, test->mode?report_sender:report_receiver, test->cpu_util[0], test->cpu_util[1], test->cpu_util[2], report_remote, test->mode?report_receiver:report_sender, test->remote_cpu_util[0], test->remote_cpu_util[1], test->remote_cpu_util[2]);
+                    iperf_printf(test, report_cpu, report_local, stream_must_be_sender?report_sender:report_receiver, test->cpu_util[0], test->cpu_util[1], test->cpu_util[2], report_remote, stream_must_be_sender?report_receiver:report_sender, test->remote_cpu_util[0], test->remote_cpu_util[1], test->remote_cpu_util[2]);
 
                 if (test->protocol->id == Ptcp) {
                     char *snd_congestion = NULL, *rcv_congestion = NULL;

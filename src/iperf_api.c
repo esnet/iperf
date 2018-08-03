@@ -2787,7 +2787,7 @@ iperf_print_intermediate(struct iperf_test *test)
                     }
                 } else {
                     /* Interval sum, UDP. */
-                    if (test->mode) {
+                    if (stream_must_be_sender) {
                         if (test->json_output)
                             cJSON_AddItemToObject(json_interval, "sum", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  packets: %d  omitted: %b sender: %b", (double) start_time, (double) end_time, (double) irp->interval_duration, (int64_t) bytes, bandwidth * 8, (int64_t) total_packets, test->omitting, stream_must_be_sender));
                         else

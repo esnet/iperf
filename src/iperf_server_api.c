@@ -450,8 +450,7 @@ iperf_run_server(struct iperf_test *test)
                     FD_CLR(test->listener, &read_set);
 
                     // Set streams number
-                    if (test->mode == BIDIRECTIONAL)
-                    {
+                    if (test->mode == BIDIRECTIONAL) {
                         streams_to_send = test->num_streams;
                         streams_to_rec = test->num_streams;
                     } else if (test->mode == RECEIVER) {
@@ -618,8 +617,7 @@ iperf_run_server(struct iperf_test *test)
             }
 
             if (test->state == TEST_RUNNING) {
-                if (test->mode == BIDIRECTIONAL)
-                {
+                if (test->mode == BIDIRECTIONAL) {
                     if (iperf_recv(test, &read_set) < 0) {
                         cleanup_server(test);
                         return -1;

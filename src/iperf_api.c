@@ -954,8 +954,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
             case 'R':
-                if (test->bidirectional)
-                {
+                if (test->bidirectional) {
                     i_errno = IEREVERSEBIDIR;
                     return -1;
                 }
@@ -963,8 +962,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
             case OPT_BIDIRECTIONAL:
-                if (test->reverse)
-                {
+                if (test->reverse) {
                     i_errno = IEREVERSEBIDIR;
                     return -1;
                 }

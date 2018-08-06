@@ -2640,7 +2640,8 @@ iperf_print_intermediate(struct iperf_test *test)
     cJSON *json_interval;
     cJSON *json_interval_streams;
 
-    int lower_role, upper_role;
+    int lower_mode, upper_mode;
+    int current_mode;
 
     /*
      * Due to timing oddities, there can be cases, especially on the
@@ -2711,19 +2712,19 @@ iperf_print_intermediate(struct iperf_test *test)
 
     if (test->mode == BIDIRECTIONAL) {
         if (test->role == 'c') {
-            lower_role = -1;
-            upper_role = 0;
+            lower_mode = -1;
+            upper_mode = 0;
         } else {
-            lower_role = 0;
-            upper_role = 1;
+            lower_mode = 0;
+            upper_mode = 1;
         }
     } else {
-        lower_role = test->mode;
-        upper_role = lower_role;
+        lower_mode = test->mode;
+        upper_mode = lower_mode;
     }
 
 
-    for (lower_role; lower_role <= upper_role; ++lower_role) {
+    for (current_mode = lower_mode; current_mode <= upper_mode; ++current_mode) {
         char ubuf[UNIT_LEN];
         char nbuf[UNIT_LEN];
         char mbuf[UNIT_LEN];
@@ -2735,7 +2736,7 @@ iperf_print_intermediate(struct iperf_test *test)
 
         int total_packets = 0, lost_packets = 0;
         double avg_jitter = 0.0, lost_percent;
-        int stream_must_be_sender = lower_role * lower_role;
+        int stream_must_be_sender = current_mode * current_mode;
 
         /*  Print stream role just for bidirectional mode. */
 
@@ -2830,7 +2831,8 @@ iperf_print_results(struct iperf_test *test)
 
     cJSON *json_summary_streams = NULL;
 
-    int lower_role, upper_role;
+    int lower_mode, upper_mode;
+    int current_mode;
 
     /* print final summary for all intervals */
 
@@ -2875,19 +2877,19 @@ iperf_print_results(struct iperf_test *test)
 
     if (test->mode == BIDIRECTIONAL) {
         if (test->role == 'c') {
-            lower_role = -1;
-            upper_role = 0;
+            lower_mode = -1;
+            upper_mode = 0;
         } else {
-            lower_role = 0;
-            upper_role = 1;
+            lower_mode = 0;
+            upper_mode = 1;
         }
     } else {
-        lower_role = test->mode;
-        upper_role = lower_role;
+        lower_mode = test->mode;
+        upper_mode = lower_mode;
     }
 
 
-    for (lower_role; lower_role <= upper_role; ++lower_role) {
+    for (current_mode = lower_mode; current_mode <= upper_mode; ++current_mode) {
         cJSON *json_summary_stream = NULL;
         int total_retransmits = 0;
         int total_packets = 0, lost_packets = 0;
@@ -2905,7 +2907,7 @@ iperf_print_results(struct iperf_test *test)
         double bandwidth;
 
         char mbuf[UNIT_LEN];
-        int stream_must_be_sender = lower_role * lower_role;
+        int stream_must_be_sender = current_mode * current_mode;
 
 
         /*  Print stream role just for bidirectional mode. */
@@ -3234,7 +3236,7 @@ iperf_print_results(struct iperf_test *test)
             }
         }
 
-        if (test->json_output && lower_role == upper_role) {
+        if (test->json_output && current_mode == upper_mode) {
             cJSON_AddItemToObject(test->json_end, "cpu_utilization_percent", iperf_json_printf("host_total: %f  host_user: %f  host_system: %f  remote_total: %f  remote_user: %f  remote_system: %f", (double) test->cpu_util[0], (double) test->cpu_util[1], (double) test->cpu_util[2], (double) test->remote_cpu_util[0], (double) test->remote_cpu_util[1], (double) test->remote_cpu_util[2]));
             if (test->protocol->id == Ptcp) {
                 char *snd_congestion = NULL, *rcv_congestion = NULL;
@@ -3256,13 +3258,13 @@ iperf_print_results(struct iperf_test *test)
         }
         else {
             if (test->verbose) {
-                if (stream_must_be_sender)
+                if (stream_must_be_sender) {
                     if (test->bidirectional) {
                         iperf_printf(test, report_cpu, report_local, stream_must_be_sender?report_sender:report_receiver, test->cpu_util[0], test->cpu_util[1], test->cpu_util[2], report_remote, stream_must_be_sender?report_receiver:report_sender, test->remote_cpu_util[0], test->remote_cpu_util[1], test->remote_cpu_util[2]);
                         iperf_printf(test, report_cpu, report_local, !stream_must_be_sender?report_sender:report_receiver, test->cpu_util[0], test->cpu_util[1], test->cpu_util[2], report_remote, !stream_must_be_sender?report_receiver:report_sender, test->remote_cpu_util[0], test->remote_cpu_util[1], test->remote_cpu_util[2]);
                     } else
                         iperf_printf(test, report_cpu, report_local, stream_must_be_sender?report_sender:report_receiver, test->cpu_util[0], test->cpu_util[1], test->cpu_util[2], report_remote, stream_must_be_sender?report_receiver:report_sender, test->remote_cpu_util[0], test->remote_cpu_util[1], test->remote_cpu_util[2]);
-
+                }
                 if (test->protocol->id == Ptcp) {
                     char *snd_congestion = NULL, *rcv_congestion = NULL;
                     if (stream_must_be_sender) {

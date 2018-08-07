@@ -1916,6 +1916,8 @@ get_results(struct iperf_test *test)
 	    result_has_retransmits = j_sender_has_retransmits->valueint;
 	    if ( test->mode == RECEIVER )
 		test->sender_has_retransmits = result_has_retransmits;
+	    else if ( test->mode == BIDIRECTIONAL )
+	        test->other_side_has_retransmits = result_has_retransmits;
 	    j_streams = cJSON_GetObjectItem(j, "streams");
 	    if (j_streams == NULL) {
 		i_errno = IERECVRESULTS;
@@ -2832,6 +2834,8 @@ iperf_print_results(struct iperf_test *test)
     int lower_mode, upper_mode;
     int current_mode;
 
+    int tmp_sender_has_retransmits = test->sender_has_retransmits;
+
     /* print final summary for all intervals */
 
     if (test->json_output) {
@@ -2844,7 +2848,7 @@ iperf_print_results(struct iperf_test *test)
 	if (test->verbose)
 	    iperf_printf(test, "%s", report_summary);
 	if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
-	    if (test->sender_has_retransmits) {
+	    if (test->sender_has_retransmits || test->other_side_has_retransmits) {
 	        if (test->bidirectional)
 	            iperf_printf(test, "%s", report_bw_retrans_header_bidir);
 	        else
@@ -2915,6 +2919,11 @@ iperf_print_results(struct iperf_test *test)
         } else {
             mbuf[0] = '\0';
         }
+
+        if (test->mode == BIDIRECTIONAL && stream_must_be_sender)
+            test->sender_has_retransmits = tmp_sender_has_retransmits;
+        else if (test->mode == BIDIRECTIONAL && !stream_must_be_sender)
+            test->sender_has_retransmits = test->other_side_has_retransmits;
 
         start_time = 0.;
         sp = SLIST_FIRST(&test->streams);
@@ -2997,7 +3006,7 @@ iperf_print_results(struct iperf_test *test)
                 }
                 unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
                 if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
-                    if (test->sender_has_retransmits && total_retransmits >= 0) {
+                    if (test->sender_has_retransmits) {
                         /* Sender summary, TCP and SCTP with retransmits. */
                         if (test->json_output)
                             cJSON_AddItemToObject(json_summary_stream, "sender", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d  max_snd_cwnd:  %d  max_rtt:  %d  min_rtt:  %d  mean_rtt:  %d sender: %b", (int64_t) sp->socket, (double) start_time, (double) sender_time, (double) sender_time, (int64_t) bytes_sent, bandwidth * 8, (int64_t) sp->result->stream_retrans, (int64_t) sp->result->stream_max_snd_cwnd, (int64_t) sp->result->stream_max_rtt, (int64_t) sp->result->stream_min_rtt, (int64_t) ((sp->result->stream_count_rtt == 0) ? 0 : sp->result->stream_sum_rtt / sp->result->stream_count_rtt), stream_must_be_sender));
@@ -3151,7 +3160,7 @@ iperf_print_results(struct iperf_test *test)
             }
             unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
             if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
-                if (test->sender_has_retransmits && total_retransmits >= 0) {
+                if (test->sender_has_retransmits) {
                     /* Summary sum, TCP with retransmits. */
                     if (test->json_output)
                         cJSON_AddItemToObject(test->json_end, "sum_sent", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d sender: %b", (double) start_time, (double) sender_time, (double) sender_time, (int64_t) total_sent, bandwidth * 8, (int64_t) total_retransmits, stream_must_be_sender));
@@ -3296,6 +3305,9 @@ iperf_print_results(struct iperf_test *test)
             }
         }
     }
+
+    if (test->mode == BIDIRECTIONAL)
+        test->sender_has_retransmits = tmp_sender_has_retransmits;
 }
 
 /**************************************************************************/

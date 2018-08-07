@@ -245,6 +245,7 @@ struct iperf_test
     char      role;                             /* 'c' lient or 's' erver */
     enum iperf_mode mode;
     int       sender_has_retransmits;
+    int       other_side_has_retransmits;       /* used if mode == BIDIRECTIONAL */
     struct protocol *protocol;
     signed char state;
     char     *server_hostname;                  /* -c option */

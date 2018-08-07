@@ -2920,6 +2920,7 @@ iperf_print_results(struct iperf_test *test)
             mbuf[0] = '\0';
         }
 
+        /* Get sender_has_retransmits for each sender side (client and server) */
         if (test->mode == BIDIRECTIONAL && stream_must_be_sender)
             test->sender_has_retransmits = tmp_sender_has_retransmits;
         else if (test->mode == BIDIRECTIONAL && !stream_must_be_sender)
@@ -3306,6 +3307,7 @@ iperf_print_results(struct iperf_test *test)
         }
     }
 
+    /* Set real sender_has_retransmits for current side */
     if (test->mode == BIDIRECTIONAL)
         test->sender_has_retransmits = tmp_sender_has_retransmits;
 }

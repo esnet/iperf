@@ -2728,6 +2728,7 @@ iperf_print_intermediate(struct iperf_test *test)
         char ubuf[UNIT_LEN];
         char nbuf[UNIT_LEN];
         char mbuf[UNIT_LEN];
+        char zbuf[] = "          ";
 
         iperf_size_t bytes = 0;
         double bandwidth;
@@ -2744,6 +2745,7 @@ iperf_print_intermediate(struct iperf_test *test)
             sprintf(mbuf, "[%s-%s]", stream_must_be_sender?"TX":"RX", test->role == 'c'?"C":"S");
         } else {
             mbuf[0] = '\0';
+            zbuf[0] = '\0';
         }
 
         SLIST_FOREACH(sp, &test->streams, streams) {
@@ -2802,7 +2804,7 @@ iperf_print_intermediate(struct iperf_test *test)
                         if (test->json_output)
                             cJSON_AddItemToObject(json_interval, "sum", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  packets: %d  omitted: %b sender: %b", (double) start_time, (double) end_time, (double) irp->interval_duration, (int64_t) bytes, bandwidth * 8, (int64_t) total_packets, test->omitting, stream_must_be_sender));
                         else
-                            iperf_printf(test, report_sum_bw_udp_sender_format, mbuf, start_time, end_time, ubuf, nbuf, total_packets, test->omitting?report_omitted:"");
+                            iperf_printf(test, report_sum_bw_udp_sender_format, mbuf, start_time, end_time, ubuf, nbuf, zbuf, total_packets, test->omitting?report_omitted:"");
                     } else {
                         avg_jitter /= test->num_streams;
                         if (total_packets > 0) {
@@ -3350,6 +3352,7 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
     char nbuf[UNIT_LEN];
     char cbuf[UNIT_LEN];
     char mbuf[UNIT_LEN];
+    char zbuf[] = "          ";
     double st = 0., et = 0.;
     struct iperf_interval_results *irp = NULL;
     double bandwidth, lost_percent;
@@ -3358,6 +3361,7 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
         sprintf(mbuf, "[%s-%s]", sp->sender?"TX":"RX", test->role == 'c'?"C":"S");
     } else {
         mbuf[0] = '\0';
+        zbuf[0] = '\0';
     }
 
     irp = TAILQ_LAST(&sp->result->interval_results, irlisthead); /* get last entry in linked list */
@@ -3387,17 +3391,13 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 	                    iperf_printf(test, "%s", report_bw_header);
 	            }
 		} else {
-		    if (test->mode) {
-		        if (test->bidirectional)
-		            iperf_printf(test, "%s", report_bw_udp_sender_header_bidir);
-		        else
-		            iperf_printf(test, "%s", report_bw_udp_sender_header);
-		    }
-		    else {
-		        if (test->bidirectional)
-		            iperf_printf(test, "%s", report_bw_udp_header_bidir);
-		        else
-		            iperf_printf(test, "%s", report_bw_udp_header);
+		    if (test->mode == SENDER) {
+		        iperf_printf(test, "%s", report_bw_udp_sender_header);
+		    } else if (test->mode == RECEIVER){
+		        iperf_printf(test, "%s", report_bw_udp_header);
+		    } else {
+		        /* BIDIRECTIONAL */
+		        iperf_printf(test, "%s", report_bw_udp_header_bidir);
 		    }
 		}
 	    } else if (test->num_streams > 1)
@@ -3439,7 +3439,7 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 	    if (test->json_output)
 		cJSON_AddItemToArray(json_interval_streams, iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  packets: %d  omitted: %b sender: %b", (int64_t) sp->socket, (double) st, (double) et, (double) irp->interval_duration, (int64_t) irp->bytes_transferred, bandwidth * 8, (int64_t) irp->interval_packet_count, irp->omitted, sp->sender));
 	    else
-		iperf_printf(test, report_bw_udp_sender_format, sp->socket, mbuf, st, et, ubuf, nbuf, irp->interval_packet_count, irp->omitted?report_omitted:"");
+		iperf_printf(test, report_bw_udp_sender_format, sp->socket, mbuf, st, et, ubuf, nbuf, zbuf, irp->interval_packet_count, irp->omitted?report_omitted:"");
 	} else {
 	    if (irp->interval_packet_count > 0) {
 		lost_percent = 100.0 * irp->interval_cnt_error / irp->interval_packet_count;

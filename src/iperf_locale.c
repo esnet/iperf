@@ -354,7 +354,7 @@ const char report_bw_udp_format[] =
 "[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)  %s\n";
 
 const char report_bw_udp_sender_format[] =
-"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %d  %s\n";
+"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %d  %s\n";
 
 const char report_summary[] =
 "Test Complete. Summary Results:\n";
@@ -369,7 +369,7 @@ const char report_sum_bw_udp_format[] =
 "[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)  %s\n";
 
 const char report_sum_bw_udp_sender_format[] =
-"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %d  %s\n";
+"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %d  %s\n";
 
 const char report_omitted[] = "(omitted)";
 

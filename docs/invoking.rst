@@ -293,7 +293,7 @@ the executable.
                  reverse the direction of a test, so that the server  sends  data
                  to the client
 
-          --bidirectional
+          --bidir
                  bidirectional mode, server and client send and receive data.
    
           -w, --window n[KM]

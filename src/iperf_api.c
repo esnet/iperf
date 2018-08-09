@@ -321,6 +321,13 @@ iperf_get_test_extra_data(struct iperf_test *ipt)
     return ipt->extra_data;
 }
 
+static const char iperf_version[] = IPERF_VERSION;
+char *
+iperf_get_iperf_version(void)
+{
+    return (char*)iperf_version;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void

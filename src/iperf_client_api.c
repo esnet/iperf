@@ -51,7 +51,7 @@
 #endif /* HAVE_TCP_CONGESTION */
 
 int
-iperf_create_streams(struct iperf_test *test)
+iperf_create_streams(struct iperf_test *test, int sender)
 {
     int i, s;
 #if defined(HAVE_TCP_CONGESTION)
@@ -97,13 +97,13 @@ iperf_create_streams(struct iperf_test *test)
 	}
 #endif /* HAVE_TCP_CONGESTION */
 
-	if (test->sender)
+	if (sender)
 	    FD_SET(s, &test->write_set);
 	else
 	    FD_SET(s, &test->read_set);
 	if (s > test->max_fd) test->max_fd = s;
 
-        sp = iperf_new_stream(test, s);
+        sp = iperf_new_stream(test, s, sender);
         if (!sp)
             return -1;
 
@@ -251,7 +251,14 @@ iperf_handle_message_client(struct iperf_test *test)
                 test->on_connect(test);
             break;
         case CREATE_STREAMS:
-            if (iperf_create_streams(test) < 0)
+            if (test->mode == BIDIRECTIONAL)
+            {
+                if (iperf_create_streams(test, 1) < 0)
+                    return -1;
+                if (iperf_create_streams(test, 0) < 0)
+                    return -1;
+            }
+            else if (iperf_create_streams(test, test->mode) < 0)
                 return -1;
             break;
         case TEST_START:
@@ -261,7 +268,7 @@ iperf_handle_message_client(struct iperf_test *test)
                 return -1;
             if (create_client_omit_timer(test) < 0)
                 return -1;
-	    if (!test->reverse)
+	    if (test->mode)
 		if (iperf_create_send_timers(test) < 0)
 		    return -1;
             break;
@@ -505,15 +512,23 @@ iperf_run_client(struct iperf_test * test)
 		}
 	    }
 
-	    if (test->reverse) {
-		// Reverse mode. Client receives.
-		if (iperf_recv(test, &read_set) < 0)
-		    return -1;
+
+	    if (test->mode == BIDIRECTIONAL)
+	    {
+                if (iperf_send(test, &write_set) < 0)
+                    return -1;
+                if (iperf_recv(test, &read_set) < 0)
+                    return -1;
+	    } else if (test->mode == SENDER) {
+                // Regular mode. Client sends.
+                if (iperf_send(test, &write_set) < 0)
+                    return -1;
 	    } else {
-		// Regular mode. Client sends.
-		if (iperf_send(test, &write_set) < 0)
-		    return -1;
+                // Reverse mode. Client receives.
+                if (iperf_recv(test, &read_set) < 0)
+                    return -1;
 	    }
+
 
             /* Run the timers. */
             (void) gettimeofday(&now, NULL);
@@ -545,7 +560,7 @@ iperf_run_client(struct iperf_test * test)
 	// deadlock where the server side fills up its pipe(s)
 	// and gets blocked, so it can't receive state changes
 	// from the client side.
-	else if (test->reverse && test->state == TEST_END) {
+	else if (test->mode == RECEIVER && test->state == TEST_END) {
 	    if (iperf_recv(test, &read_set) < 0)
 		return -1;
 	}

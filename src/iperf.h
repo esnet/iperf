@@ -167,6 +167,7 @@ struct iperf_stream
     int       remote_port;
     int       socket;
     int       id;
+    int       sender;
 	/* XXX: is settings just a pointer to the same struct in iperf_test? if not, 
 		should it be? */
     struct iperf_settings *settings;	/* pointer to structure settings */
@@ -234,11 +235,18 @@ struct xbind_entry {
     TAILQ_ENTRY(xbind_entry) link;
 };
 
+enum iperf_mode {
+	SENDER = 1,
+	RECEIVER = 0,
+	BIDIRECTIONAL = -1
+};
+
 struct iperf_test
 {
     char      role;                             /* 'c' lient or 's' erver */
-    int       sender;                           /* client & !reverse or server & reverse */
+    enum iperf_mode mode;
     int       sender_has_retransmits;
+    int       other_side_has_retransmits;       /* used if mode == BIDIRECTIONAL */
     struct protocol *protocol;
     signed char state;
     char     *server_hostname;                  /* -c option */
@@ -282,6 +290,7 @@ struct iperf_test
     int       one_off;                          /* -1 option */
     int       no_delay;                         /* -N option */
     int       reverse;                          /* -R option */
+    int       bidirectional;                    /* --bidirectional */
     int	      verbose;                          /* -V option - verbose mode */
     int	      json_output;                      /* -J option - JSON output */
     int	      zerocopy;                         /* -Z option - use sendfile */
@@ -317,6 +326,10 @@ struct iperf_test
 
     iperf_size_t bytes_sent;
     iperf_size_t blocks_sent;
+
+    iperf_size_t bytes_received;
+    iperf_size_t blocks_received;
+
     char      cookie[COOKIE_SIZE];
 //    struct iperf_stream *streams;               /* pointer to list of struct stream */
     SLIST_HEAD(slisthead, iperf_stream) streams;

@@ -70,6 +70,7 @@ struct iperf_stream;
 #define OPT_CONNECT_TIMEOUT 17
 #define OPT_REPEATING_PAYLOAD 18
 #define OPT_EXTRA_DATA 19
+#define OPT_BIDIRECTIONAL 20
 
 #define OPT_TEST_SET 101
 
@@ -155,6 +156,7 @@ void	iperf_set_test_udp_counters_64bit( struct iperf_test* ipt, int udp_counters
 void	iperf_set_test_one_off( struct iperf_test* ipt, int one_off );
 void    iperf_set_test_tos( struct iperf_test* ipt, int tos );
 void	iperf_set_extra_data( struct iperf_test* ipt, char *dat);
+void    iperf_set_test_bidirectional( struct iperf_test* ipt, int bidirectional);
 
 #if defined(HAVE_SSL)
 void    iperf_set_test_client_username(struct iperf_test *ipt, char *client_username);
@@ -216,7 +218,7 @@ void      iperf_free_test(struct iperf_test * testp);
  * returns NULL on failure
  *
  */
-struct iperf_stream *iperf_new_stream(struct iperf_test *, int);
+struct iperf_stream *iperf_new_stream(struct iperf_test *, int, int);
 
 /**
  * iperf_add_stream -- add a stream to a test
@@ -276,7 +278,7 @@ extern jmp_buf env;
 /* Client routines. */
 int iperf_run_client(struct iperf_test *);
 int iperf_connect(struct iperf_test *);
-int iperf_create_streams(struct iperf_test *);
+int iperf_create_streams(struct iperf_test *, int sender);
 int iperf_handle_message_client(struct iperf_test *);
 int iperf_client_end(struct iperf_test *);
 
@@ -332,6 +334,7 @@ enum {
     IESETCLIENTAUTH = 22,   // Bad configuration of client authentication
     IESETSERVERAUTH = 23,   // Bad configuration of server authentication
     IEBADFORMAT = 24,	    // Bad format argument to -f
+    IEREVERSEBIDIR = 25,    // Iperf cannot be both reverse and bidirectional
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

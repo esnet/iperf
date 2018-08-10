@@ -292,6 +292,9 @@ the executable.
           -R, --reverse
                  reverse the direction of a test, so that the server  sends  data
                  to the client
+
+          --bidir
+                 bidirectional mode, server and client send and receive data.
    
           -w, --window n[KM]/n[KM],m[KM]
                  window size / socket buffer size (this gets sent to  the  server

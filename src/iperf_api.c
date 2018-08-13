@@ -87,6 +87,8 @@
 #include "iperf_auth.h"
 #endif /* HAVE_SSL */
 
+#include <pthread.h>
+
 /* Forwards. */
 static int send_parameters(struct iperf_test *test);
 static int get_parameters(struct iperf_test *test);
@@ -806,6 +808,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"connect-timeout", required_argument, NULL, OPT_CONNECT_TIMEOUT},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
+        {"multithread", no_argument, NULL, OPT_MULTITHREAD},
         {NULL, 0, NULL, 0}
     };
     int flag;
@@ -1181,6 +1184,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->settings->connect_timeout = unit_atoi(optarg);
 		client_flag = 1;
 		break;
+	    case OPT_MULTITHREAD:
+	        test->multithread = 1;
+	        break;
 	    case 'h':
 		usage_long(stdout);
 		exit(0);
@@ -4023,4 +4029,147 @@ int
 iflush(struct iperf_test *test)
 {
     return fflush(test->outfile);
+}
+
+int
+iperf_create_threads(struct iperf_test *test)
+{
+    struct iperf_stream *sp;
+    struct iperf_thread *thr;
+    int i = 0;
+
+    test->thrcontrol = malloc(sizeof(struct iperf_threads_control));
+    test->thrcontrol->sum_threads = test->num_streams;
+
+    if (test->bidirectional)
+        test->thrcontrol->sum_threads *= 2;
+
+    test->thrcontrol->threads = malloc(sizeof(struct iperf_thread) * test->thrcontrol->sum_threads);
+
+    SLIST_FOREACH(sp, &test->streams, streams){
+        thr = iperf_new_thread(test, sp);
+        test->thrcontrol->threads[i] = thr;
+        ++i;
+    }
+
+    pthread_barrier_init(&test->thrcontrol->initial_barrier, NULL, test->thrcontrol->sum_threads + 1);
+
+    if (test->mode == SENDER)
+        pthread_mutex_init(&test->thrcontrol->send_mutex, NULL);
+    else if (test->mode == RECEIVER)
+        pthread_mutex_init(&test->thrcontrol->receive_mutex, NULL);
+    else {
+        pthread_mutex_init(&test->thrcontrol->send_mutex, NULL);
+        pthread_mutex_init(&test->thrcontrol->receive_mutex, NULL);
+    }
+    return 0;
+}
+
+struct iperf_thread*
+iperf_new_thread(struct iperf_test *test, struct iperf_stream *sp)
+{
+    struct iperf_thread *thr;
+    thr = malloc(sizeof(struct iperf_thread));
+    thr->test = test;
+    thr->stream = sp;
+    if (pthread_create(&thr->thread, NULL, iperf_run_thread, thr))
+        return NULL;
+    return thr;
+}
+
+void*
+iperf_run_thread(void *argv)
+{
+    int status;
+    struct iperf_thread *thr = argv;
+
+    //status = pthread_barrier_wait(&thr->test->thrcontrol->initial_barrier);
+    if (status == PTHREAD_BARRIER_SERIAL_THREAD) {
+        pthread_barrier_destroy(&thr->test->thrcontrol->initial_barrier);
+    }
+
+    // TODO: add err check
+
+    while (thr->test->state == TEST_RUNNING) {
+        if (thr->stream->sender) {
+            iperf_thread_send(thr);
+        }
+        else {
+            iperf_thread_recv(thr);
+        }
+    }
+    return NULL;
+}
+
+int
+iperf_thread_send(struct iperf_thread *thr)
+{
+    register int multisend, r, streams_active;
+    struct iperf_test *test= thr->test;
+    register struct iperf_stream *sp = thr->stream;
+    struct timeval now;
+
+    /* Can we do multisend mode? */
+    if (test->settings->burst != 0)
+        multisend = test->settings->burst;
+    else if (test->settings->rate == 0)
+        multisend = test->multisend;
+    else
+        multisend = 1;  /* nope */
+
+    for (; multisend > 0; --multisend) {
+        if (test->settings->rate != 0 && test->settings->burst == 0)
+            gettimeofday(&now, NULL);
+        streams_active = 0;
+
+        if (sp->green_light) {
+            if ((r = sp->snd(sp)) < 0) {
+                if (r == NET_SOFTERROR)
+                    break;
+                i_errno = IESTREAMWRITE;
+                return r;
+            }
+            streams_active = 1;
+
+            pthread_mutex_lock(&thr->test->thrcontrol->send_mutex);
+            test->bytes_sent += r;
+            ++test->blocks_sent;
+            pthread_mutex_unlock(&thr->test->thrcontrol->send_mutex);
+
+            if (test->settings->rate != 0 && test->settings->burst == 0)
+                iperf_check_throttle(sp, &now);
+            if (multisend > 1 && test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes)
+                break;
+            if (multisend > 1 && test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks)
+                break;
+        }
+
+        if (!streams_active)
+            break;
+    }
+
+    if (test->settings->burst != 0) {
+        gettimeofday(&now, NULL);
+        iperf_check_throttle(sp, &now);
+    }
+
+    return 0;
+}
+
+int
+iperf_thread_recv(struct iperf_thread *thr)
+{
+    int r;
+
+    if ((r = thr->stream->rcv(thr->stream)) < 0) {
+        i_errno = IESTREAMREAD;
+        return r;
+    }
+
+    pthread_mutex_lock(&thr->test->thrcontrol->receive_mutex);
+    thr->test->bytes_received += r;
+    ++thr->test->blocks_received;
+    pthread_mutex_unlock(&thr->test->thrcontrol->receive_mutex);
+
+    return 0;
 }

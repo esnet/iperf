@@ -567,7 +567,6 @@ iperf_run_server(struct iperf_test *test)
                     FD_CLR(test->prot_listener, &read_set);
                 }
 
-
                 if (rec_streams_accepted == streams_to_rec && send_streams_accepted == streams_to_send) {
                     if (test->protocol->id != Ptcp) {
                         FD_CLR(test->prot_listener, &test->read_set);
@@ -613,31 +612,46 @@ iperf_run_server(struct iperf_test *test)
 			cleanup_server(test);
                         return -1;
 		    }
+
+                    iperf_create_threads(test);
                 }
             }
 
             if (test->state == TEST_RUNNING) {
-                if (test->mode == BIDIRECTIONAL) {
-                    if (iperf_recv(test, &read_set) < 0) {
-                        cleanup_server(test);
-                        return -1;
+
+                if (test->multithread) {
+                    if (!test->thrcontrol->started) {
+                        int status;
+
+                        test->thrcontrol->started = 1;
+                        //status = pthread_barrier_wait(&test->thrcontrol->initial_barrier);
+                        if (status == PTHREAD_BARRIER_SERIAL_THREAD) {
+                            pthread_barrier_destroy(&test->thrcontrol->initial_barrier);
+                        }
                     }
-                    if (iperf_send(test, &write_set) < 0) {
-                        cleanup_server(test);
-                        return -1;
-                    }
-                } else if (test->mode == SENDER) {
-                    // Reverse mode. Server sends.
-                    if (iperf_send(test, &write_set) < 0) {
-			cleanup_server(test);
-                        return -1;
-		    }
                 } else {
-                    // Regular mode. Server receives.
-                    if (iperf_recv(test, &read_set) < 0) {
-			cleanup_server(test);
-                        return -1;
-		    }
+                    if (test->mode == BIDIRECTIONAL) {
+                        if (iperf_recv(test, &read_set) < 0) {
+                            cleanup_server(test);
+                            return -1;
+                        }
+                        if (iperf_send(test, &write_set) < 0) {
+                            cleanup_server(test);
+                            return -1;
+                        }
+                    } else if (test->mode == SENDER) {
+                        // Reverse mode. Server sends.
+                        if (iperf_send(test, &write_set) < 0) {
+                            cleanup_server(test);
+                            return -1;
+                        }
+                    } else {
+                        // Regular mode. Server receives.
+                        if (iperf_recv(test, &read_set) < 0) {
+                            cleanup_server(test);
+                            return -1;
+                        }
+                    }
                 }
             }
         }

@@ -67,6 +67,8 @@
 #include <openssl/evp.h>
 #endif // HAVE_SSL
 
+#include <pthread.h>
+
 typedef uint64_t iperf_size_t;
 
 struct iperf_interval_results
@@ -240,6 +242,23 @@ enum iperf_mode {
 	BIDIRECTIONAL = -1
 };
 
+struct iperf_thread {
+    pthread_t thread;
+
+    struct iperf_test *test;
+    struct iperf_stream *stream;
+};
+
+struct iperf_threads_control {
+    int sum_threads;
+    struct iperf_thread **threads;
+
+    pthread_barrier_t initial_barrier;
+    pthread_mutex_t send_mutex;
+    pthread_mutex_t receive_mutex;
+    int started;
+};
+
 struct iperf_test
 {
     char      role;                             /* 'c' lient or 's' erver */
@@ -282,6 +301,8 @@ struct iperf_test
     EVP_PKEY  *server_rsa_private_key;
 #endif // HAVE_SSL
 
+    struct iperf_threads_control *thrcontrol;
+
     /* boolean variables for Options */
     int       daemon;                           /* -D option */
     int       one_off;                          /* -1 option */
@@ -297,6 +318,7 @@ struct iperf_test
     int       forceflush; /* --forceflush - flushing output at every interval */
     int	      multisend;
     int	      repeating_payload;                /* --repeating-payload */
+    int       multithread;                      /* --multithread option */
 
     char     *json_output_string; /* rendered JSON output if json_output is set */
     /* Select related parameters */

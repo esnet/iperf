@@ -260,6 +260,8 @@ iperf_handle_message_client(struct iperf_test *test)
             }
             else if (iperf_create_streams(test, test->mode) < 0)
                 return -1;
+            if (test->multithread)
+                iperf_create_threads(test);
             break;
         case TEST_START:
             if (iperf_init_test(test) < 0)
@@ -512,21 +514,25 @@ iperf_run_client(struct iperf_test * test)
 		}
 	    }
 
+	    if (test->multithread) {
 
-	    if (test->mode == BIDIRECTIONAL)
-	    {
-                if (iperf_send(test, &write_set) < 0)
-                    return -1;
-                if (iperf_recv(test, &read_set) < 0)
-                    return -1;
-	    } else if (test->mode == SENDER) {
-                // Regular mode. Client sends.
-                if (iperf_send(test, &write_set) < 0)
-                    return -1;
-	    } else {
-                // Reverse mode. Client receives.
-                if (iperf_recv(test, &read_set) < 0)
-                    return -1;
+	    }
+	    else {
+                if (test->mode == BIDIRECTIONAL)
+                {
+                    if (iperf_send(test, &write_set) < 0)
+                        return -1;
+                    if (iperf_recv(test, &read_set) < 0)
+                        return -1;
+                } else if (test->mode == SENDER) {
+                    // Regular mode. Client sends.
+                    if (iperf_send(test, &write_set) < 0)
+                        return -1;
+                } else {
+                    // Reverse mode. Client receives.
+                    if (iperf_recv(test, &read_set) < 0)
+                        return -1;
+                }
 	    }
 
 

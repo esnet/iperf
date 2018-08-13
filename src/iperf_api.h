@@ -72,6 +72,8 @@ struct iperf_stream;
 #define OPT_EXTRA_DATA 19
 #define OPT_BIDIRECTIONAL 20
 
+#define OPT_MULTITHREAD 21
+
 /* states */
 #define TEST_START 1
 #define TEST_RUNNING 2
@@ -300,6 +302,14 @@ int iperf_clearaffinity(struct iperf_test *);
 /* Custom printf routine. */
 int iperf_printf(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3)));
 int iflush(struct iperf_test *test);
+
+/* Multithread option */
+
+int iperf_create_threads(struct iperf_test *test);
+struct iperf_thread *iperf_new_thread(struct iperf_test *, struct iperf_stream *);
+void *iperf_run_thread(void *);
+int iperf_thread_send(struct iperf_thread *);
+int iperf_thread_recv(struct iperf_thread *);
 
 /* Error routines. */
 void iperf_err(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3)));

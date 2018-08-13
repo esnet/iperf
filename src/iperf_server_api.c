@@ -624,7 +624,7 @@ iperf_run_server(struct iperf_test *test)
                         int status;
 
                         test->thrcontrol->started = 1;
-                        //status = pthread_barrier_wait(&test->thrcontrol->initial_barrier);
+                        status = pthread_barrier_wait(&test->thrcontrol->initial_barrier);
                         if (status == PTHREAD_BARRIER_SERIAL_THREAD) {
                             pthread_barrier_destroy(&test->thrcontrol->initial_barrier);
                         }

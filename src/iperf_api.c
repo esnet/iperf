@@ -4046,13 +4046,13 @@ iperf_create_threads(struct iperf_test *test)
 
     test->thrcontrol->threads = malloc(sizeof(struct iperf_thread) * test->thrcontrol->sum_threads);
 
+    pthread_barrier_init(&test->thrcontrol->initial_barrier, NULL, test->thrcontrol->sum_threads + 1);
+
     SLIST_FOREACH(sp, &test->streams, streams){
         thr = iperf_new_thread(test, sp);
         test->thrcontrol->threads[i] = thr;
         ++i;
     }
-
-    pthread_barrier_init(&test->thrcontrol->initial_barrier, NULL, test->thrcontrol->sum_threads + 1);
 
     if (test->mode == SENDER)
         pthread_mutex_init(&test->thrcontrol->send_mutex, NULL);
@@ -4083,7 +4083,7 @@ iperf_run_thread(void *argv)
     int status;
     struct iperf_thread *thr = argv;
 
-    //status = pthread_barrier_wait(&thr->test->thrcontrol->initial_barrier);
+    status = pthread_barrier_wait(&thr->test->thrcontrol->initial_barrier);
     if (status == PTHREAD_BARRIER_SERIAL_THREAD) {
         pthread_barrier_destroy(&thr->test->thrcontrol->initial_barrier);
     }

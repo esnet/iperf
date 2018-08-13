@@ -515,7 +515,15 @@ iperf_run_client(struct iperf_test * test)
 	    }
 
 	    if (test->multithread) {
+                if (!test->thrcontrol->started) {
+                    int status;
 
+                    test->thrcontrol->started = 1;
+                    status = pthread_barrier_wait(&test->thrcontrol->initial_barrier);
+                    if (status == PTHREAD_BARRIER_SERIAL_THREAD) {
+                        pthread_barrier_destroy(&test->thrcontrol->initial_barrier);
+                    }
+                }
 	    }
 	    else {
                 if (test->mode == BIDIRECTIONAL)

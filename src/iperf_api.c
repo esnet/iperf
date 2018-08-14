@@ -4040,6 +4040,7 @@ iperf_create_threads(struct iperf_test *test)
 
     test->thrcontrol = malloc(sizeof(struct iperf_threads_control));
     test->thrcontrol->sum_threads = test->num_streams;
+    test->thrcontrol->started = 0;
 
     if (test->bidirectional)
         test->thrcontrol->sum_threads *= 2;
@@ -4173,3 +4174,37 @@ iperf_thread_recv(struct iperf_thread *thr)
 
     return 0;
 }
+
+int
+iperf_delete_threads(struct iperf_test *test)
+{
+    struct iperf_thread *thr;
+    struct iperf_threads_control *control;
+    int i;
+
+    control = test->thrcontrol;
+
+    if (control) {
+        for (i = 0; i < test->thrcontrol->sum_threads; ++i) {
+            thr = test->thrcontrol->threads[i];
+            free(thr);
+        }
+
+        free(control->threads);
+
+        if (test->mode == SENDER)
+            pthread_mutex_destroy(&control->send_mutex);
+        else if (test->mode == RECEIVER)
+            pthread_mutex_destroy(&control->receive_mutex);
+        else {
+            // BIDIRECTIONAL
+            pthread_mutex_destroy(&control->send_mutex);
+            pthread_mutex_destroy(&control->receive_mutex);
+        }
+
+        free(control);
+    }
+
+    return 0;
+}
+

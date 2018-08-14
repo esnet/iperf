@@ -618,7 +618,6 @@ iperf_run_server(struct iperf_test *test)
             }
 
             if (test->state == TEST_RUNNING) {
-
                 if (test->multithread) {
                     if (!test->thrcontrol->started) {
                         int status;
@@ -665,6 +664,9 @@ iperf_run_server(struct iperf_test *test)
     }
 
     cleanup_server(test);
+
+    if (test->multithread)
+        iperf_delete_threads(test);
 
     if (test->json_output) {
 	if (iperf_json_finish(test) < 0)

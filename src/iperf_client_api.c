@@ -580,6 +580,9 @@ iperf_run_client(struct iperf_test * test)
 	}
     }
 
+    if (test->multithread)
+            iperf_delete_threads(test);
+
     if (test->json_output) {
 	if (iperf_json_finish(test) < 0)
 	    return -1;

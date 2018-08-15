@@ -402,6 +402,11 @@ enum {
     /* Timer errors */
     IENEWTIMER = 300,       // Unable to create new timer (check perror)
     IEUPDATETIMER = 301,    // Unable to update timer (check perror)
+    /* Threads errors */
+    IENEWTHREAD = 400,      // Unable to create new thread
+    IEINITBARRIER = 401,    // Unable to init barrier
+    IEINITMUTEX = 402,      // Unable to init mutex
+    IEWAITBARRIER = 403,    // Error wait barrier
 };
 
 

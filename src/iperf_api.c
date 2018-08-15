@@ -4047,22 +4047,42 @@ iperf_create_threads(struct iperf_test *test)
 
     test->thrcontrol->threads = malloc(sizeof(struct iperf_thread) * test->thrcontrol->sum_threads);
 
-    pthread_barrier_init(&test->thrcontrol->initial_barrier, NULL, test->thrcontrol->sum_threads + 1);
+    if (pthread_barrier_init(&test->thrcontrol->initial_barrier, NULL, test->thrcontrol->sum_threads + 1)) {
+        i_errno = IEINITBARRIER;
+        return -1;
+    }
 
     SLIST_FOREACH(sp, &test->streams, streams){
         thr = iperf_new_thread(test, sp);
+        if (thr == NULL)
+            return -1;
         test->thrcontrol->threads[i] = thr;
         ++i;
     }
 
-    if (test->mode == SENDER)
-        pthread_mutex_init(&test->thrcontrol->send_mutex, NULL);
-    else if (test->mode == RECEIVER)
-        pthread_mutex_init(&test->thrcontrol->receive_mutex, NULL);
-    else {
-        pthread_mutex_init(&test->thrcontrol->send_mutex, NULL);
-        pthread_mutex_init(&test->thrcontrol->receive_mutex, NULL);
+    /* Mutex initialization */
+    switch(test->mode) {
+    case SENDER:
+        if (pthread_mutex_init(&test->thrcontrol->send_mutex, NULL)) {
+            i_errno = IEINITMUTEX;
+            return -1;
+        }
+        break;
+    case RECEIVER:
+        if (pthread_mutex_init(&test->thrcontrol->receive_mutex, NULL)) {
+            i_errno = IEINITMUTEX;
+            return -1;
+        }
+        break;
+    case BIDIRECTIONAL:
+        if (pthread_mutex_init(&test->thrcontrol->send_mutex, NULL) ||
+                pthread_mutex_init(&test->thrcontrol->receive_mutex, NULL)) {
+            i_errno = IEINITMUTEX;
+            return -1;
+        }
+        break;
     }
+
     return 0;
 }
 
@@ -4073,8 +4093,10 @@ iperf_new_thread(struct iperf_test *test, struct iperf_stream *sp)
     thr = malloc(sizeof(struct iperf_thread));
     thr->test = test;
     thr->stream = sp;
-    if (pthread_create(&thr->thread, NULL, iperf_run_thread, thr))
+    if (pthread_create(&thr->thread, NULL, iperf_run_thread, thr)) {
+        i_errno = IENEWTHREAD;
         return NULL;
+    }
     return thr;
 }
 
@@ -4087,9 +4109,10 @@ iperf_run_thread(void *argv)
     status = pthread_barrier_wait(&thr->test->thrcontrol->initial_barrier);
     if (status == PTHREAD_BARRIER_SERIAL_THREAD) {
         pthread_barrier_destroy(&thr->test->thrcontrol->initial_barrier);
+    } else if (status != 0) {
+        i_errno = IEWAITBARRIER;
+        exit(-1);
     }
-
-    // TODO: add err check
 
     while (thr->test->state == TEST_RUNNING) {
         if (thr->stream->sender) {
@@ -4187,7 +4210,8 @@ iperf_delete_threads(struct iperf_test *test)
     if (control) {
         for (i = 0; i < test->thrcontrol->sum_threads; ++i) {
             thr = test->thrcontrol->threads[i];
-            free(thr);
+            if (thr)
+                free(thr);
         }
 
         free(control->threads);

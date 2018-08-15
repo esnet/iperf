@@ -613,7 +613,12 @@ iperf_run_server(struct iperf_test *test)
                         return -1;
 		    }
 
-                    iperf_create_threads(test);
+                    if (test->multithread)
+                        if (iperf_create_threads(test)) {
+                            iperf_delete_threads(test);
+                            cleanup_server(test);
+                            return -1;
+                        }
                 }
             }
 

@@ -92,11 +92,13 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = iperf3$(EXEEXT)
 @ENABLE_PROFILING_FALSE@noinst_PROGRAMS = t_timer$(EXEEXT) \
-@ENABLE_PROFILING_FALSE@	t_units$(EXEEXT) t_uuid$(EXEEXT)
+@ENABLE_PROFILING_FALSE@	t_units$(EXEEXT) t_uuid$(EXEEXT) \
+@ENABLE_PROFILING_FALSE@	t_api$(EXEEXT)
 @ENABLE_PROFILING_TRUE@noinst_PROGRAMS = t_timer$(EXEEXT) \
 @ENABLE_PROFILING_TRUE@	t_units$(EXEEXT) t_uuid$(EXEEXT) \
-@ENABLE_PROFILING_TRUE@	iperf3_profile$(EXEEXT)
-TESTS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT)
+@ENABLE_PROFILING_TRUE@	t_api$(EXEEXT) iperf3_profile$(EXEEXT)
+TESTS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT) \
+	t_api$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/ax_check_openssl.m4 \
@@ -187,6 +189,12 @@ iperf3_profile_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(iperf3_profile_CFLAGS) $(CFLAGS) $(iperf3_profile_LDFLAGS) \
 	$(LDFLAGS) -o $@
+am_t_api_OBJECTS = t_api-t_api.$(OBJEXT)
+t_api_OBJECTS = $(am_t_api_OBJECTS)
+t_api_DEPENDENCIES = libiperf.la
+t_api_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(t_api_CFLAGS) $(CFLAGS) \
+	$(t_api_LDFLAGS) $(LDFLAGS) -o $@
 am_t_timer_OBJECTS = t_timer-t_timer.$(OBJEXT)
 t_timer_OBJECTS = $(am_t_timer_OBJECTS)
 t_timer_DEPENDENCIES = libiperf.la
@@ -243,9 +251,10 @@ am__depfiles_remade = ./$(DEPDIR)/cjson.Plo ./$(DEPDIR)/dscp.Plo \
 	./$(DEPDIR)/iperf_sctp.Plo ./$(DEPDIR)/iperf_server_api.Plo \
 	./$(DEPDIR)/iperf_tcp.Plo ./$(DEPDIR)/iperf_udp.Plo \
 	./$(DEPDIR)/iperf_util.Plo ./$(DEPDIR)/net.Plo \
-	./$(DEPDIR)/t_timer-t_timer.Po ./$(DEPDIR)/t_units-t_units.Po \
-	./$(DEPDIR)/t_uuid-t_uuid.Po ./$(DEPDIR)/tcp_info.Plo \
-	./$(DEPDIR)/timer.Plo ./$(DEPDIR)/units.Plo
+	./$(DEPDIR)/t_api-t_api.Po ./$(DEPDIR)/t_timer-t_timer.Po \
+	./$(DEPDIR)/t_units-t_units.Po ./$(DEPDIR)/t_uuid-t_uuid.Po \
+	./$(DEPDIR)/tcp_info.Plo ./$(DEPDIR)/timer.Plo \
+	./$(DEPDIR)/units.Plo
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -266,11 +275,11 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libiperf_la_SOURCES) $(iperf3_SOURCES) \
-	$(iperf3_profile_SOURCES) $(t_timer_SOURCES) \
+	$(iperf3_profile_SOURCES) $(t_api_SOURCES) $(t_timer_SOURCES) \
 	$(t_units_SOURCES) $(t_uuid_SOURCES)
 DIST_SOURCES = $(libiperf_la_SOURCES) $(iperf3_SOURCES) \
-	$(am__iperf3_profile_SOURCES_DIST) $(t_timer_SOURCES) \
-	$(t_units_SOURCES) $(t_uuid_SOURCES)
+	$(am__iperf3_profile_SOURCES_DIST) $(t_api_SOURCES) \
+	$(t_timer_SOURCES) $(t_units_SOURCES) $(t_uuid_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -672,6 +681,10 @@ t_uuid_SOURCES = t_uuid.c
 t_uuid_CFLAGS = -g
 t_uuid_LDFLAGS = 
 t_uuid_LDADD = libiperf.la
+t_api_SOURCES = t_api.c
+t_api_CFLAGS = -g
+t_api_LDFLAGS = 
+t_api_LDADD = libiperf.la
 dist_man_MANS = iperf3.1 libiperf.3
 all: iperf_config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -829,6 +842,10 @@ iperf3_profile$(EXEEXT): $(iperf3_profile_OBJECTS) $(iperf3_profile_DEPENDENCIES
 	@rm -f iperf3_profile$(EXEEXT)
 	$(AM_V_CCLD)$(iperf3_profile_LINK) $(iperf3_profile_OBJECTS) $(iperf3_profile_LDADD) $(LIBS)
 
+t_api$(EXEEXT): $(t_api_OBJECTS) $(t_api_DEPENDENCIES) $(EXTRA_t_api_DEPENDENCIES) 
+	@rm -f t_api$(EXEEXT)
+	$(AM_V_CCLD)$(t_api_LINK) $(t_api_OBJECTS) $(t_api_LDADD) $(LIBS)
+
 t_timer$(EXEEXT): $(t_timer_OBJECTS) $(t_timer_DEPENDENCIES) $(EXTRA_t_timer_DEPENDENCIES) 
 	@rm -f t_timer$(EXEEXT)
 	$(AM_V_CCLD)$(t_timer_LINK) $(t_timer_OBJECTS) $(t_timer_LDADD) $(LIBS)
@@ -878,6 +895,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_udp.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_util.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/net.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_api-t_api.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_timer-t_timer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_units-t_units.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_uuid-t_uuid.Po@am__quote@ # am--include-marker
@@ -1163,6 +1181,20 @@ iperf3_profile-units.obj: units.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='units.c' object='iperf3_profile-units.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-units.obj `if test -f 'units.c'; then $(CYGPATH_W) 'units.c'; else $(CYGPATH_W) '$(srcdir)/units.c'; fi`
+
+t_api-t_api.o: t_api.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(t_api_CFLAGS) $(CFLAGS) -MT t_api-t_api.o -MD -MP -MF $(DEPDIR)/t_api-t_api.Tpo -c -o t_api-t_api.o `test -f 't_api.c' || echo '$(srcdir)/'`t_api.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/t_api-t_api.Tpo $(DEPDIR)/t_api-t_api.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='t_api.c' object='t_api-t_api.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(t_api_CFLAGS) $(CFLAGS) -c -o t_api-t_api.o `test -f 't_api.c' || echo '$(srcdir)/'`t_api.c
+
+t_api-t_api.obj: t_api.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(t_api_CFLAGS) $(CFLAGS) -MT t_api-t_api.obj -MD -MP -MF $(DEPDIR)/t_api-t_api.Tpo -c -o t_api-t_api.obj `if test -f 't_api.c'; then $(CYGPATH_W) 't_api.c'; else $(CYGPATH_W) '$(srcdir)/t_api.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/t_api-t_api.Tpo $(DEPDIR)/t_api-t_api.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='t_api.c' object='t_api-t_api.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(t_api_CFLAGS) $(CFLAGS) -c -o t_api-t_api.obj `if test -f 't_api.c'; then $(CYGPATH_W) 't_api.c'; else $(CYGPATH_W) '$(srcdir)/t_api.c'; fi`
 
 t_timer-t_timer.o: t_timer.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(t_timer_CFLAGS) $(CFLAGS) -MT t_timer-t_timer.o -MD -MP -MF $(DEPDIR)/t_timer-t_timer.Tpo -c -o t_timer-t_timer.o `test -f 't_timer.c' || echo '$(srcdir)/'`t_timer.c
@@ -1533,6 +1565,13 @@ t_uuid.log: t_uuid$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+t_api.log: t_api$(EXEEXT)
+	@p='t_api$(EXEEXT)'; \
+	b='t_api'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 .test.log:
 	@p='$<'; \
 	$(am__set_b); \
@@ -1662,6 +1701,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/iperf_udp.Plo
 	-rm -f ./$(DEPDIR)/iperf_util.Plo
 	-rm -f ./$(DEPDIR)/net.Plo
+	-rm -f ./$(DEPDIR)/t_api-t_api.Po
 	-rm -f ./$(DEPDIR)/t_timer-t_timer.Po
 	-rm -f ./$(DEPDIR)/t_units-t_units.Po
 	-rm -f ./$(DEPDIR)/t_uuid-t_uuid.Po
@@ -1744,6 +1784,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/iperf_udp.Plo
 	-rm -f ./$(DEPDIR)/iperf_util.Plo
 	-rm -f ./$(DEPDIR)/net.Plo
+	-rm -f ./$(DEPDIR)/t_api-t_api.Po
 	-rm -f ./$(DEPDIR)/t_timer-t_timer.Po
 	-rm -f ./$(DEPDIR)/t_units-t_units.Po
 	-rm -f ./$(DEPDIR)/t_uuid-t_uuid.Po

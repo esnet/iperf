@@ -1921,10 +1921,13 @@ get_results(struct iperf_test *test)
 	    test->remote_cpu_util[1] = j_cpu_util_user->valuedouble;
 	    test->remote_cpu_util[2] = j_cpu_util_system->valuedouble;
 	    result_has_retransmits = j_sender_has_retransmits->valueint;
-	    if ( test->mode == RECEIVER )
-		test->sender_has_retransmits = result_has_retransmits;
+	    if ( test->mode == RECEIVER ) {
+	        test->sender_has_retransmits = result_has_retransmits;
+	        test->other_side_has_retransmits = 0;
+	    }
 	    else if ( test->mode == BIDIRECTIONAL )
 	        test->other_side_has_retransmits = result_has_retransmits;
+
 	    j_streams = cJSON_GetObjectItem(j, "streams");
 	    if (j_streams == NULL) {
 		i_errno = IERECVRESULTS;

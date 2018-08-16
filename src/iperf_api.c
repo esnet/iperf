@@ -2468,6 +2468,8 @@ iperf_reset_test(struct iperf_test *test)
     test->bytes_received = 0;
     test->blocks_received = 0;
 
+    test->other_side_has_retransmits = 0;
+
     test->reverse = 0;
     test->bidirectional = 0;
     test->no_delay = 0;

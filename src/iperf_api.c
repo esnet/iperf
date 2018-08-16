@@ -4190,6 +4190,7 @@ iperf_thread_recv(struct iperf_thread *thr)
         return r;
     }
 
+    /* XXX: bytes_received and blocks_received are never used. Do we need to count it? */
     pthread_mutex_lock(&thr->test->thrcontrol->receive_mutex);
     thr->test->bytes_received += r;
     ++thr->test->blocks_received;
@@ -4216,14 +4217,17 @@ iperf_delete_threads(struct iperf_test *test)
 
         free(control->threads);
 
-        if (test->mode == SENDER)
+        switch (test->mode) {
+        case SENDER:
             pthread_mutex_destroy(&control->send_mutex);
-        else if (test->mode == RECEIVER)
+            break;
+        case RECEIVER:
             pthread_mutex_destroy(&control->receive_mutex);
-        else {
-            // BIDIRECTIONAL
+            break;
+        case BIDIRECTIONAL:
             pthread_mutex_destroy(&control->send_mutex);
             pthread_mutex_destroy(&control->receive_mutex);
+            break;
         }
 
         free(control);

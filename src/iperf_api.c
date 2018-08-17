@@ -4203,10 +4203,10 @@ iperf_thread_recv(struct iperf_thread *thr)
     }
 
     /* XXX: bytes_received and blocks_received are never used. Do we need to count it? */
-    pthread_mutex_lock(&thr->test->thrcontrol->receive_mutex);
-    thr->test->bytes_received += r;
-    ++thr->test->blocks_received;
-    pthread_mutex_unlock(&thr->test->thrcontrol->receive_mutex);
+//    pthread_mutex_lock(&thr->test->thrcontrol->receive_mutex);
+//    thr->test->bytes_received += r;
+//    ++thr->test->blocks_received;
+//    pthread_mutex_unlock(&thr->test->thrcontrol->receive_mutex);
 
     return 0;
 }

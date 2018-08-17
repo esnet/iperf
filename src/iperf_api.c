@@ -88,6 +88,7 @@
 #endif /* HAVE_SSL */
 
 #include <pthread.h>
+#include <sys/sysinfo.h>
 
 /* Forwards. */
 static int send_parameters(struct iperf_test *test);
@@ -809,6 +810,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {"multithread", no_argument, NULL, OPT_MULTITHREAD},
+        {"thread-affinity", no_argument, NULL, OPT_THREAD_AFFINITY},
         {NULL, 0, NULL, 0}
     };
     int flag;
@@ -1186,6 +1188,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		break;
 	    case OPT_MULTITHREAD:
 	        test->multithread = 1;
+	        break;
+	    case OPT_THREAD_AFFINITY:
+	        test->thread_affinity = 1;
 	        break;
 	    case 'h':
 		usage_long(stdout);
@@ -4053,7 +4058,7 @@ iperf_create_threads(struct iperf_test *test)
     }
 
     SLIST_FOREACH(sp, &test->streams, streams){
-        thr = iperf_new_thread(test, sp);
+        thr = iperf_new_thread(test, sp, i);
         if (thr == NULL)
             return -1;
         test->thrcontrol->threads[i] = thr;
@@ -4087,16 +4092,20 @@ iperf_create_threads(struct iperf_test *test)
 }
 
 struct iperf_thread*
-iperf_new_thread(struct iperf_test *test, struct iperf_stream *sp)
+iperf_new_thread(struct iperf_test *test, struct iperf_stream *sp, int id)
 {
     struct iperf_thread *thr;
+
     thr = malloc(sizeof(struct iperf_thread));
     thr->test = test;
     thr->stream = sp;
+    thr->id = id;
+
     if (pthread_create(&thr->thread, NULL, iperf_run_thread, thr)) {
         i_errno = IENEWTHREAD;
         return NULL;
     }
+
     return thr;
 }
 
@@ -4113,6 +4122,9 @@ iperf_run_thread(void *argv)
         i_errno = IEWAITBARRIER;
         exit(-1);
     }
+
+    if (thr->test->thread_affinity)
+        iperf_set_thread_affinity(thr);
 
     while (thr->test->state == TEST_RUNNING) {
         if (thr->stream->sender) {
@@ -4236,3 +4248,21 @@ iperf_delete_threads(struct iperf_test *test)
     return 0;
 }
 
+int
+iperf_set_thread_affinity(struct iperf_thread *thr)
+{
+#if defined(HAVE_SCHED_SETAFFINITY)
+    cpu_set_t cpu_set;
+    uint cpu_num;
+
+    cpu_num = get_nprocs();
+
+    CPU_ZERO(&cpu_set);
+    CPU_SET(thr->id % cpu_num, &cpu_set);
+    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0) {
+        i_errno = IEAFFINITY;
+        return -1;
+    }
+#endif
+    return 0;
+}

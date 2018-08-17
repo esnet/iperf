@@ -243,6 +243,7 @@ enum iperf_mode {
 };
 
 struct iperf_thread {
+    int id;
     pthread_t thread;
 
     struct iperf_test *test;
@@ -319,6 +320,7 @@ struct iperf_test
     int	      multisend;
     int	      repeating_payload;                /* --repeating-payload */
     int       multithread;                      /* --multithread option */
+    int       thread_affinity;                  /* --thread-affinity option. Use only with --multithread option */
 
     char     *json_output_string; /* rendered JSON output if json_output is set */
     /* Select related parameters */

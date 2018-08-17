@@ -73,6 +73,7 @@ struct iperf_stream;
 #define OPT_BIDIRECTIONAL 20
 
 #define OPT_MULTITHREAD 21
+#define OPT_THREAD_AFFINITY 22
 
 /* states */
 #define TEST_START 1
@@ -306,11 +307,12 @@ int iflush(struct iperf_test *test);
 /* Multithread option */
 
 int iperf_create_threads(struct iperf_test *);
-struct iperf_thread *iperf_new_thread(struct iperf_test *, struct iperf_stream *);
+struct iperf_thread *iperf_new_thread(struct iperf_test *, struct iperf_stream *, int);
 void *iperf_run_thread(void *);
 int iperf_thread_send(struct iperf_thread *);
 int iperf_thread_recv(struct iperf_thread *);
 int iperf_delete_threads(struct iperf_test *);
+int iperf_set_thread_affinity(struct iperf_thread *);
 
 /* Error routines. */
 void iperf_err(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3)));

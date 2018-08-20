@@ -112,6 +112,7 @@ struct iperf_stream_result
     iperf_size_t bytes_received_this_interval;
     iperf_size_t bytes_sent_this_interval;
     iperf_size_t bytes_sent_omit;
+    iperf_size_t bytes_for_previous_interval;
     int stream_prev_total_retrans;
     int stream_retrans;
     int stream_prev_total_sacks;

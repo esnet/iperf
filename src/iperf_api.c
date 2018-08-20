@@ -2560,6 +2560,7 @@ iperf_reset_stats(struct iperf_test *test)
 	rp = sp->result;
         rp->bytes_sent_omit = rp->bytes_sent;
         rp->bytes_received = 0;
+        rp->bytes_for_previous_interval = 0;
         rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;
 	if (test->sender_has_retransmits == 1) {
 	    struct iperf_interval_results ir; /* temporary results structure */
@@ -2584,11 +2585,13 @@ iperf_stats_callback(struct iperf_test *test)
     struct iperf_stream *sp;
     struct iperf_stream_result *rp = NULL;
     struct iperf_interval_results *irp, temp;
+    iperf_size_t bytes_temp;
 
     temp.omitted = test->omitting;
     SLIST_FOREACH(sp, &test->streams, streams) {
         rp = sp->result;
-	temp.bytes_transferred = sp->sender ? rp->bytes_sent_this_interval : rp->bytes_received_this_interval;
+        bytes_temp = sp->sender ? rp->bytes_sent_this_interval : rp->bytes_received_this_interval;
+        temp.bytes_transferred = bytes_temp - rp->bytes_for_previous_interval;
      
 	irp = TAILQ_LAST(&rp->interval_results, irlisthead);
         /* result->end_time contains timestamp of previous interval */
@@ -2646,7 +2649,7 @@ iperf_stats_callback(struct iperf_test *test)
 	    temp.cnt_error = sp->cnt_error;
 	}
         add_to_interval_list(rp, &temp);
-        rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;
+        rp->bytes_for_previous_interval = bytes_temp;
     }
 }
 

@@ -3468,8 +3468,8 @@ iperf_add_stream(struct iperf_test *test, struct iperf_stream *sp)
         SLIST_INSERT_HEAD(&test->streams, sp, streams);
         sp->id = 1;
     } else {
-        // for (n = test->streams, i = 2; n->next; n = n->next, ++i);
-        i = 2;
+        // for (n = test->streams, i = 1; n->next; n = n->next, ++i);
+        i = 1;
         SLIST_FOREACH(n, &test->streams, streams) {
             prev = n;
             ++i;

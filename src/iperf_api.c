@@ -4254,15 +4254,19 @@ iperf_set_thread_affinity(struct iperf_thread *thr)
 #if defined(HAVE_SCHED_SETAFFINITY)
     cpu_set_t cpu_set;
     uint cpu_num;
+    int cpu;
 
     cpu_num = get_nprocs();
+    cpu = thr->id % cpu_num;
 
     CPU_ZERO(&cpu_set);
-    CPU_SET(thr->id % cpu_num, &cpu_set);
+    CPU_SET(cpu, &cpu_set);
     if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0) {
         i_errno = IEAFFINITY;
         return -1;
     }
+
+    setsockopt(thr->stream->socket, SOL_SOCKET, SO_INCOMING_CPU, &cpu, sizeof(cpu));
 #endif
     return 0;
 }

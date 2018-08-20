@@ -4260,7 +4260,7 @@ iperf_set_thread_affinity(struct iperf_thread *thr)
     cpu_num = get_nprocs();
     cpu = thr->id % cpu_num;
 
-    getsockopt(thr->stream->socket, SOL_SOCKET, SO_INCOMING_CPU, &cpu, &cpu_num);
+    getsockopt(thr->stream->socket, SOL_SOCKET, SO_INCOMING_CPU, &cpu, &cpu_len);
 
     CPU_ZERO(&cpu_set);
     CPU_SET(cpu, &cpu_set);

@@ -3057,7 +3057,7 @@ iperf_print_results(struct iperf_test *test)
 	    else
 	        if (test->role == 's' && test->sender) {
 		    if (test->verbose) 
-		        iperf_printf(test, report_receiver_not_available_format, sp->socket);
+		        iperf_printf(test, report_receiver_not_available_summary_format, "SUM");
 		}
 		else {
 		    iperf_printf(test, report_sum_bw_format, start_time, receiver_time, ubuf, nbuf, report_receiver);

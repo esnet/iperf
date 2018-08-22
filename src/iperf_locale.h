@@ -98,6 +98,7 @@ extern const char report_receiver[] ;
 extern const char report_sender_not_available_format[];
 extern const char report_sender_not_available_summary_format[];
 extern const char report_receiver_not_available_format[];
+extern const char report_receiver_not_available_summary_format[];
 
 extern const char report_tcpInfo[] ;
 extern const char report_tcpInfo[] ;

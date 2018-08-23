@@ -211,6 +211,10 @@ struct iperf_stream
 //    struct iperf_stream *next;
     SLIST_ENTRY(iperf_stream) streams;
 
+    /* --multithread use only*/
+    int bytes_sent;
+    int blocks_sent;
+
     void     *data;
 };
 

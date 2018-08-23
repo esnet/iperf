@@ -4104,6 +4104,9 @@ iperf_new_thread(struct iperf_test *test, struct iperf_stream *sp, int id)
     thr->stream = sp;
     thr->id = id;
 
+    sp->blocks_sent = 0;
+    sp->bytes_sent = 0;
+
     if (pthread_create(&thr->thread, NULL, iperf_run_thread, thr)) {
         i_errno = IENEWTHREAD;
         return NULL;
@@ -4170,10 +4173,13 @@ iperf_thread_send(struct iperf_thread *thr)
             }
             streams_active = 1;
 
-            pthread_mutex_lock(&thr->test->thrcontrol->send_mutex);
-            test->bytes_sent += r;
-            ++test->blocks_sent;
-            pthread_mutex_unlock(&thr->test->thrcontrol->send_mutex);
+//            pthread_mutex_lock(&thr->test->thrcontrol->send_mutex);
+//            test->bytes_sent += r;
+//            ++test->blocks_sent;
+//            pthread_mutex_unlock(&thr->test->thrcontrol->send_mutex);
+
+            sp->bytes_sent += r;
+            ++sp->blocks_sent;
 
             if (test->settings->rate != 0 && test->settings->burst == 0)
                 iperf_check_throttle(sp, &now);

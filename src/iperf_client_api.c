@@ -525,7 +525,13 @@ iperf_run_client(struct iperf_test * test)
                         pthread_barrier_destroy(&test->thrcontrol->initial_barrier);
                     }
                 }
+
                 usleep(1000);
+
+                SLIST_FOREACH(sp, &test->streams, streams) {
+                    test->bytes_sent += sp->bytes_sent;
+                    test->blocks_sent += sp->blocks_sent;
+                }
 	    }
 	    else {
                 if (test->mode == BIDIRECTIONAL)

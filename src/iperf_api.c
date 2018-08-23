@@ -2227,6 +2227,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->server_port = PORT;
     testp->ctrl_sck = -1;
     testp->prot_listener = -1;
+    testp->other_side_has_retransmits = 0;
 
     testp->stats_callback = iperf_stats_callback;
     testp->reporter_callback = iperf_reporter_callback;

@@ -528,9 +528,15 @@ iperf_run_client(struct iperf_test * test)
 
                 usleep(1000);
 
-                SLIST_FOREACH(sp, &test->streams, streams) {
-                    test->bytes_sent += sp->bytes_sent;
-                    test->blocks_sent += sp->blocks_sent;
+                if (test->mode != RECEIVER) {
+
+                    test->blocks_sent = 0;
+                    test->bytes_sent = 0;
+
+                    SLIST_FOREACH(sp, &test->streams, streams) {
+                        test->bytes_sent += sp->bytes_sent;
+                        test->blocks_sent += sp->blocks_sent;
+                    }
                 }
 	    }
 	    else {
@@ -567,6 +573,18 @@ iperf_run_client(struct iperf_test * test)
 		    SLIST_FOREACH(sp, &test->streams, streams) {
 			setnonblocking(sp->socket, 0);
 		    }
+		}
+
+		/* If multisend we must to count the result after stopping all threads */
+		if (test->multithread && test->mode != RECEIVER) {
+
+                    test->blocks_sent = 0;
+                    test->bytes_sent = 0;
+
+                    SLIST_FOREACH(sp, &test->streams, streams) {
+                        test->bytes_sent += sp->bytes_sent;
+                        test->blocks_sent += sp->blocks_sent;
+                    }
 		}
 
 		/* Yes, done!  Send TEST_END. */

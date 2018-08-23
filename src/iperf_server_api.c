@@ -636,9 +636,15 @@ iperf_run_server(struct iperf_test *test)
 
                     usleep(1000);
 
-                    SLIST_FOREACH(sp, &test->streams, streams) {
-                        test->bytes_sent += sp->bytes_sent;
-                        test->blocks_sent += sp->blocks_sent;
+                    if (test->mode != RECEIVER) {
+
+                        test->blocks_sent = 0;
+                        test->bytes_sent = 0;
+
+                        SLIST_FOREACH(sp, &test->streams, streams) {
+                            test->bytes_sent += sp->bytes_sent;
+                            test->blocks_sent += sp->blocks_sent;
+                        }
                     }
                 } else {
                     if (test->mode == BIDIRECTIONAL) {

@@ -12135,6 +12135,11 @@ if test "x$GCC" = "xyes"; then
   CFLAGS="$CFLAGS -Wall"
 fi
 
+# Add -lpthread if we are using GCC
+if test "x$GCC" = "xyes"; then
+  CFLAGS="$CFLAGS -lpthread"
+fi
+
 # Check if profiling must be disabled
 # Check whether --enable-profiling was given.
 if test "${enable_profiling+set}" = set; then :

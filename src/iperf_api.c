@@ -2433,6 +2433,9 @@ iperf_reset_test(struct iperf_test *test)
 {
     struct iperf_stream *sp;
 
+    if (test->multithread)
+        iperf_delete_threads(test);
+
     /* Free streams */
     while (!SLIST_EMPTY(&test->streams)) {
         sp = SLIST_FIRST(&test->streams);
@@ -4232,11 +4235,17 @@ iperf_delete_threads(struct iperf_test *test)
     if (control) {
         for (i = 0; i < test->thrcontrol->sum_threads; ++i) {
             thr = test->thrcontrol->threads[i];
-            if (thr)
+            if (thr) {
+                pthread_join(thr->thread, NULL);
                 free(thr);
+                thr = NULL;
+            }
         }
 
-        free(control->threads);
+        if (control->threads) {
+            free(control->threads);
+            control->threads = NULL;
+        }
 
         switch (test->mode) {
         case SENDER:
@@ -4252,6 +4261,7 @@ iperf_delete_threads(struct iperf_test *test)
         }
 
         free(control);
+        test->thrcontrol = NULL;
     }
 
     return 0;

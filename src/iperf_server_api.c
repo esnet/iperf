@@ -350,6 +350,10 @@ create_server_omit_timer(struct iperf_test * test)
 static void
 cleanup_server(struct iperf_test *test)
 {
+    if (test->multithread) {
+        iperf_delete_threads(test);
+    }
+
     /* Close open test sockets */
     if (test->ctrl_sck) {
 	close(test->ctrl_sck);
@@ -682,9 +686,6 @@ iperf_run_server(struct iperf_test *test)
     }
 
     cleanup_server(test);
-
-    if (test->multithread)
-        iperf_delete_threads(test);
 
     if (test->json_output) {
 	if (iperf_json_finish(test) < 0)

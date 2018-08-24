@@ -3246,8 +3246,18 @@ iperf_print_results(struct iperf_test *test)
                 else {
                     lost_percent = 0.0;
                 }
-                if (test->json_output)
+                if (test->json_output) {
                     cJSON_AddItemToObject(test->json_end, "sum", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f sender: %b", (double) start_time, (double) receiver_time, (double) receiver_time, (int64_t) total_sent, bandwidth * 8, (double) avg_jitter * 1000.0, (int64_t) lost_packets, (int64_t) total_packets, (double) lost_percent, stream_must_be_sender));
+                    if (test->role != 's') {
+                        cJSON_AddItemToObject(test->json_end, "sum_sender", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f", (double) start_time, (double) sender_time, (double) sender_time, (int64_t) total_sent, bandwidth * 8, (double) 0.0, (int64_t) 0, (int64_t) total_packets, (double) lost_percent));
+                        if (receiver_time > 0.0) {
+                            bandwidth = (double) total_received / (double) receiver_time;
+                        } else {
+                            bandwidth = 0.0;
+                        }
+                        cJSON_AddItemToObject(test->json_end, "sum_receiver", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f", (double) start_time, (double) receiver_time, (double) receiver_time, (int64_t) total_received, bandwidth * 8, (double) avg_jitter * 1000.0, (int64_t) lost_packets, (int64_t) receiver_total_packets, (double) lost_percent));
+                    }
+                }
                 else {
                     /*
                      * On the client we have both sender and receiver overall summary

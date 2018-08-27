@@ -307,7 +307,7 @@ int iflush(struct iperf_test *test);
 /* Multithread option */
 
 int iperf_create_threads(struct iperf_test *);
-struct iperf_thread *iperf_new_thread(struct iperf_test *, struct iperf_stream *, int);
+int iperf_new_thread(struct iperf_test *, struct iperf_stream *, int, struct iperf_thread *);
 void *iperf_run_thread(void *);
 int iperf_thread_send(struct iperf_thread *);
 int iperf_thread_recv(struct iperf_thread *);

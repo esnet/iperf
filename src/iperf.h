@@ -257,7 +257,7 @@ struct iperf_thread {
 
 struct iperf_threads_control {
     int num_threads;
-    struct iperf_thread **threads;
+    struct iperf_thread *threads;
 
     pthread_barrier_t initial_barrier;
     pthread_mutex_t send_mutex;

@@ -4046,7 +4046,6 @@ int
 iperf_create_threads(struct iperf_test *test)
 {
     struct iperf_stream *sp;
-    struct iperf_thread *thr;
     int i = 0;
 
     test->thrcontrol = malloc(sizeof(struct iperf_threads_control));
@@ -4060,7 +4059,7 @@ iperf_create_threads(struct iperf_test *test)
     if (test->bidirectional)
         test->thrcontrol->num_threads *= 2;
 
-    test->thrcontrol->threads = malloc(sizeof(struct iperf_thread*) * test->thrcontrol->num_threads);
+    test->thrcontrol->threads = malloc(sizeof(struct iperf_thread) * test->thrcontrol->num_threads);
     if (!test->thrcontrol->threads)
         return -1;
 
@@ -4070,10 +4069,8 @@ iperf_create_threads(struct iperf_test *test)
     }
 
     SLIST_FOREACH(sp, &test->streams, streams){
-        thr = iperf_new_thread(test, sp, i);
-        if (thr == NULL)
+        if (iperf_new_thread(test, sp, i, &test->thrcontrol->threads[i]) < 0)
             return -1;
-        test->thrcontrol->threads[i] = thr;
         ++i;
     }
 
@@ -4103,15 +4100,9 @@ iperf_create_threads(struct iperf_test *test)
     return 0;
 }
 
-struct iperf_thread*
-iperf_new_thread(struct iperf_test *test, struct iperf_stream *sp, int id)
+int
+iperf_new_thread(struct iperf_test *test, struct iperf_stream *sp, int id, struct iperf_thread *thr)
 {
-    struct iperf_thread *thr;
-
-    thr = malloc(sizeof(struct iperf_thread));
-    if (!thr)
-        return NULL;
-
     thr->test = test;
     thr->stream = sp;
     thr->id = id;
@@ -4121,10 +4112,10 @@ iperf_new_thread(struct iperf_test *test, struct iperf_stream *sp, int id)
 
     if (pthread_create(&thr->thread, NULL, iperf_run_thread, thr)) {
         i_errno = IENEWTHREAD;
-        return NULL;
+        return -1;
     }
 
-    return thr;
+    return 0;
 }
 
 void*
@@ -4237,7 +4228,7 @@ iperf_thread_recv(struct iperf_thread *thr)
 int
 iperf_delete_threads(struct iperf_test *test)
 {
-    struct iperf_thread *thr;
+    struct iperf_thread thr;
     struct iperf_threads_control *control;
     int i;
 
@@ -4247,11 +4238,7 @@ iperf_delete_threads(struct iperf_test *test)
         if (control->threads) {
             for (i = 0; i < control->num_threads; ++i) {
                 thr = control->threads[i];
-                if (thr) {
-                    pthread_join(thr->thread, NULL);
-                    free(thr);
-                    thr = NULL;
-                }
+                pthread_join(thr.thread, NULL);
             }
 
             free(control->threads);

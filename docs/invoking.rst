@@ -295,7 +295,7 @@ the executable.
 
           --bidir
                  bidirectional mode, server and client send and receive data.
-   
+
           --multithread
                  creates a number of threads equal to the number of streams. Each
                  stream handled independently.

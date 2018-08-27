@@ -256,7 +256,7 @@ struct iperf_thread {
 };
 
 struct iperf_threads_control {
-    int sum_threads;
+    int num_threads;
     struct iperf_thread **threads;
 
     pthread_barrier_t initial_barrier;

@@ -4050,15 +4050,21 @@ iperf_create_threads(struct iperf_test *test)
     int i = 0;
 
     test->thrcontrol = malloc(sizeof(struct iperf_threads_control));
-    test->thrcontrol->sum_threads = test->num_streams;
+    /* TODO: add i_errno */
+    if (!test->thrcontrol)
+        return -1;
+
+    test->thrcontrol->num_threads = test->num_streams;
     test->thrcontrol->started = 0;
 
     if (test->bidirectional)
-        test->thrcontrol->sum_threads *= 2;
+        test->thrcontrol->num_threads *= 2;
 
-    test->thrcontrol->threads = malloc(sizeof(struct iperf_thread) * test->thrcontrol->sum_threads);
+    test->thrcontrol->threads = malloc(sizeof(struct iperf_thread*) * test->thrcontrol->num_threads);
+    if (!test->thrcontrol->threads)
+        return -1;
 
-    if (pthread_barrier_init(&test->thrcontrol->initial_barrier, NULL, test->thrcontrol->sum_threads + 1)) {
+    if (pthread_barrier_init(&test->thrcontrol->initial_barrier, NULL, test->thrcontrol->num_threads + 1)) {
         i_errno = IEINITBARRIER;
         return -1;
     }
@@ -4103,6 +4109,9 @@ iperf_new_thread(struct iperf_test *test, struct iperf_stream *sp, int id)
     struct iperf_thread *thr;
 
     thr = malloc(sizeof(struct iperf_thread));
+    if (!thr)
+        return NULL;
+
     thr->test = test;
     thr->stream = sp;
     thr->id = id;
@@ -4176,11 +4185,13 @@ iperf_thread_send(struct iperf_thread *thr)
             }
             streams_active = 1;
 
+
 //            pthread_mutex_lock(&thr->test->thrcontrol->send_mutex);
 //            test->bytes_sent += r;
 //            ++test->blocks_sent;
 //            pthread_mutex_unlock(&thr->test->thrcontrol->send_mutex);
 
+            /* XXX: split counter for each thread */
             sp->bytes_sent += r;
             ++sp->blocks_sent;
 
@@ -4233,16 +4244,16 @@ iperf_delete_threads(struct iperf_test *test)
     control = test->thrcontrol;
 
     if (control) {
-        for (i = 0; i < test->thrcontrol->sum_threads; ++i) {
-            thr = test->thrcontrol->threads[i];
-            if (thr) {
-                pthread_join(thr->thread, NULL);
-                free(thr);
-                thr = NULL;
-            }
-        }
-
         if (control->threads) {
+            for (i = 0; i < control->num_threads; ++i) {
+                thr = control->threads[i];
+                if (thr) {
+                    pthread_join(thr->thread, NULL);
+                    free(thr);
+                    thr = NULL;
+                }
+            }
+
             free(control->threads);
             control->threads = NULL;
         }

@@ -981,6 +981,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 iperf_set_test_bidirectional(test, 1);
                 client_flag = 1;
                 break;
+            case OPT_MULTITHREAD:
+                    test->multithread = 1;
+                    break;
+            case OPT_THREAD_AFFINITY:
+                test->thread_affinity = 1;
+                break;
             case 'w':
                 // XXX: This is a socket buffer, not specific to TCP
 		// Do sanity checks as double-precision floating point 
@@ -1186,12 +1192,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->settings->connect_timeout = unit_atoi(optarg);
 		client_flag = 1;
 		break;
-	    case OPT_MULTITHREAD:
-	        test->multithread = 1;
-	        break;
-	    case OPT_THREAD_AFFINITY:
-	        test->thread_affinity = 1;
-	        break;
 	    case 'h':
 		usage_long(stdout);
 		exit(0);

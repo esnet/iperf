@@ -71,9 +71,9 @@ struct iperf_stream;
 #define OPT_REPEATING_PAYLOAD 18
 #define OPT_EXTRA_DATA 19
 #define OPT_BIDIRECTIONAL 20
-
 #define OPT_MULTITHREAD 21
 #define OPT_THREAD_AFFINITY 22
+
 
 /* states */
 #define TEST_START 1

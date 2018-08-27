@@ -982,8 +982,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 client_flag = 1;
                 break;
             case OPT_MULTITHREAD:
-                    test->multithread = 1;
-                    break;
+                test->multithread = 1;
+                break;
             case OPT_THREAD_AFFINITY:
                 test->thread_affinity = 1;
                 break;

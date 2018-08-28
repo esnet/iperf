@@ -4124,6 +4124,9 @@ iperf_run_thread(void *argv)
     int status;
     struct iperf_thread *thr = argv;
 
+    if (thr->test->thread_affinity)
+        iperf_set_thread_affinity(thr);
+
     status = pthread_barrier_wait(&thr->test->thrcontrol->initial_barrier);
     if (status == PTHREAD_BARRIER_SERIAL_THREAD) {
         pthread_barrier_destroy(&thr->test->thrcontrol->initial_barrier);
@@ -4131,9 +4134,6 @@ iperf_run_thread(void *argv)
         i_errno = IEWAITBARRIER;
         exit(-1);
     }
-
-    if (thr->test->thread_affinity)
-        iperf_set_thread_affinity(thr);
 
     while (thr->test->state == TEST_RUNNING) {
         if (thr->stream->sender) {

@@ -4135,14 +4135,14 @@ iperf_run_thread(void *argv)
         exit(-1);
     }
 
-    while (thr->test->state == TEST_RUNNING) {
-        if (thr->stream->sender) {
+    if (thr->stream->sender) {
+        while (thr->test->state == TEST_RUNNING)
             iperf_thread_send(thr);
-        }
-        else {
+    } else {
+        while (thr->test->state == TEST_RUNNING)
             iperf_thread_recv(thr);
-        }
     }
+
     return NULL;
 }
 

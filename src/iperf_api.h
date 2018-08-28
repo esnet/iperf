@@ -42,6 +42,7 @@ struct iperf_test;
 struct iperf_stream_result;
 struct iperf_interval_results;
 struct iperf_stream;
+struct iperf_thread;
 
 /* default settings */
 #define Ptcp SOCK_STREAM

@@ -437,6 +437,7 @@ iperf_run_server(struct iperf_test *test)
         memcpy(&write_set, &test->write_set, sizeof(fd_set));
 
 	(void) gettimeofday(&now, NULL);
+	/* XXX: We must to recount timeout for multithread run */
 	timeout = tmr_timeout(&now);
         result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
         if (result < 0 && errno != EINTR) {

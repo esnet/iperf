@@ -558,7 +558,7 @@ iperf_run_server(struct iperf_test *test)
                              * maintain interactivity with the control channel.
                              */
                             if (test->protocol->id != Pudp ||
-                                !sp->sender) {
+                                (!sp->sender && !test->multithread) ) {
                                 setnonblocking(s, 1);
                             }
 

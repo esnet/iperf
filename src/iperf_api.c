@@ -4042,6 +4042,12 @@ iflush(struct iperf_test *test)
     return fflush(test->outfile);
 }
 
+void
+iperf_thread_hdl(int signal)
+{
+    return;
+}
+
 int
 iperf_create_threads(struct iperf_test *test)
 {
@@ -4123,6 +4129,18 @@ iperf_run_thread(void *argv)
 {
     int status;
     struct iperf_thread *thr = argv;
+
+    /* set handler for SIGUSR1 */
+    struct sigaction act;
+    sigset_t   set;
+
+    memset(&act, 0, sizeof(act));
+    act.sa_handler = iperf_thread_hdl;
+    sigemptyset(&set);
+    sigaddset(&set, SIGUSR1);
+    act.sa_mask = set;
+    sigaction(SIGUSR1, &act, 0);
+
 
     if (thr->test->thread_affinity)
         iperf_set_thread_affinity(thr);
@@ -4238,6 +4256,7 @@ iperf_delete_threads(struct iperf_test *test)
         if (control->threads) {
             for (i = 0; i < control->num_threads; ++i) {
                 thr = control->threads[i];
+                pthread_kill(thr.thread, SIGUSR1);
                 pthread_join(thr.thread, NULL);
             }
 

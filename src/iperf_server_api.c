@@ -438,12 +438,7 @@ iperf_run_server(struct iperf_test *test)
 
 	(void) gettimeofday(&now, NULL);
 	/* XXX: We must to recount timeout for multithread run */
-        if (test->multithread && test->state == TEST_RUNNING && timeout) {
-            timeout->tv_sec = 0;
-            timeout->tv_usec = 1000;
-        } else
-            timeout = tmr_timeout(&now);
-
+        timeout = tmr_timeout(&now);
         result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
         if (result < 0 && errno != EINTR) {
 	    cleanup_server(test);

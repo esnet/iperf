@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, 2016, 2017, The Regents of the University of
+ * iperf, Copyright (c) 2014-2018 The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -88,10 +88,10 @@ iperf_server_listen(struct iperf_test *test)
     if (!test->json_output) {
 	iperf_printf(test, "-----------------------------------------------------------\n");
 	iperf_printf(test, "Server listening on %d\n", test->server_port);
-    }
-
-    if (!test->json_output)
 	iperf_printf(test, "-----------------------------------------------------------\n");
+	if (test->forceflush)
+	    iflush(test);
+    }
 
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);

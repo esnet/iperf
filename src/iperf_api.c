@@ -925,17 +925,16 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 				   -b <burst_size>/<multisend> for new behaviour
 				   -b <burst_size>/1 should make iperf3 repeatable */
 						slash = strchr(optarg, '/');
-		if (slash) {
-		    *slash = '\0';
-		    ++slash;
-		    test->settings->burst = atoi(slash);
-		    if (test->settings->burst <= 0 ||
-		        test->settings->burst > MAX_BURST) {
-			i_errno = IEBURST;
-			return -1;
-		    }
-		}
-
+						if (slash) {
+							*slash = '\0';
+							++slash;
+							test->multisend = atoi(slash);
+							if (test->multisend <= 0 ||
+								test->multisend > MAX_BURST) {
+								i_errno = IEBURST;
+								return -1;
+							}
+						}
                 test->settings->bytes = unit_atoi(optarg);
 		client_flag = 1;
                 break;

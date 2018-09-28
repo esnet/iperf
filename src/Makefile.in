@@ -165,8 +165,9 @@ am__iperf3_profile_SOURCES_DIST = main.c cjson.c cjson.h flowlabel.h \
 	iperf_auth.c iperf_client_api.c iperf_locale.c iperf_locale.h \
 	iperf_server_api.c iperf_tcp.c iperf_tcp.h iperf_udp.c \
 	iperf_udp.h iperf_sctp.c iperf_sctp.h iperf_util.c \
-	iperf_util.h dscp.c net.c net.h portable_endian.h queue.h \
-	tcp_info.c timer.c timer.h units.c units.h version.h
+	iperf_util.h iperf_time.c iperf_time.h dscp.c net.c net.h \
+	portable_endian.h queue.h tcp_info.c timer.c timer.h units.c \
+	units.h version.h
 am__objects_1 = iperf3_profile-cjson.$(OBJEXT) \
 	iperf3_profile-iperf_api.$(OBJEXT) \
 	iperf3_profile-iperf_error.$(OBJEXT) \
@@ -252,12 +253,12 @@ am__depfiles_remade = ./$(DEPDIR)/cjson.Plo ./$(DEPDIR)/dscp.Plo \
 	./$(DEPDIR)/iperf_auth.Plo ./$(DEPDIR)/iperf_client_api.Plo \
 	./$(DEPDIR)/iperf_error.Plo ./$(DEPDIR)/iperf_locale.Plo \
 	./$(DEPDIR)/iperf_sctp.Plo ./$(DEPDIR)/iperf_server_api.Plo \
-	./$(DEPDIR)/iperf_tcp.Plo ./$(DEPDIR)/iperf_udp.Plo \
-	./$(DEPDIR)/iperf_util.Plo ./$(DEPDIR)/net.Plo \
-	./$(DEPDIR)/t_api-t_api.Po ./$(DEPDIR)/t_timer-t_timer.Po \
-	./$(DEPDIR)/t_units-t_units.Po ./$(DEPDIR)/t_uuid-t_uuid.Po \
-	./$(DEPDIR)/tcp_info.Plo ./$(DEPDIR)/timer.Plo \
-	./$(DEPDIR)/units.Plo
+	./$(DEPDIR)/iperf_tcp.Plo ./$(DEPDIR)/iperf_time.Plo \
+	./$(DEPDIR)/iperf_udp.Plo ./$(DEPDIR)/iperf_util.Plo \
+	./$(DEPDIR)/net.Plo ./$(DEPDIR)/t_api-t_api.Po \
+	./$(DEPDIR)/t_timer-t_timer.Po ./$(DEPDIR)/t_units-t_units.Po \
+	./$(DEPDIR)/t_uuid-t_uuid.Po ./$(DEPDIR)/tcp_info.Plo \
+	./$(DEPDIR)/timer.Plo ./$(DEPDIR)/units.Plo
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)

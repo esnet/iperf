@@ -42,6 +42,7 @@ struct iperf_test;
 struct iperf_stream_result;
 struct iperf_interval_results;
 struct iperf_stream;
+struct iperf_time;
 
 /* default settings */
 #define Ptcp SOCK_STREAM
@@ -247,7 +248,7 @@ void print_tcpinfo(struct iperf_test *test);
 void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 
 int iperf_set_send_state(struct iperf_test *test, signed char state);
-void iperf_check_throttle(struct iperf_stream *sp, struct timeval *nowP);
+void iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP);
 int iperf_send(struct iperf_test *, fd_set *) /* __attribute__((hot)) */;
 int iperf_recv(struct iperf_test *, fd_set *);
 void iperf_catch_sigend(void (*handler)(int));

@@ -189,10 +189,10 @@ timeval_diff(struct timeval * tv0, struct timeval * tv1)
 void
 cpu_util(double pcpu[3])
 {
-    static struct timeval last;
+    static struct iperf_time last;
     static clock_t clast;
     static struct rusage rlast;
-    struct timeval temp;
+    struct iperf_time now, temp_time;
     clock_t ctemp;
     struct rusage rtemp;
     double timediff;
@@ -200,18 +200,19 @@ cpu_util(double pcpu[3])
     double systemdiff;
 
     if (pcpu == NULL) {
-        gettimeofday(&last, NULL);
+        iperf_time_now(&last);
         clast = clock();
 	getrusage(RUSAGE_SELF, &rlast);
         return;
     }
 
-    gettimeofday(&temp, NULL);
+    iperf_time_now(&now);
     ctemp = clock();
     getrusage(RUSAGE_SELF, &rtemp);
 
-    timediff = ((temp.tv_sec * 1000000.0 + temp.tv_usec) -
-                (last.tv_sec * 1000000.0 + last.tv_usec));
+    iperf_time_diff(&now, &last, &temp_time);
+    timediff = iperf_time_in_secs(&temp_time);
+
     userdiff = ((rtemp.ru_utime.tv_sec * 1000000.0 + rtemp.ru_utime.tv_usec) -
                 (rlast.ru_utime.tv_sec * 1000000.0 + rlast.ru_utime.tv_usec));
     systemdiff = ((rtemp.ru_stime.tv_sec * 1000000.0 + rtemp.ru_stime.tv_usec) -

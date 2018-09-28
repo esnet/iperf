@@ -692,7 +692,9 @@ iperf_on_connect(struct iperf_test *test)
 	    else {
 		cJSON_AddNumberToObject(test->json_start, "tcp_mss_default", test->ctrl_sck_mss);
 	    }
-	}
+        if (test->settings->rate)
+            cJSON_AddNumberToObject(test->json_start, "target_bitrate", test->settings->rate);
+        }
     } else if (test->verbose) {
         iperf_printf(test, report_cookie, test->cookie);
         if (test->protocol->id == SOCK_STREAM) {
@@ -702,7 +704,8 @@ iperf_on_connect(struct iperf_test *test)
                 iperf_printf(test, "      TCP MSS: %d (default)\n", test->ctrl_sck_mss);
             }
         }
-
+        if (test->settings->rate)
+            iperf_printf(test, "      Target Bitrate: %llu\n", test->settings->rate);
     }
 }
 
@@ -1726,6 +1729,8 @@ get_parameters(struct iperf_test *test)
 #endif //HAVE_SSL
 	if (test->sender && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    test->sender_has_retransmits = 1;
+    if (test->settings->rate)
+        cJSON_AddNumberToObject(test->json_start, "target_bitrate", test->settings->rate);
 	cJSON_Delete(j);
     }
     return r;

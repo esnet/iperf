@@ -254,6 +254,12 @@ iperf_handle_message_client(struct iperf_test *test)
         case CREATE_STREAMS:
             if (iperf_create_streams(test) < 0)
                 return -1;
+
+            if(test->delay) {
+            	printf("Will now delay %d sec...\n",test->delay);
+            	sleep(test->delay);
+            }
+
             break;
         case TEST_START:
             if (iperf_init_test(test) < 0)
@@ -338,6 +344,13 @@ iperf_connect(struct iperf_test *test)
     if (Nwrite(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) < 0) {
         i_errno = IESENDCOOKIE;
         return -1;
+    }
+
+    char delay_buffer[COOKIE_SIZE];
+    snprintf(delay_buffer, sizeof(delay_buffer), "%d",test->delay);
+    if (Nwrite(test->ctrl_sck, delay_buffer, COOKIE_SIZE, Ptcp) < 0) {
+            i_errno = IESENDCOOKIE;
+            return -1;
     }
 
     FD_SET(test->ctrl_sck, &test->read_set);

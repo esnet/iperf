@@ -117,6 +117,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -D, --daemon              run the server as a daemon\n"
                            "  -I, --pidfile file        write PID file\n"
                            "  -1, --one-off             handle one client connection then exit\n"
+                           "  -z, --delay #             time in seconds to delay between connecting\n"
+                           "                            and running test proper.\n"
 #if defined(HAVE_SSL)
                            "  --rsa-private-key-path    path to the RSA private key used to decrypt\n"
 			   "                            authentication credentials\n"

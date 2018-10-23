@@ -236,6 +236,7 @@ struct xbind_entry {
 
 struct iperf_test
 {
+    int delay;
     char      role;                             /* 'c' lient or 's' erver */
     int       sender;                           /* client & !reverse or server & reverse */
     int       sender_has_retransmits;

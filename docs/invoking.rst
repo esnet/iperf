@@ -215,6 +215,11 @@ the executable.
                  run  in  client  mode,  connecting  to the specified server.  By
                  default, a test consists of sending data from the client to  the
                  server, unless the -R flag is specified.
+          -z, --delay n
+                 time in seconds to delay between establishing client/server
+                 connection and running test proper. Useful if running
+                 simultaneous tests and new iperf instances have problems
+                 establishing new connections.
    
           --sctp use SCTP rather than TCP (FreeBSD and Linux)
    

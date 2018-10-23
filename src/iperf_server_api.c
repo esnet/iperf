@@ -116,6 +116,9 @@ iperf_accept(struct iperf_test *test)
         return -1;
     }
 
+    char delay_buffer[COOKIE_SIZE];
+    int delay;
+
     if (test->ctrl_sck == -1) {
         /* Server free, accept new client */
         test->ctrl_sck = s;
@@ -123,6 +126,14 @@ iperf_accept(struct iperf_test *test)
             i_errno = IERECVCOOKIE;
             return -1;
         }
+
+        if (Nread(test->ctrl_sck, delay_buffer, COOKIE_SIZE, Ptcp) < 0) {
+                    i_errno = IERECVCOOKIE;
+                    return -1;
+        }
+        delay = atoi(delay_buffer);
+        test->delay = delay;
+
 	FD_SET(test->ctrl_sck, &test->read_set);
 	if (test->ctrl_sck > test->max_fd) test->max_fd = test->ctrl_sck;
 
@@ -461,7 +472,7 @@ iperf_run_server(struct iperf_test *test)
                     if ((s = test->protocol->accept(test)) < 0) {
 			cleanup_server(test);
                         return -1;
-		    }
+                   }
 
 #if defined(HAVE_TCP_CONGESTION)
 		    if (test->protocol->id == Ptcp) {
@@ -540,6 +551,10 @@ iperf_run_server(struct iperf_test *test)
                 }
 
                 if (streams_accepted == test->num_streams) {
+                    if(test->delay) {
+                        printf("Will now delay %d sec...\n",test->delay);
+                        sleep(test->delay);
+                    }
                     if (test->protocol->id != Ptcp) {
                         FD_CLR(test->prot_listener, &test->read_set);
                         close(test->prot_listener);

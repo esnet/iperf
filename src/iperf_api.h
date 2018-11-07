@@ -313,7 +313,7 @@ enum {
     IESERVERONLY = 3,       // This option is server only
     IECLIENTONLY = 4,       // This option is client only
     IEDURATION = 5,         // test duration too long. Maximum value = %dMAX_TIME
-    IENUMSTREAMS = 6,       // Number of parallel streams too large. Maximum value = %dMAX_STREAMS
+    IENUMSTREAMS = 6,       // Number of parallel streams too large.
     IEBLOCKSIZE = 7,        // Block size too large. Maximum value = %dMAX_BLOCKSIZE
     IEBUFSIZE = 8,          // Socket buffer size too large. Maximum value = %dMAX_TCP_BUFFER
     IEINTERVAL = 9,         // Invalid report interval (min = %gMIN_INTERVAL, max = %gMAX_INTERVAL seconds)

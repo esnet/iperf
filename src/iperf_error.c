@@ -111,7 +111,7 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "test duration too long (maximum = %d seconds)", MAX_TIME);
             break;
         case IENUMSTREAMS:
-            snprintf(errstr, len, "number of parallel streams too large (maximum = %d)", MAX_STREAMS);
+            snprintf(errstr, len, "number of parallel streams too large");
             break;
         case IEBLOCKSIZE:
             snprintf(errstr, len, "block size too large (maximum = %d bytes)", MAX_BLOCKSIZE);

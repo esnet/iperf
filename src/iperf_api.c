@@ -936,7 +936,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'P':
                 test->num_streams = atoi(optarg);
-                if (test->num_streams > MAX_STREAMS) {
+                if (test->num_streams > test->max_streams) {
                     i_errno = IENUMSTREAMS;
                     return -1;
                 }
@@ -2201,6 +2201,15 @@ iperf_defaults(struct iperf_test *testp)
 
     testp->stats_interval = testp->reporter_interval = 1;
     testp->num_streams = 1;
+
+#ifdef	_SC_OPEN_MAX
+    if ((testp->max_streams = sysconf(_SC_OPEN_MAX)) >= 20) {
+	    /* Reserve for stdio, log, control sockets etc. */
+	    testp->max_streams -= 8;
+    } else
+#endif	/*_SC_OPEN_MAX*/
+
+    testp->max_streams = 128;	/* default per older version */
 
     testp->settings->domain = AF_UNSPEC;
     testp->settings->unit_format = 'a';

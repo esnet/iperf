@@ -370,7 +370,9 @@ perform differently, just based on payload entropy.
 .BR --username " \fIusername\fR" 
 username to use for authentication to the iperf server (if built with
 OpenSSL support).
-The password will be prompted for interactively when the test is run.
+The password will be prompted for interactively when the test is run.  Note,
+the password to use can also be specified via the IPERF3_PASSWORD environment
+variable. If this variable is present, the password prompt will be skipped.
 .TP
 .BR --rsa-public-key-path " \fIfile\fR" 
 path to the RSA public key used to encrypt authentication credentials

@@ -1,0 +1,6 @@
+[gerrit]
+host=git-amr-1.devtools.intel.com
+port=29418
+project=nd_val-giant
+defaultremote=origin
+defaultrebase=0

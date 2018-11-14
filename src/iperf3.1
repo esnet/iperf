@@ -1,0 +1,433 @@
+.TH IPERF3 1 "June 2018" ESnet "User Manuals"
+.SH NAME
+iperf3 \- perform network throughput tests
+.SH SYNOPSIS
+.B iperf3 -s [
+.I options
+.B ]
+.br
+.B iperf3 -c 
+.I server
+.B [
+.I options
+.B ]
+
+.SH DESCRIPTION
+iperf3 is a tool for performing network throughput measurements.
+It can test TCP, UDP, or SCTP throughput.
+To perform an iperf3 test the user must establish both a server and a
+client.
+.PP
+The iperf3 executable contains both client and server functionality.
+An iperf3 server can be started using either of the -s or
+--server command-line parameters, for example:
+.IP
+\fCiperf3 -s\fR
+.IP
+\fCiperf3 --server \fR
+.PP
+Note that many iperf3 parameters have both short (-s) and long
+(--server) forms.
+In this section we will generally use the short form of command-line
+flags, unless only the long form of a flag is available.
+.PP
+By default, the iperf3 server listens on TCP port 5201 for connections
+from an iperf3 client.
+A custom port can be specified by using the -p flag, for
+example:
+.IP
+\fCiperf3 -s -p 5002\fR
+.PP
+After the server is started, it will listen for connections from
+iperf3 clients (in other words, the iperf3 program run in client
+mode).
+The client mode can be started using the -c command-line option,
+which also requires a host to which iperf3 should connect.
+The host can by specified by hostname, IPv4 literal, or IPv6 literal:
+.IP
+\fCiperf3 -c iperf3.example.com\fR
+.IP
+\fCiperf3 -c 192.0.2.1\fR
+.IP
+\fCiperf3 -c 2001:db8::1\fR
+.PP
+If the iperf3 server is running on a non-default TCP port, that port
+number needs to be specified on the client as well:
+.IP
+\fCiperf3 -c iperf3.example.com -p 5002\fR
+.PP
+The initial TCP connection is used to exchange test parameters,
+control the start and end of the test, and to exchange test results.
+This is sometimes referred to as the "control connection".
+The actual test data is sent over a separate TCP connection, as a
+separate flow of UDP packets, or as an independent SCTP connection,
+depending on what protocol was specified by the client.
+.PP
+Normally, the test data is sent from the client to the server, and
+measures the upload speed of the client.
+Measuring the download speed from the server can be done by specifying
+the -R flag on the client.
+This causes data to be sent from the server to the client.
+.IP
+\fCiperf3 -c iperf3.example.com -p 5202 -R
+.PP
+Results are displayed on both the client and server.
+There will be at least one line of output per measurement interval (by
+default a measurement interval lasts for one second, but this can be
+changed by the -i option).
+Each line of output includes (at least) the time since the start of
+the test, amount of data transferred during the interval, and the
+average bitrate over that interval.
+Note that the values for each measurement interval are taken from the
+point of view of the endpoint process emitting that output (in other
+words, the output on the client shows the measurement interval data for
+the client.
+.PP
+At the end of the test is a set of statistics that shows (at
+least as much as possible) a summary of the test as seen by both the
+sender and the receiver, with lines tagged accordingly.
+Recall that by default the client is the sender and the server is the
+receiver, although as indicated above, use of the \fC-R\fR flag will
+reverse these roles.
+.PP
+The client can be made to retrieve the server-side output for a given
+test by specifying the --get-server-output flag.
+.PP
+Either the client or the server can produce its output in a JSON
+structure, useful for integration with other programs, by passing it
+the -J flag.
+Because the contents of the JSON structure are only competely known
+after the test has finished, no JSON output will be emitted until the
+end of the test.
+.PP
+iperf3 has a (overly) large set of command-line options that can be
+used to set the parameters of a test.
+They are given in the "GENERAL OPTIONS" section of the manual page
+below, as well as summarized in iperf3's help output, which can be
+viewed by running iperf3 with the -h flag.
+.SH "GENERAL OPTIONS"
+.TP
+.BR -p ", " --port " \fIn\fR"
+set server port to listen on/connect to to \fIn\fR (default 5201)
+.TP
+.BR -f ", " --format " "
+[kmgtKMGT]   format to report: Kbits/Mbits/Gbits/Tbits
+.TP
+.BR -i ", " --interval " \fIn\fR"
+pause \fIn\fR seconds between periodic throughput reports;
+default is 1, use 0 to disable
+.TP
+.BR -F ", " --file " \fIname\fR"
+Use a file as the source (on the sender) or sink (on the receiver) of
+data, rather than just generating random data or throwing it away.
+This feature is used for finding whether or not the storage subsystem
+is the bottleneck for file transfers.
+It does not turn iperf3 into a file transfer tool.
+The length, attributes, and in some cases contents of the received
+file may not match those of the original file.
+.TP
+.BR -A ", " --affinity " \fIn/n,m\fR"
+Set the CPU affinity, if possible (Linux, FreeBSD, and Windows only).
+On both the client and server you can set the local affinity by using
+the \fIn\fR form of this argument (where \fIn\fR is a CPU number).
+In addition, on the client side you can override the server's
+affinity for just that one test, using the \fIn,m\fR form of
+argument.
+Note that when using this feature, a process will only be bound
+to a single CPU (as opposed to a set containing potentialy multiple
+CPUs).
+.TP
+.BR -B ", " --bind " \fIhost\fR"
+bind to the specific interface associated with address \fIhost\fR.
+If the host has multiple interfaces, it will use the first interface
+by default.
+.TP
+.BR -V ", " --verbose " "
+give more detailed output 
+.TP
+.BR -J ", " --json " "
+output in JSON format
+.TP
+.BR --logfile " \fIfile\fR"
+send output to a log file.
+.TP
+.BR --forceflush " "
+force flushing output at every interval.
+Used to avoid buffering when sending output to pipe.
+.TP
+.BR -d ", " --debug " "
+emit debugging output.
+Primarily (perhaps exclusively) of use to developers.
+.TP
+.BR -v ", " --version " "
+show version information and quit
+.TP
+.BR -h ", " --help " "
+show a help synopsis
+
+.SH "SERVER SPECIFIC OPTIONS"
+.TP
+.BR -s ", " --server " "
+run in server mode
+.TP
+.BR -D ", " --daemon " "
+run the server in background as a daemon
+.TP
+.BR -I ", " --pidfile " \fIfile\fR"
+write a file with the process ID, most useful when running as a daemon.
+.TP
+.BR -1 ", " --one-off
+handle one client connection, then exit.
+.TP
+.BR --rsa-private-key-path " \fIfile\fR"
+path to the RSA private key (not password-protected) used to decrypt 
+authentication credentials from the client (if built with OpenSSL
+support).
+.TP          
+.BR --authorized-users-path " \fIfile\fR"
+path to the configuration file containing authorized users credentials to run 
+iperf tests (if built with OpenSSL support).
+The file is a comma separated list of usernames and password hashes;
+more information on the structure of the file can be found in the
+EXAMPLES section.
+.SH "CLIENT SPECIFIC OPTIONS"
+.TP
+.BR -c ", " --client " \fIhost\fR"
+run in client mode, connecting to the specified server.
+By default, a test consists of sending data from the client to the
+server, unless the \-R flag is specified.
+.TP
+.BR --sctp
+use SCTP rather than TCP (FreeBSD and Linux)
+.TP
+.BR -u ", " --udp
+use UDP rather than TCP
+.TP
+.BR --connect-timeout " \fIn\fR"
+set timeout for establishing the initial control connection to the
+server, in milliseconds.
+The default behavior is the operating system's timeout for TCP
+connection establishment.
+Providing a shorter value may speed up detection of a down iperf3
+server.
+.TP
+.BR -b ", " --bitrate " \fIn\fR[KM]"
+set target bitrate to \fIn\fR bits/sec (default 1 Mbit/sec for UDP,
+unlimited for TCP/SCTP).
+If there are multiple streams (\-P flag), the throughput limit is applied
+separately to each stream.
+You can also add a '/' and a number to the bitrate specifier.
+This is called "burst mode".
+It will send the given number of packets without pausing, even if that
+temporarily exceeds the specified throughput limit.
+Setting the target bitrate to 0 will disable bitrate limits
+(particularly useful for UDP tests).
+This throughput limit is implemented internally inside iperf3, and is
+available on all platforms.
+Compare with the \--fq-rate flag.
+This option replaces the \--bandwidth flag, which is now deprecated
+but (at least for now) still accepted.
+.TP
+.BR --pacing-timer " \fIn\fR[KMG]"
+set pacing timer interval in microseconds (default 1000 microseconds,
+or 1 ms).
+This controls iperf3's internal pacing timer for the \-b/\--bitrate
+option.
+The timer fires at the interval set by this parameter.
+Smaller values of the pacing timer parameter smooth out the traffic
+emitted by iperf3, but potentially at the cost of performance due to
+more frequent timer processing.
+.TP
+.BR --fq-rate " \fIn\fR[KM]"
+Set a rate to be used with fair-queueing based socket-level pacing,
+in bits per second.
+This pacing (if specified) will be in addition to any pacing due to
+iperf3's internal throughput pacing (\-b/\--bitrate flag), and both can be
+specified for the same test.
+Only available on platforms supporting the
+\fCSO_MAX_PACING_RATE\fR socket option (currently only Linux).
+The default is no fair-queueing based pacing.
+.TP
+.BR --no-fq-socket-pacing
+This option is deprecated and will be removed.
+It is equivalent to specifying --fq-rate=0.
+.TP
+.BR -t ", " --time " \fIn\fR"
+time in seconds to transmit for (default 10 secs)
+.TP
+.BR -n ", " --bytes " \fIn\fR[KM]"
+number of bytes to transmit (instead of \-t)
+.TP
+.BR -k ", " --blockcount " \fIn\fR[KM]"
+number of blocks (packets) to transmit (instead of \-t or \-n)
+.TP
+.BR -l ", " --length " \fIn\fR[KM]"
+length of buffer to read or write.  For TCP tests, the default value
+is 128KB.
+In the case of UDP, iperf3 tries to dynamically determine a reasonable
+sending size based on the path MTU; if that cannot be determined it
+uses 1460 bytes as a sending size.
+For SCTP tests, the default size is 64KB.
+.TP
+.BR --cport " \fIport\fR"
+bind data streams to a specific client port (for TCP and UDP only,
+default is to use an ephemeral port)
+.TP
+.BR -P ", " --parallel " \fIn\fR"
+number of parallel client streams to run. Note that iperf3 is single threaded, so if you are CPU bound, this will not yield higher throughput.
+.TP
+.BR -R ", " --reverse
+reverse the direction of a test, so that the server sends data to the
+client
+.TP
+.BR -w ", " --window " \fIn\fR[KM]"
+window size / socket buffer size (this gets sent to the server and used on that side too)
+.TP
+.BR -M ", " --set-mss " \fIn\fR"
+set TCP/SCTP maximum segment size (MTU - 40 bytes)
+.TP
+.BR -N ", " --no-delay " "
+set TCP/SCTP no delay, disabling Nagle's Algorithm
+.TP
+.BR -4 ", " --version4 " "
+only use IPv4
+.TP
+.BR -6 ", " --version6 " "
+only use IPv6
+.TP
+.BR -S ", " --tos " \fIn\fR"
+set the IP type of service. The usual prefixes for octal and hex can be used,
+i.e. 52, 064 and 0x34 all specify the same value.
+.TP
+.BR "--dscp " \fIdscp\fR
+set the IP DSCP bits.  Both numeric and symbolic values are accepted. Numeric
+values can be specified in decimal, octal and hex (see --tos above).
+.TP
+.BR -L ", " --flowlabel " \fIn\fR"
+set the IPv6 flow label (currently only supported on Linux)
+.TP
+.BR -X ", " --xbind " \fIname\fR"
+Bind SCTP associations to a specific subset of links using sctp_bindx(3).
+The \fB--B\fR flag will be ignored if this flag is specified.
+Normally SCTP will include the protocol addresses of all active links
+on the local host when setting up an association. Specifying at least
+one \fB--X\fR name will disable this behaviour.
+This flag must be specified for each link to be included in the
+association, and is supported for both iperf servers and clients
+(the latter are supported by passing the first \fB--X\fR argument to bind(2)).
+Hostnames are accepted as arguments and are resolved using
+getaddrinfo(3).
+If the \fB--4\fR or \fB--6\fR flags are specified, names
+which do not resolve to addresses within the
+specified protocol family will be ignored.
+.TP
+.BR --nstreams " \fIn\fR"
+Set number of SCTP streams.
+.TP
+.BR -Z ", " --zerocopy " "
+Use a "zero copy" method of sending data, such as sendfile(2),
+instead of the usual write(2).
+.TP
+.BR -O ", " --omit " \fIn\fR"
+Omit the first n seconds of the test, to skip past the TCP slow-start
+period.
+.TP
+.BR -T ", " --title " \fIstr\fR"
+Prefix every output line with this string.
+.TP
+.BR --extra-data " \fIstr\fR"
+Specify an extra data string field to be included in JSON output.
+.TP
+.BR -C ", " --congestion " \fIalgo\fR"
+Set the congestion control algorithm (Linux and FreeBSD only).  An
+older
+.B --linux-congestion
+synonym for this flag is accepted but is deprecated.
+.TP
+.BR "--get-server-output"
+Get the output from the server.
+The output format is determined by the server (in particular, if the
+server was invoked with the \fB--json\fR flag, the output will be in
+JSON format, otherwise it will be in human-readable format).
+If the client is run with \fB--json\fR, the server output is included
+in a JSON object; otherwise it is appended at the bottom of the
+human-readable output.
+.TP
+.BR --udp-counters-64bit
+Use 64-bit counters in UDP test packets.
+The use of this option can help prevent counter overflows during long
+or high-bitrate UDP tests.  Both client and server need to be running
+at least version 3.1 for this option to work.  It may become the
+default behavior at some point in the future.
+.TP
+.BR --repeating-payload
+Use repeating pattern in payload, instead of random bytes.
+The same payload is used in iperf2 (ASCII '0..9' repeating).
+It might help to test and reveal problems in networking gear with hardware
+compression (including some WiFi access points), where iperf2 and iperf3
+perform differently, just based on payload entropy.
+.TP
+.BR --username " \fIusername\fR" 
+username to use for authentication to the iperf server (if built with
+OpenSSL support).
+The password will be prompted for interactively when the test is run.
+.TP
+.BR --rsa-public-key-path " \fIfile\fR" 
+path to the RSA public key used to encrypt authentication credentials
+(if built with OpenSSL support)
+
+.SH EXAMPLES
+.SS "Authentication - RSA Keypair"
+The authentication feature of iperf3 requires an RSA public keypair.
+The public key is used to encrypt the authentication token containing the 
+user credentials, while the private key is used to decrypt the authentication token.
+An example of a set of UNIX/Linux commands to generate correct keypair follows:
+.sp 1 
+.in +.5i
+> openssl genrsa -des3 -out private.pem 2048
+.sp 0
+> openssl rsa -in private.pem -outform PEM -pubout -out public.pem
+.sp 0
+> openssl rsa -in private.pem -out private_not_protected.pem -outform PEM  
+.in -.5i
+.sp 1
+After these commands, the public key will be contained in the file
+public.pem and the private key will be contained in the file
+private_not_protected.pem.
+.SS "Authentication - Authorized users configuration file"
+A simple plaintext file must be provided to the iperf3 server in order to specify 
+the authorized user credentials.
+The file is a simple list of comma-separated pairs of a username and a
+corresponding password hash.
+The password hash is a SHA256 hash of the string "{$user}$password".
+The file can also contain commented lines (starting with the \fC#\fR
+character).
+An example of commands to generate the password hash on a UNIX/Linux system
+is given below:
+.sp 1 
+.in +.5i
+> S_USER=mario S_PASSWD=rossi
+.sp 0
+> echo -n "{$S_USER}$S_PASSWD" | sha256sum | awk '{ print $1 }'
+.in -.5i
+.sp 1
+An example of a password file (with an entry corresponding to the
+above username and password) is given below:
+.sp 0
+.in +.5i
+> cat credentials.csv
+.sp 0
+# file format: username,sha256
+.sp 0
+mario,bf7a49a846d44b454a5d11e7acfaf13d138bbe0b7483aa3e050879700572709b
+.in -.5i
+.sp 1
+
+.SH AUTHORS
+A list of the contributors to iperf3 can be found within the
+documentation located at
+\fChttps://software.es.net/iperf/dev.html#authors\fR.
+
+.SH "SEE ALSO"
+libiperf(3),
+https://software.es.net/iperf

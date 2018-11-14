@@ -1,0 +1,113 @@
+.TH LIBIPERF 3 "June 2018" ESnet "User Manuals"
+.SH NAME
+libiperf \- API for iperf3 network throughput tester
+
+.SH SYNOPSIS
+#include <iperf_api.h>
+.br
+\-liperf
+
+.SH DESCRIPTION
+.PP
+Libiperf gives you access to all the functionality of the iperf3
+network testing tool.
+You can build it directly into your own program, instead of having
+to run it as a shell command.
+
+.SH CALLS
+Initialization / termination:
+.nf
+    struct iperf_test *iperf_new_test();
+    int iperf_defaults(struct iperf_test *t);
+    void iperf_free_test(struct iperf_test *t);
+.fi
+Setting test parameters:
+.nf
+    void iperf_set_test_role( struct iperf_test *pt, char role );
+    void iperf_set_test_bind_address( struct iperf_test *t, char *bind_address );
+    void iperf_set_test_server_hostname( struct iperf_test *t, char *server_host );
+    void iperf_set_test_server_port( struct iperf_test *t, int server_port );
+    void iperf_set_test_duration( struct iperf_test *t, int duration );
+    void iperf_set_test_blksize( struct iperf_test *t, int blksize );
+    void iperf_set_test_num_streams( struct iperf_test *t, int num_streams );
+    void iperf_set_test_json_output( struct iperf_test *t, int json_output );
+    int iperf_has_zerocopy( void );
+    void iperf_set_test_zerocopy( struct iperf_test* t, int zerocopy );
+    void iperf_set_test_tos( struct iperf_test* t, int tos );
+.fi
+Authentication functions:
+.nf
+    void iperf_set_test_client_username(struct iperf_test *ipt, char *client_username)
+    void iperf_set_test_client_password(struct iperf_test *ipt, char *client_password)
+    void iperf_set_test_client_rsa_pubkey(struct iperf_test *ipt, char *client_rsa_pubkey_base64)
+.fi
+Running a test:
+.nf
+    int iperf_run_client(struct iperf_test *);
+    int iperf_run_server(struct iperf_test *);
+    void iperf_reset_test(struct iperf_test *);
+.fi
+Output:
+.nf
+    FILE *iperf_get_test_outfile(struct iperf_test *);
+    char* iperf_get_test_json_output_string(struct iperf_test *);
+.fi
+Error reporting:
+.nf
+    void iperf_err(struct iperf_test *t, const char *format, ...);
+    char *iperf_strerror(int);
+    extern int i_errno;
+.fi
+This is not a complete list of the available calls.
+See the include file for more.
+
+.SH EXAMPLES
+Here's some sample code that runs an iperf client:
+.nf
+    struct iperf_test *test;
+    test = iperf_new_test();
+    if ( test == NULL ) {
+        fprintf( stderr, "%s: failed to create test\n", argv0 );
+        exit( EXIT_FAILURE );
+    }
+    iperf_defaults( test );
+    iperf_set_test_role( test, 'c' );
+    iperf_set_test_server_hostname( test, host );
+    iperf_set_test_server_port( test, port );
+    if ( iperf_run_client( test ) < 0 ) {
+        fprintf( stderr, "%s: error - %s\n", argv0, iperf_strerror( i_errno ) );
+        exit( EXIT_FAILURE );
+    }
+    iperf_free_test( test );
+.fi
+And here's a server:
+.nf
+    struct iperf_test *test;
+    test = iperf_new_test();
+    if ( test == NULL ) {
+        fprintf( stderr, "%s: failed to create test\n", argv0 );
+        exit( EXIT_FAILURE );
+    }
+    iperf_defaults( test );
+    iperf_set_test_role( test, 's' );
+    iperf_set_test_server_port( test, port );
+    for (;;) {
+        if ( iperf_run_server( test ) < 0 )
+            fprintf( stderr, "%s: error - %s\n\n", argv0, iperf_strerror( i_errn
+o ) );
+        iperf_reset_test( test );
+    }
+    iperf_free_test( test );
+.fi
+These are not complete programs, just excerpts.
+The full runnable source code can be found in the examples subdirectory
+of the iperf3 source tree.
+
+.SH AUTHORS
+A list of the contributors to iperf3 can be found within the
+documentation located at
+\fChttps://software.es.net/iperf/dev.html#authors\fR.
+
+.SH "SEE ALSO"
+iperf3(1),
+https://software.es.net/iperf/

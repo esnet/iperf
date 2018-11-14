@@ -1,0 +1,10 @@
+[Unit]
+Description=iperf3
+Requires=network.target
+
+[Service]
+ExecStart=/usr/bin/iperf3 -s
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

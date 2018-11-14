@@ -1,0 +1,69 @@
+#!/bin/sh
+
+proj="iperf"
+
+if [ "x$2" != "x" ]; then
+tag=$2
+else
+tag=`awk '/IPERF_VERSION / {
+  gsub(/"/, "", $3);
+  print $3 }' src/version.h`
+fi
+
+dirname=`echo $tag $proj | awk '{
+  gsub(/-ALPHA/, "a", $1);
+  gsub(/-BETA/, "b", $1);
+  gsub(/-RELEASE/, "", $1);
+  print $2"-"$1 }'`
+
+# echo tag $tag
+# echo dirname $dirname
+
+do_tag ()
+{
+    git tag -s -m "tagging $tag" $tag
+}
+
+do_tar ()
+{
+    tarball=${dirname}.tar.gz
+    rm -f ${tarball}
+    git archive --format=tar --prefix ${dirname}/ ${tag} | gzip -9 > ${tarball}
+
+    # Compute SHA256 hash
+    case `uname -s` in
+	FreeBSD) sha=sha256 ;;
+	Linux) sha=sha256sum ;;
+	Darwin) sha="shasum -a 256" ;;
+	*) sha=echo ;;
+    esac
+    ${sha} ${tarball} | tee ${tarball}.sha256
+}
+
+usage ()
+{
+    cat <<EOF
+$0: tag|tar
+
+   tag  -- create a tag
+   tar  -- create a tarball from a tag
+
+General use is to do:
+
+./$0 tag
+./$0 tar
+
+An optional argument may be specified to both the tag and tar
+subcommands to explicitly specify a tag string.  If not specified, the
+contents of src/version.h are used.
+
+EOF
+}
+
+case $1 in
+    tag) do_tag ;;
+    tar) do_tar ;;
+    *) echo "unknown command: $1"; usage ;;
+esac
+
+exit

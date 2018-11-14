@@ -1,0 +1,13 @@
+language: c
+compiler:
+   - gcc
+   - clang
+os:
+   - linux
+   - osx
+ 
+notifications:
+  slack:
+    secure: ImUmX7hcYotHWCDBfOcIvF6H7kkeGqiaUCy7SVPFtgPbz33ttpbRd94E7oxWVmZMLKb+i6+JCujTEWGwGBimzH+DjL0LLWs0ShzXZIUa1UzEPTc4hgV6VAxucYKFg2WrbXgOPWbulkMG1VZ6pX7GlAEGf0qyNqn44F7S2ay9m18=
+
+script: ./configure && make && make check

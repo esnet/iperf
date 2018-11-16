@@ -105,6 +105,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -A, --affinity n/n,m      set CPU affinity\n"
 #endif /* HAVE_CPU_AFFINITY */
                            "  -B, --bind      <host>    bind to the interface associated with the address <host>\n"
+                           "  --bind_dev      <dev>     bind to the network interface with SO_BINDTODEVICE\n"
                            "  -V, --verbose             more detailed output\n"
                            "  -J, --json                output in JSON format\n"
                            "  --logfile f               send output to a log file\n"
@@ -224,6 +225,9 @@ const char client_port[] =
 
 const char bind_address[] =
 "Binding to local address %s\n";
+
+const char bind_dev[] =
+"Binding to local network device %s\n";
 
 const char bind_port[] =
 "Binding to local port %s\n";

@@ -60,6 +60,7 @@
 #include <poll.h>
 #endif /* HAVE_POLL_H */
 
+#include "iperf.h"
 #include "iperf_util.h"
 #include "net.h"
 #include "timer.h"
@@ -120,9 +121,9 @@ timeout_connect(int s, const struct sockaddr *name, socklen_t namelen,
 
 /* make connection to server */
 int
-netdial(int domain, int proto, char *local, int local_port, char *server, int port, int timeout)
+netdial(int domain, int proto, char *local, const char* bind_dev, int local_port, char *server, int port, int timeout)
 {
-    struct addrinfo hints, *local_res, *server_res;
+    struct addrinfo hints, *local_res = NULL, *server_res = NULL;
     int s, saved_errno;
 
     if (local) {
@@ -145,6 +146,21 @@ netdial(int domain, int proto, char *local, int local_port, char *server, int po
 	    freeaddrinfo(local_res);
 	freeaddrinfo(server_res);
         return -1;
+    }
+
+    if (bind_dev) {
+#ifdef SO_BINDTODEVICE
+        if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE,
+                       bind_dev, IFNAMSIZ) < 0)
+#endif
+        {
+            saved_errno = errno;
+            close(s);
+            freeaddrinfo(local_res);
+            freeaddrinfo(server_res);
+            errno = saved_errno;
+            return -1;
+        }
     }
 
     /* Bind the local address if given a name (with or without --cport) */
@@ -217,7 +233,7 @@ netdial(int domain, int proto, char *local, int local_port, char *server, int po
 /***************************************************************/
 
 int
-netannounce(int domain, int proto, char *local, int port)
+netannounce(int domain, int proto, char *local, const char* bind_dev, int port)
 {
     struct addrinfo hints, *res;
     char portstr[6];
@@ -252,6 +268,20 @@ netannounce(int domain, int proto, char *local, int port)
     if (s < 0) {
 	freeaddrinfo(res);
         return -1;
+    }
+
+    if (bind_dev) {
+#ifdef SO_BINDTODEVICE
+        if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE,
+                       bind_dev, IFNAMSIZ) < 0)
+#endif
+        {
+            saved_errno = errno;
+            close(s);
+            freeaddrinfo(res);
+            errno = saved_errno;
+            return -1;
+        }
     }
 
     opt = 1;

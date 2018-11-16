@@ -195,6 +195,21 @@ iperf_tcp_listen(struct iperf_test *test)
             return -1;
         }
 
+        if (test->bind_dev) {
+#ifdef SO_BINDTODEVICE
+            if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE,
+                           test->bind_dev, IFNAMSIZ) < 0)
+#endif
+            {
+                saved_errno = errno;
+                close(s);
+                freeaddrinfo(res);
+                i_errno = IEBINDDEV;
+                errno = saved_errno;
+                return -1;
+            }
+        }
+
         if (test->no_delay) {
             opt = 1;
             if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0) {
@@ -364,7 +379,7 @@ iperf_tcp_listen(struct iperf_test *test)
 int
 iperf_tcp_connect(struct iperf_test *test)
 {
-    struct addrinfo hints, *local_res, *server_res;
+    struct addrinfo hints, *local_res = NULL, *server_res = NULL;
     char portstr[6];
     int s, opt;
     socklen_t optlen;
@@ -393,11 +408,26 @@ iperf_tcp_connect(struct iperf_test *test)
     }
 
     if ((s = socket(server_res->ai_family, SOCK_STREAM, 0)) < 0) {
-	if (test->bind_address)
-	    freeaddrinfo(local_res);
+        freeaddrinfo(local_res);
 	freeaddrinfo(server_res);
         i_errno = IESTREAMCONNECT;
         return -1;
+    }
+
+    if (test->bind_dev) {
+#ifdef SO_BINDTODEVICE
+        if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE,
+                       test->bind_dev, IFNAMSIZ) < 0)
+#endif
+        {
+            saved_errno = errno;
+            close(s);
+            freeaddrinfo(local_res);
+            freeaddrinfo(server_res);
+            i_errno = IEBINDDEV;
+            errno = saved_errno;
+            return -1;
+        }
     }
 
     /*

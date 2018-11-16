@@ -73,6 +73,7 @@ struct iperf_time;
 #define OPT_REPEATING_PAYLOAD 18
 #define OPT_EXTRA_DATA 19
 #define OPT_BIDIRECTIONAL 20
+#define OPT_BIND_DEV 21
 
 /* states */
 #define TEST_START 1
@@ -402,6 +403,7 @@ enum {
     /* Timer errors */
     IENEWTIMER = 300,       // Unable to create new timer (check perror)
     IEUPDATETIMER = 301,    // Unable to update timer (check perror)
+    IEBINDDEV = 302,        // Unable to bind-to-device (check perror, maybe permissions?)
 };
 
 

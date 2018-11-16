@@ -159,6 +159,10 @@ the executable.
                  bind to the specific interface associated with address host.  If
                  the  host  has multiple interfaces, it will use the first inter-
                  face by default.
+
+          --bind_dev <network device>
+                 bind to the specific network device.  This calls SO_BINDTODEVICE,
+                 and may require root permissions.
    
           -V, --verbose
                  give more detailed output

@@ -80,6 +80,7 @@ typedef uint64_t iperf_size_t;
 #define OPT_SERVER_BITRATE_LIMIT 21
 #define OPT_TIMESTAMPS 22
 #define OPT_SERVER_SKEW_THRESHOLD 23
+#define OPT_BIND_DEV 24
 
 /* states */
 #define TEST_START 1
@@ -408,6 +409,7 @@ enum {
     IESETPACING= 140,       // Unable to set socket pacing rate
     IESETBUF2= 141,	    // Socket buffer size incorrect (written value != read value)
     IEAUTHTEST = 142,       // Test authorization failed
+    IEBINDDEV = 143,        // Unable to bind-to-device (check perror, maybe permissions?)
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

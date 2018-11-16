@@ -339,6 +339,12 @@ iperf_get_test_bind_address(struct iperf_test *ipt)
     return ipt->bind_address;
 }
 
+char *
+iperf_get_test_bind_dev(struct iperf_test *ipt)
+{
+    return ipt->bind_dev;
+}
+
 int
 iperf_get_test_udp_counters_64bit(struct iperf_test *ipt)
 {
@@ -662,6 +668,12 @@ iperf_set_test_bind_address(struct iperf_test *ipt, const char *bnd_address)
 }
 
 void
+iperf_set_test_bind_dev(struct iperf_test *ipt, char *bnd_dev)
+{
+    ipt->bind_dev = strdup(bnd_dev);
+}
+
+void
 iperf_set_test_udp_counters_64bit(struct iperf_test *ipt, int udp_counters_64bit)
 {
     ipt->udp_counters_64bit = udp_counters_64bit;
@@ -894,6 +906,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"bidir", no_argument, NULL, OPT_BIDIRECTIONAL},
         {"window", required_argument, NULL, 'w'},
         {"bind", required_argument, NULL, 'B'},
+        {"bind-dev", required_argument, NULL, OPT_BIND_DEV},
         {"cport", required_argument, NULL, OPT_CLIENT_PORT},
         {"set-mss", required_argument, NULL, 'M'},
         {"no-delay", no_argument, NULL, 'N'},
@@ -1146,6 +1159,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'B':
                 test->bind_address = strdup(optarg);
+                break;
+            case OPT_BIND_DEV:
+                test->bind_dev = strdup(optarg);
                 break;
             case OPT_CLIENT_PORT:
 		portno = atoi(optarg);
@@ -2635,6 +2651,8 @@ iperf_free_test(struct iperf_test *test)
 	free(test->tmp_template);
     if (test->bind_address)
 	free(test->bind_address);
+    if (test->bind_dev)
+	free(test->bind_dev);
     if (!TAILQ_EMPTY(&test->xbind_addrs)) {
         struct xbind_entry *xbe;
 

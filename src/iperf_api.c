@@ -4139,11 +4139,13 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
      * easily exceed the size of the line buffer, but which don't need
      * to be buffered up anyway.
      */
+    int rv;
     if (test->role == 'c') {
 	if (test->title)
 	    fprintf(test->outfile, "%s:  ", test->title);
 	va_start(argp, format);
 	r = vfprintf(test->outfile, format, argp);
+        rv = r;
 	va_end(argp);
     }
     else if (test->role == 's') {
@@ -4151,7 +4153,7 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
 	va_start(argp, format);
 	r = vsnprintf(linebuffer, sizeof(linebuffer), format, argp);
 	va_end(argp);
-	fprintf(test->outfile, "%s", linebuffer);
+	rv = fprintf(test->outfile, "%s", linebuffer);
 
 	if (test->role == 's' && iperf_get_test_get_server_output(test)) {
 	    struct iperf_textline *l = (struct iperf_textline *) malloc(sizeof(struct iperf_textline));
@@ -4159,11 +4161,19 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
 	    TAILQ_INSERT_TAIL(&(test->server_output_list), l, textlineentries);
 	}
     }
+
+    if (rv < 0) {
+        /* If printing output fails, go ahead and exit, probably broken pipe */
+        iperf_errexit(test, "print to outfile failed: %s\n", strerror(errno));
+    }
     return r;
 }
 
 int
 iflush(struct iperf_test *test)
 {
-    return fflush(test->outfile);
+    int rv = fflush(test->outfile);
+    if (rv < 0) {
+        iperf_errexit(test, "fflush on outfile failed: %s\n", strerror(errno));
+    }
 }

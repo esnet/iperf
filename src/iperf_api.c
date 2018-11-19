@@ -722,6 +722,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 {
     static struct option longopts[] =
     {
+        {"delay", required_argument, NULL, 'z'},
         {"port", required_argument, NULL, 'p'},
         {"format", required_argument, NULL, 'f'},
         {"interval", required_argument, NULL, 'i'},
@@ -807,10 +808,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     char *client_username = NULL, *client_rsa_public_key = NULL, *server_rsa_private_key = NULL;
 #endif /* HAVE_SSL */
 
-    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "z:p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
                 test->server_port = atoi(optarg);
+                break;
+            case 'z':
+                test->delay = atoi(optarg);
                 break;
             case 'f':
 		if (!optarg) {

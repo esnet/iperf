@@ -1,5 +1,8 @@
 /* src/iperf_config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define to 1 if you have the `clock_gettime' function. */
+#undef HAVE_CLOCK_GETTIME
+
 /* Define to 1 if you have the `cpuset_setaffinity' function. */
 #undef HAVE_CPUSET_SETAFFINITY
 

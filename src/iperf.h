@@ -61,6 +61,7 @@
 #include "timer.h"
 #include "queue.h"
 #include "cjson.h"
+#include "iperf_time.h"
 
 #if defined(HAVE_SSL)
 #include <openssl/bio.h>
@@ -72,8 +73,8 @@ typedef uint64_t iperf_size_t;
 struct iperf_interval_results
 {
     iperf_size_t bytes_transferred; /* bytes transfered in this interval */
-    struct timeval interval_start_time;
-    struct timeval interval_end_time;
+    struct iperf_time interval_start_time;
+    struct iperf_time interval_end_time;
     float     interval_duration;
 
     /* for UDP */
@@ -119,9 +120,9 @@ struct iperf_stream_result
     int stream_sum_rtt;
     int stream_count_rtt;
     int stream_max_snd_cwnd;
-    struct timeval start_time;
-    struct timeval end_time;
-    struct timeval start_time_fixed;
+    struct iperf_time start_time;
+    struct iperf_time end_time;
+    struct iperf_time start_time_fixed;
     double sender_time;
     double receiver_time;
     TAILQ_HEAD(irlisthead, iperf_interval_results) interval_results;

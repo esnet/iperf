@@ -35,6 +35,7 @@
 #include <netdb.h>
 #include <sys/time.h>
 #include <sys/select.h>
+#include <limits.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -301,7 +302,7 @@ iperf_tcp_listen(struct iperf_test *test)
 
         freeaddrinfo(res);
 
-        if (listen(s, 5) < 0) {
+        if (listen(s, INT_MAX) < 0) {
             i_errno = IESTREAMLISTEN;
             return -1;
         }

@@ -353,6 +353,13 @@ If the client is run with \fB--json\fR, the server output is included
 in a JSON object; otherwise it is appended at the bottom of the
 human-readable output.
 .TP
+.BR --udp-counters-64bit
+Use 64-bit counters in UDP test packets.
+The use of this option can help prevent counter overflows during long
+or high-bitrate UDP tests.  Both client and server need to be running
+at least version 3.1 for this option to work.  It may become the
+default behavior at some point in the future.
+.TP
 .BR --repeating-payload
 Use repeating pattern in payload, instead of random bytes.
 The same payload is used in iperf2 (ASCII '0..9' repeating).

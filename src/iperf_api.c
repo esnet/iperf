@@ -321,6 +321,13 @@ iperf_get_test_extra_data(struct iperf_test *ipt)
     return ipt->extra_data;
 }
 
+static const char iperf_version[] = IPERF_VERSION;
+char *
+iperf_get_iperf_version(void)
+{
+    return (char*)iperf_version;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -705,7 +712,9 @@ iperf_on_connect(struct iperf_test *test)
 	    else {
 		cJSON_AddNumberToObject(test->json_start, "tcp_mss_default", test->ctrl_sck_mss);
 	    }
-	}
+        if (test->settings->rate)
+            cJSON_AddNumberToObject(test->json_start, "target_bitrate", test->settings->rate);
+        }
     } else if (test->verbose) {
         iperf_printf(test, report_cookie, test->cookie);
         if (test->protocol->id == SOCK_STREAM) {
@@ -715,7 +724,8 @@ iperf_on_connect(struct iperf_test *test)
                 iperf_printf(test, "      TCP MSS: %d (default)\n", test->ctrl_sck_mss);
             }
         }
-
+        if (test->settings->rate)
+            iperf_printf(test, "      Target Bitrate: %llu\n", test->settings->rate);
     }
 }
 
@@ -1340,14 +1350,16 @@ iperf_set_send_state(struct iperf_test *test, signed char state)
 }
 
 void
-iperf_check_throttle(struct iperf_stream *sp, struct timeval *nowP)
+iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP)
 {
+    struct iperf_time temp_time;
     double seconds;
     uint64_t bits_per_second;
 
     if (sp->test->done)
         return;
-    seconds = timeval_diff(&sp->result->start_time_fixed, nowP);
+    iperf_time_diff(&sp->result->start_time_fixed, nowP, &temp_time);
+    seconds = iperf_time_in_secs(&temp_time);
     bits_per_second = sp->result->bytes_sent * 8 / seconds;
     if (bits_per_second < sp->test->settings->rate) {
         sp->green_light = 1;
@@ -1363,7 +1375,7 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 {
     register int multisend, r, streams_active;
     register struct iperf_stream *sp;
-    struct timeval now;
+    struct iperf_time now;
 
     /* Can we do multisend mode? */
     if (test->settings->burst != 0)
@@ -1375,7 +1387,7 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 
     for (; multisend > 0; --multisend) {
 	if (test->settings->rate != 0 && test->settings->burst == 0)
-	    gettimeofday(&now, NULL);
+	    iperf_time_now(&now);
 	streams_active = 0;
 	SLIST_FOREACH(sp, &test->streams, streams) {
 	    if ((sp->green_light && sp->sender &&
@@ -1401,7 +1413,7 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 	    break;
     }
     if (test->settings->burst != 0) {
-	gettimeofday(&now, NULL);
+	iperf_time_now(&now);
 	SLIST_FOREACH(sp, &test->streams, streams)
 	    iperf_check_throttle(sp, &now);
     }
@@ -1437,7 +1449,7 @@ iperf_recv(struct iperf_test *test, fd_set *read_setP)
 int
 iperf_init_test(struct iperf_test *test)
 {
-    struct timeval now;
+    struct iperf_time now;
     struct iperf_stream *sp;
 
     if (test->protocol->init) {
@@ -1446,7 +1458,7 @@ iperf_init_test(struct iperf_test *test)
     }
 
     /* Init each stream. */
-    if (gettimeofday(&now, NULL) < 0) {
+    if (iperf_time_now(&now) < 0) {
 	i_errno = IEINITTEST;
 	return -1;
     }
@@ -1461,7 +1473,7 @@ iperf_init_test(struct iperf_test *test)
 }
 
 static void
-send_timer_proc(TimerClientData client_data, struct timeval *nowP)
+send_timer_proc(TimerClientData client_data, struct iperf_time *nowP)
 {
     struct iperf_stream *sp = client_data.p;
 
@@ -1475,11 +1487,11 @@ send_timer_proc(TimerClientData client_data, struct timeval *nowP)
 int
 iperf_create_send_timers(struct iperf_test * test)
 {
-    struct timeval now;
+    struct iperf_time now;
     struct iperf_stream *sp;
     TimerClientData cd;
 
-    if (gettimeofday(&now, NULL) < 0) {
+    if (iperf_time_now(&now) < 0) {
 	i_errno = IEINITTEST;
 	return -1;
     }
@@ -1487,7 +1499,7 @@ iperf_create_send_timers(struct iperf_test * test)
         sp->green_light = 1;
 	if (test->settings->rate != 0) {
 	    cd.p = sp;
-	    sp->send_timer = tmr_create((struct timeval*) 0, send_timer_proc, cd, test->settings->pacing_timer, 1);
+	    sp->send_timer = tmr_create(NULL, send_timer_proc, cd, test->settings->pacing_timer, 1);
 	    if (sp->send_timer == NULL) {
 		i_errno = IEINITTEST;
 		return -1;
@@ -1769,6 +1781,8 @@ get_parameters(struct iperf_test *test)
 #endif //HAVE_SSL
 	if (test->mode && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    test->sender_has_retransmits = 1;
+    if (test->settings->rate)
+        cJSON_AddNumberToObject(test->json_start, "target_bitrate", test->settings->rate);
 	cJSON_Delete(j);
     }
     return r;
@@ -1787,6 +1801,7 @@ send_results(struct iperf_test *test)
     int sender_has_retransmits;
     iperf_size_t bytes_transferred;
     int retransmits;
+    struct iperf_time temp_time;
     double start_time, end_time;
 
     j = cJSON_CreateObject();
@@ -1856,8 +1871,10 @@ send_results(struct iperf_test *test)
 		    cJSON_AddNumberToObject(j_stream, "errors", sp->cnt_error);
 		    cJSON_AddNumberToObject(j_stream, "packets", sp->packet_count);
 
-		    start_time = timeval_diff(&sp->result->start_time, &sp->result->start_time);
-		    end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
+		    iperf_time_diff(&sp->result->start_time, &sp->result->start_time, &temp_time);
+		    start_time = iperf_time_in_secs(&temp_time);
+		    iperf_time_diff(&sp->result->start_time, &sp->result->end_time, &temp_time);
+		    end_time = iperf_time_in_secs(&temp_time);
 		    cJSON_AddNumberToObject(j_stream, "start_time", start_time);
 		    cJSON_AddNumberToObject(j_stream, "end_time", end_time);
 
@@ -1927,10 +1944,13 @@ get_results(struct iperf_test *test)
 	    test->remote_cpu_util[1] = j_cpu_util_user->valuedouble;
 	    test->remote_cpu_util[2] = j_cpu_util_system->valuedouble;
 	    result_has_retransmits = j_sender_has_retransmits->valueint;
-	    if ( test->mode == RECEIVER )
-		test->sender_has_retransmits = result_has_retransmits;
+	    if ( test->mode == RECEIVER ) {
+	        test->sender_has_retransmits = result_has_retransmits;
+	        test->other_side_has_retransmits = 0;
+	    }
 	    else if ( test->mode == BIDIRECTIONAL )
 	        test->other_side_has_retransmits = result_has_retransmits;
+
 	    j_streams = cJSON_GetObjectItem(j, "streams");
 	    if (j_streams == NULL) {
 		i_errno = IERECVRESULTS;
@@ -2230,6 +2250,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->server_port = PORT;
     testp->ctrl_sck = -1;
     testp->prot_listener = -1;
+    testp->other_side_has_retransmits = 0;
 
     testp->stats_callback = iperf_stats_callback;
     testp->reporter_callback = iperf_reporter_callback;
@@ -2473,6 +2494,8 @@ iperf_reset_test(struct iperf_test *test)
     test->bytes_received = 0;
     test->blocks_received = 0;
 
+    test->other_side_has_retransmits = 0;
+
     test->reverse = 0;
     test->bidirectional = 0;
     test->no_delay = 0;
@@ -2536,13 +2559,13 @@ iperf_reset_test(struct iperf_test *test)
 void
 iperf_reset_stats(struct iperf_test *test)
 {
-    struct timeval now;
+    struct iperf_time now;
     struct iperf_stream *sp;
     struct iperf_stream_result *rp;
 
     test->bytes_sent = 0;
     test->blocks_sent = 0;
-    gettimeofday(&now, NULL);
+    iperf_time_now(&now);
     SLIST_FOREACH(sp, &test->streams, streams) {
 	sp->omitted_packet_count = sp->packet_count;
         sp->omitted_cnt_error = sp->cnt_error;
@@ -2575,6 +2598,7 @@ iperf_stats_callback(struct iperf_test *test)
     struct iperf_stream *sp;
     struct iperf_stream_result *rp = NULL;
     struct iperf_interval_results *irp, temp;
+    struct iperf_time temp_time;
 
     temp.omitted = test->omitting;
     SLIST_FOREACH(sp, &test->streams, streams) {
@@ -2584,14 +2608,14 @@ iperf_stats_callback(struct iperf_test *test)
 	irp = TAILQ_LAST(&rp->interval_results, irlisthead);
         /* result->end_time contains timestamp of previous interval */
         if ( irp != NULL ) /* not the 1st interval */
-            memcpy(&temp.interval_start_time, &rp->end_time, sizeof(struct timeval));
+            memcpy(&temp.interval_start_time, &rp->end_time, sizeof(struct iperf_time));
         else /* or use timestamp from beginning */
-            memcpy(&temp.interval_start_time, &rp->start_time, sizeof(struct timeval));
+            memcpy(&temp.interval_start_time, &rp->start_time, sizeof(struct iperf_time));
         /* now save time of end of this interval */
-        gettimeofday(&rp->end_time, NULL);
-        memcpy(&temp.interval_end_time, &rp->end_time, sizeof(struct timeval));
-        temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
-        //temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
+        iperf_time_now(&rp->end_time);
+        memcpy(&temp.interval_end_time, &rp->end_time, sizeof(struct iperf_time));
+        iperf_time_diff(&temp.interval_start_time, &temp.interval_end_time, &temp_time);
+        temp.interval_duration = iperf_time_in_secs(&temp_time);
 	if (test->protocol->id == Ptcp) {
 	    if ( has_tcpinfo()) {
 		save_tcpinfo(sp, &temp);
@@ -2652,6 +2676,7 @@ iperf_print_intermediate(struct iperf_test *test)
 {
     struct iperf_stream *sp = NULL;
     struct iperf_interval_results *irp;
+    struct iperf_time temp_time;
     cJSON *json_interval;
     cJSON *json_interval_streams;
 
@@ -2675,8 +2700,8 @@ iperf_print_intermediate(struct iperf_test *test)
     SLIST_FOREACH(sp, &test->streams, streams) {
 	irp = TAILQ_LAST(&sp->result->interval_results, irlisthead);
 	if (irp) {
-	    double interval_len = timeval_diff(&irp->interval_start_time,
-					       &irp->interval_end_time);
+	    iperf_time_diff(&irp->interval_start_time, &irp->interval_end_time, &temp_time);
+	    double interval_len = iperf_time_in_secs(&temp_time);
 	    if (test->debug) {
 		printf("interval_len %f bytes_transferred %" PRIu64 "\n", interval_len, irp->bytes_transferred);
 	    }
@@ -2791,14 +2816,16 @@ iperf_print_intermediate(struct iperf_test *test)
             sp = SLIST_FIRST(&test->streams); /* reset back to 1st stream */
             /* Only do this of course if there was a first stream */
             if (sp) {
-                irp = TAILQ_LAST(&sp->result->interval_results, irlisthead);    /* use 1st stream for timing info */
+	    irp = TAILQ_LAST(&sp->result->interval_results, irlisthead);    /* use 1st stream for timing info */
 
-                unit_snprintf(ubuf, UNIT_LEN, (double) bytes, 'A');
-                bandwidth = (double) bytes / (double) irp->interval_duration;
-                unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
+	    unit_snprintf(ubuf, UNIT_LEN, (double) bytes, 'A');
+	    bandwidth = (double) bytes / (double) irp->interval_duration;
+	    unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
 
-                start_time = timeval_diff(&sp->result->start_time,&irp->interval_start_time);
-                end_time = timeval_diff(&sp->result->start_time,&irp->interval_end_time);
+	    iperf_time_diff(&sp->result->start_time,&irp->interval_start_time, &temp_time);
+	    start_time = iperf_time_in_secs(&temp_time);
+	    iperf_time_diff(&sp->result->start_time,&irp->interval_end_time, &temp_time);
+	    end_time = iperf_time_in_secs(&temp_time);
                 if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
                     if (test->sender_has_retransmits == 1 && stream_must_be_sender) {
                         /* Interval sum, TCP with retransmits. */
@@ -2923,6 +2950,7 @@ iperf_print_results(struct iperf_test *test)
         iperf_size_t bytes_received, total_received = 0;
         double start_time, end_time = 0.0, avg_jitter = 0.0, lost_percent = 0.0;
         double sender_time = 0.0, receiver_time = 0.0;
+    struct iperf_time temp_time;
         double bandwidth;
 
         char mbuf[UNIT_LEN];
@@ -2960,7 +2988,8 @@ iperf_print_results(struct iperf_test *test)
          */
 
         if (sp) {
-        end_time = timeval_diff(&sp->result->start_time, &sp->result->end_time);
+    iperf_time_diff(&sp->result->start_time, &sp->result->end_time, &temp_time);
+    end_time = iperf_time_in_secs(&temp_time);
         if (sp->sender) {
             sp->result->sender_time = end_time;
             if (sp->result->receiver_time == 0.0) {
@@ -3369,6 +3398,7 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
     char mbuf[UNIT_LEN];
     char zbuf[] = "          ";
     double st = 0., et = 0.;
+    struct iperf_time temp_time;
     struct iperf_interval_results *irp = NULL;
     double bandwidth, lost_percent;
 
@@ -3391,7 +3421,7 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 	    ** else if there's more than one stream, print the separator;
 	    ** else nothing.
 	    */
-	    if (timeval_equals(&sp->result->start_time, &irp->interval_start_time)) {
+	    if (iperf_time_compare(&sp->result->start_time, &irp->interval_start_time) == 0) {
 		if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 		    if (test->sender_has_retransmits == 1) {
 		        if (test->bidirectional)
@@ -3429,8 +3459,10 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
     }
     unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
     
-    st = timeval_diff(&sp->result->start_time, &irp->interval_start_time);
-    et = timeval_diff(&sp->result->start_time, &irp->interval_end_time);
+    iperf_time_diff(&sp->result->start_time, &irp->interval_start_time, &temp_time);
+    st = iperf_time_in_secs(&temp_time);
+    iperf_time_diff(&sp->result->start_time, &irp->interval_end_time, &temp_time);
+    et = iperf_time_in_secs(&temp_time);
     
     if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
 	if (test->sender_has_retransmits == 1 && sp->sender) {

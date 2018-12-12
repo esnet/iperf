@@ -66,7 +66,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     int       r;
     int       size = sp->settings->blksize;
     double    transit = 0, d = 0;
-    struct timeval sent_time, arrival_time;
+    struct iperf_time sent_time, arrival_time, temp_time;
 
     r = Nread(sp->socket, sp->buffer, size, Pudp);
 
@@ -90,8 +90,8 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    sec = ntohl(sec);
 	    usec = ntohl(usec);
 	    pcount = be64toh(pcount);
-	    sent_time.tv_sec = sec;
-	    sent_time.tv_usec = usec;
+	    sent_time.secs = sec;
+	    sent_time.usecs = usec;
 	}
 	else {
 	    uint32_t pc;
@@ -101,8 +101,8 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    sec = ntohl(sec);
 	    usec = ntohl(usec);
 	    pcount = ntohl(pc);
-	    sent_time.tv_sec = sec;
-	    sent_time.tv_usec = usec;
+	    sent_time.secs = sec;
+	    sent_time.usecs = usec;
 	}
 
 	if (sp->test->debug)
@@ -163,9 +163,10 @@ iperf_udp_recv(struct iperf_stream *sp)
 	 * computation does not require knowing the round-trip
 	 * time.
 	 */
-	gettimeofday(&arrival_time, NULL);
+	iperf_time_now(&arrival_time);
 
-	transit = timeval_diff(&sent_time, &arrival_time);
+	iperf_time_diff(&arrival_time, &sent_time, &temp_time);
+	transit = iperf_time_in_secs(&temp_time);
 	d = transit - sp->prev_transit;
 	if (d < 0)
 	    d = -d;
@@ -190,9 +191,9 @@ iperf_udp_send(struct iperf_stream *sp)
 {
     int r;
     int       size = sp->settings->blksize;
-    struct timeval before;
+    struct iperf_time before;
 
-    gettimeofday(&before, 0);
+    iperf_time_now(&before);
 
     ++sp->packet_count;
 
@@ -201,8 +202,8 @@ iperf_udp_send(struct iperf_stream *sp)
 	uint32_t  sec, usec;
 	uint64_t  pcount;
 
-	sec = htonl(before.tv_sec);
-	usec = htonl(before.tv_usec);
+	sec = htonl(before.secs);
+	usec = htonl(before.usecs);
 	pcount = htobe64(sp->packet_count);
 	
 	memcpy(sp->buffer, &sec, sizeof(sec));
@@ -214,8 +215,8 @@ iperf_udp_send(struct iperf_stream *sp)
 
 	uint32_t  sec, usec, pcount;
 
-	sec = htonl(before.tv_sec);
-	usec = htonl(before.tv_usec);
+	sec = htonl(before.secs);
+	usec = htonl(before.usecs);
 	pcount = htonl(sp->packet_count);
 	
 	memcpy(sp->buffer, &sec, sizeof(sec));

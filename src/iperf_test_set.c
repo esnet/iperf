@@ -459,7 +459,7 @@ ts_result_averaging(struct test_unit* t_unit, struct benchmark_coefs* b_coefs)
 				total_sent += bytes_sent;
 				total_received += bytes_received;
 
-				if (test->sender) {
+				if (test->mode == SENDER) {
 					sender_packet_count = sp->packet_count;
 					receiver_packet_count = sp->peer_packet_count;
 				}

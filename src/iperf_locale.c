@@ -148,6 +148,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  --cport         <port>    bind to a specific client port (TCP and UDP, default: ephemeral port)\n"
                            "  -P, --parallel  #         number of parallel client streams to run\n"
                            "  -R, --reverse             run in reverse mode (server sends, client receives)\n"
+                           "  --bidir                   run in bidirectional mode.\n"
+                           "                            Client and server send and receive data.\n"
                            "  -w, --window    #[KMG]    set window size / socket buffer size\n"
 #if defined(HAVE_TCP_CONGESTION)
                            "  -C, --congestion <algo>   set TCP congestion control algorithm (Linux and FreeBSD only)\n"
@@ -312,47 +314,62 @@ const char report_read_length_times[] =
 const char report_bw_header[] =
 "[ ID] Interval           Transfer     Bitrate\n";
 
+const char report_bw_header_bidir[] =
+"[ ID][Role] Interval           Transfer     Bitrate\n";
+
 const char report_bw_retrans_header[] =
 "[ ID] Interval           Transfer     Bitrate         Retr\n";
+
+const char report_bw_retrans_header_bidir[] =
+"[ ID][Role] Interval           Transfer     Bitrate         Retr\n";
 
 const char report_bw_retrans_cwnd_header[] =
 "[ ID] Interval           Transfer     Bitrate         Retr  Cwnd\n";
 
+const char report_bw_retrans_cwnd_header_bidir[] =
+"[ ID][Role] Interval           Transfer     Bitrate         Retr  Cwnd\n";
+
 const char report_bw_udp_header[] =
 "[ ID] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams\n";
+
+const char report_bw_udp_header_bidir[] =
+"[ ID][Role] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams\n";
 
 const char report_bw_udp_sender_header[] =
 "[ ID] Interval           Transfer     Bitrate         Total Datagrams\n";
 
+const char report_bw_udp_sender_header_bidir[] =
+"[ ID][Role] Interval           Transfer     Bitrate         Total Datagrams\n";
+
 const char report_bw_format[] =
-"[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec                  %s\n";
+"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec                  %s\n";
 
 const char report_bw_retrans_format[] =
-"[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec  %3u             %s\n";
+"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %3u             %s\n";
 
 const char report_bw_retrans_cwnd_format[] =
-"[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec  %3u   %ss       %s\n";
+"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %3u   %ss       %s\n";
 
 const char report_bw_udp_format[] =
-"[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)  %s\n";
+"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)  %s\n";
 
 const char report_bw_udp_sender_format[] =
-"[%3d] %6.2f-%-6.2f sec  %ss  %ss/sec  %d  %s\n";
+"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %d  %s\n";
 
 const char report_summary[] =
 "Test Complete. Summary Results:\n";
 
 const char report_sum_bw_format[] =
-"[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec                  %s\n";
+"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec                  %s\n";
 
 const char report_sum_bw_retrans_format[] =
-"[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec  %3d             %s\n";
+"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %3d             %s\n";
 
 const char report_sum_bw_udp_format[] =
-"[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)  %s\n";
+"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)  %s\n";
 
 const char report_sum_bw_udp_sender_format[] =
-"[SUM] %6.2f-%-6.2f sec  %ss  %ss/sec  %d  %s\n";
+"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %d  %s\n";
 
 const char report_omitted[] = "(omitted)";
 
@@ -360,10 +377,10 @@ const char report_bw_separator[] =
 "- - - - - - - - - - - - - - - - - - - - - - - - -\n";
 
 const char report_outoforder[] =
-"[%3d] %4.1f-%4.1f sec  %d datagrams received out-of-order\n";
+"[%3d]%s %4.1f-%4.1f sec  %d datagrams received out-of-order\n";
 
 const char report_sum_outoforder[] =
-"[SUM] %4.1f-%4.1f sec  %d datagrams received out-of-order\n";
+"[SUM]%s %4.1f-%4.1f sec  %d datagrams received out-of-order\n";
 
 const char report_peer[] =
 "[%3d] local %s port %u connected with %s port %u\n";

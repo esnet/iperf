@@ -374,6 +374,9 @@ iperf_strerror(int int_errno)
 	case IESETBUF2:
 	    snprintf(errstr, len, "socket buffer size not set correctly");
 	    break;
+	case IEREVERSEBIDIR:
+	    snprintf(errstr, len, "cannot be both reverse and bidirectional");
+            break;
 	
     }
 

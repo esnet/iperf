@@ -37,6 +37,7 @@
 #include <netdb.h>
 #include <sys/time.h>
 #include <sys/select.h>
+#include <limits.h>
 
 #ifdef HAVE_NETINET_SCTP_H
 #include <netinet/sctp.h>
@@ -234,7 +235,7 @@ iperf_sctp_listen(struct iperf_test *test)
 
     freeaddrinfo(res);
 
-    if (listen(s, 5) < 0) {
+    if (listen(s, INT_MAX) < 0) {
         i_errno = IESTREAMLISTEN;
         return -1;
     }

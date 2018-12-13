@@ -211,7 +211,7 @@ cpu_util(double pcpu[3])
     getrusage(RUSAGE_SELF, &rtemp);
 
     iperf_time_diff(&now, &last, &temp_time);
-    timediff = iperf_time_in_secs(&temp_time);
+    timediff = iperf_time_in_usecs(&temp_time);
 
     userdiff = ((rtemp.ru_utime.tv_sec * 1000000.0 + rtemp.ru_utime.tv_usec) -
                 (rlast.ru_utime.tv_sec * 1000000.0 + rlast.ru_utime.tv_usec));

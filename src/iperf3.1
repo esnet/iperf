@@ -153,6 +153,9 @@ send output to a log file.
 force flushing output at every interval.
 Used to avoid buffering when sending output to pipe.
 .TP
+.BR -I ", " --pidfile " \fIfile\fR"
+write a file with the process ID, useful for automated process cleanup.
+.TP
 .BR -d ", " --debug " "
 emit debugging output.
 Primarily (perhaps exclusively) of use to developers.
@@ -170,9 +173,6 @@ run in server mode
 .TP
 .BR -D ", " --daemon " "
 run the server in background as a daemon
-.TP
-.BR -I ", " --pidfile " \fIfile\fR"
-write a file with the process ID, most useful when running as a daemon.
 .TP
 .BR -1 ", " --one-off
 handle one client connection, then exit.

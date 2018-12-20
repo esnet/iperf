@@ -295,6 +295,14 @@ the executable.
 
           --bidir
                  bidirectional mode, server and client send and receive data.
+
+          --multithread
+                 creates a number of threads equal to the number of streams. Each
+                 stream handled independently.
+   
+          --thread-affinity
+                 experimental option. Use only with --multithread option.
+                 Sets each thread a affinity depending SO_INCOMING_CPU option.
    
           -w, --window n[KM]/n[KM],m[KM]
                  window size / socket buffer size (this gets sent to  the  server

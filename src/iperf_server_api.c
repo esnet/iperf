@@ -351,6 +351,10 @@ create_server_omit_timer(struct iperf_test * test)
 static void
 cleanup_server(struct iperf_test *test)
 {
+    if (test->multithread) {
+        iperf_delete_threads(test);
+    }
+
     /* Close open test sockets */
     if (test->ctrl_sck) {
 	close(test->ctrl_sck);
@@ -555,7 +559,7 @@ iperf_run_server(struct iperf_test *test)
                              * maintain interactivity with the control channel.
                              */
                             if (test->protocol->id != Pudp ||
-                                !sp->sender) {
+                                (!sp->sender && !test->multithread) ) {
                                 setnonblocking(s, 1);
                             }
 
@@ -567,7 +571,6 @@ iperf_run_server(struct iperf_test *test)
                     }
                     FD_CLR(test->prot_listener, &read_set);
                 }
-
 
                 if (rec_streams_accepted == streams_to_rec && send_streams_accepted == streams_to_send) {
                     if (test->protocol->id != Ptcp) {
@@ -614,31 +617,63 @@ iperf_run_server(struct iperf_test *test)
 			cleanup_server(test);
                         return -1;
 		    }
+
+                    if (test->multithread)
+                        if (iperf_create_threads(test)) {
+                            iperf_delete_threads(test);
+                            cleanup_server(test);
+                            return -1;
+                        }
                 }
             }
 
             if (test->state == TEST_RUNNING) {
-                if (test->mode == BIDIRECTIONAL) {
-                    if (iperf_recv(test, &read_set) < 0) {
-                        cleanup_server(test);
-                        return -1;
+                if (test->multithread) {
+                    if (!test->thrcontrol->started) {
+                        int status;
+
+                        test->thrcontrol->started = 1;
+                        status = pthread_barrier_wait(&test->thrcontrol->initial_barrier);
+                        if (status == PTHREAD_BARRIER_SERIAL_THREAD) {
+                            pthread_barrier_destroy(&test->thrcontrol->initial_barrier);
+                        }
                     }
-                    if (iperf_send(test, &write_set) < 0) {
-                        cleanup_server(test);
-                        return -1;
+
+                    usleep(1000);
+
+                    if (test->mode != RECEIVER) {
+
+                        test->blocks_sent = 0;
+                        test->bytes_sent = 0;
+
+                        SLIST_FOREACH(sp, &test->streams, streams) {
+                            test->bytes_sent += sp->bytes_sent;
+                            test->blocks_sent += sp->blocks_sent;
+                        }
                     }
-                } else if (test->mode == SENDER) {
-                    // Reverse mode. Server sends.
-                    if (iperf_send(test, &write_set) < 0) {
-			cleanup_server(test);
-                        return -1;
-		    }
                 } else {
-                    // Regular mode. Server receives.
-                    if (iperf_recv(test, &read_set) < 0) {
-			cleanup_server(test);
-                        return -1;
-		    }
+                    if (test->mode == BIDIRECTIONAL) {
+                        if (iperf_recv(test, &read_set) < 0) {
+                            cleanup_server(test);
+                            return -1;
+                        }
+                        if (iperf_send(test, &write_set) < 0) {
+                            cleanup_server(test);
+                            return -1;
+                        }
+                    } else if (test->mode == SENDER) {
+                        // Reverse mode. Server sends.
+                        if (iperf_send(test, &write_set) < 0) {
+                            cleanup_server(test);
+                            return -1;
+                        }
+                    } else {
+                        // Regular mode. Server receives.
+                        if (iperf_recv(test, &read_set) < 0) {
+                            cleanup_server(test);
+                            return -1;
+                        }
+                    }
                 }
             }
         }

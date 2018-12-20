@@ -377,6 +377,18 @@ iperf_strerror(int int_errno)
 	case IEREVERSEBIDIR:
 	    snprintf(errstr, len, "cannot be both reverse and bidirectional");
             break;
+	case IENEWTHREAD:
+	    snprintf(errstr, len, "unable to create new thread");
+	    break;
+	case IEINITBARRIER:
+	    snprintf(errstr, len, "unable to init barrier");
+	    break;
+	case IEINITMUTEX:
+	    snprintf(errstr, len, "unable to init mutex");
+	    break;
+	case IEWAITBARRIER:
+	    snprintf(errstr, len, "error wait barrier");
+	    break;
 	
     }
 

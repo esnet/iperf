@@ -43,6 +43,7 @@ struct iperf_stream_result;
 struct iperf_interval_results;
 struct iperf_stream;
 struct iperf_time;
+struct iperf_thread;
 
 /* default settings */
 #define Ptcp SOCK_STREAM
@@ -72,6 +73,9 @@ struct iperf_time;
 #define OPT_REPEATING_PAYLOAD 18
 #define OPT_EXTRA_DATA 19
 #define OPT_BIDIRECTIONAL 20
+#define OPT_MULTITHREAD 21
+#define OPT_THREAD_AFFINITY 22
+
 
 #define OPT_TEST_SET 101
 
@@ -304,6 +308,16 @@ int iperf_clearaffinity(struct iperf_test *);
 int iperf_printf(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3)));
 int iflush(struct iperf_test *test);
 
+/* Multithread option */
+
+int iperf_create_threads(struct iperf_test *);
+int iperf_new_thread(struct iperf_test *, struct iperf_stream *, int, struct iperf_thread *);
+void *iperf_run_thread(void *);
+int iperf_thread_send(struct iperf_thread *);
+int iperf_thread_recv(struct iperf_thread *);
+int iperf_delete_threads(struct iperf_test *);
+int iperf_set_thread_affinity(struct iperf_thread *);
+
 /* Error routines. */
 void iperf_err(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3)));
 void iperf_errexit(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3),noreturn));
@@ -394,6 +408,11 @@ enum {
     /* Timer errors */
     IENEWTIMER = 300,       // Unable to create new timer (check perror)
     IEUPDATETIMER = 301,    // Unable to update timer (check perror)
+    /* Threads errors */
+    IENEWTHREAD = 400,      // Unable to create new thread
+    IEINITBARRIER = 401,    // Unable to init barrier
+    IEINITMUTEX = 402,      // Unable to init mutex
+    IEWAITBARRIER = 403,    // Error wait barrier
 };
 
 

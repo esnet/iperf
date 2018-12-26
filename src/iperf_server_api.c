@@ -88,7 +88,7 @@ iperf_server_listen(struct iperf_test *test)
 
     if (!test->json_output) {
 	iperf_printf(test, "-----------------------------------------------------------\n");
-	iperf_printf(test, "Server listening on %d\n", test->server_port);
+	iperf_printf(test, "Server listening on %d\n", getsockport(test->listener));
 	iperf_printf(test, "-----------------------------------------------------------\n");
 	if (test->forceflush)
 	    iflush(test);

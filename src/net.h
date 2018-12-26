@@ -36,6 +36,7 @@ int has_sendfile(void);
 int Nsendfile(int fromfd, int tofd, const char *buf, size_t count) /* __attribute__((hot)) */;
 int setnonblocking(int fd, int nonblocking);
 int getsockdomain(int sock);
+int getsockport(int sock);
 int parse_qos(const char *tos);
 
 #define NET_SOFTERROR -1

@@ -481,3 +481,18 @@ getsockdomain(int sock)
     }
     return ((struct sockaddr *) &sa)->sa_family;
 }
+
+/****************************************************************************/
+
+int
+getsockport(int sock)
+{
+    struct sockaddr_in sin;
+    socklen_t len = sizeof(sin);
+    if (getsockname(sock, (struct sockaddr *)&sin, &len) == -1) {
+        perror("getsockname");
+        return -1;
+    }
+
+    return ntohs(sin.sin_port);
+}

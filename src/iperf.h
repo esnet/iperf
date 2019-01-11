@@ -347,6 +347,7 @@ struct iperf_test
     cJSON *json_connected;
     cJSON *json_intervals;
     cJSON *json_end;
+    cJSON *json_end_sums;
 
     /* Server output (use on client side only) */
     char *server_output_text;

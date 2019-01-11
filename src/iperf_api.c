@@ -3199,6 +3199,21 @@ iperf_print_results(struct iperf_test *test)
         }
 
         if (test->num_streams > 1 || test->json_output) {
+            cJSON *json_sum_container = NULL;
+
+            if (test->json_output) {
+                if (test->mode == BIDIRECTIONAL) {
+                    /* Put to a subcontainer */
+                    json_sum_container = cJSON_CreateObject();
+                    if (json_sum_container != NULL)
+                        cJSON_AddItemToArray(test->json_end_sums, json_sum_container);
+                }
+                if (json_sum_container == NULL)
+                    json_sum_container = test->json_end;
+            } else {
+                json_sum_container = NULL;
+            }
+
             unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
             /* If no tests were run, arbitrarily set bandwidth to 0. */
             if (sender_time > 0.0) {
@@ -3212,7 +3227,7 @@ iperf_print_results(struct iperf_test *test)
                 if (test->sender_has_retransmits) {
                     /* Summary sum, TCP with retransmits. */
                     if (test->json_output)
-                        cJSON_AddItemToObject(test->json_end, "sum_sent", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d sender: %b", (double) start_time, (double) sender_time, (double) sender_time, (int64_t) total_sent, bandwidth * 8, (int64_t) total_retransmits, stream_must_be_sender));
+                        cJSON_AddItemToObject(json_sum_container, "sum_sent", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d sender: %b", (double) start_time, (double) sender_time, (double) sender_time, (int64_t) total_sent, bandwidth * 8, (int64_t) total_retransmits, stream_must_be_sender));
                     else
                         if (test->role == 's' && !stream_must_be_sender) {
                             if (test->verbose)
@@ -3224,7 +3239,7 @@ iperf_print_results(struct iperf_test *test)
                 } else {
                     /* Summary sum, TCP without retransmits. */
                     if (test->json_output)
-                        cJSON_AddItemToObject(test->json_end, "sum_sent", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f sender: %b", (double) start_time, (double) sender_time, (double) sender_time, (int64_t) total_sent, bandwidth * 8, stream_must_be_sender));
+                        cJSON_AddItemToObject(json_sum_container, "sum_sent", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f sender: %b", (double) start_time, (double) sender_time, (double) sender_time, (int64_t) total_sent, bandwidth * 8, stream_must_be_sender));
                     else
                         if (test->role == 's' && !stream_must_be_sender) {
                             if (test->verbose)
@@ -3234,6 +3249,7 @@ iperf_print_results(struct iperf_test *test)
                             iperf_printf(test, report_sum_bw_format, mbuf, start_time, sender_time, ubuf, nbuf, report_sender);
                         }
                 }
+
                 unit_snprintf(ubuf, UNIT_LEN, (double) total_received, 'A');
                 /* If no tests were run, set received bandwidth to 0 */
                 if (receiver_time > 0.0) {
@@ -3244,7 +3260,7 @@ iperf_print_results(struct iperf_test *test)
                 }
                 unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
                 if (test->json_output)
-                    cJSON_AddItemToObject(test->json_end, "sum_received", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f sender: %b", (double) start_time, (double) receiver_time, (double) receiver_time, (int64_t) total_received, bandwidth * 8, stream_must_be_sender));
+                    cJSON_AddItemToObject(json_sum_container, "sum_received", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f sender: %b", (double) start_time, (double) receiver_time, (double) receiver_time, (int64_t) total_received, bandwidth * 8, stream_must_be_sender));
                 else
                     if (test->role == 's' && stream_must_be_sender) {
                         if (test->verbose)
@@ -3264,7 +3280,7 @@ iperf_print_results(struct iperf_test *test)
                     lost_percent = 0.0;
                 }
                 if (test->json_output)
-                    cJSON_AddItemToObject(test->json_end, "sum", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f sender: %b", (double) start_time, (double) receiver_time, (double) receiver_time, (int64_t) total_sent, bandwidth * 8, (double) avg_jitter * 1000.0, (int64_t) lost_packets, (int64_t) total_packets, (double) lost_percent, stream_must_be_sender));
+                    cJSON_AddItemToObject(json_sum_container, "sum", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f sender: %b", (double) start_time, (double) receiver_time, (double) receiver_time, (int64_t) total_sent, bandwidth * 8, (double) avg_jitter * 1000.0, (int64_t) lost_packets, (int64_t) total_packets, (double) lost_percent, stream_must_be_sender));
                 else {
                     /*
                      * On the client we have both sender and receiver overall summary
@@ -3899,6 +3915,14 @@ iperf_json_start(struct iperf_test *test)
     if (test->json_end == NULL)
         return -1;
     cJSON_AddItemToObject(test->json_top, "end", test->json_end);
+    if (test->mode == BIDIRECTIONAL) {
+        test->json_end_sums = cJSON_CreateArray();
+        if (test->json_end_sums == NULL)
+            return -1;
+        cJSON_AddItemToObject(test->json_end, "sums", test->json_end_sums);
+    } else {
+        test->json_end_sums = NULL;
+    }
     return 0;
 }
 
@@ -3922,7 +3946,7 @@ iperf_json_finish(struct iperf_test *test)
     fprintf(test->outfile, "%s\n", test->json_output_string);
     iflush(test);
     cJSON_Delete(test->json_top);
-    test->json_top = test->json_start = test->json_connected = test->json_intervals = test->json_server_output = test->json_end = NULL;
+    test->json_top = test->json_start = test->json_connected = test->json_intervals = test->json_server_output = test->json_end = test->json_end_sums = NULL;
     return 0;
 }
 

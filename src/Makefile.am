@@ -29,6 +29,8 @@ libiperf_la_SOURCES     = \
                         iperf_udp.h \
                         iperf_sctp.c \
                         iperf_sctp.h \
+                        iperf_vsock.c \
+                        iperf_vsock.h \
                         iperf_util.c \
                         iperf_util.h \
                         iperf_time.c \

@@ -26,6 +26,7 @@
  */
 #include "iperf_config.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
@@ -63,6 +64,91 @@
 #include "iperf_util.h"
 #include "net.h"
 #include "timer.h"
+
+#if defined(HAVE_VSOCK)
+#include <linux/vm_sockets.h>
+
+static int
+parse_cid(const char *cid_str)
+{
+	char *end = NULL;
+	long cid = strtol(cid_str, &end, 10);
+	if (cid_str != end && *end == '\0') {
+		return cid;
+	} else {
+		fprintf(stderr, "VSOCK - invalid cid: %s\n", cid_str);
+		return -1;
+	}
+}
+
+static int
+vsockannounce(int port)
+{
+	int listen_fd, opt;
+	struct sockaddr_vm sa_listen = {
+		.svm_family = AF_VSOCK,
+		.svm_cid = VMADDR_CID_ANY,
+	};
+
+	sa_listen.svm_port = port;
+
+	listen_fd = socket(AF_VSOCK, SOCK_STREAM, 0);
+	if (listen_fd < 0) {
+		goto err;
+	}
+
+	opt = 1;
+	if (setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+		goto err_close;
+	}
+
+	if (bind(listen_fd, (struct sockaddr*)&sa_listen, sizeof(sa_listen)) != 0) {
+		goto err_close;
+	}
+
+	if (listen(listen_fd, INT_MAX) != 0) {
+		goto err_close;
+	}
+
+	return listen_fd;
+
+err_close:
+	close(listen_fd);
+err:
+	return -1;
+}
+
+static int
+vsockdial(char *server, int port, int timeout)
+{
+	int fd, cid;
+	struct sockaddr_vm sa = {
+		.svm_family = AF_VSOCK,
+	};
+
+	cid = parse_cid(server);
+	if (cid < 0) {
+		return -1;
+	}
+
+	sa.svm_cid = cid;
+	sa.svm_port = port;
+
+	fd = socket(AF_VSOCK, SOCK_STREAM, 0);
+	if (fd < 0) {
+		return -1;
+	}
+
+	if (timeout_connect(fd, (struct sockaddr*)&sa, sizeof(sa), timeout) != 0) {
+		close(fd);
+		return -1;
+	}
+
+	return fd;
+}
+
+#endif /* HAVE_VSOCK */
+
 
 /*
  * Declaration of gerror in iperf_error.c.  Most other files in iperf3 can get this
@@ -124,6 +210,12 @@ netdial(int domain, int proto, char *local, int local_port, char *server, int po
 {
     struct addrinfo hints, *local_res, *server_res;
     int s, saved_errno;
+
+#if defined(HAVE_VSOCK)
+    if (domain == AF_VSOCK) {
+        return vsockdial(server, port, timeout);
+    }
+#endif /* HAVE_VSOCK */
 
     if (local) {
         memset(&hints, 0, sizeof(hints));
@@ -222,6 +314,12 @@ netannounce(int domain, int proto, char *local, int port)
     struct addrinfo hints, *res;
     char portstr[6];
     int s, opt, saved_errno;
+
+#if defined(HAVE_VSOCK)
+    if (domain == AF_VSOCK) {
+        return vsockannounce(port);
+    }
+#endif /* HAVE_VSOCK */
 
     snprintf(portstr, 6, "%d", port);
     memset(&hints, 0, sizeof(hints));

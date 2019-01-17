@@ -49,9 +49,15 @@ struct iperf_time;
 #define Ptcp SOCK_STREAM
 #define Pudp SOCK_DGRAM
 #define Psctp 12
+#ifdef HAVE_VSOCK
+#define Pvsock AF_VSOCK
+#else /* !HAVE_VSOCK */
+#define Pvsock 40
+#endif
 #define DEFAULT_UDP_BLKSIZE 1460 /* default is dynamically set, else this */
 #define DEFAULT_TCP_BLKSIZE (128 * 1024)  /* default read/write block size */
 #define DEFAULT_SCTP_BLKSIZE (64 * 1024)
+#define DEFAULT_VSOCK_BLKSIZE (64 * 1024)
 
 /* short option equivalents, used to support options that only have long form */
 #define OPT_SCTP 1
@@ -73,6 +79,7 @@ struct iperf_time;
 #define OPT_REPEATING_PAYLOAD 18
 #define OPT_EXTRA_DATA 19
 #define OPT_BIDIRECTIONAL 20
+#define OPT_VSOCK 21
 
 /* states */
 #define TEST_START 1
@@ -343,6 +350,7 @@ enum {
     IEBADFORMAT = 24,	    // Bad format argument to -f
     IEREVERSEBIDIR = 25,    // Iperf cannot be both reverse and bidirectional
     IEBADPORT = 26,	    // Bad port number
+    IENOVSOCK = 27,	    // No VSOCK support available
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

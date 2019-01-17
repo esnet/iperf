@@ -102,6 +102,15 @@ AC_CHECK_HEADERS([netinet/sctp.h],
 #endif
 ])
 
+# Check for VSOCK support
+AC_CHECK_HEADERS([linux/vm_sockets.h],
+		 AC_DEFINE([HAVE_VSOCK], [1], [Have VSOCK support.]),
+		 [],
+		 [#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+])
+
 AC_CHECK_HEADER([endian.h],
 		AC_DEFINE([HAVE_ENDIAN_H], [1], [Define to 1 if you have the <endian.h> header file.]),
 		AC_CHECK_HEADER([sys/endian.h],

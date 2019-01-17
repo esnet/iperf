@@ -49,6 +49,10 @@
 #include <setjmp.h>
 
 #include "iperf.h"
+#if defined(HAVE_VSOCK)
+#include <linux/vm_sockets.h>
+#endif /* HAVE_VSOCK */
+
 #include "iperf_api.h"
 #include "iperf_udp.h"
 #include "iperf_tcp.h"

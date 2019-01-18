@@ -14,7 +14,7 @@ iperf3 \- perform network throughput tests
 
 .SH DESCRIPTION
 iperf3 is a tool for performing network throughput measurements.
-It can test TCP, UDP, or SCTP throughput.
+It can test TCP, UDP, SCTP or VSOCK throughput.
 To perform an iperf3 test the user must establish both a server and a
 client.
 .PP
@@ -43,13 +43,15 @@ iperf3 clients (in other words, the iperf3 program run in client
 mode).
 The client mode can be started using the -c command-line option,
 which also requires a host to which iperf3 should connect.
-The host can by specified by hostname, IPv4 literal, or IPv6 literal:
+The host can by specified by hostname, IPv4 literal, IPv6 literal or VSOCK CID:
 .IP
 \fCiperf3 -c iperf3.example.com\fR
 .IP
 \fCiperf3 -c 192.0.2.1\fR
 .IP
 \fCiperf3 -c 2001:db8::1\fR
+.IP
+\fCiperf3 --vsock -c 3\fR
 .PP
 If the iperf3 server is running on a non-default TCP port, that port
 number needs to be specified on the client as well:
@@ -105,6 +107,21 @@ used to set the parameters of a test.
 They are given in the "GENERAL OPTIONS" section of the manual page
 below, as well as summarized in iperf3's help output, which can be
 viewed by running iperf3 with the -h flag.
+.SS VSOCK
+.PP
+The  VSOCK  address family facilitates communication between virtual
+machines and the host they are running on.
+To use VSOCK (only Linux), you must use the option --vsock on both server
+and client.
+.PP
+Usually the server side runs in the VM:
+.IP
+\fCiperf3 --vsock -s\fR
+.PP
+And the client runs in the host, in this case you must specify the Context
+Identifier (CID) of the guest where the server is running (eg. guest-cid = 3):
+.IP
+\fCiperf3 --vsock -c 3\fR
 .SH "GENERAL OPTIONS"
 .TP
 .BR -p ", " --port " \fIn\fR"
@@ -139,6 +156,9 @@ CPUs).
 .TP
 .BR -B ", " --bind " \fIhost\fR"
 bind to the specific interface associated with address \fIhost\fR.
+.TP
+.BR --vsock
+use VSOCK address family rather than INET (Linux)
 .TP
 .BR -V ", " --verbose " "
 give more detailed output 
@@ -211,7 +231,7 @@ server.
 .TP
 .BR -b ", " --bitrate " \fIn\fR[KM]"
 set target bitrate to \fIn\fR bits/sec (default 1 Mbit/sec for UDP,
-unlimited for TCP/SCTP).
+unlimited for TCP/SCTP/VSOCK).
 If there are multiple streams (\-P flag), the throughput limit is applied
 separately to each stream.
 You can also add a '/' and a number to the bitrate specifier.
@@ -265,7 +285,7 @@ is 128KB.
 In the case of UDP, iperf3 tries to dynamically determine a reasonable
 sending size based on the path MTU; if that cannot be determined it
 uses 1460 bytes as a sending size.
-For SCTP tests, the default size is 64KB.
+For SCTP and VSOCK tests, the default size is 64KB.
 .TP
 .BR --cport " \fIport\fR"
 bind data streams to a specific client port (for TCP and UDP only,

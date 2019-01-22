@@ -142,8 +142,17 @@ iperf_vsock_recv(struct iperf_stream *sp)
 	int r;
 
 	r = Nread(sp->socket, sp->buffer, sp->settings->blksize, Pvsock);
-	if (r < 0)
-		return r;
+	if (r < 0) {
+		/*
+		 * VSOCK can return -1 with errno = ENOTCONN if the remote host
+		 * closes the connection, but in the iperf3 code we expect
+		 * return 0 in this case.
+		 */
+		if (errno == ENOTCONN)
+			return 0;
+		else
+			return r;
+	}
 
 	/* Only count bytes received while we're in the correct state. */
 	if (sp->test->state == TEST_RUNNING) {
@@ -163,8 +172,17 @@ iperf_vsock_send(struct iperf_stream *sp)
 	int r;
 
 	r = Nwrite(sp->socket, sp->buffer, sp->settings->blksize, Pvsock);
-	if (r < 0)
-		return r;
+	if (r < 0) {
+		/*
+		 * VSOCK can return -1 with errno = ENOTCONN if the remote host
+		 * closes the connection, but in the iperf3 code we expect
+		 * return 0 in this case.
+		 */
+		if (errno == ENOTCONN)
+			return 0;
+		else
+			return r;
+	}
 
 	sp->result->bytes_sent += r;
 	sp->result->bytes_sent_this_interval += r;

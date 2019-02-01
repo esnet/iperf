@@ -1225,7 +1225,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
         char *client_password = NULL;
         size_t s;
-        if (iperf_getpass(&client_password, &s, stdin) < 0){
+        if ((client_password = getenv("IPERF3_PASSWORD")) == NULL &&
+            iperf_getpass(&client_password, &s, stdin) < 0){
             return -1;
         } 
 

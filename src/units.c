@@ -1,3 +1,4 @@
+
 /*---------------------------------------------------------------
  * Copyright (c) 1999,2000,2001,2002,2003
  * The Board of Trustees of the University of Illinois
@@ -263,14 +264,18 @@ extern    "C"
  * adaptive picks the "best" one based on the number.
  * s should be at least 11 chars long
  * (4 digits + space + 5 chars max + null)
+ * If precision == -1, treat that as old behavior that tries to do 4 characters,
+ *  otherwise, use it as decimial precision.
  * ------------------------------------------------------------------- */
 
     void      unit_snprintf(char *s, int inLen,
-			              double inNum, char inFormat)
+                            double inNum, char inFormat, int precision)
     {
 	int       conv;
 	const char *suffix;
 	const char *format;
+        char format_custom[40];
+        int p = precision;
 
 	/* convert to bits for [bkmga] */
 	if        (!isupper((int) inFormat))
@@ -303,14 +308,30 @@ extern    "C"
 
 		if (isupper((int) inFormat))
 		{
-		    while (tmpNum >= 1024.0 && conv < TERA_CONV)
+                    double max = 1024.0;
+                    int z;
+                    for (z = 0; z<precision - 2; z++) {
+                       max *= 10;
+                    }
+                    precision -= z; // We effectively increase precision above.
+                    if (p > 2 && precision < 2)
+                       precision = 2;
+		    while (tmpNum >= max && conv < TERA_CONV)
 		    {
 			tmpNum /= 1024.0;
 			conv++;
 		    }
 		} else
 		{
-		    while (tmpNum >= 1000.0 && conv < TERA_CONV)
+                    double max = 1000.0;
+                    int z;
+                    for (z = 0; z<precision - 2; z++) {
+                       max *= 10;
+                    }
+                    precision -= z; // We effectively increase precision above.
+                    if (p > 2 && precision < 2)
+                       precision = 2;
+		    while (tmpNum >= max && conv < TERA_CONV)
 		    {
 			tmpNum /= 1000.0;
 			conv++;
@@ -330,22 +351,28 @@ extern    "C"
 	    suffix = label_byte[conv];
 	}
 
-	/* print such that we always fit in 4 places */
-	if (inNum < 9.995)
-	{			/* 9.995 would be rounded to 10.0 */
-	    format = "%4.2f %s";/* #.## */
-	} else if (inNum < 99.95)
-	{			/* 99.95 would be rounded to 100 */
-	    format = "%4.1f %s";/* ##.# */
-	} else if (inNum < 999.5)
-	{			/* 999.5 would be rounded to 1000 */
-	    format = "%4.0f %s";/* ### */
-	} else
-	{			/* 1000-1024 fits in 4 places If not using
+        if (precision == -1) {
+           /* print such that we always fit in 4 places */
+           if (inNum < 9.995)
+              {			/* 9.995 would be rounded to 10.0 */
+                 format = "%4.2f %s";/* #.## */
+              } else if (inNum < 99.95)
+              {			/* 99.95 would be rounded to 100 */
+                 format = "%4.1f %s";/* ##.# */
+              } else if (inNum < 999.5)
+              {			/* 999.5 would be rounded to 1000 */
+                 format = "%4.0f %s";/* ### */
+              } else
+              {			/* 1000-1024 fits in 4 places If not using
 				 * Adaptive sizes then this code will not
 				 * control spaces */
-	    format = "%4.0f %s";/* #### */
-	}
+                 format = "%4.0f %s";/* #### */
+              }
+        }
+        else {
+           snprintf(format_custom, sizeof(format_custom), "%%0.%df %%s", precision);
+           format = format_custom;
+        }
 	snprintf(s, inLen, format, inNum, suffix);
     }				/* end unit_snprintf */
 

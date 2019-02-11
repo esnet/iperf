@@ -800,6 +800,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     {
         {"port", required_argument, NULL, 'p'},
         {"format", required_argument, NULL, 'f'},
+        {"precision", required_argument, NULL, 'r'},
         {"interval", required_argument, NULL, 'i'},
         {"daemon", no_argument, NULL, 'D'},
         {"one-off", no_argument, NULL, '1'},
@@ -886,7 +887,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     char *client_username = NULL, *client_rsa_public_key = NULL, *server_rsa_private_key = NULL;
 #endif /* HAVE_SSL */
 
-    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rr:w:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
 		portno = atoi(optarg);
@@ -895,6 +896,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		    return -1;
 		}
 		test->server_port = portno;
+                break;
+            case 'r':
+                test->settings->unit_precision = atoi(optarg);
+                if (test->settings->unit_precision < -1)
+                   test->settings->unit_precision = 1;
+                else if (test->settings->unit_precision > 30)
+                   test->settings->unit_precision = 30;
                 break;
             case 'f':
 		if (!optarg) {
@@ -2346,6 +2354,7 @@ iperf_defaults(struct iperf_test *testp)
 
     testp->settings->domain = AF_UNSPEC;
     testp->settings->unit_format = 'a';
+    testp->settings->unit_precision = -1; /* auto */
     testp->settings->socket_bufsize = 0;    /* use autotuning */
     testp->settings->blksize = DEFAULT_TCP_BLKSIZE;
     testp->settings->rate = 0;
@@ -2926,9 +2935,9 @@ iperf_print_intermediate(struct iperf_test *test)
             if (sp) {
 	    irp = TAILQ_LAST(&sp->result->interval_results, irlisthead);    /* use 1st stream for timing info */
 
-	    unit_snprintf(ubuf, UNIT_LEN, (double) bytes, 'A');
+	    unit_snprintf(ubuf, UNIT_LEN, (double) bytes, 'A', test->settings->unit_precision);
 	    bandwidth = (double) bytes / (double) irp->interval_duration;
-	    unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
+	    unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format, test->settings->unit_precision);
 
 	    iperf_time_diff(&sp->result->start_time,&irp->interval_start_time, &temp_time);
 	    start_time = iperf_time_in_secs(&temp_time);
@@ -3152,14 +3161,15 @@ iperf_print_results(struct iperf_test *test)
                     avg_jitter += sp->jitter;
                 }
 
-                unit_snprintf(ubuf, UNIT_LEN, (double) bytes_sent, 'A');
+                unit_snprintf(ubuf, UNIT_LEN, (double) bytes_sent, 'A', test->settings->unit_precision);
+
                 if (sender_time > 0.0) {
                     bandwidth = (double) bytes_sent / (double) sender_time;
                 }
                 else {
                     bandwidth = 0.0;
                 }
-                unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
+                unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format, test->settings->unit_precision);
                 if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
                     if (test->sender_has_retransmits) {
                         /* Sender summary, TCP and SCTP with retransmits. */
@@ -3242,7 +3252,7 @@ iperf_print_results(struct iperf_test *test)
                             percent_sent = (int) ( ( (double) bytes_sent / (double) sb.st_size ) * 100.0 );
                             percent_received = (int) ( ( (double) bytes_received / (double) sb.st_size ) * 100.0 );
                         }
-                        unit_snprintf(sbuf, UNIT_LEN, (double) sb.st_size, 'A');
+                        unit_snprintf(sbuf, UNIT_LEN, (double) sb.st_size, 'A', test->settings->unit_precision);
                         if (test->json_output)
                             cJSON_AddItemToObject(json_summary_stream, "diskfile", iperf_json_printf("sent: %d  received: %d  size: %d  percent_sent: %d  percent_received: %d  filename: %s", (int64_t) bytes_sent, (int64_t) bytes_received, (int64_t) sb.st_size, (int64_t) percent_sent, (int64_t) percent_received, test->diskfile_name));
                         else
@@ -3250,20 +3260,20 @@ iperf_print_results(struct iperf_test *test)
                                 iperf_printf(test, report_diskfile, ubuf, sbuf, percent_sent, test->diskfile_name);
                             }
                             else {
-                                unit_snprintf(ubuf, UNIT_LEN, (double) bytes_received, 'A');
+                                unit_snprintf(ubuf, UNIT_LEN, (double) bytes_received, 'A', test->settings->unit_precision);
                                 iperf_printf(test, report_diskfile, ubuf, sbuf, percent_received, test->diskfile_name);
                             }
                     }
                 }
 
-                unit_snprintf(ubuf, UNIT_LEN, (double) bytes_received, 'A');
+                unit_snprintf(ubuf, UNIT_LEN, (double) bytes_received, 'A', test->settings->unit_precision);
                 if (receiver_time > 0) {
                     bandwidth = (double) bytes_received / (double) receiver_time;
                 }
                 else {
                     bandwidth = 0.0;
                 }
-                unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
+                unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format, test->settings->unit_precision);
                 if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
                     /* Receiver summary, TCP and SCTP */
                     if (test->json_output)
@@ -3305,7 +3315,7 @@ iperf_print_results(struct iperf_test *test)
         }
 
         if (test->num_streams > 1 || test->json_output) {
-            unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
+            unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A', test->settings->unit_precision);
             /* If no tests were run, arbitrarily set bandwidth to 0. */
             if (sender_time > 0.0) {
                 bandwidth = (double) total_sent / (double) sender_time;
@@ -3313,7 +3323,7 @@ iperf_print_results(struct iperf_test *test)
             else {
                 bandwidth = 0.0;
             }
-            unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
+            unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format, test->settings->unit_precision);
             if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
                 if (test->sender_has_retransmits) {
                     /* Summary sum, TCP with retransmits. */
@@ -3340,7 +3350,7 @@ iperf_print_results(struct iperf_test *test)
                             iperf_printf(test, report_sum_bw_format, mbuf, start_time, sender_time, ubuf, nbuf, report_sender);
                         }
                 }
-                unit_snprintf(ubuf, UNIT_LEN, (double) total_received, 'A');
+                unit_snprintf(ubuf, UNIT_LEN, (double) total_received, 'A', test->settings->unit_precision);
                 /* If no tests were run, set received bandwidth to 0 */
                 if (receiver_time > 0.0) {
                     bandwidth = (double) total_received / (double) receiver_time;
@@ -3348,7 +3358,7 @@ iperf_print_results(struct iperf_test *test)
                 else {
                     bandwidth = 0.0;
                 }
-                unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
+                unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format, test->settings->unit_precision);
                 if (test->json_output)
                     cJSON_AddItemToObject(test->json_end, "sum_received", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f sender: %b", (double) start_time, (double) receiver_time, (double) receiver_time, (int64_t) total_received, bandwidth * 8, stream_must_be_sender));
                 else
@@ -3378,12 +3388,12 @@ iperf_print_results(struct iperf_test *test)
                      * server.  Output whatever we have.
                      */
                     if (! (test->role == 's' && !stream_must_be_sender) ) {
-                        unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
+                        unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A', test->settings->unit_precision);
                         iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, sender_time, ubuf, nbuf, 0.0, 0, sender_total_packets, 0.0, "sender");
                     }
                     if (! (test->role == 's' && stream_must_be_sender) ) {
 
-                        unit_snprintf(ubuf, UNIT_LEN, (double) total_received, 'A');
+                        unit_snprintf(ubuf, UNIT_LEN, (double) total_received, 'A', test->settings->unit_precision);
                         /* Compute received bandwidth. */
                         if (end_time > 0.0) {
                             bandwidth = (double) total_received / (double) receiver_time;
@@ -3391,7 +3401,7 @@ iperf_print_results(struct iperf_test *test)
                         else {
                             bandwidth = 0.0;
                         }
-                        unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
+                        unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format, test->settings->unit_precision);
                         iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, receiver_time, ubuf, nbuf, avg_jitter * 1000.0, lost_packets, receiver_total_packets, lost_percent, "receiver");
                     }
                 }
@@ -3558,14 +3568,14 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 	}
     }
 
-    unit_snprintf(ubuf, UNIT_LEN, (double) (irp->bytes_transferred), 'A');
+    unit_snprintf(ubuf, UNIT_LEN, (double) (irp->bytes_transferred), 'A', test->settings->unit_precision);
     if (irp->interval_duration > 0.0) {
 	bandwidth = (double) irp->bytes_transferred / (double) irp->interval_duration;
     }
     else {
 	bandwidth = 0.0;
     }
-    unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
+    unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format, test->settings->unit_precision);
     
     iperf_time_diff(&sp->result->start_time, &irp->interval_start_time, &temp_time);
     st = iperf_time_in_secs(&temp_time);
@@ -3578,7 +3588,7 @@ print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *
 	    if (test->json_output)
 		cJSON_AddItemToArray(json_interval_streams, iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d  snd_cwnd:  %d  rtt:  %d  rttvar: %d  pmtu: %d  omitted: %b sender: %b", (int64_t) sp->socket, (double) st, (double) et, (double) irp->interval_duration, (int64_t) irp->bytes_transferred, bandwidth * 8, (int64_t) irp->interval_retrans, (int64_t) irp->snd_cwnd, (int64_t) irp->rtt, (int64_t) irp->rttvar, (int64_t) irp->pmtu, irp->omitted, sp->sender));
 	    else {
-		unit_snprintf(cbuf, UNIT_LEN, irp->snd_cwnd, 'A');
+                unit_snprintf(cbuf, UNIT_LEN, irp->snd_cwnd, 'A', test->settings->unit_precision);
 		iperf_printf(test, report_bw_retrans_cwnd_format, sp->socket, mbuf, st, et, ubuf, nbuf, irp->interval_retrans, cbuf, irp->omitted?report_omitted:"");
 	    }
 	} else {
@@ -4175,4 +4185,5 @@ iflush(struct iperf_test *test)
     if (rv < 0) {
         iperf_errexit(test, "fflush on outfile failed: %s\n", strerror(errno));
     }
+    return rv;
 }

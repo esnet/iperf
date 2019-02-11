@@ -99,6 +99,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "Server or Client:\n"
                            "  -p, --port      #         server port to listen on/connect to\n"
                            "  -f, --format   [kmgtKMGT] format to report: Kbits, Mbits, Gbits, Tbits\n"
+                           "  -r, --precision   [-1 - 30] decimal precision for format to report\n"
                            "  -i, --interval  #         seconds between periodic throughput reports\n"
                            "  -F, --file name           xmit/recv the specified file\n"
 #if defined(HAVE_CPU_AFFINITY)

@@ -270,6 +270,9 @@ create_server_timers(struct iperf_test * test)
 {
     struct iperf_time now;
     TimerClientData cd;
+    int max_rtt = 4; /* seconds */
+    int state_transitions = 10; /* number of state transitions in iperf3 */
+    int grace_period = max_rtt * state_transitions;
 
     if (iperf_time_now(&now) < 0) {
 	i_errno = IEINITTEST;
@@ -279,7 +282,7 @@ create_server_timers(struct iperf_test * test)
     test->timer = test->stats_timer = test->reporter_timer = NULL;
     if (test->duration != 0 ) {
         test->done = 0;
-        test->timer = tmr_create(&now, server_timer_proc, cd, (test->duration + test->omit + 5) * SEC_TO_US, 0);
+        test->timer = tmr_create(&now, server_timer_proc, cd, (test->duration + test->omit + grace_period) * SEC_TO_US, 0);
         if (test->timer == NULL) {
             i_errno = IEINITTEST;
             return -1;

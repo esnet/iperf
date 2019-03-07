@@ -194,6 +194,7 @@ iperf_handle_message_server(struct iperf_test *test)
                 test->on_test_finish(test);
             break;
         case IPERF_DONE:
+            test->state = IPERF_DONE;
             break;
         case CLIENT_TERMINATE:
             i_errno = IECLIENTTERM;

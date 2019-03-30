@@ -725,7 +725,7 @@ iperf_on_connect(struct iperf_test *test)
             }
         }
         if (test->settings->rate)
-            iperf_printf(test, "      Target Bitrate: %llu\n", test->settings->rate);
+            iperf_printf(test, "      Target Bitrate: %" SCNu64 "\n", test->settings->rate);
     }
 }
 

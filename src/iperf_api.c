@@ -662,7 +662,7 @@ void
 iperf_on_connect(struct iperf_test *test)
 {
     time_t now_secs;
-    const char* rfc1123_fmt = "%a, %d %b %Y %H:%M:%S GMT";
+    const char* rfc1123_fmt = "%a, %d %b %Y %H:%M:%S %Z";
     char now_str[100];
     char ipr[INET6_ADDRSTRLEN];
     int port;

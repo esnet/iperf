@@ -238,6 +238,12 @@ iperf_get_test_num_streams(struct iperf_test *ipt)
 }
 
 int
+iperf_get_test_repeating_payload(struct iperf_test *ipt)
+{
+    return ipt->repeating_payload;
+}
+
+int
 iperf_get_test_server_port(struct iperf_test *ipt)
 {
     return ipt->server_port;
@@ -430,6 +436,12 @@ void
 iperf_set_test_num_streams(struct iperf_test *ipt, int num_streams)
 {
     ipt->num_streams = num_streams;
+}
+
+void
+iperf_set_test_repeating_payload(struct iperf_test *ipt, int repeating_payload)
+{
+    ipt->repeating_payload = repeating_payload;
 }
 
 static void

@@ -379,6 +379,12 @@ iperf_set_test_blksize(struct iperf_test *ipt, int blksize)
 }
 
 void
+iperf_set_test_logfile(struct iperf_test *ipt, char *logfile)
+{
+    ipt->logfile = strdup(logfile);
+}
+
+void
 iperf_set_test_rate(struct iperf_test *ipt, uint64_t rate)
 {
     ipt->settings->rate = rate;
@@ -1193,15 +1199,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         }
     }
 
-    /* Set logging to a file if specified, otherwise use the default (stdout) */
-    if (test->logfile) {
-        test->outfile = fopen(test->logfile, "a+");
-        if (test->outfile == NULL) {
-            i_errno = IELOGFILE;
-            return -1;
-        }
-    }
-
     /* Check flag / role compatibility. */
     if (test->role == 'c' && server_flag) {
         i_errno = IESERVERONLY;
@@ -1321,6 +1318,20 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     }
     if (test->json_output && test->debug) {
         warning("Debug output (-d) may interfere with JSON output (-J)");
+    }
+
+    return 0;
+}
+
+/*
+ * Open the file specified by test->logfile and set test->outfile to its' FD.
+ */
+int iperf_open_logfile(struct iperf_test *test)
+{
+    test->outfile = fopen(test->logfile, "a+");
+    if (test->outfile == NULL) {
+        i_errno = IELOGFILE;
+        return -1;
     }
 
     return 0;

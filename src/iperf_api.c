@@ -328,6 +328,12 @@ iperf_get_iperf_version(void)
     return (char*)iperf_version;
 }
 
+int
+iperf_get_test_no_delay(struct iperf_test *ipt)
+{
+    return ipt->no_delay;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -577,6 +583,12 @@ iperf_set_test_bidirectional(struct iperf_test* ipt, int bidirectional)
         ipt->mode = BIDIRECTIONAL;
     else
         iperf_set_test_reverse(ipt, ipt->reverse);
+}
+
+void
+iperf_set_test_no_delay(struct iperf_test* ipt, int no_delay)
+{
+    ipt->no_delay = no_delay;
 }
 
 /********************** Get/set test protocol structure ***********************/

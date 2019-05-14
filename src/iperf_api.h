@@ -125,6 +125,7 @@ int	iperf_get_test_one_off( struct iperf_test* ipt );
 int iperf_get_test_tos( struct iperf_test* ipt );
 char*	iperf_get_extra_data( struct iperf_test* ipt );
 char*	iperf_get_iperf_version(void);
+int	iperf_get_test_no_delay( struct iperf_test* ipt );
 
 /* Setter routines for some fields inside iperf_test. */
 void	iperf_set_verbose( struct iperf_test* ipt, int verbose );
@@ -157,6 +158,7 @@ void	iperf_set_test_one_off( struct iperf_test* ipt, int one_off );
 void    iperf_set_test_tos( struct iperf_test* ipt, int tos );
 void	iperf_set_extra_data( struct iperf_test* ipt, char *dat);
 void    iperf_set_test_bidirectional( struct iperf_test* ipt, int bidirectional);
+void    iperf_set_test_no_delay( struct iperf_test* ipt, int no_delay);
 
 #if defined(HAVE_SSL)
 void    iperf_set_test_client_username(struct iperf_test *ipt, char *client_username);

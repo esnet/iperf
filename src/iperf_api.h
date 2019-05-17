@@ -27,6 +27,7 @@
 #ifndef        __IPERF_API_H
 #define        __IPERF_API_H
 
+#include <sys/socket.h>
 #include <sys/time.h>
 #include <setjmp.h>
 #include <stdio.h>

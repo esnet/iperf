@@ -45,7 +45,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'iperf3'
-copyright = u'2014-2018, ESnet'
+copyright = u'2014-2019, ESnet'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

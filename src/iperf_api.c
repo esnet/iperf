@@ -3353,7 +3353,7 @@ iperf_print_results(struct iperf_test *test)
             }
 
             /* Print server output if we're on the client and it was requested/provided */
-            if (test->role == 'c' && iperf_get_test_get_server_output(test)) {
+            if (test->role == 'c' && iperf_get_test_get_server_output(test) && !test->json_output) {
                 if (test->json_server_output) {
                     iperf_printf(test, "\nServer JSON output:\n%s\n", cJSON_Print(test->json_server_output));
                     cJSON_Delete(test->json_server_output);

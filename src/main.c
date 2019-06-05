@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, 2017, The Regents of the University of
+ * iperf, Copyright (c) 2014, 2015, 2017, 2019, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -157,8 +157,13 @@ run(struct iperf_test *test)
 		    }
                 }
                 iperf_reset_test(test);
-                if (iperf_get_test_one_off(test))
-                    break;
+                if (iperf_get_test_one_off(test)) {
+		    /* Authentication failure doesn't count for 1-off test */
+		    if (rc < 0 && i_errno == IEAUTHTEST) {
+			continue;
+		    }
+		    break;
+		}
             }
 	    iperf_delete_pidfile(test);
             break;

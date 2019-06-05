@@ -398,6 +398,10 @@ iperf_run_server(struct iperf_test *test)
     struct timeval* timeout;
     int flag;
 
+    if (test->logfile)
+        if (iperf_open_logfile(test) < 0)
+            return -1;
+
     if (test->affinity != -1) 
 	if (iperf_setaffinity(test, test->affinity) != 0)
 	    return -2;

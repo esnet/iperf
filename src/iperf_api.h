@@ -138,6 +138,7 @@ void	iperf_set_test_reporter_interval( struct iperf_test* ipt, double reporter_i
 void	iperf_set_test_stats_interval( struct iperf_test* ipt, double stats_interval );
 void	iperf_set_test_state( struct iperf_test* ipt, signed char state );
 void	iperf_set_test_blksize( struct iperf_test* ipt, int blksize );
+void	iperf_set_test_logfile( struct iperf_test* ipt, char *logfile );
 void	iperf_set_test_rate( struct iperf_test* ipt, uint64_t rate );
 void    iperf_set_test_pacing_timer( struct iperf_test* ipt, int pacing_timer );
 void    iperf_set_test_bytes( struct iperf_test* ipt, uint64_t bytes );
@@ -267,6 +268,7 @@ int iperf_exchange_results(struct iperf_test *);
 int iperf_init_test(struct iperf_test *);
 int iperf_create_send_timers(struct iperf_test *);
 int iperf_parse_arguments(struct iperf_test *, int, char **);
+int iperf_open_logfile(struct iperf_test *);
 void iperf_reset_test(struct iperf_test *);
 void iperf_reset_stats(struct iperf_test * test);
 

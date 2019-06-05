@@ -454,6 +454,10 @@ iperf_run_client(struct iperf_test * test)
     struct timeval* timeout = NULL;
     struct iperf_stream *sp;
 
+    if (test->logfile)
+        if (iperf_open_logfile(test) < 0)
+            return -1;
+
     if (test->affinity != -1)
 	if (iperf_setaffinity(test, test->affinity) != 0)
 	    return -1;

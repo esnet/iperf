@@ -17,9 +17,12 @@ iperf 3.7 2019-06-xx
 
  * Specifying --repeating-payload and --reverse now works (#867).
 
+ * Failed authentication doesn't count for --one-off (#864/#877).
+
 * Notable developer changes
 
- * Various improvements to the libiperf APIs (#767, #775, #869, #870)
+ * Various improvements to the libiperf APIs (#767, #775, #869, #870,
+   #871)
 
  * Fixed build behavior when OpenSSL is absent (#854).
 

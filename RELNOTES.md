@@ -6,59 +6,59 @@ iperf 3.7 2019-06-xx
 
 * Notable user-visible changes
 
- * Support for simultaneous bidirectional tests with the --bidir flag
-   (#201/#780).
+  * Support for simultaneous bidirectional tests with the --bidir flag
+    (#201/#780).
 
- * Use POSIX standard clock_gettime(3) interface for timekeeping where
-   available (#253/#738).
+  * Use POSIX standard clock_gettime(3) interface for timekeeping where
+    available (#253/#738).
 
- * Passwords for authentication can be provided via environment
-   variable (#815).
+  * Passwords for authentication can be provided via environment
+    variable (#815).
 
- * Specifying --repeating-payload and --reverse now works (#867).
+  * Specifying --repeating-payload and --reverse now works (#867).
 
- * Failed authentication doesn't count for --one-off (#864/#877).
+  * Failed authentication doesn't count for --one-off (#864/#877).
 
 * Notable developer changes
 
- * Various improvements to the libiperf APIs (#767, #775, #869, #870,
-   #871)
+  * Various improvements to the libiperf APIs (#767, #775, #869, #870,
+    #871)
 
- * Fixed build behavior when OpenSSL is absent (#854).
+  * Fixed build behavior when OpenSSL is absent (#854).
 
- * Portability fixes (#821/#874).
+  * Portability fixes (#821/#874).
 
 iperf 3.6 2018-06-25
 --------------------
 
 * Notable user-visible changes
 
- * A new --extra-data option can be used to fill in a user-defined
-   string field that appears in JSON output.  (#600 / #729)
+  * A new --extra-data option can be used to fill in a user-defined
+    string field that appears in JSON output.  (#600 / #729)
 
- * A new --repeating-payload option makes iperf3 use a payload pattern
-   similar to that used by iperf2, which could help in recreating
-   results that might be affected by payload entropy (for example,
-   compression).  (#726)
+  * A new --repeating-payload option makes iperf3 use a payload pattern
+    similar to that used by iperf2, which could help in recreating
+    results that might be affected by payload entropy (for example,
+    compression).  (#726)
 
- * -B now works properly with SCTP tests.  (#678 / #715)
+  * -B now works properly with SCTP tests.  (#678 / #715)
 
- * A compile fix for Solaris 10 was added.  (#711)
+  * A compile fix for Solaris 10 was added.  (#711)
 
- * Some minor bug fixes for JSON output.  In particular, warnings for
-   debug and/or verbose modes with --json output (#737) and a fix for
-   JSON output on CentOS 6 (#727 / #744).
+  * Some minor bug fixes for JSON output.  In particular, warnings for
+    debug and/or verbose modes with --json output (#737) and a fix for
+    JSON output on CentOS 6 (#727 / #744).
 
- * software.es.net and downloads.es.net now support HTTPS, so URLs in
-   documentation that refer to those two hosts now use https://
-   instead of http:// URLs. (#759)
+  * software.es.net and downloads.es.net now support HTTPS, so URLs in
+    documentation that refer to those two hosts now use https://
+    instead of http:// URLs. (#759)
 
 * Notable developer-visible changes
 
- * Functions related to authenticated iperf3 connections have been
-   exposed via libiperf.  (#712 / #713)
+  * Functions related to authenticated iperf3 connections have been
+    exposed via libiperf.  (#712 / #713)
 
- * The ToS byte is now exposed in the libiperf API. (#719)
+  * The ToS byte is now exposed in the libiperf API. (#719)
 
 iperf 3.5 2018-03-02
 --------------------

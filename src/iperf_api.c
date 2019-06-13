@@ -1757,7 +1757,7 @@ get_parameters(struct iperf_test *test)
 	if (test->debug) {
             char *str;
             str = cJSON_Print(j);
-	    printf("get_parameters:\n%s\n", str );
+            printf("get_parameters:\n%s\n", str );
             free(str);
 	}
 
@@ -2400,8 +2400,6 @@ iperf_free_test(struct iperf_test *test)
         SLIST_REMOVE_HEAD(&test->streams, streams);
         iperf_free_stream(sp);
     }
-    free(test->remote_congestion_used);
-    test->remote_congestion_used = NULL;
     if (test->server_hostname)
 	free(test->server_hostname);
     if (test->tmp_template)
@@ -2538,7 +2536,8 @@ iperf_reset_test(struct iperf_test *test)
 
     SLIST_INIT(&test->streams);
 
-    free(test->remote_congestion_used);
+    if (test->remote_congestion_used)
+        free(test->remote_congestion_used);
     test->remote_congestion_used = NULL;
     test->role = 's';
     test->mode = RECEIVER;

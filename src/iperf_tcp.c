@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2018, The Regents of the University of
+ * iperf, Copyright (c) 2014-2019, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -184,7 +184,7 @@ iperf_tcp_listen(struct iperf_test *test)
 	}
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_flags = AI_PASSIVE;
-        if (getaddrinfo(test->bind_address, portstr, &hints, &res) != 0) {
+        if ((gerror = getaddrinfo(test->bind_address, portstr, &hints, &res)) != 0) {
             i_errno = IESTREAMLISTEN;
             return -1;
         }
@@ -375,7 +375,7 @@ iperf_tcp_connect(struct iperf_test *test)
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = test->settings->domain;
         hints.ai_socktype = SOCK_STREAM;
-        if (getaddrinfo(test->bind_address, NULL, &hints, &local_res) != 0) {
+        if ((gerror = getaddrinfo(test->bind_address, NULL, &hints, &local_res)) != 0) {
             i_errno = IESTREAMCONNECT;
             return -1;
         }
@@ -385,7 +385,7 @@ iperf_tcp_connect(struct iperf_test *test)
     hints.ai_family = test->settings->domain;
     hints.ai_socktype = SOCK_STREAM;
     snprintf(portstr, sizeof(portstr), "%d", test->server_port);
-    if (getaddrinfo(test->server_hostname, portstr, &hints, &server_res) != 0) {
+    if ((gerror = getaddrinfo(test->server_hostname, portstr, &hints, &server_res)) != 0) {
 	if (test->bind_address)
 	    freeaddrinfo(local_res);
         i_errno = IESTREAMCONNECT;

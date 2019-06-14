@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2018, The Regents of the University of
+ * iperf, Copyright (c) 2014-2019, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -842,6 +842,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {NULL, 0, NULL, 0}
     };
     int flag;
+    int portno;
     int blksize;
     int server_flag, client_flag, rate_flag, duration_flag;
     char *endptr;
@@ -861,7 +862,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
-                test->server_port = atoi(optarg);
+		portno = atoi(optarg);
+		if (portno < 1 || portno > 65535) {
+		    i_errno = IEBADPORT;
+		    return -1;
+		}
+		test->server_port = portno;
                 break;
             case 'f':
 		if (!optarg) {
@@ -1025,7 +1031,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 test->bind_address = strdup(optarg);
                 break;
             case OPT_CLIENT_PORT:
-                test->bind_port = atoi(optarg);
+		portno = atoi(optarg);
+		if (portno < 1 || portno > 65535) {
+		    i_errno = IEBADPORT;
+		    return -1;
+		}
+                test->bind_port = portno;
                 break;
             case 'M':
                 test->settings->mss = atoi(optarg);

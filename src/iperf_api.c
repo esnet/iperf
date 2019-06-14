@@ -1031,7 +1031,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 test->bind_address = strdup(optarg);
                 break;
             case OPT_CLIENT_PORT:
-                test->bind_port = atoi(optarg);
+		portno = atoi(optarg);
+		if (portno < 1 || portno > 65535) {
+		    i_errno = IEBADPORT;
+		    return -1;
+		}
+                test->bind_port = portno;
                 break;
             case 'M':
                 test->settings->mss = atoi(optarg);

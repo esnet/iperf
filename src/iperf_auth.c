@@ -156,10 +156,12 @@ EVP_PKEY *load_pubkey_from_file(const char *file) {
     BIO *key = NULL;
     EVP_PKEY *pkey = NULL;
 
-    key = BIO_new_file(file, "r");
-    pkey = PEM_read_bio_PUBKEY(key, NULL, NULL, NULL);
+    if (file) {
+      key = BIO_new_file(file, "r");
+      pkey = PEM_read_bio_PUBKEY(key, NULL, NULL, NULL);
 
-    BIO_free(key);
+      BIO_free(key);
+    }
     return (pkey);
 }   
 

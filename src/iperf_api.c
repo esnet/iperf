@@ -1277,8 +1277,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         test->settings->client_username = client_username;
         test->settings->client_password = client_password;
         test->settings->client_rsa_pubkey = load_pubkey_from_file(client_rsa_public_key);
+	free(client_rsa_public_key);
+	client_rsa_public_key = NULL;
     }
-    free(client_rsa_public_key);
 
     if (test->role == 'c' && (server_rsa_private_key || test->server_authorized_users)){
         i_errno = IESERVERONLY;
@@ -1293,9 +1294,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             i_errno = IESETSERVERAUTH;
             return -1;
         }
+	free(server_rsa_private_key);
+	server_rsa_private_key = NULL;
     }
-    free(server_rsa_private_key);
-    server_rsa_private_key = NULL;
 
 #endif //HAVE_SSL
     if (blksize == 0) {
@@ -1571,8 +1572,6 @@ int test_is_authorized(struct iperf_test *test){
             free(password);
             return -1;
         }
-        free(username);
-        free(password);
     }
     return -1;
 }

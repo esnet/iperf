@@ -548,7 +548,7 @@ iperf_sctp_bindx(struct iperf_test *test, int s, int is_server)
         xbe0 = TAILQ_FIRST(&test->xbind_addrs);
         TAILQ_REMOVE(&test->xbind_addrs, xbe0, link);
 
-        if (gerror = getaddrinfo(xbe0->name, servname, &hints, &xbe0->ai)) != 0) {
+        if ((gerror = getaddrinfo(xbe0->name, servname, &hints, &xbe0->ai)) != 0) {
             i_errno = IESETSCTPBINDX;
             retval = -1;
             goto out;

@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2018, The Regents of the University of
+ * iperf, Copyright (c) 2014-2019, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -65,6 +65,13 @@
 #include "timer.h"
 
 /*
+ * Declaration of gerror in iperf_error.c.  Most other files in iperf3 can get this
+ * by including "iperf.h", but net.c lives "below" this layer.  Clearly the
+ * presence of this declaration is a sign we need to revisit this layering.
+ */
+extern int gerror;
+
+/*
  * timeout_connect adapted from netcat, via OpenBSD and FreeBSD
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  */
@@ -122,14 +129,14 @@ netdial(int domain, int proto, char *local, int local_port, char *server, int po
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = domain;
         hints.ai_socktype = proto;
-        if (getaddrinfo(local, NULL, &hints, &local_res) != 0)
+        if ((gerror = getaddrinfo(local, NULL, &hints, &local_res)) != 0)
             return -1;
     }
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = domain;
     hints.ai_socktype = proto;
-    if (getaddrinfo(server, NULL, &hints, &server_res) != 0)
+    if ((gerror = getaddrinfo(server, NULL, &hints, &server_res)) != 0)
         return -1;
 
     s = socket(server_res->ai_family, proto, 0);
@@ -238,7 +245,7 @@ netannounce(int domain, int proto, char *local, int port)
     }
     hints.ai_socktype = proto;
     hints.ai_flags = AI_PASSIVE;
-    if (getaddrinfo(local, portstr, &hints, &res) != 0)
+    if ((gerror = getaddrinfo(local, portstr, &hints, &res)) != 0)
         return -1; 
 
     s = socket(res->ai_family, proto, 0);

@@ -33,6 +33,8 @@
 #include "iperf.h"
 #include "iperf_api.h"
 
+int gerror;
+
 /* Do a printf to stderr. */
 void
 iperf_err(struct iperf_test *test, const char *format, ...)
@@ -185,11 +187,13 @@ iperf_strerror(int int_errno)
             break;
         case IELISTEN:
             snprintf(errstr, len, "unable to start listener for connections");
+	    herr = 1;
             perr = 1;
             break;
         case IECONNECT:
             snprintf(errstr, len, "unable to connect to server");
             perr = 1;
+	    herr = 1;
             break;
         case IEACCEPT:
             snprintf(errstr, len, "unable to accept connection from client");
@@ -317,6 +321,7 @@ iperf_strerror(int int_errno)
             break;
         case IESTREAMLISTEN:
             snprintf(errstr, len, "unable to start stream listener");
+	    herr = 1;
             perr = 1;
             break;
         case IESTREAMCONNECT:
@@ -383,10 +388,15 @@ iperf_strerror(int int_errno)
 	
     }
 
+    /* Append the result of strerror() or gai_strerror() if appropriate */
     if (herr || perr)
         strncat(errstr, ": ", len - strlen(errstr) - 1);
     if (errno && perr)
         strncat(errstr, strerror(errno), len - strlen(errstr) - 1);
+    else if (herr && gerror) {
+        strncat(errstr, gai_strerror(gerror), len - strlen(errstr) - 1);
+	gerror = 0;
+    }
 
     return errstr;
 }

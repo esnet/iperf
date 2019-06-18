@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2018, The Regents of the University of
+ * iperf, Copyright (c) 2014-2019, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -342,6 +342,7 @@ enum {
     IESETSERVERAUTH = 23,   // Bad configuration of server authentication
     IEBADFORMAT = 24,	    // Bad format argument to -f
     IEREVERSEBIDIR = 25,    // Iperf cannot be both reverse and bidirectional
+    IEBADPORT = 26,	    // Bad port number
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

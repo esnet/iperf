@@ -142,6 +142,9 @@ iperf_strerror(int int_errno)
 	case IEBADFORMAT:
 	    snprintf(errstr, len, "bad format specifier (valid formats are in the set [kmgtKMGT])");
 	    break;
+	case IEBADPORT:
+	    snprintf(errstr, len, "port number must be between 1 and 65535 inclusive");
+	    break;
         case IEMSS:
             snprintf(errstr, len, "TCP MSS too large (maximum = %d bytes)", MAX_MSS);
             break;

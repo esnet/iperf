@@ -1257,8 +1257,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
         char *client_password = NULL;
         size_t s;
-        if ((client_password = getenv("IPERF3_PASSWORD")) == NULL &&
-            iperf_getpass(&client_password, &s, stdin) < 0){
+        /* Need to copy env var, so we can do a common free */
+        if ((client_password = getenv("IPERF3_PASSWORD")) != NULL)
+             client_password = strdup(client_password);
+        else if (iperf_getpass(&client_password, &s, stdin) < 0){
             return -1;
         } 
 
@@ -1275,6 +1277,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         test->settings->client_username = client_username;
         test->settings->client_password = client_password;
         test->settings->client_rsa_pubkey = load_pubkey_from_file(client_rsa_public_key);
+	free(client_rsa_public_key);
+	client_rsa_public_key = NULL;
     }
 
     if (test->role == 'c' && (server_rsa_private_key || test->server_authorized_users)){
@@ -1284,11 +1288,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         !(server_rsa_private_key && test->server_authorized_users)) {
          i_errno = IESETSERVERAUTH;
         return -1;
-    } else if (test->role == 's' && server_rsa_private_key && test_load_private_key_from_file(server_rsa_private_key) < 0){
-        i_errno = IESETSERVERAUTH;
-        return -1;
-    } else {
+    } else if (test->role == 's' && server_rsa_private_key) {
         test->server_rsa_private_key = load_privkey_from_file(server_rsa_private_key);
+        if (test->server_rsa_private_key == NULL){
+            i_errno = IESETSERVERAUTH;
+            return -1;
+        }
+	free(server_rsa_private_key);
+	server_rsa_private_key = NULL;
     }
 
 #endif //HAVE_SSL
@@ -1556,9 +1563,13 @@ int test_is_authorized(struct iperf_test *test){
         int ret = check_authentication(username, password, ts, test->server_authorized_users);
         if (ret == 0){
             iperf_printf(test, report_authetication_successed, username, ts);
+            free(username);
+            free(password);
             return 0;
         } else {
             iperf_printf(test, report_authetication_failed, username, ts);
+            free(username);
+            free(password);
             return -1;
         }
     }
@@ -1754,7 +1765,10 @@ get_parameters(struct iperf_test *test)
         r = -1;
     } else {
 	if (test->debug) {
-	    printf("get_parameters:\n%s\n", cJSON_Print(j));
+            char *str;
+            str = cJSON_Print(j);
+            printf("get_parameters:\n%s\n", str );
+            free(str);
 	}
 
 	if ((j_p = cJSON_GetObjectItem(j, "tcp")) != NULL)
@@ -1919,7 +1933,9 @@ send_results(struct iperf_test *test)
 		}
 	    }
 	    if (r == 0 && test->debug) {
-		printf("send_results\n%s\n", cJSON_Print(j));
+                char *str = cJSON_Print(j);
+		printf("send_results\n%s\n", str);
+                free(str);
 	    }
 	    if (r == 0 && JSON_write(test->ctrl_sck, j) < 0) {
 		i_errno = IESENDRESULTS;
@@ -1975,7 +1991,9 @@ get_results(struct iperf_test *test)
 	    r = -1;
 	} else {
 	    if (test->debug) {
-		printf("get_results\n%s\n", cJSON_Print(j));
+                char *str = cJSON_Print(j);
+                printf("get_results\n%s\n", str);
+                free(str);
 	    }
 
 	    test->remote_cpu_util[0] = j_cpu_util_total->valuedouble;
@@ -2392,7 +2410,6 @@ iperf_free_test(struct iperf_test *test)
         SLIST_REMOVE_HEAD(&test->streams, streams);
         iperf_free_stream(sp);
     }
-
     if (test->server_hostname)
 	free(test->server_hostname);
     if (test->tmp_template)
@@ -2411,6 +2428,26 @@ iperf_free_test(struct iperf_test *test)
             free(xbe);
         }
     }
+#if defined(HAVE_SSL)
+
+    if (test->server_rsa_private_key)
+      EVP_PKEY_free(test->server_rsa_private_key);
+    test->server_rsa_private_key = NULL;
+
+    free(test->settings->authtoken);
+    test->settings->authtoken = NULL;
+
+    free(test->settings->client_username);
+    test->settings->client_username = NULL;
+
+    free(test->settings->client_password);
+    test->settings->client_password = NULL;
+
+    if (test->settings->client_rsa_pubkey)
+      EVP_PKEY_free(test->settings->client_rsa_pubkey);
+    test->settings->client_rsa_pubkey = NULL;
+#endif /* HAVE_SSL */
+
     if (test->settings)
     free(test->settings);
     if (test->title)
@@ -2509,6 +2546,9 @@ iperf_reset_test(struct iperf_test *test)
 
     SLIST_INIT(&test->streams);
 
+    if (test->remote_congestion_used)
+        free(test->remote_congestion_used);
+    test->remote_congestion_used = NULL;
     test->role = 's';
     test->mode = RECEIVER;
     test->sender_has_retransmits = 0;

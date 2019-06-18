@@ -95,6 +95,7 @@ int check_authentication(const char *username, const char *password, const time_
         s_username = strtok(buf, ",");
         s_password = strtok(NULL, ",");
         if (strcmp( username, s_username ) == 0 && strcmp( passwordHash, s_password ) == 0){
+            fclose(ptr_file);
             return 0;
         }
     }
@@ -115,11 +116,9 @@ int Base64Encode(const unsigned char* buffer, const size_t length, char** b64tex
     BIO_write(bio, buffer, length);
     BIO_flush(bio);
     BIO_get_mem_ptr(bio, &bufferPtr);
-    BIO_set_close(bio, BIO_NOCLOSE);
+    *b64text = strndup( (*bufferPtr).data, (*bufferPtr).length );
     BIO_free_all(bio);
 
-    *b64text=(*bufferPtr).data;
-    (*b64text)[(*bufferPtr).length] = '\0';
     return (0); //success
 }
 
@@ -157,10 +156,12 @@ EVP_PKEY *load_pubkey_from_file(const char *file) {
     BIO *key = NULL;
     EVP_PKEY *pkey = NULL;
 
-    key = BIO_new_file(file, "r");
-    pkey = PEM_read_bio_PUBKEY(key, NULL, NULL, NULL);
+    if (file) {
+      key = BIO_new_file(file, "r");
+      pkey = PEM_read_bio_PUBKEY(key, NULL, NULL, NULL);
 
-    BIO_free(key);
+      BIO_free(key);
+    }
     return (pkey);
 }   
 
@@ -179,10 +180,12 @@ EVP_PKEY *load_privkey_from_file(const char *file) {
     BIO *key = NULL;
     EVP_PKEY *pkey = NULL;
 
-    key = BIO_new_file(file, "r");
-    pkey = PEM_read_bio_PrivateKey(key, NULL, NULL, NULL);
+    if (file) {
+      key = BIO_new_file(file, "r");
+      pkey = PEM_read_bio_PrivateKey(key, NULL, NULL, NULL);
 
-    BIO_free(key);
+      BIO_free(key);
+    }
     return (pkey);
 }
 
@@ -222,7 +225,7 @@ int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned ch
 
     RSA_free(rsa);
     OPENSSL_free(rsa_buffer);
-    OPENSSL_free(bioBuff);  
+    BIO_free(bioBuff);
 
     return encryptedtext_len;  
 }
@@ -244,7 +247,7 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
 
     RSA_free(rsa);
     OPENSSL_free(rsa_buffer);
-    OPENSSL_free(bioBuff);   
+    BIO_free(bioBuff);
 
     return plaintext_len;
 }
@@ -258,6 +261,8 @@ int encode_auth_setting(const char *username, const char *password, EVP_PKEY *pu
     int encrypted_len;
     encrypted_len = encrypt_rsa_message(text, public_key, &encrypted);
     Base64Encode(encrypted, encrypted_len, authtoken);
+    OPENSSL_free(encrypted);
+
     return (0); //success
 }
 
@@ -270,6 +275,7 @@ int decode_auth_setting(int enable_debug, char *authtoken, EVP_PKEY *private_key
     int plaintext_len;
     plaintext_len = decrypt_rsa_message(encrypted_b64, encrypted_len_b64, private_key, &plaintext);
     plaintext[plaintext_len] = '\0';
+    free(encrypted_b64);
 
     char s_username[20], s_password[20];
     sscanf ((char *)plaintext,"user: %s\npwd:  %s\nts:   %ld", s_username, s_password, ts);
@@ -281,6 +287,7 @@ int decode_auth_setting(int enable_debug, char *authtoken, EVP_PKEY *private_key
     *password = (char *) calloc(21, sizeof(char));
     strncpy(*username, s_username, 20);
     strncpy(*password, s_password, 20);
+    OPENSSL_free(plaintext);
     return (0);
 }
 

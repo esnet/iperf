@@ -2,15 +2,23 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Building iperf3 &#8212; iperf3 3.6 documentation</title>
+    <title>Building iperf3 &#8212; iperf3 3.7 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/esnet/esnet.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.7',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -28,7 +36,8 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head><body>
+  </head>
+  <body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -146,12 +155,12 @@ systems.  The only known prerequisites are listed here.</p>
 <div class="section" id="building">
 <h2>Building<a class="headerlink" href="#building" title="Permalink to this headline">¶</a></h2>
 <p>In many cases, iperf3 can be built and installed as follows:</p>
-<p><code class="docutils literal notranslate"><span class="pre">./configure</span> <span class="pre">&amp;&amp;</span> <span class="pre">make</span> <span class="pre">&amp;&amp;</span> <span class="pre">make</span> <span class="pre">install</span></code></p>
+<p><code class="docutils literal"><span class="pre">./configure</span> <span class="pre">&amp;&amp;</span> <span class="pre">make</span> <span class="pre">&amp;&amp;</span> <span class="pre">make</span> <span class="pre">install</span></code></p>
 <p>In some cases, configuration might fail.  If this happens, it might
-help to run <code class="docutils literal notranslate"><span class="pre">./bootstrap.sh</span></code> first from the top-level directory.</p>
-<p>By default, the <code class="docutils literal notranslate"><span class="pre">libiperf</span></code> library is built in both shared and
+help to run <code class="docutils literal"><span class="pre">./bootstrap.sh</span></code> first from the top-level directory.</p>
+<p>By default, the <code class="docutils literal"><span class="pre">libiperf</span></code> library is built in both shared and
 static forms.  Either can be suppressed by using the
-<code class="docutils literal notranslate"><span class="pre">--disabled-shared</span></code> or <code class="docutils literal notranslate"><span class="pre">--disable-static</span></code> configure-time options.</p>
+<code class="docutils literal"><span class="pre">--disabled-shared</span></code> or <code class="docutils literal"><span class="pre">--disable-static</span></code> configure-time options.</p>
 </div>
 </div>
 
@@ -172,8 +181,8 @@ static forms.  Either can be suppressed by using the
         
         </p>
         <p>
-            &copy; Copyright 2014-2018, ESnet.<br/>
-          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.7.1.<br/>
+            &copy; Copyright 2014-2019, ESnet.<br/>
+          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.6.5.<br/>
         </p>
       </div>
     </div>

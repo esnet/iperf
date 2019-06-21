@@ -292,6 +292,9 @@ the executable.
           -R, --reverse
                  reverse the direction of a test, so that the server  sends  data
                  to the client
+
+          --bidir
+                 bidirectional mode, server and client send and receive data.
    
           -w, --window n[KM]
                  window  size  / socket buffer size (this gets sent to the server
@@ -377,8 +380,11 @@ the executable.
           --username username
                  username to use for authentication to the iperf server (if built
                  with OpenSSL support).  The password will be prompted for inter-
-                 actively when the test is run.
-   
+                 actively when the test is run.  Note, the password to use can
+                 also be specified via the IPERF3_PASSWORD environment variable.
+                 If this variable is present, the password prompt will be
+                 skipped.
+
           --rsa-public-key-path file
                  path to the RSA public key used to encrypt  authentication  cre-
                  dentials (if built with OpenSSL support)

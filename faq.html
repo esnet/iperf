@@ -2,15 +2,23 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>iperf3 FAQ &#8212; iperf3 3.6 documentation</title>
+    <title>iperf3 FAQ &#8212; iperf3 3.7 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/esnet/esnet.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.7',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -27,7 +35,8 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head><body>
+  </head>
+  <body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -165,13 +174,13 @@ quite a straight-forward process.</p>
 can probably be adapted for use with other Linux distributions:</p>
 <ol class="arabic simple">
 <li>If necessary, install the static C libraries; for CentOS this is
-the <code class="docutils literal notranslate"><span class="pre">glibc-static</span></code> package.</li>
+the <code class="docutils literal"><span class="pre">glibc-static</span></code> package.</li>
 <li>If OpenSSL is installed, be sure that its static libraries are
-also installed, from the <code class="docutils literal notranslate"><span class="pre">openssl-static</span></code> package.</li>
-<li>Be sure that <code class="docutils literal notranslate"><span class="pre">lksctp-*</span></code> packages are not installed, because
+also installed, from the <code class="docutils literal"><span class="pre">openssl-static</span></code> package.</li>
+<li>Be sure that <code class="docutils literal"><span class="pre">lksctp-*</span></code> packages are not installed, because
 as of this writing, there do not appear to be any static
 libraries available for SCTP.</li>
-<li>Configure iperf3 thusly: <code class="docutils literal notranslate"><span class="pre">configure</span> <span class="pre">&quot;LDFLAGS=--static&quot;</span>
+<li>Configure iperf3 thusly: <code class="docutils literal"><span class="pre">configure</span> <span class="pre">&quot;LDFLAGS=--static&quot;</span>
 <span class="pre">--disable-shared</span></code> These options are necessary to disable the
 generation of shared libraries and link the executable
 statically.</li>
@@ -185,8 +194,8 @@ the last two steps are needed to produce a static executable.</p>
 Android systems.  There are several workarounds. In order from least
 effort to most effort:</p>
 <ol class="last arabic">
-<li><p class="first">Beginning with iperf-3.6, the <code class="docutils literal notranslate"><span class="pre">--disable-profiling</span></code> flag can be
-passed to <code class="docutils literal notranslate"><span class="pre">configure</span></code> to disable the building of profiled
+<li><p class="first">Beginning with iperf-3.6, the <code class="docutils literal"><span class="pre">--disable-profiling</span></code> flag can be
+passed to <code class="docutils literal"><span class="pre">configure</span></code> to disable the building of profiled
 object files and the profiled executable.</p>
 </li>
 <li><p class="first">At the time the linking of the iperf3 profiled executable fails,
@@ -196,26 +205,26 @@ you are willing to accept the error exit from the make process
 not need to do anything.</p>
 </li>
 <li><p class="first">After the configure step, there will be a definition in
-<code class="docutils literal notranslate"><span class="pre">src/Makefile</span></code> that looks like this:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>noinst_PROGRAMS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT) \
+<code class="docutils literal"><span class="pre">src/Makefile</span></code> that looks like this:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>noinst_PROGRAMS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT) \
   iperf3_profile$(EXEEXT)
 </pre></div>
 </div>
 <p>If you edit it to look like this, it will disable the build of the profiled iperf3:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>noinst_PROGRAMS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT)
+<div class="highlight-default"><div class="highlight"><pre><span></span>noinst_PROGRAMS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT)
 </pre></div>
 </div>
 </li>
 <li><p class="first">Similar to item 2 above, but more permanent…if you edit
-<code class="docutils literal notranslate"><span class="pre">src/Makefile.am</span></code> and change the line reading like this:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">noinst_PROGRAMS</span>         <span class="o">=</span> <span class="n">t_timer</span> <span class="n">t_units</span> <span class="n">t_uuid</span> <span class="n">iperf3_profile</span>
+<code class="docutils literal"><span class="pre">src/Makefile.am</span></code> and change the line reading like this:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">noinst_PROGRAMS</span>         <span class="o">=</span> <span class="n">t_timer</span> <span class="n">t_units</span> <span class="n">t_uuid</span> <span class="n">iperf3_profile</span>
 </pre></div>
 </div>
 <p>To look like this:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">noinst_PROGRAMS</span>         <span class="o">=</span> <span class="n">t_timer</span> <span class="n">t_units</span> <span class="n">t_uuid</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">noinst_PROGRAMS</span>         <span class="o">=</span> <span class="n">t_timer</span> <span class="n">t_units</span> <span class="n">t_uuid</span>
 </pre></div>
 </div>
-<p>And then run <code class="docutils literal notranslate"><span class="pre">./bootstrap.sh</span></code>, that will regenerate the project
+<p>And then run <code class="docutils literal"><span class="pre">./bootstrap.sh</span></code>, that will regenerate the project
 Makefiles to make the exclusion of the profiled iperf3 executable
 permanant (within that source tree).</p>
 </li>
@@ -224,24 +233,24 @@ permanant (within that source tree).</p>
 <dt>I’m seeing quite a bit of unexpected UDP loss. Why?</dt>
 <dd>First, confirm you are using iperf 3.1.5 or higher. There was an
 issue with the default UDP send size that was fixed in
-3.1.5. Second, try adding the flag <code class="docutils literal notranslate"><span class="pre">-w2M</span></code> to increase the socket
+3.1.5. Second, try adding the flag <code class="docutils literal"><span class="pre">-w2M</span></code> to increase the socket
 buffer sizes. That seems to make a big difference on some hosts.</dd>
 <dt>iperf3 UDP does not seem to work at bandwidths less than 100Kbps. Why?</dt>
-<dd>You’ll need to reduce the default packet length to get UDP rates of less that 100Kbps. Try <code class="docutils literal notranslate"><span class="pre">-l100</span></code>.</dd>
+<dd>You’ll need to reduce the default packet length to get UDP rates of less that 100Kbps. Try <code class="docutils literal"><span class="pre">-l100</span></code>.</dd>
 <dt>What congestion control algorithms are supported?</dt>
 <dd><p class="first">On Linux, run this command to see the available congestion control
 algorithms (note that some algorithms are packaged as kernel
 modules, which must be loaded before they can be used):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">sbin</span><span class="o">/</span><span class="n">sysctl</span> <span class="n">net</span><span class="o">.</span><span class="n">ipv4</span><span class="o">.</span><span class="n">tcp_available_congestion_control</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">sbin</span><span class="o">/</span><span class="n">sysctl</span> <span class="n">net</span><span class="o">.</span><span class="n">ipv4</span><span class="o">.</span><span class="n">tcp_available_congestion_control</span>
 </pre></div>
 </div>
 <p>On FreeBSD, the equivalent command is:</p>
-<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">sbin</span><span class="o">/</span><span class="n">sysctl</span> <span class="n">net</span><span class="o">.</span><span class="n">inet</span><span class="o">.</span><span class="n">tcp</span><span class="o">.</span><span class="n">cc</span><span class="o">.</span><span class="n">available</span>
+<div class="last highlight-default"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">sbin</span><span class="o">/</span><span class="n">sysctl</span> <span class="n">net</span><span class="o">.</span><span class="n">inet</span><span class="o">.</span><span class="n">tcp</span><span class="o">.</span><span class="n">cc</span><span class="o">.</span><span class="n">available</span>
 </pre></div>
 </div>
 </dd>
-<dt>I’m using the <code class="docutils literal notranslate"><span class="pre">--logfile</span></code> option. How do I see file output in real time?</dt>
-<dd>Use the <code class="docutils literal notranslate"><span class="pre">--forceflush</span></code> flag.</dd>
+<dt>I’m using the <code class="docutils literal"><span class="pre">--logfile</span></code> option. How do I see file output in real time?</dt>
+<dd>Use the <code class="docutils literal"><span class="pre">--forceflush</span></code> flag.</dd>
 <dt>I’m using the –fq-rate flag, but it does not seem to be working. Why?</dt>
 <dd>You need to add ‘net.core.default_qdisc = fq’ to /etc/sysctl.conf for that option to work.</dd>
 <dt>I’m having trouble getting iperf3 to work on Windows, Android, etc. Where can I get help?</dt>
@@ -271,8 +280,8 @@ the control connection can be received and acted upon before all of
 the test data has been processed.  Thus the test ends with data
 still in flight.  This effect can be significant for short (a few
 seconds) tests, but is probably negligible for longer tests.</dd>
-<dt>A file sent using the <code class="docutils literal notranslate"><span class="pre">-F</span></code> option got corrupted…what happened?</dt>
-<dd>The <code class="docutils literal notranslate"><span class="pre">-F</span></code> option to iperf3 is not a file transfer utility.  It’s a
+<dt>A file sent using the <code class="docutils literal"><span class="pre">-F</span></code> option got corrupted…what happened?</dt>
+<dd>The <code class="docutils literal"><span class="pre">-F</span></code> option to iperf3 is not a file transfer utility.  It’s a
 way of testing the end-to-end performance of a file transfer,
 including filesystem and disk overheads.  So while the test will
 mimic an actual file transfer, the data stored to disk may not be
@@ -312,8 +321,8 @@ pull requests are encouraged, however.</p>
         
         </p>
         <p>
-            &copy; Copyright 2014-2018, ESnet.<br/>
-          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.7.1.<br/>
+            &copy; Copyright 2014-2019, ESnet.<br/>
+          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.6.5.<br/>
         </p>
       </div>
     </div>

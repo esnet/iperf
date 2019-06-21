@@ -2,15 +2,23 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Invoking iperf3 &#8212; iperf3 3.6 documentation</title>
+    <title>Invoking iperf3 &#8212; iperf3 3.7 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/esnet/esnet.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.7',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -28,7 +36,8 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head><body>
+  </head>
+  <body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -141,10 +150,10 @@ The manual page is the most up-to-date reference to the various flags and parame
 <p>Using the default options, iperf3 is meant to show typical well
 designed application performance.  “Typical well designed application”
 means avoiding artificial enhancements that work only for testing
-(such as <code class="docutils literal notranslate"><span class="pre">splice()</span></code>-ing the data to <code class="docutils literal notranslate"><span class="pre">/dev/null</span></code>).  iperf3 does
+(such as <code class="docutils literal"><span class="pre">splice()</span></code>-ing the data to <code class="docutils literal"><span class="pre">/dev/null</span></code>).  iperf3 does
 also have flags for “extreme best case” optimizations but they must be
-explicitly activated.  These flags include the <code class="docutils literal notranslate"><span class="pre">-Z</span></code> (<code class="docutils literal notranslate"><span class="pre">--zerocopy</span></code>)
-and <code class="docutils literal notranslate"><span class="pre">-A</span></code> (<code class="docutils literal notranslate"><span class="pre">--affinity</span></code>) options.</p>
+explicitly activated.  These flags include the <code class="docutils literal"><span class="pre">-Z</span></code> (<code class="docutils literal"><span class="pre">--zerocopy</span></code>)
+and <code class="docutils literal"><span class="pre">-A</span></code> (<code class="docutils literal"><span class="pre">--affinity</span></code>) options.</p>
 <div class="section" id="iperf3-manual-page">
 <h2>iperf3 Manual Page<a class="headerlink" href="#iperf3-manual-page" title="Permalink to this headline">¶</a></h2>
 <p>This section contains a plaintext rendering of the iperf3 manual page.
@@ -152,7 +161,7 @@ It is presented here only for convenience; the text here might not
 correspond to the current version of iperf3.  The authoritative iperf3
 manual page is included in the source tree and installed along with
 the executable.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IPERF3</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>                        <span class="n">User</span> <span class="n">Manuals</span>                        <span class="n">IPERF3</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">IPERF3</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>                        <span class="n">User</span> <span class="n">Manuals</span>                        <span class="n">IPERF3</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
 
 
@@ -418,6 +427,9 @@ the executable.</p>
               <span class="n">reverse</span> <span class="n">the</span> <span class="n">direction</span> <span class="n">of</span> <span class="n">a</span> <span class="n">test</span><span class="p">,</span> <span class="n">so</span> <span class="n">that</span> <span class="n">the</span> <span class="n">server</span>  <span class="n">sends</span>  <span class="n">data</span>
               <span class="n">to</span> <span class="n">the</span> <span class="n">client</span>
 
+       <span class="o">--</span><span class="n">bidir</span>
+              <span class="n">bidirectional</span> <span class="n">mode</span><span class="p">,</span> <span class="n">server</span> <span class="ow">and</span> <span class="n">client</span> <span class="n">send</span> <span class="ow">and</span> <span class="n">receive</span> <span class="n">data</span><span class="o">.</span>
+
        <span class="o">-</span><span class="n">w</span><span class="p">,</span> <span class="o">--</span><span class="n">window</span> <span class="n">n</span><span class="p">[</span><span class="n">KM</span><span class="p">]</span>
               <span class="n">window</span>  <span class="n">size</span>  <span class="o">/</span> <span class="n">socket</span> <span class="n">buffer</span> <span class="n">size</span> <span class="p">(</span><span class="n">this</span> <span class="n">gets</span> <span class="n">sent</span> <span class="n">to</span> <span class="n">the</span> <span class="n">server</span>
               <span class="ow">and</span> <span class="n">used</span> <span class="n">on</span> <span class="n">that</span> <span class="n">side</span> <span class="n">too</span><span class="p">)</span>
@@ -502,7 +514,10 @@ the executable.</p>
        <span class="o">--</span><span class="n">username</span> <span class="n">username</span>
               <span class="n">username</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">authentication</span> <span class="n">to</span> <span class="n">the</span> <span class="n">iperf</span> <span class="n">server</span> <span class="p">(</span><span class="k">if</span> <span class="n">built</span>
               <span class="k">with</span> <span class="n">OpenSSL</span> <span class="n">support</span><span class="p">)</span><span class="o">.</span>  <span class="n">The</span> <span class="n">password</span> <span class="n">will</span> <span class="n">be</span> <span class="n">prompted</span> <span class="k">for</span> <span class="n">inter</span><span class="o">-</span>
-              <span class="n">actively</span> <span class="n">when</span> <span class="n">the</span> <span class="n">test</span> <span class="ow">is</span> <span class="n">run</span><span class="o">.</span>
+              <span class="n">actively</span> <span class="n">when</span> <span class="n">the</span> <span class="n">test</span> <span class="ow">is</span> <span class="n">run</span><span class="o">.</span>  <span class="n">Note</span><span class="p">,</span> <span class="n">the</span> <span class="n">password</span> <span class="n">to</span> <span class="n">use</span> <span class="n">can</span>
+              <span class="n">also</span> <span class="n">be</span> <span class="n">specified</span> <span class="n">via</span> <span class="n">the</span> <span class="n">IPERF3_PASSWORD</span> <span class="n">environment</span> <span class="n">variable</span><span class="o">.</span>
+              <span class="n">If</span> <span class="n">this</span> <span class="n">variable</span> <span class="ow">is</span> <span class="n">present</span><span class="p">,</span> <span class="n">the</span> <span class="n">password</span> <span class="n">prompt</span> <span class="n">will</span> <span class="n">be</span>
+              <span class="n">skipped</span><span class="o">.</span>
 
        <span class="o">--</span><span class="n">rsa</span><span class="o">-</span><span class="n">public</span><span class="o">-</span><span class="n">key</span><span class="o">-</span><span class="n">path</span> <span class="n">file</span>
               <span class="n">path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">RSA</span> <span class="n">public</span> <span class="n">key</span> <span class="n">used</span> <span class="n">to</span> <span class="n">encrypt</span>  <span class="n">authentication</span>  <span class="n">cre</span><span class="o">-</span>
@@ -581,8 +596,8 @@ section 1.</p>
         
         </p>
         <p>
-            &copy; Copyright 2014-2018, ESnet.<br/>
-          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.7.1.<br/>
+            &copy; Copyright 2014-2019, ESnet.<br/>
+          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.6.5.<br/>
         </p>
       </div>
     </div>

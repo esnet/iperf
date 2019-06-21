@@ -1,35 +1,74 @@
-== iperf 3.6 2018-06-25 ==
+iperf3 Release Notes
+====================
+
+iperf 3.7 2019-06-21
+--------------------
 
 * Notable user-visible changes
 
- * A new --extra-data option can be used to fill in a user-defined
-   string field that appears in JSON output.  (#600 / #729)
+  * Support for simultaneous bidirectional tests with the --bidir flag
+    (#201/#780).
 
- * A new --repeating-payload option makes iperf3 use a payload pattern
-   similar to that used by iperf2, which could help in recreating
-   results that might be affected by payload entropy (for example,
-   compression).  (#726)
+  * Use POSIX standard clock_gettime(3) interface for timekeeping where
+    available (#253/#738).
 
- * -B now works properly with SCTP tests.  (#678 / #715)
+  * Passwords for authentication can be provided via environment
+    variable (#815).
 
- * A compile fix for Solaris 10 was added.  (#711)
+  * Specifying --repeating-payload and --reverse now works (#867).
 
- * Some minor bug fixes for JSON output.  In particular, warnings for
-   debug and/or verbose modes with --json output (#737) and a fix for
-   JSON output on CentOS 6 (#727 / #744).
+  * Failed authentication doesn't count for --one-off (#864/#877).
 
- * software.es.net and downloads.es.net now support HTTPS, so URLs in
-   documentation that refer to those two hosts now use https://
-   instead of http:// URLs. (#759)
+  * Several memory leaks related to authenticated use were fixed
+    (#881/#888).
+
+  * The delay for tearing down the control connection for the default
+    timed tests has been increased, to more gracefully handle
+    high-delay paths (#751/#859).
 
 * Notable developer-visible changes
 
- * Functions related to authenticated iperf3 connections have been
-   exposed via libiperf.  (#712 / #713)
+  * Various improvements to the libiperf APIs (#767, #775, #869, #870,
+    #871)
 
- * The ToS byte is now exposed in the libiperf API. (#719)
+  * Fixed build behavior when OpenSSL is absent (#854).
 
-== iperf 3.5 2018-03-02 ==
+  * Portability fixes (#821/#874).
+
+iperf 3.6 2018-06-25
+--------------------
+
+* Notable user-visible changes
+
+  * A new --extra-data option can be used to fill in a user-defined
+    string field that appears in JSON output.  (#600 / #729)
+
+  * A new --repeating-payload option makes iperf3 use a payload pattern
+    similar to that used by iperf2, which could help in recreating
+    results that might be affected by payload entropy (for example,
+    compression).  (#726)
+
+  * -B now works properly with SCTP tests.  (#678 / #715)
+
+  * A compile fix for Solaris 10 was added.  (#711)
+
+  * Some minor bug fixes for JSON output.  In particular, warnings for
+    debug and/or verbose modes with --json output (#737) and a fix for
+    JSON output on CentOS 6 (#727 / #744).
+
+  * software.es.net and downloads.es.net now support HTTPS, so URLs in
+    documentation that refer to those two hosts now use https://
+    instead of http:// URLs. (#759)
+
+* Notable developer-visible changes
+
+  * Functions related to authenticated iperf3 connections have been
+    exposed via libiperf.  (#712 / #713)
+
+  * The ToS byte is now exposed in the libiperf API. (#719)
+
+iperf 3.5 2018-03-02
+--------------------
 
 * Notable user-visible changes
 
@@ -41,7 +80,8 @@
     paths.  Many thanks to @FuzzyStatic for providing access to a test
     environment for diagnosing this issue (#692).
 
-== iperf 3.4 2018-02-14 ==
+iperf 3.4 2018-02-14
+--------------------
 
 * Notable user-visible changes
 
@@ -80,7 +120,8 @@
     #668).  Also some code was cleaned up to eliminate (or at least
     reduce) compiler warnings (#664, #671).
 
-== iperf 3.3 2017-10-31 ==
+iperf 3.3 2017-10-31
+--------------------
 
 * Notable user-visible changes
 
@@ -109,7 +150,8 @@
 
 * Notable developer-visible changes
 
-== iperf 3.2 2017-06-26 ==
+iperf 3.2 2017-06-26
+--------------------
 
 * User-visible changes
 
@@ -196,13 +238,15 @@
 
   * Some dead code has been removed.
 
-== iperf 3.1.7 2017-03-06 ==
+iperf 3.1.7 2017-03-06
+----------------------
 
 iperf 3.1.7 is functionally identical to iperf 3.1.6.  Its only
 changes consist of updated documentation files and text in the RPM
 spec file.
 
-== iperf 3.1.6 2017-02-02 ==
+iperf 3.1.6 2017-02-02
+----------------------
 
 The release notes for iperf 3.1.6 describe changes, including bug
 fixes and new functionality, made since iperf 3.1.5.
@@ -217,7 +261,8 @@ fixes and new functionality, made since iperf 3.1.5.
   * Fixed a bug where two recently-added diagnostic messages spammed
     the JSON output on UDP tests.
 
-== iperf 3.1.5 2017-01-12 ==
+iperf 3.1.5 2017-01-12
+----------------------
 
 The release notes for iperf 3.1.5 describe changes, including bug
 fixes and new functionality, made since iperf 3.1.4.
@@ -273,7 +318,8 @@ sending size.
 
   * A systemd service file has been added (#340, #430).
 
-== iperf 3.1.4 2016-10-31 ==
+iperf 3.1.4 2016-10-31
+----------------------
 
 The release notes for iperf 3.1.4 describe changes, including bug
 fixes and new functionality, made since iperf 3.1.3.
@@ -297,7 +343,8 @@ fixes and new functionality, made since iperf 3.1.3.
 
   * Various bug fixes (issue #459, pull request #429, issue #388).
 
-== iperf 3.1.3 2016-06-08 ==
+iperf 3.1.3 2016-06-08
+----------------------
 
 The release notes for iperf 3.1.3 describe changes, including bug
 fixes and new functionality, made since iperf 3.1.2.
@@ -335,7 +382,8 @@ fixes and new functionality, made since iperf 3.1.2.
 
   * Fixed various coding errors (issue #423, issue #425).
 
-== iperf 3.1.2 2016-02-01 ==
+iperf 3.1.2 2016-02-01
+----------------------
 
 The release notes for iperf 3.1.2 describe changes, including bug
 fixes and new functionality, made since iperf 3.1.1.
@@ -353,7 +401,8 @@ fixes and new functionality, made since iperf 3.1.1.
 
 * Developer-visible changes
 
-== iperf 3.1.1 2015-11-19 ==
+iperf 3.1.1 2015-11-19
+----------------------
 
 The release notes for iperf 3.1.1 describe changes and new
 functionality in iperf 3.1.1, but not present in 3.1.
@@ -374,7 +423,8 @@ functionality in iperf 3.1.1, but not present in 3.1.
   * A regression with C++ compatibility in one of the iperf header
     files has been fixed (issue #323).
 
-== iperf 3.1 2015-10-16 ==
+iperf 3.1 2015-10-16
+--------------------
 
 The release notes for iperf 3.1 describe changes and new
 functionality in iperf 3.1, but not present in 3.0.11 or any earlier
@@ -428,7 +478,8 @@ functionality in iperf 3.1, but not present in 3.0.11 or any earlier
 
   * Out-of-tree builds now work (issue #265).
 
-== iperf 3.0.11 2015-01-09 ==
+iperf 3.0.11 2015-01-09
+-----------------------
 
 * User-visible changes
 
@@ -441,7 +492,8 @@ functionality in iperf 3.1, but not present in 3.0.11 or any earlier
   * Added 30-second timeout for UDP tests if unable to establish UDP
     connectivity between sender and receiver (issue #222).
 
-== iperf 3.0.10 2014-12-16 ==
+iperf 3.0.10 2014-12-16
+-----------------------
 
 * User-visible changes
 
@@ -458,7 +510,8 @@ functionality in iperf 3.1, but not present in 3.0.11 or any earlier
   * Fixed potential filename collision with a system header (issue
     #203).
 
-== iperf 3.0.9 2014-10-14 ==
+iperf 3.0.9 2014-10-14
+----------------------
 
 * User-visible changes
 
@@ -472,7 +525,8 @@ functionality in iperf 3.1, but not present in 3.0.11 or any earlier
 
   * None.
 
-== iperf 3.0.8 2014-09-30 ==
+iperf 3.0.8 2014-09-30
+----------------------
 
 * User-visible changes
 
@@ -484,7 +538,8 @@ functionality in iperf 3.1, but not present in 3.0.11 or any earlier
 
   * None.
 
-== iperf 3.0.7 2014-08-28 ==
+iperf 3.0.7 2014-08-28
+----------------------
 
 * User-visible changes
 
@@ -501,7 +556,8 @@ functionality in iperf 3.1, but not present in 3.0.11 or any earlier
 
 * Developer-visible changes
 
-== iperf 3.0.6 2014-07-28 ==
+iperf 3.0.6 2014-07-28
+----------------------
 
 * User-visible changes
 
@@ -516,7 +572,8 @@ functionality in iperf 3.1, but not present in 3.0.11 or any earlier
   * The {get,set}_test_bind_address API calls have been added to
     expose the -B functionality to API consumers (issue #197).
 
-== iperf 3.0.5 2014-06-16 ==
+iperf 3.0.5 2014-06-16
+----------------------
 
 * User-visible changes
 
@@ -550,9 +607,11 @@ functionality in iperf 3.1, but not present in 3.0.11 or any earlier
     versions.  AM_MAINTAINER_MODE is now used to avoid requiring these
     tools at build-time.
 
-== iperf 3.0.4 was not released ==
+iperf 3.0.4 was not released
+----------------------------
 
-== iperf 3.0.3 2014-03-26 ==
+iperf 3.0.3 2014-03-26
+----------------------
 
 * User-visible changes
 
@@ -574,7 +633,8 @@ functionality in iperf 3.1, but not present in 3.0.11 or any earlier
   * Example programs now build correctly, after having been broken in
     the 3.0.2 release (issue #152).
 
-== iperf 3.0.2 2014-03-10 ==
+iperf 3.0.2 2014-03-10
+----------------------
 
 * User-visible changes
 
@@ -619,7 +679,9 @@ functionality in iperf 3.1, but not present in 3.0.11 or any earlier
     While technically an incompatible API change, the former behavior
     generated unusable JSON.
 
-== iperf 3.0.1 2014-01-10 ==
+iperf 3.0.1 2014-01-10
+----------------------
+
   * Added the following new flags
      -D, --daemon	       run server as a daemon
      -L, --flowlabel           set IPv6 flow label (Linux only)
@@ -628,7 +690,9 @@ functionality in iperf 3.1, but not present in 3.0.11 or any earlier
      	 	      	       (instead of -t or -n)
   * Bug fixes
 
-== iperf 3.0-RC5 2013-11-15 ==
+iperf 3.0-RC5 2013-11-15
+------------------------
+
   * Added the following new flags
      -F, --file name           xmit/recv the specified file
      -A, --affinity n/n,m      set CPU affinity (Linux only)
@@ -640,7 +704,8 @@ functionality in iperf 3.1, but not present in 3.0.11 or any earlier
   * Many bug fixes
 
 
-== iperf 3.0b4 2010-08-02 ==
+iperf 3.0b4 2010-08-02
+----------------------
 
   * Added support for binding to a specific interface (-B)
   * Added support for IPv6 mode (-6)
@@ -654,7 +719,8 @@ functionality in iperf 3.1, but not present in 3.0.11 or any earlier
       * Support for decimal values
   * Many bug fixes
 
-== iperf 3.0b3 2010-07-23 ==
+iperf 3.0b3 2010-07-23
+----------------------
 
   * Better error handling
       * All errors now handled with iperf_error()
@@ -668,7 +734,8 @@ functionality in iperf 3.1, but not present in 3.0.11 or any earlier
           * on_test_finish - executes after the test is finished
   * Added early support for verbose mode (-V)
 
-== iperf 3.0b2 2010-07-15 ==
+iperf 3.0b2 2010-07-15
+----------------------
 
   * UDP mode now supported
       * Support for setting bandwidth (-b)
@@ -678,7 +745,8 @@ functionality in iperf 3.1, but not present in 3.0.11 or any earlier
   * Support for setting TCP MSS (-M)
       * Note: This feature is still in development. It is still very buggy.
 
-== iperf 3.0b1 2010-07-08 ==
+iperf 3.0b1 2010-07-08
+----------------------
 
   * TCP control socket now manages messages between client and server
   * Dynamic server (gets test parameters from client)

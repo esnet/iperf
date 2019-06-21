@@ -124,14 +124,14 @@ Changed flags:
 
     -C, --linux-congestion    set congestion control algorithm (Linux only)
                               (-Z in iperf2)
-
+    --bidir                   bidirectional testing mode
+                              (-d in iperf2)
 
 Deprecated options:
 
 Not planning to support these iperf2 flags. If you really miss these
 options, please submit a request in the issue tracker:
 
-    -d, --dualtest           Do a bidirectional test simultaneously
     -r, --tradeoff           Do a bidirectional test individually
     -T, --ttl                time-to-live, for multicast (default 1)
     -x, --reportexclude [CDMSV]   exclude C(connection) D(data) M(multicast) 

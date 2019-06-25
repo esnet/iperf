@@ -278,6 +278,10 @@ number of parallel client streams to run. Note that iperf3 is single threaded, s
 reverse the direction of a test, so that the server sends data to the
 client
 .TP
+.BR --bidir
+test in both directions (normal and reverse), with both the client and
+server sending and receiving data simultaneously
+.TP
 .BR -w ", " --window " \fIn\fR[KM]"
 window size / socket buffer size (this gets sent to the server and used on that side too)
 .TP

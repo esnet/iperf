@@ -1,7 +1,7 @@
 _NOTE: The iperf3 issue tracker is for registering bugs, enhancement
 requests, or submissions of code.  It is not a means for asking
 questions about building or using iperf3.  Those are best directed
-towards the iperf3 mailing list at iperf-dev@google-groups.com or
+towards the iperf3 mailing list at iperf-dev@googlegroups.com or
 question sites such as Stack Overflow
 (http://www.stackoverflow.com/).  A list of frequently-asked questions
 regarding iperf3 can be found at http://software.es.net/iperf/faq.html._

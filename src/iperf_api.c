@@ -470,7 +470,9 @@ iperf_set_test_role(struct iperf_test *ipt, char role)
 {
     ipt->role = role;
     if (!ipt->reverse) {
-        if (role == 'c')
+        if (ipt->bidirectional)
+            ipt->mode = BIDIRECTIONAL;
+        else if (role == 'c')
             ipt->mode = SENDER;
         else if (role == 's')
             ipt->mode = RECEIVER;

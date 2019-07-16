@@ -1397,7 +1397,7 @@ iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP)
     double seconds;
     uint64_t bits_per_second;
 
-    if (sp->test->done)
+    if (sp->test->done || sp->test->settings->rate == 0 || sp->test->settings->burst != 0)
         return;
     iperf_time_diff(&sp->result->start_time_fixed, nowP, &temp_time);
     seconds = iperf_time_in_secs(&temp_time);
@@ -1442,8 +1442,7 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 		streams_active = 1;
 		test->bytes_sent += r;
 		++test->blocks_sent;
-		if (test->settings->rate != 0 && test->settings->burst == 0)
-		    iperf_check_throttle(sp, &now);
+		iperf_check_throttle(sp, &now);
 		if (multisend > 1 && test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes)
 		    break;
 		if (multisend > 1 && test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks)

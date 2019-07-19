@@ -54,20 +54,29 @@
 int
 iperf_create_streams(struct iperf_test *test, int sender)
 {
-    int i, s;
+    int i, j, s;
 #if defined(HAVE_TCP_CONGESTION)
     int saved_errno;
 #endif /* HAVE_TCP_CONGESTION */
     struct iperf_stream *sp;
+    struct iperf_stream *tmp_sp;
 
     int orig_bind_port = test->bind_port;
     for (i = 0; i < test->num_streams; ++i) {
 
-        test->bind_port = orig_bind_port;
-	if (orig_bind_port)
-	    test->bind_port += i;
-        if ((s = test->protocol->connect(test)) < 0)
-            return -1;
+        if (!sender && iperf_is_bidir_ssock(test)) {
+            tmp_sp = (&test->streams)->slh_first;
+            for (j = 0; j < i; ++j)
+                tmp_sp = tmp_sp->streams.sle_next;
+            s = tmp_sp->socket;
+        }
+        else {
+            test->bind_port = orig_bind_port;
+            if (orig_bind_port)
+                test->bind_port += i;
+            if ((s = test->protocol->connect(test)) < 0)
+                return -1;
+        }
 
 #if defined(HAVE_TCP_CONGESTION)
 	if (test->protocol->id == Ptcp) {

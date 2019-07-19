@@ -400,6 +400,8 @@ iperf_run_server(struct iperf_test *test)
     struct iperf_stream *sp;
     struct iperf_time now;
     struct timeval* timeout;
+    struct iperf_stream *tmp_sp;
+    int j = 0;
     int flag;
 
     if (test->affinity != -1) 
@@ -439,13 +441,17 @@ iperf_run_server(struct iperf_test *test)
 
 	iperf_time_now(&now);
 	timeout = tmr_timeout(&now);
+        if (iperf_is_bidir_ssock(test) && rec_streams_accepted == streams_to_rec && send_streams_accepted != streams_to_send) {
+            result = 1;
+            goto bidir;
+        }
         result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
         if (result < 0 && errno != EINTR) {
 	    cleanup_server(test);
             i_errno = IESELECT;
             return -1;
         }
-	if (result > 0) {
+        if (result > 0) {
             if (FD_ISSET(test->listener, &read_set)) {
                 if (test->state != CREATE_STREAMS) {
                     if (iperf_accept(test) < 0) {
@@ -477,11 +483,18 @@ iperf_run_server(struct iperf_test *test)
 
             if (test->state == CREATE_STREAMS) {
                 if (FD_ISSET(test->prot_listener, &read_set)) {
-    
-                    if ((s = test->protocol->accept(test)) < 0) {
-			cleanup_server(test);
+
+                    if (iperf_is_bidir_ssock(test) && rec_streams_accepted == streams_to_rec) {
+                        bidir:
+                        tmp_sp = (&test->streams)->slh_first;
+                        for (j = 0; j < send_streams_accepted; ++j)
+                            tmp_sp = tmp_sp->streams.sle_next;
+                        s = tmp_sp->socket;
+                    }
+                    else if ((s = test->protocol->accept(test)) < 0) {
+                        cleanup_server(test);
                         return -1;
-		    }
+                    }
 
 #if defined(HAVE_TCP_CONGESTION)
 		    if (test->protocol->id == Ptcp) {
@@ -529,7 +542,6 @@ iperf_run_server(struct iperf_test *test)
 #endif /* HAVE_TCP_CONGESTION */
 
                     if (!is_closed(s)) {
-
                         if (rec_streams_accepted != streams_to_rec) {
                             flag = 0;
                             ++rec_streams_accepted;

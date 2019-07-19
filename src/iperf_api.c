@@ -331,6 +331,12 @@ iperf_get_iperf_version(void)
     return (char*)iperf_version;
 }
 
+int
+iperf_is_bidir_ssock(struct iperf_test* ipt)
+{
+    return ipt->mode == BIDIRECTIONAL && ipt->ssock == 1;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -765,6 +771,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"parallel", required_argument, NULL, 'P'},
         {"reverse", no_argument, NULL, 'R'},
         {"bidir", no_argument, NULL, OPT_BIDIRECTIONAL},
+        {"ssock", no_argument, NULL, OPT_SINGLE_SOCKET},
         {"window", required_argument, NULL, 'w'},
         {"bind", required_argument, NULL, 'B'},
         {"cport", required_argument, NULL, OPT_CLIENT_PORT},
@@ -982,6 +989,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 }
                 iperf_set_test_bidirectional(test, 1);
                 client_flag = 1;
+                break;
+            case OPT_SINGLE_SOCKET:
+                test->ssock = 1;
                 break;
             case OPT_MULTITHREAD:
                 test->multithread = 1;
@@ -1665,6 +1675,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddTrueToObject(j, "reverse");
 	if (test->bidirectional)
 	            cJSON_AddTrueToObject(j, "bidirectional");
+    if (test->ssock)
+        cJSON_AddTrueToObject(j, "ssock");
 	if (test->settings->socket_bufsize)
 	    cJSON_AddNumberToObject(j, "window", test->settings->server_socket_bufsize);
 	if (test->settings->blksize)
@@ -1758,6 +1770,8 @@ get_parameters(struct iperf_test *test)
 	    iperf_set_test_reverse(test, 1);
         if ((j_p = cJSON_GetObjectItem(j, "bidirectional")) != NULL)
             iperf_set_test_bidirectional(test, 1);
+        if ((j_p = cJSON_GetObjectItem(j, "ssock")) != NULL)
+            test->ssock = 1;
 	if ((j_p = cJSON_GetObjectItem(j, "window")) != NULL)
 	    test->settings->socket_bufsize = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "len")) != NULL)
@@ -2512,6 +2526,7 @@ iperf_reset_test(struct iperf_test *test)
 
     test->reverse = 0;
     test->bidirectional = 0;
+    test->ssock = 0;
     test->no_delay = 0;
 
     FD_ZERO(&test->read_set);

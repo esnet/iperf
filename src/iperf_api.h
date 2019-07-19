@@ -75,6 +75,7 @@ struct iperf_thread;
 #define OPT_BIDIRECTIONAL 20
 #define OPT_MULTITHREAD 21
 #define OPT_THREAD_AFFINITY 22
+#define OPT_SINGLE_SOCKET 23
 
 
 #define OPT_TEST_SET 101
@@ -131,6 +132,7 @@ int	iperf_get_test_one_off( struct iperf_test* ipt );
 int iperf_get_test_tos( struct iperf_test* ipt );
 char*	iperf_get_extra_data( struct iperf_test* ipt );
 char*	iperf_get_iperf_version(void);
+int     iperf_is_bidir_ssock( struct iperf_test* ipt );
 
 /* Setter routines for some fields inside iperf_test. */
 void	iperf_set_verbose( struct iperf_test* ipt, int verbose );

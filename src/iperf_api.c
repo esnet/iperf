@@ -76,6 +76,7 @@
 #include "iperf_sctp.h"
 #endif /* HAVE_SCTP */
 #if defined(HAVE_VSOCK)
+#include <linux/vm_sockets.h>
 #include "iperf_vsock.h"
 #endif /* HAVE_VSOCK */
 #include "timer.h"
@@ -700,10 +701,14 @@ iperf_on_connect(struct iperf_test *test)
     const char* rfc1123_fmt = "%a, %d %b %Y %H:%M:%S %Z";
     char now_str[100];
     char ipr[INET6_ADDRSTRLEN];
-    int port;
+    unsigned int port;
+    int sockdomain;
     struct sockaddr_storage sa;
     struct sockaddr_in *sa_inP;
     struct sockaddr_in6 *sa_in6P;
+#if defined(HAVE_VSOCK)
+    struct sockaddr_vm *sa_vm;
+#endif
     socklen_t len;
 
     now_secs = time((time_t*) 0);
@@ -724,10 +729,17 @@ iperf_on_connect(struct iperf_test *test)
     } else {
         len = sizeof(sa);
         getpeername(test->ctrl_sck, (struct sockaddr *) &sa, &len);
-        if (getsockdomain(test->ctrl_sck) == AF_INET) {
+        sockdomain = getsockdomain(test->ctrl_sck);
+        if (sockdomain == AF_INET) {
 	    sa_inP = (struct sockaddr_in *) &sa;
             inet_ntop(AF_INET, &sa_inP->sin_addr, ipr, sizeof(ipr));
 	    port = ntohs(sa_inP->sin_port);
+#if defined(HAVE_VSOCK)
+        } else if (sockdomain == AF_VSOCK) {
+	    sa_vm = (struct sockaddr_vm *) &sa;
+	    sprintf(ipr, "%u", sa_vm->svm_cid);
+	    port = sa_vm->svm_port;
+#endif
         } else {
 	    sa_in6P = (struct sockaddr_in6 *) &sa;
             inet_ntop(AF_INET6, &sa_in6P->sin6_addr, ipr, sizeof(ipr));
@@ -735,7 +747,7 @@ iperf_on_connect(struct iperf_test *test)
         }
 	mapped_v4_to_regular_v4(ipr);
 	if (test->json_output)
-	    cJSON_AddItemToObject(test->json_start, "accepted_connection", iperf_json_printf("host: %s  port: %d", ipr, (int64_t) port));
+	    cJSON_AddItemToObject(test->json_start, "accepted_connection", iperf_json_printf("host: %s  port: %u", ipr, (uint64_t) port));
 	else
 	    iperf_printf(test, report_accepted, ipr, port);
     }
@@ -2227,15 +2239,23 @@ void
 connect_msg(struct iperf_stream *sp)
 {
     char ipl[INET6_ADDRSTRLEN], ipr[INET6_ADDRSTRLEN];
-    int lport, rport;
+    unsigned int lport, rport;
+    int sockdomain = getsockdomain(sp->socket);
 
-    if (getsockdomain(sp->socket) == AF_INET) {
+    if (sockdomain == AF_INET) {
         inet_ntop(AF_INET, (void *) &((struct sockaddr_in *) &sp->local_addr)->sin_addr, ipl, sizeof(ipl));
 	mapped_v4_to_regular_v4(ipl);
         inet_ntop(AF_INET, (void *) &((struct sockaddr_in *) &sp->remote_addr)->sin_addr, ipr, sizeof(ipr));
 	mapped_v4_to_regular_v4(ipr);
         lport = ntohs(((struct sockaddr_in *) &sp->local_addr)->sin_port);
         rport = ntohs(((struct sockaddr_in *) &sp->remote_addr)->sin_port);
+#if defined(HAVE_VSOCK)
+    } else if (sockdomain == AF_VSOCK) {
+	sprintf(ipl, "%u", ((struct sockaddr_vm *) &sp->local_addr)->svm_cid);
+	sprintf(ipr, "%u", ((struct sockaddr_vm *) &sp->remote_addr)->svm_cid);
+	lport = ((struct sockaddr_vm *) &sp->local_addr)->svm_port;
+	rport = ((struct sockaddr_vm *) &sp->remote_addr)->svm_port;
+#endif
     } else {
         inet_ntop(AF_INET6, (void *) &((struct sockaddr_in6 *) &sp->local_addr)->sin6_addr, ipl, sizeof(ipl));
 	mapped_v4_to_regular_v4(ipl);

@@ -1738,9 +1738,21 @@ CJSON_PUBLIC(cJSON *) cJSON_GetObjectItem(const cJSON * const object, const char
     return get_object_item(object, string, false);
 }
 
+CJSON_PUBLIC(cJSON *) cJSON_GetObjectItemOfType(const cJSON * const object, const char * const string, int type)
+{
+    cJSON * obj = get_object_item(object, string, false);
+    return obj == NULL || obj->type != type ? NULL : obj;
+}
+
 CJSON_PUBLIC(cJSON *) cJSON_GetObjectItemCaseSensitive(const cJSON * const object, const char * const string)
 {
     return get_object_item(object, string, true);
+}
+
+CJSON_PUBLIC(cJSON *) cJSON_GetObjectItemCaseSensitiveOfType(const cJSON * const object, const char * const string, int type)
+{
+    cJSON * obj = get_object_item(object, string, true);
+    return obj == NULL || obj->type != type ? NULL : obj;
 }
 
 CJSON_PUBLIC(cJSON_bool) cJSON_HasObjectItem(const cJSON *object, const char *string)

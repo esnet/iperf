@@ -1815,13 +1815,13 @@ get_parameters(struct iperf_test *test)
 	    test->settings->tos = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "flowlabel")) != NULL)
 	    test->settings->flowlabel = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "title")) != NULL)
+	if ((j_p = cJSON_GetObjectItemOfType(j, "title", cJSON_String)) != NULL)
 	    test->title = strdup(j_p->valuestring);
-	if ((j_p = cJSON_GetObjectItem(j, "extra_data")) != NULL)
+	if ((j_p = cJSON_GetObjectItemOfType(j, "extra_data", cJSON_String)) != NULL)
 	    test->extra_data = strdup(j_p->valuestring);
-	if ((j_p = cJSON_GetObjectItem(j, "congestion")) != NULL)
+	if ((j_p = cJSON_GetObjectItemOfType(j, "congestion", cJSON_String)) != NULL)
 	    test->congestion = strdup(j_p->valuestring);
-	if ((j_p = cJSON_GetObjectItem(j, "congestion_used")) != NULL)
+	if ((j_p = cJSON_GetObjectItemOfType(j, "congestion_used", cJSON_String)) != NULL)
 	    test->congestion_used = strdup(j_p->valuestring);
 	if ((j_p = cJSON_GetObjectItem(j, "get_server_output")) != NULL)
 	    iperf_set_test_get_server_output(test, 1);
@@ -1830,7 +1830,7 @@ get_parameters(struct iperf_test *test)
 	if ((j_p = cJSON_GetObjectItem(j, "repeating_payload")) != NULL)
 	    test->repeating_payload = 1;
 #if defined(HAVE_SSL)
-	if ((j_p = cJSON_GetObjectItem(j, "authtoken")) != NULL)
+	if ((j_p = cJSON_GetObjectItemOfType(j, "authtoken", cJSON_String)) != NULL)
         test->settings->authtoken = strdup(j_p->valuestring);
 #endif //HAVE_SSL
 	if (test->mode && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
@@ -2092,7 +2092,7 @@ get_results(struct iperf_test *test)
 		    }
 		    else {
 			/* No JSON, look for textual output.  Make a copy of the text for later. */
-			j_server_output = cJSON_GetObjectItem(j, "server_output_text");
+			j_server_output = cJSON_GetObjectItemOfType(j, "server_output_text", cJSON_String);
 			if (j_server_output != NULL) {
 			    test->server_output_text = strdup(j_server_output->valuestring);
 			}
@@ -2101,7 +2101,7 @@ get_results(struct iperf_test *test)
 	    }
 	}
 
-	j_remote_congestion_used = cJSON_GetObjectItem(j, "congestion_used");
+	j_remote_congestion_used = cJSON_GetObjectItemOfType(j, "congestion_used", cJSON_String);
 	if (j_remote_congestion_used != NULL) {
 	    test->remote_congestion_used = strdup(j_remote_congestion_used->valuestring);
 	}

@@ -76,6 +76,7 @@ struct iperf_thread;
 #define OPT_MULTITHREAD 21
 #define OPT_THREAD_AFFINITY 22
 #define OPT_SINGLE_SOCKET 23
+#define OPT_VAR_LEN 24
 
 
 #define OPT_TEST_SET 101

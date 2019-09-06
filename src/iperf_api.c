@@ -768,6 +768,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"bytes", required_argument, NULL, 'n'},
         {"blockcount", required_argument, NULL, 'k'},
         {"length", required_argument, NULL, 'l'},
+        {"varlen", no_argument, NULL, OPT_VAR_LEN},
         {"parallel", required_argument, NULL, 'P'},
         {"reverse", no_argument, NULL, 'R'},
         {"bidir", no_argument, NULL, OPT_BIDIRECTIONAL},
@@ -965,6 +966,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             case 'l':
                 blksize = unit_atoi(optarg);
 		client_flag = 1;
+                break;
+            case OPT_VAR_LEN:
+                test->settings->varlen = 1;
                 break;
             case 'P':
                 test->num_streams = atoi(optarg);

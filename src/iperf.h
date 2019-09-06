@@ -139,6 +139,7 @@ struct iperf_settings
     int       socket_bufsize;       /* window size for TCP */
     int       server_socket_bufsize;/* server window size for TCP */
     int       blksize;              /* size of read/writes (-l) */
+    int       varlen;               /* Variable block size */
     uint64_t  rate;                 /* target data rate for application pacing*/
     uint64_t  fqrate;               /* target data rate for FQ pacing*/
     int	      pacing_timer;	    /* pacing timer in microseconds */
@@ -199,6 +200,7 @@ struct iperf_stream
     int       cnt_error;
     int       omitted_cnt_error;
     uint64_t  target;
+    int       current_varlen;
 
     struct sockaddr_storage local_addr;
     struct sockaddr_storage remote_addr;

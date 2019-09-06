@@ -315,18 +315,23 @@ Nread(int fd, char *buf, size_t count, int prot)
     register size_t nleft = count;
 
     while (nleft > 0) {
-        r = read(fd, buf, nleft);
+        r = recv(fd, buf, nleft, NULL);
+
         if (r < 0) {
             if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
                 break;
             else
-                return NET_HARDERROR;
-        } else if (r == 0)
+                 return NET_HARDERROR;
+        } else if (r == 0 && prot != SOCK_DGRAM)
             break;
+
+        if (prot == SOCK_DGRAM)
+            return r;
 
         nleft -= r;
         buf += r;
     }
+
     return count - nleft;
 }
 
@@ -342,26 +347,27 @@ Nwrite(int fd, const char *buf, size_t count, int prot)
     register size_t nleft = count;
 
     while (nleft > 0) {
-	r = write(fd, buf, nleft);
-	if (r < 0) {
-	    switch (errno) {
-		case EINTR:
-		case EAGAIN:
+        r = send(fd, buf, nleft, NULL);
+	
+        if (r < 0) {
+            switch (errno) {
+            case EINTR:
+            case EAGAIN:
 #if (EAGAIN != EWOULDBLOCK)
-		case EWOULDBLOCK:
+		    case EWOULDBLOCK:
 #endif
-		return count - nleft;
+		        return count - nleft;
 
-		case ENOBUFS:
-		return NET_SOFTERROR;
+		    case ENOBUFS:
+		        return NET_SOFTERROR;
 
-		default:
-		return NET_HARDERROR;
-	    }
-	} else if (r == 0)
-	    return NET_SOFTERROR;
-	nleft -= r;
-	buf += r;
+		    default:
+		        return NET_HARDERROR;
+	        }
+	    } else if (r == 0)
+	        return NET_SOFTERROR;
+	    nleft -= r;
+	    buf += r;
     }
     return count;
 }

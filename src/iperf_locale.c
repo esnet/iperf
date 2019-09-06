@@ -185,6 +185,9 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  --rsa-public-key-path     path to the RSA public key used to encrypt\n"
                            "                            authentication credentials\n"
 #endif //HAVESSL
+                           "  --varlen                  enable variable random UDP packet size. Client simulates realis-\n"
+                           "                            tic network load. Works only with -u key. It is recommended to\n"
+                           "                            disable speed limit with -b 0 key."
     
 #ifdef NOT_YET_SUPPORTED /* still working on these */
 #endif

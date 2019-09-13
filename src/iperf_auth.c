@@ -151,7 +151,6 @@ int Base64Decode(const char* b64message, unsigned char** buffer, size_t* length)
     return (0); //success
 }
 
-
 EVP_PKEY *load_pubkey_from_file(const char *file) {
     BIO *key = NULL;
     EVP_PKEY *pkey = NULL;
@@ -159,7 +158,7 @@ EVP_PKEY *load_pubkey_from_file(const char *file) {
     if (file) {
       key = BIO_new_file(file, "r");
       pkey = PEM_read_bio_PUBKEY(key, NULL, NULL, NULL);
-
+ 
       BIO_free(key);
     }
     return (pkey);
@@ -189,6 +188,16 @@ EVP_PKEY *load_privkey_from_file(const char *file) {
     return (pkey);
 }
 
+EVP_PKEY *load_privkey_from_base64(const char *buffer) {
+    unsigned char *key = NULL;
+    size_t key_len;
+    Base64Decode(buffer, &key, &key_len);
+
+    BIO* bio = BIO_new(BIO_s_mem());
+    BIO_write(bio, key, key_len);
+    EVP_PKEY *pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
+    return (pkey);
+}
 
 int test_load_pubkey_from_file(const char *file){
     EVP_PKEY *key = load_pubkey_from_file(file);

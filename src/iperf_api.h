@@ -168,6 +168,8 @@ void    iperf_set_test_no_delay( struct iperf_test* ipt, int no_delay);
 void    iperf_set_test_client_username(struct iperf_test *ipt, char *client_username);
 void    iperf_set_test_client_password(struct iperf_test *ipt, char *client_password);
 void    iperf_set_test_client_rsa_pubkey(struct iperf_test *ipt, char *client_rsa_pubkey_base64);
+void    iperf_set_test_server_authorized_users(struct iperf_test *ipt, char *server_authorized_users);
+void    iperf_set_test_server_rsa_privkey(struct iperf_test *ipt, char *server_rsa_privkey_base64);
 #endif // HAVE_SSL
 
 /**

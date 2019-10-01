@@ -34,6 +34,7 @@ int test_load_private_key_from_file(const char *private_keyfile);
 EVP_PKEY *load_pubkey_from_file(const char *file);
 EVP_PKEY *load_pubkey_from_base64(const char *buffer);
 EVP_PKEY *load_privkey_from_file(const char *file);
+EVP_PKEY *load_privkey_from_base64(const char *buffer);
 int encode_auth_setting(const char *username, const char *password, EVP_PKEY *public_key, char **authtoken);
 int decode_auth_setting(int enable_debug, const char *authtoken, EVP_PKEY *private_key, char **username, char **password, time_t *ts);
 int check_authentication(const char *username, const char *password, const time_t ts, const char *filename);

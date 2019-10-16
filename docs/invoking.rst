@@ -388,7 +388,14 @@ the executable.
           --rsa-public-key-path file
                  path to the RSA public key used to encrypt  authentication  cre-
                  dentials (if built with OpenSSL support)
-   
+
+          --udp-gso N
+                 enables Generic Segmentation Offload for UDP protocol. "N" is a
+                 segment size, it cannot be greater than MTU including headers.
+                 Use "--udp-lso 0" to use blocksize ("-l" option) as a segment
+                 size. Attention! Spliting into too many fragments can lead to a
+                 crash of "iperf" or statistics errors. Supported only by Linux!
+
    
    EXAMPLES
       Authentication - RSA Keypair

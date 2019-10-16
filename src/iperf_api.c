@@ -44,6 +44,9 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/ip6.h>
+#include <netinet/udp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #ifdef HAVE_STDINT_H
@@ -57,6 +60,9 @@
 #include <sched.h>
 #include <setjmp.h>
 #include <stdarg.h>
+#if defined(__linux__)
+#include <linux/if_ether.h>
+#endif
 
 #if defined(HAVE_CPUSET_SETAFFINITY)
 #include <sys/param.h>
@@ -86,6 +92,14 @@
 #include <openssl/bio.h>
 #include "iperf_auth.h"
 #endif /* HAVE_SSL */
+
+#ifndef UDP_SEGMENT
+    #define UDP_SEGMENT 103 /* Set GSO segmentation size */
+#endif
+
+#ifndef ETH_MAX_MTU
+    #define ETH_MAX_MTU 0xFFFF
+#endif
 
 /* Forwards. */
 static int send_parameters(struct iperf_test *test);
@@ -853,6 +867,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"connect-timeout", required_argument, NULL, OPT_CONNECT_TIMEOUT},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
+        {"udp-gso", required_argument, NULL, OPT_UDP_GSO},
         {NULL, 0, NULL, 0}
     };
     int flag;
@@ -1242,6 +1257,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	    case 'h':
 		usage_long(stdout);
 		exit(0);
+            case OPT_UDP_GSO:
+#if defined(__linux__)
+                test->settings->udp_gso = 1;
+                test->settings->udp_gso_segsize = unit_atoi(optarg);
+#endif
+                break;
             default:
                 usage_long(stderr);
                 exit(1);
@@ -1375,6 +1396,48 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     if (test->json_output && test->debug) {
         warning("Debug output (-d) may interfere with JSON output (-J)");
     }
+
+#if defined(__linux__)
+    if (test->settings->udp_gso) {
+        int prev_blksize = test->settings->blksize;
+        uint16_t iphdr_len = 0;
+        switch (test->settings->domain) {
+            case PF_UNSPEC:
+                warning("Domain is unspecified! Using IPv4 by default.");
+            case PF_INET:
+                iphdr_len = sizeof(struct iphdr);
+                break;
+            case PF_INET6:
+                iphdr_len = sizeof(struct ip6_hdr);
+                break;
+            default:
+                i_errno = IEDOMAIN;
+                perror("Current domain is unsupported by iperf GSO now. Disabling UDP GSO");
+                test->settings->udp_gso = 0;
+                test->settings->udp_gso_segsize = 0;
+                break;
+        }
+
+        if (iphdr_len) {
+            if (!test->settings->udp_gso_segsize) {
+                test->settings->udp_gso_segsize = test->settings->blksize;
+                test->settings->blksize = ETH_MAX_MTU - iphdr_len - sizeof(struct udphdr);
+            }
+
+            if (test->settings->udp_gso_segsize > ETH_DATA_LEN - iphdr_len - sizeof(struct udphdr)) {
+                warning("UDP GSO segment size exceeds maximum. Using maximum value instead of current.");
+                test->settings->udp_gso_segsize = ETH_DATA_LEN - iphdr_len - sizeof(struct udphdr);
+            }
+
+            if (test->settings->udp_gso_segsize >= test->settings->blksize) {
+                warning("UDP GSO segment size >= block size. The use of UDP GSO is impractival and amy cause errors. Disabling UDP GSO.");
+                test->settings->blksize = prev_blksize;
+                test->settings->udp_gso = 0;
+                test->settings->udp_gso_segsize = 0;
+            }
+        }
+    }
+#endif
 
     return 0;
 }

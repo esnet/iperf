@@ -154,6 +154,8 @@ struct iperf_settings
     EVP_PKEY  *client_rsa_pubkey;
 #endif // HAVE_SSL
     int	      connect_timeout;	    /* socket connection timeout, in ms */
+    int       udp_gso;        	    /* Generic Segmentation Offload for UDP protocol */
+    uint16_t  udp_gso_segsize;	    /* GSO segment size */
 };
 
 struct iperf_test;

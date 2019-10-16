@@ -34,6 +34,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <netinet/udp.h>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
@@ -55,6 +56,10 @@
 # define PRIu64		"llu"
 #endif
 
+#ifndef UDP_SEGMENT
+    #define UDP_SEGMENT 103 /* Set GSO segmentation size */
+#endif
+
 /* iperf_udp_recv
  *
  * receives the data for UDP
@@ -64,6 +69,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 {
     uint32_t  sec, usec;
     uint64_t  pcount;
+    uint16_t  udp_gso_seg;
     int       r;
     int       size = sp->settings->blksize;
     double    transit = 0, d = 0;
@@ -88,9 +94,11 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    memcpy(&sec, sp->buffer, sizeof(sec));
 	    memcpy(&usec, sp->buffer+4, sizeof(usec));
 	    memcpy(&pcount, sp->buffer+8, sizeof(pcount));
+	    memcpy(&udp_gso_seg, sp->buffer+16, sizeof(udp_gso_seg));
 	    sec = ntohl(sec);
 	    usec = ntohl(usec);
 	    pcount = be64toh(pcount);
+	    udp_gso_seg = ntohs(udp_gso_seg);
 	    sent_time.secs = sec;
 	    sent_time.usecs = usec;
 	}
@@ -99,9 +107,11 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    memcpy(&sec, sp->buffer, sizeof(sec));
 	    memcpy(&usec, sp->buffer+4, sizeof(usec));
 	    memcpy(&pc, sp->buffer+8, sizeof(pc));
+	    memcpy(&udp_gso_seg, sp->buffer+12, sizeof(udp_gso_seg));
 	    sec = ntohl(sec);
 	    usec = ntohl(usec);
 	    pcount = ntohl(pc);
+	    udp_gso_seg = ntohs(udp_gso_seg);
 	    sent_time.secs = sec;
 	    sent_time.usecs = usec;
 	}
@@ -122,6 +132,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	 * far (so we're expecting to see the packet with sequence number
 	 * sp->packet_count + 1 arrive next).
 	 */
+	if (!udp_gso_seg) {
 	if (pcount >= sp->packet_count + 1) {
 
 	    /* Forward, but is there a gap in sequence numbers? */
@@ -151,6 +162,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    /* Log the out-of-order packet */
 	    if (sp->test->debug) 
 		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count, sp->socket);
+	}
 	}
 
 	/*
@@ -202,31 +214,98 @@ iperf_udp_send(struct iperf_stream *sp)
 
 	uint32_t  sec, usec;
 	uint64_t  pcount;
+	uint16_t  udp_gso_seg = 0;
 
 	sec = htonl(before.secs);
 	usec = htonl(before.usecs);
 	pcount = htobe64(sp->packet_count);
+	udp_gso_seg = htons(udp_gso_seg);
 	
-	memcpy(sp->buffer, &sec, sizeof(sec));
-	memcpy(sp->buffer+4, &usec, sizeof(usec));
-	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
+	if (sp->settings->udp_gso) {
+	    /* Protection from lose segment with counters. */
+	    int i = 0;
+	    int counters_len = sizeof(sec) + sizeof(usec) + sizeof(pcount) + sizeof(udp_gso_seg);
+	    char* buf = sp->buffer;
+	    do {
+	        memcpy(buf, &sec, sizeof(sec));
+	        memcpy(buf+4, &usec, sizeof(usec));
+	        memcpy(buf+8, &pcount, sizeof(pcount));
+	        memcpy(buf+16, &udp_gso_seg, sizeof(udp_gso_seg));
+
+	        buf         += sp->settings->udp_gso_segsize;
+	        i           += sp->settings->udp_gso_segsize;
+	        udp_gso_seg = htons(ntohs(udp_gso_seg) + 1);
+	    } while (i + counters_len <= size);
+	} else {
+	    memcpy(sp->buffer, &sec, sizeof(sec));
+	    memcpy(sp->buffer+4, &usec, sizeof(usec));
+	    memcpy(sp->buffer+8, &pcount, sizeof(pcount));
+	    memcpy(sp->buffer+16, &udp_gso_seg, sizeof(udp_gso_seg));
+	}
 	
-    }
-    else {
+	}
+	else {
 
 	uint32_t  sec, usec, pcount;
+	uint16_t  udp_gso_seg = 0;
 
 	sec = htonl(before.secs);
 	usec = htonl(before.usecs);
 	pcount = htonl(sp->packet_count);
-	
-	memcpy(sp->buffer, &sec, sizeof(sec));
-	memcpy(sp->buffer+4, &usec, sizeof(usec));
-	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
-	
-    }
+	udp_gso_seg = htons(udp_gso_seg);
 
-    r = Nwrite(sp->socket, sp->buffer, size, Pudp);
+	if (sp->settings->udp_gso) {
+	    /* Protection from lose segment with counters. */
+	    int i = 0;
+	    int counters_len = sizeof(sec) + sizeof(usec) + sizeof(pcount) + sizeof(udp_gso_seg);
+	    char* buf = sp->buffer;
+	    do {
+	        memcpy(buf, &sec, sizeof(sec));
+	        memcpy(buf+4, &usec, sizeof(usec));
+	        memcpy(buf+8, &pcount, sizeof(pcount));
+	        memcpy(buf+12, &udp_gso_seg, sizeof(udp_gso_seg));
+
+	        buf         += sp->settings->udp_gso_segsize;
+	        i           += sp->settings->udp_gso_segsize;
+	        udp_gso_seg = htons(ntohs(udp_gso_seg) + 1);
+	    } while (i + counters_len <= size);
+	} else {
+	    memcpy(sp->buffer, &sec, sizeof(sec));
+	    memcpy(sp->buffer+4, &usec, sizeof(usec));
+	    memcpy(sp->buffer+8, &pcount, sizeof(pcount));
+	    memcpy(sp->buffer+12, &udp_gso_seg, sizeof(udp_gso_seg));
+	}
+	
+	}
+
+	if (sp->settings->udp_gso) {
+#if defined(__linux__)
+	    char control[CMSG_SPACE(sizeof(sp->settings->udp_gso_segsize))] = { 0 };
+	    struct msghdr msg  = { 0 };
+	    struct iovec iov   = { 0 };
+	    struct cmsghdr *cm = NULL;
+
+	    iov.iov_base       = sp->buffer;
+	    iov.iov_len        = size;
+
+	    msg.msg_iov        = &iov;
+	    msg.msg_iovlen     = 1;
+
+	    msg.msg_control    = control;
+	    msg.msg_controllen = sizeof(control);
+
+	    cm                 = CMSG_FIRSTHDR(&msg);
+	    cm->cmsg_level     = SOL_UDP;
+	    cm->cmsg_type      = UDP_SEGMENT;
+	    cm->cmsg_len       = CMSG_LEN(sizeof(sp->settings->udp_gso_segsize));
+	    uint16_t *valp     = (uint16_t *)CMSG_DATA(cm);
+	    *valp              = sp->settings->udp_gso_segsize;
+
+	    r = Nsendmsg(sp->socket, &msg, Pudp);
+#endif
+	} else {
+	    r = Nwrite(sp->socket, sp->buffer, size, Pudp);
+	}
 
     if (r < 0)
 	return r;
@@ -552,6 +631,19 @@ iperf_udp_connect(struct iperf_test *test)
         i_errno = IESTREAMREAD;
         return -1;
     }
+
+#if defined(__linux__)
+    if (test->settings->udp_gso) {
+        uint16_t t_udp_gso_value;
+        socklen_t t_udp_gso_size;
+        if (getsockopt(s, SOL_UDP, UDP_SEGMENT, &t_udp_gso_value, &t_udp_gso_size)) {
+            i_errno = IEUDPGSO;
+            test->settings->udp_gso = 0;
+            test->settings->udp_gso_segsize = 0;
+            return -1;
+        }
+    }
+#endif
 
     return s;
 }

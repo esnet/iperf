@@ -73,6 +73,7 @@ struct iperf_time;
 #define OPT_REPEATING_PAYLOAD 18
 #define OPT_EXTRA_DATA 19
 #define OPT_BIDIRECTIONAL 20
+#define OPT_UDP_GSO 25
 
 /* states */
 #define TEST_START 1
@@ -345,6 +346,8 @@ enum {
     IEBADFORMAT = 24,	    // Bad format argument to -f
     IEREVERSEBIDIR = 25,    // Iperf cannot be both reverse and bidirectional
     IEBADPORT = 26,	    // Bad port number
+    IEDOMAIN = 27,          // The specified domain doesn't supported by some functions (check perror)
+    IEUDPGSO = 28,          // The configuration doesn't LSO for UDP protocol
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

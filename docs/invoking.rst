@@ -403,6 +403,12 @@ the executable.
                  enable variable random UDP packet size. Client simulates realis-
                  tic network load. Works only with -u key. It is recommended to 
                  disable speed limit with -b 0 key.
+          --udp-lso N
+                 enables Large Send Offload for UDP protocol. "N" is a segment
+                 size, it cannot be greater than MTU including headers. Use
+                 "--udp-lso 0" to use blocksize ("-l" option) as a segment size.
+                 Attention! Spliting into too many fragments can lead to a crash
+                 of "iperf" or statistics errors.
    
    
    EXAMPLES

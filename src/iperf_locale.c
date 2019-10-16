@@ -187,7 +187,12 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 #endif //HAVESSL
                            "  --varlen                  enable variable random UDP packet size. Client simulates realis-\n"
                            "                            tic network load. Works only with -u key. It is recommended to\n"
-                           "                            disable speed limit with -b 0 key."
+                           "                            disable speed limit with -b 0 key.\n"
+                           "  --udp-lso N               enables Large Send Offload for UDP protocol. \"N\" is a\n"
+                           "                            segment size, it cannot be greater than MTU including headers.\n"
+                           "                            Use \"--udp-lso 0\" to use blocksize (\"-l\" option) as a segment\n"
+                           "                            size. Attention! Splitting into too many fragments can lead to a\n"
+                           "                            crash of \"iperf\" or statistics errors.\n"
     
 #ifdef NOT_YET_SUPPORTED /* still working on these */
 #endif

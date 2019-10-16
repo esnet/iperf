@@ -77,6 +77,7 @@ struct iperf_thread;
 #define OPT_THREAD_AFFINITY 22
 #define OPT_SINGLE_SOCKET 23
 #define OPT_VAR_LEN 24
+#define OPT_UDP_LSO 25
 
 
 #define OPT_TEST_SET 101
@@ -354,6 +355,8 @@ enum {
     IESETSERVERAUTH = 23,   // Bad configuration of server authentication
     IEBADFORMAT = 24,	    // Bad format argument to -f
     IEREVERSEBIDIR = 25,    // Iperf cannot be both reverse and bidirectional
+    IEDOMAIN = 26,          // The specified domain doesn't supported by some functions (check perror)
+    IEUDPLSO = 27,          // The configuration doesn't LSO for UDP protocol
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

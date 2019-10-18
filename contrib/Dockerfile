@@ -11,4 +11,5 @@ FROM scratch
 COPY src/iperf3 /iperf3
 COPY tmp /tmp
 ENTRYPOINT ["/iperf3"]
+EXPOSE 5201
 CMD ["-s"]

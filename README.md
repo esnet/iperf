@@ -54,6 +54,26 @@ None.
 
 (Note: If configure fails, try running `./bootstrap.sh` first)
 
+### Building with mingw ###
+    autoconf; cross-configure.sh; cd src && make -f Makefile.mingw
+
+It will fail with mysterious errors if you do not copy these libraries from
+the build machine to the install dir on the windows machine (possibly not all of these
+are needed)
+
+    Directory: C:\Users\Ben Greear\Desktop\iperf
+
+Mode                LastWriteTime     Length Name
+----                -------------     ------ ----
+-a---        10/20/2019   8:51 PM     326195 iperf3.exe
+-a---        10/20/2019   8:37 PM    1690887 libcrypto-10.dll
+-a---        10/20/2019   8:37 PM    1013208 libgcc_s_sjlj-1.dll
+-a---        10/20/2019   8:33 PM      67090 libgnurx-0.dll
+-a---        10/20/2019   8:35 PM     393870 libssl-10.dll
+-a---        10/20/2019   8:47 PM      62672 libwinpthread-1.dll
+-a---        10/20/2019   8:33 PM      91368 zlib1.dll
+
+
 Invoking iperf3
 ---------------
 

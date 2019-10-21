@@ -41,18 +41,11 @@
 #include <unistd.h>
 #include <assert.h>
 #include <fcntl.h>
-#include <sys/socket.h>
 #include <sys/types.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
-#include <netinet/tcp.h>
 #include <sys/time.h>
-#include <sys/resource.h>
-#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sched.h>
 #include <setjmp.h>
@@ -3780,7 +3773,7 @@ iperf_init_stream(struct iperf_stream *sp, struct iperf_test *test)
     if ((opt = test->settings->tos)) {
         if (getsockdomain(sp->socket) == AF_INET6) {
 #ifdef IPV6_TCLASS
-            if (setsockopt(sp->socket, IPPROTO_IPV6, IPV6_TCLASS, &opt, sizeof(opt)) < 0) {
+            if (setsockopt(sp->socket, IPPROTO_IPV6, IPV6_TCLASS, (const char*)&opt, sizeof(opt)) < 0) {
                 i_errno = IESETCOS;
                 return -1;
             }
@@ -3789,7 +3782,7 @@ iperf_init_stream(struct iperf_stream *sp, struct iperf_test *test)
             return -1;
 #endif
         } else {
-            if (setsockopt(sp->socket, IPPROTO_IP, IP_TOS, &opt, sizeof(opt)) < 0) {
+            if (setsockopt(sp->socket, IPPROTO_IP, IP_TOS, (const char*)&opt, sizeof(opt)) < 0) {
                 i_errno = IESETTOS;
                 return -1;
             }
@@ -3882,7 +3875,9 @@ diskfile_recv(struct iperf_stream *sp)
     r = sp->rcv2(sp);
     if (r > 0) {
 	(void) write(sp->diskfile_fd, sp->buffer, r);
+#ifndef __WIN32__
 	(void) fsync(sp->diskfile_fd);
+#endif
     }
     return r;
 }
@@ -3893,7 +3888,9 @@ iperf_catch_sigend(void (*handler)(int))
 {
     signal(SIGINT, handler);
     signal(SIGTERM, handler);
+#ifndef __WIN32__
     signal(SIGHUP, handler);
+#endif
 }
 
 /**
@@ -3929,6 +3926,10 @@ iperf_got_sigend(struct iperf_test *test)
     iperf_errexit(test, "interrupt - %s", iperf_strerror(i_errno));
 }
 
+#ifdef __WIN32__
+
+#endif
+
 /* Try to write a PID file if requested, return -1 on an error. */
 int
 iperf_create_pidfile(struct iperf_test *test)
@@ -3947,6 +3948,7 @@ iperf_create_pidfile(struct iperf_test *test)
 		pid = atoi(buf);
 		if (pid > 0) {
 
+#ifndef __WIN32__ /* don't know how to kill on windows */
 		    /* See if the process exists. */
 		    if (kill(pid, 0) == 0) {
 			/*
@@ -3958,6 +3960,7 @@ iperf_create_pidfile(struct iperf_test *test)
 			test->pidfile = NULL;
 			iperf_errexit(test, "Another instance of iperf3 appears to be running");
 		    }
+#endif
 		}
 	    }
 	}
@@ -4148,7 +4151,7 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
      * easily exceed the size of the line buffer, but which don't need
      * to be buffered up anyway.
      */
-    int rv;
+    int rv = -1;
     if (test->role == 'c') {
 	if (test->title)
 	    fprintf(test->outfile, "%s:  ", test->title);

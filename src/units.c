@@ -58,7 +58,9 @@
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
+#ifndef __WIN32__
 #include <sys/socket.h>
+#endif
 #include <sys/types.h>
 #include <sys/time.h>
 

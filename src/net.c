@@ -29,12 +29,14 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
+#ifndef __WIN32__
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <assert.h>
 #include <netdb.h>
+#endif
+#include <assert.h>
 #include <string.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -72,6 +74,28 @@
  */
 extern int gerror;
 
+#ifdef __WIN32__
+
+void nonblock(int s) {
+    unsigned long nb = 1;
+    if (ioctlsocket(s, FIONBIO, &nb) == SOCKET_ERROR) {
+       //VLOG_ERR(VLOG << "Error setting Connection FIONBIO: "
+       //         << WSAGetLastError());
+    }
+    else {
+       //VLOG << "Made socket: " << s << " non-blocking: " << msg << endl;
+    }
+}
+#else
+void nonblock(int s) {
+   //VLOG_TRC(VLOG << "in other nonblock, msg: " << msg << endl);
+   if (fcntl(s, F_SETFL, O_NDELAY) == -1) {
+      //VLOG << "ERROR:  fcntl (!LINUX), executing nonblock:  " 
+      //     << LFSTRERROR << endl;
+   }//if
+}//nonblock
+#endif
+
 /*
  * timeout_connect adapted from netcat, via OpenBSD and FreeBSD
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
@@ -80,25 +104,42 @@ int
 timeout_connect(int s, const struct sockaddr *name, socklen_t namelen,
     int timeout)
 {
-	struct pollfd pfd;
 	socklen_t optlen;
 	int flags, optval;
 	int ret;
 
 	flags = 0;
 	if (timeout != -1) {
-		flags = fcntl(s, F_GETFL, 0);
-		if (fcntl(s, F_SETFL, flags | O_NONBLOCK) == -1)
-			return -1;
+#ifndef __WIN32__
+           flags = fcntl(s, F_GETFL, 0);
+#endif
+           nonblock(s);
 	}
 
 	if ((ret = connect(s, name, namelen)) != 0 && errno == EINPROGRESS) {
+#ifndef __WIN32__
+                struct pollfd pfd;
 		pfd.fd = s;
 		pfd.events = POLLOUT;
-		if ((ret = poll(&pfd, 1, timeout)) == 1) {
+		if ((ret = poll(&pfd, 1, timeout)) == 1)
+#else
+                fd_set write_fds;
+                FD_ZERO(&write_fds);            //Zero out the file descriptor set
+                FD_SET(s, &write_fds);     //Set the current socket file descriptor into the set
+
+                //We are going to use select to wait for the socket to connect
+                struct timeval tv;              //Time value struct declaration
+                tv.tv_sec = timeout / 1000;                  //The second portion of the struct
+                tv.tv_usec = (timeout % 1000) * 1000;        //The microsecond portion of the struct
+
+                //DEBUG: This is ALWAYS 1
+                int select_ret = select(s + 1, NULL, &write_fds, NULL, &tv);
+                if (select_ret == 1)
+#endif
+                {
 			optlen = sizeof(optval);
 			if ((ret = getsockopt(s, SOL_SOCKET, SO_ERROR,
-			    &optval, &optlen)) == 0) {
+                                              (char*)&optval, &optlen)) == 0) {
 				errno = optval;
 				ret = optval == 0 ? 0 : -1;
 			}
@@ -109,8 +150,12 @@ timeout_connect(int s, const struct sockaddr *name, socklen_t namelen,
 			ret = -1;
 	}
 
-	if (timeout != -1 && fcntl(s, F_SETFL, flags) == -1)
-		ret = -1;
+	if (timeout != -1) {
+#ifndef __WIN32__
+           fcntl(s, F_SETFL, flags);
+#endif
+           /* TODO:  Implement this for Windows? */
+        }
 
 	return (ret);
 }
@@ -486,6 +531,14 @@ Nsendfile(int fromfd, int tofd, const char *buf, size_t count)
 int
 setnonblocking(int fd, int nonblocking)
 {
+#ifdef __WIN32__
+   if (nonblocking) {
+      nonblock(fd);
+      return 0;
+   }
+   else
+      return -1; /*not supported currently */
+#else
     int flags, newflags;
 
     flags = fcntl(fd, F_GETFL, 0);
@@ -503,6 +556,7 @@ setnonblocking(int fd, int nonblocking)
 	    return -1;
 	}
     return 0;
+#endif
 }
 
 /****************************************************************************/
@@ -518,3 +572,116 @@ getsockdomain(int sock)
     }
     return ((struct sockaddr *) &sa)->sa_family;
 }
+
+
+#ifdef __WIN32__
+
+// From 'mairix', under LGPL evidently
+
+/* The mmap/munmap implementation was shamelessly stolen, with minimal
+   changes, from libgwc32, a Windows port of glibc.  */
+
+static DWORD granularity = 0;
+static int isw9x = -1;
+
+void *
+mmap (void *addr, size_t len, int prot, int flags, int fd, off_t offset)
+{
+  void *map = NULL;
+  char *gran_addr = addr;
+  HANDLE handle = INVALID_HANDLE_VALUE;
+  DWORD cfm_flags = 0, mvf_flags = 0, sysgran;
+  off_t gran_offset = offset, filelen = _filelength(fd);
+  off_t mmlen = len;
+
+  if (!granularity)
+    {
+      SYSTEM_INFO si;
+
+      GetSystemInfo (&si);
+      granularity = si.dwAllocationGranularity;
+    }
+  sysgran = granularity;
+
+  switch (prot) {
+    case PROT_READ | PROT_WRITE | PROT_EXEC:
+    case PROT_WRITE | PROT_EXEC:
+      cfm_flags = PAGE_EXECUTE_READWRITE;
+      mvf_flags = FILE_MAP_ALL_ACCESS;
+      break;
+    case PROT_READ | PROT_WRITE:
+      cfm_flags = PAGE_READWRITE;
+      mvf_flags = FILE_MAP_ALL_ACCESS;
+      break;
+    case PROT_WRITE:
+      cfm_flags = PAGE_READWRITE;
+      mvf_flags = FILE_MAP_WRITE;
+      break;
+    case PROT_READ:
+      cfm_flags = PAGE_READONLY;
+      mvf_flags = FILE_MAP_READ;
+      break;
+    case PROT_NONE:
+      cfm_flags = PAGE_NOACCESS;
+      mvf_flags = FILE_MAP_READ;
+      break;
+    case PROT_EXEC:
+      cfm_flags = PAGE_EXECUTE;
+      mvf_flags = FILE_MAP_READ;
+      break;
+  }
+  if (flags & MAP_PRIVATE)
+    {
+      if (isw9x == -1)
+	isw9x = ((DWORD)(LOBYTE (LOWORD (GetVersion()))) < 5);
+      if (isw9x == 1)
+	cfm_flags = PAGE_WRITECOPY;
+      mvf_flags = FILE_MAP_COPY;
+    }
+  if (flags & MAP_FIXED)
+    {
+      gran_offset = offset;
+      gran_addr = addr;
+    }
+  else
+    {
+      gran_offset = offset & ~(sysgran - 1);
+      gran_addr = (char *) (((DWORD) gran_addr / sysgran) * sysgran);
+    }
+  mmlen = (filelen < gran_offset + len ? filelen - gran_offset : len);
+
+  handle = CreateFileMapping ((HANDLE) _get_osfhandle(fd), NULL, cfm_flags,
+			      0, mmlen, NULL);
+  if (!handle)
+    {
+      errno = EINVAL;	/* FIXME */
+      return MAP_FAILED;
+    }
+  map = MapViewOfFileEx (handle, mvf_flags, HIDWORD(gran_offset),
+			 LODWORD(gran_offset), (SIZE_T) mmlen,
+			 (LPVOID) gran_addr);
+  if (map == NULL && (flags & MAP_FIXED))
+    {
+      map = MapViewOfFileEx (handle, mvf_flags, HIDWORD(gran_offset),
+			     LODWORD(gran_offset), (SIZE_T) mmlen,
+			     (LPVOID) NULL);
+    }
+  CloseHandle(handle);
+
+  if (map == NULL)
+    {
+      errno = EINVAL; 	/* FIXME */
+      return MAP_FAILED;
+    }
+  return map;
+}
+
+int munmap (void *addr, size_t len)
+{
+  if (!UnmapViewOfFile (addr))
+    return -1;
+  return 0;
+}
+
+/* End of ISC stuff */
+#endif

@@ -27,6 +27,10 @@
 #ifndef __NET_H
 #define __NET_H
 
+#include "iperf.h"
+
+void nonblock(int s);
+
 int timeout_connect(int s, const struct sockaddr *name, socklen_t namelen, int timeout);
 int netdial(int domain, int proto, char *local, const char* bind_dev, int local_port, char *server, int port, int timeout);
 int netannounce(int domain, int proto, char *local, const char* bind_dev, int port);

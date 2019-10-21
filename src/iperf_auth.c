@@ -25,16 +25,18 @@
  * for complete information.
  */
 
-#include "iperf_config.h"
+#include "iperf_auth.h"
 
+#include <errno.h>
 #include <string.h>
 #include <assert.h>
-#include <time.h>
 #include <sys/types.h>
 /* FreeBSD needs _WITH_GETLINE to enable the getline() declaration */
 #define _WITH_GETLINE
 #include <stdio.h>
+#ifndef __WIN32__
 #include <termios.h>
+#endif
 
 #if defined(HAVE_SSL)
 
@@ -116,7 +118,12 @@ int Base64Encode(const unsigned char* buffer, const size_t length, char** b64tex
     BIO_write(bio, buffer, length);
     BIO_flush(bio);
     BIO_get_mem_ptr(bio, &bufferPtr);
+#ifndef __WIN32__
     *b64text = strndup( (*bufferPtr).data, (*bufferPtr).length );
+#else
+    *b64text = malloc((*bufferPtr).length);
+    strncpy(*b64text, (*bufferPtr).data, (*bufferPtr).length);
+#endif
     BIO_free_all(bio);
 
     return (0); //success
@@ -275,7 +282,7 @@ int encode_auth_setting(const char *username, const char *password, EVP_PKEY *pu
     return (0); //success
 }
 
-int decode_auth_setting(int enable_debug, char *authtoken, EVP_PKEY *private_key, char **username, char **password, time_t *ts){
+int decode_auth_setting(int enable_debug, const char *authtoken, EVP_PKEY *private_key, char **username, char **password, time_t *ts){
     unsigned char *encrypted_b64 = NULL;
     size_t encrypted_len_b64;
     Base64Decode(authtoken, &encrypted_b64, &encrypted_len_b64);        
@@ -303,9 +310,10 @@ int decode_auth_setting(int enable_debug, char *authtoken, EVP_PKEY *private_key
 #endif //HAVE_SSL
 
 ssize_t iperf_getpass (char **lineptr, size_t *n, FILE *stream) {
-    struct termios old, new;
     ssize_t nread;
 
+#ifndef __WIN32__
+    struct termios old, new;
     /* Turn echoing off and fail if we can't. */
     if (tcgetattr (fileno (stream), &old) != 0)
         return -1;
@@ -313,13 +321,16 @@ ssize_t iperf_getpass (char **lineptr, size_t *n, FILE *stream) {
     new.c_lflag &= ~ECHO;
     if (tcsetattr (fileno (stream), TCSAFLUSH, &new) != 0)
         return -1;
+#endif
 
     /* Read the password. */
     printf("Password: ");
     nread = getline (lineptr, n, stream);
 
+#ifndef __WIN32__
     /* Restore terminal. */
     (void) tcsetattr (fileno (stream), TCSAFLUSH, &old);
+#endif
 
     //strip the \n or \r\n chars
     char *buf = *lineptr;

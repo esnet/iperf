@@ -32,10 +32,12 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/types.h>
+#ifndef __WIN32__
 #include <netinet/in.h>
 #include <sys/select.h>
 #include <sys/uio.h>
 #include <arpa/inet.h>
+#endif
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -354,7 +356,12 @@ iperf_connect(struct iperf_test *test)
     socklen_t len;
 
     len = sizeof(opt);
-    if (getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_MAXSEG, &opt, &len) < 0) {
+#ifdef __WIN32__
+    if (1)
+#else
+    if (getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_MAXSEG, &opt, &len) < 0)
+#endif
+    {
         test->ctrl_sck_mss = 0;
     }
     else {

@@ -24,6 +24,8 @@
  * This code is distributed under a BSD style license, see the LICENSE
  * file for complete information.
  */
+#ifndef __WIN32__
+
 #include "iperf_config.h"
 
 #include <stdio.h>
@@ -684,3 +686,5 @@ out:
     return -1;
 #endif /* HAVE_SCTP */
 }
+
+#endif /* win32 */

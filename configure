@@ -12130,6 +12130,11 @@ CC=$lt_save_CC
 
 
 
+case "$host" in
+   *-mingw*)
+	LDFLAGS="$LDFLAGS -lws2_32"
+esac
+
 # Add -Wall if we are using GCC.
 if test "x$GCC" = "xyes"; then
   CFLAGS="$CFLAGS -Wall"
@@ -12390,7 +12395,7 @@ if test "$ac_res" != no; then :
 else
 
 echo "socket()"
-exit 1
+#exit 1
 
 fi
 
@@ -12453,7 +12458,7 @@ if test "$ac_res" != no; then :
 else
 
 echo "inet_ntop()"
-exit 1
+#exit 1
 
 fi
 

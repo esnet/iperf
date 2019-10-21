@@ -31,7 +31,7 @@
 #include <inttypes.h>
 
 #ifdef WIN32
-#define strcasecmp(a,b) _stricmp(a,b)
+//#define strcasecmp(a,b) _stricmp(a,b)
 #define snprintf _snprintf
 #endif
 

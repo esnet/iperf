@@ -47,9 +47,11 @@
 #include <stdlib.h>
 #include <sys/param.h>
 #include <sys/types.h>
+#ifndef __WIN32__
 #include <sys/socket.h>
-#include <string.h>
 #include <netinet/in.h>
+#endif
+#include <string.h>
 #include <errno.h>
 
 #include "iperf.h"

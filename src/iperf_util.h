@@ -29,8 +29,11 @@
 
 #include "iperf_config.h"
 #include "cjson.h"
+#ifndef __WIN32__
 #include <sys/select.h>
+#endif
 #include <stddef.h>
+#include "iperf.h"
 
 int readentropy(void *out, size_t outsize);
 

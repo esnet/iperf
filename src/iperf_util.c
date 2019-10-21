@@ -37,11 +37,13 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdarg.h>
+#ifndef __WIN32__
 #include <sys/select.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
+#endif
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -189,6 +191,11 @@ timeval_diff(struct timeval * tv0, struct timeval * tv1)
 void
 cpu_util(double pcpu[3])
 {
+#ifdef __WIN32__
+   pcpu[0] = 0;
+   pcpu[1] = 0;
+   pcpu[2] = 0;
+#else
     static struct iperf_time last;
     static clock_t clast;
     static struct rusage rlast;
@@ -221,11 +228,15 @@ cpu_util(double pcpu[3])
     pcpu[0] = (((ctemp - clast) * 1000000.0 / CLOCKS_PER_SEC) / timediff) * 100;
     pcpu[1] = (userdiff / timediff) * 100;
     pcpu[2] = (systemdiff / timediff) * 100;
+#endif
 }
 
 const char *
 get_system_info(void)
 {
+#ifdef __WIN32__
+   return "Windows";
+#else
     static char buf[1024];
     struct utsname  uts;
 
@@ -236,6 +247,7 @@ get_system_info(void)
 	     uts.release, uts.version, uts.machine);
 
     return buf;
+#endif
 }
 
 
@@ -425,6 +437,7 @@ iperf_dump_fdset(FILE *fp, char *str, int nfds, fd_set *fds)
  * Cobbled together from various daemon(3) implementations,
  * not intended to be general-purpose. */
 #ifndef HAVE_DAEMON
+#ifndef __WIN32__
 int daemon(int nochdir, int noclose)
 {
     pid_t pid = 0;
@@ -482,6 +495,7 @@ int daemon(int nochdir, int noclose)
     return (0);
 }
 #endif /* HAVE_DAEMON */
+#endif
 
 /* Compatibility version of getline(3) for systems that don't have it.. */
 #ifndef HAVE_GETLINE

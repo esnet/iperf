@@ -1,0 +1,66 @@
+
+#CC = i386-mingw32-gcc
+#CCC = i386-mingw32-g++
+CC = i686-w64-mingw32-gcc
+CCC = i686-w64-mingw32-g++
+AR = i686-w64-mingw32-ar
+RANLIB = i686-w64-mingw32-ranlib
+
+
+# WINVER 0501 is XP (2003), and higher
+# WINVER 0600 is Vista
+CCFLAGS = $(BASIC_CCFLAGS) -DHAVE_SNPRINTF -DHAVE_VSNPRINTF \
+          -DWINVER=0x0600 -D_WIN32_WINNT=0x0600 -DHAVE_REMOTE
+
+BASIC_LDLIBS=-lm -lws2_32
+LDLIBS =  $(BASIC_LDLIBS) -liphlpapi -lz -lssl -lcrypto
+
+LDFLAGS := $(LDFLAGS)
+
+# Other main classes
+# t_api.c t_timer.c t_units.c t_uuid.c
+
+# makefile template
+COMMON_SRCS  = cjson.c      iperf_auth.c        iperf_locale.c      iperf_tcp.c \
+   iperf_util.c  units.c \
+   dscp.c       iperf_client_api.c  iperf_sctp.c        iperf_time.c  main.c        tcp_info.c  \
+   iperf_api.c  iperf_error.c       iperf_server_api.c  iperf_udp.c   net.c         timer.c
+
+COMMON_OBJS = cjson.o      iperf_auth.o        iperf_locale.o      iperf_tcp.o \
+   iperf_util.o    units.o \
+   dscp.o       iperf_client_api.o  iperf_sctp.o        iperf_time.o  main.o        tcp_info.o \
+   iperf_api.o  iperf_error.o       iperf_server_api.o  iperf_udp.o   net.o         timer.o
+
+
+TARG = iperf3.exe
+
+ALL_OBJS=${COMMON_OBJS}
+ALL_SRCS=${COMMON_SRCS}
+
+${TARG}: $(COMMON_OBJS)
+	$(CC) $(CCFLAGS) $(LDFLAGS) -o ${TARG} $(COMMON_OBJS)\
+           $(LDLIBS) \
+           -lwinmm -lsetupapi -luuid
+
+$(ALL_OBJS): %.o: %.c Makefile.mingw
+	@echo " "
+	@echo "Making object file $<"
+	$(CC) $(CCFLAGS) -c $<
+
+clean:
+	rm -f ${ALL_OBJS}
+
+purge: clean
+	rm -f *~ *.flc *lo *.o *.la ${TARG} \
+           make.depend *.dll *.exe
+
+ifneq "$(PURGEMEHARDER)" "1"
+# Dependencies are supposed to be in a file ``make.depend''
+# which is inclduded by make.
+include make.depend
+# Because of the following rule, ``make'' will attempt to
+# create ``make.depend'' if it does not exist or if one
+# of the files in $(COMMON_SRCS) is more recent than ``make.depend''
+make.depend: $(ALL_SRCS) Makefile.mingw
+	$(CC) -M $(CCFLAGS) $(ALL_SRCS) > make.depend
+endif

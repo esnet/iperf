@@ -372,7 +372,7 @@ static unsigned char* ensure(printbuffer * const p, size_t needed)
         /* overflow of int, use LLONG_MAX if possible */
         if (needed <= LLONG_MAX)
         {
-            newsize = LLONG_MAX;
+           newsize = (size_t)LLONG_MAX;
         }
         else
         {

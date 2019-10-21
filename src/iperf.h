@@ -40,10 +40,19 @@
 #include <net/if.h> // for IFNAMSIZ
 #include <sys/resource.h>
 #include <sys/mman.h>
+
+#define STRERROR strerror(errno)
+#define ERRNO errno
+#define closesocket close
+
 #else
 #include <winsock2.h>
 #include <ws2tcpip.h>
 typedef int socklen_t;
+
+const char* winstrerror();
+#define STRERROR winstrerror()
+#define ERRNO WSAGetLastError()
 
 /* From here: https://github.com/eclipse/paho.mqtt.c/issues/577 */
 #define htonll(x) ((1==htonl(1)) ? (x) : ((((uint64_t)htonl((x)) & 0xFFFFFFFFUL)) << 32) | ((uint64_t)(htonl((uint32_t)((x)))) >> 32))

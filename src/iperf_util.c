@@ -67,10 +67,18 @@ int readentropy(void *out, size_t outsize)
     if (frandom == NULL) {
         frandom = fopen(rndfile, "rb");
         if (frandom == NULL) {
-            iperf_errexit(NULL, "error - failed to open %s: %s\n",
-                          rndfile, strerror(errno));
+            // use rand() instead (this could be way more efficient but doesn't matter much)
+            unsigned char* dest = (unsigned char*)out;
+            for (size_t i = 0; i<outsize; i++) {
+                dest[i] = rand();
+            }
+            return 0;
+            //iperf_errexit(NULL, "error - failed to open %s: %s\n",
+            //              rndfile, strerror(errno));
         }
-        setbuf(frandom, NULL);
+        else {
+            setbuf(frandom, NULL);
+        }
     }
     if (fread(out, 1, outsize, frandom) != outsize) {
         iperf_errexit(NULL, "error - failed to read %s: %s\n",
@@ -192,9 +200,11 @@ void
 cpu_util(double pcpu[3])
 {
 #ifdef __WIN32__
-   pcpu[0] = 0;
-   pcpu[1] = 0;
-   pcpu[2] = 0;
+    if (pcpu) {
+        pcpu[0] = 0;
+        pcpu[1] = 0;
+        pcpu[2] = 0;
+    }
 #else
     static struct iperf_time last;
     static clock_t clast;

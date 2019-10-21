@@ -1506,6 +1506,7 @@ iperf_recv(struct iperf_test *test, fd_set *read_setP)
     SLIST_FOREACH(sp, &test->streams, streams) {
 	if (FD_ISSET(sp->socket, read_setP) && !sp->sender) {
 	    if ((r = sp->rcv(sp)) < 0) {
+                fprintf(stderr, "Failed rcv: %s  socket: %d\n", STRERROR, sp->socket);
 		i_errno = IESTREAMREAD;
 		return r;
 	    }
@@ -3625,8 +3626,9 @@ iperf_free_stream(struct iperf_stream *sp)
     /* XXX: need to free interval list too! */
     munmap(sp->buffer, sp->test->settings->blksize);
     close(sp->buffer_fd);
-    if (sp->diskfile_fd >= 0)
+    if (sp->diskfile_fd >= 0) {
 	close(sp->diskfile_fd);
+    }
     for (irp = TAILQ_FIRST(&sp->result->interval_results); irp != NULL; irp = nirp) {
         nirp = TAILQ_NEXT(irp, irlistentries);
         free(irp);
@@ -3649,7 +3651,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         snprintf(template, sizeof(template) / sizeof(char), "%s", test->tmp_template);
     } else {
         //find the system temporary dir *unix, windows, cygwin support
-        char* tempdir = getenv("TMPDIR");
+        const char* tempdir = getenv("TMPDIR");
         if (tempdir == 0){
             tempdir = getenv("TEMP");
         }
@@ -3657,13 +3659,22 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
             tempdir = getenv("TMP");
         }
         if (tempdir == 0){
+#ifndef __WIN32__
             tempdir = "/tmp";
+#else
+            tempdir = ""; // CWD
+#endif
         }
+#ifndef __WIN32__
         snprintf(template, sizeof(template) / sizeof(char), "%s/iperf3.XXXXXX", tempdir);
+#else
+        snprintf(template, sizeof(template) / sizeof(char), "%s\\iperf3.XXXXXX", tempdir);
+#endif
     }
 
     sp = (struct iperf_stream *) malloc(sizeof(struct iperf_stream));
     if (!sp) {
+        fprintf(stderr, "Failed to malloc iperf-stream.\n");
         i_errno = IECREATESTREAM;
         return NULL;
     }
@@ -3676,6 +3687,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     sp->result = (struct iperf_stream_result *) malloc(sizeof(struct iperf_stream_result));
     if (!sp->result) {
         free(sp);
+        fprintf(stderr, "Failed to malloc sp->result.\n");
         i_errno = IECREATESTREAM;
         return NULL;
     }
@@ -3684,20 +3696,30 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     TAILQ_INIT(&sp->result->interval_results);
     
     /* Create and randomize the buffer */
+    errno = 0;
     sp->buffer_fd = mkstemp(template);
     if (sp->buffer_fd == -1) {
+        fprintf(stderr, "Failed to mkstemp %s (%s)\n", template, STRERROR);
         i_errno = IECREATESTREAM;
         free(sp->result);
         free(sp);
         return NULL;
     }
+
+    // Windows will not allow one to unlink an open file, unfortunately.
+#ifndef __WIN32__
+    errno = 0;
     if (unlink(template) < 0) {
+        fprintf(stderr, "Failed to unlink temp file: %s (%s)\n", template, STRERROR);
         i_errno = IECREATESTREAM;
         free(sp->result);
         free(sp);
         return NULL;
     }
+#endif
+    
     if (ftruncate(sp->buffer_fd, test->settings->blksize) < 0) {
+        fprintf(stderr, "Failed to truncate, fd: %d  blksize: %d\n", sp->buffer_fd, test->settings->blksize);
         i_errno = IECREATESTREAM;
         free(sp->result);
         free(sp);
@@ -3705,6 +3727,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     }
     sp->buffer = (char *) mmap(NULL, test->settings->blksize, PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
     if (sp->buffer == MAP_FAILED) {
+        fprintf(stderr, "Failed to mmap.\n");
         i_errno = IECREATESTREAM;
         free(sp->result);
         free(sp);

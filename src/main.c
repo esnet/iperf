@@ -202,3 +202,13 @@ run(struct iperf_test *test)
 
     return 0;
 }
+
+#ifdef __WIN32__
+const char* winstrerror() {
+   // To decode these, try:
+   // http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winsock/winsock/windows_sockets_error_codes_2.asp
+   static char lfsrr[128];
+   sprintf(lfsrr, "errno: %s(%d) (WSAGetLastError: Error# %d)", strerror(errno), errno, WSAGetLastError());
+   return lfsrr;
+}
+#endif

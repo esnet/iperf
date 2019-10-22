@@ -159,16 +159,27 @@ tmr_timeout( struct iperf_time* nowP )
     static struct timeval timeout;
 
     getnow( nowP, &now );
+
+    /* For reasons I do not understand, the iperf server will sometimes hang in
+     * select and not accept new connections until some keyboard input happens
+     * (on Windows, at least).  So, never block more than one second in select
+     * to try to mitigate this. --Ben
+     */
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+
     /* Since the list is sorted, we only need to look at the first timer. */
-    if ( timers == NULL )
-	return NULL;
-    past = iperf_time_diff(&timers->time, &now, &diff);
-    if (past)
-        usecs = 0;
-    else
-        usecs = iperf_time_in_usecs(&diff);
-    timeout.tv_sec = usecs / 1000000LL;
-    timeout.tv_usec = usecs % 1000000LL;
+    if (timers) {
+        past = iperf_time_diff(&timers->time, &now, &diff);
+        if (past)
+            usecs = 0;
+        else
+            usecs = iperf_time_in_usecs(&diff);
+        timeout.tv_sec = usecs / 1000000LL;
+        timeout.tv_usec = usecs % 1000000LL;
+        if (timeout.tv_sec > 1)
+            timeout.tv_sec = 1;
+    }
     return &timeout;
 }
 

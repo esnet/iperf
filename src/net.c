@@ -284,7 +284,7 @@ netdial(int domain, int proto, char *local, const char* bind_dev, int local_port
 /***************************************************************/
 
 int
-netannounce(int domain, int proto, char *local, const char* bind_dev, int port)
+netannounce(int domain, int proto, char *local, const char* bind_dev, int port, struct iperf_test *test)
 {
     struct addrinfo hints, *res;
     char portstr[6];
@@ -292,6 +292,7 @@ netannounce(int domain, int proto, char *local, const char* bind_dev, int port)
 
     snprintf(portstr, 6, "%d", port);
     memset(&hints, 0, sizeof(hints));
+
     /* 
      * If binding to the wildcard address with no explicit address
      * family specified, then force us to get an AF_INET6 socket.  On
@@ -316,6 +317,12 @@ netannounce(int domain, int proto, char *local, const char* bind_dev, int port)
         return -1; 
 
     s = socket(res->ai_family, proto, 0);
+
+    if (test->debug) {
+        fprintf(stderr, "netannounce, domain: %d  proto: %d  local: %s  bind-dev: %s port: %d fd: %d\n",
+                domain, proto, local, bind_dev, port, s);
+    }
+
     if (s < 0) {
 	freeaddrinfo(res);
         return -1;

@@ -32,7 +32,8 @@
 void nonblock(int s);
 
 int timeout_connect(int s, const struct sockaddr *name, socklen_t namelen, int timeout);
-int netdial(int domain, int proto, char *local, const char* bind_dev, int local_port, char *server, int port, int timeout);
+int netdial(int domain, int proto, char *local, const char* bind_dev, int local_port, char *server, int port, int timeout,
+            struct iperf_test *test);
 int netannounce(int domain, int proto, char *local, const char* bind_dev, int port);
 int Nread(int fd, char *buf, size_t count, int prot, struct iperf_test *test);
 int Nwrite(int fd, const char *buf, size_t count, int prot, struct iperf_test *test) /* __attribute__((hot)) */;

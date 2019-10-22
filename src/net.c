@@ -166,7 +166,8 @@ timeout_connect(int s, const struct sockaddr *name, socklen_t namelen,
 
 /* make connection to server */
 int
-netdial(int domain, int proto, char *local, const char* bind_dev, int local_port, char *server, int port, int timeout)
+netdial(int domain, int proto, char *local, const char* bind_dev, int local_port, char *server, int port, int timeout,
+        struct iperf_test *test)
 {
     struct addrinfo hints, *local_res = NULL, *server_res = NULL;
     int s, saved_errno;
@@ -191,6 +192,11 @@ netdial(int domain, int proto, char *local, const char* bind_dev, int local_port
 	    freeaddrinfo(local_res);
 	freeaddrinfo(server_res);
         return -1;
+    }
+
+    if (test->debug) {
+        fprintf(stderr, "netdial, domain: %d  proto: %d  local: %s  bind-dev: %s local-port: %d  server: %s:%d timeout: %d, socket: %d\n",
+                domain, proto, local, bind_dev, local_port, server, port, timeout, s);
     }
 
     if (bind_dev) {
@@ -426,7 +432,7 @@ Nread(int fd, char *buf, size_t count, int prot, struct iperf_test *test)
     }
     if (test && test->debug > 1) {
         fprintf(stderr, "Nread:\n");
-        fprintf(stderr, hexdump(oldbuf, count - nleft, 1, 1));
+        fprintf(stderr, hexdump((const unsigned char*)oldbuf, count - nleft, 1, 1));
     }
     return count - nleft;
 }
@@ -444,7 +450,7 @@ Nwrite(int fd, const char *buf, size_t count, int prot, struct iperf_test *test)
 
     if (test && test->debug > 1) {
         fprintf(stderr, "Nwrite:\n");
-        fprintf(stderr, hexdump(buf, count, 1, 1));
+        fprintf(stderr, hexdump((const unsigned char*)buf, count, 1, 1));
     }
 
     while (nleft > 0) {

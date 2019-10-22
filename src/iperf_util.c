@@ -38,6 +38,7 @@
 #include <string.h>
 #include <stdarg.h>
 #ifndef __WIN32__
+#include <ctype.h>
 #include <sys/select.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -240,6 +241,7 @@ const char* hexdump(const unsigned char* msg, int len, int show_decode,
                 return retval;
             buf += count;
         }//for
+        snprintf(buf, maxlen - sofar, "\n");
     }
     return retval;
 }//hexdump

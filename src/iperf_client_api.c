@@ -62,6 +62,11 @@ iperf_create_streams(struct iperf_test *test, int sender)
 #endif /* HAVE_TCP_CONGESTION */
     struct iperf_stream *sp;
 
+    if (test->debug) {
+        fprintf(stderr, "iperf-create-streams, num-streams: %d\n",
+                test->num_streams);
+    }
+            
     int orig_bind_port = test->bind_port;
     for (i = 0; i < test->num_streams; ++i) {
 
@@ -338,7 +343,8 @@ iperf_connect(struct iperf_test *test)
     /* Create and connect the control channel */
     if (test->ctrl_sck < 0)
 	// Create the control channel using an ephemeral port
-	test->ctrl_sck = netdial(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, 0, test->server_hostname, test->server_port, test->settings->connect_timeout);
+	test->ctrl_sck = netdial(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, 0,
+                                 test->server_hostname, test->server_port, test->settings->connect_timeout, test);
     if (test->ctrl_sck < 0) {
         i_errno = IECONNECT;
         return -1;

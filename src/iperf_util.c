@@ -156,6 +156,7 @@ is_closed(int fd)
     tv.tv_usec = 0;
 
     if (select(fd+1, &readset, NULL, NULL, &tv) < 0) {
+        fprintf(stderr, "is-closed, had error for fd: %d: %s", fd, STRERROR);
         if (errno == EBADF)
             return 1;
     }

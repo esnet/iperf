@@ -170,7 +170,7 @@ iperf_tcp_listen(struct iperf_test *test)
 	struct addrinfo hints, *res;
 	char portstr[6];
 
-        FD_CLR(s, &test->read_set);
+        IFD_CLR(s, &test->read_set, test);
         closesocket(s);
         test->listener = -1;
 

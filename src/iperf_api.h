@@ -81,12 +81,12 @@ struct iperf_time;
 /* states */
 #define TEST_START 1
 #define TEST_RUNNING 2
-#define RESULT_REQUEST 3 /* not used */
+//#define RESULT_REQUEST 3 /* not used */
 #define TEST_END 4
-#define STREAM_BEGIN 5 /* not used */
-#define STREAM_RUNNING 6 /* not used */
-#define STREAM_END 7 /* not used */
-#define ALL_STREAMS_END 8 /* not used */
+//#define STREAM_BEGIN 5 /* not used */
+#define STREAM_RUNNING 6
+//#define STREAM_END 7 /* not used */
+//#define ALL_STREAMS_END 8 /* not used */
 #define PARAM_EXCHANGE 9
 #define CREATE_STREAMS 10
 #define SERVER_TERMINATE 11
@@ -97,6 +97,12 @@ struct iperf_time;
 #define IPERF_DONE 16
 #define ACCESS_DENIED (-1)
 #define SERVER_ERROR (-2)
+
+const char* iperf_get_state_str(int s);
+void _fd_set(int fd, fd_set* fdset, struct iperf_test *test, const char* file, int line);
+void _fd_clr(int fd, fd_set* fdset, struct iperf_test *test, const char* file, int line);
+#define IFD_SET(a, b, c) _fd_set(a, b, c, __FILE__, __LINE__)
+#define IFD_CLR(a, b, c) _fd_clr(a, b, c, __FILE__, __LINE__)
 
 /* Getter routines for some fields inside iperf_test. */
 int	iperf_get_verbose( struct iperf_test* ipt );

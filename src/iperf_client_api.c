@@ -101,10 +101,9 @@ iperf_create_streams(struct iperf_test *test, int sender)
 #endif /* HAVE_TCP_CONGESTION */
 
 	if (sender)
-	    FD_SET(s, &test->write_set);
+	    IFD_SET(s, &test->write_set, test);
 	else
-	    FD_SET(s, &test->read_set);
-	if (s > test->max_fd) test->max_fd = s;
+	    IFD_SET(s, &test->read_set, test);
 
         sp = iperf_new_stream(test, s, sender);
         if (!sp) {
@@ -351,8 +350,7 @@ iperf_connect(struct iperf_test *test)
         return -1;
     }
 
-    FD_SET(test->ctrl_sck, &test->read_set);
-    if (test->ctrl_sck > test->max_fd) test->max_fd = test->ctrl_sck;
+    IFD_SET(test->ctrl_sck, &test->read_set, test);
 
     int opt;
     socklen_t len;
@@ -511,7 +509,7 @@ iperf_run_client(struct iperf_test * test)
  	        if (iperf_handle_message_client(test) < 0) {
 		    return -1;
 		}
-		FD_CLR(test->ctrl_sck, &read_set);
+		IFD_CLR(test->ctrl_sck, &read_set, test);
 	    }
 	}
 

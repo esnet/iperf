@@ -1436,10 +1436,10 @@ iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP)
     bits_per_second = sp->result->bytes_sent * 8 / seconds;
     if (bits_per_second < sp->test->settings->rate) {
         sp->green_light = 1;
-        FD_SET(sp->socket, &sp->test->write_set);
+        IFD_SET(sp->socket, &sp->test->write_set, sp->test);
     } else {
         sp->green_light = 0;
-        FD_CLR(sp->socket, &sp->test->write_set);
+        IFD_CLR(sp->socket, &sp->test->write_set, sp->test);
     }
 }
 
@@ -1492,7 +1492,7 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
     if (write_setP != NULL)
 	SLIST_FOREACH(sp, &test->streams, streams)
 	    if (FD_ISSET(sp->socket, write_setP))
-		FD_CLR(sp->socket, write_setP);
+		IFD_CLR(sp->socket, write_setP, test);
 
     return 0;
 }
@@ -1512,7 +1512,7 @@ iperf_recv(struct iperf_test *test, fd_set *read_setP)
 	    }
 	    test->bytes_received += r;
 	    ++test->blocks_received;
-	    FD_CLR(sp->socket, read_setP);
+	    IFD_CLR(sp->socket, read_setP, test);
 	}
     }
 
@@ -1645,7 +1645,7 @@ iperf_exchange_parameters(struct iperf_test *test)
 #endif //HAVE_SSL
 
         if ((s = test->protocol->listen(test)) < 0) {
-	        if (iperf_set_send_state(test, SERVER_ERROR) != 0)
+            if (iperf_set_send_state(test, SERVER_ERROR) != 0)
                 return -1;
             err = htonl(i_errno);
             if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
@@ -1659,8 +1659,12 @@ iperf_exchange_parameters(struct iperf_test *test)
             }
             return -1;
         }
-        FD_SET(s, &test->read_set);
-        test->max_fd = (s > test->max_fd) ? s : test->max_fd;
+
+        if (test->debug) {
+            fprintf(stderr, "iperf-exchange-parameters, setting read FD: %d.\n", s);
+        }
+        
+        IFD_SET(s, &test->read_set, test);
         test->prot_listener = s;
 
         // Send the control message to create streams and start the test
@@ -1670,6 +1674,45 @@ iperf_exchange_parameters(struct iperf_test *test)
     }
 
     return 0;
+}
+
+void _fd_set(int fd, fd_set* fdset, struct iperf_test *test, const char* file, int line) {
+    if (test->debug) {
+        fprintf(stderr, "FD-SET, fd: %d  at %s:%d\n",
+                fd, file, line);
+    }
+    FD_SET(fd, fdset);
+    if (fd > test->max_fd)
+        test->max_fd = fd;
+}
+
+void _fd_clr(int fd, fd_set* fdset, struct iperf_test *test, const char* file, int line) {
+    if (test->debug) {
+        fprintf(stderr, "FD-CLR, fd: %d  at %s:%d\n",
+                fd, file, line);
+    }
+    FD_CLR(fd, fdset);
+}
+
+const char* iperf_get_state_str(int s) {
+    switch (s) {
+    case TEST_START: return "START";
+    case TEST_RUNNING: return "RUNNING";
+    case TEST_END: return "END";
+    case PARAM_EXCHANGE: return "PARAM-EXCHANGE";
+    case STREAM_RUNNING: return "STREAM-RUNNING";
+    case CREATE_STREAMS: return "CREATE-STREAMS";
+    case SERVER_TERMINATE: return "SERVER-TERMINATE";
+    case CLIENT_TERMINATE: return "CLIENT-TERMINATE";
+    case EXCHANGE_RESULTS: return "EXCHANGE-RESULTS";
+    case DISPLAY_RESULTS: return "DISPLAY-RESULTS";
+    case IPERF_START: return "IPERF-START";
+    case IPERF_DONE: return "IPERF-DONE";
+    case ACCESS_DENIED: return "ACCESS-DENIED";
+    case SERVER_ERROR: return "SERVER-ERROR";
+    default:
+        return "UNKNOWN";
+    }
 }
 
 /*************************************************************/
@@ -2613,6 +2656,7 @@ iperf_reset_test(struct iperf_test *test)
 
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);
+    test->max_fd = 0;
     
     test->num_streams = 1;
     test->settings->socket_bufsize = 0;

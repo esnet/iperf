@@ -426,8 +426,7 @@ iperf_udp_accept(struct iperf_test *test)
         return -1;
     }
 
-    FD_SET(test->prot_listener, &test->read_set);
-    test->max_fd = (test->max_fd < test->prot_listener) ? test->prot_listener : test->max_fd;
+    IFD_SET(test->prot_listener, &test->read_set, test);
 
     /* Let the client know we're ready "accept" another UDP "stream" */
     buf = 987654321;		/* any content will work here */

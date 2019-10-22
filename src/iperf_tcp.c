@@ -58,7 +58,7 @@ iperf_tcp_recv(struct iperf_stream *sp)
 {
     int r;
 
-    r = Nread(sp->socket, sp->buffer, sp->settings->blksize, Ptcp);
+    r = Nread(sp->socket, sp->buffer, sp->settings->blksize, Ptcp, sp->test);
 
     if (r < 0) {
         fprintf(stderr, "tcp-recv, failed (%s), socket: %d\n", STRERROR, sp->socket);
@@ -91,7 +91,7 @@ iperf_tcp_send(struct iperf_stream *sp)
     if (sp->test->zerocopy)
 	r = Nsendfile(sp->buffer_fd, sp->socket, sp->buffer, sp->settings->blksize);
     else
-	r = Nwrite(sp->socket, sp->buffer, sp->settings->blksize, Ptcp);
+	r = Nwrite(sp->socket, sp->buffer, sp->settings->blksize, Ptcp, sp->test);
 
     if (r < 0)
         return r;
@@ -125,13 +125,13 @@ iperf_tcp_accept(struct iperf_test * test)
         return -1;
     }
 
-    if (Nread(s, cookie, COOKIE_SIZE, Ptcp) < 0) {
+    if (Nread(s, cookie, COOKIE_SIZE, Ptcp, test) < 0) {
         i_errno = IERECVCOOKIE;
         return -1;
     }
 
     if (strcmp(test->cookie, cookie) != 0) {
-        if (Nwrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp) < 0) {
+        if (Nwrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp, test) < 0) {
             i_errno = IESENDMESSAGE;
             return -1;
         }
@@ -674,7 +674,7 @@ iperf_tcp_connect(struct iperf_test *test)
     freeaddrinfo(server_res);
 
     /* Send cookie for verification */
-    if (Nwrite(s, test->cookie, COOKIE_SIZE, Ptcp) < 0) {
+    if (Nwrite(s, test->cookie, COOKIE_SIZE, Ptcp, test) < 0) {
 	saved_errno = errno;
 	closesocket(s);
 	errno = saved_errno;

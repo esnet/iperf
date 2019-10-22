@@ -391,8 +391,9 @@ netannounce(int domain, int proto, char *local, const char* bind_dev, int port)
 /********************************************************************/
 
 int
-Nread(int fd, char *buf, size_t count, int prot)
+Nread(int fd, char *buf, size_t count, int prot, struct iperf_test *test)
 {
+    char* oldbuf = buf;
     register ssize_t r;
     register size_t nleft = count;
 
@@ -423,6 +424,10 @@ Nread(int fd, char *buf, size_t count, int prot)
         nleft -= r;
         buf += r;
     }
+    if (test && test->debug > 1) {
+        fprintf(stderr, "Nread:\n");
+        fprintf(stderr, hexdump(oldbuf, count - nleft, 1, 1));
+    }
     return count - nleft;
 }
 
@@ -432,10 +437,15 @@ Nread(int fd, char *buf, size_t count, int prot)
  */
 
 int
-Nwrite(int fd, const char *buf, size_t count, int prot)
+Nwrite(int fd, const char *buf, size_t count, int prot, struct iperf_test *test)
 {
     register ssize_t r;
     register size_t nleft = count;
+
+    if (test && test->debug > 1) {
+        fprintf(stderr, "Nwrite:\n");
+        fprintf(stderr, hexdump(buf, count, 1, 1));
+    }
 
     while (nleft > 0) {
         errno = 0;

@@ -164,6 +164,87 @@ is_closed(int fd)
 }
 
 
+const char* hexdump(const unsigned char* msg, int len, int show_decode,
+                    int add_newlines) {
+    static char retval[24000];
+    int bytes_per_line = 16;
+    char* buf = retval;
+    int maxlen = sizeof(retval) - 1;
+    buf[0] = 0;
+
+    unsigned short tmp = 0;
+    int i;
+    int sofar = 0;
+    int count = 0;
+
+    for (i = 0; i<len; i++) {
+        tmp = msg[i];
+        tmp &= 0xff; //mask out high bits (left over from signed-ness??)
+        count = snprintf(buf, maxlen - sofar, "%02hx ", tmp);
+        sofar += count;
+        buf += count;
+
+        if (sofar >= maxlen)
+            return retval;
+
+        if (add_newlines && ((i + 1) % bytes_per_line == 0)) {
+            if (show_decode) {
+                count = snprintf(buf, maxlen - sofar, "   ");
+                buf += count;
+                if (sofar >= maxlen)
+                    return retval;
+                for (int j = i - (bytes_per_line - 1); j<=i; j++) {
+                    if (isprint(msg[j])) {
+                        count = snprintf(buf, maxlen - sofar, "%c", msg[j]);
+                    }
+                    else {
+                        count = snprintf(buf, maxlen - sofar, ".");
+                    }
+                    if (sofar >= maxlen)
+                        return retval;
+                    buf += count;
+                }//for
+            }
+            count = snprintf(buf, maxlen - sofar, "\n");
+            if (sofar >= maxlen)
+                return retval;
+            buf += count;
+        }//if
+    }//for
+
+    if (show_decode) {
+        // do final char translations.
+        int q = (i) % bytes_per_line;
+        int offset = i-q;
+        count = snprintf(buf, maxlen - sofar, "   ");
+        buf += count;
+        if (sofar >= maxlen)
+            return retval;
+        for (int l = 0; l< bytes_per_line-q; l++) {
+            //space, where the hex would have gone.
+            count = snprintf(buf, maxlen - sofar, "   ");
+            buf += count;
+            if (sofar >= maxlen)
+                return retval;
+        }
+
+        //VLOG << "q: " << q << " offset: " << offset << " i: " << i << endl;
+        for (int j = 0; j<q; j++) {
+            if (isprint(msg[j + offset])) {
+                count = snprintf(buf, maxlen - sofar, "%c", msg[j + offset]);
+            }
+            else {
+                count = snprintf(buf, maxlen - sofar, ".");
+            }
+            if (sofar >= maxlen)
+                return retval;
+            buf += count;
+        }//for
+    }
+    return retval;
+}//hexdump
+
+
 double
 timeval_to_double(struct timeval * tv)
 {

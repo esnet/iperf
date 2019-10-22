@@ -35,6 +35,9 @@
 #include <stddef.h>
 #include "iperf.h"
 
+const char* hexdump(const unsigned char* msg, int len, int show_decode,
+                    int add_newlines);
+
 int readentropy(void *out, size_t outsize);
 
 void fill_with_repeating_pattern(void *out, size_t outsize);

@@ -70,7 +70,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     double    transit = 0, d = 0;
     struct iperf_time sent_time, arrival_time, temp_time;
 
-    r = Nread(sp->socket, sp->buffer, size, Pudp);
+    r = Nread(sp->socket, sp->buffer, size, Pudp, sp->test);
 
     /*
      * If we got an error in the read, or if we didn't read anything
@@ -227,7 +227,7 @@ iperf_udp_send(struct iperf_stream *sp)
 	
     }
 
-    r = Nwrite(sp->socket, sp->buffer, size, Pudp);
+    r = Nwrite(sp->socket, sp->buffer, size, Pudp, sp->test);
 
     if (r < 0)
 	return r;

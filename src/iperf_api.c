@@ -87,9 +87,9 @@ static int send_results(struct iperf_test *test);
 static int get_results(struct iperf_test *test);
 static int diskfile_send(struct iperf_stream *sp);
 static int diskfile_recv(struct iperf_stream *sp);
-static int JSON_write(int fd, cJSON *json);
+static int JSON_write(int fd, cJSON *json, struct iperf_test *test);
 static void print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *json_interval_streams);
-static cJSON *JSON_read(int fd);
+static cJSON *JSON_read(int fd, struct iperf_test *test);
 
 
 /*************************** Print usage functions ****************************/
@@ -1196,7 +1196,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif /* HAVE_TCP_CONGESTION */
 		break;
 	    case 'd':
-		test->debug = 1;
+		test->debug++;
 		break;
 	    case 'I':
 		test->pidfile = strdup(optarg);
@@ -1415,7 +1415,7 @@ int
 iperf_set_send_state(struct iperf_test *test, signed char state)
 {
     test->state = state;
-    if (Nwrite(test->ctrl_sck, (char*) &state, sizeof(state), Ptcp) < 0) {
+    if (Nwrite(test->ctrl_sck, (char*) &state, sizeof(state), Ptcp, test) < 0) {
 	i_errno = IESENDMESSAGE;
 	return -1;
     }
@@ -1636,7 +1636,7 @@ iperf_exchange_parameters(struct iperf_test *test)
                 return -1;
             i_errno = IEAUTHTEST;
             err = htonl(i_errno);
-            if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
+            if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp, test) < 0) {
                 i_errno = IECTRLWRITE;
                 return -1;
             }
@@ -1648,12 +1648,12 @@ iperf_exchange_parameters(struct iperf_test *test)
             if (iperf_set_send_state(test, SERVER_ERROR) != 0)
                 return -1;
             err = htonl(i_errno);
-            if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
+            if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp, test) < 0) {
                 i_errno = IECTRLWRITE;
                 return -1;
             }
             err = htonl(errno);
-            if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
+            if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp, test) < 0) {
                 i_errno = IECTRLWRITE;
                 return -1;
             }
@@ -1816,7 +1816,7 @@ send_parameters(struct iperf_test *test)
 	    printf("send_parameters:\n%s\n", cJSON_Print(j));
 	}
 
-	if (JSON_write(test->ctrl_sck, j) < 0) {
+	if (JSON_write(test->ctrl_sck, j, test) < 0) {
 	    i_errno = IESENDPARAMS;
 	    r = -1;
 	}
@@ -1834,7 +1834,7 @@ get_parameters(struct iperf_test *test)
     cJSON *j;
     cJSON *j_p;
 
-    j = JSON_read(test->ctrl_sck);
+    j = JSON_read(test->ctrl_sck, test);
     if (j == NULL) {
 	i_errno = IERECVPARAMS;
         r = -1;
@@ -2012,7 +2012,7 @@ send_results(struct iperf_test *test)
 		printf("send_results\n%s\n", str);
                 free(str);
 	    }
-	    if (r == 0 && JSON_write(test->ctrl_sck, j) < 0) {
+	    if (r == 0 && JSON_write(test->ctrl_sck, j, test) < 0) {
 		i_errno = IESENDRESULTS;
 		r = -1;
 	    }
@@ -2052,7 +2052,7 @@ get_results(struct iperf_test *test)
     int retransmits;
     struct iperf_stream *sp;
 
-    j = JSON_read(test->ctrl_sck);
+    j = JSON_read(test->ctrl_sck, test);
     if (j == NULL) {
 	i_errno = IERECVRESULTS;
         r = -1;
@@ -2187,7 +2187,7 @@ get_results(struct iperf_test *test)
 /*************************************************************/
 
 static int
-JSON_write(int fd, cJSON *json)
+JSON_write(int fd, cJSON *json, struct iperf_test *test)
 {
     uint32_t hsize, nsize;
     char *str;
@@ -2199,10 +2199,10 @@ JSON_write(int fd, cJSON *json)
     else {
 	hsize = strlen(str);
 	nsize = htonl(hsize);
-	if (Nwrite(fd, (char*) &nsize, sizeof(nsize), Ptcp) < 0)
+	if (Nwrite(fd, (char*) &nsize, sizeof(nsize), Ptcp, test) < 0)
 	    r = -1;
 	else {
-	    if (Nwrite(fd, str, hsize, Ptcp) < 0)
+	    if (Nwrite(fd, str, hsize, Ptcp, test) < 0)
 		r = -1;
 	}
 	free(str);
@@ -2213,7 +2213,7 @@ JSON_write(int fd, cJSON *json)
 /*************************************************************/
 
 static cJSON *
-JSON_read(int fd)
+JSON_read(int fd, struct iperf_test *test)
 {
     uint32_t hsize, nsize;
     char *str;
@@ -2225,12 +2225,12 @@ JSON_read(int fd)
      * Then read the JSON into a buffer and parse it.  Return a parsed JSON
      * structure, NULL if there was an error.
      */
-    if (Nread(fd, (char*) &nsize, sizeof(nsize), Ptcp) >= 0) {
+    if (Nread(fd, (char*) &nsize, sizeof(nsize), Ptcp, test) >= 0) {
 	hsize = ntohl(nsize);
 	/* Allocate a buffer to hold the JSON */
 	str = (char *) calloc(sizeof(char), hsize+1);	/* +1 for trailing null */
 	if (str != NULL) {
-	    rc = Nread(fd, str, hsize, Ptcp);
+	    rc = Nread(fd, str, hsize, Ptcp, test);
 	    if (rc >= 0) {
 		/*
 		 * We should be reading in the number of bytes corresponding to the
@@ -3987,7 +3987,7 @@ iperf_got_sigend(struct iperf_test *test)
 
     if (test->ctrl_sck >= 0) {
 	test->state = (test->role == 'c') ? CLIENT_TERMINATE : SERVER_TERMINATE;
-	(void) Nwrite(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp);
+	(void) Nwrite(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp, test);
     }
     i_errno = (test->role == 'c') ? IECLIENTTERM : IESERVERTERM;
     iperf_errexit(test, "interrupt - %s", iperf_strerror(i_errno));

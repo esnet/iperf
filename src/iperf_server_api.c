@@ -127,7 +127,7 @@ iperf_accept(struct iperf_test *test)
     if (test->ctrl_sck == -1) {
         /* Server free, accept new client */
         test->ctrl_sck = s;
-        int rv = Nread(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp);
+        int rv = Nread(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp, test);
         if (rv < 0) {
             fprintf(stderr, "Accept problem, ctrl-sck: %d  s: %d  listener: %d Nread rv: %d\n",
                     test->ctrl_sck, s, test->listener, rv);
@@ -150,7 +150,7 @@ iperf_accept(struct iperf_test *test)
 	 * Don't try to read from the socket.  It could block an ongoing test. 
 	 * Just send ACCESS_DENIED.
 	 */
-        if (Nwrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp) < 0) {
+        if (Nwrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp, test) < 0) {
             i_errno = IESENDMESSAGE;
             closesocket(s);
             return -1;
@@ -170,7 +170,7 @@ iperf_handle_message_server(struct iperf_test *test)
     struct iperf_stream *sp;
 
     // XXX: Need to rethink how this behaves to fit API
-    if ((rval = Nread(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp)) <= 0) {
+    if ((rval = Nread(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp, test)) <= 0) {
         if (rval == 0) {
 	    iperf_err(test, "the client has unexpectedly closed the connection");
             i_errno = IECTRLCLOSE;

@@ -1512,7 +1512,7 @@ iperf_recv(struct iperf_test *test, fd_set *read_setP)
 	    }
 	    test->bytes_received += r;
 	    ++test->blocks_received;
-	    IFD_CLR(sp->socket, read_setP, test);
+	    /* IFD_CLR(sp->socket, read_setP, test); // Don't see how this is helpful. --Ben */
 	}
     }
 

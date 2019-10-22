@@ -96,6 +96,24 @@ void nonblock(int s) {
 }//nonblock
 #endif
 
+void print_fdset(int max_fd, fd_set* read_set, fd_set* write_set) {
+    fprintf(stderr, "read/write FD sets: ");
+    for (int i = 0; i<=max_fd; i++) {
+        if (FD_ISSET(i, read_set)) {
+            if (FD_ISSET(i, write_set)) {
+                fprintf(stderr, "%i RW ", i);
+            }
+            else {
+                fprintf(stderr, "%i RO ", i);
+            }
+        }
+        else if (FD_ISSET(i, write_set)) {
+            fprintf(stderr, "%i WO ", i);
+        }
+    }
+    fprintf(stderr, "\n");
+}
+
 /*
  * timeout_connect adapted from netcat, via OpenBSD and FreeBSD
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
@@ -438,8 +456,7 @@ Nread(int fd, char *buf, size_t count, int prot, struct iperf_test *test)
         buf += r;
     }
     if (test && test->debug > 1) {
-        fprintf(stderr, "Nread:\n");
-        fprintf(stderr, hexdump((const unsigned char*)oldbuf, count - nleft, 1, 1));
+        fprintf(stderr, "Nread:\n%s", hexdump((const unsigned char*)oldbuf, count - nleft, 1, 1));
     }
     return count - nleft;
 }
@@ -456,8 +473,7 @@ Nwrite(int fd, const char *buf, size_t count, int prot, struct iperf_test *test)
     register size_t nleft = count;
 
     if (test && test->debug > 1) {
-        fprintf(stderr, "Nwrite:\n");
-        fprintf(stderr, hexdump((const unsigned char*)buf, count, 1, 1));
+        fprintf(stderr, "Nwrite:\n%s", hexdump((const unsigned char*)buf, count, 1, 1));
     }
 
     while (nleft > 0) {

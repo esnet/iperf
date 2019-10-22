@@ -618,13 +618,13 @@ iperf_udp_connect(struct iperf_test *test)
             if (test->debug) {
                 fprintf(stderr, "Received response from server: %s", hexdump((const unsigned char*)(&buf), sizeof(buf), 1, 1));
             }
+            return s;
         }
         else {
             if (test->debug) {
-                fprintf(stderr, "No response from server, will retry: %d / 30", i);
+                fprintf(stderr, "No response from server, will retry: %d / 30\n", i);
             }
         }
-        return s;
     }
 
     /* if here, we could not get a response in time. */

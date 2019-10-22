@@ -468,6 +468,7 @@ iperf_run_server(struct iperf_test *test)
             else
                 fprintf(stderr, "timeout NULL, max-fd: %d state: %d(%s)\n", test->max_fd,
                         test->state, iperf_get_state_str(test->state));
+            print_fdset(test->max_fd, &read_set, &write_set);
         }
         result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
 
@@ -477,6 +478,7 @@ iperf_run_server(struct iperf_test *test)
                     iperf_get_state_str(test->state));
             fprintf(stderr, "prot-listener: %d  ISSET: %d  max-fd: %d\n",
                     test->prot_listener, FD_ISSET(test->prot_listener, &read_set), test->max_fd);
+            print_fdset(test->max_fd, &read_set, &write_set);
         }
 
         if (result < 0 && errno != EINTR) {

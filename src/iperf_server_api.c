@@ -461,9 +461,13 @@ iperf_run_server(struct iperf_test *test)
 	timeout = tmr_timeout(&now);
         if (test->debug) {
             if (timeout)
-                fprintf(stderr, "timeout: %d.%06d  max-fd: %d\n", timeout->tv_sec, timeout->tv_usec, test->max_fd);
+                fprintf(stderr, "timeout: %d.%06d  max-fd: %d state: %d (%s)\n",
+                        timeout->tv_sec, timeout->tv_usec, test->max_fd,
+                        test->state, iperf_get_state_str(test->state));
+
             else
-                fprintf(stderr, "timeout NULL, max-fd: %d\n", test->max_fd);
+                fprintf(stderr, "timeout NULL, max-fd: %d state: %d(%s)\n", test->max_fd,
+                        test->state, iperf_get_state_str(test->state));
         }
         result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
 

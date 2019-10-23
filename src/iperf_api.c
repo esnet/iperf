@@ -1813,7 +1813,9 @@ send_parameters(struct iperf_test *test)
 	cJSON_AddStringToObject(j, "client_version", IPERF_VERSION);
 
 	if (test->debug) {
-	    printf("send_parameters:\n%s\n", cJSON_Print(j));
+            char* jp = cJSON_Print(j);
+	    printf("send_parameters:\n%s\n", jp);
+            free(jp);
 	}
 
 	if (JSON_write(test->ctrl_sck, j, test) < 0) {
@@ -3498,7 +3500,9 @@ iperf_print_results(struct iperf_test *test)
             /* Print server output if we're on the client and it was requested/provided */
             if (test->role == 'c' && iperf_get_test_get_server_output(test) && !test->json_output) {
                 if (test->json_server_output) {
-                    iperf_printf(test, "\nServer JSON output:\n%s\n", cJSON_Print(test->json_server_output));
+                    char* jp = cJSON_Print(test->json_server_output);
+                    iperf_printf(test, "\nServer JSON output:\n%s\n", jp);
+                    free(jp);
                     cJSON_Delete(test->json_server_output);
                     test->json_server_output = NULL;
                 }

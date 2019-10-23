@@ -1,6 +1,14 @@
 iperf3:  A TCP, UDP, and SCTP network bandwidth measurement tool
 ================================================================
 
+NOTE
+------
+
+Modified by Candela Technologies to support compilation for Windows
+(using mingw cross-compiler on Linux) and other bug fixes and features.
+
+https://github.com/greearb/iperf
+
 Summary
 -------
 
@@ -71,7 +79,6 @@ Mode                LastWriteTime     Length Name
 -a---        10/20/2019   8:33 PM      67090 libgnurx-0.dll
 -a---        10/20/2019   8:35 PM     393870 libssl-10.dll
 -a---        10/20/2019   8:47 PM      62672 libwinpthread-1.dll
--a---        10/20/2019   8:33 PM      91368 zlib1.dll
 
 
 Invoking iperf3

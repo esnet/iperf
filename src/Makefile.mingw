@@ -13,8 +13,8 @@ BASIC_CCFLAGS = -g -O2
 CCFLAGS = $(BASIC_CCFLAGS) -DHAVE_SNPRINTF -DHAVE_VSNPRINTF \
           -DWINVER=0x0600 -D_WIN32_WINNT=0x0600 -DHAVE_REMOTE
 
-BASIC_LDLIBS=-lm -lws2_32
-LDLIBS =  $(BASIC_LDLIBS) -liphlpapi -lz -lssl -lcrypto
+BASIC_LDLIBS=-lws2_32
+LDLIBS =  $(BASIC_LDLIBS) -liphlpapi -lssl -lcrypto
 
 LDFLAGS := $(LDFLAGS)
 
@@ -40,13 +40,22 @@ ALL_SRCS=${COMMON_SRCS}
 
 ${TARG}: $(COMMON_OBJS)
 	$(CC) $(CCFLAGS) $(LDFLAGS) -o ${TARG} $(COMMON_OBJS)\
-           $(LDLIBS) \
-           -lwinmm -lsetupapi -luuid
+           $(LDLIBS)
 
 $(ALL_OBJS): %.o: %.c Makefile.mingw
 	@echo " "
 	@echo "Making object file $<"
 	$(CC) $(CCFLAGS) -c $<
+
+package_win32: ${TARG}
+	# Copy libraries into place so we can package them.
+	cp /usr/i686-w64-mingw32/sys-root/mingw/bin/libwinpthread-1.dll ./
+	cp /usr/i686-w64-mingw32/sys-root/mingw/bin/libssl-10.dll ./
+	cp /usr/i686-w64-mingw32/sys-root/mingw/bin/libcrypto-10.dll ./
+	cp /usr/i686-w64-mingw32/sys-root/mingw/bin/libgcc_s_sjlj-1.dll ./
+	cp /usr/i686-w64-mingw32/sys-root/mingw/bin/libgnurx-0.dll ./
+	cp ../LICENSE ./license.txt
+	makensis iperf.nsis
 
 clean:
 	rm -f ${ALL_OBJS}

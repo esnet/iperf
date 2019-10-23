@@ -1,0 +1,272 @@
+; iper3-ct install script for NSIS. --Ben Greear
+RequestExecutionLevel highest
+
+!include "MUI2.nsh"
+!include "InstallOptions.nsh"
+
+; -------------------------------
+; Start
+
+!define LFS_VER 3.7-ct
+!define MUI_PRODUCT "iperf3-ct {LFS_VER}"
+!define LF_INSTALL_DIR "iperf3-ct"
+
+CRCCheck On
+
+;--------------------------------
+;General
+
+Name "iperf3-ct ${LFS_VER} Installer"
+OutFile "iperf3-ct-${LFS_VER}-installer.exe"
+
+ShowInstDetails "hide"
+ShowUninstDetails "hide"
+SetCompressor "lzma"
+; install icon
+;!define MUI_ICON   "Installer-box-server-256.ico"
+; server desktop icon
+;!define DT_ICON    "brass_anvil_lh_server.ico"
+; server lfconfig icon
+;!define CF_ICON    "brass_anvil_lh_config.ico"
+; uninstaller icon
+;!define MUI_UNICON ${MUI_ICON}
+
+;  !define MUI_HEADERIMAGE
+;  !define MUI_HEADERIMAGE_RIGHT
+;  !define MUI_HEADERIMAGE_BITMAP "candela_swirl_small-57h.bmp"
+;  !define MUI_HEADERIMAGE_UNBITMAP "candela_swirl_small-57h.bmp"
+
+;--------------------------------
+;Folder selection page
+
+InstallDir "$PROGRAMFILES\${LF_INSTALL_DIR}"
+InstallDirRegKey HKCU "Software\iperf3-ct" ""
+
+
+;--------------------------------
+;Modern UI Configuration
+!define MUI_ABORTWARNING
+!define MUI_UNINSTALLER
+!define MUI_WELCOMEPAGE
+
+!insertmacro MUI_PAGE_WELCOME
+!insertmacro MUI_PAGE_LICENSE "license.txt"
+!insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+
+!insertmacro   MUI_UNPAGE_WELCOME
+!insertmacro   MUI_UNPAGE_COMPONENTS
+!insertmacro   MUI_UNPAGE_CONFIRM
+!insertmacro   MUI_UNPAGE_INSTFILES
+!insertmacro   MUI_UNPAGE_FINISH
+
+!insertmacro MUI_UNPAGE_INSTFILES
+!insertmacro MUI_LANGUAGE "English"
+
+!define SMP_INST "$SMPROGRAMS\${LF_INSTALL_DIR}"
+
+
+; ! macro plugin_init
+; !echo  "${NSISDIR}\Plugins\x86-unicode\InstallOptions.dll"
+; !if /FileExists '"${NSISDIR}\Plugins\x86-unicode\InstallOptions.dll"'
+!if `"${NSISDIR}\Plugins\x86-unicode\InstallOptions.dll"`
+   !echo  "trying try_unicode_install_opts"
+   !define found_install_opts "${NSISDIR}\Plugins\x86-unicode\InstallOptions.dll"
+!elseif /FileExists "${NSISDIR}\Plugins\x86-ansi\InstallOptions.dll"
+   !echo  "trying try_ansi_install_opts"
+   !define found_install_opts "${NSISDIR}\Plugins\x86-ansi\InstallOptions.dll"
+!elseif /FileExists "${NSISDIR}\Plugins\InstallOptions.dll"
+   !echo  "trying old_install_opts: $found_install_opts"
+   !define found_install_opts "${NSISDIR}\Plugins\InstallOptions.dll"
+!endif
+
+!ifdef found_install_opts
+   !echo  "installoptions.dll: ${found_install_opts}"
+   ;ReserveFile /plugin "${found_install_opts}"
+!else
+   !echo  "no installoptions.dll $found_install_opts"
+!endif
+; ! macroend
+
+
+Function .onInit
+  InitPluginsDir
+  
+   !ifdef found_install_opts
+      !echo "found_install_opts: ${found_install_opts}"
+      ReserveFile /plugin "${found_install_opts}"
+   !endif
+FunctionEnd
+
+
+;-------------------------------- 
+;Installer Sections     
+Section "install" Installation
+
+;Add files
+  SetOutPath "$INSTDIR"
+
+; Remove some old .dll files that could conflict with new
+; installs (for instance, if we are using non-OEM winpcap)
+;  Delete "$INSTDIR\packet.dll"
+  
+  File "iperf3.exe"
+;  File ${MUI_ICON}
+;  File ${DT_ICON}
+;  File ${CF_ICON}
+  File "libwinpthread-1.dll"
+  File "libssl-10.dll"
+  File "libcrypto-10.dll"
+  File "libgcc_s_sjlj-1.dll"
+  File "libgnurx-0.dll"
+
+;write uninstall information to the registry
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${LF_INSTALL_DIR}" "DisplayName" "${MUI_PRODUCT} (remove only)"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${LF_INSTALL_DIR}" "UninstallString" "$INSTDIR\Uninstall.exe"
+ 
+  WriteUninstaller "$INSTDIR\Uninstall.exe"
+
+SectionEnd
+
+
+;--------------------------------    
+;Uninstaller Section  
+Section "Uninstall"
+   
+;Delete Files 
+  RMDir /r "$INSTDIR\*.*"    
+ 
+;Remove the installation directory
+  RMDir "$INSTDIR"
+  
+;Delete Uninstaller And Unistall Registry Entries
+  DeleteRegKey HKLM "SOFTWARE\${LF_INSTALL_DIR}"
+  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${LF_INSTALL_DIR}"  
+
+SectionEnd
+
+;Function that calls a messagebox when installation finished correctly
+Function .onInstSuccess
+   MessageBox MB_OK \
+      '${MUI_PRODUCT} was installed.  Change to the install directory and run .\iperf3.exe --help for usage help'
+FunctionEnd
+
+Function un.onUninstSuccess
+  ;MessageBox MB_OK "You have successfully uninstalled ${MUI_PRODUCT}."
+FunctionEnd
+
+;------------------------------------------------------------------------------
+; FindWindowClose
+;
+; Closes a window if open. Also prompts user if closing fails.
+; Use by passing the window class and title on the stack.
+; You must pass both even if one is empty (i.e. "").
+;
+; Usage: 
+;   Push ThunderRT6FormDC
+;   Push "Visual Basic Form Name"
+;   Call FindWindowClose
+;
+ 
+Function FindWindowClose
+   Exch $0
+   Exch
+   Exch $1
+   Push $2
+   Push $3
+   find:
+      FindWindow $2 $1 $0
+      IntCmp $2 0 nowindow
+         MessageBox MB_YESNO "$0 must be stopped before continuing install.  Would you like it stopped now?" IDNO nowindow
+      SendMessage $2 16 "" ""
+      Sleep 500
+      FindWindow $2 $1 $0
+      IntCmp $2 0 nowindow
+         MessageBox MB_OK|MB_ICONSTOP "An instance of the program $0 is running. Please close it and press OK to continue."
+      Goto find
+   nowindow:
+   ;MessageBox MB_OK "Program $0 is not running."
+   Pop $3
+   Pop $2
+   Pop $1
+   Pop $0
+FunctionEnd
+
+
+Function un.confirm_again
+   MessageBox MB_YESNO "Do you really want to uninstall ${LFS_VER} now?" IDYES dont_abt
+      Abort
+   dont_abt:
+FunctionEnd
+
+;------------------------------------------------------------------------------
+; GetWindowsVersion
+;
+; Based on Yazno's function, http://yazno.tripod.com/powerpimpit/
+; Returns on top of stack
+;
+; Windows Version (95, 98, ME, NT x.x, 2000)
+; or
+; '' (Unknown Windows Version)
+;
+; Usage:
+;   Call GetWindowsVersion
+;   Pop $0
+;   ; at this point $0 is "NT 4.0" or whatnot
+
+Function GetWindowsVersion
+  Push $0
+  Push $9
+  ReadRegStr $0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
+  StrCmp $0 "" 0 lbl_winnt
+  ; we are not NT.
+  ReadRegStr $0 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion VersionNumber
+ 
+  StrCpy $9 $0 1
+  StrCmp $9 '4' 0 lbl_error
+
+  StrCpy $9 $0 3
+
+  StrCmp $9 '4.0' lbl_win32_95
+  StrCmp $9 '4.9' lbl_win32_ME lbl_win32_98
+
+  lbl_win32_95:
+    StrCpy $0 '95'
+  Goto lbl_done
+
+  lbl_win32_98:
+    StrCpy $0 '98'
+  Goto lbl_done
+
+  lbl_win32_ME:
+    StrCpy $0 'ME'
+  Goto lbl_done
+
+  lbl_winnt: 
+
+    StrCpy $9 $0 1
+    StrCmp $9 '3' lbl_winnt_x
+    StrCmp $9 '4' lbl_winnt_x
+    StrCmp $9 '5' lbl_winnt_5 lbl_error
+
+    lbl_winnt_x:
+      StrCpy $0 "NT $0" 6
+    Goto lbl_done
+
+    lbl_winnt_5:
+      StrCmp $0 "5.1" lbl_wxp
+      Strcpy $0 '2000'
+    Goto lbl_done
+    lbl_wxp:
+      Strcpy $0 'XP'
+    Goto lbl_done
+
+  lbl_error:
+    Strcpy $0 ''
+  lbl_done:
+  Pop $9
+  Exch $0
+FunctionEnd
+
+; eof

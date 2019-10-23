@@ -2726,6 +2726,7 @@ iperf_reset_stats(struct iperf_test *test)
         sp->omitted_cnt_error = sp->cnt_error;
         sp->omitted_outoforder_packets = sp->outoforder_packets;
 	sp->jitter = 0;
+        sp->prev_transit = 0;
 	rp = sp->result;
         rp->bytes_sent_omit = rp->bytes_sent;
         rp->bytes_received = 0;

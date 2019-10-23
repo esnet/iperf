@@ -70,7 +70,8 @@ int readentropy(void *out, size_t outsize)
         if (frandom == NULL) {
             // use rand() instead (this could be way more efficient but doesn't matter much)
             unsigned char* dest = (unsigned char*)out;
-            for (size_t i = 0; i<outsize; i++) {
+            size_t i;
+            for (i = 0; i<outsize; i++) {
                 dest[i] = rand();
             }
             return 0;
@@ -190,11 +191,12 @@ const char* hexdump(const unsigned char* msg, int len, int show_decode,
 
         if (add_newlines && ((i + 1) % bytes_per_line == 0)) {
             if (show_decode) {
+               int j;
                 count = snprintf(buf, maxlen - sofar, "   ");
                 buf += count;
                 if (sofar >= maxlen)
                     return retval;
-                for (int j = i - (bytes_per_line - 1); j<=i; j++) {
+                for (j = i - (bytes_per_line - 1); j<=i; j++) {
                     if (isprint(msg[j])) {
                         count = snprintf(buf, maxlen - sofar, "%c", msg[j]);
                     }
@@ -217,11 +219,12 @@ const char* hexdump(const unsigned char* msg, int len, int show_decode,
         // do final char translations.
         int q = (i) % bytes_per_line;
         int offset = i-q;
+        int l, j;
         count = snprintf(buf, maxlen - sofar, "   ");
         buf += count;
         if (sofar >= maxlen)
             return retval;
-        for (int l = 0; l< bytes_per_line-q; l++) {
+        for (l = 0; l< bytes_per_line-q; l++) {
             //space, where the hex would have gone.
             count = snprintf(buf, maxlen - sofar, "   ");
             buf += count;
@@ -230,7 +233,7 @@ const char* hexdump(const unsigned char* msg, int len, int show_decode,
         }
 
         //VLOG << "q: " << q << " offset: " << offset << " i: " << i << endl;
-        for (int j = 0; j<q; j++) {
+        for (j = 0; j<q; j++) {
             if (isprint(msg[j + offset])) {
                 count = snprintf(buf, maxlen - sofar, "%c", msg[j + offset]);
             }

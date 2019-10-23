@@ -97,8 +97,9 @@ void nonblock(int s) {
 #endif
 
 void print_fdset(int max_fd, fd_set* read_set, fd_set* write_set) {
+    int i;
     fprintf(stderr, "read/write FD sets: ");
-    for (int i = 0; i<=max_fd; i++) {
+    for (i = 0; i<=max_fd; i++) {
         if (FD_ISSET(i, read_set)) {
             if (FD_ISSET(i, write_set)) {
                 fprintf(stderr, "%i RW ", i);

@@ -348,6 +348,7 @@ iperf_udp_accept(struct iperf_test *test)
     socklen_t len;
     int       sz, s;
     int	      rc;
+    int i;
 
     /*
      * Get the current outstanding socket.  This socket will be used to handle
@@ -355,17 +356,46 @@ iperf_udp_accept(struct iperf_test *test)
      */
     s = test->prot_listener;
 
-    /*
-     * Grab the UDP packet sent by the client.  From that we can extract the
-     * client's address, and then use that information to bind the remote side
-     * of the socket to the client.
-     */
-    len = sizeof(sa_peer);
-    if ((sz = recvfrom(test->prot_listener, (char*)&buf, sizeof(buf), 0, (struct sockaddr *) &sa_peer, &len)) < 0) {
-        i_errno = IESTREAMACCEPT;
-        return -1;
+    for (i = 0; i<30; i++) {
+        fd_set read_fds;
+        FD_ZERO(&read_fds);            //Zero out the file descriptor set
+        FD_SET(test->prot_listener, &read_fds);     //Set the current socket file descriptor into the set
+
+        /* Don't block forever if the peer messed up or cannot otherwise send frame
+         * this direction.
+         */
+        struct timeval tv;
+        tv.tv_sec = 1;  //The second portion of the struct
+        tv.tv_usec = 0; //The microsecond portion of the struct
+        
+        int select_ret = select(test->prot_listener + 1, &read_fds, NULL, NULL, &tv);
+        if (select_ret == 1) {
+            /*
+             * Grab the UDP packet sent by the client.  From that we can extract the
+             * client's address, and then use that information to bind the remote side
+             * of the socket to the client.
+             */
+            len = sizeof(sa_peer);
+            if ((sz = recvfrom(test->prot_listener, (char*)&buf, sizeof(buf), 0, (struct sockaddr *) &sa_peer, &len)) < 0) {
+                i_errno = IESTREAMACCEPT;
+                return -1;
+            }
+            goto got_response;
+        }
+        else {
+            if (test->debug) {
+                fprintf(stderr, "Did not receive response, try %d / 30, in udp-accept.\n",
+                        i);
+            }
+        }
     }
 
+    /* If here, we did not get a response in time. */
+    fprintf(stderr, "Did not receive frame within 30 seconds in udp-accept.\n");
+    i_errno = IESTREAMACCEPT;
+    return -1;
+
+got_response:
     if (connect(s, (struct sockaddr *) &sa_peer, len) < 0) {
         i_errno = IESTREAMACCEPT;
         return -1;

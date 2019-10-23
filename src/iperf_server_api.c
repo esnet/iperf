@@ -417,6 +417,7 @@ iperf_run_server(struct iperf_test *test)
     struct iperf_time now;
     struct timeval* timeout;
     int flag;
+    unsigned long last_dbg = 0;
 
     if (test->logfile)
         if (iperf_open_logfile(test) < 0)
@@ -459,7 +460,7 @@ iperf_run_server(struct iperf_test *test)
 
 	iperf_time_now(&now);
 	timeout = tmr_timeout(&now);
-        if (test->debug) {
+        if (test->debug > 1 || (test->debug && (last_dbg != now.secs))) {
             if (timeout)
                 fprintf(stderr, "timeout: %ld.%06ld  max-fd: %d state: %d (%s)\n",
                         (long)(timeout->tv_sec), (long)(timeout->tv_usec), test->max_fd,
@@ -472,13 +473,14 @@ iperf_run_server(struct iperf_test *test)
         }
         result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
 
-        if (test->debug) {
+        if (test->debug > 1 || (test->debug && (last_dbg != now.secs))) {
             fprintf(stderr, "select result: %d, listener: %d  ISSET-listener: %d  test-state: %d(%s)\n",
                     result, test->listener, FD_ISSET(test->listener, &read_set), test->state,
                     iperf_get_state_str(test->state));
             fprintf(stderr, "prot-listener: %d  ISSET: %d  max-fd: %d\n",
                     test->prot_listener, FD_ISSET(test->prot_listener, &read_set), test->max_fd);
             print_fdset(test->max_fd, &read_set, &write_set);
+            last_dbg = now.secs;
         }
 
         if (result < 0 && errno != EINTR) {

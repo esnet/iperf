@@ -1677,7 +1677,7 @@ iperf_exchange_parameters(struct iperf_test *test)
 }
 
 void _fd_set(int fd, fd_set* fdset, struct iperf_test *test, const char* file, int line) {
-    if (test->debug) {
+    if (test->debug > 1) {
         fprintf(stderr, "FD-SET, fd: %d  at %s:%d\n",
                 fd, file, line);
     }
@@ -1687,7 +1687,7 @@ void _fd_set(int fd, fd_set* fdset, struct iperf_test *test, const char* file, i
 }
 
 void _fd_clr(int fd, fd_set* fdset, struct iperf_test *test, const char* file, int line) {
-    if (test->debug) {
+    if (test->debug > 1) {
         fprintf(stderr, "FD-CLR, fd: %d  at %s:%d\n",
                 fd, file, line);
     }

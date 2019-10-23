@@ -3843,6 +3843,7 @@ iperf_init_stream(struct iperf_stream *sp, struct iperf_test *test)
 
     /* Set IP TOS */
     if ((opt = test->settings->tos)) {
+#ifndef __WIN32__ /* windows does not support setting ToS */
         if (getsockdomain(sp->socket) == AF_INET6) {
 #ifdef IPV6_TCLASS
             if (setsockopt(sp->socket, IPPROTO_IPV6, IPV6_TCLASS, (const char*)&opt, sizeof(opt)) < 0) {
@@ -3859,6 +3860,10 @@ iperf_init_stream(struct iperf_stream *sp, struct iperf_test *test)
                 return -1;
             }
         }
+#else
+        fprintf(stderr, "WARNING:  ToS: 0x%x requested, but windows does not support setting ToS.  Ignoring.\n",
+                test->settings->tos);
+#endif
     }
 
     return 0;

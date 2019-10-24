@@ -117,7 +117,7 @@ iperf_accept(struct iperf_test *test)
     struct sockaddr_storage addr;
 
     if (test->debug) {
-        fprintf(stderr, "iperf-accept called.\n");
+        iperf_err(test, "iperf-accept called.\n");
     }
 
     len = sizeof(addr);
@@ -132,8 +132,8 @@ iperf_accept(struct iperf_test *test)
 
         int rv = waitRead(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp, test, ctrl_wait_ms);
         if (rv != COOKIE_SIZE) {
-            fprintf(stderr, "Accept problem, ctrl-sck: %d  s: %d  listener: %d waitRead rv: %d\n",
-                    test->ctrl_sck, s, test->listener, rv);
+            iperf_err(test, "Accept problem, ctrl-sck: %d  s: %d  listener: %d waitRead rv: %d\n",
+                      test->ctrl_sck, s, test->listener, rv);
             i_errno = IERECVCOOKIE;
             goto out_err;
         }
@@ -178,18 +178,22 @@ iperf_handle_message_server(struct iperf_test *test)
 {
     int rval;
     struct iperf_stream *sp;
+    signed char s;
 
     // XXX: Need to rethink how this behaves to fit API
-    if ((rval = waitRead(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp, test, ctrl_wait_ms)) != sizeof(signed char)) {
+    if ((rval = waitRead(test->ctrl_sck, (char*) &s, sizeof(s), Ptcp, test, ctrl_wait_ms)) != sizeof(s)) {
+        iperf_err(test, "The client has unexpectedly closed the connection (handle-message-server): %s",
+                  STRERROR);
         if (rval == 0) {
-	    iperf_err(test, "the client has unexpectedly closed the connection");
             i_errno = IECTRLCLOSE;
-            test->state = IPERF_DONE;
-            return 0;
+            return -1;
         } else {
             i_errno = IERECVMESSAGE;
             return -1;
         }
+    }
+    else {
+        iperf_set_state(test, s, __FUNCTION__);
     }
 
     switch(test->state) {
@@ -224,9 +228,9 @@ iperf_handle_message_server(struct iperf_test *test)
 	    // ending summary statistics.
 	    signed char oldstate = test->state;
 	    cpu_util(test->cpu_util);
-	    test->state = DISPLAY_RESULTS;
+            iperf_set_state(test, DISPLAY_RESULTS, __FUNCTION__);
 	    test->reporter_callback(test);
-	    test->state = oldstate;
+            iperf_set_state(test, oldstate, __FUNCTION__);
 
             // XXX: Remove this line below!
 	    iperf_err(test, "the client has terminated");
@@ -236,7 +240,7 @@ iperf_handle_message_server(struct iperf_test *test)
                 closesocket(sp->socket);
                 sp->socket = -1;
             }
-            test->state = IPERF_DONE;
+            iperf_set_state(test, IPERF_DONE, __FUNCTION__);
             break;
         default:
             i_errno = IEMESSAGE;
@@ -409,7 +413,7 @@ cleanup_server(struct iperf_test *test)
         tmr_cancel(test->timer);
         test->timer = NULL;
     }
-    test->state = IPERF_DONE;
+    iperf_set_state(test, IPERF_DONE, __FUNCTION__);
 }
 
 
@@ -422,7 +426,7 @@ iperf_run_server(struct iperf_test *test)
 #if defined(HAVE_TCP_CONGESTION)
     int saved_errno;
 #endif /* HAVE_TCP_CONGESTION */
-    fd_set read_set, write_set;
+    fd_set read_set, write_set, exc_set;
     struct iperf_stream *sp;
     struct iperf_time now;
     struct timeval* timeout;
@@ -459,7 +463,7 @@ iperf_run_server(struct iperf_test *test)
     // Begin calculating CPU utilization
     cpu_util(NULL);
 
-    test->state = IPERF_START;
+    iperf_set_state(test, IPERF_START, __FUNCTION__);
     send_streams_accepted = 0;
     rec_streams_accepted = 0;
 
@@ -467,34 +471,35 @@ iperf_run_server(struct iperf_test *test)
 
         memcpy(&read_set, &test->read_set, sizeof(fd_set));
         memcpy(&write_set, &test->write_set, sizeof(fd_set));
+        //memcpy(&exc_set, &test->exc_set, sizeof(fd_set));
 
 	iperf_time_now(&now);
 	timeout = tmr_timeout(&now);
         if (test->debug > 1 || (test->debug && (last_dbg != now.secs))) {
             if (timeout)
-                fprintf(stderr, "timeout: %ld.%06ld  max-fd: %d state: %d (%s)\n",
-                        (long)(timeout->tv_sec), (long)(timeout->tv_usec), test->max_fd,
-                        test->state, iperf_get_state_str(test->state));
+                iperf_err(test, "timeout: %ld.%06ld  max-fd: %d state: %d (%s)",
+                          (long)(timeout->tv_sec), (long)(timeout->tv_usec), test->max_fd,
+                          test->state, iperf_get_state_str(test->state));
 
             else
-                fprintf(stderr, "timeout NULL, max-fd: %d state: %d(%s)\n", test->max_fd,
-                        test->state, iperf_get_state_str(test->state));
+                iperf_err(test, "timeout NULL, max-fd: %d state: %d(%s)", test->max_fd,
+                          test->state, iperf_get_state_str(test->state));
             print_fdset(test->max_fd, &read_set, &write_set);
         }
         result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
 
         if (test->debug > 1 || (test->debug && (last_dbg != now.secs))) {
-            fprintf(stderr, "select result: %d, listener: %d  ISSET-listener: %d  test-state: %d(%s)\n",
-                    result, test->listener, FD_ISSET(test->listener, &read_set), test->state,
-                    iperf_get_state_str(test->state));
-            fprintf(stderr, "prot-listener: %d  ISSET: %d  max-fd: %d\n",
-                    test->prot_listener, FD_ISSET(test->prot_listener, &read_set), test->max_fd);
+            iperf_err(test, "select result: %d, listener: %d  ISSET-listener: %d  test-state: %d(%s)",
+                      result, test->listener, FD_ISSET(test->listener, &read_set), test->state,
+                      iperf_get_state_str(test->state));
+            iperf_err(test, "prot-listener: %d  ISSET: %d  max-fd: %d\n",
+                      test->prot_listener, FD_ISSET(test->prot_listener, &read_set), test->max_fd);
             print_fdset(test->max_fd, &read_set, &write_set);
             last_dbg = now.secs;
         }
 
         if (result < 0 && errno != EINTR) {
-            fprintf(stderr, "Cleaning server, select had error: %s\n", STRERROR);
+            iperf_err(test, "Cleaning server, select had error: %s", STRERROR);
 	    cleanup_server(test);
             i_errno = IESELECT;
             return -1;
@@ -544,7 +549,7 @@ iperf_run_server(struct iperf_test *test)
                     setnonblocking(s, 1);
 
                     if (test->debug) {
-                        fprintf(stderr, "create-streams, accepted socket: %d\n", s);
+                        iperf_err(test, "create-streams, accepted socket: %d\n", s);
                     }
 
 #if defined(HAVE_TCP_CONGESTION)
@@ -707,11 +712,17 @@ iperf_run_server(struct iperf_test *test)
 	if (result == 0 ||
 	    (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0)) {
 	    /* Run the timers. */
+            if (test->debug)
+                iperf_err(test, "Running timers..\n");
 	    iperf_time_now(&now);
 	    tmr_run(&now);
+            if (test->debug)
+                iperf_err(test, "Done with timers..\n");
 	}
     }
 
+    if (test->debug)
+        iperf_err(test, "Done with server loop, cleaning up server.\n");
     cleanup_server(test);
 
     if (test->json_output) {

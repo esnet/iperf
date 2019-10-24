@@ -240,8 +240,9 @@ iperf_handle_message_client(struct iperf_test *test)
 {
     int rval;
     int32_t err;
+    signed char s;
 
-    if ((rval = waitRead(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp, test, ctrl_wait_ms)) != sizeof(signed char)) {
+    if ((rval = waitRead(test->ctrl_sck, (char*) &s, sizeof(s), Ptcp, test, ctrl_wait_ms)) != sizeof(s)) {
         if (rval == 0) {
             i_errno = IECTRLCLOSE;
             return -1;
@@ -249,6 +250,9 @@ iperf_handle_message_client(struct iperf_test *test)
             i_errno = IERECVMESSAGE;
             return -1;
         }
+    }
+    else {
+        iperf_set_state(test, s, __FUNCTION__);
     }
 
     switch (test->state) {
@@ -302,9 +306,9 @@ iperf_handle_message_client(struct iperf_test *test)
 	     */
 	    signed char oldstate = test->state;
 	    cpu_util(test->cpu_util);
-	    test->state = DISPLAY_RESULTS;
+            iperf_set_state(test, DISPLAY_RESULTS, __FUNCTION__);
 	    test->reporter_callback(test);
-	    test->state = oldstate;
+            iperf_set_state(test, oldstate, __FUNCTION__);
             return -1;
         case ACCESS_DENIED:
             i_errno = IEACCESSDENIED;

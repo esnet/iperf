@@ -136,36 +136,6 @@ make_cookie(char *cookie)
     out[pos] = '\0';
 }
 
-
-/* is_closed
- *
- * Test if the file descriptor fd is closed.
- * 
- * Iperf uses this function to test whether a TCP stream socket
- * is closed, because accepting and denying an invalid connection
- * in iperf_tcp_accept is not considered an error.
- */
-
-int
-is_closed(int fd)
-{
-    struct timeval tv;
-    fd_set readset;
-
-    FD_ZERO(&readset);
-    FD_SET(fd, &readset);
-    tv.tv_sec = 0;
-    tv.tv_usec = 0;
-
-    if (select(fd+1, &readset, NULL, NULL, &tv) < 0) {
-        fprintf(stderr, "is-closed, had error for fd: %d: %s", fd, STRERROR);
-        if (errno == EBADF)
-            return 1;
-    }
-    return 0;
-}
-
-
 const char* hexdump(const unsigned char* msg, int len, int show_decode,
                     int add_newlines) {
     static char retval[24000];

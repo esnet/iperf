@@ -576,44 +576,44 @@ iperf_run_server(struct iperf_test *test)
 		    }
 #endif /* HAVE_TCP_CONGESTION */
 
-                    if (!is_closed(s)) {
+                    // This code used to check if socket was is-closed, but we specifically test
+                    // and return if it is closed above, so no need for that check here.
 
-                        if (rec_streams_accepted != streams_to_rec) {
-                            flag = 0;
-                            ++rec_streams_accepted;
-                        } else if (send_streams_accepted != streams_to_send) {
-                            flag = 1;
-                            ++send_streams_accepted;
+                    if (rec_streams_accepted != streams_to_rec) {
+                        flag = 0;
+                        ++rec_streams_accepted;
+                    } else if (send_streams_accepted != streams_to_send) {
+                        flag = 1;
+                        ++send_streams_accepted;
+                    }
+
+                    if (flag != -1) {
+                        sp = iperf_new_stream(test, s, flag);
+                        if (!sp) {
+                            cleanup_server(test);
+                            return -1;
                         }
 
-                        if (flag != -1) {
-                            sp = iperf_new_stream(test, s, flag);
-                            if (!sp) {
-                                cleanup_server(test);
-                                return -1;
-                            }
+                        if (sp->sender)
+                            IFD_SET(s, &test->write_set, test);
+                        else
+                            IFD_SET(s, &test->read_set, test);
 
-                            if (sp->sender)
-                                IFD_SET(s, &test->write_set, test);
-                            else
-                                IFD_SET(s, &test->read_set, test);
-
-                            /*
-                             * If the protocol isn't UDP, or even if it is but
-                             * we're the receiver, set nonblocking sockets.
-                             * We need this to allow a server receiver to
-                             * maintain interactivity with the control channel.
-                             */
-                            if (test->protocol->id != Pudp ||
-                                !sp->sender) {
-                                setnonblocking(s, 1);
-                            }
-
-                            if (test->on_new_stream)
-                                test->on_new_stream(sp);
-
-                            flag = -1;
+                        /*
+                         * If the protocol isn't UDP, or even if it is but
+                         * we're the receiver, set nonblocking sockets.
+                         * We need this to allow a server receiver to
+                         * maintain interactivity with the control channel.
+                         */
+                        if (test->protocol->id != Pudp ||
+                            !sp->sender) {
+                            setnonblocking(s, 1);
                         }
+
+                        if (test->on_new_stream)
+                            test->on_new_stream(sp);
+
+                        flag = -1;
                     }
                     IFD_CLR(test->prot_listener, &read_set, test);
                 }

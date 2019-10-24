@@ -81,7 +81,7 @@ iperf_create_streams(struct iperf_test *test, int sender)
 	    if (test->congestion) {
 		if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
 		    saved_errno = errno;
-		    closesocket(s);
+		    iclosesocket(s, test);
 		    errno = saved_errno;
 		    i_errno = IESETCONGESTION;
 		    return -1;
@@ -92,7 +92,7 @@ iperf_create_streams(struct iperf_test *test, int sender)
 		char ca[TCP_CA_NAME_MAX + 1];
 		if (getsockopt(s, IPPROTO_TCP, TCP_CONGESTION, ca, &len) < 0) {
 		    saved_errno = errno;
-		    closesocket(s);
+		    iclosesocket(s, test);
 		    errno = saved_errno;
 		    i_errno = IESETCONGESTION;
 		    return -1;
@@ -107,12 +107,11 @@ iperf_create_streams(struct iperf_test *test, int sender)
 
 	if (sender)
 	    IFD_SET(s, &test->write_set, test);
-	else
-	    IFD_SET(s, &test->read_set, test);
+        IFD_SET(s, &test->read_set, test);
 
         sp = iperf_new_stream(test, s, sender);
         if (!sp) {
-            closesocket(s);
+            iclosesocket(s, test);
             return -1;
         }
 
@@ -445,7 +444,7 @@ iperf_client_end(struct iperf_test *test)
 
     /* Close all stream sockets */
     SLIST_FOREACH(sp, &test->streams, streams) {
-        closesocket(sp->socket);
+        iclosesocket(sp->socket, test);
         sp->socket = -1;
     }
 
@@ -456,10 +455,7 @@ iperf_client_end(struct iperf_test *test)
         return -1;
 
     /* Close control socket */
-    if (test->ctrl_sck != -1) {
-        closesocket(test->ctrl_sck);
-        test->ctrl_sck = -1;
-    }
+    iclosesocket(test->ctrl_sck, test);
 
     return 0;
 }

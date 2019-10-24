@@ -463,7 +463,7 @@ got_response:
 
     if (test->prot_listener < 0) {
         i_errno = IESTREAMLISTEN;
-        closesocket(s);
+        iclosesocket(s, test);
         return -1;
     }
 
@@ -478,7 +478,7 @@ got_response:
 #endif
     {
         i_errno = IESTREAMWRITE;
-        closesocket(s);
+        iclosesocket(s, test);
         return -1;
     }
 
@@ -547,7 +547,7 @@ iperf_udp_connect(struct iperf_test *test)
     rc = iperf_udp_buffercheck(test, s);
     if (rc < 0) {
 	/* error */
-        closesocket(s);
+        iclosesocket(s, test);
 	return rc;
     }
 
@@ -563,7 +563,7 @@ iperf_udp_connect(struct iperf_test *test)
 	    test->settings->socket_bufsize = bufsize;
 	    rc = iperf_udp_buffercheck(test, s);
 	    if (rc < 0) {
-                closesocket(s);
+                iclosesocket(s, test);
 		return rc;
             }
 	}
@@ -626,7 +626,7 @@ iperf_udp_connect(struct iperf_test *test)
         {
             // XXX: Should this be changed to IESTREAMCONNECT? 
             i_errno = IESTREAMWRITE;
-            closesocket(s);
+            iclosesocket(s, test);
             return -1;
         }
 
@@ -646,7 +646,7 @@ iperf_udp_connect(struct iperf_test *test)
         if (select_ret == 1) {
             if ((sz = recv(s, (char*)&buf, sizeof(buf), 0)) < 0) {
                 fprintf(stderr, "Failed recv: %s  socket: %d\n", STRERROR, s);
-                closesocket(s);
+                iclosesocket(s, test);
                 i_errno = IESTREAMREAD;
                 return -1;
             }
@@ -667,7 +667,7 @@ iperf_udp_connect(struct iperf_test *test)
     if (test->debug) {
         fprintf(stderr, "Did not receive UDP connect response in time.\n");
     }
-    closesocket(s);
+    iclosesocket(s, test);
     i_errno = IESTREAMREAD;
     return -1;
 }

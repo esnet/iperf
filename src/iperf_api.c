@@ -1501,8 +1501,9 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
     }
     if (write_setP != NULL)
 	SLIST_FOREACH(sp, &test->streams, streams)
-	    if (FD_ISSET(sp->socket, write_setP))
-		IFD_CLR(sp->socket, write_setP, test);
+            if (sp->socket >= 0)
+                if (FD_ISSET(sp->socket, write_setP))
+                    IFD_CLR(sp->socket, write_setP, test);
 
     return 0;
 }

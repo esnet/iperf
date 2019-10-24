@@ -33,6 +33,7 @@ extern int ctrl_wait_ms;
 
 int eWouldBlock();
 
+void iclosesocket(int s, struct iperf_test *test);
 void nonblock(int s);
 
 void print_fdset(int max_fd, fd_set* read_set, fd_set* write_set);

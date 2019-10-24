@@ -43,7 +43,6 @@
 
 #define STRERROR strerror(errno)
 #define ERRNO errno
-#define closesocket close
 
 #else
 #include <winsock2.h>

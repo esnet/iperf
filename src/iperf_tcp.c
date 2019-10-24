@@ -120,18 +120,23 @@ iperf_tcp_accept(struct iperf_test * test)
     struct sockaddr_storage addr;
 
     len = sizeof(addr);
+
+    /* Wait a bit until the peer attempts a connection */
+    waitSocketReadable(test->listener, ctrl_wait_ms);
+    
     if ((s = accept(test->listener, (struct sockaddr *) &addr, &len)) < 0) {
+        fprintf(stderr, "tcp-accept, accept failed: %s\n", STRERROR);
         i_errno = IESTREAMCONNECT;
         return -1;
     }
 
-    if (Nread(s, cookie, COOKIE_SIZE, Ptcp, test) < 0) {
+    if (waitRead(s, cookie, COOKIE_SIZE, Ptcp, test, ctrl_wait_ms) != COOKIE_SIZE) {
         i_errno = IERECVCOOKIE;
         return -1;
     }
 
     if (strcmp(test->cookie, cookie) != 0) {
-        if (Nwrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp, test) < 0) {
+        if (waitWrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp, test, ctrl_wait_ms) != sizeof(rbuf)) {
             i_errno = IESENDMESSAGE;
             return -1;
         }
@@ -146,6 +151,7 @@ iperf_tcp_accept(struct iperf_test * test)
 /* iperf_tcp_listen
  *
  * start up a listener for TCP stream connections
+ * Returns non-blocking socket.
  */
 int
 iperf_tcp_listen(struct iperf_test *test)
@@ -200,6 +206,8 @@ iperf_tcp_listen(struct iperf_test *test)
             i_errno = IESTREAMLISTEN;
             return -1;
         }
+
+        setnonblocking(s, 1);
 
         if (test->bind_dev) {
 #ifdef SO_BINDTODEVICE
@@ -392,6 +400,7 @@ iperf_tcp_listen(struct iperf_test *test)
  * This function is roughly similar to netdial(), and may indeed have
  * been derived from it at some point, but it sets many TCP-specific
  * options between socket creation and connection.
+ * Returns non-blocking socket
  */
 int
 iperf_tcp_connect(struct iperf_test *test)
@@ -408,6 +417,7 @@ iperf_tcp_connect(struct iperf_test *test)
         hints.ai_family = test->settings->domain;
         hints.ai_socktype = SOCK_STREAM;
         if ((gerror = getaddrinfo(test->bind_address, NULL, &hints, &local_res)) != 0) {
+            fprintf(stderr, "tcp-connect, getaddrinfo failed: %s\n", STRERROR);
             i_errno = IESTREAMCONNECT;
             return -1;
         }
@@ -420,6 +430,7 @@ iperf_tcp_connect(struct iperf_test *test)
     if ((gerror = getaddrinfo(test->server_hostname, portstr, &hints, &server_res)) != 0) {
 	if (test->bind_address)
 	    freeaddrinfo(local_res);
+        fprintf(stderr, "tcp-connect, getaddrinfo (server) failed: %s\n", STRERROR);
         i_errno = IESTREAMCONNECT;
         return -1;
     }
@@ -427,9 +438,12 @@ iperf_tcp_connect(struct iperf_test *test)
     if ((s = socket(server_res->ai_family, SOCK_STREAM, 0)) < 0) {
         freeaddrinfo(local_res);
 	freeaddrinfo(server_res);
+        fprintf(stderr, "tcp-connect, socket() failed: %s\n", STRERROR);
         i_errno = IESTREAMCONNECT;
         return -1;
     }
+
+    setnonblocking(s, 1);
 
     if (test->bind_dev) {
 #ifdef SO_BINDTODEVICE
@@ -457,6 +471,7 @@ iperf_tcp_connect(struct iperf_test *test)
         lcladdr->sin_port = htons(test->bind_port);
 
         if (bind(s, (struct sockaddr *) local_res->ai_addr, local_res->ai_addrlen) < 0) {
+            fprintf(stderr, "tcp-connect, bind() failed: %s\n", STRERROR);
 	    saved_errno = errno;
 	    closesocket(s);
 	    freeaddrinfo(local_res);
@@ -499,6 +514,7 @@ iperf_tcp_connect(struct iperf_test *test)
 	}
 
         if (bind(s, (struct sockaddr *) &lcl, addrlen) < 0) {
+            fprintf(stderr, "tcp-connect, bind2() failed: %s\n", STRERROR);
 	    saved_errno = errno;
 	    closesocket(s);
 	    freeaddrinfo(server_res);
@@ -662,7 +678,8 @@ iperf_tcp_connect(struct iperf_test *test)
 	}
     }
 
-    if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS) {
+    if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && !eWouldBlock()) {
+        fprintf(stderr, "tcp-connect, connect() failed: %s\n", STRERROR);
 	saved_errno = errno;
 	closesocket(s);
 	freeaddrinfo(server_res);
@@ -674,7 +691,7 @@ iperf_tcp_connect(struct iperf_test *test)
     freeaddrinfo(server_res);
 
     /* Send cookie for verification */
-    if (Nwrite(s, test->cookie, COOKIE_SIZE, Ptcp, test) < 0) {
+    if (waitWrite(s, test->cookie, COOKIE_SIZE, Ptcp, test, ctrl_wait_ms) != COOKIE_SIZE) {
 	saved_errno = errno;
 	closesocket(s);
 	errno = saved_errno;

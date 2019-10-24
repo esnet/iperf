@@ -99,6 +99,8 @@ iperf_server_listen(struct iperf_test *test)
 	    iflush(test);
     }
 
+    setnonblocking(test->listener, 1);
+
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);
     IFD_SET(test->listener, &test->read_set, test);
@@ -109,7 +111,7 @@ iperf_server_listen(struct iperf_test *test)
 int
 iperf_accept(struct iperf_test *test)
 {
-    int s;
+    int s = -1;
     signed char rbuf = ACCESS_DENIED;
     socklen_t len;
     struct sockaddr_storage addr;
@@ -127,22 +129,23 @@ iperf_accept(struct iperf_test *test)
     if (test->ctrl_sck == -1) {
         /* Server free, accept new client */
         test->ctrl_sck = s;
-        int rv = Nread(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp, test);
-        if (rv < 0) {
-            fprintf(stderr, "Accept problem, ctrl-sck: %d  s: %d  listener: %d Nread rv: %d\n",
+
+        int rv = waitRead(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp, test, ctrl_wait_ms);
+        if (rv != COOKIE_SIZE) {
+            fprintf(stderr, "Accept problem, ctrl-sck: %d  s: %d  listener: %d waitRead rv: %d\n",
                     test->ctrl_sck, s, test->listener, rv);
             i_errno = IERECVCOOKIE;
-            return -1;
+            goto out_err;
         }
 	IFD_SET(test->ctrl_sck, &test->read_set, test);
 
 	if (iperf_set_send_state(test, PARAM_EXCHANGE) != 0)
-            return -1;
+            goto out_err;
         if (iperf_exchange_parameters(test) < 0)
-            return -1;
+            goto out_err;
 	if (test->server_affinity != -1) 
 	    if (iperf_setaffinity(test, test->server_affinity) != 0)
-		return -1;
+		goto out_err;
         if (test->on_connect)
             test->on_connect(test);
     } else {
@@ -150,15 +153,22 @@ iperf_accept(struct iperf_test *test)
 	 * Don't try to read from the socket.  It could block an ongoing test. 
 	 * Just send ACCESS_DENIED.
 	 */
-        if (Nwrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp, test) < 0) {
+        if (waitWrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp, test, ctrl_wait_ms) != sizeof(rbuf)) {
             i_errno = IESENDMESSAGE;
-            closesocket(s);
-            return -1;
+            goto out_err;
         }
         closesocket(s);
     }
 
     return 0;
+
+out_err:
+    if (s >= 0) {
+        closesocket(s);
+        if (test->ctrl_sck == s)
+            test->ctrl_sck = -1;
+    }
+    return -1;
 }
 
 
@@ -170,7 +180,7 @@ iperf_handle_message_server(struct iperf_test *test)
     struct iperf_stream *sp;
 
     // XXX: Need to rethink how this behaves to fit API
-    if ((rval = Nread(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp, test)) <= 0) {
+    if ((rval = waitRead(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp, test, ctrl_wait_ms)) != sizeof(signed char)) {
         if (rval == 0) {
 	    iperf_err(test, "the client has unexpectedly closed the connection");
             i_errno = IECTRLCLOSE;
@@ -369,11 +379,11 @@ static void
 cleanup_server(struct iperf_test *test)
 {
     /* Close open test sockets */
-    if (test->ctrl_sck) {
+    if (test->ctrl_sck != -1) {
 	closesocket(test->ctrl_sck);
         test->ctrl_sck = -1;
     }
-    if (test->listener) {
+    if (test->listener != -1) {
 	closesocket(test->listener);
         test->listener = -1;
     }
@@ -529,6 +539,10 @@ iperf_run_server(struct iperf_test *test)
                         return -1;
 		    }
 
+                    /* Use non-blocking IO so we don't accidentally end up
+                     * hanging on socket operations. */
+                    setnonblocking(s, 1);
+
                     if (test->debug) {
                         fprintf(stderr, "create-streams, accepted socket: %d\n", s);
                     }
@@ -596,21 +610,11 @@ iperf_run_server(struct iperf_test *test)
                             return -1;
                         }
 
+                        // TODO:  For read+write, do we need to set this fd in both sets?
                         if (sp->sender)
                             IFD_SET(s, &test->write_set, test);
                         else
                             IFD_SET(s, &test->read_set, test);
-
-                        /*
-                         * If the protocol isn't UDP, or even if it is but
-                         * we're the receiver, set nonblocking sockets.
-                         * We need this to allow a server receiver to
-                         * maintain interactivity with the control channel.
-                         */
-                        if (test->protocol->id != Pudp ||
-                            !sp->sender) {
-                            setnonblocking(s, 1);
-                        }
 
                         if (test->on_new_stream)
                             test->on_new_stream(sp);
@@ -638,6 +642,9 @@ iperf_run_server(struct iperf_test *test)
                                 i_errno = IELISTEN;
                                 return -1;
                             }
+
+                            setnonblocking(s, 1);
+
                             test->listener = s;
                             IFD_SET(test->listener, &test->read_set, test);
                         }

@@ -538,6 +538,7 @@ iperf_udp_connect(struct iperf_test *test)
     /* Create and bind our local socket. */
     if ((s = netdial(test->settings->domain, Pudp, test->bind_address, test->bind_dev, test->bind_port,
                      test->server_hostname, test->server_port, -1, test)) < 0) {
+        fprintf(stderr, "udp-connect, netdial() failed: %s\n", STRERROR);
         i_errno = IESTREAMCONNECT;
         return -1;
     }

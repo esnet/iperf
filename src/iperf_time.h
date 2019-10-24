@@ -46,4 +46,6 @@ uint64_t iperf_time_in_usecs(struct iperf_time *time);
 
 double iperf_time_in_secs(struct iperf_time *time);
 
+uint64_t getCurMs();
+
 #endif

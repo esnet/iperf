@@ -92,306 +92,231 @@ iperf_strerror(int int_errno)
     len = sizeof(errstr);
     memset(errstr, 0, len);
 
+    /* Put text on same line as error to make grepping easier */
     switch (int_errno) {
-        case IENONE:
-            snprintf(errstr, len, "no error");
+        case IENONE: snprintf(errstr, len, "no error");
             break;
-        case IESERVCLIENT:
-            snprintf(errstr, len, "cannot be both server and client");
+        case IESERVCLIENT: snprintf(errstr, len, "cannot be both server and client");
             break;
-        case IENOROLE:
-            snprintf(errstr, len, "must either be a client (-c) or server (-s)");
+        case IENOROLE: snprintf(errstr, len, "must either be a client (-c) or server (-s)");
             break;
-        case IESERVERONLY:
-            snprintf(errstr, len, "some option you are trying to set is server only");
+        case IESERVERONLY: snprintf(errstr, len, "some option you are trying to set is server only");
             break;
-        case IECLIENTONLY:
-            snprintf(errstr, len, "some option you are trying to set is client only");
+        case IECLIENTONLY: snprintf(errstr, len, "some option you are trying to set is client only");
             break;
-        case IEDURATION:
-            snprintf(errstr, len, "test duration too long (maximum = %d seconds)", MAX_TIME);
+        case IEDURATION: snprintf(errstr, len, "test duration too long (maximum = %d seconds)", MAX_TIME);
             break;
-        case IENUMSTREAMS:
-            snprintf(errstr, len, "number of parallel streams too large (maximum = %d)", MAX_STREAMS);
+        case IENUMSTREAMS: snprintf(errstr, len, "number of parallel streams too large (maximum = %d)", MAX_STREAMS);
             break;
-        case IEBLOCKSIZE:
-            snprintf(errstr, len, "block size too large (maximum = %d bytes)", MAX_BLOCKSIZE);
+        case IEBLOCKSIZE: snprintf(errstr, len, "block size too large (maximum = %d bytes)", MAX_BLOCKSIZE);
             break;
-        case IEBUFSIZE:
-            snprintf(errstr, len, "socket buffer size too large (maximum = %d bytes)", MAX_TCP_BUFFER);
+        case IEBUFSIZE: snprintf(errstr, len, "socket buffer size too large (maximum = %d bytes)", MAX_TCP_BUFFER);
             break;
-        case IEINTERVAL:
-            snprintf(errstr, len, "invalid report interval (min = %g, max = %g seconds)", MIN_INTERVAL, MAX_INTERVAL);
+        case IEINTERVAL: snprintf(errstr, len, "invalid report interval (min = %g, max = %g seconds)", MIN_INTERVAL, MAX_INTERVAL);
             break;
-    case IEBIND: /* UNUSED */
-            snprintf(errstr, len, "--bind must be specified to use --cport");
+        case IEBIND: /* UNUSED */ snprintf(errstr, len, "--bind must be specified to use --cport");
             break;
-        case IEUDPBLOCKSIZE:
-            snprintf(errstr, len, "block size invalid (minimum = %d bytes, maximum = %d bytes)", MIN_UDP_BLOCKSIZE, MAX_UDP_BLOCKSIZE);
+        case IEUDPBLOCKSIZE: snprintf(errstr, len, "block size invalid (minimum = %d bytes, maximum = %d bytes)", MIN_UDP_BLOCKSIZE, MAX_UDP_BLOCKSIZE);
             break;
-        case IEBADTOS:
-            snprintf(errstr, len, "bad TOS value (must be between 0 and 255 inclusive)");
+        case IEBADTOS: snprintf(errstr, len, "bad TOS value (must be between 0 and 255 inclusive)");
             break;
-        case IESETCLIENTAUTH:
-             snprintf(errstr, len, "you must specify username (max 20 chars), password (max 20 chars) and a path to a valid public rsa client to be used");
+        case IESETCLIENTAUTH: snprintf(errstr, len, "you must specify username (max 20 chars), password (max 20 chars) and a path to a valid public rsa client to be used");
             break;
-        case IESETSERVERAUTH:
-             snprintf(errstr, len, "you must specify path to a valid private rsa server to be used and a user credential file");
+        case IESETSERVERAUTH: snprintf(errstr, len, "you must specify path to a valid private rsa server to be used and a user credential file");
             break;
-	case IEBADFORMAT:
-	    snprintf(errstr, len, "bad format specifier (valid formats are in the set [kmgtKMGT])");
+	case IEBADFORMAT: snprintf(errstr, len, "bad format specifier (valid formats are in the set [kmgtKMGT])");
 	    break;
-	case IEBADPORT:
-	    snprintf(errstr, len, "port number must be between 1 and 65535 inclusive");
+	case IEBADPORT: snprintf(errstr, len, "port number must be between 1 and 65535 inclusive");
 	    break;
-        case IEMSS:
-            snprintf(errstr, len, "TCP MSS too large (maximum = %d bytes)", MAX_MSS);
+        case IEMSS: snprintf(errstr, len, "TCP MSS too large (maximum = %d bytes)", MAX_MSS);
             break;
-        case IENOSENDFILE:
-            snprintf(errstr, len, "this OS does not support sendfile");
+        case IENOSENDFILE: snprintf(errstr, len, "this OS does not support sendfile");
             break;
-        case IEOMIT:
-            snprintf(errstr, len, "bogus value for --omit");
+        case IEOMIT: snprintf(errstr, len, "bogus value for --omit");
             break;
-        case IEUNIMP:
-            snprintf(errstr, len, "an option you are trying to set is not implemented yet");
+        case IEUNIMP: snprintf(errstr, len, "an option you are trying to set is not implemented yet");
             break;
-        case IEFILE:
-            snprintf(errstr, len, "unable to open -F file");
+        case IEFILE: snprintf(errstr, len, "unable to open -F file");
             perr = 1;
             break;
-        case IEBURST:
-            snprintf(errstr, len, "invalid burst count (maximum = %d)", MAX_BURST);
+        case IEBURST: snprintf(errstr, len, "invalid burst count (maximum = %d)", MAX_BURST);
             break;
-        case IEENDCONDITIONS:
-            snprintf(errstr, len, "only one test end condition (-t, -n, -k) may be specified");
+        case IEENDCONDITIONS: snprintf(errstr, len, "only one test end condition (-t, -n, -k) may be specified");
             break;
-	case IELOGFILE:
-	    snprintf(errstr, len, "unable to open log file");
+	case IELOGFILE: snprintf(errstr, len, "unable to open log file");
 	    perr = 1;
 	    break;
-	case IENOSCTP:
-	    snprintf(errstr, len, "no SCTP support available");
+	case IENOSCTP: snprintf(errstr, len, "no SCTP support available");
 	    break;
-        case IENEWTEST:
-            snprintf(errstr, len, "unable to create a new test");
+        case IENEWTEST: snprintf(errstr, len, "unable to create a new test");
             perr = 1;
             break;
-        case IEINITTEST:
-            snprintf(errstr, len, "test initialization failed");
+        case IEINITTEST: snprintf(errstr, len, "test initialization failed");
             perr = 1;
             break;
-        case IEAUTHTEST:
-            snprintf(errstr, len, "test authorization failed");
+        case IEAUTHTEST: snprintf(errstr, len, "test authorization failed");
             break;
-        case IELISTEN:
-            snprintf(errstr, len, "unable to start listener for connections");
+        case IELISTEN: snprintf(errstr, len, "unable to start listener for connections");
 	    herr = 1;
             perr = 1;
             break;
-        case IECONNECT:
-            snprintf(errstr, len, "unable to connect to server");
+        case IECONNECT: snprintf(errstr, len, "unable to connect to server");
             perr = 1;
 	    herr = 1;
             break;
-        case IEACCEPT:
-            snprintf(errstr, len, "unable to accept connection from client");
+        case IEACCEPT: snprintf(errstr, len, "unable to accept connection from client");
             herr = 1;
             perr = 1;
             break;
-        case IESENDCOOKIE:
-            snprintf(errstr, len, "unable to send cookie to server");
+        case IESENDCOOKIE: snprintf(errstr, len, "unable to send cookie to server");
             perr = 1;
             break;
-        case IERECVCOOKIE:
-            snprintf(errstr, len, "unable to receive cookie at server");
+        case IERECVCOOKIE: snprintf(errstr, len, "unable to receive cookie at server");
             perr = 1;
             break;
-        case IECTRLWRITE:
-            snprintf(errstr, len, "unable to write to the control socket");
+        case IECTRLWRITE: snprintf(errstr, len, "unable to write to the control socket");
             perr = 1;
             break;
-        case IECTRLREAD:
-            snprintf(errstr, len, "unable to read from the control socket");
+        case IECTRLREAD: snprintf(errstr, len, "unable to read from the control socket");
             perr = 1;
             break;
-        case IECTRLCLOSE:
-            snprintf(errstr, len, "control socket has closed unexpectedly");
+        case IECTRLCLOSE: snprintf(errstr, len, "control socket has closed unexpectedly");
             break;
-        case IEMESSAGE:
-            snprintf(errstr, len, "received an unknown control message");
+        case IEMESSAGE: snprintf(errstr, len, "received an unknown control message");
             break;
-        case IESENDMESSAGE:
-            snprintf(errstr, len, "unable to send control message");
+        case IESENDMESSAGE: snprintf(errstr, len, "unable to send control message");
             perr = 1;
             break;
-        case IERECVMESSAGE:
-            snprintf(errstr, len, "unable to receive control message");
+        case IERECVMESSAGE: snprintf(errstr, len, "unable to receive control message");
             perr = 1;
             break;
-        case IESENDPARAMS:
-            snprintf(errstr, len, "unable to send parameters to server");
+        case IESENDPARAMS: snprintf(errstr, len, "unable to send parameters to server");
             perr = 1;
             break;
-        case IERECVPARAMS:
-            snprintf(errstr, len, "unable to receive parameters from client");
+        case IERECVPARAMS: snprintf(errstr, len, "unable to receive parameters from client");
             perr = 1;
             break;
-        case IEPACKAGERESULTS:
-            snprintf(errstr, len, "unable to package results");
+        case IEPACKAGERESULTS: snprintf(errstr, len, "unable to package results");
             perr = 1;
             break;
-        case IESENDRESULTS:
-            snprintf(errstr, len, "unable to send results");
+        case IESENDRESULTS: snprintf(errstr, len, "unable to send results");
             perr = 1;
             break;
-        case IERECVRESULTS:
-            snprintf(errstr, len, "unable to receive results");
+        case IERECVRESULTS: snprintf(errstr, len, "unable to receive results");
             perr = 1;
             break;
-        case IESELECT:
-            snprintf(errstr, len, "select failed");
+        case IESELECT: snprintf(errstr, len, "select failed");
             perr = 1;
             break;
-        case IECLIENTTERM:
-            snprintf(errstr, len, "the client has terminated");
+        case IECLIENTTERM: snprintf(errstr, len, "the client has terminated");
             break;
-        case IESERVERTERM:
-            snprintf(errstr, len, "the server has terminated");
+        case IESERVERTERM: snprintf(errstr, len, "the server has terminated");
             break;
-        case IEACCESSDENIED:
-            snprintf(errstr, len, "the server is busy running a test. try again later");
+        case IEACCESSDENIED: snprintf(errstr, len, "the server is busy running a test. try again later");
             break;
-        case IESETNODELAY:
-            snprintf(errstr, len, "unable to set TCP/SCTP NODELAY");
+        case IESETNODELAY: snprintf(errstr, len, "unable to set TCP/SCTP NODELAY");
             perr = 1;
             break;
-        case IESETMSS:
-            snprintf(errstr, len, "unable to set TCP/SCTP MSS");
+        case IESETMSS: snprintf(errstr, len, "unable to set TCP/SCTP MSS");
             perr = 1;
             break;
-        case IESETBUF:
-            snprintf(errstr, len, "unable to set socket buffer size");
+        case IESETBUF: snprintf(errstr, len, "unable to set socket buffer size");
             perr = 1;
             break;
-        case IESETTOS:
-            snprintf(errstr, len, "unable to set IP TOS");
+        case IESETTOS: snprintf(errstr, len, "unable to set IP TOS");
             perr = 1;
             break;
-        case IESETCOS:
-            snprintf(errstr, len, "unable to set IPv6 traffic class");
+        case IESETCOS: snprintf(errstr, len, "unable to set IPv6 traffic class");
             perr = 1;
             break;
-        case IESETFLOW:
-            snprintf(errstr, len, "unable to set IPv6 flow label");
+        case IESETFLOW: snprintf(errstr, len, "unable to set IPv6 flow label");
             break;
-        case IEREUSEADDR:
-            snprintf(errstr, len, "unable to reuse address on socket");
+        case IEREUSEADDR: snprintf(errstr, len, "unable to reuse address on socket");
             perr = 1;
             break;
-        case IENONBLOCKING:
-            snprintf(errstr, len, "unable to set socket to non-blocking");
+        case IENONBLOCKING: snprintf(errstr, len, "unable to set socket to non-blocking");
             perr = 1;
             break;
-        case IESETWINDOWSIZE:
-            snprintf(errstr, len, "unable to set socket window size");
+        case IESETWINDOWSIZE: snprintf(errstr, len, "unable to set socket window size");
             perr = 1;
             break;
-        case IEPROTOCOL:
-            snprintf(errstr, len, "protocol does not exist");
+        case IEPROTOCOL: snprintf(errstr, len, "protocol does not exist");
             break;
-        case IEAFFINITY:
-            snprintf(errstr, len, "unable to set CPU affinity");
+        case IEAFFINITY: snprintf(errstr, len, "unable to set CPU affinity");
             perr = 1;
             break;
-	case IEDAEMON:
-	    snprintf(errstr, len, "unable to become a daemon");
+	case IEDAEMON: snprintf(errstr, len, "unable to become a daemon");
 	    perr = 1;
 	    break;
-        case IECREATESTREAM:
-            snprintf(errstr, len, "unable to create a new stream");
+        case IECREATESTREAM: snprintf(errstr, len, "unable to create a new stream");
             herr = 1;
             perr = 1;
             break;
-        case IEINITSTREAM:
-            snprintf(errstr, len, "unable to initialize stream");
+        case IEINITSTREAM: snprintf(errstr, len, "unable to initialize stream");
             herr = 1;
             perr = 1;
             break;
-        case IESTREAMLISTEN:
-            snprintf(errstr, len, "unable to start stream listener");
+        case IESTREAMLISTEN: snprintf(errstr, len, "unable to start stream listener");
 	    herr = 1;
             perr = 1;
             break;
-        case IESTREAMCONNECT:
-            snprintf(errstr, len, "unable to connect stream");
+        case IESTREAMCONNECT: snprintf(errstr, len, "unable to connect stream");
             herr = 1;
             perr = 1;
             break;
-        case IESTREAMACCEPT:
-            snprintf(errstr, len, "unable to accept stream connection");
+        case IESTREAMACCEPT: snprintf(errstr, len, "unable to accept stream connection");
             perr = 1;
             break;
-        case IESTREAMWRITE:
-            snprintf(errstr, len, "unable to write to stream socket");
+        case IESTREAMWRITE: snprintf(errstr, len, "unable to write to stream socket");
             perr = 1;
             break;
-        case IESTREAMREAD:
-            snprintf(errstr, len, "unable to read from stream socket");
+        case IESTREAMREAD: snprintf(errstr, len, "unable to read from stream socket");
             perr = 1;
             break;
-        case IESTREAMCLOSE:
-            snprintf(errstr, len, "stream socket has closed unexpectedly");
+        case IESTREAMCLOSE: snprintf(errstr, len, "stream socket has closed unexpectedly");
             break;
-        case IESTREAMID:
-            snprintf(errstr, len, "stream has an invalid id");
+        case IESTREAMID: snprintf(errstr, len, "stream has an invalid id");
             break;
-        case IENEWTIMER:
-            snprintf(errstr, len, "unable to create new timer");
+        case IENEWTIMER: snprintf(errstr, len, "unable to create new timer");
             perr = 1;
             break;
-        case IEUPDATETIMER:
-            snprintf(errstr, len, "unable to update timer");
+        case IEUPDATETIMER: snprintf(errstr, len, "unable to update timer");
             perr = 1;
             break;
-        case IESETCONGESTION:
-            snprintf(errstr, len, "unable to set TCP_CONGESTION: " 
-                                  "Supplied congestion control algorithm not supported on this host");
+        case IESETCONGESTION: snprintf(errstr, len, "unable to set TCP_CONGESTION: " 
+                                       "Supplied congestion control algorithm not supported on this host");
             break;
-	case IEPIDFILE:
-            snprintf(errstr, len, "unable to write PID file");
+	case IEPIDFILE: snprintf(errstr, len, "unable to write PID file");
             perr = 1;
             break;
-	case IEV6ONLY:
-	    snprintf(errstr, len, "Unable to set/reset IPV6_V6ONLY");
+	case IEV6ONLY: snprintf(errstr, len, "Unable to set/reset IPV6_V6ONLY");
 	    perr = 1;
 	    break;
-        case IESETSCTPDISABLEFRAG:
-            snprintf(errstr, len, "unable to set SCTP_DISABLE_FRAGMENTS");
+        case IESETSCTPDISABLEFRAG: snprintf(errstr, len, "unable to set SCTP_DISABLE_FRAGMENTS");
             perr = 1;
             break;
-        case IESETSCTPNSTREAM:
-            snprintf(errstr, len, "unable to set SCTP_INIT num of SCTP streams\n");
+        case IESETSCTPNSTREAM: snprintf(errstr, len, "unable to set SCTP_INIT num of SCTP streams\n");
             perr = 1;
             break;
-	case IESETPACING:
-	    snprintf(errstr, len, "unable to set socket pacing");
+	case IESETPACING: snprintf(errstr, len, "unable to set socket pacing");
 	    perr = 1;
 	    break;
-	case IESETBUF2:
-	    snprintf(errstr, len, "socket buffer size not set correctly");
+	case IESETBUF2: snprintf(errstr, len, "socket buffer size not set correctly");
 	    break;
-	case IEREVERSEBIDIR:
-	    snprintf(errstr, len, "cannot be both reverse and bidirectional");
-            break;
-	
+	case IEREVERSEBIDIR: snprintf(errstr, len, "cannot be both reverse and bidirectional");
+            break;	
     }
 
     /* Append the result of strerror() or gai_strerror() if appropriate */
     if (herr || perr)
         strncat(errstr, ": ", len - strlen(errstr) - 1);
+#ifndef __WIN32__
     if (errno && perr)
         strncat(errstr, strerror(errno), len - strlen(errstr) - 1);
+#else
+    if (perr)
+        strncat(errstr, STRERROR, len - strlen(errstr) - 1);
+#endif
     else if (herr && gerror) {
         strncat(errstr, gai_strerror(gerror), len - strlen(errstr) - 1);
 	gerror = 0;

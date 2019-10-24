@@ -480,7 +480,7 @@ iperf_sctp_connect(struct iperf_test *test)
     freeaddrinfo(server_res);
 
     /* Send cookie for verification */
-    if (Nwrite(s, test->cookie, COOKIE_SIZE, Psctp, test) < 0) {
+    if (waitWrite(s, test->cookie, COOKIE_SIZE, Psctp, test, ctrl_wait_ms) != COOKIE_SIZE) {
 	saved_errno = errno;
 	close(s);
 	errno = saved_errno;

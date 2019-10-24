@@ -29,6 +29,10 @@
 
 #include "iperf.h"
 
+extern int ctrl_wait_ms;
+
+int eWouldBlock();
+
 void nonblock(int s);
 
 void print_fdset(int max_fd, fd_set* read_set, fd_set* write_set);
@@ -37,7 +41,10 @@ int timeout_connect(int s, const struct sockaddr *name, socklen_t namelen, int t
 int netdial(int domain, int proto, char *local, const char* bind_dev, int local_port, char *server, int port, int timeout,
             struct iperf_test *test);
 int netannounce(int domain, int proto, char *local, const char* bind_dev, int port, struct iperf_test *test);
+int waitSocketReadable(int fd, int wait_for_ms);
+int waitRead(int fd, char *buf, size_t count, int prot, struct iperf_test *test, int timeout_ms);
 int Nread(int fd, char *buf, size_t count, int prot, struct iperf_test *test);
+int waitWrite(int fd, char *buf, size_t count, int prot, struct iperf_test *test, int timeout_ms);
 int Nwrite(int fd, const char *buf, size_t count, int prot, struct iperf_test *test) /* __attribute__((hot)) */;
 int has_sendfile(void);
 int Nsendfile(int fromfd, int tofd, const char *buf, size_t count) /* __attribute__((hot)) */;

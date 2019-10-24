@@ -241,7 +241,7 @@ iperf_handle_message_client(struct iperf_test *test)
     int rval;
     int32_t err;
 
-    if ((rval = Nread(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp, test)) <= 0) {
+    if ((rval = waitRead(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp, test, ctrl_wait_ms)) != sizeof(signed char)) {
         if (rval == 0) {
             i_errno = IECTRLCLOSE;
             return -1;
@@ -310,12 +310,12 @@ iperf_handle_message_client(struct iperf_test *test)
             i_errno = IEACCESSDENIED;
             return -1;
         case SERVER_ERROR:
-            if (Nread(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp, test) < 0) {
+            if (waitRead(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp, test, ctrl_wait_ms) != sizeof(err)) {
                 i_errno = IECTRLREAD;
                 return -1;
             }
 	    i_errno = ntohl(err);
-            if (Nread(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp, test) < 0) {
+            if (waitRead(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp, test, ctrl_wait_ms) != sizeof(err)) {
                 i_errno = IECTRLREAD;
                 return -1;
             }
@@ -350,7 +350,9 @@ iperf_connect(struct iperf_test *test)
         return -1;
     }
 
-    if (Nwrite(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp, test) < 0) {
+    setnonblocking(test->ctrl_sck, 1);
+
+    if (waitWrite(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp, test, ctrl_wait_ms) != COOKIE_SIZE) {
         i_errno = IESENDCOOKIE;
         return -1;
     }

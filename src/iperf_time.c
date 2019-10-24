@@ -65,6 +65,16 @@ iperf_time_now(struct iperf_time *time1)
 
 #endif
 
+uint64_t getCurMs() {
+    struct iperf_time tv;
+    uint64_t rv;
+    iperf_time_now(&tv);
+    rv = tv.secs * 1000;
+    rv += tv.usecs / 1000;
+    return rv;
+}
+    
+
 /* iperf_time_add_usecs
  *
  * Add a number of microseconds to a iperf_time.

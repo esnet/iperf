@@ -55,5 +55,6 @@ int parse_qos(const char *tos);
 
 #define NET_SOFTERROR -1
 #define NET_HARDERROR -2
+#define NET_HANGUP    -3 /* socket has been closed */
 
 #endif /* __NET_H */

@@ -107,8 +107,8 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    sent_time.usecs = usec;
 	}
 
-	if (sp->test->debug)
-	    fprintf(stderr, "pcount %" PRIu64 " packet_count %d\n", pcount, sp->packet_count);
+	if (sp->test->debug > 1)
+	    iperf_err(sp->test, "udp pcount %" PRIu64 " packet_count %d\n", pcount, sp->packet_count);
 
 	/*
 	 * Try to handle out of order packets.  The way we do this

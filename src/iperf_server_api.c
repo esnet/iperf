@@ -175,12 +175,12 @@ iperf_handle_message_server(struct iperf_test *test)
     signed char s;
 
     // XXX: Need to rethink how this behaves to fit API
-    if (test->debug)
-        iperf_err(test, "Calling waitRead in handle-message-server, fd: %d", test->ctrl_sck);
+    //if (test->debug)
+    //    iperf_err(test, "Calling waitRead in handle-message-server, fd: %d", test->ctrl_sck);
     if ((rval = waitRead(test->ctrl_sck, (char*) &s, sizeof(s), Ptcp, test, ctrl_wait_ms)) != sizeof(s)) {
         iperf_err(test, "The client has unexpectedly closed the connection (handle-message-server): %s  rval: %d",
                   STRERROR, rval);
-        if (rval == 0) {
+        if ((rval == 0) || (rval == NET_HANGUP)) {
             i_errno = IECTRLCLOSE;
             return -1;
         } else {

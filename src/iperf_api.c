@@ -1672,13 +1672,14 @@ iperf_exchange_parameters(struct iperf_test *test)
         }
 
         if (test->debug) {
-            fprintf(stderr, "iperf-exchange-parameters, setting read FD: %d.\n", s);
+            iperf_err(test, "iperf-exchange-parameters, setting read FD: %d.\n", s);
         }
         
         IFD_SET(s, &test->read_set, test);
         test->prot_listener = s;
 
         // Send the control message to create streams and start the test
+        test->create_streams_state_at = getCurMs();
 	if (iperf_set_send_state(test, CREATE_STREAMS) != 0)
             return -1;
 
@@ -2655,6 +2656,7 @@ iperf_reset_test(struct iperf_test *test)
     CPU_ZERO(&test->cpumask);
 #endif /* HAVE_CPUSET_SETAFFINITY */
     iperf_set_state(test, TEST_INIT, __FUNCTION__);
+    test->create_streams_state_at = 0;
     
     test->ctrl_sck = -1;
     test->prot_listener = -1;

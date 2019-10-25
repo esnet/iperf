@@ -47,12 +47,14 @@ iperf_err(struct iperf_test *test, const char *format, ...)
 	cJSON_AddStringToObject(test->json_top, "error", str);
     else
 	if (test && test->outfile && test->outfile != stdout) {
-	    fprintf(test->outfile, "%llu %s iperf3: %s\n",
-                    getCurMs(), iperf_get_state_str(test->state), str);
+	    fprintf(test->outfile, "%llu %s %s iperf3: %s\n",
+                    getCurMs(), test->protocol ? test->protocol->name : "NULL-PROTO",
+                    iperf_get_state_str(test->state), str);
 	}
 	else {
-	    fprintf(stderr, "%llu %s iperf3: %s\n",
-                    getCurMs(), iperf_get_state_str(test->state), str);
+	    fprintf(stderr, "%llu %s %s iperf3: %s\n",
+                    getCurMs(), test->protocol ? test->protocol->name : "NULL-PROTO",
+                    iperf_get_state_str(test->state), str);
 	}
     va_end(argp);
 }

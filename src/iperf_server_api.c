@@ -699,6 +699,16 @@ iperf_run_server(struct iperf_test *test)
             if (test->debug)
                 iperf_err(test, "Done with timers..\n");
 	}
+
+        if (test->state == CREATE_STREAMS) {
+            // If it has been too long, then consider the test a failure and return.
+            if (test->create_streams_state_at + 5000 < getCurMs()) {
+                iperf_err(test, "Test has been in create-streams state for: %llums, aborting.\n",
+                          (unsigned long long)(getCurMs() - test->create_streams_state_at));
+                cleanup_server(test);
+                return -1;
+            }
+        }
     }
 
     if (test->debug)

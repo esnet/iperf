@@ -605,8 +605,6 @@ iperf_udp_connect(struct iperf_test *test)
 
     for (i = 0; i<30; i++) {
         fd_set read_fds;
-        FD_ZERO(&read_fds);            //Zero out the file descriptor set
-        FD_SET(s, &read_fds);     //Set the current socket file descriptor into the set
 
         /* UDP messages can be lost and will not automatically be retransmitted.
          * so we will retry and use select to not block forever.
@@ -632,8 +630,11 @@ iperf_udp_connect(struct iperf_test *test)
          */
         //We are going to use select to wait for the socket to connect
         struct timeval tv;
-        tv.tv_sec = 1;  //The second portion of the struct
-        tv.tv_usec = 0; //The microsecond portion of the struct
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
+
+        FD_ZERO(&read_fds);
+        FD_SET(s, &read_fds);
 
         int select_ret = select(s + 1, &read_fds, NULL, NULL, &tv);
         if (select_ret == 1) {
@@ -657,9 +658,7 @@ iperf_udp_connect(struct iperf_test *test)
     }
 
     /* if here, we could not get a response in time. */
-    if (test->debug) {
-        iperf_err(test, "Did not receive UDP connect response in time.");
-    }
+    iperf_err(test, "Did not receive UDP connect response in time.");
     iclosesocket(s, test);
     i_errno = IESTREAMREAD;
     return -1;

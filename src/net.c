@@ -443,11 +443,11 @@ int waitRead(int fd, char *buf, size_t count, int prot, struct iperf_test *test,
         int r;
         
         if (test->debug > 1)
-            iperf_err(test, "waitRead, calling Nread, fd: %d count: %d  sofar: %d", fd, count, sofar);
+            iperf_err(test, "waitRead, calling Nread, fd: %d count: %d  sofar: %d", fd, (int)count, sofar);
         r = Nread(fd, buf + sofar, count - sofar, prot, test);
         if (test->debug > 1)
             iperf_err(test, "waitRead, Nread, fd: %d count: %d  sofar: %d rv: %d",
-                      fd, count, sofar, r);
+                      fd, (int)count, sofar, r);
         if (r < 0) {
             if (sofar == 0)
                 return r;
@@ -472,7 +472,7 @@ int waitRead(int fd, char *buf, size_t count, int prot, struct iperf_test *test,
         select_ret = select(fd + 1, &read_fds, NULL, NULL, &tv);
         if (test->debug > 1)
             iperf_err(test, "waitRead, done with select, fd: %d count: %d  sofar: %d select-ret: %d",
-                      fd, count, sofar, select_ret);
+                      fd, (int)count, sofar, select_ret);
         if (select_ret <= 0)
             return sofar;
     }

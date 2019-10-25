@@ -377,6 +377,15 @@ void cleanup_server(struct iperf_test *test)
     iclosesocket(test->listener, test);
     iclosesocket(test->prot_listener, test);
 
+    /* Free streams */
+    struct iperf_stream *sp;
+    while (!SLIST_EMPTY(&test->streams)) {
+        sp = SLIST_FIRST(&test->streams);
+        SLIST_REMOVE_HEAD(&test->streams, streams);
+        iclosesocket(sp->socket, test);
+        iperf_free_stream(sp);
+    }
+
     /* Cancel any remaining timers. */
     if (test->stats_timer != NULL) {
 	tmr_cancel(test->stats_timer);
@@ -626,7 +635,7 @@ iperf_run_server(struct iperf_test *test)
                             IFD_SET(test->listener, &test->read_set, test);
                         }
                     }
-                    test->prot_listener = -1;
+
 		    if (iperf_set_send_state(test, TEST_START) != 0) {
                         return -1;
 		    }

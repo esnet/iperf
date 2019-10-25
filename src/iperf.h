@@ -230,7 +230,7 @@ struct iperf_stream
     int       local_port;
     int       remote_port;
     int       socket;
-    int       id;
+    int       stream_id;
     int       sender;
 	/* XXX: is settings just a pointer to the same struct in iperf_test? if not, 
 		should it be? */

@@ -2000,7 +2000,7 @@ send_results(struct iperf_test *test)
 		    cJSON_AddItemToArray(j_streams, j_stream);
 		    bytes_transferred = sp->sender ? (sp->result->bytes_sent - sp->result->bytes_sent_omit) : sp->result->bytes_received;
 		    retransmits = (sp->sender && test->sender_has_retransmits) ? sp->result->stream_retrans : -1;
-		    cJSON_AddNumberToObject(j_stream, "id", sp->id);
+		    cJSON_AddNumberToObject(j_stream, "id", sp->stream_id);
 		    cJSON_AddNumberToObject(j_stream, "bytes", bytes_transferred);
 		    cJSON_AddNumberToObject(j_stream, "retransmits", retransmits);
 		    cJSON_AddNumberToObject(j_stream, "jitter", sp->jitter);
@@ -2122,7 +2122,8 @@ get_results(struct iperf_test *test)
 			    cerror = j_errors->valueint;
 			    pcount = j_packets->valueint;
 			    SLIST_FOREACH(sp, &test->streams, streams)
-				if (sp->id == sid) break;
+				if (sp->stream_id == sid)
+                                    break;
 			    if (sp == NULL) {
 				i_errno = IESTREAMID;
 				r = -1;
@@ -3889,7 +3890,7 @@ iperf_add_stream(struct iperf_test *test, struct iperf_stream *sp)
 
     if (SLIST_EMPTY(&test->streams)) {
         SLIST_INSERT_HEAD(&test->streams, sp, streams);
-        sp->id = 1;
+        sp->stream_id = 1;
     } else {
         // for (n = test->streams, i = 2; n->next; n = n->next, ++i);
         i = 2;
@@ -3898,7 +3899,7 @@ iperf_add_stream(struct iperf_test *test, struct iperf_stream *sp)
             ++i;
         }
         SLIST_INSERT_AFTER(prev, sp, streams);
-        sp->id = i;
+        sp->stream_id = i;
     }
 }
 

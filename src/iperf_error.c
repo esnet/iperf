@@ -48,12 +48,12 @@ iperf_err(struct iperf_test *test, const char *format, ...)
     else
 	if (test && test->outfile && test->outfile != stdout) {
 	    fprintf(test->outfile, "%llu %s %s iperf3: %s\n",
-                    getCurMs(), test->protocol ? test->protocol->name : "NULL-PROTO",
+                    (unsigned long long)getCurMs(), test->protocol ? test->protocol->name : "NULL-PROTO",
                     iperf_get_state_str(test->state), str);
 	}
 	else {
 	    fprintf(stderr, "%llu %s %s iperf3: %s\n",
-                    getCurMs(), test->protocol ? test->protocol->name : "NULL-PROTO",
+                    (unsigned long long)getCurMs(), test->protocol ? test->protocol->name : "NULL-PROTO",
                     iperf_get_state_str(test->state), str);
 	}
     va_end(argp);

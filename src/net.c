@@ -102,7 +102,7 @@ void nonblock(int s) {
 
 void print_fdset(int max_fd, fd_set* read_set, fd_set* write_set) {
     int i;
-    fprintf(stderr, "%llu read/write FD sets: ", getCurMs());
+    fprintf(stderr, "%llu read/write FD sets: ", (unsigned long long)getCurMs());
     for (i = 0; i<=max_fd; i++) {
         if (FD_ISSET(i, read_set)) {
             if (FD_ISSET(i, write_set)) {
@@ -129,10 +129,8 @@ timeout_connect(int s, const struct sockaddr *name, socklen_t namelen,
     int timeout)
 {
 	socklen_t optlen;
-	int flags, optval;
+	int optval;
 	int ret;
-
-	flags = 0;
 
 	if ((ret = connect(s, name, namelen)) != 0 && eWouldBlock()) {
 #ifndef __WIN32__

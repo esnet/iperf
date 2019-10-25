@@ -41,21 +41,36 @@ iperf_err(struct iperf_test *test, const char *format, ...)
     va_list argp;
     char str[1000];
 
+    /* For reasons that I don't understand, when I run iperf with debugging on windows,
+     * (inside power-shell on win 7 specifically)
+     * Then it appears it blocks on writing to stderr fairly often, until I hit enter in
+     * the shell.
+     * I do not see the problem writing to stdout.  So, switch err messages to stdout for
+     * windows. --Ben
+     */
+#ifdef __WIN32__
+    #define __OFILE stdout
+#else
+    #define __OFILE stderr
+#endif
+
     va_start(argp, format);
     vsnprintf(str, sizeof(str), format, argp);
-    if (test != NULL && test->json_output && test->json_top != NULL)
+    if (test != NULL && test->json_output && test->json_top != NULL) {
 	cJSON_AddStringToObject(test->json_top, "error", str);
-    else
-	if (test && test->outfile && test->outfile != stdout) {
+    }
+    else {
+	if (test && test->outfile && test->outfile != __OFILE) {
 	    fprintf(test->outfile, "%llu %s %s iperf3: %s\n",
                     (unsigned long long)getCurMs(), test->protocol ? test->protocol->name : "NULL-PROTO",
                     iperf_get_state_str(test->state), str);
 	}
 	else {
-	    fprintf(stderr, "%llu %s %s iperf3: %s\n",
+	    fprintf(__OFILE, "%llu %s %s iperf3: %s\n",
                     (unsigned long long)getCurMs(), test->protocol ? test->protocol->name : "NULL-PROTO",
                     iperf_get_state_str(test->state), str);
 	}
+    }
     va_end(argp);
 }
 

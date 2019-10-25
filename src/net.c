@@ -100,23 +100,23 @@ void nonblock(int s) {
 }//nonblock
 #endif
 
-void print_fdset(int max_fd, fd_set* read_set, fd_set* write_set) {
+void print_fdset(int max_fd, fd_set* read_set, fd_set* write_set, struct iperf_test *test) {
     int i;
-    fprintf(stderr, "%llu read/write FD sets: ", (unsigned long long)getCurMs());
+    iperf_err(test, "%llu read/write FD sets: ", (unsigned long long)getCurMs());
     for (i = 0; i<=max_fd; i++) {
         if (FD_ISSET(i, read_set)) {
             if (FD_ISSET(i, write_set)) {
-                fprintf(stderr, "%i RW ", i);
+                fprintf(stdout, "%i RW ", i);
             }
             else {
-                fprintf(stderr, "%i RO ", i);
+                fprintf(stdout, "%i RO ", i);
             }
         }
         else if (FD_ISSET(i, write_set)) {
-            fprintf(stderr, "%i WO ", i);
+            fprintf(stdout, "%i WO ", i);
         }
     }
-    fprintf(stderr, "\n");
+    fprintf(stdout, "\n");
 }
 
 /*

@@ -80,7 +80,7 @@ iperf_server_listen(struct iperf_test *test)
 	    ** kernel does not actually do IPv6.  This is not too unusual,
 	    ** v6 support is and perhaps always will be spotty.
 	    */
-	    warning("this system does not seem to support IPv6 - trying IPv4");
+	    iperf_err(test, "this system does not seem to support IPv6 - trying IPv4");
 	    test->settings->domain = AF_INET;
 	    goto retry;
 	} else {
@@ -468,7 +468,7 @@ iperf_run_server(struct iperf_test *test)
             else
                 iperf_err(test, "timeout NULL, max-fd: %d state: %d(%s)", test->max_fd,
                           test->state, iperf_get_state_str(test->state));
-            print_fdset(test->max_fd, &read_set, &write_set);
+            print_fdset(test->max_fd, &read_set, &write_set, test);
         }
         result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
 
@@ -476,9 +476,9 @@ iperf_run_server(struct iperf_test *test)
             iperf_err(test, "select result: %d, listener: %d  ISSET-listener: %d  test-state: %d(%s)",
                       result, test->listener, FD_ISSET(test->listener, &read_set), test->state,
                       iperf_get_state_str(test->state));
-            iperf_err(test, "prot-listener: %d  ISSET: %d  max-fd: %d\n",
+            iperf_err(test, "prot-listener: %d  ISSET: %d  max-fd: %d",
                       test->prot_listener, FD_ISSET(test->prot_listener, &read_set), test->max_fd);
-            print_fdset(test->max_fd, &read_set, &write_set);
+            print_fdset(test->max_fd, &read_set, &write_set, test);
             last_dbg = now.secs;
         }
 
@@ -550,7 +550,7 @@ iperf_run_server(struct iperf_test *test)
 				 * continue.
 				 */
 				if (errno == ENOENT) {
-				    warning("TCP congestion control algorithm not supported");
+				    iperf_err(test, "TCP congestion control algorithm not supported");
 				}
 				else {
 				    saved_errno = errno;
@@ -692,11 +692,11 @@ iperf_run_server(struct iperf_test *test)
 	if (result == 0 ||
 	    (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0)) {
 	    /* Run the timers. */
-            if (test->debug)
+            if (test->debug > 1)
                 iperf_err(test, "Running timers..\n");
 	    iperf_time_now(&now);
 	    tmr_run(&now);
-            if (test->debug)
+            if (test->debug > 1)
                 iperf_err(test, "Done with timers..\n");
 	}
 

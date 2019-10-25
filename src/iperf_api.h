@@ -277,7 +277,6 @@ void iperf_catch_sigend(void (*handler)(int));
 void iperf_got_sigend(struct iperf_test *test) __attribute__ ((noreturn));
 void usage(void);
 void usage_long(FILE * f);
-void warning(char *);
 int iperf_exchange_results(struct iperf_test *);
 int iperf_init_test(struct iperf_test *);
 int iperf_create_send_timers(struct iperf_test *);

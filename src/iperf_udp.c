@@ -151,7 +151,8 @@ iperf_udp_recv(struct iperf_stream *sp)
 	
 	    /* Log the out-of-order packet */
 	    if (sp->test->debug) 
-		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count, sp->socket);
+		iperf_err(sp->test, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d",
+                          pcount, sp->packet_count, sp->socket);
 	}
 
 	/*
@@ -301,11 +302,8 @@ iperf_udp_buffercheck(struct iperf_test *test, int s)
 	return -1;
     }
     if (test->settings->blksize > sndbuf_actual) {
-	char str[80];
-	snprintf(str, sizeof(str),
-		 "Block size %d > sending socket buffer size %d",
-		 test->settings->blksize, sndbuf_actual);
-	warning(str);
+        iperf_err(test, "Block size %d > sending socket buffer size %d",
+                  test->settings->blksize, sndbuf_actual);
 	rc = 1;
     }
 
@@ -323,11 +321,8 @@ iperf_udp_buffercheck(struct iperf_test *test, int s)
 	return -1;
     }
     if (test->settings->blksize > rcvbuf_actual) {
-	char str[80];
-	snprintf(str, sizeof(str),
-		 "Block size %d > receiving socket buffer size %d",
-		 test->settings->blksize, rcvbuf_actual);
-	warning(str);
+        iperf_err(test, "Block size %d > receiving socket buffer size %d",
+                  test->settings->blksize, rcvbuf_actual);
 	rc = 1;
     }
 
@@ -389,14 +384,13 @@ iperf_udp_accept(struct iperf_test *test)
         }
         else {
             if (test->debug) {
-                fprintf(stderr, "Did not receive response, try %d / 30, in udp-accept.\n",
-                        i);
+                iperf_err(test, "Did not receive response, try %d / 30, in udp-accept.", i);
             }
         }
     }
 
     /* If here, we did not get a response in time. */
-    fprintf(stderr, "Did not receive frame within 30 seconds in udp-accept.\n");
+    iperf_err(test, "Did not receive frame within 30 seconds in udp-accept.");
     i_errno = IESTREAMACCEPT;
     return -1;
 
@@ -438,7 +432,7 @@ got_response:
 		printf("Setting fair-queue socket pacing to %u\n", fqrate);
 	    }
 	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &fqrate, sizeof(fqrate)) < 0) {
-		warning("Unable to set socket pacing");
+		iperf_err(test, "Unable to set socket pacing");
 	    }
 	}
     }
@@ -458,7 +452,7 @@ got_response:
     test->prot_listener = netannounce(test->settings->domain, Pudp, test->bind_address, test->bind_dev,
                                       test->server_port, test);
     if (test->debug) {
-        fprintf(stderr, "udp-accept, new prot-listener socket: %d\n", test->prot_listener);
+        iperf_err(test, "udp-accept, new prot-listener socket: %d", test->prot_listener);
     }
 
     if (test->prot_listener < 0) {
@@ -505,9 +499,8 @@ iperf_udp_listen(struct iperf_test *test)
     }
 
     if (test->debug) {
-        fprintf(stderr, "iperf-udp-listen, fd: %d\n", s);
+        iperf_err(test, "iperf-udp-listen, fd: %d", s);
     }
-
 
     /*
      * The caller will put this value into test->prot_listener.
@@ -532,13 +525,13 @@ iperf_udp_connect(struct iperf_test *test)
     int rc;
 
     if (test->debug) {
-        fprintf(stderr, "udp-connect called\n");
+        iperf_err(test, "udp-connect called");
     }
     
     /* Create and bind our local socket. */
     if ((s = netdial(test->settings->domain, Pudp, test->bind_address, test->bind_dev, test->bind_port,
                      test->server_hostname, test->server_port, -1, test)) < 0) {
-        fprintf(stderr, "udp-connect, netdial() failed: %s\n", STRERROR);
+        iperf_err(test, "udp-connect, netdial() failed: %s", STRERROR);
         i_errno = IESTREAMCONNECT;
         return -1;
     }
@@ -579,7 +572,7 @@ iperf_udp_connect(struct iperf_test *test)
 		printf("Setting fair-queue socket pacing to %u\n", fqrate);
 	    }
 	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &fqrate, sizeof(fqrate)) < 0) {
-		warning("Unable to set socket pacing");
+		iperf_err(test, "Unable to set socket pacing");
 	    }
 	}
     }
@@ -606,8 +599,8 @@ iperf_udp_connect(struct iperf_test *test)
      */
     buf = 123456789;		/* this can be pretty much anything */
     if (test->debug) {
-        fprintf(stderr, "sending '123456789' to peer to let them know we are here: %s",
-                hexdump((const unsigned char*)(&buf), sizeof(buf), 1, 1));
+        iperf_err(test, "sending '123456789' to peer to let them know we are here: %s",
+                  hexdump((const unsigned char*)(&buf), sizeof(buf), 1, 1));
     }
 
     for (i = 0; i<30; i++) {
@@ -631,7 +624,7 @@ iperf_udp_connect(struct iperf_test *test)
         }
 
         if (test->debug) {
-            fprintf(stderr, "waiting to receive response from server\n");
+            iperf_err(test, "waiting to receive response from server");
         }
 
         /*
@@ -645,27 +638,27 @@ iperf_udp_connect(struct iperf_test *test)
         int select_ret = select(s + 1, &read_fds, NULL, NULL, &tv);
         if (select_ret == 1) {
             if ((sz = recv(s, (char*)&buf, sizeof(buf), 0)) < 0) {
-                fprintf(stderr, "Failed recv: %s  socket: %d\n", STRERROR, s);
+                iperf_err(test, "Failed recv: %s  socket: %d", STRERROR, s);
                 iclosesocket(s, test);
                 i_errno = IESTREAMREAD;
                 return -1;
             }
 
             if (test->debug) {
-                fprintf(stderr, "Received response from server: %s", hexdump((const unsigned char*)(&buf), sizeof(buf), 1, 1));
+                iperf_err(test, "Received response from server: %s", hexdump((const unsigned char*)(&buf), sizeof(buf), 1, 1));
             }
             return s;
         }
         else {
             if (test->debug) {
-                fprintf(stderr, "No response from server, will retry: %d / 30\n", i);
+                iperf_err(test, "No response from server, will retry: %d / 30", i);
             }
         }
     }
 
     /* if here, we could not get a response in time. */
     if (test->debug) {
-        fprintf(stderr, "Did not receive UDP connect response in time.\n");
+        iperf_err(test, "Did not receive UDP connect response in time.");
     }
     iclosesocket(s, test);
     i_errno = IESTREAMREAD;

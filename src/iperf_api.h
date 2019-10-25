@@ -303,6 +303,7 @@ int iperf_handle_message_client(struct iperf_test *);
 int iperf_client_end(struct iperf_test *);
 
 /* Server routines. */
+void cleanup_server(struct iperf_test *test);
 int iperf_run_server(struct iperf_test *);
 int iperf_server_listen(struct iperf_test *);
 int iperf_accept(struct iperf_test *);

@@ -370,12 +370,12 @@ create_server_omit_timer(struct iperf_test * test)
     return 0;
 }
 
-static void
-cleanup_server(struct iperf_test *test)
+void cleanup_server(struct iperf_test *test)
 {
     /* Close open test sockets */
     iclosesocket(test->ctrl_sck, test);
     iclosesocket(test->listener, test);
+    iclosesocket(test->prot_listener, test);
 
     /* Cancel any remaining timers. */
     if (test->stats_timer != NULL) {
@@ -484,7 +484,6 @@ iperf_run_server(struct iperf_test *test)
 
         if (result < 0 && errno != EINTR) {
             iperf_err(test, "Cleaning server, select had error: %s", STRERROR);
-	    cleanup_server(test);
             i_errno = IESELECT;
             return -1;
         }
@@ -494,7 +493,6 @@ iperf_run_server(struct iperf_test *test)
             if (FD_ISSET(test->listener, &read_set)) {
                 if (test->state != CREATE_STREAMS) {
                     if (iperf_accept(test) < 0) {
-			cleanup_server(test);
                         return -1;
                     }
 
@@ -515,7 +513,6 @@ iperf_run_server(struct iperf_test *test)
             // Check control socket
             if (FD_ISSET(test->ctrl_sck, &read_set)) {
                 if (iperf_handle_message_server(test) < 0) {
-		    cleanup_server(test);
                     return -1;
 		}
             }
@@ -524,7 +521,6 @@ iperf_run_server(struct iperf_test *test)
                 if (FD_ISSET(test->prot_listener, &read_set)) {
     
                     if ((s = test->protocol->accept(test)) < 0) {
-			cleanup_server(test);
                         return -1;
 		    }
 
@@ -555,7 +551,6 @@ iperf_run_server(struct iperf_test *test)
 				else {
 				    saved_errno = errno;
 				    iclosesocket(s, test);
-				    cleanup_server(test);
 				    errno = saved_errno;
 				    i_errno = IESETCONGESTION;
 				    return -1;
@@ -568,7 +563,6 @@ iperf_run_server(struct iperf_test *test)
 			    if (getsockopt(s, IPPROTO_TCP, TCP_CONGESTION, ca, &len) < 0) {
 				saved_errno = errno;
 				iclosesocket(s, test);
-				cleanup_server(test);
 				errno = saved_errno;
 				i_errno = IESETCONGESTION;
 				return -1;
@@ -595,7 +589,6 @@ iperf_run_server(struct iperf_test *test)
                     if (flag != -1) {
                         sp = iperf_new_stream(test, s, flag);
                         if (!sp) {
-                            cleanup_server(test);
                             return -1;
                         }
 
@@ -623,7 +616,6 @@ iperf_run_server(struct iperf_test *test)
                             iclosesocket(test->listener, test);
                             if ((s = netannounce(test->settings->domain, Ptcp, test->bind_address, test->bind_dev,
                                                  test->server_port, test)) < 0) {
-				cleanup_server(test);
                                 i_errno = IELISTEN;
                                 return -1;
                             }
@@ -636,28 +628,22 @@ iperf_run_server(struct iperf_test *test)
                     }
                     test->prot_listener = -1;
 		    if (iperf_set_send_state(test, TEST_START) != 0) {
-			cleanup_server(test);
                         return -1;
 		    }
                     if (iperf_init_test(test) < 0) {
-			cleanup_server(test);
                         return -1;
 		    }
 		    if (create_server_timers(test) < 0) {
-			cleanup_server(test);
                         return -1;
 		    }
 		    if (create_server_omit_timer(test) < 0) {
-			cleanup_server(test);
                         return -1;
 		    }
 		    if (test->mode != RECEIVER)
 			if (iperf_create_send_timers(test) < 0) {
-			    cleanup_server(test);
 			    return -1;
 			}
 		    if (iperf_set_send_state(test, TEST_RUNNING) != 0) {
-			cleanup_server(test);
                         return -1;
 		    }
                 }
@@ -666,23 +652,19 @@ iperf_run_server(struct iperf_test *test)
             if (test->state == TEST_RUNNING) {
                 if (test->mode == BIDIRECTIONAL) {
                     if (iperf_recv(test, &read_set) < 0) {
-                        cleanup_server(test);
                         return -1;
                     }
                     if (iperf_send(test, &write_set) < 0) {
-                        cleanup_server(test);
                         return -1;
                     }
                 } else if (test->mode == SENDER) {
                     // Reverse mode. Server sends.
                     if (iperf_send(test, &write_set) < 0) {
-			cleanup_server(test);
                         return -1;
 		    }
                 } else {
                     // Regular mode. Server receives.
                     if (iperf_recv(test, &read_set) < 0) {
-			cleanup_server(test);
                         return -1;
 		    }
                 }
@@ -705,7 +687,6 @@ iperf_run_server(struct iperf_test *test)
             if (test->create_streams_state_at + 5000 < getCurMs()) {
                 iperf_err(test, "Test has been in create-streams state for: %llums, aborting.\n",
                           (unsigned long long)(getCurMs() - test->create_streams_state_at));
-                cleanup_server(test);
                 return -1;
             }
         }
@@ -713,7 +694,6 @@ iperf_run_server(struct iperf_test *test)
 
     if (test->debug)
         iperf_err(test, "Done with server loop, cleaning up server.\n");
-    cleanup_server(test);
 
     if (test->json_output) {
 	if (iperf_json_finish(test) < 0)

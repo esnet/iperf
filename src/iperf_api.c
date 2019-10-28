@@ -381,6 +381,8 @@ void
 iperf_set_test_blksize(struct iperf_test *ipt, int blksize)
 {
     ipt->settings->blksize = blksize;
+    if (ipt->settings->buflen < blksize)
+        ipt->settings->buflen = blksize;
 }
 
 void
@@ -1345,6 +1347,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	return -1;
     }
     test->settings->blksize = blksize;
+    if (blksize < DEFAULT_TCP_BLKSIZE)
+        test->settings->buflen = DEFAULT_TCP_BLKSIZE;
+    else
+        test->settings->buflen = blksize;
 
     if (!rate_flag)
 	test->settings->rate = test->protocol->id == Pudp ? UDP_RATE : 0;
@@ -3682,7 +3688,7 @@ iperf_free_stream(struct iperf_stream *sp)
     struct iperf_interval_results *irp, *nirp;
 
     /* XXX: need to free interval list too! */
-    munmap(sp->buffer, sp->test->settings->blksize);
+    munmap(sp->buffer, sp->test->settings->buflen);
     close(sp->buffer_fd);
     if (sp->diskfile_fd >= 0) {
 	close(sp->diskfile_fd);
@@ -3776,14 +3782,14 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     }
 #endif
     
-    if (ftruncate(sp->buffer_fd, test->settings->blksize) < 0) {
-        iperf_err(test, "Failed to truncate, fd: %d  blksize: %d", sp->buffer_fd, test->settings->blksize);
+    if (ftruncate(sp->buffer_fd, test->settings->buflen) < 0) {
+        iperf_err(test, "Failed to truncate, fd: %d  buflen: %d", sp->buffer_fd, test->settings->buflen);
         i_errno = IECREATESTREAM;
         free(sp->result);
         free(sp);
         return NULL;
     }
-    sp->buffer = (char *) mmap(NULL, test->settings->blksize, PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
+    sp->buffer = (char *) mmap(NULL, test->settings->buflen, PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
     if (sp->buffer == MAP_FAILED) {
         iperf_err(test, "Failed to mmap.");
         i_errno = IECREATESTREAM;
@@ -3802,7 +3808,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 	sp->diskfile_fd = open(test->diskfile_name, sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC), S_IRUSR|S_IWUSR);
 	if (sp->diskfile_fd == -1) {
 	    i_errno = IEFILE;
-            munmap(sp->buffer, sp->test->settings->blksize);
+            munmap(sp->buffer, sp->test->settings->buflen);
             free(sp->result);
             free(sp);
 	    return NULL;
@@ -3816,13 +3822,13 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 
     /* Initialize stream */
     if (test->repeating_payload)
-        fill_with_repeating_pattern(sp->buffer, test->settings->blksize);
+        fill_with_repeating_pattern(sp->buffer, test->settings->buflen);
     else
-        ret = readentropy(sp->buffer, test->settings->blksize);
+        ret = readentropy(sp->buffer, test->settings->buflen);
 
     if ((ret < 0) || (iperf_init_stream(sp, test) < 0)) {
         close(sp->buffer_fd);
-        munmap(sp->buffer, sp->test->settings->blksize);
+        munmap(sp->buffer, sp->test->settings->buflen);
         free(sp->result);
         free(sp);
         return NULL;

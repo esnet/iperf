@@ -198,6 +198,7 @@ struct iperf_settings
     int       domain;               /* AF_INET or AF_INET6 */
     int       socket_bufsize;       /* window size for TCP */
     int       blksize;              /* size of read/writes (-l) */
+    int       buflen;               /* read/write buffer len, for tcp rcv, can be larger than blksize */
     uint64_t  rate;                 /* target data rate for application pacing*/
     uint64_t  fqrate;               /* target data rate for FQ pacing*/
     int	      pacing_timer;	    /* pacing timer in microseconds */

@@ -88,11 +88,21 @@ int
 iperf_tcp_send(struct iperf_stream *sp)
 {
     int r;
+    int wsize = sp->settings->blksize;
 
-    if (sp->test->zerocopy)
-	r = Nsendfile(sp->buffer_fd, sp->socket, sp->buffer, sp->settings->blksize);
-    else
-	r = Nwrite(sp->socket, sp->buffer, sp->settings->blksize, Ptcp, sp->test);
+    if (sp->test->zerocopy) {
+	r = Nsendfile(sp->buffer_fd, sp->socket, sp->buffer, wsize);
+    }
+    else {
+#ifdef __WIN32__
+        if (sp->settings->mss) {
+            // Windows cannot do mss, send smaller block-sizes instead.
+            if (sp->settings->mss < sp->settings->blksize)
+                wsize = sp->settings->mss;
+        }
+#endif
+	r = Nwrite(sp->socket, sp->buffer, wsize, Ptcp, sp->test);
+    }
 
     if (r < 0)
         return r;
@@ -101,7 +111,7 @@ iperf_tcp_send(struct iperf_stream *sp)
     sp->result->bytes_sent_this_interval += r;
 
     if (sp->test->debug > 1)
-       printf("tcp: sent %d bytes of %d, total %llu\n", r, sp->settings->blksize, (long long unsigned)sp->result->bytes_sent);
+       printf("tcp: sent %d bytes of %d, total %llu\n", r, wsize, (long long unsigned)sp->result->bytes_sent);
 
     return r;
 }

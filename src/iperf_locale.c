@@ -415,10 +415,6 @@ const char report_local[] = "local";
 const char report_remote[] = "remote";
 const char report_sender[] = "sender";
 const char report_receiver[] = "receiver";
-const char report_sender_not_available_format[] = "[%3d] (sender statistics not available)\n";
-const char report_sender_not_available_summary_format[] = "[%3s] (sender statistics not available)\n";
-const char report_receiver_not_available_format[] = "[%3d] (receiver statistics not available)\n";
-const char report_receiver_not_available_summary_format[] = "[%3s] (receiver statistics not available)\n";
 
 #if defined(linux)
 const char report_tcpInfo[] =

@@ -382,6 +382,7 @@ struct iperf_test
     Timer     *stats_timer;
     Timer     *reporter_timer;
     uint64_t  create_streams_state_at; /* when did we enter the create-streams state? */
+    uint64_t  done_at_ms;
 
     double cpu_util[3];                            /* cpu utilization of the test - total, user, system */
     double remote_cpu_util[3];                     /* cpu utilization for the remote host/client - total, user, system */

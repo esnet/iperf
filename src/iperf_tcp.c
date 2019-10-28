@@ -61,7 +61,8 @@ iperf_tcp_recv(struct iperf_stream *sp)
     r = Nread(sp->socket, sp->buffer, sp->settings->blksize, Ptcp, sp->test);
 
     if (r < 0) {
-        iperf_err(sp->test, "tcp-recv, failed (%s), socket: %d\n", STRERROR, sp->socket);
+        if (sp->test->debug) // normal to hit this in tcp client receive mode.
+            iperf_err(sp->test, "tcp-recv, failed (%s), socket: %d", STRERROR, sp->socket);
         return r;
     }
 

@@ -128,6 +128,8 @@ test_timer_proc(TimerClientData client_data, struct iperf_time *nowP)
 {
     struct iperf_test *test = client_data.p;
 
+    if (test->debug)
+        iperf_err(test, "test-timer-proc, setting done.");
     test->timer = NULL;
     test->done = 1;
 }
@@ -168,7 +170,7 @@ create_client_timers(struct iperf_test * test)
     test->timer = test->stats_timer = test->reporter_timer = NULL;
     if (test->duration != 0) {
 	test->done = 0;
-        test->timer = tmr_create(&now, test_timer_proc, cd, ( test->duration + test->omit ) * SEC_TO_US, 0);
+        test->timer = tmr_create(&now, test_timer_proc, cd, ( test->duration + test->omit) * SEC_TO_US, 0);
         if (test->timer == NULL) {
             i_errno = IEINITTEST;
             return -1;
@@ -535,7 +537,7 @@ iperf_run_client(struct iperf_test * test)
                 if (iperf_send(test, &write_set) < 0)
                     return -1;
                 if (iperf_recv(test, &read_set) < 0)
-                    return -1;
+                    test->done = 1; // peer could have just closed the connection since test was done.
 	    } else if (test->mode == SENDER) {
                 // Regular mode. Client sends.
                 if (iperf_send(test, &write_set) < 0)
@@ -543,7 +545,7 @@ iperf_run_client(struct iperf_test * test)
 	    } else {
                 // Reverse mode. Client receives.
                 if (iperf_recv(test, &read_set) < 0)
-                    return -1;
+                    test->done = 1; // peer could have just closed the connection since test was done.
 	    }
 
 
@@ -552,19 +554,12 @@ iperf_run_client(struct iperf_test * test)
             tmr_run(&now);
 
 	    /* Is the test done yet? */
-	    if ((!test->omitting) &&
-	        ((test->duration != 0 && test->done) ||
-	         (test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes) ||
-	         (test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks))) {
-
-		// Unset non-blocking for non-UDP tests
-		if (test->protocol->id != Pudp) {
-		    SLIST_FOREACH(sp, &test->streams, streams) {
-			setnonblocking(sp->socket, 0);
-		    }
-		}
+	    if (test->done ||
+                (test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes) ||
+                (test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks)) {
 
 		/* Yes, done!  Send TEST_END. */
+                iperf_err(test, "test is done");
 		test->done = 1;
 		cpu_util(test->cpu_util);
 		test->stats_callback(test);
@@ -578,10 +573,19 @@ iperf_run_client(struct iperf_test * test)
 	// and gets blocked, so it can't receive state changes
 	// from the client side.
 	else if (test->mode == RECEIVER && test->state == TEST_END) {
-	    if (iperf_recv(test, &read_set) < 0)
-		return -1;
+	    if (iperf_recv(test, &read_set) < 0) {
+                /* Recv sockets have been drained, wait a bit to see if we can exchange results */
+                if (test->done_at_ms == 0) {
+                    test->done_at_ms = getCurMs();
+                }
+                else {
+                    if (test->done_at_ms + 3000 < getCurMs()) { // 3 seconds to exchange results
+                        break;
+                    }
+                }
+            }
 	}
-    }
+    }/* while test state is not done */
 
     if (test->json_output) {
 	if (iperf_json_finish(test) < 0)

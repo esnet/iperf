@@ -1505,22 +1505,31 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 int
 iperf_recv(struct iperf_test *test, fd_set *read_setP)
 {
+    int valid_sock = 0;
     int r;
     struct iperf_stream *sp;
 
     SLIST_FOREACH(sp, &test->streams, streams) {
+        if (sp->socket < 0)
+            continue;
+        valid_sock++;
 	if (FD_ISSET(sp->socket, read_setP) && !sp->sender) {
 	    if ((r = sp->rcv(sp)) < 0) {
-                iperf_err(test, "Failed rcv: %s  socket: %d\n", STRERROR, sp->socket);
-		i_errno = IESTREAMREAD;
-		return r;
+                iperf_err(test, "Failed rcv: %s  socket: %d", STRERROR, sp->socket);
+                iclosesocket(sp->socket, test);
+                sp->socket = -1;
+                valid_sock--;
 	    }
-	    test->bytes_received += r;
-	    ++test->blocks_received;
-	    /* IFD_CLR(sp->socket, read_setP, test); // Don't see how this is helpful. --Ben */
+            else {
+                test->bytes_received += r;
+                ++test->blocks_received;
+                /* IFD_CLR(sp->socket, read_setP, test); // Don't see how this is helpful. --Ben */
+            }
 	}
     }
 
+    if (valid_sock == 0)
+        return -1;
     return 0;
 }
 
@@ -2652,6 +2661,7 @@ iperf_reset_test(struct iperf_test *test)
 #endif /* HAVE_CPUSET_SETAFFINITY */
     iperf_set_state(test, TEST_INIT, __FUNCTION__);
     test->create_streams_state_at = 0;
+    test->done_at_ms = 0;
     
     test->ctrl_sck = -1;
     test->prot_listener = -1;

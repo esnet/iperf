@@ -203,7 +203,6 @@ iperf_handle_message_server(struct iperf_test *test)
                 iclosesocket(sp->socket, test);
                 sp->socket = -1;
             }
-            test->reporter_callback(test);
 	    if (iperf_set_send_state(test, EXCHANGE_RESULTS) != 0)
                 return -1;
             if (iperf_exchange_results(test) < 0)
@@ -212,6 +211,7 @@ iperf_handle_message_server(struct iperf_test *test)
                 return -1;
             if (test->on_test_finish)
                 test->on_test_finish(test);
+            test->reporter_callback(test);
             break;
         case IPERF_DONE:
             break;

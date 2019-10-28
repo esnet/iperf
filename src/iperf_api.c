@@ -3359,13 +3359,7 @@ iperf_print_results(struct iperf_test *test)
                                                                 (double) receiver_time, (double) end_time, (int64_t) bytes_received,
                                                                 bandwidth * 8, stream_must_be_sender));
                     else
-                        if (test->role == 's' && sp->sender) {
-                            if (test->verbose)
-                                iperf_printf(test, report_receiver_not_available_format, sp->stream_id);
-                        }
-                        else {
-                            iperf_printf(test, report_bw_format, sp->stream_id, mbuf, start_time, receiver_time, ubuf, nbuf, report_receiver);
-                        }
+                        iperf_printf(test, report_bw_format, sp->stream_id, mbuf, start_time, receiver_time, ubuf, nbuf, report_receiver);
                 }
                 else {
                     /*
@@ -3381,13 +3375,9 @@ iperf_print_results(struct iperf_test *test)
                             lost_percent = 0.0;
                         }
 
-                        if (test->role == 's' && sp->sender) {
-                            if (test->verbose)
-                                iperf_printf(test, report_receiver_not_available_format, sp->stream_id);
-                        }
-                        else {
-                            iperf_printf(test, report_bw_udp_format, sp->stream_id, mbuf, start_time, receiver_time, ubuf, nbuf, sp->jitter * 1000.0, (sp->cnt_error - sp->omitted_cnt_error), (receiver_packet_count - sp->omitted_packet_count), lost_percent, report_receiver);
-                        }
+                        iperf_printf(test, report_bw_udp_format, sp->stream_id, mbuf, start_time, receiver_time, ubuf, nbuf,
+                                     sp->jitter * 1000.0, (sp->cnt_error - sp->omitted_cnt_error),
+                                     (receiver_packet_count - sp->omitted_packet_count), lost_percent, report_receiver);
                     }
                 }
             }

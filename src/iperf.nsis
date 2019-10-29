@@ -120,6 +120,7 @@ Section "install" Installation
   File "libcrypto-10.dll"
   File "libgcc_s_sjlj-1.dll"
   File "libgnurx-0.dll"
+  File "zlib1.dll"
 
 ;write uninstall information to the registry
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${LF_INSTALL_DIR}" "DisplayName" "${MUI_PRODUCT} (remove only)"

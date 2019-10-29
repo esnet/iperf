@@ -54,6 +54,7 @@ package_win32: ${TARG}
 	cp /usr/i686-w64-mingw32/sys-root/mingw/bin/libcrypto-10.dll ./
 	cp /usr/i686-w64-mingw32/sys-root/mingw/bin/libgcc_s_sjlj-1.dll ./
 	cp /usr/i686-w64-mingw32/sys-root/mingw/bin/libgnurx-0.dll ./
+	cp /usr/i686-w64-mingw32/sys-root/mingw/bin/zlib1.dll ./
 	cp ../LICENSE ./license.txt
 	makensis iperf.nsis
 

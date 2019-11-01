@@ -189,6 +189,26 @@ iperf_sctp_listen(struct iperf_test *test)
         return -1;
     }
 
+    if ((opt = test->settings->socket_bufsize)) {
+        int saved_errno;
+        if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) < 0) {
+            saved_errno = errno;
+            close(s);
+            freeaddrinfo(res);
+            errno = saved_errno;
+            i_errno = IESETBUF;
+            return -1;
+        }
+        if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) < 0) {
+            saved_errno = errno;
+            close(s);
+            freeaddrinfo(res);
+            errno = saved_errno;
+            i_errno = IESETBUF;
+            return -1;
+        }
+    }
+
 #if defined(IPV6_V6ONLY) && !defined(__OpenBSD__)
     if (res->ai_family == AF_INET6 && (test->settings->domain == AF_UNSPEC || 
         test->settings->domain == AF_INET6)) {
@@ -290,6 +310,26 @@ iperf_sctp_connect(struct iperf_test *test)
 	freeaddrinfo(server_res);
         i_errno = IESTREAMCONNECT;
         return -1;
+    }
+
+    if ((opt = test->settings->socket_bufsize)) {
+        int saved_errno;
+        if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) < 0) {
+            saved_errno = errno;
+            close(s);
+            freeaddrinfo(server_res);
+            errno = saved_errno;
+            i_errno = IESETBUF;
+            return -1;
+        }
+        if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) < 0) {
+            saved_errno = errno;
+            close(s);
+            freeaddrinfo(server_res);
+            errno = saved_errno;
+            i_errno = IESETBUF;
+            return -1;
+        }
     }
 
     /*

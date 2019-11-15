@@ -877,7 +877,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         switch (flag) {
             case 'p':
 		portno = atoi(optarg);
-		if (portno < 1 || portno > 65535) {
+		if (portno < 0 || portno > 65535) {
 		    i_errno = IEBADPORT;
 		    return -1;
 		}
@@ -1046,7 +1046,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case OPT_CLIENT_PORT:
 		portno = atoi(optarg);
-		if (portno < 1 || portno > 65535) {
+		if (portno < 0 || portno > 65535) {
 		    i_errno = IEBADPORT;
 		    return -1;
 		}

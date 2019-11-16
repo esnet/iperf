@@ -3862,9 +3862,15 @@ diskfile_recv(struct iperf_stream *sp)
 void
 iperf_catch_sigend(void (*handler)(int))
 {
+#ifdef SIGINT
     signal(SIGINT, handler);
+#endif
+#ifdef SIGTERM
     signal(SIGTERM, handler);
+#endif
+#ifdef SIGHUP
     signal(SIGHUP, handler);
+#endif
 }
 
 /**

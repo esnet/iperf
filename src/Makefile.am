@@ -49,7 +49,7 @@ libiperf_la_SOURCES     = \
 iperf3_SOURCES          = main.c
 iperf3_CFLAGS           = -g
 iperf3_LDADD            = libiperf.la
-iperf3_LDFLAGS          = -g
+iperf3_LDFLAGS          = -g -rpath $(libdir)
 
 if ENABLE_PROFILING
 # If the iperf-profiled-binary is enabled (and this condition is true by default)

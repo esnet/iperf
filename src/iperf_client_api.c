@@ -499,6 +499,7 @@ iperf_run_client(struct iperf_test * test)
 
     startup = 1;
     while (test->state != IPERF_DONE) {
+        int ran_timers = 0;
 	memcpy(&read_set, &test->read_set, sizeof(fd_set));
 	memcpy(&write_set, &test->write_set, sizeof(fd_set));
 	iperf_time_now(&now);
@@ -552,6 +553,7 @@ iperf_run_client(struct iperf_test * test)
             /* Run the timers. */
             iperf_time_now(&now);
             tmr_run(&now);
+            ran_timers = 1;
 
 	    /* Is the test done yet? */
 	    if (test->done ||
@@ -559,7 +561,7 @@ iperf_run_client(struct iperf_test * test)
                 (test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks)) {
 
 		/* Yes, done!  Send TEST_END. */
-                iperf_err(test, "test is done");
+                //iperf_err(test, "test is done");
 		test->done = 1;
 		cpu_util(test->cpu_util);
 		test->stats_callback(test);
@@ -573,18 +575,25 @@ iperf_run_client(struct iperf_test * test)
 	// and gets blocked, so it can't receive state changes
 	// from the client side.
 	else if (test->mode == RECEIVER && test->state == TEST_END) {
-	    if (iperf_recv(test, &read_set) < 0) {
-                /* Recv sockets have been drained, wait a bit to see if we can exchange results */
-                if (test->done_at_ms == 0) {
-                    test->done_at_ms = getCurMs();
-                }
-                else {
-                    if (test->done_at_ms + 3000 < getCurMs()) { // 3 seconds to exchange results
-                        break;
-                    }
+            iperf_recv(test, &read_set);
+
+            /* Recv sockets have been drained, wait a bit to see if we can exchange results */
+            if (test->done_at_ms == 0) {
+                test->done_at_ms = getCurMs();
+            }
+            else {
+                if (test->done_at_ms + 3000 < getCurMs()) { // 3 seconds to exchange results
+                    iperf_err(test, "Did not finish exchanging results within 3 seconds.");
+                    break;
                 }
             }
 	}
+
+        if (!ran_timers) {
+           /* Run the timers. */
+           iperf_time_now(&now);
+           tmr_run(&now);
+        }
     }/* while test state is not done */
 
     if (test->json_output) {

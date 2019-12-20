@@ -160,7 +160,7 @@ void	iperf_set_test_bind_address( struct iperf_test* ipt, char *bind_address );
 void	iperf_set_test_udp_counters_64bit( struct iperf_test* ipt, int udp_counters_64bit );
 void	iperf_set_test_one_off( struct iperf_test* ipt, int one_off );
 void    iperf_set_test_tos( struct iperf_test* ipt, int tos );
-void	iperf_set_extra_data( struct iperf_test* ipt, char *dat);
+void	iperf_set_test_extra_data( struct iperf_test* ipt, char *dat );
 void    iperf_set_test_bidirectional( struct iperf_test* ipt, int bidirectional);
 void    iperf_set_test_no_delay( struct iperf_test* ipt, int no_delay);
 

@@ -549,13 +549,13 @@ iperf_set_test_unit_format(struct iperf_test *ipt, char unit_format)
 void
 iperf_set_test_client_username(struct iperf_test *ipt, char *client_username)
 {
-    ipt->settings->client_username = client_username;
+    ipt->settings->client_username = strdup(client_username);
 }
 
 void
 iperf_set_test_client_password(struct iperf_test *ipt, char *client_password)
 {
-    ipt->settings->client_password = client_password;
+    ipt->settings->client_password = strdup(client_password);
 }
 
 void
@@ -567,7 +567,7 @@ iperf_set_test_client_rsa_pubkey(struct iperf_test *ipt, char *client_rsa_pubkey
 void
 iperf_set_test_server_authorized_users(struct iperf_test *ipt, char *server_authorized_users)
 {
-    ipt->server_authorized_users = server_authorized_users;
+    ipt->server_authorized_users = strdup(server_authorized_users);
 }
 
 void
@@ -604,7 +604,7 @@ iperf_set_test_tos(struct iperf_test *ipt, int tos)
 void
 iperf_set_test_extra_data(struct iperf_test *ipt, char *dat)
 {
-    ipt->extra_data = dat;
+    ipt->extra_data = strdup(dat);
 }
 
 void

@@ -1416,7 +1416,7 @@ Optional Features:
   --enable-fast-install[=PKGS]
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
-  --disable-profiling     Disable iperf profiling binary
+  --enable-profiling      Enable iperf profiling binary
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -12135,12 +12135,12 @@ if test "x$GCC" = "xyes"; then
   CFLAGS="$CFLAGS -Wall"
 fi
 
-# Check if profiling must be disabled
+# Check if enable profiling
 # Check whether --enable-profiling was given.
 if test "${enable_profiling+set}" = set; then :
-  enableval=$enable_profiling; :
+  enableval=$enable_profiling; enable_profiling=yes
 else
-  enable_profiling=yes
+  :
 fi
 
  if test x$enable_profiling = xyes; then

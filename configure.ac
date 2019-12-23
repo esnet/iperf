@@ -52,11 +52,11 @@ if test "x$GCC" = "xyes"; then
   CFLAGS="$CFLAGS -Wall"
 fi
 
-# Check if profiling must be disabled
+# Check if enable profiling
 AC_ARG_ENABLE([profiling],
-    AS_HELP_STRING([--disable-profiling], [Disable iperf profiling binary]),
-    [:],
-    [enable_profiling=yes])
+    AS_HELP_STRING([--enable-profiling], [Enable iperf profiling binary]),
+    [enable_profiling=yes],
+    [:])
 AM_CONDITIONAL([ENABLE_PROFILING], [test x$enable_profiling = xyes])
 
 # Checks for header files.

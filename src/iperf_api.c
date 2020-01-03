@@ -61,6 +61,11 @@
 #if defined(HAVE_CPUSET_SETAFFINITY)
 #include <sys/param.h>
 #include <sys/cpuset.h>
+#if defined(__CYGWIN__)
+#ifndef CPU_SETSIZE
+#define CPU_SETSIZE __CPU_SETSIZE
+#endif /* CPU_SETSIZE */
+#endif /* __CYGWIN__ */
 #endif /* HAVE_CPUSET_SETAFFINITY */
 
 #if defined(HAVE_SETPROCESSAFFINITYMASK)

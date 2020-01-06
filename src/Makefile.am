@@ -52,7 +52,7 @@ iperf3_LDADD            = libiperf.la
 iperf3_LDFLAGS          = -g
 
 if ENABLE_PROFILING
-# If the iperf-profiled-binary is enabled (and this condition is true by default)
+# If the iperf-profiled-binary is enabled
 # Specify the sources and various flags for the profiled iperf binary. This
 # binary recompiles all the source files to make sure they are all profiled.
 iperf3_profile_SOURCES  = main.c \

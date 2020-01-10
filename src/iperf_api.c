@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2019, The Regents of the University of
+ * iperf, Copyright (c) 2014-2020, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -61,12 +61,11 @@
 #if defined(HAVE_CPUSET_SETAFFINITY)
 #include <sys/param.h>
 #include <sys/cpuset.h>
-#if defined(__CYGWIN__)
-#ifndef CPU_SETSIZE
-#define CPU_SETSIZE __CPU_SETSIZE
-#endif /* CPU_SETSIZE */
-#endif /* __CYGWIN__ */
 #endif /* HAVE_CPUSET_SETAFFINITY */
+
+#if defined(__CYGWIN__) || defined(_WIN32) || defined(_WIN64) || defined(__WINDOWS__)
+#define CPU_SETSIZE __CPU_SETSIZE
+#endif /* __CYGWIN__, _WIN32, _WIN64, __WINDOWS__ */
 
 #if defined(HAVE_SETPROCESSAFFINITYMASK)
 #include <Windows.h>

@@ -75,6 +75,8 @@ int readentropy(void *out, size_t outsize)
                       rndfile,
                       feof(frandom) ? "EOF" : strerror(errno));
     }
+    fclose(frandom);
+    frandom = NULL;
     return 0;
 }
 

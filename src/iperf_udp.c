@@ -68,7 +68,9 @@ iperf_udp_recv(struct iperf_stream *sp)
     int       size = sp->settings->blksize;
     double    transit = 0, d = 0;
     struct iperf_time sent_time, arrival_time, temp_time;
+    char guard_before[5], guard_after[5];
 
+    memset(sp->buffer, 0, MIN_UDP_BLOCKSIZE);	/* ensure clear header is case of read error */
     r = Nread(sp->socket, sp->buffer, size, Pudp);
 
     /*
@@ -78,6 +80,10 @@ iperf_udp_recv(struct iperf_stream *sp)
      */
     if (r <= 0)
         return r;
+    else if (r < size) {	/* trancated packet was received */
+	if (sp->test->verbose)
+		fprintf(stderr, "Truncated UDP packet was received: received %d bytes but expected %d bytes\n", r, size);
+    }
 
     /* Only count bytes received while we're in the correct state. */
     if (sp->test->state == TEST_RUNNING) {
@@ -87,7 +93,9 @@ iperf_udp_recv(struct iperf_stream *sp)
 	if (sp->test->udp_counters_64bit) {
 	    memcpy(&sec, sp->buffer, sizeof(sec));
 	    memcpy(&usec, sp->buffer+4, sizeof(usec));
-	    memcpy(&pcount, sp->buffer+8, sizeof(pcount));
+	    memcpy(guard_before, sp->buffer+8, 4);
+	    memcpy(&pcount, sp->buffer+12, sizeof(pcount));
+	    memcpy(guard_after, sp->buffer+20, 4);
 	    sec = ntohl(sec);
 	    usec = ntohl(usec);
 	    pcount = be64toh(pcount);
@@ -98,7 +106,9 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    uint32_t pc;
 	    memcpy(&sec, sp->buffer, sizeof(sec));
 	    memcpy(&usec, sp->buffer+4, sizeof(usec));
-	    memcpy(&pc, sp->buffer+8, sizeof(pc));
+	    memcpy(guard_before, sp->buffer+8, 4);
+	    memcpy(&pc, sp->buffer+12, sizeof(pc));
+	    memcpy(guard_after, sp->buffer+16, 4);
 	    sec = ntohl(sec);
 	    usec = ntohl(usec);
 	    pcount = ntohl(pc);
@@ -122,7 +132,13 @@ iperf_udp_recv(struct iperf_stream *sp)
 	 * far (so we're expecting to see the packet with sequence number
 	 * sp->packet_count + 1 arrive next).
 	 */
-	if (pcount >= sp->packet_count + 1) {
+
+	/* ensure that packet count was received correctly */
+	if (r < MIN_UDP_BLOCKSIZE || strncmp(guard_before, PCOUNT_GURAD_BEFORE, 4) != 0 || strncmp(guard_after, PCOUNT_GUARD_AFTER, 4) != 0) {
+		guard_before[4] = guard_after[4] = 0;
+		iperf_err(sp->test, "UDP Packet was not received properly and counter is ignored: Received %d bytes, Packet-count %" PRIu64 ", Guard-before \"%s\", Guard-after \"%s\";", r, pcount, guard_before, guard_after);
+	}
+	else if (pcount >= sp->packet_count + 1) {
 
 	    /* Forward, but is there a gap in sequence numbers? */
 	    if (pcount > sp->packet_count + 1) {
@@ -209,8 +225,10 @@ iperf_udp_send(struct iperf_stream *sp)
 	
 	memcpy(sp->buffer, &sec, sizeof(sec));
 	memcpy(sp->buffer+4, &usec, sizeof(usec));
-	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
-	
+	memcpy(sp->buffer+8, PCOUNT_GURAD_BEFORE, 4);
+	memcpy(sp->buffer+12, &pcount, sizeof(pcount));
+	memcpy(sp->buffer+20, PCOUNT_GUARD_AFTER, 4);
+
     }
     else {
 
@@ -222,7 +240,9 @@ iperf_udp_send(struct iperf_stream *sp)
 	
 	memcpy(sp->buffer, &sec, sizeof(sec));
 	memcpy(sp->buffer+4, &usec, sizeof(usec));
-	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
+	memcpy(sp->buffer+8, PCOUNT_GURAD_BEFORE, 4);
+	memcpy(sp->buffer+12, &pcount, sizeof(pcount));
+	memcpy(sp->buffer+16, PCOUNT_GUARD_AFTER, 4);
 	
     }
 

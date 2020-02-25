@@ -357,6 +357,10 @@ struct iperf_test
 
 };
 
+/* Guard text before Packet Counter in UDP packets */
+#define PCOUNT_GURAD_BEFORE "BFOR"
+#define PCOUNT_GUARD_AFTER "AFTR"
+
 /* default settings */
 #define PORT 5201  /* default port to listen on (don't use the same port as iperf2) */
 #define uS_TO_NS 1000
@@ -374,8 +378,8 @@ struct iperf_test
 #define MB (1024 * 1024)
 #define MAX_TCP_BUFFER (512 * MB)
 #define MAX_BLOCKSIZE MB
-/* Minimum size UDP send is the size of two 32-bit ints followed by a 64-bit int */
-#define MIN_UDP_BLOCKSIZE (4 + 4 + 8)
+/* Minimum size UDP send is the size of two 32-bit ints followed by 4 chars guard then a 64-bit int and another 4 chars guard */
+#define MIN_UDP_BLOCKSIZE (4 + 4 + 4 + 8 +4)
 /* Maximum size UDP send is (64K - 1) - IP and UDP header sizes */
 #define MAX_UDP_BLOCKSIZE (65535 - 8 - 20)
 #define MIN_INTERVAL 0.1

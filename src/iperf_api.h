@@ -73,6 +73,9 @@ struct iperf_time;
 #define OPT_REPEATING_PAYLOAD 18
 #define OPT_EXTRA_DATA 19
 #define OPT_BIDIRECTIONAL 20
+#define OPT_SLEEP 21	/* DBO */
+#define OPT_BUNDLE 22	/* DBO */
+#define OPT_STEP 23	/* DBO */
 
 /* states */
 #define TEST_START 1
@@ -102,9 +105,15 @@ int	iperf_get_test_duration( struct iperf_test* ipt );
 char	iperf_get_test_role( struct iperf_test* ipt );
 int	iperf_get_test_reverse( struct iperf_test* ipt );
 int	iperf_get_test_blksize( struct iperf_test* ipt );
+int	iperf_get_test_blksize_max( struct iperf_test* ipt );
+int	iperf_get_test_blksize_step( struct iperf_test* ipt );
 FILE*	iperf_get_test_outfile( struct iperf_test* ipt );
 uint64_t iperf_get_test_rate( struct iperf_test* ipt );
-int iperf_get_test_pacing_timer( struct iperf_test* ipt );
+int	iperf_get_test_pacing_timer( struct iperf_test* ipt );
+int	iperf_get_test_sleep_timer( struct iperf_test* ipt );
+int	iperf_get_test_sleep_timer_max( struct iperf_test* ipt );
+int	iperf_get_test_bundle( struct iperf_test* ipt );
+int	iperf_get_test_bundle_max( struct iperf_test* ipt );
 uint64_t iperf_get_test_bytes( struct iperf_test* ipt );
 uint64_t iperf_get_test_blocks( struct iperf_test* ipt );
 int     iperf_get_test_burst( struct iperf_test* ipt );
@@ -138,9 +147,15 @@ void	iperf_set_test_reporter_interval( struct iperf_test* ipt, double reporter_i
 void	iperf_set_test_stats_interval( struct iperf_test* ipt, double stats_interval );
 void	iperf_set_test_state( struct iperf_test* ipt, signed char state );
 void	iperf_set_test_blksize( struct iperf_test* ipt, int blksize );
+void	iperf_set_test_blksize_max( struct iperf_test* ipt, int blksize_max );
+void	iperf_set_test_blksize_step( struct iperf_test* ipt, int step );
 void	iperf_set_test_logfile( struct iperf_test* ipt, char *logfile );
 void	iperf_set_test_rate( struct iperf_test* ipt, uint64_t rate );
 void    iperf_set_test_pacing_timer( struct iperf_test* ipt, int pacing_timer );
+void    iperf_set_test_sleep_timer( struct iperf_test* ipt, int sleep_timer );
+void    iperf_set_test_sleep_timer_max( struct iperf_test* ipt, int sleep_timer_max );
+void    iperf_set_test_bundle( struct iperf_test* ipt, int bundle );
+void    iperf_set_test_bundle_max( struct iperf_test* ipt, int bundle_max );
 void    iperf_set_test_bytes( struct iperf_test* ipt, uint64_t bytes );
 void    iperf_set_test_blocks( struct iperf_test* ipt, uint64_t blocks );
 void	iperf_set_test_burst( struct iperf_test* ipt, int burst );
@@ -345,6 +360,10 @@ enum {
     IEBADFORMAT = 24,	    // Bad format argument to -f
     IEREVERSEBIDIR = 25,    // Iperf cannot be both reverse and bidirectional
     IEBADPORT = 26,	    // Bad port number
+    IESLEEP = 27,           // Illegal sleep value	/* DBO */
+    IEBUNDLE = 28,           // Illegal bundle value	/* DBO */
+    IESTEP = 29,            // Illegal step value	/* DBO */
+
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

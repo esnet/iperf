@@ -45,10 +45,12 @@
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <math.h>
 
 #include "cjson.h"
 #include "iperf.h"
 #include "iperf_api.h"
+#include "iperf_time.h"
 
 /*
  * Read entropy from /dev/urandom
@@ -565,3 +567,66 @@ getline(char **buf, size_t *bufsiz, FILE *fp)
 }
 
 #endif
+
+
+/*
+ * Sleep for number of miliseconds
+ */
+void iperf_sleep(int sleep_time)
+{
+#ifdef __WINDOWS__
+	sleep(sleep_timer);
+#else
+	struct timespec ts;
+	int res;
+	ts.tv_sec = sleep_time / 1000;
+	ts.tv_nsec = (sleep_time % 1000) * 1000000;
+	do {
+		res = nanosleep(&ts, NULL);
+	} while (res && errno == EINTR);
+#endif
+}
+
+
+/*
+ * Since different OS support different minimum resolution of possible
+ * sleep time, calculate estimated average actual sleep time for a
+ * given required sleep time in [miliseconds].
+ * It is assumed that all OSs supports at least about 15ms resolution,
+ * so sleep time above 60ms (15*4) will be sufficiently acurate,
+ * and there is no need to calculate an average for it
+ * (25% accuracy is regarded as accurate enough).
+ */
+int actual_average_sleep_time(int sleep_time)
+{
+	int average_time;
+	struct iperf_time start_time, end_time, diff_time;
+	int n, i;
+	float delta;
+
+	if (sleep_time < 10)
+		n = 50;
+	else if (sleep_time < 20)
+		n = 20;
+	else if (sleep_time < 40)
+		n = 10;
+	else if (sleep_time < 60)
+		n = 5;
+	else {
+		n = 1;
+		average_time = sleep_time;
+	}
+
+	if (n > 1) {
+		iperf_time_now(&start_time);
+		i = n;
+		while (i--)
+			iperf_sleep(sleep_time);
+		iperf_time_now(&end_time);
+		iperf_time_diff(&start_time, &end_time, &diff_time);
+		delta = (float)(iperf_time_in_usecs(&diff_time)/1000);
+		average_time = round(delta/n);
+	}
+
+	return average_time;
+}

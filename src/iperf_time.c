@@ -27,6 +27,7 @@
 
 
 #include <stddef.h>
+#include <stdio.h>
 
 #include "iperf_config.h"
 #include "iperf_time.h"

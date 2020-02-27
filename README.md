@@ -119,6 +119,10 @@ New options:
     -k, --blockcount #[KMG]   number of blocks (packets) to transmit (instead 
                               of -t or -n)
     -L, --flowlabel           set IPv6 flow label (Linux only)
+    -l, --length l1/[l2]      UDP - added optional range of lengths (per step or random)
+    --step                    UPD - delta between packets length when length range is specifid
+    --sleep n1[/n2]           UDP - wait time between packets or packets bundle
+    --bundle n                UDP - number of packets to send before sleep waiting time
 
 Changed flags:
 
@@ -163,7 +167,7 @@ responsibility for the content of these pages.
 Copyright
 ---------
 
-iperf, Copyright (c) 2014-2020, The Regents of the University of
+iperf, Copyright (c) 2014-2019, The Regents of the University of
 California, through Lawrence Berkeley National Laboratory (subject
 to receipt of any required approvals from the U.S. Dept. of
 Energy).  All rights reserved.

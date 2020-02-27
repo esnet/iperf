@@ -259,17 +259,35 @@ number of bytes to transmit (instead of \-t)
 .BR -k ", " --blockcount " \fIn\fR[KM]"
 number of blocks (packets) to transmit (instead of \-t or \-n)
 .TP
-.BR -l ", " --length " \fIn\fR[KM]"
+.BR -l ", " --length " \fIn1\fR[KM]/[\fIn2\fR[KM]]"
 length of buffer to read or write.  For TCP tests, the default value
 is 128KB.
 In the case of UDP, iperf3 tries to dynamically determine a reasonable
 sending size based on the path MTU; if that cannot be determined it
 uses 1460 bytes as a sending size.
+Also in case of UDP, if a second lenth value is specified,
+packet length used is between the two sizes range.  If --step value is
+specified the next packet length will be increased/decreased using this
+value.  If --step is not specified, packet length will be selected
+randomally between the two values.
 For SCTP tests, the default size is 64KB.
+.TP
+.BR --step " \fIn\fR[KM]"
+In case of UDP, when packet size range is specified by, speifies the number of bytes
+step between pakets size - increased if --length parameter n2>n1 and decreased if n2<n1,
+re-starting from the first length when the range limit is reached.
 .TP
 .BR --cport " \fIport\fR"
 bind data streams to a specific client port (for TCP and UDP only,
 default is to use an ephemeral port)
+ .TP
+.BR --sleep ", " --length " \fIn1\fR[KM]/[\fIn2\fR[KM]]"
+In case of UDP - time in miliseconds to wait between packets or packets bundle;
+when range is given - random wait time in the range.
+.TP
+.BR --bundle ", " --length " \fIn1\fR/[\fIn2\fR]"
+In case of UDP - number of packets to send between sleeps;
+when range is given - random bundle size in the range.
 .TP
 .BR -P ", " --parallel " \fIn\fR"
 number of parallel client streams to run. Note that iperf3 is single threaded, so if you are CPU bound, this will not yield higher throughput.

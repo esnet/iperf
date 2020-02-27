@@ -339,6 +339,27 @@ Nread(int fd, char *buf, size_t count, int prot)
 }
 
 
+/*******************************************/
+/* reads Packet from socket                */
+/*******************************************/
+
+int
+Pread(int fd, char *buf, size_t count, int prot)
+{
+    register ssize_t r;
+
+    r = read(fd, buf, count);
+    if (r < 0) {
+        if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
+	    r = 0;
+        else
+            return NET_HARDERROR;
+    }
+
+    return r;
+}
+
+
 /*
  *                      N W R I T E
  */

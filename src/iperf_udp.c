@@ -48,6 +48,7 @@
 #include "net.h"
 #include "cjson.h"
 #include "portable_endian.h"
+#include <math.h>
 
 #if defined(HAVE_INTTYPES_H)
 # include <inttypes.h>
@@ -66,18 +67,25 @@ iperf_udp_recv(struct iperf_stream *sp)
     uint64_t  pcount;
     int       r;
     int       size = sp->settings->blksize;
+    int       size_max = sp->settings->blksize_max;
     double    transit = 0, d = 0;
     struct iperf_time sent_time, arrival_time, temp_time;
 
-    r = Nread(sp->socket, sp->buffer, size, Pudp);
+    if (size == size_max)
+    	r = Nread(sp->socket, sp->buffer, size, Pudp);
+    else
+	r = Pread(sp->socket, sp->buffer, size_max, Pudp);
 
     /*
      * If we got an error in the read, or if we didn't read anything
      * because the underlying read(2) got a EAGAIN, then skip packet
      * processing.
      */
-    if (r <= 0)
-        return r;
+    if (r <= 0) {
+     	if (sp->test->debug)
+	    fprintf(stderr, "No bytes read: %d;\n", r);
+	return r;
+    }
 
     /* Only count bytes received while we're in the correct state. */
     if (sp->test->state == TEST_RUNNING) {
@@ -86,8 +94,8 @@ iperf_udp_recv(struct iperf_stream *sp)
 
 	if (sp->test->udp_counters_64bit) {
 	    memcpy(&sec, sp->buffer, sizeof(sec));
-	    memcpy(&usec, sp->buffer+4, sizeof(usec));
-	    memcpy(&pcount, sp->buffer+8, sizeof(pcount));
+	    memcpy(&usec, sp->buffer+4, sizeof(usec));		/*!!! "+4" should be "+sizeof(sec)" ??? */
+	    memcpy(&pcount, sp->buffer+8, sizeof(pcount));	/*!!! "+4" should be "+sizeof(sec)+sizeof(usec)" ??? */
 	    sec = ntohl(sec);
 	    usec = ntohl(usec);
 	    pcount = be64toh(pcount);
@@ -97,8 +105,8 @@ iperf_udp_recv(struct iperf_stream *sp)
 	else {
 	    uint32_t pc;
 	    memcpy(&sec, sp->buffer, sizeof(sec));
-	    memcpy(&usec, sp->buffer+4, sizeof(usec));
-	    memcpy(&pc, sp->buffer+8, sizeof(pc));
+	    memcpy(&usec, sp->buffer+4, sizeof(usec));	/*!!! "+4" should be "+sizeof(sec)" ??? */
+	    memcpy(&pc, sp->buffer+8, sizeof(pc));	/*!!! "+4" should be "+sizeof(sec)+sizeof(usec)" ??? */
 	    sec = ntohl(sec);
 	    usec = ntohl(usec);
 	    pcount = ntohl(pc);
@@ -107,7 +115,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	}
 
 	if (sp->test->debug)
-	    fprintf(stderr, "pcount %" PRIu64 " packet_count %d\n", pcount, sp->packet_count);
+	    fprintf(stderr, "pcount %" PRIu64 " packet_count %d size %d\n", pcount, sp->packet_count, r);
 
 	/*
 	 * Try to handle out of order packets.  The way we do this
@@ -149,7 +157,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 		sp->cnt_error--;
 	
 	    /* Log the out-of-order packet */
-	    if (sp->test->debug) 
+	    if (sp->test->debug || (sp->test->verbose && (sp->test->settings->sleep_timer != sp->test->settings->sleep_timer_max))) 
 		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count, sp->socket);
 	}
 
@@ -190,9 +198,76 @@ iperf_udp_recv(struct iperf_stream *sp)
 int
 iperf_udp_send(struct iperf_stream *sp)
 {
+    int r = 0;
+    int bundle_size = sp->settings->bundle_size;
+    int bundle_size_max = sp->settings->bundle_size_max;
+    int sleep_timer = sp->settings->sleep_timer;
+    int sleep_timer_max = sp->settings->sleep_timer_max;
+    int actual_sleep_timer = sp->settings->actual_sleep_timer;
+
+    /* set sleep time a adn bundle size in the range specified randmly */
+    if (sleep_timer > 0 &&  sleep_timer_max > sleep_timer)
+	sleep_timer += round(((float)rand()/RAND_MAX)*(sleep_timer_max - sleep_timer));
+    if (bundle_size_max > bundle_size)
+	bundle_size += round(((float)rand()/RAND_MAX)*(bundle_size_max - bundle_size));
+
+    /* if actual sleep time is greater then required sleep time.
+    *  increase bundle size using the proportion between the two times,
+    *  so get about the expected rate of packets
+    */
+    if (actual_sleep_timer > sleep_timer*1.25)
+        bundle_size *= round((float)actual_sleep_timer/sleep_timer);
+
+    if (sp->test->debug && (bundle_size != 1 || sleep_timer != 0)) {
+	struct iperf_time now;
+	iperf_time_now(&now);
+	printf("%d.%d: Sending bundle of %d packets and sleep for %dms\n", now.secs, now.usecs/1000, bundle_size, sleep_timer);
+    }
+
+    /* send <bundle> of packets */
+    while (bundle_size--) {
+	    r += iperf_udp_send_packet(sp);
+    }
+
+    /* wait a while after sending the bunlde */
+    if (sleep_timer > 0)
+	iperf_sleep(sleep_timer);	/* sleep for give miliseconds */
+
+    return r;
+}
+
+/* iperf_udp_send_packet
+ *
+ * sends one UDP packet
+ */
+int
+iperf_udp_send_packet(struct iperf_stream *sp)
+{
     int r;
-    int       size = sp->settings->blksize;
+    int size = sp->settings->blksize;
+    int	size_max = sp->settings->blksize_max;
+    int step = sp->settings->blksize_step;
     struct iperf_time before;
+
+    /* determine block size for this packet */
+    if (size_max > size) {
+	if (step == 0)
+		size += round((rand()/(double)RAND_MAX)*(size_max - size));
+	else {
+		int last = sp->settings->last_blksize;
+		if (last != 0)
+			size = last + step;
+		else {
+			if (step < 0)
+				size = size_max;
+		}
+		if (size > sp->settings->blksize_max)
+			size = sp->settings->blksize;
+		else if (size < sp->settings->blksize)
+			size = sp->settings->blksize_max;
+		sp->settings->last_blksize = size;
+	}
+    }
 
     iperf_time_now(&before);
 
@@ -208,8 +283,8 @@ iperf_udp_send(struct iperf_stream *sp)
 	pcount = htobe64(sp->packet_count);
 	
 	memcpy(sp->buffer, &sec, sizeof(sec));
-	memcpy(sp->buffer+4, &usec, sizeof(usec));
-	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
+	memcpy(sp->buffer+4, &usec, sizeof(usec));	/*!!! "+4" should be "+sizeof(sec)" ??? */
+	memcpy(sp->buffer+8, &pcount, sizeof(pcount));	/*!!! "+8" should be "+sizeof(sec)+sizeof(usec)" ??? */
 	
     }
     else {
@@ -221,12 +296,12 @@ iperf_udp_send(struct iperf_stream *sp)
 	pcount = htonl(sp->packet_count);
 	
 	memcpy(sp->buffer, &sec, sizeof(sec));
-	memcpy(sp->buffer+4, &usec, sizeof(usec));
-	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
+	memcpy(sp->buffer+4, &usec, sizeof(usec));	/*!!! "+4" should be "+sizeof(sec)" ??? */
+	memcpy(sp->buffer+8, &pcount, sizeof(pcount));	/*!!! "+8" should be "+sizeof(sec)+sizeof(usec)" ??? */
 	
     }
-
-    r = Nwrite(sp->socket, sp->buffer, size, Pudp);
+    
+     r = Nwrite(sp->socket, sp->buffer, size, Pudp);
 
     if (r < 0)
 	return r;
@@ -235,7 +310,7 @@ iperf_udp_send(struct iperf_stream *sp)
     sp->result->bytes_sent_this_interval += r;
 
     if (sp->test->debug)
-	printf("sent %d bytes of %d, total %" PRIu64 "\n", r, sp->settings->blksize, sp->result->bytes_sent);
+	printf("sent %d bytes of %d, total %" PRIu64 "\n", r, size, sp->result->bytes_sent);
 
     return r;
 }

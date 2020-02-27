@@ -1,6 +1,16 @@
 iperf3 Release Notes
 ====================
 
+iperf 3.x ......
+--------------------
+
+* New features for UDP that allows to enhanced traffic profiles 
+
+  * Range option for packets lenth (-l)
+  * Steps between packets lengths (--step), otherwise random length is selected
+  * Sleep time (range) between sending bundles of packets (--sleep)
+  * Bundle size (range) - number of packets to send between (--bundle)
+
 iperf 3.7 2019-06-21
 --------------------
 

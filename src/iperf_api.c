@@ -171,6 +171,30 @@ iperf_get_test_pacing_timer(struct iperf_test *ipt)
     return ipt->settings->pacing_timer;
 }
 
+int
+iperf_get_test_sleep_timer(struct iperf_test *ipt)
+{
+    return ipt->settings->sleep_timer;
+}
+
+int
+iperf_get_test_sleep_timer_max(struct iperf_test *ipt)
+{
+    return ipt->settings->sleep_timer_max;
+}
+
+int
+iperf_get_test_bundle(struct iperf_test *ipt)
+{
+    return ipt->settings->bundle_size;
+}
+
+int
+iperf_get_test_bundle_max(struct iperf_test *ipt)
+{
+    return ipt->settings->bundle_size_max;
+}
+
 uint64_t
 iperf_get_test_bytes(struct iperf_test *ipt)
 {
@@ -205,6 +229,18 @@ int
 iperf_get_test_blksize(struct iperf_test *ipt)
 {
     return ipt->settings->blksize;
+}
+
+int
+iperf_get_test_blksize_max(struct iperf_test *ipt)
+{
+    return ipt->settings->blksize_max;
+}
+
+int
+iperf_get_test_blksize_step(struct iperf_test *ipt)
+{
+    return ipt->settings->blksize_step;
 }
 
 FILE *
@@ -391,6 +427,18 @@ iperf_set_test_blksize(struct iperf_test *ipt, int blksize)
 }
 
 void
+iperf_set_test_blksize_max(struct iperf_test *ipt, int blksize_max)
+{
+    ipt->settings->blksize_max = blksize_max;
+}
+
+void
+iperf_set_test_blksize_step(struct iperf_test *ipt, int step)
+{
+    ipt->settings->blksize_step = step;
+}
+
+void
 iperf_set_test_logfile(struct iperf_test *ipt, char *logfile)
 {
     ipt->logfile = strdup(logfile);
@@ -412,6 +460,30 @@ void
 iperf_set_test_pacing_timer(struct iperf_test *ipt, int pacing_timer)
 {
     ipt->settings->pacing_timer = pacing_timer;
+}
+
+void
+iperf_set_test_sleep_timer(struct iperf_test *ipt, int sleep_timer)
+{
+    ipt->settings->sleep_timer = sleep_timer;
+}
+
+void
+iperf_set_test_sleep_timer_max(struct iperf_test *ipt, int sleep_timer)
+{
+    ipt->settings->sleep_timer_max = sleep_timer;
+}
+
+void
+iperf_set_test_bundle(struct iperf_test *ipt, int bundle_size)
+{
+    ipt->settings->bundle_size = bundle_size;
+}
+
+void
+iperf_set_test_bundle_max(struct iperf_test *ipt, int bundle_size)
+{
+    ipt->settings->bundle_size_max = bundle_size;
 }
 
 void
@@ -670,16 +742,23 @@ iperf_on_new_stream(struct iperf_stream *sp)
 void
 iperf_on_test_start(struct iperf_test *test)
 {
+    char s[100];
+    
     if (test->json_output) {
-	cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d  omit: %d  duration: %d  bytes: %d  blocks: %d  reverse: %d  tos: %d", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->omit, (int64_t) test->duration, (int64_t) test->settings->bytes, (int64_t) test->settings->blocks, test->reverse?(int64_t)1:(int64_t)0, (int64_t) test->settings->tos));
+	cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d blksize_max: %d  step: %d omit: %d  duration: %d  bytes: %d  blocks: %d  reverse: %d  tos: %d, sleep: %d, sleep_max: %d, bundle: %d, bundle_max: %d", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->settings->blksize_max, (int64_t) test->settings->blksize_step, (int64_t) test->omit, (int64_t) test->duration, (int64_t) test->settings->bytes, (int64_t) test->settings->blocks, test->reverse?(int64_t)1:(int64_t)0, (int64_t) test->settings->tos, (int64_t) test->settings->sleep_timer, (int64_t) test->settings->sleep_timer_max, (int64_t) test->settings->bundle_size, (int64_t) test->settings->bundle_size_max));
     } else {
 	if (test->verbose) {
-	    if (test->settings->bytes)
-		iperf_printf(test, test_start_bytes, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->settings->bytes, test->settings->tos);
-	    else if (test->settings->blocks)
-		iperf_printf(test, test_start_blocks, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->settings->blocks, test->settings->tos);
+	    if (test->settings->blksize_max > test->settings->blksize)
+	        sprintf(s, "%d", test->settings->blksize);
 	    else
-		iperf_printf(test, test_start_time, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->duration, test->settings->tos);
+	        sprintf(s, "%d-%d", test->settings->blksize, test->settings->blksize_max);
+
+	    if (test->settings->bytes)
+		iperf_printf(test, test_start_bytes, test->protocol->name, test->num_streams, s, test->settings->blksize_step, test->omit, test->settings->bytes, test->settings->tos);
+	    else if (test->settings->blocks)
+		iperf_printf(test, test_start_blocks, test->protocol->name, test->num_streams, s,  test->settings->blksize_step, test->omit, test->settings->blocks, test->settings->tos);
+	    else
+		iperf_printf(test, test_start_time, test->protocol->name, test->num_streams, s,  test->settings->blksize_step, test->omit, test->duration, test->settings->tos);
 	}
     }
 }
@@ -850,6 +929,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif /* HAVE_SSL */
 	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
 	{"pacing-timer", required_argument, NULL, OPT_PACING_TIMER},
+	{"sleep", required_argument, NULL, OPT_SLEEP},
+	{"bundle", required_argument, NULL, OPT_BUNDLE},
+	{"step", required_argument, NULL, OPT_STEP},
 	{"connect-timeout", required_argument, NULL, OPT_CONNECT_TIMEOUT},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
@@ -858,6 +940,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     int flag;
     int portno;
     int blksize;
+    int blksize_max;
     int server_flag, client_flag, rate_flag, duration_flag;
     char *endptr;
 #if defined(HAVE_CPU_AFFINITY)
@@ -868,6 +951,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     double farg;
 
     blksize = 0;
+    blksize_max = 0;
     server_flag = client_flag = rate_flag = duration_flag = 0;
 #if defined(HAVE_SSL)
     char *client_username = NULL, *client_rsa_public_key = NULL, *server_rsa_private_key = NULL;
@@ -1002,7 +1086,61 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
             case 'l':
-                blksize = unit_atoi(optarg);
+ 		slash = strchr(optarg, '/');
+		if (slash) {
+		    *slash = '\0';
+		    ++slash;
+		    blksize_max = atoi(slash);
+		    if (blksize_max <= 0) {
+			i_errno = IEUDPBLOCKSIZE;
+			return -1;
+		    }
+		}
+		blksize = unit_atoi(optarg);
+		if (blksize <= 0 && blksize_max > 0) {
+			i_errno = IEUDPBLOCKSIZE;
+			return -1;
+		}
+		client_flag = 1;
+                break;
+            case OPT_STEP:
+		test->settings->blksize_step = unit_atoi(optarg);
+		if (test->settings->blksize_step <= 0) {
+			i_errno = IESTEP;
+			return -1;
+		}
+		client_flag = 1;
+                break; 
+            case OPT_SLEEP:
+ 		slash = strchr(optarg, '/');
+		if (slash) {
+		    *slash = '\0';
+		    ++slash;
+		    test->settings->sleep_timer_max = atoi(slash);
+		}
+		test->settings->sleep_timer = unit_atoi(optarg);
+		if (test->settings->sleep_timer_max == 0)
+		    test->settings->sleep_timer_max = test->settings->sleep_timer;
+		if (test->settings->sleep_timer < 0 || test->settings->sleep_timer_max < 0 || test->settings->sleep_timer > test->settings->sleep_timer_max) {
+			i_errno = IESLEEP;
+			return -1;
+		}
+		client_flag = 1;
+                break;
+            case OPT_BUNDLE:
+ 		slash = strchr(optarg, '/');
+		if (slash) {
+		    *slash = '\0';
+		    ++slash;
+		    test->settings->bundle_size_max = atoi(slash);
+		}
+		test->settings->bundle_size = unit_atoi(optarg);
+		if (test->settings->bundle_size_max == 0)
+		    test->settings->bundle_size_max = test->settings->bundle_size;
+		if (test->settings->bundle_size < 1 || test->settings->bundle_size_max < 1 || test->settings->bundle_size > test->settings->bundle_size_max) {
+			i_errno = IEBUNDLE;
+			return -1;
+		}
 		client_flag = 1;
                 break;
             case 'P':
@@ -1322,17 +1460,28 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	    blksize = DEFAULT_TCP_BLKSIZE;
     }
     if ((test->protocol->id != Pudp && blksize <= 0) 
-	|| blksize > MAX_BLOCKSIZE) {
+		|| blksize > MAX_BLOCKSIZE || blksize_max > MAX_BLOCKSIZE) {
 	i_errno = IEBLOCKSIZE;
 	return -1;
     }
-    if (test->protocol->id == Pudp &&
-	(blksize > 0 &&
-	    (blksize < MIN_UDP_BLOCKSIZE || blksize > MAX_UDP_BLOCKSIZE))) {
+    /* if max block is less then block size then step should be negative - large to small size */
+    if (blksize_max == 0)
+	blksize_max = blksize;
+    if (blksize_max < blksize) {
+	test->settings->blksize_step = -test->settings->blksize_step;
+	int tmp = blksize_max;
+	blksize_max = blksize;
+	blksize = tmp;
+    }
+    if (test->protocol->id == Pudp) {
+	if ( (blksize > 0 && blksize < MIN_UDP_BLOCKSIZE) ||
+	      (blksize_max > 0 && blksize_max > MAX_UDP_BLOCKSIZE) ) {
 	i_errno = IEUDPBLOCKSIZE;
 	return -1;
+	}
     }
     test->settings->blksize = blksize;
+    test->settings->blksize_max = blksize_max;
 
     if (!rate_flag)
 	test->settings->rate = test->protocol->id == Pudp ? UDP_RATE : 0;
@@ -1505,6 +1654,8 @@ iperf_init_test(struct iperf_test *test)
 {
     struct iperf_time now;
     struct iperf_stream *sp;
+
+    srand(time(0)); /* reset random seed using current time for each new test */
 
     if (test->protocol->init) {
         if (test->protocol->init(test) < 0)
@@ -1716,6 +1867,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "window", test->settings->socket_bufsize);
 	if (test->settings->blksize)
 	    cJSON_AddNumberToObject(j, "len", test->settings->blksize);
+	if (test->settings->blksize_max)
+	    cJSON_AddNumberToObject(j, "len_max", test->settings->blksize_max);
 	if (test->settings->rate)
 	    cJSON_AddNumberToObject(j, "bandwidth", test->settings->rate);
 	if (test->settings->fqrate)
@@ -1742,6 +1895,16 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "udp_counters_64bit", iperf_get_test_udp_counters_64bit(test));
 	if (test->repeating_payload)
 	    cJSON_AddNumberToObject(j, "repeating_payload", test->repeating_payload);
+	if (test->settings->sleep_timer)
+	    cJSON_AddNumberToObject(j, "sleep", test->settings->sleep_timer);
+	if (test->settings->sleep_timer_max)
+	    cJSON_AddNumberToObject(j, "sleep_max", test->settings->sleep_timer_max);
+	if (test->settings->bundle_size)
+	    cJSON_AddNumberToObject(j, "bundle", test->settings->bundle_size);
+	if (test->settings->bundle_size_max)
+	    cJSON_AddNumberToObject(j, "bundle_max", test->settings->bundle_size_max);
+	if (test->settings->blksize_step)
+	    cJSON_AddNumberToObject(j, "step", test->settings->blksize_step);
 #if defined(HAVE_SSL)
     if (test->settings->client_username && test->settings->client_password && test->settings->client_rsa_pubkey){
         encode_auth_setting(test->settings->client_username, test->settings->client_password, test->settings->client_rsa_pubkey, &test->settings->authtoken);
@@ -1814,6 +1977,8 @@ get_parameters(struct iperf_test *test)
 	    test->settings->socket_bufsize = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "len")) != NULL)
 	    test->settings->blksize = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "len_max")) != NULL)
+	    test->settings->blksize_max = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "bandwidth")) != NULL)
 	    test->settings->rate = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "fqrate")) != NULL)
@@ -1840,6 +2005,16 @@ get_parameters(struct iperf_test *test)
 	    iperf_set_test_udp_counters_64bit(test, 1);
 	if ((j_p = cJSON_GetObjectItem(j, "repeating_payload")) != NULL)
 	    test->repeating_payload = 1;
+	if ((j_p = cJSON_GetObjectItem(j, "sleep")) != NULL)
+	    test->settings->sleep_timer = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "sleep_max")) != NULL)
+	    test->settings->sleep_timer_max = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "bundle")) != NULL)
+	    test->settings->bundle_size = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "bundle_max")) != NULL)
+	    test->settings->bundle_size_max = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "step")) != NULL)
+	    test->settings->blksize_step = j_p->valueint;    
 #if defined(HAVE_SSL)
 	if ((j_p = cJSON_GetObjectItem(j, "authtoken")) != NULL)
         test->settings->authtoken = strdup(j_p->valuestring);
@@ -2052,7 +2227,7 @@ get_results(struct iperf_test *test)
 			    pcount = j_packets->valueint;
 			    SLIST_FOREACH(sp, &test->streams, streams)
 				if (sp->id == sid) break;
-			    if (sp == NULL) {
+			    if (sp == NULL) {	/*!!! "NULL" should be changed to "SLIST_END(&test->streams)"" ??? */
 				i_errno = IESTREAMID;
 				r = -1;
 			    } else {
@@ -2331,9 +2506,17 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->unit_format = 'a';
     testp->settings->socket_bufsize = 0;    /* use autotuning */
     testp->settings->blksize = DEFAULT_TCP_BLKSIZE;
+    testp->settings->blksize_max = DEFAULT_TCP_BLKSIZE;
+    testp->settings->last_blksize = 0;
+    testp->settings->blksize_step = 0;
     testp->settings->rate = 0;
     testp->settings->fqrate = 0;
     testp->settings->pacing_timer = 1000;
+    testp->settings->sleep_timer = 0;
+    testp->settings->sleep_timer_max = 0;
+    testp->settings->actual_sleep_timer = 0;
+    testp->settings->bundle_size = 1;
+    testp->settings->bundle_size_max = 0;
     testp->settings->burst = 0;
     testp->settings->mss = 0;
     testp->settings->bytes = 0;
@@ -2595,10 +2778,16 @@ iperf_reset_test(struct iperf_test *test)
     test->num_streams = 1;
     test->settings->socket_bufsize = 0;
     test->settings->blksize = DEFAULT_TCP_BLKSIZE;
+    test->settings->blksize = DEFAULT_TCP_BLKSIZE;
+    test->settings->blksize_step = 0;
     test->settings->rate = 0;
     test->settings->burst = 0;
     test->settings->mss = 0;
     test->settings->tos = 0;
+    test->settings->sleep_timer = 0;
+    test->settings->sleep_timer_max = 0;
+    test->settings->bundle_size = 0;
+    test->settings->bundle_size_max = 0;
 
 #if defined(HAVE_SSL)
     if (test->settings->authtoken) {
@@ -3601,7 +3790,7 @@ iperf_free_stream(struct iperf_stream *sp)
     struct iperf_interval_results *irp, *nirp;
 
     /* XXX: need to free interval list too! */
-    munmap(sp->buffer, sp->test->settings->blksize);
+    munmap(sp->buffer, sp->test->settings->blksize_max);
     close(sp->buffer_fd);
     if (sp->diskfile_fd >= 0)
 	close(sp->diskfile_fd);
@@ -3675,13 +3864,13 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         free(sp);
         return NULL;
     }
-    if (ftruncate(sp->buffer_fd, test->settings->blksize) < 0) {
+    if (ftruncate(sp->buffer_fd, test->settings->blksize_max) < 0) {
         i_errno = IECREATESTREAM;
         free(sp->result);
         free(sp);
         return NULL;
     }
-    sp->buffer = (char *) mmap(NULL, test->settings->blksize, PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
+    sp->buffer = (char *) mmap(NULL, test->settings->blksize_max, PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
     if (sp->buffer == MAP_FAILED) {
         i_errno = IECREATESTREAM;
         free(sp->result);
@@ -3699,7 +3888,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 	sp->diskfile_fd = open(test->diskfile_name, sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC), S_IRUSR|S_IWUSR);
 	if (sp->diskfile_fd == -1) {
 	    i_errno = IEFILE;
-            munmap(sp->buffer, sp->test->settings->blksize);
+            munmap(sp->buffer, sp->test->settings->blksize_max);
             free(sp->result);
             free(sp);
 	    return NULL;
@@ -3713,13 +3902,13 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 
     /* Initialize stream */
     if (test->repeating_payload)
-        fill_with_repeating_pattern(sp->buffer, test->settings->blksize);
+        fill_with_repeating_pattern(sp->buffer, test->settings->blksize_max);
     else
-        ret = readentropy(sp->buffer, test->settings->blksize);
+        ret = readentropy(sp->buffer, test->settings->blksize_max);
 
     if ((ret < 0) || (iperf_init_stream(sp, test) < 0)) {
         close(sp->buffer_fd);
-        munmap(sp->buffer, sp->test->settings->blksize);
+        munmap(sp->buffer, sp->test->settings->blksize_max);
         free(sp->result);
         free(sp);
         return NULL;
@@ -3807,13 +3996,13 @@ diskfile_send(struct iperf_stream *sp)
     static int rtot;
 
     /* if needed, read enough data from the disk to fill up the buffer */
-    if (sp->diskfile_left < sp->test->settings->blksize && !sp->test->done) {
-	r = read(sp->diskfile_fd, sp->buffer, sp->test->settings->blksize -
+    if (sp->diskfile_left < sp->test->settings->blksize_max && !sp->test->done) {
+	r = read(sp->diskfile_fd, sp->buffer, sp->test->settings->blksize_max -
 		 sp->diskfile_left);
 	rtot += r;
 	if (sp->test->debug) {
 	    printf("read %d bytes from file, %d total\n", r, rtot);
-	    if (r != sp->test->settings->blksize - sp->diskfile_left)
+	    if (r != sp->test->settings->blksize_max - sp->diskfile_left)
 		printf("possible eof\n");
 	}
 	/* If there's no data left in the file or in the buffer, we're done */
@@ -3840,7 +4029,7 @@ diskfile_send(struct iperf_stream *sp)
 	       sp->buffer + (sp->test->settings->blksize - sp->diskfile_left),
 	       sp->diskfile_left);
 	if (sp->test->debug)
-	    printf("Shifting %d bytes by %d\n", sp->diskfile_left, (sp->test->settings->blksize - sp->diskfile_left));
+	    printf("Shifting %d bytes by %d\n", sp->diskfile_left, (sp->test->settings->blksize_max - sp->diskfile_left));
     }
     return r;
 }

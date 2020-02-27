@@ -37,13 +37,20 @@
 int iperf_udp_recv(struct iperf_stream *);
 
 /**
- * iperf_udp_send -- sends the client data for UDP
+ * iperf_udp_send -- sends the client bundle of packets for UDP
  *
- * returns: bytes sent
+ * returns: total bytes sent
  *
  */
 int iperf_udp_send(struct iperf_stream *) /* __attribute__((hot)) */;
 
+/**
+ * iperf_udp_send_packet -- sends one packet for UDP
+ *
+ * returns: bytes sent
+ *
+ */
+int iperf_udp_send_packet(struct iperf_stream *) /* __attribute__((hot)) */;
 
 /**
  * iperf_udp_accept -- accepts a new UDP connection

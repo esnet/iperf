@@ -398,6 +398,8 @@ iperf_connect(struct iperf_test *test)
 	    else {
 		test->settings->blksize = DEFAULT_UDP_BLKSIZE;
 	    }
+	    if (test->settings->blksize_max == 0)
+	    	test->settings->blksize_max = test->settings->blksize;
 	    if (test->verbose) {
 		printf("Setting UDP block size to %d\n", test->settings->blksize);
 	    }
@@ -475,6 +477,11 @@ iperf_run_client(struct iperf_test * test)
 	iperf_printf(test, "%s\n", get_system_info());
 	iflush(test);
     }
+
+    /* calculate average actual sleep time for the required (minimum) sleep time */
+    test->settings->actual_sleep_timer = actual_average_sleep_time(test->settings->sleep_timer);
+    if (test->verbose  && test->settings->sleep_timer > 0)
+	printf("Actual sleep time for %dms is %dms\n", test->settings->sleep_timer, test->settings->actual_sleep_timer);
 
     /* Start the client and connect to the server */
     if (iperf_connect(test) < 0)

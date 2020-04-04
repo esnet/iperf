@@ -94,8 +94,8 @@ iperf_udp_recv(struct iperf_stream *sp)
 
 	if (sp->test->udp_counters_64bit) {
 	    memcpy(&sec, sp->buffer, sizeof(sec));
-	    memcpy(&usec, sp->buffer+4, sizeof(usec));
-	    memcpy(&pcount, sp->buffer+8, sizeof(pcount));
+	    memcpy(&usec, sp->buffer+4, sizeof(usec));		/*!!! "+4" should be "+sizeof(sec)" ??? */
+	    memcpy(&pcount, sp->buffer+8, sizeof(pcount));	/*!!! "+4" should be "+sizeof(sec)+sizeof(usec)" ??? */
 	    sec = ntohl(sec);
 	    usec = ntohl(usec);
 	    pcount = be64toh(pcount);
@@ -105,8 +105,8 @@ iperf_udp_recv(struct iperf_stream *sp)
 	else {
 	    uint32_t pc;
 	    memcpy(&sec, sp->buffer, sizeof(sec));
-	    memcpy(&usec, sp->buffer+4, sizeof(usec));
-	    memcpy(&pc, sp->buffer+8, sizeof(pc));
+	    memcpy(&usec, sp->buffer+4, sizeof(usec));	/*!!! "+4" should be "+sizeof(sec)" ??? */
+	    memcpy(&pc, sp->buffer+8, sizeof(pc));	/*!!! "+4" should be "+sizeof(sec)+sizeof(usec)" ??? */
 	    sec = ntohl(sec);
 	    usec = ntohl(usec);
 	    pcount = ntohl(pc);
@@ -283,8 +283,8 @@ iperf_udp_send_packet(struct iperf_stream *sp)
 	pcount = htobe64(sp->packet_count);
 	
 	memcpy(sp->buffer, &sec, sizeof(sec));
-	memcpy(sp->buffer+4, &usec, sizeof(usec));
-	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
+	memcpy(sp->buffer+4, &usec, sizeof(usec));	/*!!! "+4" should be "+sizeof(sec)" ??? */
+	memcpy(sp->buffer+8, &pcount, sizeof(pcount));	/*!!! "+8" should be "+sizeof(sec)+sizeof(usec)" ??? */
 	
     }
     else {
@@ -296,8 +296,8 @@ iperf_udp_send_packet(struct iperf_stream *sp)
 	pcount = htonl(sp->packet_count);
 	
 	memcpy(sp->buffer, &sec, sizeof(sec));
-	memcpy(sp->buffer+4, &usec, sizeof(usec));
-	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
+	memcpy(sp->buffer+4, &usec, sizeof(usec));	/*!!! "+4" should be "+sizeof(sec)" ??? */
+	memcpy(sp->buffer+8, &pcount, sizeof(pcount));	/*!!! "+8" should be "+sizeof(sec)+sizeof(usec)" ??? */
 	
     }
     

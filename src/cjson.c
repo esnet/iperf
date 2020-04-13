@@ -44,6 +44,10 @@
 #include <limits.h>
 #include <ctype.h>
 #include <float.h>
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+#include <sys/types.h>
 
 #ifdef ENABLE_LOCALES
 #include <locale.h>
@@ -56,7 +60,7 @@
 #pragma GCC visibility pop
 #endif
 
-#include "cJSON.h"
+#include "cjson.h"
 
 /* define our own boolean type */
 #ifdef true
@@ -86,6 +90,13 @@ typedef struct {
     size_t position;
 } error;
 static error global_error = { NULL, 0 };
+
+#ifndef LLONG_MAX
+#define LLONG_MAX 9223372036854775807LL
+#endif
+#ifndef LLONG_MIN
+#define LLONG_MIN (-LLONG_MAX - 1LL)
+#endif
 
 CJSON_PUBLIC(const char *) cJSON_GetErrorPtr(void)
 {
@@ -355,17 +366,17 @@ loop_end:
     item->valuedouble = number;
 
     /* use saturation in case of overflow */
-    if (number >= INT_MAX)
+    if (number >= LLONG_MAX)
     {
-        item->valueint = INT_MAX;
+        item->valueint = LLONG_MAX;
     }
-    else if (number <= (double)INT_MIN)
+    else if (number <= (double)LLONG_MIN)
     {
-        item->valueint = INT_MIN;
+        item->valueint = LLONG_MIN;
     }
     else
     {
-        item->valueint = (int)number;
+        item->valueint = (int64_t)number;
     }
 
     item->type = cJSON_Number;
@@ -377,17 +388,17 @@ loop_end:
 /* don't ask me, but the original cJSON_SetNumberValue returns an integer or double */
 CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number)
 {
-    if (number >= INT_MAX)
+    if (number >= LLONG_MAX)
     {
-        object->valueint = INT_MAX;
+        object->valueint = LLONG_MAX;
     }
-    else if (number <= (double)INT_MIN)
+    else if (number <= (double)LLONG_MIN)
     {
-        object->valueint = INT_MIN;
+        object->valueint = LLONG_MIN;
     }
     else
     {
-        object->valueint = (int)number;
+        object->valueint = (int64_t)number;
     }
 
     return object->valuedouble = number;
@@ -448,9 +459,9 @@ static unsigned char* ensure(printbuffer * const p, size_t needed)
         return NULL;
     }
 
-    if (needed > INT_MAX)
+    if (needed > LLONG_MAX)
     {
-        /* sizes bigger than INT_MAX are currently not supported */
+        /* sizes bigger than LLONG_MAX are currently not supported */
         return NULL;
     }
 
@@ -465,12 +476,12 @@ static unsigned char* ensure(printbuffer * const p, size_t needed)
     }
 
     /* calculate new buffer size */
-    if (needed > (INT_MAX / 2))
+    if (needed > (LLONG_MAX / 2))
     {
-        /* overflow of int, use INT_MAX if possible */
-        if (needed <= INT_MAX)
+        /* overflow of int, use LLONG_MAX if possible */
+        if (needed <= LLONG_MAX)
         {
-            newsize = INT_MAX;
+            newsize = LLONG_MAX;
         }
         else
         {
@@ -2411,17 +2422,17 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateNumber(double num)
         item->valuedouble = num;
 
         /* use saturation in case of overflow */
-        if (num >= INT_MAX)
+        if (num >= LLONG_MAX)
         {
-            item->valueint = INT_MAX;
+            item->valueint = LLONG_MAX;
         }
-        else if (num <= (double)INT_MIN)
+        else if (num <= (double)LLONG_MIN)
         {
-            item->valueint = INT_MIN;
+            item->valueint = LLONG_MIN;
         }
         else
         {
-            item->valueint = (int)num;
+            item->valueint = (int64_t)num;
         }
     }
 

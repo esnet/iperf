@@ -459,9 +459,9 @@ static unsigned char* ensure(printbuffer * const p, size_t needed)
         return NULL;
     }
 
-    if (needed > LLONG_MAX)
+    if (needed > SIZE_MAX)
     {
-        /* sizes bigger than LLONG_MAX are currently not supported */
+        /* sizes bigger than SIZE_MAX are currently not supported */
         return NULL;
     }
 
@@ -476,12 +476,12 @@ static unsigned char* ensure(printbuffer * const p, size_t needed)
     }
 
     /* calculate new buffer size */
-    if (needed > (LLONG_MAX / 2))
+    if (needed > (SIZE_MAX / 2))
     {
-        /* overflow of int, use LLONG_MAX if possible */
-        if (needed <= LLONG_MAX)
+        /* overflow of int, use SIZE_MAX if possible */
+        if (needed <= SIZE_MAX)
         {
-            newsize = LLONG_MAX;
+            newsize = SIZE_MAX;
         }
         else
         {

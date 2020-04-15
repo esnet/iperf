@@ -1850,8 +1850,8 @@ get_parameters(struct iperf_test *test)
 #endif //HAVE_SSL
 	if (test->mode && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    test->sender_has_retransmits = 1;
-    if (test->settings->rate)
-        cJSON_AddNumberToObject(test->json_start, "target_bitrate", test->settings->rate);
+	if (test->settings->rate)
+	    cJSON_AddNumberToObject(test->json_start, "target_bitrate", test->settings->rate);
 	cJSON_Delete(j);
     }
     return r;

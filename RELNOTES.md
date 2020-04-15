@@ -1,6 +1,13 @@
 iperf3 Release Notes
 ====================
 
+iperf 3.8 2020-xx-xx
+--------------------
+
+* Notable user-visible changes
+
+* Notable developer-visible changes
+
 iperf 3.7 2019-06-21
 --------------------
 

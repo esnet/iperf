@@ -6,7 +6,21 @@ iperf 3.8 2020-xx-xx
 
 * Notable user-visible changes
 
+  * Profiled libraries and binaries are no longer built by default
+    (#950).   
+
+  * A minimal Dockerfile has been added (#824).
+
+  * A bug with burst mode and unlimited rate has been fixed (#898).
+
 * Notable developer-visible changes
+
+  * The embedded version of cJSON has been updated to 1.3.17 (#978).
+
+  * Some server authentication functions have been added to the API
+    (#911).
+
+  * Various compiler errors and warnings have been fixed.
 
 iperf 3.7 2019-06-21
 --------------------

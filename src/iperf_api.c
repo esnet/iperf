@@ -1755,7 +1755,9 @@ send_parameters(struct iperf_test *test)
 	cJSON_AddStringToObject(j, "client_version", IPERF_VERSION);
 
 	if (test->debug) {
-	    printf("send_parameters:\n%s\n", cJSON_Print(j));
+	    char *str = cJSON_Print(j);
+	    printf("send_parameters:\n%s\n", str);
+	    cJSON_free(str);
 	}
 
 	if (JSON_write(test->ctrl_sck, j) < 0) {
@@ -1785,7 +1787,7 @@ get_parameters(struct iperf_test *test)
             char *str;
             str = cJSON_Print(j);
             printf("get_parameters:\n%s\n", str );
-            free(str);
+            cJSON_free(str);
 	}
 
 	if ((j_p = cJSON_GetObjectItem(j, "tcp")) != NULL)
@@ -1952,7 +1954,7 @@ send_results(struct iperf_test *test)
 	    if (r == 0 && test->debug) {
                 char *str = cJSON_Print(j);
 		printf("send_results\n%s\n", str);
-                free(str);
+                cJSON_free(str);
 	    }
 	    if (r == 0 && JSON_write(test->ctrl_sck, j) < 0) {
 		i_errno = IESENDRESULTS;
@@ -2010,7 +2012,7 @@ get_results(struct iperf_test *test)
 	    if (test->debug) {
                 char *str = cJSON_Print(j);
                 printf("get_results\n%s\n", str);
-                free(str);
+                cJSON_free(str);
 	    }
 
 	    test->remote_cpu_util[0] = j_cpu_util_total->valuedouble;
@@ -2147,7 +2149,7 @@ JSON_write(int fd, cJSON *json)
 	    if (Nwrite(fd, str, hsize, Ptcp) < 0)
 		r = -1;
 	}
-	free(str);
+	cJSON_free(str);
     }
     return r;
 }
@@ -3434,7 +3436,9 @@ iperf_print_results(struct iperf_test *test)
             /* Print server output if we're on the client and it was requested/provided */
             if (test->role == 'c' && iperf_get_test_get_server_output(test) && !test->json_output) {
                 if (test->json_server_output) {
-                    iperf_printf(test, "\nServer JSON output:\n%s\n", cJSON_Print(test->json_server_output));
+		    char *str = cJSON_Print(test->json_server_output);
+                    iperf_printf(test, "\nServer JSON output:\n%s\n", str);
+		    cJSON_free(str);
                     cJSON_Delete(test->json_server_output);
                     test->json_server_output = NULL;
                 }
@@ -4018,6 +4022,8 @@ iperf_json_finish(struct iperf_test *test)
         return -1;
     fprintf(test->outfile, "%s\n", test->json_output_string);
     iflush(test);
+    cJSON_free(test->json_output_string);
+    test->json_output_string = NULL;
     cJSON_Delete(test->json_top);
     test->json_top = test->json_start = test->json_connected = test->json_intervals = test->json_server_output = test->json_end = NULL;
     return 0;

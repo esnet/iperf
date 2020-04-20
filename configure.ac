@@ -125,7 +125,7 @@ else
     if $have_ssl; then
         case $host in
            *-*-cygwin)
-             CFLAGS="$CFFLAGS -DNOCRYPT"
+             CFLAGS="$CFLAGS -DNOCRYPT"
              ;;
         esac
         LDFLAGS="$LDFLAGS $OPENSSL_LDFLAGS"

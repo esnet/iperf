@@ -479,6 +479,7 @@ iperf_sctp_connect(struct iperf_test *test)
     if (!TAILQ_EMPTY(&test->xbind_addrs)) {
         if (iperf_sctp_bindx(test, s, IPERF_SCTP_CLIENT)) {
             freeaddrinfo(server_res);
+            close(s);
             return -1;
         }
     }
@@ -502,7 +503,6 @@ iperf_sctp_connect(struct iperf_test *test)
         i_errno = IESENDCOOKIE;
         return -1;
     }
-    freeaddrinfo(server_res);
 
     /*
      * We want to allow fragmentation.  But there's at least one
@@ -522,6 +522,7 @@ iperf_sctp_connect(struct iperf_test *test)
         return -1;
     }
 
+    freeaddrinfo(server_res);
     return s;
 #else
     i_errno = IENOSCTP;

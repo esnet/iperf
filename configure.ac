@@ -26,6 +26,7 @@
 # Initialize the autoconf system for the specified tool, version and mailing list
 AC_INIT(iperf, 3.7+, https://github.com/esnet/iperf, iperf, https://software.es.net/iperf/)
 m4_include([config/ax_check_openssl.m4])
+m4_include([config/iperf_config_static_bin.m4])
 AC_LANG(C)
 
 # Specify where the auxiliary files created by configure should go. The config
@@ -35,6 +36,9 @@ AC_CONFIG_AUX_DIR(config)
 
 # Initialize the automake system
 AM_INIT_AUTOMAKE([foreign])
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+LT_INIT
+
 AM_MAINTAINER_MODE
 AM_CONFIG_HEADER(src/iperf_config.h)
 

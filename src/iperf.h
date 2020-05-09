@@ -135,7 +135,10 @@ struct iperf_settings
     int       domain;               /* AF_INET or AF_INET6 */
     int       socket_bufsize;       /* window size for TCP */
     int       blksize;              /* size of read/writes (-l) */
-    uint64_t  rate;                 /* target data rate for application pacing*/
+    iperf_size_t  rate;                 /* target data rate for application pacing*/
+    iperf_size_t  total_rate_maximum;   /* server's maximum allowed total data rate for all streams*/
+    double        total_rate_interval;  /* interval for avaraging total data rate */
+    int           total_rate_stats;     /* calculated number of stats periods for averaging total data rate */
     uint64_t  fqrate;               /* target data rate for FQ pacing*/
     int	      pacing_timer;	    /* pacing timer in microseconds */
     int       burst;                /* packets per burst */
@@ -327,6 +330,12 @@ struct iperf_test
 
     iperf_size_t bytes_received;
     iperf_size_t blocks_received;
+
+    iperf_size_t total_rate_stats_count;               /* Number of stats periods accumulated for total rate average */
+    iperf_size_t *total_rate_intervals_traffic_bytes;  /* Pointer to a cyclic array that includes the last interval's bytes transferred */
+    iperf_size_t total_rate_last_interval_index;       /* Index of the last interval traffic insrted into the cyclic array */
+    struct iperf_time total_rate_last_check_time;      /* The time of total throughput check was done */
+    int          total_rate_traffic_exceeded_limit;    /* Set by callback routine when average data rate exceeded the limit */
 
     char      cookie[COOKIE_SIZE];
 //    struct iperf_stream *streams;               /* pointer to list of struct stream */

@@ -385,7 +385,9 @@ iperf_strerror(int int_errno)
 	case IEREVERSEBIDIR:
 	    snprintf(errstr, len, "cannot be both reverse and bidirectional");
             break;
-	
+	case IETOTALRATE:
+	    snprintf(errstr, len, "total required bandwidth is larger than server limit");
+            break;
     }
 
     /* Append the result of strerror() or gai_strerror() if appropriate */

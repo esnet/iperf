@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2018, The Regents of the University of
+ * iperf, Copyright (c) 2014-2020, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -150,7 +150,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	
 	    /* Log the out-of-order packet */
 	    if (sp->test->debug) 
-		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count, sp->socket);
+		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count + 1, sp->socket);
 	}
 
 	/*

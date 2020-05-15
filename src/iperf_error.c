@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2019, The Regents of the University of
+ * iperf, Copyright (c) 2014-2020, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -134,10 +134,10 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "bad TOS value (must be between 0 and 255 inclusive)");
             break;
         case IESETCLIENTAUTH:
-             snprintf(errstr, len, "you must specify username (max 20 chars), password (max 20 chars) and a path to a valid public rsa client to be used");
+             snprintf(errstr, len, "you must specify a username, password, and path to a valid RSA public key");
             break;
         case IESETSERVERAUTH:
-             snprintf(errstr, len, "you must specify path to a valid private rsa server to be used and a user credential file");
+             snprintf(errstr, len, "you must specify a path to a valid RSA private key and a user credential file");
             break;
 	case IEBADFORMAT:
 	    snprintf(errstr, len, "bad format specifier (valid formats are in the set [kmgtKMGT])");

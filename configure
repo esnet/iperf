@@ -12983,7 +12983,9 @@ fi
 $as_echo "$iperf3_cv_header_tcp_congestion" >&6; }
 if test "x$iperf3_cv_header_tcp_congestion" = "xyes"; then
 
-$as_echo "#define HAVE_TCP_CONGESTION 1" >>confdefs.h
+# DBO >>> $as_echo "#define HAVE_TCP_CONGESTION 1" >>confdefs.h
+$as_echo "#undef HAVE_TCP_CONGESTION 1" >>confdefs.h
+# <<< DBO */
 
 fi
 

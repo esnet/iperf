@@ -95,7 +95,7 @@ void
 save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp)
 {
 #if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)) && \
-	defined(TCP_INFO)
+	defined(TCP_INFO)/*DBO >>> */ && 0 /*<<<DBO*/
     socklen_t tcp_info_length = sizeof(struct tcp_info);
 
     if (getsockopt(sp->socket, IPPROTO_TCP, TCP_INFO, (void *)&irp->tcpInfo, &tcp_info_length) < 0)

@@ -615,10 +615,10 @@ iperf_run_server(struct iperf_test *test)
                     test->prot_listener = -1;
 
 		    /* Ensure that total requested data rate is not above limit */
-		    if (test->settings->total_rate_maximum > 0 &&
-				(test->num_streams * test->settings->rate) > test->settings->total_rate_maximum) {
+		    iperf_size_t total_requested_rate = test->num_streams * test->settings->rate * (test->mode == BIDIRECTIONAL? 2 : 1);
+		    if (test->settings->total_rate_maximum > 0 && total_requested_rate > test->settings->total_rate_maximum) {
 			iperf_err(test, "Client total requested throughput rate of %ld bps exceeded %ld bps limit",
-				test->num_streams * test->settings->rate, test->settings->total_rate_maximum);
+				total_requested_rate, test->settings->total_rate_maximum);
 			cleanup_server(test);
 			i_errno = IETOTALRATE;
 			return -1;

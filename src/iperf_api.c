@@ -1508,8 +1508,9 @@ iperf_check_total_rate(struct iperf_test *test, iperf_size_t last_interval_bytes
         return;
  
      /* Calculating total bytes traffic to be averaged */
-    for (total_bytes = 0, i = 0; i < test->settings->total_rate_stats; i++)
+    for (total_bytes = 0, i = 0; i < test->settings->total_rate_stats; i++) {
         total_bytes += test->total_rate_intervals_traffic_bytes[i];
+    }
 
     seconds = test->stats_interval * test->settings->total_rate_stats;
     bits_per_second = total_bytes * 8 / seconds;
@@ -1518,7 +1519,7 @@ iperf_check_total_rate(struct iperf_test *test, iperf_size_t last_interval_bytes
     }
 
     if (bits_per_second  > test->settings->total_rate_maximum) {
-	iperf_err(test, "Throughput of %ld bps exceeded %ld bps limit", bits_per_second, test->settings->total_rate_maximum);
+	iperf_err(test, "Total throughput of %ld bps exceeded %ld bps limit", bits_per_second, test->settings->total_rate_maximum);
 	test->total_rate_traffic_exceeded_limit = 1;
     }
 }
@@ -2817,7 +2818,7 @@ iperf_stats_callback(struct iperf_test *test)
 
         // Total bytes transferred this interval
 	total_interval_bytes_transferred += rp->bytes_sent_this_interval + rp->bytes_received_this_interval;
-     
+    
 	irp = TAILQ_LAST(&rp->interval_results, irlisthead);
         /* result->end_time contains timestamp of previous interval */
         if ( irp != NULL ) /* not the 1st interval */

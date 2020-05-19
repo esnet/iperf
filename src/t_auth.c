@@ -35,7 +35,9 @@
 
 #include "iperf.h"
 #include "iperf_api.h"
+#if defined(HAVE_SSL)
 #include "iperf_auth.h"
+#endif /* HAVE_SSL */
 
 #include "version.h"
 

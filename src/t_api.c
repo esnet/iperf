@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2017, The Regents of the University of
+ * iperf, Copyright (c) 2017-2020, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -45,9 +45,21 @@ int
 main(int argc, char **argv)
 {
     const char *ver;
+    struct iperf_test *test;
+    int sint, gint;
 
     ver = iperf_get_iperf_version();
     assert(strcmp(ver, IPERF_VERSION) == 0);
+
+    test = iperf_new_test();
+    assert(test != NULL);
+
+    iperf_defaults(test);
+
+    sint = 10;
+    iperf_set_test_connect_timeout(test, sint);
+    gint = iperf_get_test_connect_timeout(test);
+    assert(sint == gint);
 
     return 0;
 }

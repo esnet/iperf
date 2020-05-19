@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2019, The Regents of the University of
+ * iperf, Copyright (c) 2014-2020, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -128,6 +128,7 @@ int iperf_get_test_tos( struct iperf_test* ipt );
 char*	iperf_get_extra_data( struct iperf_test* ipt );
 char*	iperf_get_iperf_version(void);
 int	iperf_get_test_no_delay( struct iperf_test* ipt );
+int	iperf_get_test_connect_timeout( struct iperf_test* ipt );
 
 /* Setter routines for some fields inside iperf_test. */
 void	iperf_set_verbose( struct iperf_test* ipt, int verbose );
@@ -171,6 +172,8 @@ void    iperf_set_test_client_rsa_pubkey(struct iperf_test *ipt, char *client_rs
 void    iperf_set_test_server_authorized_users(struct iperf_test *ipt, char *server_authorized_users);
 void    iperf_set_test_server_rsa_privkey(struct iperf_test *ipt, char *server_rsa_privkey_base64);
 #endif // HAVE_SSL
+
+void	iperf_set_test_connect_timeout(struct iperf_test *ipt, int ct);
 
 /**
  * exchange_parameters - handles the param_Exchange part for client

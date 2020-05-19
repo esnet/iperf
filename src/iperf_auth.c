@@ -43,6 +43,7 @@
 #include <openssl/pem.h>
 #include <openssl/sha.h>
 #include <openssl/buffer.h>
+#include <openssl/err.h>
 
 const char *auth_text_format = "user: %s\npwd:  %s\nts:   %ld";
 
@@ -240,6 +241,11 @@ int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned ch
     OPENSSL_free(rsa_buffer);
     BIO_free(bioBuff);
 
+    if (encryptedtext_len < 0) {
+      /* We probably shoudln't be printing stuff like this */
+      fprintf(stderr, "%s\n", ERR_error_string(ERR_get_error(), NULL));
+    }
+
     return encryptedtext_len;  
 }
 
@@ -262,6 +268,11 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
     OPENSSL_free(rsa_buffer);
     BIO_free(bioBuff);
 
+    if (plaintext_len < 0) {
+      /* We probably shoudln't be printing stuff like this */
+      fprintf(stderr, "%s\n", ERR_error_string(ERR_get_error(), NULL));
+    }
+
     return plaintext_len;
 }
 
@@ -283,6 +294,9 @@ int encode_auth_setting(const char *username, const char *password, EVP_PKEY *pu
     unsigned char *encrypted = NULL;
     int encrypted_len;
     encrypted_len = encrypt_rsa_message(text, public_key, &encrypted);
+    if (encrypted_len < 0) {
+      return -1;
+    }
     Base64Encode(encrypted, encrypted_len, authtoken);
     OPENSSL_free(encrypted);
 
@@ -297,8 +311,11 @@ int decode_auth_setting(int enable_debug, char *authtoken, EVP_PKEY *private_key
     unsigned char *plaintext = NULL;
     int plaintext_len;
     plaintext_len = decrypt_rsa_message(encrypted_b64, encrypted_len_b64, private_key, &plaintext);
-    plaintext[plaintext_len] = '\0';
     free(encrypted_b64);
+    if (plaintext_len < 0) {
+        return -1;
+    }
+    plaintext[plaintext_len] = '\0';
 
     char *s_username, *s_password;
     s_username = (char *) calloc(plaintext_len, sizeof(char));

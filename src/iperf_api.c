@@ -1294,12 +1294,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         else if (iperf_getpass(&client_password, &s, stdin) < 0){
             return -1;
         } 
-
-        if (strlen(client_username) > 20 || strlen(client_password) > 20){
-            i_errno = IESETCLIENTAUTH;
-            return -1;
-        }
-
         if (test_load_pubkey_from_file(client_rsa_public_key) < 0){
             i_errno = IESETCLIENTAUTH;
             return -1;
@@ -1589,15 +1583,18 @@ int test_is_authorized(struct iperf_test *test){
     if (test->settings->authtoken){
         char *username = NULL, *password = NULL;
         time_t ts;
-        decode_auth_setting(test->debug, test->settings->authtoken, test->server_rsa_private_key, &username, &password, &ts);
+        int rc = decode_auth_setting(test->debug, test->settings->authtoken, test->server_rsa_private_key, &username, &password, &ts);
+	if (rc) {
+	    return -1;
+	}
         int ret = check_authentication(username, password, ts, test->server_authorized_users);
         if (ret == 0){
-            iperf_printf(test, report_authetication_successed, username, ts);
+            iperf_printf(test, report_authentication_succeeded, username, ts);
             free(username);
             free(password);
             return 0;
         } else {
-            iperf_printf(test, report_authetication_failed, username, ts);
+            iperf_printf(test, report_authentication_failed, username, ts);
             free(username);
             free(password);
             return -1;
@@ -1760,10 +1757,18 @@ send_parameters(struct iperf_test *test)
 	if (test->repeating_payload)
 	    cJSON_AddNumberToObject(j, "repeating_payload", test->repeating_payload);
 #if defined(HAVE_SSL)
-    if (test->settings->client_username && test->settings->client_password && test->settings->client_rsa_pubkey){
-        encode_auth_setting(test->settings->client_username, test->settings->client_password, test->settings->client_rsa_pubkey, &test->settings->authtoken);
-        cJSON_AddStringToObject(j, "authtoken", test->settings->authtoken);
-    }
+	/* Send authentication parameters */
+	if (test->settings->client_username && test->settings->client_password && test->settings->client_rsa_pubkey){
+	    int rc = encode_auth_setting(test->settings->client_username, test->settings->client_password, test->settings->client_rsa_pubkey, &test->settings->authtoken);
+
+	    if (rc) {
+		cJSON_Delete(j);
+		i_errno = IESENDPARAMS;
+		return -1;
+	    }
+	    
+	    cJSON_AddStringToObject(j, "authtoken", test->settings->authtoken);
+	}
 #endif // HAVE_SSL
 	cJSON_AddStringToObject(j, "client_version", IPERF_VERSION);
 

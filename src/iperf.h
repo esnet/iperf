@@ -134,11 +134,18 @@ struct iperf_settings
 {
     int       domain;               /* AF_INET or AF_INET6 */
     int       socket_bufsize;       /* window size for TCP */
-    int       blksize;              /* size of read/writes (-l) */
+    int       blksize;              /* (minimum) size of read/writes (-l) */
+    int       blksize_max;          /* maximum UDP read/write size */
+    int       last_blksize;         /* last blocksize used when blksize_step is used */
+    int       blksize_step;         /* steps between blksize/max range. Default is random size in range */
     uint64_t  rate;                 /* target data rate for application pacing*/
     uint64_t  fqrate;               /* target data rate for FQ pacing*/
     int	      pacing_timer;	    /* pacing timer in microseconds */
-    int       burst;                /* packets per burst */
+    int       sleep_timer;          /* (minimum) sleep time between (bundle of) packets in miliseconds */
+    int       sleep_timer_max;      /* maximum sleep time between (bundle of) packets in miliseconds */
+    int       actual_sleep_timer;   /* calculated actual sleep() time for sleep_timer */
+    int       bundle_size;          /* (minimum) bundle of packets between sleeps */
+    int       bundle_size_max;      /* maximum sleep bundle of packets between sleeps */    int       burst;                /* packets per burst */
     int       mss;                  /* for TCP MSS */
     int       ttl;                  /* IP TTL option */
     int       tos;                  /* type of service bit */

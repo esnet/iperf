@@ -59,3 +59,22 @@ host=$1
 ./src/iperf3 -c $host -C reno -V
 
 
+###### test different UDP traffic profiles
+# -l flag - fixed packet length
+./src/iperf3 -c $host -u -d -k 7 -l 1000
+# -l flag - random length change in range
+./src/iperf3 -c $host -u -d -k 7 -l 1000/1400
+# --step flag - increased length change in range
+./src/iperf3 -c $host -u -d -k 7 -l 1000/1040 --step 10
+# --step flag - dencreased length change in range
+./src/iperf3 -c $host -u -d -k 7 -l 400/360 --step 10
+# --sleep flag - fixed sleep time after each packet sent
+./src/iperf3 -c $host -u -d -k 7 -l 1000/1040 --sleep 100
+# --sleep flag - random sleep time in tange after each packet sent
+./src/iperf3 -c $host -u -d -k 7 -l 100/1040 --sleep 100/1000
+# --bundle flag - fixed bundle size beween sleeps
+./src/iperf3 -c $host -u -d -k 9 -l 500 --sleep 100 - bundle 3
+# --bundle flag - random bundle size i range between sleeps
+./src/iperf3 -c $host -u -d -k 10 -l 500 --sleep 100/1000 - bundle 2/5
+# -R flag - a UDP traffic profile with reverse option
+./src/iperf3 -c $host -u -d -k 250 -l 100/200 --step 1 --sleep 5/50 --bundle 2/4 -R  

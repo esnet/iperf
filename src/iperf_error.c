@@ -118,6 +118,15 @@ iperf_strerror(int int_errno)
         case IEBLOCKSIZE:
             snprintf(errstr, len, "block size too large (maximum = %d bytes)", MAX_BLOCKSIZE);
             break;
+	case IESLEEP:
+	    snprintf(errstr, len, "sleep must be n1[/n2] where n1<=n2 are non-negative integers of miliseconds");
+	    break;
+	case IEBUNDLE:
+	    snprintf(errstr, len, "bundle size must be n1[/n2] where n1<=n2 are positive integers");
+	    break;
+	case IESTEP:
+	    snprintf(errstr, len, "step must be a positive integer");
+	    break;
         case IEBUFSIZE:
             snprintf(errstr, len, "socket buffer size too large (maximum = %d bytes)", MAX_TCP_BUFFER);
             break;

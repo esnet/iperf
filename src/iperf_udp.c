@@ -68,6 +68,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     int       r;
     int       size = sp->settings->blksize;
     int       size_max = sp->settings->blksize_max;
+    int       first_packet = 0;
     double    transit = 0, d = 0;
     struct iperf_time sent_time, arrival_time, temp_time;
 
@@ -158,7 +159,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	
 	    /* Log the out-of-order packet */
 	    if (sp->test->debug || (sp->test->verbose && (sp->test->settings->sleep_timer != sp->test->settings->sleep_timer_max))) 
-		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count, sp->socket);
+		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count + 1, sp->socket);
 	}
 
 	/*

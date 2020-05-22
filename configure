@@ -775,6 +775,7 @@ with_sysroot
 enable_libtool_lock
 enable_maintainer_mode
 enable_profiling
+with_sctp
 with_openssl
 '
       ac_precious_vars='build_alias
@@ -1433,6 +1434,7 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-sysroot[=DIR]    Search for dependent libraries within DIR (or the
                           compiler's sysroot if not specified).
+  --without-sctp          disable SCTP
   --with-openssl=DIR      root of the OpenSSL directory
 
 Some influential environment variables:
@@ -13361,7 +13363,35 @@ fi
 done
 
 
+# SCTP.  Allow user to disable SCTP support with --without-sctp.
+# Otherwise we try to find whatever support is required.
+try_sctp=true
+
+# Check whether --with-sctp was given.
+if test "${with_sctp+set}" = set; then :
+  withval=$with_sctp;
+        case "$withval" in
+	y | ye | yes)
+	  ;;
+	n | no)
+	try_sctp=false
+	  ;;
+	*)
+	as_fn_error $? "Invalid --with-sctp value" "$LINENO" 5
+	  ;;
+	esac
+
+else
+
+        try_sctp=true
+
+
+fi
+
+
 # Check for SCTP support
+echo "TRY_SCTP" $try_sctp
+if $try_sctp; then
 for ac_header in sys/socket.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "sys/socket.h" "ac_cv_header_sys_socket_h" "$ac_includes_default"
@@ -13513,6 +13543,7 @@ fi
 
 done
 
+fi
 
 ac_fn_c_check_header_mongrel "$LINENO" "endian.h" "ac_cv_header_endian_h" "$ac_includes_default"
 if test "x$ac_cv_header_endian_h" = xyes; then :

@@ -58,7 +58,7 @@ fi
 
 # Check if enable profiling
 AC_ARG_ENABLE([profiling],
-    AS_HELP_STRING([--enable-profiling], [Enable iperf profiling binary]),
+    AS_HELP_STRING([--enable-profiling], [Enable iperf3 profiling binary]),
     [enable_profiling=yes],
     [:])
 AM_CONDITIONAL([ENABLE_PROFILING], [test x$enable_profiling = xyes])
@@ -116,7 +116,6 @@ AC_ARG_WITH([sctp],
 )
 
 # Check for SCTP support
-echo "TRY_SCTP" $try_sctp
 if $try_sctp; then
 AC_CHECK_HEADERS([sys/socket.h])
 AC_CHECK_HEADERS([netinet/sctp.h],

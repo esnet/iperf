@@ -7,11 +7,23 @@ iperf 3.8 2020-xx-xx
 * Notable user-visible changes
 
   * Profiled libraries and binaries are no longer built by default
-    (#950).   
+    (#950).
 
   * A minimal Dockerfile has been added (#824).
 
   * A bug with burst mode and unlimited rate has been fixed (#898).
+
+  * Configuring with the --enable-static-bin flag will now cause
+    a statically-linked iperf3 binary to be built (#989).
+
+  * Clock skew between the iperf3 client and server will no longer
+    skew the computation of jitter during UDP tests (#842 / #990).
+
+  * A possible buffer overflow in the authentication feature has been
+    fixed.  This was only relevant when configuration authentication
+    using the libiperf3 API, and did not affect command-line usage.
+    Various other improvements and fixes in this area were also made
+    (#996).
 
 * Notable developer-visible changes
 
@@ -19,6 +31,11 @@ iperf 3.8 2020-xx-xx
 
   * Some server authentication functions have been added to the API
     (#911).
+
+  * API access has been added to the connection timeout parameter
+    (#1001).
+
+  * Tests for some authentication functions have been added.
 
   * Various compiler errors and warnings have been fixed.
 

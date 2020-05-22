@@ -294,6 +294,7 @@ int encode_auth_setting(const char *username, const char *password, EVP_PKEY *pu
     unsigned char *encrypted = NULL;
     int encrypted_len;
     encrypted_len = encrypt_rsa_message(text, public_key, &encrypted);
+    free(text);
     if (encrypted_len < 0) {
       return -1;
     }

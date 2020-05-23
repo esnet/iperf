@@ -1135,7 +1135,7 @@ CJSON_PUBLIC(char *) cJSON_PrintBuffered(const cJSON *item, int prebuffer, cJSON
     return (char*)p.buffer;
 }
 
-CJSON_PUBLIC(cJSON_bool) cJSON_PrintPreallocated(cJSON *item, char *buf, const int len, const cJSON_bool fmt)
+CJSON_PUBLIC(cJSON_bool) cJSON_PrintPreallocated(cJSON *item, const char *buf, const int len, const cJSON_bool fmt)
 {
     printbuffer p = { 0, 0, 0, 0, 0, 0, { 0, 0, 0 } };
 
@@ -2354,7 +2354,7 @@ fail:
     return NULL;
 }
 
-CJSON_PUBLIC(void) cJSON_Minify(char *json)
+CJSON_PUBLIC(void) cJSON_Minify(const char *json)
 {
     unsigned char *into = (unsigned char*)json;
     while (*json)

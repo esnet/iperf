@@ -151,7 +151,7 @@ CJSON_PUBLIC(char *) cJSON_PrintUnformatted(const cJSON *item);
 CJSON_PUBLIC(char *) cJSON_PrintBuffered(const cJSON *item, int prebuffer, cJSON_bool fmt);
 /* Render a cJSON entity to text using a buffer already allocated in memory with given length. Returns 1 on success and 0 on failure. */
 /* NOTE: cJSON is not always 100% accurate in estimating how much memory it will use, so to be safe allocate 5 bytes more than you actually need */
-CJSON_PUBLIC(cJSON_bool) cJSON_PrintPreallocated(cJSON *item, const char *buffer, const int length, const cJSON_bool format);
+CJSON_PUBLIC(cJSON_bool) cJSON_PrintPreallocated(cJSON *item, char *buffer, const int length, const cJSON_bool format);
 /* Delete a cJSON entity and all subentities. */
 CJSON_PUBLIC(void) cJSON_Delete(cJSON *c);
 
@@ -237,7 +237,10 @@ CJSON_PUBLIC(cJSON_bool) cJSON_Compare(const cJSON * const a, const cJSON * cons
 /* If you supply a ptr in return_parse_end and parsing fails, then return_parse_end will contain a pointer to the error. If not, then cJSON_GetErrorPtr() does the job. */
 CJSON_PUBLIC(cJSON *) cJSON_ParseWithOpts(const char *value, const char **return_parse_end, cJSON_bool require_null_terminated);
 
-CJSON_PUBLIC(void) cJSON_Minify(const char *json);
+/* Minify a strings, remove blank characters(such as ' ', '\t', '\r', '\n') from strings.
+ * The input pointer json cannot point to a read-only address area, such as a string constant, 
+ * but should point to a readable and writable adress area. */
+CJSON_PUBLIC(void) cJSON_Minify(char *json);
 
 /* Macros for creating things quickly. */
 #define cJSON_AddNullToObject(object,name) cJSON_AddItemToObject(object, name, cJSON_CreateNull())

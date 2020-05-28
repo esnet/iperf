@@ -1,6 +1,6 @@
 # Also link binaries as static
 AC_ARG_ENABLE([static-bin],
-    AS_HELP_STRING([--enable-static-bin], [link iperf binary statically]),
+    AS_HELP_STRING([--enable-static-bin], [link iperf3 binary statically]),
     [enable_static_bin=yes
      AC_DISABLE_SHARED],
     [:])

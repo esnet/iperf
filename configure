@@ -775,6 +775,7 @@ with_sysroot
 enable_libtool_lock
 enable_maintainer_mode
 enable_profiling
+with_sctp
 with_openssl
 '
       ac_precious_vars='build_alias
@@ -1405,7 +1406,7 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-static-bin     link iperf binary statically
+  --enable-static-bin     link iperf3 binary statically
   --enable-shared[=PKGS]  build shared libraries [default=no]
   --enable-silent-rules   less verbose build output (undo: "make V=1")
   --disable-silent-rules  verbose build output (undo: "make V=0")
@@ -1420,7 +1421,7 @@ Optional Features:
   --enable-maintainer-mode
                           enable make rules and dependencies not useful (and
                           sometimes confusing) to the casual installer
-  --enable-profiling      Enable iperf profiling binary
+  --enable-profiling      Enable iperf3 profiling binary
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1433,6 +1434,7 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-sysroot[=DIR]    Search for dependent libraries within DIR (or the
                           compiler's sysroot if not specified).
+  --without-sctp          disable SCTP
   --with-openssl=DIR      root of the OpenSSL directory
 
 Some influential environment variables:
@@ -13361,7 +13363,34 @@ fi
 done
 
 
+# SCTP.  Allow user to disable SCTP support with --without-sctp.
+# Otherwise we try to find whatever support is required.
+try_sctp=true
+
+# Check whether --with-sctp was given.
+if test "${with_sctp+set}" = set; then :
+  withval=$with_sctp;
+        case "$withval" in
+	y | ye | yes)
+	  ;;
+	n | no)
+	try_sctp=false
+	  ;;
+	*)
+	as_fn_error $? "Invalid --with-sctp value" "$LINENO" 5
+	  ;;
+	esac
+
+else
+
+        try_sctp=true
+
+
+fi
+
+
 # Check for SCTP support
+if $try_sctp; then
 for ac_header in sys/socket.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "sys/socket.h" "ac_cv_header_sys_socket_h" "$ac_includes_default"
@@ -13513,6 +13542,7 @@ fi
 
 done
 
+fi
 
 ac_fn_c_check_header_mongrel "$LINENO" "endian.h" "ac_cv_header_endian_h" "$ac_includes_default"
 if test "x$ac_cv_header_endian_h" = xyes; then :

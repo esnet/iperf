@@ -1,4 +1,4 @@
-# iperf, Copyright (c) 2014-2018, The Regents of the University of
+# iperf, Copyright (c) 2014-2020, The Regents of the University of
 # California, through Lawrence Berkeley National Laboratory (subject
 # to receipt of any required approvals from the U.S. Dept. of
 # Energy).  All rights reserved.
@@ -58,7 +58,7 @@ fi
 
 # Check if enable profiling
 AC_ARG_ENABLE([profiling],
-    AS_HELP_STRING([--enable-profiling], [Enable iperf profiling binary]),
+    AS_HELP_STRING([--enable-profiling], [Enable iperf3 profiling binary]),
     [enable_profiling=yes],
     [:])
 AM_CONDITIONAL([ENABLE_PROFILING], [test x$enable_profiling = xyes])
@@ -93,7 +93,30 @@ AC_C_CONST
 # Check for poll.h (it's in POSIX so everyone should have it?)
 AC_CHECK_HEADERS([poll.h])
 
+# SCTP.  Allow user to disable SCTP support with --without-sctp.
+# Otherwise we try to find whatever support is required.
+try_sctp=true
+AC_ARG_WITH([sctp],
+    [AS_HELP_STRING([--without-sctp],
+        [disable SCTP])],
+    [
+        case "$withval" in
+	y | ye | yes)
+	  ;;
+	n | no)
+	try_sctp=false
+	  ;;
+	*)
+	AC_MSG_ERROR([Invalid --with-sctp value])
+	  ;;
+	esac
+    ], [
+        try_sctp=true
+    ]
+)
+
 # Check for SCTP support
+if $try_sctp; then
 AC_CHECK_HEADERS([sys/socket.h])
 AC_CHECK_HEADERS([netinet/sctp.h],
 		 AC_DEFINE([HAVE_SCTP], [1], [Have SCTP support.])
@@ -105,6 +128,7 @@ AC_CHECK_HEADERS([netinet/sctp.h],
 #include <sys/socket.h>
 #endif
 ])
+fi
 
 AC_CHECK_HEADER([endian.h],
 		AC_DEFINE([HAVE_ENDIAN_H], [1], [Define to 1 if you have the <endian.h> header file.]),

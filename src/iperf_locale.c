@@ -125,11 +125,11 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 #endif //HAVE_SSL
                            "Client specific:\n"
                            "  -c, --client    <host>    run in client mode, connecting to <host>\n"
-#if defined(HAVE_SCTP)
+#if defined(HAVE_SCTP_H)
                            "  --sctp                    use SCTP rather than TCP\n"
                            "  -X, --xbind <name>        bind SCTP association to links\n"
                            "  --nstreams      #         number of SCTP streams\n"
-#endif /* HAVE_SCTP */
+#endif /* HAVE_SCTP_H */
                            "  -u, --udp                 use UDP rather than TCP\n"
                            "  --connect-timeout #       timeout for control connection setup (ms)\n"
                            "  -b, --bitrate #[KMG][/#]  target bitrate in bits/sec (0 for unlimited)\n"

@@ -267,7 +267,7 @@ get_optional_features(void)
     numfeatures++;
 #endif /* HAVE_FLOWLABEL */
     
-#if defined(HAVE_SCTP)
+#if defined(HAVE_SCTP_H)
     if (numfeatures > 0) {
 	strncat(features, ", ", 
 		sizeof(features) - strlen(features) - 1);
@@ -275,7 +275,7 @@ get_optional_features(void)
     strncat(features, "SCTP", 
 	sizeof(features) - strlen(features) - 1);
     numfeatures++;
-#endif /* HAVE_SCTP */
+#endif /* HAVE_SCTP_H */
     
 #if defined(HAVE_TCP_CONGESTION)
     if (numfeatures > 0) {

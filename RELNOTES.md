@@ -16,6 +16,11 @@ iperf 3.8 2020-xx-xx
   * Configuring with the --enable-static-bin flag will now cause
     a statically-linked iperf3 binary to be built (#989).
 
+  * Configuring with the --without-sctp flag will now prevent SCTP
+    from being auto-detected (#1008).  This flag allows building a
+    static binary (see above item) on a CentOS system with SCTP
+    installed, because no static SCTP libraries are available.
+
   * Clock skew between the iperf3 client and server will no longer
     skew the computation of jitter during UDP tests (#842 / #990).
 

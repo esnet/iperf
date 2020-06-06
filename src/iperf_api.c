@@ -1480,7 +1480,8 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
     if (test->settings->burst != 0) {
 	iperf_time_now(&now);
 	SLIST_FOREACH(sp, &test->streams, streams)
-	    iperf_check_throttle(sp, &now);
+	    if (sp->sender)
+	        iperf_check_throttle(sp, &now);
     }
     if (write_setP != NULL)
 	SLIST_FOREACH(sp, &test->streams, streams)
@@ -1562,7 +1563,7 @@ iperf_create_send_timers(struct iperf_test * test)
     }
     SLIST_FOREACH(sp, &test->streams, streams) {
         sp->green_light = 1;
-	if (test->settings->rate != 0) {
+	if (test->settings->rate != 0 && sp->sender) {
 	    cd.p = sp;
 	    sp->send_timer = tmr_create(NULL, send_timer_proc, cd, test->settings->pacing_timer, 1);
 	    if (sp->send_timer == NULL) {

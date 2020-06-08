@@ -1,31 +1,23 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Obtaining iperf3 &#8212; iperf3 3.7 documentation</title>
+    <meta charset="utf-8" />
+    <title>Obtaining iperf3 &#8212; iperf3 3.8 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/esnet/esnet.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '3.7',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/js/jquery-1.11.0.min.js"></script>
+    <script src="_static/js/jquery-fix.js"></script>
+    <script src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script src="_static/bootstrap-sphinx.js"></script>
     <link rel="shortcut icon" href="_static/favicon.ico"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -36,8 +28,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body>
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -152,18 +143,18 @@ the packages listed in this section are provided by third parties, who
 are solely responsible for their contents.  This is an incomplete list
 of binary packages:</p>
 <ul class="simple">
-<li>FreeBSD:  <a class="reference external" href="http://freshports.org/benchmarks/iperf3">benchmarks/iperf3</a> in the FreeBSD Ports Collection</li>
-<li>Fedora / CentOS: <a class="reference external" href="https://apps.fedoraproject.org/packages/iperf3/">iperf3</a> and
+<li><p>FreeBSD:  <a class="reference external" href="http://freshports.org/benchmarks/iperf3">benchmarks/iperf3</a> in the FreeBSD Ports Collection</p></li>
+<li><p>Fedora / CentOS: <a class="reference external" href="https://apps.fedoraproject.org/packages/iperf3/">iperf3</a> and
 <a class="reference external" href="https://apps.fedoraproject.org/packages/iperf3-devel">iperf3-devel</a> in Fedora
 19 and 20 and in Fedora EPEL 5, 6, and 7.  iperf3 is included as a
 part of RedHat Enterprise Linux 7.4 and later (as well as CentOS 7.4
-and later).</li>
-<li>Ubuntu:  <a class="reference external" href="https://launchpad.net/ubuntu/+source/iperf3">iperf3</a>,
+and later).</p></li>
+<li><p>Ubuntu:  <a class="reference external" href="https://launchpad.net/ubuntu/+source/iperf3">iperf3</a>,
 is available in Trusty (backports), and as a part of the main
-release in Vivid and newer.</li>
-<li>macOS:  via HomeBrew.</li>
-<li>Windows:  <a class="reference external" href="https://iperf.fr/iperf-download.php#windows">iperf3 binaries for Windows</a> are available from
-iperf.fr (and other sources).</li>
+release in Vivid and newer.</p></li>
+<li><p>macOS:  via HomeBrew.</p></li>
+<li><p>Windows:  <a class="reference external" href="https://iperf.fr/iperf-download.php#windows">iperf3 binaries for Windows</a> are available from
+iperf.fr (and other sources).</p></li>
 </ul>
 </div>
 <div class="section" id="source-distributions">
@@ -172,14 +163,14 @@ iperf.fr (and other sources).</li>
 tarballs at:</p>
 <p><a class="reference external" href="https://downloads.es.net/pub/iperf/">https://downloads.es.net/pub/iperf/</a></p>
 <p><strong>Note:</strong>  Due to a software packaging error, the 3.0.2 release
-tarball was not compressed, even though its filename had a <code class="docutils literal"><span class="pre">.tar.gz</span></code>
+tarball was not compressed, even though its filename had a <code class="docutils literal notranslate"><span class="pre">.tar.gz</span></code>
 suffix.</p>
 <p><strong>Note:</strong>  GitHub, which currently hosts the iperf3 project, supports
-a “Releases” feature, which can automatically generate <code class="docutils literal"><span class="pre">.zip</span></code> or <code class="docutils literal"><span class="pre">.tar.gz</span></code>
+a “Releases” feature, which can automatically generate <code class="docutils literal notranslate"><span class="pre">.zip</span></code> or <code class="docutils literal notranslate"><span class="pre">.tar.gz</span></code>
 archives, on demand, from tags in the iperf3 source tree.  These tags are
 created during the release engineering process to mark the exact
 version of files making up a release.</p>
-<p>In theory, the <code class="docutils literal"><span class="pre">.tar.gz</span></code> files produced by GitHub contain the same
+<p>In theory, the <code class="docutils literal notranslate"><span class="pre">.tar.gz</span></code> files produced by GitHub contain the same
 contents as what are in the official tarballs, note that the tarballs
 themselves will be different due to internal timestamps or other
 metadata.  Therefore these files will <em>not</em> match the published SHA256
@@ -195,7 +186,7 @@ ensure the files have not been tampered with.</p>
 <p><a class="reference external" href="https://github.com/esnet/iperf">https://github.com/esnet/iperf</a></p>
 <p>The iperf3 source code repository can be checked out directly from
 GitHub using:</p>
-<p><code class="docutils literal"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/esnet/iperf.git</span></code></p>
+<p><code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/esnet/iperf.git</span></code></p>
 <p>Primary development for iperf3 takes place on CentOS 7 Linux, FreeBSD 11,
 and macOS 10.12. At this time, these are the only officially supported
 platforms, however there have been some reports of success with
@@ -220,8 +211,8 @@ NetBSD, OpenBSD, Windows, Solaris, Android, and iOS.</p>
         
         </p>
         <p>
-            &copy; Copyright 2014-2019, ESnet.<br/>
-          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.6.5.<br/>
+            &copy; Copyright 2014-2020, ESnet.<br/>
+          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 3.0.4.<br/>
         </p>
       </div>
     </div>

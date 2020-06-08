@@ -1,31 +1,23 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Invoking iperf3 &#8212; iperf3 3.7 documentation</title>
+    <meta charset="utf-8" />
+    <title>Invoking iperf3 &#8212; iperf3 3.8 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/esnet/esnet.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '3.7',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/js/jquery-1.11.0.min.js"></script>
+    <script src="_static/js/jquery-fix.js"></script>
+    <script src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script src="_static/bootstrap-sphinx.js"></script>
     <link rel="shortcut icon" href="_static/favicon.ico"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -36,8 +28,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body>
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -150,10 +141,10 @@ The manual page is the most up-to-date reference to the various flags and parame
 <p>Using the default options, iperf3 is meant to show typical well
 designed application performance.  “Typical well designed application”
 means avoiding artificial enhancements that work only for testing
-(such as <code class="docutils literal"><span class="pre">splice()</span></code>-ing the data to <code class="docutils literal"><span class="pre">/dev/null</span></code>).  iperf3 does
+(such as <code class="docutils literal notranslate"><span class="pre">splice()</span></code>-ing the data to <code class="docutils literal notranslate"><span class="pre">/dev/null</span></code>).  iperf3 does
 also have flags for “extreme best case” optimizations but they must be
-explicitly activated.  These flags include the <code class="docutils literal"><span class="pre">-Z</span></code> (<code class="docutils literal"><span class="pre">--zerocopy</span></code>)
-and <code class="docutils literal"><span class="pre">-A</span></code> (<code class="docutils literal"><span class="pre">--affinity</span></code>) options.</p>
+explicitly activated.  These flags include the <code class="docutils literal notranslate"><span class="pre">-Z</span></code> (<code class="docutils literal notranslate"><span class="pre">--zerocopy</span></code>)
+and <code class="docutils literal notranslate"><span class="pre">-A</span></code> (<code class="docutils literal notranslate"><span class="pre">--affinity</span></code>) options.</p>
 <div class="section" id="iperf3-manual-page">
 <h2>iperf3 Manual Page<a class="headerlink" href="#iperf3-manual-page" title="Permalink to this headline">¶</a></h2>
 <p>This section contains a plaintext rendering of the iperf3 manual page.
@@ -161,7 +152,7 @@ It is presented here only for convenience; the text here might not
 correspond to the current version of iperf3.  The authoritative iperf3
 manual page is included in the source tree and installed along with
 the executable.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">IPERF3</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>                        <span class="n">User</span> <span class="n">Manuals</span>                        <span class="n">IPERF3</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">IPERF3</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>                        <span class="n">User</span> <span class="n">Manuals</span>                        <span class="n">IPERF3</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
 
 
@@ -596,8 +587,8 @@ section 1.</p>
         
         </p>
         <p>
-            &copy; Copyright 2014-2019, ESnet.<br/>
-          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.6.5.<br/>
+            &copy; Copyright 2014-2020, ESnet.<br/>
+          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 3.0.4.<br/>
         </p>
       </div>
     </div>

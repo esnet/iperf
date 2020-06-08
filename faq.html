@@ -1,31 +1,23 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>iperf3 FAQ &#8212; iperf3 3.7 documentation</title>
+    <meta charset="utf-8" />
+    <title>iperf3 FAQ &#8212; iperf3 3.8 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/esnet/esnet.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '3.7',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/js/jquery-1.11.0.min.js"></script>
+    <script src="_static/js/jquery-fix.js"></script>
+    <script src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script src="_static/bootstrap-sphinx.js"></script>
     <link rel="shortcut icon" href="_static/favicon.ico"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -35,8 +27,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body>
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -131,9 +122,8 @@
       
   <div class="section" id="iperf3-faq">
 <span id="faq"></span><h1>iperf3 FAQ<a class="headerlink" href="#iperf3-faq" title="Permalink to this headline">¶</a></h1>
-<dl class="docutils">
-<dt>What is the history of iperf3, and what is the difference between iperf2 and iperf3?</dt>
-<dd><p class="first">iperf2 was orphaned in the late 2000s at version 2.0.5, despite some
+<dl>
+<dt>What is the history of iperf3, and what is the difference between iperf2 and iperf3?</dt><dd><p>iperf2 was orphaned in the late 2000s at version 2.0.5, despite some
 known bugs and issues. After spending some time trying to fix
 iperf2’s problems, ESnet decided by 2010 that a new, simpler tool
 was needed, and began development of iperf3. The goal was make the
@@ -152,136 +142,129 @@ as broad platform support.</p>
 <p>As of this writing (2017), both iperf2 and iperf3 are being actively
 (although independently) developed.  We recommend being familiar with
 both tools, and use whichever tool’s features best match your needs.</p>
-<p class="last">A feature comparison of iperf2, iperf3, and nuttcp is available at:
+<p>A feature comparison of iperf2, iperf3, and nuttcp is available at:
 <a class="reference external" href="https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/throughput-tool-comparision/">https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/throughput-tool-comparision/</a></p>
 </dd>
-<dt>iperf3 parallel stream performance is much less than iperf2. Why?</dt>
-<dd>iperf3 is single threaded, and iperf2 is multi-threaded. We
+<dt>iperf3 parallel stream performance is much less than iperf2. Why?</dt><dd><p>iperf3 is single threaded, and iperf2 is multi-threaded. We
 recommend using iperf2 for parallel streams.
-If you want to use multiple iperf3 streams use the method described <a class="reference external" href="https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/multi-stream-iperf3/">here</a>.</dd>
-<dt>I’m trying to use iperf3 on Windows, but having trouble. What should I do?</dt>
-<dd><p class="first">iperf3 is not officially supported on Windows, but iperf2 is. We
+If you want to use multiple iperf3 streams use the method described <a class="reference external" href="https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/multi-stream-iperf3/">here</a>.</p>
+</dd>
+<dt>I’m trying to use iperf3 on Windows, but having trouble. What should I do?</dt><dd><p>iperf3 is not officially supported on Windows, but iperf2 is. We
 recommend you use iperf2.</p>
-<p class="last">Some people are using Cygwin to run iperf3 in Windows, but not all
+<p>Some people are using Cygwin to run iperf3 in Windows, but not all
 options will work.  Some community-provided binaries of iperf3 for
 Windows exist.</p>
 </dd>
-<dt>How can I build a statically-linked executable of iperf3?</dt>
-<dd><p class="first">There are a number of reasons for building an iperf3 executable with
+<dt>How can I build a statically-linked executable of iperf3?</dt><dd><p>There are a number of reasons for building an iperf3 executable with
 no dependencies on any shared libraries.  Unfortunately this isn’t
 quite a straight-forward process.</p>
 <p>The steps below have nominally been tested on CentOS 7.4, but
 can probably be adapted for use with other Linux distributions:</p>
 <ol class="arabic simple">
-<li>If necessary, install the static C libraries; for CentOS this is
-the <code class="docutils literal"><span class="pre">glibc-static</span></code> package.</li>
-<li>If OpenSSL is installed, be sure that its static libraries are
-also installed, from the <code class="docutils literal"><span class="pre">openssl-static</span></code> package.</li>
-<li>Be sure that <code class="docutils literal"><span class="pre">lksctp-*</span></code> packages are not installed, because
+<li><p>If necessary, install the static C libraries; for CentOS this is
+the <code class="docutils literal notranslate"><span class="pre">glibc-static</span></code> package.</p></li>
+<li><p>If OpenSSL is installed, be sure that its static libraries are
+also installed, from the <code class="docutils literal notranslate"><span class="pre">openssl-static</span></code> package.</p></li>
+<li><p>Be sure that <code class="docutils literal notranslate"><span class="pre">lksctp-*</span></code> packages are not installed, because
 as of this writing, there do not appear to be any static
-libraries available for SCTP.</li>
-<li>Configure iperf3 thusly: <code class="docutils literal"><span class="pre">configure</span> <span class="pre">&quot;LDFLAGS=--static&quot;</span>
+libraries available for SCTP.</p></li>
+<li><p>Configure iperf3 thusly: <code class="docutils literal notranslate"><span class="pre">configure</span> <span class="pre">&quot;LDFLAGS=--static&quot;</span>
 <span class="pre">--disable-shared</span></code> These options are necessary to disable the
 generation of shared libraries and link the executable
-statically.</li>
-<li>Compile as normal.</li>
+statically.  For iperf-3.8 or later, configuring as <code class="docutils literal notranslate"><span class="pre">configure</span>
+<span class="pre">--enable-static-bin</span></code> is another, shorter way to accomplish
+this.</p></li>
+<li><p>Compile as normal.</p></li>
 </ol>
-<p class="last">It appears that for FreeBSD (tested on FreeBSD 11.1-RELEASE), only
+<p>It appears that for FreeBSD (tested on FreeBSD 11.1-RELEASE), only
 the last two steps are needed to produce a static executable.</p>
 </dd>
-<dt>How can I build on a system that doesn’t support profiled executables?</dt>
-<dd><p class="first">This problem has been noted by users attempting to build iperf3 for
+<dt>How can I build on a system that doesn’t support profiled executables?</dt><dd><p>This problem has been noted by users attempting to build iperf3 for
 Android systems.  There are several workarounds. In order from least
 effort to most effort:</p>
-<ol class="last arabic">
-<li><p class="first">Beginning with iperf-3.6, the <code class="docutils literal"><span class="pre">--disable-profiling</span></code> flag can be
-passed to <code class="docutils literal"><span class="pre">configure</span></code> to disable the building of profiled
-object files and the profiled executable.</p>
-</li>
-<li><p class="first">At the time the linking of the iperf3 profiled executable fails,
+<ol class="arabic">
+<li><p>Beginning with iperf-3.6, the <code class="docutils literal notranslate"><span class="pre">--disable-profiling</span></code> flag can be
+passed to <code class="docutils literal notranslate"><span class="pre">configure</span></code> to disable the building of profiled
+object files and the profiled executable.</p></li>
+<li><p>At the time the linking of the iperf3 profiled executable fails,
 the “normal” iperf3 executable is probably already created. So if
 you are willing to accept the error exit from the make process
 (and a little bit of wasted work on the build host), you might
-not need to do anything.</p>
-</li>
-<li><p class="first">After the configure step, there will be a definition in
-<code class="docutils literal"><span class="pre">src/Makefile</span></code> that looks like this:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>noinst_PROGRAMS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT) \
+not need to do anything.</p></li>
+<li><p>After the configure step, there will be a definition in
+<code class="docutils literal notranslate"><span class="pre">src/Makefile</span></code> that looks like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>noinst_PROGRAMS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT) \
   iperf3_profile$(EXEEXT)
 </pre></div>
 </div>
 <p>If you edit it to look like this, it will disable the build of the profiled iperf3:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>noinst_PROGRAMS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT)
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>noinst_PROGRAMS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT)
 </pre></div>
 </div>
 </li>
-<li><p class="first">Similar to item 2 above, but more permanent…if you edit
-<code class="docutils literal"><span class="pre">src/Makefile.am</span></code> and change the line reading like this:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">noinst_PROGRAMS</span>         <span class="o">=</span> <span class="n">t_timer</span> <span class="n">t_units</span> <span class="n">t_uuid</span> <span class="n">iperf3_profile</span>
+<li><p>Similar to item 2 above, but more permanent…if you edit
+<code class="docutils literal notranslate"><span class="pre">src/Makefile.am</span></code> and change the line reading like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">noinst_PROGRAMS</span>         <span class="o">=</span> <span class="n">t_timer</span> <span class="n">t_units</span> <span class="n">t_uuid</span> <span class="n">iperf3_profile</span>
 </pre></div>
 </div>
 <p>To look like this:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">noinst_PROGRAMS</span>         <span class="o">=</span> <span class="n">t_timer</span> <span class="n">t_units</span> <span class="n">t_uuid</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">noinst_PROGRAMS</span>         <span class="o">=</span> <span class="n">t_timer</span> <span class="n">t_units</span> <span class="n">t_uuid</span>
 </pre></div>
 </div>
-<p>And then run <code class="docutils literal"><span class="pre">./bootstrap.sh</span></code>, that will regenerate the project
+<p>And then run <code class="docutils literal notranslate"><span class="pre">./bootstrap.sh</span></code>, that will regenerate the project
 Makefiles to make the exclusion of the profiled iperf3 executable
 permanant (within that source tree).</p>
 </li>
 </ol>
 </dd>
-<dt>I’m seeing quite a bit of unexpected UDP loss. Why?</dt>
-<dd>First, confirm you are using iperf 3.1.5 or higher. There was an
+<dt>I’m seeing quite a bit of unexpected UDP loss. Why?</dt><dd><p>First, confirm you are using iperf 3.1.5 or higher. There was an
 issue with the default UDP send size that was fixed in
-3.1.5. Second, try adding the flag <code class="docutils literal"><span class="pre">-w2M</span></code> to increase the socket
-buffer sizes. That seems to make a big difference on some hosts.</dd>
-<dt>iperf3 UDP does not seem to work at bandwidths less than 100Kbps. Why?</dt>
-<dd>You’ll need to reduce the default packet length to get UDP rates of less that 100Kbps. Try <code class="docutils literal"><span class="pre">-l100</span></code>.</dd>
-<dt>What congestion control algorithms are supported?</dt>
-<dd><p class="first">On Linux, run this command to see the available congestion control
+3.1.5. Second, try adding the flag <code class="docutils literal notranslate"><span class="pre">-w2M</span></code> to increase the socket
+buffer sizes. That seems to make a big difference on some hosts.</p>
+</dd>
+<dt>iperf3 UDP does not seem to work at bandwidths less than 100Kbps. Why?</dt><dd><p>You’ll need to reduce the default packet length to get UDP rates of less that 100Kbps. Try <code class="docutils literal notranslate"><span class="pre">-l100</span></code>.</p>
+</dd>
+<dt>What congestion control algorithms are supported?</dt><dd><p>On Linux, run this command to see the available congestion control
 algorithms (note that some algorithms are packaged as kernel
 modules, which must be loaded before they can be used):</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">sbin</span><span class="o">/</span><span class="n">sysctl</span> <span class="n">net</span><span class="o">.</span><span class="n">ipv4</span><span class="o">.</span><span class="n">tcp_available_congestion_control</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">sbin</span><span class="o">/</span><span class="n">sysctl</span> <span class="n">net</span><span class="o">.</span><span class="n">ipv4</span><span class="o">.</span><span class="n">tcp_available_congestion_control</span>
 </pre></div>
 </div>
 <p>On FreeBSD, the equivalent command is:</p>
-<div class="last highlight-default"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">sbin</span><span class="o">/</span><span class="n">sysctl</span> <span class="n">net</span><span class="o">.</span><span class="n">inet</span><span class="o">.</span><span class="n">tcp</span><span class="o">.</span><span class="n">cc</span><span class="o">.</span><span class="n">available</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">sbin</span><span class="o">/</span><span class="n">sysctl</span> <span class="n">net</span><span class="o">.</span><span class="n">inet</span><span class="o">.</span><span class="n">tcp</span><span class="o">.</span><span class="n">cc</span><span class="o">.</span><span class="n">available</span>
 </pre></div>
 </div>
 </dd>
-<dt>I’m using the <code class="docutils literal"><span class="pre">--logfile</span></code> option. How do I see file output in real time?</dt>
-<dd>Use the <code class="docutils literal"><span class="pre">--forceflush</span></code> flag.</dd>
-<dt>I’m using the –fq-rate flag, but it does not seem to be working. Why?</dt>
-<dd>You need to add ‘net.core.default_qdisc = fq’ to /etc/sysctl.conf for that option to work.</dd>
-<dt>I’m having trouble getting iperf3 to work on Windows, Android, etc. Where can I get help?</dt>
-<dd>iperf3 only supports Linux, FreeBSD, and OSX. For other platforms we recommend using iperf2.</dd>
-<dt>I managed to get a Windows executable built, but why do I get a BSOD on Windows 7?</dt>
-<dd><p class="first">There seems to be a bug in Windows 7 where running iperf3 from a
+<dt>I’m using the <code class="docutils literal notranslate"><span class="pre">--logfile</span></code> option. How do I see file output in real time?</dt><dd><p>Use the <code class="docutils literal notranslate"><span class="pre">--forceflush</span></code> flag.</p>
+</dd>
+<dt>I’m using the –fq-rate flag, but it does not seem to be working. Why?</dt><dd><p>You need to add ‘net.core.default_qdisc = fq’ to /etc/sysctl.conf for that option to work.</p>
+</dd>
+<dt>I’m having trouble getting iperf3 to work on Windows, Android, etc. Where can I get help?</dt><dd><p>iperf3 only supports Linux, FreeBSD, and OSX. For other platforms we recommend using iperf2.</p>
+</dd>
+<dt>I managed to get a Windows executable built, but why do I get a BSOD on Windows 7?</dt><dd><p>There seems to be a bug in Windows 7 where running iperf3 from a
 network filesystem can cause a system crash (in other words Blue
 Screen of Death, or BSOD).  This is a Windows bug addressed in kb2839149:</p>
 <p><a class="reference external" href="https://support.microsoft.com/en-us/help/2839149/stop-error-0x00000027-in-the-rdbss-sys-process-in-windows-7-or-windows">https://support.microsoft.com/en-us/help/2839149/stop-error-0x00000027-in-the-rdbss-sys-process-in-windows-7-or-windows</a></p>
 <p>A hotfix is available under kb2732673:</p>
-<p class="last"><a class="reference external" href="https://support.microsoft.com/en-us/help/2732673/-delayed-write-failed-error-message-when--pst-files-are-stored-on-a-ne">https://support.microsoft.com/en-us/help/2732673/-delayed-write-failed-error-message-when–pst-files-are-stored-on-a-ne</a></p>
+<p><a class="reference external" href="https://support.microsoft.com/en-us/help/2732673/-delayed-write-failed-error-message-when--pst-files-are-stored-on-a-ne">https://support.microsoft.com/en-us/help/2732673/-delayed-write-failed-error-message-when–pst-files-are-stored-on-a-ne</a></p>
 </dd>
-<dt>Why can’t I run a UDP client with no server?</dt>
-<dd>This is potentially dangerous, and an attacker could use this for a
-denial of service attack.  We don’t want iperf3 to be an attack tool.</dd>
-<dt>I’m trying to use iperf3 to test a 40G/100G link…What do I need to know?</dt>
-<dd><p class="first">See the following pages on fasterdata.es.net:</p>
-<ul class="last simple">
-<li><a class="reference external" href="https://fasterdata.es.net/host-tuning/100g-tuning/">https://fasterdata.es.net/host-tuning/100g-tuning/</a></li>
-<li><a class="reference external" href="https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/multi-stream-iperf3/">https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/multi-stream-iperf3/</a></li>
+<dt>Why can’t I run a UDP client with no server?</dt><dd><p>This is potentially dangerous, and an attacker could use this for a
+denial of service attack.  We don’t want iperf3 to be an attack tool.</p>
+</dd>
+<dt>I’m trying to use iperf3 to test a 40G/100G link…What do I need to know?</dt><dd><p>See the following pages on fasterdata.es.net:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://fasterdata.es.net/host-tuning/100g-tuning/">https://fasterdata.es.net/host-tuning/100g-tuning/</a></p></li>
+<li><p><a class="reference external" href="https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/multi-stream-iperf3/">https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/multi-stream-iperf3/</a></p></li>
 </ul>
 </dd>
-<dt>My receiver didn’t get all the bytes that got sent but there was no loss.  Huh?</dt>
-<dd>iperf3 uses a control connection between the client and server to
+<dt>My receiver didn’t get all the bytes that got sent but there was no loss.  Huh?</dt><dd><p>iperf3 uses a control connection between the client and server to
 manage the start and end of each test.  Sometimes the commands on
 the control connection can be received and acted upon before all of
 the test data has been processed.  Thus the test ends with data
 still in flight.  This effect can be significant for short (a few
-seconds) tests, but is probably negligible for longer tests.</dd>
-<dt>A file sent using the <code class="docutils literal"><span class="pre">-F</span></code> option got corrupted…what happened?</dt>
-<dd>The <code class="docutils literal"><span class="pre">-F</span></code> option to iperf3 is not a file transfer utility.  It’s a
+seconds) tests, but is probably negligible for longer tests.</p>
+</dd>
+<dt>A file sent using the <code class="docutils literal notranslate"><span class="pre">-F</span></code> option got corrupted…what happened?</dt><dd><p>The <code class="docutils literal notranslate"><span class="pre">-F</span></code> option to iperf3 is not a file transfer utility.  It’s a
 way of testing the end-to-end performance of a file transfer,
 including filesystem and disk overheads.  So while the test will
 mimic an actual file transfer, the data stored to disk may not be
@@ -289,15 +272,15 @@ the same as what was sent.  In particular, the file size will be
 rounded up to the next larger multiple of the transfer block size,
 and for UDP tests, iperf’s metadata (containing timestamps and
 sequence numbers) will overwrite the start of every UDP packet
-payload.</dd>
-<dt>I have a question regarding iperf3…what’s the best way to get help?</dt>
-<dd><p class="first">Searching on the Internet is a good first step.
+payload.</p>
+</dd>
+<dt>I have a question regarding iperf3…what’s the best way to get help?</dt><dd><p>Searching on the Internet is a good first step.
 <a class="reference external" href="http://stackoverflow.com/">http://stackoverflow.com/</a> has a number of iperf3-related questions
 and answers, but a simple query into your favorite search engine can
 also yield some results.</p>
 <p>There is a mailing list nominally used for iperf3 development,
 <a class="reference external" href="mailto:iperf-dev&#37;&#52;&#48;googlegroups&#46;com">iperf-dev<span>&#64;</span>googlegroups<span>&#46;</span>com</a>.</p>
-<p class="last">We discourage the use of the iperf3 issue tracker on GitHub for
+<p>We discourage the use of the iperf3 issue tracker on GitHub for
 support questions.  Actual bug reports, enhancement requests, or
 pull requests are encouraged, however.</p>
 </dd>
@@ -321,8 +304,8 @@ pull requests are encouraged, however.</p>
         
         </p>
         <p>
-            &copy; Copyright 2014-2019, ESnet.<br/>
-          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.6.5.<br/>
+            &copy; Copyright 2014-2020, ESnet.<br/>
+          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 3.0.4.<br/>
         </p>
       </div>
     </div>

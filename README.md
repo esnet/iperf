@@ -97,40 +97,26 @@ sensitive information.
 If you have a question about usage or about the code, please do *not*
 submit an issue.  Please use one of the mailing lists for that.
 
-Changes from iperf 2.x
-----------------------
+Relation to iperf 2.x
+---------------------
 
-(Note that iperf2 is no longer being developed by its original
+Note that iperf2 is no longer being developed by its original
 maintainers.  However, beginning in 2014, another developer began
 fixing bugs and enhancing functionality, and generating releases of
 iperf2.  Both projects (as of late 2017) are currently being developed
 actively, but independently.  The continuing iperf2 development
-project can be found at https://sourceforge.net/projects/iperf2/.)
+project can be found at https://sourceforge.net/projects/iperf2/.
 
-New options:
-
-    -V, --verbose             more detailed output than before
-    -J, --json                output in JSON format
-    -Z, --zerocopy            use a 'zero copy' sendfile() method of sending data
-    -O, --omit N              omit the first n seconds (to ignore slowstart)
-    -T, --title str           prefix every output line with this string
-    -F, --file name           xmit/recv the specified file
-    -A, --affinity n/n,m      set CPU affinity (Linux and FreeBSD only)
-    -k, --blockcount #[KMG]   number of blocks (packets) to transmit (instead 
-                              of -t or -n)
-    -L, --flowlabel           set IPv6 flow label (Linux only)
-
-Changed flags:
+iperf3 contains a number of options and functions not present in
+iperf2.  In addition, some flags are changed from their iperf2
+counterparts:
 
     -C, --linux-congestion    set congestion control algorithm (Linux only)
                               (-Z in iperf2)
     --bidir                   bidirectional testing mode
                               (-d in iperf2)
 
-Deprecated options:
-
-Not planning to support these iperf2 flags. If you really miss these
-options, please submit a request in the issue tracker:
+Some iperf2 options are not available in iperf3:
 
     -r, --tradeoff           Do a bidirectional test individually
     -T, --ttl                time-to-live, for multicast (default 1)
@@ -138,7 +124,7 @@ options, please submit a request in the issue tracker:
                                   S(settings) V(server) reports
     -y, --reportstyle C      report as a Comma-Separated Values
 
-Also deprecated is the ability to set the options via environment
+Also removed is the ability to set the options via environment
 variables.
 
 Known Issues

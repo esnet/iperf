@@ -29,12 +29,20 @@ host=$1
 # force V6
 ./src/iperf3 -c $host -6 -t 5
 ./src/iperf3 -c $host -6 -u -t 5
+# FQ rate
+./src/iperf3 -c $host -V -t 5 --fq-rate 5m
+./src/iperf3 -c $host -u -V -t 5 --fq-rate 5m
+# SCTP
+./src/iperf3 -c $host --sctp -V -t 5
 # parallel streams
 ./src/iperf3 -c $host -P 3 -t 5 
 ./src/iperf3 -c $host -u -P 3 -t 5
 # reverse mode
 ./src/iperf3 -c $host -P 2 -t 5 -R
 ./src/iperf3 -c $host -u -P 2 -t 5 -R
+# bidirectional mode
+./src/iperf3 -c $host -P 2 -t 5 --bidir
+./src/iperf3 -c $host -u -P 2 -t 5 --bidir
 # zero copy
 ./src/iperf3 -c $host -Z -t 5 
 ./src/iperf3 -c $host -Z -t 5 -R

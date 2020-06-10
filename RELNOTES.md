@@ -1,6 +1,15 @@
 iperf3 Release Notes
 ====================
 
+iperf 3.8.1 2020-06-10
+----------------------
+
+* Notable user-visible changes
+
+  * A regression with "make install", where the libiperf shared
+    library files were not getting installed, has been fixed (#1013 /
+    #1014).
+
 iperf 3.8 2020-06-08
 --------------------
 

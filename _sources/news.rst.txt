@@ -1,6 +1,15 @@
 iperf3 Project News
 ===================
 
+2020-06-10:  iperf-3.8.1 released
+---------------------------------
+
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.8.1.tar.gz
+| SHA256:  ``e5b080f3273a8a715a4100f13826ac2ca31cc7b1315925631b2ecf64957ded96 iperf-3.8.1.tar.gz``
+
+iperf 3.8.1 fixes a regression with ``make install`` in iperf 3.8.  It
+is otherwise identical to iperf 3.8.
+
 2020-06-08:  iperf-3.8 released
 -------------------------------
 

@@ -76,9 +76,9 @@
 #include "iperf_api.h"
 #include "iperf_udp.h"
 #include "iperf_tcp.h"
-#if defined(HAVE_SCTP)
+#if defined(HAVE_SCTP_H)
 #include "iperf_sctp.h"
-#endif /* HAVE_SCTP */
+#endif /* HAVE_SCTP_H */
 #include "timer.h"
 
 #include "cjson.h"
@@ -848,7 +848,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"congestion", required_argument, NULL, 'C'},
         {"linux-congestion", required_argument, NULL, 'C'},
 #endif /* HAVE_TCP_CONGESTION */
-#if defined(HAVE_SCTP)
+#if defined(HAVE_SCTP_H)
         {"sctp", no_argument, NULL, OPT_SCTP},
         {"nstreams", required_argument, NULL, OPT_NUMSTREAMS},
         {"xbind", required_argument, NULL, 'X'},
@@ -968,14 +968,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
             case OPT_SCTP:
-#if defined(HAVE_SCTP)
+#if defined(HAVE_SCTP_H)
                 set_protocol(test, Psctp);
                 client_flag = 1;
                 break;
-#else /* HAVE_SCTP */
+#else /* HAVE_SCTP_H */
                 i_errno = IEUNIMP;
                 return -1;
-#endif /* HAVE_SCTP */
+#endif /* HAVE_SCTP_H */
 
             case OPT_NUMSTREAMS:
 #if defined(linux) || defined(__FreeBSD__)
@@ -2322,9 +2322,9 @@ int
 iperf_defaults(struct iperf_test *testp)
 {
     struct protocol *tcp, *udp;
-#if defined(HAVE_SCTP)
+#if defined(HAVE_SCTP_H)
     struct protocol *sctp;
-#endif /* HAVE_SCTP */
+#endif /* HAVE_SCTP_H */
 
     testp->omit = OMIT;
     testp->duration = DURATION;
@@ -2403,7 +2403,7 @@ iperf_defaults(struct iperf_test *testp)
 
     set_protocol(testp, Ptcp);
 
-#if defined(HAVE_SCTP)
+#if defined(HAVE_SCTP_H)
     sctp = protocol_new();
     if (!sctp) {
         protocol_free(tcp);
@@ -2421,7 +2421,7 @@ iperf_defaults(struct iperf_test *testp)
     sctp->init = iperf_sctp_init;
 
     SLIST_INSERT_AFTER(udp, sctp, protocols);
-#endif /* HAVE_SCTP */
+#endif /* HAVE_SCTP_H */
 
     testp->on_new_stream = iperf_on_new_stream;
     testp->on_test_start = iperf_on_test_start;

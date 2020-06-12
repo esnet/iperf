@@ -57,7 +57,7 @@
 int
 iperf_sctp_recv(struct iperf_stream *sp)
 {
-#if defined(HAVE_SCTP)
+#if defined(HAVE_SCTP_H)
     int r;
 
     r = Nread(sp->socket, sp->buffer, sp->settings->blksize, Psctp);
@@ -78,7 +78,7 @@ iperf_sctp_recv(struct iperf_stream *sp)
 #else
     i_errno = IENOSCTP;
     return -1;
-#endif /* HAVE_SCTP */
+#endif /* HAVE_SCTP_H */
 }
 
 
@@ -89,7 +89,7 @@ iperf_sctp_recv(struct iperf_stream *sp)
 int
 iperf_sctp_send(struct iperf_stream *sp)
 {
-#if defined(HAVE_SCTP)
+#if defined(HAVE_SCTP_H)
     int r;
 
     r = Nwrite(sp->socket, sp->buffer, sp->settings->blksize, Psctp);
@@ -103,7 +103,7 @@ iperf_sctp_send(struct iperf_stream *sp)
 #else
     i_errno = IENOSCTP;
     return -1;
-#endif /* HAVE_SCTP */
+#endif /* HAVE_SCTP_H */
 }
 
 
@@ -115,7 +115,7 @@ iperf_sctp_send(struct iperf_stream *sp)
 int
 iperf_sctp_accept(struct iperf_test * test)
 {
-#if defined(HAVE_SCTP)
+#if defined(HAVE_SCTP_H)
     int     s;
     signed char rbuf = ACCESS_DENIED;
     char    cookie[COOKIE_SIZE];
@@ -148,7 +148,7 @@ iperf_sctp_accept(struct iperf_test * test)
 #else
     i_errno = IENOSCTP;
     return -1;
-#endif /* HAVE_SCTP */
+#endif /* HAVE_SCTP_H */
 }
 
 
@@ -159,7 +159,7 @@ iperf_sctp_accept(struct iperf_test * test)
 int
 iperf_sctp_listen(struct iperf_test *test)
 {
-#if defined(HAVE_SCTP)
+#if defined(HAVE_SCTP_H)
     struct addrinfo hints, *res;
     char portstr[6];
     int s, opt, saved_errno;
@@ -270,7 +270,7 @@ iperf_sctp_listen(struct iperf_test *test)
 #else
     i_errno = IENOSCTP;
     return -1;
-#endif /* HAVE_SCTP */
+#endif /* HAVE_SCTP_H */
 }
 
 
@@ -281,7 +281,7 @@ iperf_sctp_listen(struct iperf_test *test)
 int
 iperf_sctp_connect(struct iperf_test *test)
 {
-#if defined(HAVE_SCTP)
+#if defined(HAVE_SCTP_H)
     int s, opt, saved_errno;
     char portstr[6];
     struct addrinfo hints, *local_res, *server_res;
@@ -527,7 +527,7 @@ iperf_sctp_connect(struct iperf_test *test)
 #else
     i_errno = IENOSCTP;
     return -1;
-#endif /* HAVE_SCTP */
+#endif /* HAVE_SCTP_H */
 }
 
 
@@ -535,12 +535,12 @@ iperf_sctp_connect(struct iperf_test *test)
 int
 iperf_sctp_init(struct iperf_test *test)
 {
-#if defined(HAVE_SCTP)
+#if defined(HAVE_SCTP_H)
     return 0;
 #else
     i_errno = IENOSCTP;
     return -1;
-#endif /* HAVE_SCTP */
+#endif /* HAVE_SCTP_H */
 }
 
 
@@ -552,7 +552,7 @@ iperf_sctp_init(struct iperf_test *test)
 int
 iperf_sctp_bindx(struct iperf_test *test, int s, int is_server)
 {
-#if defined(HAVE_SCTP)
+#if defined(HAVE_SCTP_H)
     struct addrinfo hints;
     char portstr[6];
     char *servname;
@@ -701,5 +701,5 @@ out:
 #else
     i_errno = IENOSCTP;
     return -1;
-#endif /* HAVE_SCTP */
+#endif /* HAVE_SCTP_H */
 }

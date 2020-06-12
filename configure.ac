@@ -119,7 +119,7 @@ AC_ARG_WITH([sctp],
 if $try_sctp; then
 AC_CHECK_HEADERS([sys/socket.h])
 AC_CHECK_HEADERS([netinet/sctp.h],
-		 AC_DEFINE([HAVE_SCTP], [1], [Have SCTP support.])
+		 AC_DEFINE([HAVE_SCTP_H], [1], [Have SCTP support.])
 		 AC_SEARCH_LIBS(sctp_bindx, [sctp])
 		 AC_CHECK_TYPES([struct sctp_assoc_value], [], [],
 				[[#include <netinet/sctp.h>]]),

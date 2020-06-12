@@ -40,7 +40,7 @@
 #undef HAVE_SCHED_SETAFFINITY
 
 /* Have SCTP support. */
-#undef HAVE_SCTP
+#undef HAVE_SCTP_H
 
 /* Define to 1 if you have the `sendfile' function. */
 #undef HAVE_SENDFILE

@@ -13416,7 +13416,7 @@ if test "x$ac_cv_header_netinet_sctp_h" = xyes; then :
 #define HAVE_NETINET_SCTP_H 1
 _ACEOF
 
-$as_echo "#define HAVE_SCTP 1" >>confdefs.h
+$as_echo "#define HAVE_SCTP_H 1" >>confdefs.h
 
 		 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing sctp_bindx" >&5
 $as_echo_n "checking for library containing sctp_bindx... " >&6; }

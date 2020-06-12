@@ -119,7 +119,7 @@ usage_long(FILE *f)
 }
 
 
-void warning(char *str)
+void warning(const char *str)
 {
     fprintf(stderr, "warning: %s\n", str);
 }
@@ -401,7 +401,7 @@ iperf_set_test_blksize(struct iperf_test *ipt, int blksize)
 }
 
 void
-iperf_set_test_logfile(struct iperf_test *ipt, char *logfile)
+iperf_set_test_logfile(struct iperf_test *ipt, const char *logfile)
 {
     ipt->logfile = strdup(logfile);
 }
@@ -496,13 +496,13 @@ iperf_set_test_role(struct iperf_test *ipt, char role)
 }
 
 void
-iperf_set_test_server_hostname(struct iperf_test *ipt, char *server_hostname)
+iperf_set_test_server_hostname(struct iperf_test *ipt, const char *server_hostname)
 {
     ipt->server_hostname = strdup(server_hostname);
 }
 
 void
-iperf_set_test_template(struct iperf_test *ipt, char *tmp_template)
+iperf_set_test_template(struct iperf_test *ipt, const char *tmp_template)
 {
     ipt->tmp_template = strdup(tmp_template);
 }
@@ -557,38 +557,38 @@ iperf_set_test_unit_format(struct iperf_test *ipt, char unit_format)
 
 #if defined(HAVE_SSL)
 void
-iperf_set_test_client_username(struct iperf_test *ipt, char *client_username)
+iperf_set_test_client_username(struct iperf_test *ipt, const char *client_username)
 {
     ipt->settings->client_username = strdup(client_username);
 }
 
 void
-iperf_set_test_client_password(struct iperf_test *ipt, char *client_password)
+iperf_set_test_client_password(struct iperf_test *ipt, const char *client_password)
 {
     ipt->settings->client_password = strdup(client_password);
 }
 
 void
-iperf_set_test_client_rsa_pubkey(struct iperf_test *ipt, char *client_rsa_pubkey_base64)
+iperf_set_test_client_rsa_pubkey(struct iperf_test *ipt, const char *client_rsa_pubkey_base64)
 {
     ipt->settings->client_rsa_pubkey = load_pubkey_from_base64(client_rsa_pubkey_base64);
 }
 
 void
-iperf_set_test_server_authorized_users(struct iperf_test *ipt, char *server_authorized_users)
+iperf_set_test_server_authorized_users(struct iperf_test *ipt, const char *server_authorized_users)
 {
     ipt->server_authorized_users = strdup(server_authorized_users);
 }
 
 void
-iperf_set_test_server_rsa_privkey(struct iperf_test *ipt, char *server_rsa_privkey_base64)
+iperf_set_test_server_rsa_privkey(struct iperf_test *ipt, const char *server_rsa_privkey_base64)
 {
     ipt->server_rsa_private_key = load_privkey_from_base64(server_rsa_privkey_base64);
 }
 #endif // HAVE_SSL
 
 void
-iperf_set_test_bind_address(struct iperf_test *ipt, char *bnd_address)
+iperf_set_test_bind_address(struct iperf_test *ipt, const char *bnd_address)
 {
     ipt->bind_address = strdup(bnd_address);
 }
@@ -612,7 +612,7 @@ iperf_set_test_tos(struct iperf_test *ipt, int tos)
 }
 
 void
-iperf_set_test_extra_data(struct iperf_test *ipt, char *dat)
+iperf_set_test_extra_data(struct iperf_test *ipt, const char *dat)
 {
     ipt->extra_data = strdup(dat);
 }

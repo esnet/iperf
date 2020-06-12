@@ -12947,9 +12947,7 @@ fi
 # Check if enable profiling
 # Check whether --enable-profiling was given.
 if test "${enable_profiling+set}" = set; then :
-  enableval=$enable_profiling; enable_profiling=yes
-else
-  :
+  enableval=$enable_profiling;
 fi
 
  if test x$enable_profiling = xyes; then

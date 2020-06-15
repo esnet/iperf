@@ -304,7 +304,7 @@ int encode_auth_setting(const char *username, const char *password, EVP_PKEY *pu
     return (0); //success
 }
 
-int decode_auth_setting(int enable_debug, char *authtoken, EVP_PKEY *private_key, char **username, char **password, time_t *ts){
+int decode_auth_setting(int enable_debug, const char *authtoken, EVP_PKEY *private_key, char **username, char **password, time_t *ts){
     unsigned char *encrypted_b64 = NULL;
     size_t encrypted_len_b64;
     Base64Decode(authtoken, &encrypted_b64, &encrypted_len_b64);        

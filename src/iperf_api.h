@@ -139,7 +139,7 @@ void	iperf_set_test_reporter_interval( struct iperf_test* ipt, double reporter_i
 void	iperf_set_test_stats_interval( struct iperf_test* ipt, double stats_interval );
 void	iperf_set_test_state( struct iperf_test* ipt, signed char state );
 void	iperf_set_test_blksize( struct iperf_test* ipt, int blksize );
-void	iperf_set_test_logfile( struct iperf_test* ipt, char *logfile );
+void	iperf_set_test_logfile( struct iperf_test* ipt, const char *logfile );
 void	iperf_set_test_rate( struct iperf_test* ipt, uint64_t rate );
 void    iperf_set_test_pacing_timer( struct iperf_test* ipt, int pacing_timer );
 void    iperf_set_test_bytes( struct iperf_test* ipt, uint64_t bytes );
@@ -150,27 +150,27 @@ void	iperf_set_test_socket_bufsize( struct iperf_test* ipt, int socket_bufsize )
 void	iperf_set_test_num_streams( struct iperf_test* ipt, int num_streams );
 void	iperf_set_test_repeating_payload( struct iperf_test* ipt, int repeating_payload );
 void	iperf_set_test_role( struct iperf_test* ipt, char role );
-void	iperf_set_test_server_hostname( struct iperf_test* ipt, char* server_hostname );
-void    iperf_set_test_template( struct iperf_test *ipt, char *tmp_template );
+void	iperf_set_test_server_hostname( struct iperf_test* ipt, const char* server_hostname );
+void    iperf_set_test_template( struct iperf_test *ipt, const char *tmp_template );
 void	iperf_set_test_reverse( struct iperf_test* ipt, int reverse );
 void	iperf_set_test_json_output( struct iperf_test* ipt, int json_output );
 int	iperf_has_zerocopy( void );
 void	iperf_set_test_zerocopy( struct iperf_test* ipt, int zerocopy );
 void	iperf_set_test_get_server_output( struct iperf_test* ipt, int get_server_output );
-void	iperf_set_test_bind_address( struct iperf_test* ipt, char *bind_address );
+void	iperf_set_test_bind_address( struct iperf_test* ipt, const char *bind_address );
 void	iperf_set_test_udp_counters_64bit( struct iperf_test* ipt, int udp_counters_64bit );
 void	iperf_set_test_one_off( struct iperf_test* ipt, int one_off );
 void    iperf_set_test_tos( struct iperf_test* ipt, int tos );
-void	iperf_set_test_extra_data( struct iperf_test* ipt, char *dat );
+void	iperf_set_test_extra_data( struct iperf_test* ipt, const char *dat );
 void    iperf_set_test_bidirectional( struct iperf_test* ipt, int bidirectional);
 void    iperf_set_test_no_delay( struct iperf_test* ipt, int no_delay);
 
 #if defined(HAVE_SSL)
-void    iperf_set_test_client_username(struct iperf_test *ipt, char *client_username);
-void    iperf_set_test_client_password(struct iperf_test *ipt, char *client_password);
-void    iperf_set_test_client_rsa_pubkey(struct iperf_test *ipt, char *client_rsa_pubkey_base64);
-void    iperf_set_test_server_authorized_users(struct iperf_test *ipt, char *server_authorized_users);
-void    iperf_set_test_server_rsa_privkey(struct iperf_test *ipt, char *server_rsa_privkey_base64);
+void    iperf_set_test_client_username(struct iperf_test *ipt, const char *client_username);
+void    iperf_set_test_client_password(struct iperf_test *ipt, const char *client_password);
+void    iperf_set_test_client_rsa_pubkey(struct iperf_test *ipt, const char *client_rsa_pubkey_base64);
+void    iperf_set_test_server_authorized_users(struct iperf_test *ipt, const char *server_authorized_users);
+void    iperf_set_test_server_rsa_privkey(struct iperf_test *ipt, const char *server_rsa_privkey_base64);
 #endif // HAVE_SSL
 
 void	iperf_set_test_connect_timeout(struct iperf_test *ipt, int ct);
@@ -268,7 +268,7 @@ void iperf_catch_sigend(void (*handler)(int));
 void iperf_got_sigend(struct iperf_test *test) __attribute__ ((noreturn));
 void usage(void);
 void usage_long(FILE * f);
-void warning(char *);
+void warning(const char *);
 int iperf_exchange_results(struct iperf_test *);
 int iperf_init_test(struct iperf_test *);
 int iperf_create_send_timers(struct iperf_test *);

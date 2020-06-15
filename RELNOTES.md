@@ -41,7 +41,7 @@ iperf 3.8 2020-06-08
 
 * Notable developer-visible changes
 
-  * The embedded version of cJSON has been updated to 1.3.17 (#978).
+  * The embedded version of cJSON has been updated to 1.7.13 (#978).
 
   * Some server authentication functions have been added to the API
     (#911).

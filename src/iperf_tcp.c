@@ -235,6 +235,40 @@ iperf_tcp_listen(struct iperf_test *test)
                 i_errno = IESETBUF;
                 return -1;
             }
+
+            /* Read back and verify the sender socket buffer size */
+            optlen = sizeof(sndbuf_actual);
+            if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &sndbuf_actual, &optlen) < 0) {
+                saved_errno = errno;
+                close(s);
+                errno = saved_errno;
+                i_errno = IESETBUF;
+                return -1;
+            }
+            if (test->debug) {
+                printf("SNDBUF is %u, expecting %u\n", sndbuf_actual, test->settings->socket_bufsize);
+            }
+            if (test->settings->socket_bufsize > sndbuf_actual) {
+                i_errno = IESETBUF2;
+                return -1;
+            }
+
+            /* Read back and verify the receiver socket buffer size */
+            optlen = sizeof(rcvbuf_actual);
+            if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, &rcvbuf_actual, &optlen) < 0) {
+                saved_errno = errno;
+                close(s);
+                errno = saved_errno;
+                i_errno = IESETBUF;
+                return -1;
+            }
+            if (test->debug) {
+                printf("RCVBUF is %u, expecting %u\n", rcvbuf_actual, test->settings->socket_bufsize);
+            }
+            if (test->settings->socket_bufsize > rcvbuf_actual) {
+                i_errno = IESETBUF2;
+                return -1;
+            }
         }
 #if defined(HAVE_SO_MAX_PACING_RATE)
     /* If fq socket pacing is specified, enable it. */
@@ -309,40 +343,6 @@ iperf_tcp_listen(struct iperf_test *test)
         }
 
         test->listener = s;
-    }
-    
-    /* Read back and verify the sender socket buffer size */
-    optlen = sizeof(sndbuf_actual);
-    if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &sndbuf_actual, &optlen) < 0) {
-	saved_errno = errno;
-	close(s);
-	errno = saved_errno;
-	i_errno = IESETBUF;
-	return -1;
-    }
-    if (test->debug) {
-	printf("SNDBUF is %u, expecting %u\n", sndbuf_actual, test->settings->socket_bufsize);
-    }
-    if (test->settings->socket_bufsize && test->settings->socket_bufsize > sndbuf_actual) {
-	i_errno = IESETBUF2;
-	return -1;
-    }
-
-    /* Read back and verify the receiver socket buffer size */
-    optlen = sizeof(rcvbuf_actual);
-    if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, &rcvbuf_actual, &optlen) < 0) {
-	saved_errno = errno;
-	close(s);
-	errno = saved_errno;
-	i_errno = IESETBUF;
-	return -1;
-    }
-    if (test->debug) {
-	printf("RCVBUF is %u, expecting %u\n", rcvbuf_actual, test->settings->socket_bufsize);
-    }
-    if (test->settings->socket_bufsize && test->settings->socket_bufsize > rcvbuf_actual) {
-	i_errno = IESETBUF2;
-	return -1;
     }
 
     if (test->json_output) {
@@ -501,42 +501,42 @@ iperf_tcp_connect(struct iperf_test *test)
             i_errno = IESETBUF;
             return -1;
         }
-    }
 
-    /* Read back and verify the sender socket buffer size */
-    optlen = sizeof(sndbuf_actual);
-    if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &sndbuf_actual, &optlen) < 0) {
-	saved_errno = errno;
-	close(s);
-	freeaddrinfo(server_res);
-	errno = saved_errno;
-	i_errno = IESETBUF;
-	return -1;
-    }
-    if (test->debug) {
-	printf("SNDBUF is %u, expecting %u\n", sndbuf_actual, test->settings->socket_bufsize);
-    }
-    if (test->settings->socket_bufsize && test->settings->socket_bufsize > sndbuf_actual) {
-	i_errno = IESETBUF2;
-	return -1;
-    }
+        /* Read back and verify the sender socket buffer size */
+        optlen = sizeof(sndbuf_actual);
+        if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &sndbuf_actual, &optlen) < 0) {
+            saved_errno = errno;
+            close(s);
+            freeaddrinfo(server_res);
+            errno = saved_errno;
+            i_errno = IESETBUF;
+            return -1;
+        }
+        if (test->debug) {
+            printf("SNDBUF is %u, expecting %u\n", sndbuf_actual, test->settings->socket_bufsize);
+        }
+        if (test->settings->socket_bufsize > sndbuf_actual) {
+            i_errno = IESETBUF2;
+            return -1;
+        }
 
-    /* Read back and verify the receiver socket buffer size */
-    optlen = sizeof(rcvbuf_actual);
-    if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, &rcvbuf_actual, &optlen) < 0) {
-	saved_errno = errno;
-	close(s);
-	freeaddrinfo(server_res);
-	errno = saved_errno;
-	i_errno = IESETBUF;
-	return -1;
-    }
-    if (test->debug) {
-	printf("RCVBUF is %u, expecting %u\n", rcvbuf_actual, test->settings->socket_bufsize);
-    }
-    if (test->settings->socket_bufsize && test->settings->socket_bufsize > rcvbuf_actual) {
-	i_errno = IESETBUF2;
-	return -1;
+        /* Read back and verify the receiver socket buffer size */
+        optlen = sizeof(rcvbuf_actual);
+        if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, &rcvbuf_actual, &optlen) < 0) {
+            saved_errno = errno;
+            close(s);
+            freeaddrinfo(server_res);
+            errno = saved_errno;
+            i_errno = IESETBUF;
+            return -1;
+        }
+        if (test->debug) {
+            printf("RCVBUF is %u, expecting %u\n", rcvbuf_actual, test->settings->socket_bufsize);
+        }
+        if (test->settings->socket_bufsize > rcvbuf_actual) {
+            i_errno = IESETBUF2;
+            return -1;
+        }
     }
 
     if (test->json_output) {

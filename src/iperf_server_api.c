@@ -178,11 +178,6 @@ iperf_handle_message_server(struct iperf_test *test)
 	    test->done = 1;
             cpu_util(test->cpu_util);
             test->stats_callback(test);
-            SLIST_FOREACH(sp, &test->streams, streams) {
-                FD_CLR(sp->socket, &test->read_set);
-                FD_CLR(sp->socket, &test->write_set);
-                close(sp->socket);
-            }
             test->reporter_callback(test);
 	    if (iperf_set_send_state(test, EXCHANGE_RESULTS) != 0)
                 return -1;
@@ -192,6 +187,11 @@ iperf_handle_message_server(struct iperf_test *test)
                 return -1;
             if (test->on_test_finish)
                 test->on_test_finish(test);
+            SLIST_FOREACH(sp, &test->streams, streams) {
+                FD_CLR(sp->socket, &test->read_set);
+                FD_CLR(sp->socket, &test->write_set);
+                close(sp->socket);
+            }
             break;
         case IPERF_DONE:
             break;
@@ -442,7 +442,7 @@ iperf_run_server(struct iperf_test *test)
 
 	iperf_time_now(&now);
 	timeout = tmr_timeout(&now);
-        result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
+        result = select(test->max_fd + 1, &read_set, test->state == TEST_RUNNING ? &write_set : NULL, NULL, timeout);
         if (result < 0 && errno != EINTR) {
 	    cleanup_server(test);
             i_errno = IESELECT;

@@ -75,7 +75,7 @@ typedef uint64_t iperf_size_t;
 #define OPT_REPEATING_PAYLOAD 18
 #define OPT_EXTRA_DATA 19
 #define OPT_BIDIRECTIONAL 20
-#define OPT_TOTAL_BITRATE 21
+#define OPT_SERVER_BITRATE_LIMIT 21
 
 /* states */
 #define TEST_START 1

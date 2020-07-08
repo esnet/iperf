@@ -447,7 +447,7 @@ iperf_run_server(struct iperf_test *test)
     while (test->state != IPERF_DONE) {
 
         // Check if average transfer rate was exceeded (condition set in the callback routines)
-	if (test->total_rate_traffic_exceeded_limit) {
+	if (test->bitrate_limit_exceeded) {
 	    cleanup_server(test);
             i_errno = IETOTALRATE;
             return -1;	
@@ -616,9 +616,9 @@ iperf_run_server(struct iperf_test *test)
 
 		    /* Ensure that total requested data rate is not above limit */
 		    iperf_size_t total_requested_rate = test->num_streams * test->settings->rate * (test->mode == BIDIRECTIONAL? 2 : 1);
-		    if (test->settings->total_rate_maximum > 0 && total_requested_rate > test->settings->total_rate_maximum) {
+		    if (test->settings->bitrate_limit > 0 && total_requested_rate > test->settings->bitrate_limit) {
 			iperf_err(test, "Client total requested throughput rate of %ld bps exceeded %ld bps limit",
-				total_requested_rate, test->settings->total_rate_maximum);
+				total_requested_rate, test->settings->bitrate_limit);
 			cleanup_server(test);
 			i_errno = IETOTALRATE;
 			return -1;

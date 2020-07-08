@@ -161,21 +161,21 @@ iperf_get_test_rate(struct iperf_test *ipt)
 }
 
 uint64_t
-iperf_get_test_total_rate_maximum(struct iperf_test *ipt)
+iperf_get_test_bitrate_limit(struct iperf_test *ipt)
 {
-    return ipt->settings->total_rate_maximum;
+    return ipt->settings->bitrate_limit;
 }
 
 double
-iperf_get_test_total_rate_interval(struct iperf_test *ipt)
+iperf_get_test_bitrate_limit_interval(struct iperf_test *ipt)
 {
-    return ipt->settings->total_rate_interval;
+    return ipt->settings->bitrate_limit_interval;
 }
 
 int
-iperf_get_test_total_rate_stats(struct iperf_test *ipt)
+iperf_get_test_bitrate_limit_stats_per_interval(struct iperf_test *ipt)
 {
-    return ipt->settings->total_rate_stats;
+    return ipt->settings->bitrate_limit_stats_per_interval;
 }
 
 uint64_t
@@ -422,21 +422,21 @@ iperf_set_test_rate(struct iperf_test *ipt, uint64_t rate)
 }
 
 void
-iperf_set_test_total_rate_maximum(struct iperf_test *ipt, uint64_t total_rate)
+iperf_set_test_bitrate_limit_maximum(struct iperf_test *ipt, uint64_t total_rate)
 {
-    ipt->settings->total_rate_maximum = total_rate;
+    ipt->settings->bitrate_limit = total_rate;
 }
 
 void
-iperf_set_test_total_rate_interval(struct iperf_test *ipt, uint64_t total_rate_interval)
+iperf_set_test_bitrate_limit_interval(struct iperf_test *ipt, uint64_t bitrate_limit_interval)
 {
-    ipt->settings->total_rate_interval = total_rate_interval;
+    ipt->settings->bitrate_limit_interval = bitrate_limit_interval;
 }
 
 void
-iperf_set_test_total_rate_stats(struct iperf_test *ipt, uint64_t total_rate_stats)
+iperf_set_test_bitrate_limit_stats_per_interval(struct iperf_test *ipt, uint64_t bitrate_limit_stats_per_interval)
 {
-    ipt->settings->total_rate_stats = total_rate_stats;
+    ipt->settings->bitrate_limit_stats_per_interval = bitrate_limit_stats_per_interval;
 }
 
 void
@@ -836,7 +836,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"udp", no_argument, NULL, 'u'},
         {"bitrate", required_argument, NULL, 'b'},
         {"bandwidth", required_argument, NULL, 'b'},
-	{"btotal", required_argument, NULL, OPT_TOTAL_BITRATE},
+	{"server-bitrate-limit", required_argument, NULL, OPT_SERVER_BITRATE_LIMIT},
         {"time", required_argument, NULL, 't'},
         {"bytes", required_argument, NULL, 'n'},
         {"blockcount", required_argument, NULL, 'k'},
@@ -1022,19 +1022,19 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		rate_flag = 1;
 		client_flag = 1;
                 break;
-            case OPT_TOTAL_BITRATE:
+            case OPT_SERVER_BITRATE_LIMIT:
 		slash = strchr(optarg, '/');
 		if (slash) {
 		    *slash = '\0';
 		    ++slash;
-		    test->settings->total_rate_interval = atof(slash);
-		    if (test->settings->total_rate_interval != 0 &&	/* Using same Max/Min limits as for Stats Interval */
-		        (test->settings->total_rate_interval < MIN_INTERVAL || test->settings->total_rate_interval > MAX_INTERVAL) ) {
+		    test->settings->bitrate_limit_interval = atof(slash);
+		    if (test->settings->bitrate_limit_interval != 0 &&	/* Using same Max/Min limits as for Stats Interval */
+		        (test->settings->bitrate_limit_interval < MIN_INTERVAL || test->settings->bitrate_limit_interval > MAX_INTERVAL) ) {
 			i_errno = IETOTALINTERVAL;
 			return -1;
 		    }
 		}
-		test->settings->total_rate_maximum = unit_atof_rate(optarg);
+		test->settings->bitrate_limit = unit_atof_rate(optarg);
 		server_flag = 1;
 	        break;
             case 't':
@@ -1417,10 +1417,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     }
 
     /* Set Total-rate average interval to multiplicity of State interval */
-    if (test->settings->total_rate_interval != 0) {
-	test->settings->total_rate_stats =
-	    (test->settings->total_rate_interval <= test->stats_interval ?
-	    1 : round(test->settings->total_rate_interval/test->stats_interval) );
+    if (test->settings->bitrate_limit_interval != 0) {
+	test->settings->bitrate_limit_stats_per_interval =
+	    (test->settings->bitrate_limit_interval <= test->stats_interval ?
+	    1 : round(test->settings->bitrate_limit_interval/test->stats_interval) );
     }
 
     /* Show warning if JSON output is used with explicit report format */
@@ -1494,33 +1494,33 @@ iperf_check_total_rate(struct iperf_test *test, iperf_size_t last_interval_bytes
     iperf_size_t total_bytes;
     int i;
 
-    if (test->done || test->settings->total_rate_maximum == 0)    // Continue only if check should be done
+    if (test->done || test->settings->bitrate_limit == 0)    // Continue only if check should be done
         return;
     
     /* Add last inetrval's transffered bytes to the array */
-    if (++test->total_rate_last_interval_index >= test->settings->total_rate_stats)
-        test->total_rate_last_interval_index = 0;
-    test->total_rate_intervals_traffic_bytes[test->total_rate_last_interval_index] = last_interval_bytes_transferred;
+    if (++test->bitrate_limit_last_interval_index >= test->settings->bitrate_limit_stats_per_interval)
+        test->bitrate_limit_last_interval_index = 0;
+    test->bitrate_limit_intervals_traffic_bytes[test->bitrate_limit_last_interval_index] = last_interval_bytes_transferred;
 
     /* Ensure that enough stats periods passed to allow averaging throughput */
-    test->total_rate_stats_count += 1;
-    if (test->total_rate_stats_count < test->settings->total_rate_stats)
+    test->bitrate_limit_stats_count += 1;
+    if (test->bitrate_limit_stats_count < test->settings->bitrate_limit_stats_per_interval)
         return;
  
      /* Calculating total bytes traffic to be averaged */
-    for (total_bytes = 0, i = 0; i < test->settings->total_rate_stats; i++) {
-        total_bytes += test->total_rate_intervals_traffic_bytes[i];
+    for (total_bytes = 0, i = 0; i < test->settings->bitrate_limit_stats_per_interval; i++) {
+        total_bytes += test->bitrate_limit_intervals_traffic_bytes[i];
     }
 
-    seconds = test->stats_interval * test->settings->total_rate_stats;
+    seconds = test->stats_interval * test->settings->bitrate_limit_stats_per_interval;
     bits_per_second = total_bytes * 8 / seconds;
     if (test->debug) {
-        iperf_printf(test,"Interval %ld - throughput %ld bps (limit %ld)\n", test->total_rate_stats_count, bits_per_second, test->settings->total_rate_maximum);
+        iperf_printf(test,"Interval %ld - throughput %ld bps (limit %ld)\n", test->bitrate_limit_stats_count, bits_per_second, test->settings->bitrate_limit);
     }
 
-    if (bits_per_second  > test->settings->total_rate_maximum) {
-	iperf_err(test, "Total throughput of %ld bps exceeded %ld bps limit", bits_per_second, test->settings->total_rate_maximum);
-	test->total_rate_traffic_exceeded_limit = 1;
+    if (bits_per_second  > test->settings->bitrate_limit) {
+	iperf_err(test, "Total throughput of %ld bps exceeded %ld bps limit", bits_per_second, test->settings->bitrate_limit);
+	test->bitrate_limit_exceeded = 1;
     }
 }
 
@@ -2365,13 +2365,13 @@ iperf_new_test()
     }
     memset(test->settings, 0, sizeof(struct iperf_settings));
 
-    test->total_rate_intervals_traffic_bytes = (iperf_size_t *) malloc(sizeof(iperf_size_t) * MAX_INTERVAL);
-    if (!test->total_rate_intervals_traffic_bytes) {
+    test->bitrate_limit_intervals_traffic_bytes = (iperf_size_t *) malloc(sizeof(iperf_size_t) * MAX_INTERVAL);
+    if (!test->bitrate_limit_intervals_traffic_bytes) {
         free(test);
 	i_errno = IENEWTEST;
 	return NULL;
     }
-    memset(test->total_rate_intervals_traffic_bytes, 0, sizeof(sizeof(iperf_size_t) * MAX_INTERVAL));   
+    memset(test->bitrate_limit_intervals_traffic_bytes, 0, sizeof(sizeof(iperf_size_t) * MAX_INTERVAL));   
 
     /* By default all output goes to stdout */
     test->outfile = stdout;
@@ -2440,9 +2440,9 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->socket_bufsize = 0;    /* use autotuning */
     testp->settings->blksize = DEFAULT_TCP_BLKSIZE;
     testp->settings->rate = 0;
-    testp->settings->total_rate_maximum = 0;
-    testp->settings->total_rate_interval = 5;
-    testp->settings->total_rate_stats = 0;
+    testp->settings->bitrate_limit = 0;
+    testp->settings->bitrate_limit_interval = 5;
+    testp->settings->bitrate_limit_stats_per_interval = 0;
     testp->settings->fqrate = 0;
     testp->settings->pacing_timer = 1000;
     testp->settings->burst = 0;
@@ -2632,8 +2632,8 @@ iperf_free_test(struct iperf_test *test)
     }
 
     /* Free interval's traffic array for avrage rate calculations */
-    if (test->total_rate_intervals_traffic_bytes != NULL)
-        free(test->total_rate_intervals_traffic_bytes);
+    if (test->bitrate_limit_intervals_traffic_bytes != NULL)
+        free(test->bitrate_limit_intervals_traffic_bytes);
 
     /* XXX: Why are we setting these values to NULL? */
     // test->streams = NULL;
@@ -2647,6 +2647,7 @@ void
 iperf_reset_test(struct iperf_test *test)
 {
     struct iperf_stream *sp;
+    int i;
 
     /* Free streams */
     while (!SLIST_EMPTY(&test->streams)) {
@@ -2700,11 +2701,12 @@ iperf_reset_test(struct iperf_test *test)
 
     test->other_side_has_retransmits = 0;
 
-    test->total_rate_stats_count = 0;
-    test->total_rate_last_interval_index = 0;
-    test->total_rate_traffic_exceeded_limit = 0;
-    for (int i = 0; i < MAX_INTERVAL; i++)
-        test->total_rate_intervals_traffic_bytes[i] = 0;
+    test->bitrate_limit_stats_count = 0;
+    test->bitrate_limit_last_interval_index = 0;
+    test->bitrate_limit_exceeded = 0;
+
+    for (i = 0; i < MAX_INTERVAL; i++)
+        test->bitrate_limit_intervals_traffic_bytes[i] = 0;
 
     test->reverse = 0;
     test->bidirectional = 0;

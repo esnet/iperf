@@ -181,6 +181,11 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  --rsa-public-key-path     path to the RSA public key used to encrypt\n"
                            "                            authentication credentials\n"
 #endif //HAVESSL
+                           "  --udp-gso N               enables Generic Segmentation Offload for UDP protocol. \"N\" is a\n"
+                           "                            segment size, it cannot be greater than MTU including headers.\n"
+                           "                            Use \"--udp-gso 0\" to use blocksize (\"-l\" option) as a segment\n"
+                           "                            size. Attention! Splitting into too many fragments can lead to a\n"
+                           "                            crash of \"iperf\" or statistics errors. Supported only by Linux!\n"
     
 #ifdef NOT_YET_SUPPORTED /* still working on these */
 #endif

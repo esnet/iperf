@@ -1345,6 +1345,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         if ((client_password = getenv("IPERF3_PASSWORD")) != NULL)
              client_password = strdup(client_password);
         else if (iperf_getpass(&client_password, &s, stdin) < 0){
+            i_errno = IESETCLIENTAUTH;
             return -1;
         } 
         if (test_load_pubkey_from_file(client_rsa_public_key) < 0){

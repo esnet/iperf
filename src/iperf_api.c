@@ -1526,11 +1526,11 @@ iperf_check_total_rate(struct iperf_test *test, iperf_size_t last_interval_bytes
     seconds = test->stats_interval * test->settings->bitrate_limit_stats_per_interval;
     bits_per_second = total_bytes * 8 / seconds;
     if (test->debug) {
-        iperf_printf(test,"Interval %ld - throughput %ld bps (limit %ld)\n", test->bitrate_limit_stats_count, bits_per_second, test->settings->bitrate_limit);
+        iperf_printf(test,"Interval %" PRIu64 " - throughput %" PRIu64 " bps (limit %" PRIu64 ")\n", test->bitrate_limit_stats_count, bits_per_second, test->settings->bitrate_limit);
     }
 
     if (bits_per_second  > test->settings->bitrate_limit) {
-	iperf_err(test, "Total throughput of %ld bps exceeded %ld bps limit", bits_per_second, test->settings->bitrate_limit);
+	iperf_err(test, "Total throughput of %" PRIu64 " bps exceeded %" PRIu64 " bps limit", bits_per_second, test->settings->bitrate_limit);
 	test->bitrate_limit_exceeded = 1;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2018 The Regents of the University of
+ * iperf, Copyright (c) 2014-2020 The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -617,7 +617,7 @@ iperf_run_server(struct iperf_test *test)
 		    /* Ensure that total requested data rate is not above limit */
 		    iperf_size_t total_requested_rate = test->num_streams * test->settings->rate * (test->mode == BIDIRECTIONAL? 2 : 1);
 		    if (test->settings->bitrate_limit > 0 && total_requested_rate > test->settings->bitrate_limit) {
-			iperf_err(test, "Client total requested throughput rate of %ld bps exceeded %ld bps limit",
+			iperf_err(test, "Client total requested throughput rate of %" PRIu64 " bps exceeded %" PRIu64 " bps limit",
 				total_requested_rate, test->settings->bitrate_limit);
 			cleanup_server(test);
 			i_errno = IETOTALRATE;

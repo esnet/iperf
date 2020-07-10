@@ -52,7 +52,13 @@
 #if defined(HAVE_INTTYPES_H)
 # include <inttypes.h>
 #else
-# define PRIu64		"llu"
+# ifndef PRIu64
+#  if sizeof(long) == 8
+#   define PRIu64		"lu"
+#  else
+#   define PRIu64		"llu"
+#  endif
+# endif
 #endif
 
 /* iperf_udp_recv

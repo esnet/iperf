@@ -45,6 +45,8 @@ struct iperf_interval_results;
 struct iperf_stream;
 struct iperf_time;
 
+typedef uint64_t iperf_size_t;
+
 /* default settings */
 #define Ptcp SOCK_STREAM
 #define Pudp SOCK_DGRAM
@@ -73,6 +75,7 @@ struct iperf_time;
 #define OPT_REPEATING_PAYLOAD 18
 #define OPT_EXTRA_DATA 19
 #define OPT_BIDIRECTIONAL 20
+#define OPT_SERVER_BITRATE_LIMIT 21
 
 /* states */
 #define TEST_START 1
@@ -301,6 +304,7 @@ int iperf_accept(struct iperf_test *);
 int iperf_handle_message_server(struct iperf_test *);
 int iperf_create_pidfile(struct iperf_test *);
 int iperf_delete_pidfile(struct iperf_test *);
+void iperf_check_total_rate(struct iperf_test *, iperf_size_t);
 
 /* JSON output routines. */
 int iperf_json_start(struct iperf_test *);
@@ -348,6 +352,8 @@ enum {
     IEBADFORMAT = 24,	    // Bad format argument to -f
     IEREVERSEBIDIR = 25,    // Iperf cannot be both reverse and bidirectional
     IEBADPORT = 26,	    // Bad port number
+    IETOTALRATE = 27,       // Total required bandwidth is larger than server's limit
+    IETOTALINTERVAL = 28,   // Invalid time interval for calculating average data rate
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

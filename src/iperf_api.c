@@ -878,6 +878,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"omit", required_argument, NULL, 'O'},
         {"file", required_argument, NULL, 'F'},
         {"repeating-payload", no_argument, NULL, OPT_REPEATING_PAYLOAD},
+        {"timestamps", no_argument, NULL, OPT_TIMESTAMPS},
 #if defined(HAVE_CPU_AFFINITY)
         {"affinity", required_argument, NULL, 'A'},
 #endif /* HAVE_CPU_AFFINITY */
@@ -1201,6 +1202,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             case OPT_REPEATING_PAYLOAD:
                 test->repeating_payload = 1;
                 client_flag = 1;
+                break;
+            case OPT_TIMESTAMPS:
+                test->timestamps = 1;
                 break;
             case 'O':
                 test->omit = atoi(optarg);
@@ -4269,11 +4273,24 @@ iperf_clearaffinity(struct iperf_test *test)
 #endif /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY nor HAVE_SETPROCESSAFFINITYMASK */
 }
 
+char iperf_timestr[100];
+
 int
 iperf_printf(struct iperf_test *test, const char* format, ...)
 {
     va_list argp;
     int r = -1;
+    time_t now;
+    struct tm *ltm = NULL;
+    char *ct = NULL;
+
+    /* Timestamp if requested */
+    if (test->timestamps) {
+	time(&now);
+	ltm = localtime(&now);
+	strftime(iperf_timestr, sizeof(iperf_timestr), "%c ", ltm);
+	ct = iperf_timestr;
+    }
 
     /*
      * There are roughly two use cases here.  If we're the client,
@@ -4288,6 +4305,9 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
      * to be buffered up anyway.
      */
     if (test->role == 'c') {
+	if (ct) {
+	    fprintf(test->outfile, "%s", ct);
+	}
 	if (test->title)
 	    fprintf(test->outfile, "%s:  ", test->title);
 	va_start(argp, format);
@@ -4296,8 +4316,12 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
     }
     else if (test->role == 's') {
 	char linebuffer[1024];
+	int i = 0;
+	if (ct) {
+	    i = sprintf(linebuffer, "%s", ct);
+	}
 	va_start(argp, format);
-	r = vsnprintf(linebuffer, sizeof(linebuffer), format, argp);
+	r = vsnprintf(linebuffer + i, sizeof(linebuffer), format, argp);
 	va_end(argp);
 	fprintf(test->outfile, "%s", linebuffer);
 

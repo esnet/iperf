@@ -261,6 +261,18 @@ iperf_get_test_num_streams(struct iperf_test *ipt)
 }
 
 int
+iperf_get_test_timestamps(struct iperf_test *ipt)
+{
+    return ipt->timestamps;
+}
+
+const char *
+iperf_get_test_timestamp_format(struct iperf_test *ipt)
+{
+    return ipt->timestamp_format;
+}
+
+int
 iperf_get_test_repeating_payload(struct iperf_test *ipt)
 {
     return ipt->repeating_payload;
@@ -501,6 +513,18 @@ void
 iperf_set_test_repeating_payload(struct iperf_test *ipt, int repeating_payload)
 {
     ipt->repeating_payload = repeating_payload;
+}
+
+void
+iperf_set_test_timestamps(struct iperf_test *ipt, int timestamps)
+{
+    ipt->timestamps = timestamps;
+}
+
+void
+iperf_set_test_timestamp_format(struct iperf_test *ipt, const char *tf)
+{
+    ipt->timestamp_format = strdup(tf);
 }
 
 static void
@@ -878,7 +902,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"omit", required_argument, NULL, 'O'},
         {"file", required_argument, NULL, 'F'},
         {"repeating-payload", no_argument, NULL, OPT_REPEATING_PAYLOAD},
-        {"timestamps", no_argument, NULL, OPT_TIMESTAMPS},
+        {"timestamps", optional_argument, NULL, OPT_TIMESTAMPS},
 #if defined(HAVE_CPU_AFFINITY)
         {"affinity", required_argument, NULL, 'A'},
 #endif /* HAVE_CPU_AFFINITY */
@@ -1204,7 +1228,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 client_flag = 1;
                 break;
             case OPT_TIMESTAMPS:
-                test->timestamps = 1;
+                iperf_set_test_timestamps(test, 1);
+		if (optarg) {
+		    iperf_set_test_timestamp_format(test, optarg);
+		}
+		else {
+		    iperf_set_test_timestamp_format(test, TIMESTAMP_FORMAT);
+		}
                 break;
             case 'O':
                 test->omit = atoi(optarg);
@@ -2614,6 +2644,8 @@ iperf_free_test(struct iperf_test *test)
 	free(test->congestion_used);
     if (test->remote_congestion_used)
 	free(test->remote_congestion_used);
+    if (test->timestamp_format)
+	free(test->timestamp_format);
     if (test->omit_timer != NULL)
 	tmr_cancel(test->omit_timer);
     if (test->timer != NULL)
@@ -4285,10 +4317,10 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
     char *ct = NULL;
 
     /* Timestamp if requested */
-    if (test->timestamps) {
+    if (iperf_get_test_timestamps(test)) {
 	time(&now);
 	ltm = localtime(&now);
-	strftime(iperf_timestr, sizeof(iperf_timestr), "%c ", ltm);
+	strftime(iperf_timestr, sizeof(iperf_timestr), iperf_get_test_timestamp_format(test), ltm);
 	ct = iperf_timestr;
     }
 

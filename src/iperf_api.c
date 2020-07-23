@@ -261,6 +261,18 @@ iperf_get_test_num_streams(struct iperf_test *ipt)
 }
 
 int
+iperf_get_test_timestamps(struct iperf_test *ipt)
+{
+    return ipt->timestamps;
+}
+
+const char *
+iperf_get_test_timestamp_format(struct iperf_test *ipt)
+{
+    return ipt->timestamp_format;
+}
+
+int
 iperf_get_test_repeating_payload(struct iperf_test *ipt)
 {
     return ipt->repeating_payload;
@@ -501,6 +513,18 @@ void
 iperf_set_test_repeating_payload(struct iperf_test *ipt, int repeating_payload)
 {
     ipt->repeating_payload = repeating_payload;
+}
+
+void
+iperf_set_test_timestamps(struct iperf_test *ipt, int timestamps)
+{
+    ipt->timestamps = timestamps;
+}
+
+void
+iperf_set_test_timestamp_format(struct iperf_test *ipt, const char *tf)
+{
+    ipt->timestamp_format = strdup(tf);
 }
 
 static void
@@ -878,6 +902,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"omit", required_argument, NULL, 'O'},
         {"file", required_argument, NULL, 'F'},
         {"repeating-payload", no_argument, NULL, OPT_REPEATING_PAYLOAD},
+        {"timestamps", optional_argument, NULL, OPT_TIMESTAMPS},
 #if defined(HAVE_CPU_AFFINITY)
         {"affinity", required_argument, NULL, 'A'},
 #endif /* HAVE_CPU_AFFINITY */
@@ -1201,6 +1226,15 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             case OPT_REPEATING_PAYLOAD:
                 test->repeating_payload = 1;
                 client_flag = 1;
+                break;
+            case OPT_TIMESTAMPS:
+                iperf_set_test_timestamps(test, 1);
+		if (optarg) {
+		    iperf_set_test_timestamp_format(test, optarg);
+		}
+		else {
+		    iperf_set_test_timestamp_format(test, TIMESTAMP_FORMAT);
+		}
                 break;
             case 'O':
                 test->omit = atoi(optarg);
@@ -2610,6 +2644,8 @@ iperf_free_test(struct iperf_test *test)
 	free(test->congestion_used);
     if (test->remote_congestion_used)
 	free(test->remote_congestion_used);
+    if (test->timestamp_format)
+	free(test->timestamp_format);
     if (test->omit_timer != NULL)
 	tmr_cancel(test->omit_timer);
     if (test->timer != NULL)
@@ -4269,11 +4305,24 @@ iperf_clearaffinity(struct iperf_test *test)
 #endif /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY nor HAVE_SETPROCESSAFFINITYMASK */
 }
 
+char iperf_timestr[100];
+
 int
 iperf_printf(struct iperf_test *test, const char* format, ...)
 {
     va_list argp;
     int r = -1;
+    time_t now;
+    struct tm *ltm = NULL;
+    char *ct = NULL;
+
+    /* Timestamp if requested */
+    if (iperf_get_test_timestamps(test)) {
+	time(&now);
+	ltm = localtime(&now);
+	strftime(iperf_timestr, sizeof(iperf_timestr), iperf_get_test_timestamp_format(test), ltm);
+	ct = iperf_timestr;
+    }
 
     /*
      * There are roughly two use cases here.  If we're the client,
@@ -4288,6 +4337,9 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
      * to be buffered up anyway.
      */
     if (test->role == 'c') {
+	if (ct) {
+	    fprintf(test->outfile, "%s", ct);
+	}
 	if (test->title)
 	    fprintf(test->outfile, "%s:  ", test->title);
 	va_start(argp, format);
@@ -4296,8 +4348,12 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
     }
     else if (test->role == 's') {
 	char linebuffer[1024];
+	int i = 0;
+	if (ct) {
+	    i = sprintf(linebuffer, "%s", ct);
+	}
 	va_start(argp, format);
-	r = vsnprintf(linebuffer, sizeof(linebuffer), format, argp);
+	r = vsnprintf(linebuffer + i, sizeof(linebuffer), format, argp);
 	va_end(argp);
 	fprintf(test->outfile, "%s", linebuffer);
 

@@ -35,12 +35,25 @@
 
 int gerror;
 
+char iperf_timestrerr[100];
+
 /* Do a printf to stderr. */
 void
 iperf_err(struct iperf_test *test, const char *format, ...)
 {
     va_list argp;
     char str[1000];
+    time_t now;
+    struct tm *ltm = NULL;
+    char *ct = NULL;
+
+    /* Timestamp if requested */
+    if (test != NULL && test->timestamps) {
+	time(&now);
+	ltm = localtime(&now);
+	strftime(iperf_timestrerr, sizeof(iperf_timestrerr), test->timestamp_format, ltm);
+	ct = iperf_timestrerr;
+    }
 
     va_start(argp, format);
     vsnprintf(str, sizeof(str), format, argp);
@@ -48,9 +61,15 @@ iperf_err(struct iperf_test *test, const char *format, ...)
 	cJSON_AddStringToObject(test->json_top, "error", str);
     else
 	if (test && test->outfile && test->outfile != stdout) {
+	    if (ct) {
+		fprintf(test->outfile, "%s", ct);
+	    }
 	    fprintf(test->outfile, "iperf3: %s\n", str);
 	}
 	else {
+	    if (ct) {
+		fprintf(stderr, "%s", ct);
+	    }
 	    fprintf(stderr, "iperf3: %s\n", str);
 	}
     va_end(argp);
@@ -62,6 +81,17 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
 {
     va_list argp;
     char str[1000];
+    time_t now;
+    struct tm *ltm = NULL;
+    char *ct = NULL;
+
+    /* Timestamp if requested */
+    if (test != NULL && test->timestamps) {
+	time(&now);
+	ltm = localtime(&now);
+	strftime(iperf_timestrerr, sizeof(iperf_timestrerr), "%c ", ltm);
+	ct = iperf_timestrerr;
+    }
 
     va_start(argp, format);
     vsnprintf(str, sizeof(str), format, argp);
@@ -70,9 +100,15 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
 	iperf_json_finish(test);
     } else
 	if (test && test->outfile && test->outfile != stdout) {
+	    if (ct) {
+		fprintf(test->outfile, "%s", ct);
+	    }
 	    fprintf(test->outfile, "iperf3: %s\n", str);
 	}
 	else {
+	    if (ct) {
+		fprintf(stderr, "%s", ct);
+	    }
 	    fprintf(stderr, "iperf3: %s\n", str);
 	}
     va_end(argp);

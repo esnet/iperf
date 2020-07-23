@@ -153,6 +153,14 @@ send output to a log file.
 force flushing output at every interval.
 Used to avoid buffering when sending output to pipe.
 .TP
+.BR --timestamps " [\fIformat\fR]"
+prepend a timestamp at the start of each output line.
+By default, timestamps have the format emitted by
+.BR ctime ( 1 ).
+Optionally, a format specification can be passed to customize the
+timestamps, see
+.BR strftime ( 3 ).
+.TP
 .BR -d ", " --debug " "
 emit debugging output.
 Primarily (perhaps exclusively) of use to developers.

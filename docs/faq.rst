@@ -65,7 +65,9 @@ How can I build a statically-linked executable of iperf3?
       generation of shared libraries and link the executable
       statically.  For iperf-3.8 or later, configuring as ``configure
       --enable-static-bin`` is another, shorter way to accomplish
-      this.
+      this.  If SCTP is installed on the system it might also be
+      necessary to pass the ``--without-sctp`` flag at configure
+      time.
 
   #.  Compile as normal.
 

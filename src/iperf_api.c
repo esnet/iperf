@@ -2662,6 +2662,15 @@ iperf_free_test(struct iperf_test *test)
         free(prot);
     }
 
+    if (test->logfile) {
+	free(test->logfile);
+	test->logfile = NULL;
+	if (test->outfile) {
+	    fclose(test->outfile);
+	    test->outfile = NULL;
+	}
+    }
+
     if (test->server_output_text) {
 	free(test->server_output_text);
 	test->server_output_text = NULL;

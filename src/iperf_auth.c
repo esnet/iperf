@@ -174,6 +174,7 @@ EVP_PKEY *load_pubkey_from_base64(const char *buffer) {
 
     BIO* bio = BIO_new(BIO_s_mem());
     BIO_write(bio, key, key_len);
+    free(key);
     EVP_PKEY *pkey = PEM_read_bio_PUBKEY(bio, NULL, NULL, NULL);
     BIO_free(bio);
     return (pkey);
@@ -199,6 +200,7 @@ EVP_PKEY *load_privkey_from_base64(const char *buffer) {
 
     BIO* bio = BIO_new(BIO_s_mem());
     BIO_write(bio, key, key_len);
+    free(key);
     EVP_PKEY *pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
     BIO_free(bio);
     return (pkey);

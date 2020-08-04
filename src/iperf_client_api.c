@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2018, The Regents of the University of
+ * iperf, Copyright (c) 2014-2020, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -478,7 +478,7 @@ iperf_run_client(struct iperf_test * test)
 
     /* Start the client and connect to the server */
     if (iperf_connect(test) < 0)
-        return -1;
+        goto cleanup_and_fail;
 
     /* Begin calculating CPU utilization */
     cpu_util(NULL);
@@ -492,12 +492,12 @@ iperf_run_client(struct iperf_test * test)
 	result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
 	if (result < 0 && errno != EINTR) {
   	    i_errno = IESELECT;
-	    return -1;
+	    goto cleanup_and_fail;
 	}
 	if (result > 0) {
 	    if (FD_ISSET(test->ctrl_sck, &read_set)) {
  	        if (iperf_handle_message_client(test) < 0) {
-		    return -1;
+		    goto cleanup_and_fail;
 		}
 		FD_CLR(test->ctrl_sck, &read_set);
 	    }
@@ -521,17 +521,17 @@ iperf_run_client(struct iperf_test * test)
 	    if (test->mode == BIDIRECTIONAL)
 	    {
                 if (iperf_send(test, &write_set) < 0)
-                    return -1;
+                    goto cleanup_and_fail;
                 if (iperf_recv(test, &read_set) < 0)
-                    return -1;
+                    goto cleanup_and_fail;
 	    } else if (test->mode == SENDER) {
                 // Regular mode. Client sends.
                 if (iperf_send(test, &write_set) < 0)
-                    return -1;
+                    goto cleanup_and_fail;
 	    } else {
                 // Reverse mode. Client receives.
                 if (iperf_recv(test, &read_set) < 0)
-                    return -1;
+                    goto cleanup_and_fail;
 	    }
 
 
@@ -557,7 +557,7 @@ iperf_run_client(struct iperf_test * test)
 		cpu_util(test->cpu_util);
 		test->stats_callback(test);
 		if (iperf_set_send_state(test, TEST_END) != 0)
-		    return -1;
+                    goto cleanup_and_fail;
 	    }
 	}
 	// If we're in reverse mode, continue draining the data
@@ -567,7 +567,7 @@ iperf_run_client(struct iperf_test * test)
 	// from the client side.
 	else if (test->mode == RECEIVER && test->state == TEST_END) {
 	    if (iperf_recv(test, &read_set) < 0)
-		return -1;
+		goto cleanup_and_fail;
 	}
     }
 
@@ -582,4 +582,12 @@ iperf_run_client(struct iperf_test * test)
     iflush(test);
 
     return 0;
+
+  cleanup_and_fail:
+    iperf_printf(test, "cleanup_and_fail\n");
+    iperf_client_end(test);
+    if (test->json_output)
+	iperf_json_finish(test);
+    iflush(test);
+    return -1;
 }

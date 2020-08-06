@@ -63,7 +63,11 @@ How can I build a statically-linked executable of iperf3?
   #.  Configure iperf3 thusly: ``configure "LDFLAGS=--static"
       --disable-shared`` These options are necessary to disable the
       generation of shared libraries and link the executable
-      statically.
+      statically.  For iperf-3.8 or later, configuring as ``configure
+      --enable-static-bin`` is another, shorter way to accomplish
+      this.  If SCTP is installed on the system it might also be
+      necessary to pass the ``--without-sctp`` flag at configure
+      time.
 
   #.  Compile as normal.
 
@@ -72,10 +76,16 @@ How can I build a statically-linked executable of iperf3?
 
 How can I build on a system that doesn't support profiled executables?
   This problem has been noted by users attempting to build iperf3 for
-  Android systems.  There are several workarounds. In order from least
+  Android systems, as well as some recent versions of macOS.
+  There are several workarounds. In order from least
   effort to most effort:
 
-  #. Beginning with iperf-3.6, the ``--disable-profiling`` flag can be
+  #. Beginning with iperf-3.8, profiled executables are actually not
+     built by default, so this question becomes somewhat moot.  Pass
+     the ``--enable-profiling`` flag to ``configure`` to build
+     profiled executables.
+
+  #. In iperf-3.6 and iperf-3.7, the ``--disable-profiling`` flag can be
      passed to ``configure`` to disable the building of profiled
      object files and the profiled executable.
 
@@ -117,6 +127,59 @@ I'm seeing quite a bit of unexpected UDP loss. Why?
 iperf3 UDP does not seem to work at bandwidths less than 100Kbps. Why?
   You'll need to reduce the default packet length to get UDP rates of less that 100Kbps. Try ``-l100``.
  
+TCP throughput drops to (almost) zero during a test, what's going on?
+  A drop in throughput to almost zero, except maybe for the first
+  reported interval(s), may be related to problems in NIC TCP Offload,
+  which is used to offload TCP functionality to the NIC (see
+  https://en.wikipedia.org/wiki/TCP_offload_engine). The goal of TCP
+  Offload is to save main CPU performance, mainly in the areas of
+  segmentation and reassembly of large packets and checksum
+  computation.
+
+  When TCP packets are sent with the "Don't Fragment" flag set, which
+  is the recommended setting, segmentation is done by the TCP stack
+  based on the reported next hop MSS in the ICMP Fragmentation Needed
+  message. With TCP Offload, active segmentation is done by the NIC on
+  the sending side, which is known as TCP Segmentation offload (TSO)
+  or in Windows as Large Send Offload (LSO). It seems that there are
+  TSO/LSO implementations which for some reason ignore the reported
+  MSS and therefore don’t perform segmentation. In these cases, when
+  large packets are sent, e.g. the default iperf3 128KB (131,072
+  bytes), iperf3 will show that data was sent in the first interval,
+  but since the packets don’t get to the server, no ack is received
+  and therefore no data is sent in the following intervals. It may
+  happen that after certain timeout the main CPU will re-send the
+  packet by re-segmenting it, and in these cases data will get to the
+  server after a while. However, it seems that segmentation is not
+  automatically continued with the next packet, so the data transfer
+  rate be very low.
+
+  The recommended solution in such a case is to disable TSO/LSO, at
+  least on the relevant port. See for example:
+  https://atomicit.ca/kb/articles/slow-network-speed-windows-10/. If
+  that doesn’t help then "Don't Fragment" TCP flag may be
+  disabled. See for example:
+  https://support.microsoft.com/en-us/help/900926/recommended-tcp-ip-settings-for-wan-links-with-a-mtu-size-of-less-than. However,
+  note that disabling the “Don’t Fragment” flag may cause other
+  issues.
+
+  To test whether TSO/LSO may be the problem, do the following:
+
+  * If different machine configurations are used for the client and
+    server, try the iperf3 reverse mode (``-R``). If TSO/LSO is only
+    enabled on the client machine, this test should succeed.
+  * Reduce the sending length to a small value that should not require
+    segmentation, using the iperf3 ``-l`` option, e.g. ``-l 512``. It
+    may also help to reduce the MTU by using the iperf3 ``-M`` option,
+    e.g. ``-M 1460``.
+  * Using tools like Wireshark, identify the required MSS in the ICMP
+    Fragmentation Needed messages (if reported). Run tests with the
+    ``-l`` value set to 2 times the MSS and then 4 times, 6 times,
+    etc. With TSO/LSO issue in each test the throughput should be
+    reduced more. It may help to increase the testing time beyond the
+    default 10 seconds to better see the behavior (iperf3 ``-t``
+    option).
+
 What congestion control algorithms are supported?
   On Linux, run this command to see the available congestion control
   algorithms (note that some algorithms are packaged as kernel

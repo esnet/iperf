@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2019, The Regents of the University of
+ * iperf, Copyright (c) 2014-2020, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -45,6 +45,8 @@ struct iperf_interval_results;
 struct iperf_stream;
 struct iperf_time;
 
+typedef uint64_t iperf_size_t;
+
 /* default settings */
 #define Ptcp SOCK_STREAM
 #define Pudp SOCK_DGRAM
@@ -73,6 +75,8 @@ struct iperf_time;
 #define OPT_REPEATING_PAYLOAD 18
 #define OPT_EXTRA_DATA 19
 #define OPT_BIDIRECTIONAL 20
+#define OPT_SERVER_BITRATE_LIMIT 21
+#define OPT_TIMESTAMPS 22
 
 /* states */
 #define TEST_START 1
@@ -113,6 +117,8 @@ double	iperf_get_test_reporter_interval( struct iperf_test* ipt );
 double	iperf_get_test_stats_interval( struct iperf_test* ipt );
 int	iperf_get_test_num_streams( struct iperf_test* ipt );
 int	iperf_get_test_repeating_payload( struct iperf_test* ipt );
+int	iperf_get_test_timestamps( struct iperf_test* ipt );
+const char* iperf_get_test_timestamp_format( struct iperf_test* ipt );
 int	iperf_get_test_server_port( struct iperf_test* ipt );
 char*	iperf_get_test_server_hostname( struct iperf_test* ipt );
 char*	iperf_get_test_template( struct iperf_test* ipt );
@@ -128,6 +134,7 @@ int iperf_get_test_tos( struct iperf_test* ipt );
 char*	iperf_get_extra_data( struct iperf_test* ipt );
 char*	iperf_get_iperf_version(void);
 int	iperf_get_test_no_delay( struct iperf_test* ipt );
+int	iperf_get_test_connect_timeout( struct iperf_test* ipt );
 
 /* Setter routines for some fields inside iperf_test. */
 void	iperf_set_verbose( struct iperf_test* ipt, int verbose );
@@ -138,7 +145,7 @@ void	iperf_set_test_reporter_interval( struct iperf_test* ipt, double reporter_i
 void	iperf_set_test_stats_interval( struct iperf_test* ipt, double stats_interval );
 void	iperf_set_test_state( struct iperf_test* ipt, signed char state );
 void	iperf_set_test_blksize( struct iperf_test* ipt, int blksize );
-void	iperf_set_test_logfile( struct iperf_test* ipt, char *logfile );
+void	iperf_set_test_logfile( struct iperf_test* ipt, const char *logfile );
 void	iperf_set_test_rate( struct iperf_test* ipt, uint64_t rate );
 void    iperf_set_test_pacing_timer( struct iperf_test* ipt, int pacing_timer );
 void    iperf_set_test_bytes( struct iperf_test* ipt, uint64_t bytes );
@@ -148,29 +155,33 @@ void	iperf_set_test_server_port( struct iperf_test* ipt, int server_port );
 void	iperf_set_test_socket_bufsize( struct iperf_test* ipt, int socket_bufsize );
 void	iperf_set_test_num_streams( struct iperf_test* ipt, int num_streams );
 void	iperf_set_test_repeating_payload( struct iperf_test* ipt, int repeating_payload );
+void	iperf_set_test_timestamps( struct iperf_test* ipt, int timestamps );
+void	iperf_set_test_timestamp_format( struct iperf_test*, const char *tf );
 void	iperf_set_test_role( struct iperf_test* ipt, char role );
-void	iperf_set_test_server_hostname( struct iperf_test* ipt, char* server_hostname );
-void    iperf_set_test_template( struct iperf_test *ipt, char *tmp_template );
+void	iperf_set_test_server_hostname( struct iperf_test* ipt, const char* server_hostname );
+void    iperf_set_test_template( struct iperf_test *ipt, const char *tmp_template );
 void	iperf_set_test_reverse( struct iperf_test* ipt, int reverse );
 void	iperf_set_test_json_output( struct iperf_test* ipt, int json_output );
 int	iperf_has_zerocopy( void );
 void	iperf_set_test_zerocopy( struct iperf_test* ipt, int zerocopy );
 void	iperf_set_test_get_server_output( struct iperf_test* ipt, int get_server_output );
-void	iperf_set_test_bind_address( struct iperf_test* ipt, char *bind_address );
+void	iperf_set_test_bind_address( struct iperf_test* ipt, const char *bind_address );
 void	iperf_set_test_udp_counters_64bit( struct iperf_test* ipt, int udp_counters_64bit );
 void	iperf_set_test_one_off( struct iperf_test* ipt, int one_off );
 void    iperf_set_test_tos( struct iperf_test* ipt, int tos );
-void	iperf_set_test_extra_data( struct iperf_test* ipt, char *dat );
+void	iperf_set_test_extra_data( struct iperf_test* ipt, const char *dat );
 void    iperf_set_test_bidirectional( struct iperf_test* ipt, int bidirectional);
 void    iperf_set_test_no_delay( struct iperf_test* ipt, int no_delay);
 
 #if defined(HAVE_SSL)
-void    iperf_set_test_client_username(struct iperf_test *ipt, char *client_username);
-void    iperf_set_test_client_password(struct iperf_test *ipt, char *client_password);
-void    iperf_set_test_client_rsa_pubkey(struct iperf_test *ipt, char *client_rsa_pubkey_base64);
-void    iperf_set_test_server_authorized_users(struct iperf_test *ipt, char *server_authorized_users);
-void    iperf_set_test_server_rsa_privkey(struct iperf_test *ipt, char *server_rsa_privkey_base64);
+void    iperf_set_test_client_username(struct iperf_test *ipt, const char *client_username);
+void    iperf_set_test_client_password(struct iperf_test *ipt, const char *client_password);
+void    iperf_set_test_client_rsa_pubkey(struct iperf_test *ipt, const char *client_rsa_pubkey_base64);
+void    iperf_set_test_server_authorized_users(struct iperf_test *ipt, const char *server_authorized_users);
+void    iperf_set_test_server_rsa_privkey(struct iperf_test *ipt, const char *server_rsa_privkey_base64);
 #endif // HAVE_SSL
+
+void	iperf_set_test_connect_timeout(struct iperf_test *ipt, int ct);
 
 /**
  * exchange_parameters - handles the param_Exchange part for client
@@ -265,7 +276,7 @@ void iperf_catch_sigend(void (*handler)(int));
 void iperf_got_sigend(struct iperf_test *test) __attribute__ ((noreturn));
 void usage(void);
 void usage_long(FILE * f);
-void warning(char *);
+void warning(const char *);
 int iperf_exchange_results(struct iperf_test *);
 int iperf_init_test(struct iperf_test *);
 int iperf_create_send_timers(struct iperf_test *);
@@ -298,6 +309,7 @@ int iperf_accept(struct iperf_test *);
 int iperf_handle_message_server(struct iperf_test *);
 int iperf_create_pidfile(struct iperf_test *);
 int iperf_delete_pidfile(struct iperf_test *);
+void iperf_check_total_rate(struct iperf_test *, iperf_size_t);
 
 /* JSON output routines. */
 int iperf_json_start(struct iperf_test *);
@@ -345,6 +357,8 @@ enum {
     IEBADFORMAT = 24,	    // Bad format argument to -f
     IEREVERSEBIDIR = 25,    // Iperf cannot be both reverse and bidirectional
     IEBADPORT = 26,	    // Bad port number
+    IETOTALRATE = 27,       // Total required bandwidth is larger than server's limit
+    IETOTALINTERVAL = 28,   // Invalid time interval for calculating average data rate
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

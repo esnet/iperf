@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2018, The Regents of the University of
+ * iperf, Copyright (c) 2014-2020, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -52,7 +52,13 @@
 #if defined(HAVE_INTTYPES_H)
 # include <inttypes.h>
 #else
-# define PRIu64		"llu"
+# ifndef PRIu64
+#  if sizeof(long) == 8
+#   define PRIu64		"lu"
+#  else
+#   define PRIu64		"llu"
+#  endif
+# endif
 #endif
 
 /* iperf_udp_recv
@@ -66,6 +72,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     uint64_t  pcount;
     int       r;
     int       size = sp->settings->blksize;
+    int       first_packet = 0;
     double    transit = 0, d = 0;
     struct iperf_time sent_time, arrival_time, temp_time;
 
@@ -81,9 +88,19 @@ iperf_udp_recv(struct iperf_stream *sp)
 
     /* Only count bytes received while we're in the correct state. */
     if (sp->test->state == TEST_RUNNING) {
+
+	/*
+	 * For jitter computation below, it's important to know if this
+	 * packet is the first packet received.
+	 */
+	if (sp->result->bytes_received == 0) {
+	    first_packet = 1;
+	}
+
 	sp->result->bytes_received += r;
 	sp->result->bytes_received_this_interval += r;
 
+	/* Dig the various counters out of the incoming UDP packet */
 	if (sp->test->udp_counters_64bit) {
 	    memcpy(&sec, sp->buffer, sizeof(sec));
 	    memcpy(&usec, sp->buffer+4, sizeof(usec));
@@ -150,7 +167,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	
 	    /* Log the out-of-order packet */
 	    if (sp->test->debug) 
-		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count, sp->socket);
+		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count + 1, sp->socket);
 	}
 
 	/*
@@ -168,6 +185,11 @@ iperf_udp_recv(struct iperf_stream *sp)
 
 	iperf_time_diff(&arrival_time, &sent_time, &temp_time);
 	transit = iperf_time_in_secs(&temp_time);
+
+	/* Hack to handle the first packet by initializing prev_transit. */
+	if (first_packet)
+	    sp->prev_transit = transit;
+
 	d = transit - sp->prev_transit;
 	if (d < 0)
 	    d = -d;

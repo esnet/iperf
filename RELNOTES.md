@@ -1,6 +1,58 @@
 iperf3 Release Notes
 ====================
 
+iperf 3.8.1 2020-06-10
+----------------------
+
+* Notable user-visible changes
+
+  * A regression with "make install", where the libiperf shared
+    library files were not getting installed, has been fixed (#1013 /
+    #1014).
+
+iperf 3.8 2020-06-08
+--------------------
+
+* Notable user-visible changes
+
+  * Profiled libraries and binaries are no longer built by default
+    (#950).
+
+  * A minimal Dockerfile has been added (#824).
+
+  * A bug with burst mode and unlimited rate has been fixed (#898).
+
+  * Configuring with the --enable-static-bin flag will now cause
+    a statically-linked iperf3 binary to be built (#989).
+
+  * Configuring with the --without-sctp flag will now prevent SCTP
+    from being auto-detected (#1008).  This flag allows building a
+    static binary (see above item) on a CentOS system with SCTP
+    installed, because no static SCTP libraries are available.
+
+  * Clock skew between the iperf3 client and server will no longer
+    skew the computation of jitter during UDP tests (#842 / #990).
+
+  * A possible buffer overflow in the authentication feature has been
+    fixed.  This was only relevant when configuration authentication
+    using the libiperf3 API, and did not affect command-line usage.
+    Various other improvements and fixes in this area were also made
+    (#996).
+
+* Notable developer-visible changes
+
+  * The embedded version of cJSON has been updated to 1.7.13 (#978).
+
+  * Some server authentication functions have been added to the API
+    (#911).
+
+  * API access has been added to the connection timeout parameter
+    (#1001).
+
+  * Tests for some authentication functions have been added.
+
+  * Various compiler errors and warnings have been fixed.
+
 iperf 3.7 2019-06-21
 --------------------
 

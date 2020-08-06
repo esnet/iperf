@@ -111,7 +111,7 @@ void fill_with_repeating_pattern(void *out, size_t outsize)
  */
 
 void
-make_cookie(char *cookie)
+make_cookie(const char *cookie)
 {
     unsigned char *out = (unsigned char*)cookie;
     size_t pos;
@@ -267,7 +267,7 @@ get_optional_features(void)
     numfeatures++;
 #endif /* HAVE_FLOWLABEL */
     
-#if defined(HAVE_SCTP)
+#if defined(HAVE_SCTP_H)
     if (numfeatures > 0) {
 	strncat(features, ", ", 
 		sizeof(features) - strlen(features) - 1);
@@ -275,7 +275,7 @@ get_optional_features(void)
     strncat(features, "SCTP", 
 	sizeof(features) - strlen(features) - 1);
     numfeatures++;
-#endif /* HAVE_SCTP */
+#endif /* HAVE_SCTP_H */
     
 #if defined(HAVE_TCP_CONGESTION)
     if (numfeatures > 0) {
@@ -402,7 +402,7 @@ iperf_json_printf(const char *format, ...)
 
 /* Debugging routine to dump out an fd_set. */
 void
-iperf_dump_fdset(FILE *fp, char *str, int nfds, fd_set *fds)
+iperf_dump_fdset(FILE *fp, const char *str, int nfds, fd_set *fds)
 {
     int fd;
     int comma;

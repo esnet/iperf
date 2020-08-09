@@ -83,8 +83,18 @@ iperf_udp_recv(struct iperf_stream *sp)
     double    transit = 0, d = 0;
     struct iperf_time sent_time, arrival_time, temp_time;
 
+#ifdef HAVE_SEND_RECVMMSG
     struct mmsghdr msg[sp->settings->burst];
+#else
+    struct dummy_mmsghdr  {
+        struct msghdr msg_hdr;  /* Message header */
+        unsigned int  msg_len;  /* Number of received bytes for header */
+    };
+    struct dummy_mmsghdr msg[sp->settings->burst];
+#endif /* HAVE_SEND_RECVMMSG */
+
     struct iovec msgvec[sp->settings->burst];
+
     int msgs_recvd;
     int total_received = 0; /* total received bytes return value */
     // struct timespec tmo;
@@ -92,7 +102,10 @@ iperf_udp_recv(struct iperf_stream *sp)
     char *pbuf;
 
     /* Select message reading method */
-    if (sp->settings->send_recvmmsg == 0) {
+#ifdef HAVE_SEND_RECVMMSG
+    if (sp->settings->send_recvmmsg == 0)
+#endif
+    {
 
         r = Nread(sp->socket, sp->buffer, size, Pudp);
 
@@ -113,7 +126,8 @@ iperf_udp_recv(struct iperf_stream *sp)
 	msg[0].msg_len = r;
 
     } /* Nread */
-    
+
+#ifdef HAVE_SEND_RECVMMSG    
     else { /* Use recvmmsg() */
 
         memset(msg, 0, sizeof(msg));
@@ -137,6 +151,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	}
 	    
     } /* recvmmsg */
+#endif /* HAVE_SEND_RECVMMSG*/
 
     /* Only count bytes received while we're in the correct state. */
     if (sp->test->state == TEST_RUNNING) {
@@ -276,17 +291,22 @@ iperf_udp_send(struct iperf_stream *sp)
     int size = sp->settings->blksize;
     struct iperf_time before;
     char *buf = sp->buffer;
+
+#ifdef HAVE_SEND_RECVMMSG
     struct mmsghdr msg[sp->settings->burst + 1];
     struct iovec msgvec[sp->settings->burst + 1];
     int i, j;
     char *b;
+#endif /* HAVE_SEND_RECVMMSG */
 
+#ifdef HAVE_SEND_RECVMMSG
     /* if sendmmsg is used - set buffer pointer to next buffer */
     if (sp->settings->send_recvmmsg == 1) {
         buf += sp->sendmmsg_buffered_packets_count * (sp->settings->blksize + sizeof(int));
 	*(int *)buf = size;
 	buf += sizeof(int);
     }
+#endif /* HAVE_SEND_RECVMMSG */
    
     iperf_time_now(&before);
 

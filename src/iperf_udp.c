@@ -24,6 +24,13 @@
  * This code is distributed under a BSD style license, see the LICENSE
  * file for complete information.
  */
+
+#include "iperf_config.h"
+
+#ifdef HAVE_SEND_RECVMMSG
+#define _GNU_SOURCE	/* required for sendmmg() */
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -76,132 +83,185 @@ iperf_udp_recv(struct iperf_stream *sp)
     double    transit = 0, d = 0;
     struct iperf_time sent_time, arrival_time, temp_time;
 
-    r = Nread(sp->socket, sp->buffer, size, Pudp);
+    struct mmsghdr msg[sp->settings->burst];
+    struct iovec msgvec[sp->settings->burst];
+    int msgs_recvd;
+    int total_received = 0; /* total received bytes return value */
+    // struct timespec tmo;
+    int i;
+    char *pbuf;
 
-    /*
-     * If we got an error in the read, or if we didn't read anything
-     * because the underlying read(2) got a EAGAIN, then skip packet
-     * processing.
-     */
-    if (r <= 0)
-        return r;
+    /* Select message reading method */
+    if (sp->settings->send_recvmmsg == 0) {
+
+        r = Nread(sp->socket, sp->buffer, size, Pudp);
+
+        /*
+        * If we got an error in the read, or if we didn't read anything
+         * because the underlying read(2) got a EAGAIN, then skip packet
+        * processing.
+         */
+        if (r <= 0)
+            return r;
+
+	/* Emulate receive from recvmmsg() */
+	msgs_recvd = 1;
+	msgvec[0].iov_base = sp->buffer;
+	msgvec[0].iov_len          = sp->settings->blksize;
+        msg[0].msg_hdr.msg_iov    = &msgvec[0];
+        msg[0].msg_hdr.msg_iovlen = 1;
+	msg[0].msg_len = r;
+
+    } /* Nread */
+    
+    else { /* Use recvmmsg() */
+
+        memset(msg, 0, sizeof(msg));
+	for (i = 0, pbuf = sp->buffer; i < sp->settings->burst; i++, pbuf += sp->settings->blksize) {
+            msgvec[i].iov_base         = pbuf;
+            msgvec[i].iov_len          = sp->settings->blksize;
+            msg[i].msg_hdr.msg_iov    = &msgvec[i];
+            msg[i].msg_hdr.msg_iovlen = 1;
+	}
+
+	/* Set read timeout */
+	// tmo.tv_sec = 1;
+	// tmo.tv_nsec = 0;
+
+        /* Receive at least one message */
+        do {
+	    msgs_recvd = recvmmsg(sp->socket, msg, sp->settings->burst, 0, NULL); //??? Should be OPT=MSG_WAITFORONE? Timeout 1 sec?
+	} while (msgs_recvd < 0 && (errno == EAGAIN || errno == EWOULDBLOCK));
+        if (msgs_recvd <= 0) {
+            return msgs_recvd;
+	}
+	    
+    } /* recvmmsg */
 
     /* Only count bytes received while we're in the correct state. */
     if (sp->test->state == TEST_RUNNING) {
 
-	/*
-	 * For jitter computation below, it's important to know if this
-	 * packet is the first packet received.
-	 */
-	if (sp->result->bytes_received == 0) {
-	    first_packet = 1;
-	}
-
-	sp->result->bytes_received += r;
-	sp->result->bytes_received_this_interval += r;
-
-	/* Dig the various counters out of the incoming UDP packet */
-	if (sp->test->udp_counters_64bit) {
-	    memcpy(&sec, sp->buffer, sizeof(sec));
-	    memcpy(&usec, sp->buffer+4, sizeof(usec));
-	    memcpy(&pcount, sp->buffer+8, sizeof(pcount));
-	    sec = ntohl(sec);
-	    usec = ntohl(usec);
-	    pcount = be64toh(pcount);
-	    sent_time.secs = sec;
-	    sent_time.usecs = usec;
-	}
-	else {
-	    uint32_t pc;
-	    memcpy(&sec, sp->buffer, sizeof(sec));
-	    memcpy(&usec, sp->buffer+4, sizeof(usec));
-	    memcpy(&pc, sp->buffer+8, sizeof(pc));
-	    sec = ntohl(sec);
-	    usec = ntohl(usec);
-	    pcount = ntohl(pc);
-	    sent_time.secs = sec;
-	    sent_time.usecs = usec;
-	}
-
 	if (sp->test->debug)
-	    fprintf(stderr, "pcount %" PRIu64 " packet_count %d\n", pcount, sp->packet_count);
-
-	/*
-	 * Try to handle out of order packets.  The way we do this
-	 * uses a constant amount of storage but might not be
-	 * correct in all cases.  In particular we seem to have the
-	 * assumption that packets can't be duplicated in the network,
-	 * because duplicate packets will possibly cause some problems here.
-	 *
-	 * First figure out if the sequence numbers are going forward.
-	 * Note that pcount is the sequence number read from the packet,
-	 * and sp->packet_count is the highest sequence number seen so
-	 * far (so we're expecting to see the packet with sequence number
-	 * sp->packet_count + 1 arrive next).
-	 */
-	if (pcount >= sp->packet_count + 1) {
-
-	    /* Forward, but is there a gap in sequence numbers? */
-	    if (pcount > sp->packet_count + 1) {
-		/* There's a gap so count that as a loss. */
-		sp->cnt_error += (pcount - 1) - sp->packet_count;
-	    }
-	    /* Update the highest sequence number seen so far. */
-	    sp->packet_count = pcount;
-	} else {
-
-	    /* 
-	     * Sequence number went backward (or was stationary?!?).
-	     * This counts as an out-of-order packet.
-	     */
-	    sp->outoforder_packets++;
-
-	    /*
-	     * If we have lost packets, then the fact that we are now
-	     * seeing an out-of-order packet offsets a prior sequence
-	     * number gap that was counted as a loss.  So we can take
-	     * away a loss.
-	     */
-	    if (sp->cnt_error > 0)
-		sp->cnt_error--;
+		fprintf(stderr, "iperf_udp_recv: received %d packets; pcount %" PRIu64 " packet_count %d\n", msgs_recvd, pcount, sp->packet_count);
 	
-	    /* Log the out-of-order packet */
-	    if (sp->test->debug) 
-		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count + 1, sp->socket);
-	}
+	/* Go over all nessages received */
+	for (i = 0; i < msgs_recvd; i++) {
+		pbuf = msg[i].msg_hdr.msg_iov->iov_base;	/* current msg buffer */
+		/*
+		* For jitter computation below, it's important to know if this
+		* packet is the first packet received.
+		*/
+		if (sp->result->bytes_received == 0) {
+		    first_packet = 1;
+		}
 
-	/*
-	 * jitter measurement
-	 *
-	 * This computation is based on RFC 1889 (specifically
-	 * sections 6.3.1 and A.8).
-	 *
-	 * Note that synchronized clocks are not required since
-	 * the source packet delta times are known.  Also this
-	 * computation does not require knowing the round-trip
-	 * time.
-	 */
-	iperf_time_now(&arrival_time);
+		r = msg[i].msg_len;	/* length received in this packet */
+		total_received += r;
+		sp->result->bytes_received += r;
+		sp->result->bytes_received_this_interval += r;
 
-	iperf_time_diff(&arrival_time, &sent_time, &temp_time);
-	transit = iperf_time_in_secs(&temp_time);
+		/* Dig the various counters out of the incoming UDP packet */
+		if (sp->test->udp_counters_64bit) {
+			memcpy(&sec, pbuf, sizeof(sec));
+			memcpy(&usec, pbuf+4, sizeof(usec));
+			memcpy(&pcount, pbuf+8, sizeof(pcount));
+			sec = ntohl(sec);
+			usec = ntohl(usec);
+			pcount = be64toh(pcount);
+			sent_time.secs = sec;
+			sent_time.usecs = usec;
+		}
+		else {
+			uint32_t pc;
+			memcpy(&sec, pbuf, sizeof(sec));
+			memcpy(&usec, pbuf+4, sizeof(usec));
+			memcpy(&pc, pbuf+8, sizeof(pc));
+			sec = ntohl(sec);
+			usec = ntohl(usec);
+			pcount = ntohl(pc);
+			sent_time.secs = sec;
+			sent_time.usecs = usec;
+		}
 
-	/* Hack to handle the first packet by initializing prev_transit. */
-	if (first_packet)
-	    sp->prev_transit = transit;
+		/*
+		* Try to handle out of order packets.  The way we do this
+		* uses a constant amount of storage but might not be
+		* correct in all cases.  In particular we seem to have the
+		* assumption that packets can't be duplicated in the network,
+		* because duplicate packets will possibly cause some problems here.
+		*
+		* First figure out if the sequence numbers are going forward.
+		* Note that pcount is the sequence number read from the packet,
+		* and sp->packet_count is the highest sequence number seen so
+		* far (so we're expecting to see the packet with sequence number
+		* sp->packet_count + 1 arrive next).
+		*/
+		if (pcount >= sp->packet_count + 1) {
 
-	d = transit - sp->prev_transit;
-	if (d < 0)
-	    d = -d;
-	sp->prev_transit = transit;
-	sp->jitter += (d - sp->jitter) / 16.0;
-    }
+		/* Forward, but is there a gap in sequence numbers? */
+		if (pcount > sp->packet_count + 1) {
+			/* There's a gap so count that as a loss. */
+			sp->cnt_error += (pcount - 1) - sp->packet_count;
+		}
+		/* Update the highest sequence number seen so far. */
+		sp->packet_count = pcount;
+		} else {
+
+		/* 
+		* Sequence number went backward (or was stationary?!?).
+		* This counts as an out-of-order packet.
+		*/
+		sp->outoforder_packets++;
+
+		/*
+		* If we have lost packets, then the fact that we are now
+		* seeing an out-of-order packet offsets a prior sequence
+		* number gap that was counted as a loss.  So we can take
+		* away a loss.
+		*/
+		if (sp->cnt_error > 0)
+			sp->cnt_error--;
+		
+		/* Log the out-of-order packet */
+		if (sp->test->debug) 
+			fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count + 1, sp->socket);
+		}
+
+		/*
+		* jitter measurement
+		*
+		* This computation is based on RFC 1889 (specifically
+		* sections 6.3.1 and A.8).
+		*
+		* Note that synchronized clocks are not required since
+		* the source packet delta times are known.  Also this
+		* computation does not require knowing the round-trip
+		* time.
+		*/
+		iperf_time_now(&arrival_time);
+
+		iperf_time_diff(&arrival_time, &sent_time, &temp_time);
+		transit = iperf_time_in_secs(&temp_time);
+
+		/* Hack to handle the first packet by initializing prev_transit. */
+		if (first_packet)
+		    sp->prev_transit = transit;
+
+		d = transit - sp->prev_transit;
+		if (d < 0)
+		    d = -d;
+		sp->prev_transit = transit;
+		sp->jitter += (d - sp->jitter) / 16.0;
+
+	} /* for over all received messages */
+
+    } /* if proper state */
     else {
 	if (sp->test->debug)
 	    printf("Late receive, state = %d\n", sp->test->state);
     }
 
-    return r;
+    return total_received;
 }
 
 
@@ -212,14 +272,26 @@ iperf_udp_recv(struct iperf_stream *sp)
 int
 iperf_udp_send(struct iperf_stream *sp)
 {
-    int r;
-    int       size = sp->settings->blksize;
+    int r = 0;
+    int size = sp->settings->blksize;
     struct iperf_time before;
+    char *buf = sp->buffer;
+    struct mmsghdr msg[sp->settings->burst + 1];
+    struct iovec msgvec[sp->settings->burst + 1];
+    int i, j;
+    char *b;
 
+    /* if sendmmsg is used - set buffer pointer to next buffer */
+    if (sp->settings->send_recvmmsg == 1) {
+        buf += sp->sendmmsg_buffered_packets_count * (sp->settings->blksize + sizeof(int));
+	*(int *)buf = size;
+	buf += sizeof(int);
+    }
+   
     iperf_time_now(&before);
 
     ++sp->packet_count;
-
+ 
     if (sp->test->udp_counters_64bit) {
 
 	uint32_t  sec, usec;
@@ -229,9 +301,9 @@ iperf_udp_send(struct iperf_stream *sp)
 	usec = htonl(before.usecs);
 	pcount = htobe64(sp->packet_count);
 	
-	memcpy(sp->buffer, &sec, sizeof(sec));
-	memcpy(sp->buffer+4, &usec, sizeof(usec));
-	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
+	memcpy(buf, &sec, sizeof(sec));
+	memcpy(buf+4, &usec, sizeof(usec));
+	memcpy(buf+8, &pcount, sizeof(pcount));
 	
     }
     else {
@@ -241,23 +313,78 @@ iperf_udp_send(struct iperf_stream *sp)
 	sec = htonl(before.secs);
 	usec = htonl(before.usecs);
 	pcount = htonl(sp->packet_count);
-	
-	memcpy(sp->buffer, &sec, sizeof(sec));
-	memcpy(sp->buffer+4, &usec, sizeof(usec));
-	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
-	
+
+	memcpy(buf, &sec, sizeof(sec));
+	memcpy(buf+4, &usec, sizeof(usec));
+	memcpy(buf+8, &pcount, sizeof(pcount));	
     }
 
-    r = Nwrite(sp->socket, sp->buffer, size, Pudp);
+/* use sendmmsg when approriate to send the packet, else use Nwrite */
+#ifdef HAVE_SEND_RECVMMSG
+    if (sp->settings->send_recvmmsg == 1) {
+	/* when "burst" packets were buffered - send them */
+	if (++sp->sendmmsg_buffered_packets_count >= sp->settings->burst) {
+	    memset(msg, 0, sizeof(msg));
+	    memset(msgvec, 0, sizeof(msgvec));
+	    for ( i = 0, b = sp->buffer; i < sp->sendmmsg_buffered_packets_count; i++, b += sp->settings->blksize + sizeof(int) ) {
+		msg[i].msg_hdr.msg_iov = &msgvec[i];
+                msg[i].msg_hdr.msg_iovlen = 1;
+	        msgvec[i].iov_base = b + sizeof(int);
+                msgvec[i].iov_len = *(int *)b;
+		
+		/* Reset sending time to actual sending - same for 32 and 64 bits */
+		uint32_t  sec, usec;
+		sec = htonl(before.secs);
+		usec = htonl(before.usecs);
+		memcpy(buf, &sec, sizeof(sec));
+		memcpy(buf+4, &usec, sizeof(usec));	
+	    }
 
-    if (r < 0)
+	    /* sending messages and making sure all packets are sent */
+	    i = 0;	/* count of messages sent */
+	    r = 0;	/* total bytes sent */
+	    while (i < sp->sendmmsg_buffered_packets_count) {
+	        j = sendmmsg(sp->socket, &msg[i], sp->sendmmsg_buffered_packets_count - i, 0);
+		if (j < 0) {
+		    r = j;
+		    break;
+		}
+		if (sp->test->debug && i+j < sp->sendmmsg_buffered_packets_count)
+                    printf("sendmmsg() sent only %d messges out of %d still bufferred\n",
+		           j, sp->sendmmsg_buffered_packets_count-i);
+		i += j;
+		while (--j >= 0)
+		    r += msg[i-j-1].msg_len;
+	    }
+
+	    if (sp->test->debug)
+                printf("sendmmsg() %s. Sent %d messges out of %d bufferred. Actual %d bytes sent. (IF failed: errno=%d: %s)\n",
+		       ((r > 0)? "succesful":"FAILED"), i, sp->sendmmsg_buffered_packets_count, r, errno, strerror(errno));
+	    
+	    sp->sendmmsg_buffered_packets_count = 0;
+	}
+    }
+    else
+#endif	// HAVE_SEND_RECVMMSG
+    {
+        r = Nwrite(sp->socket, buf, size, Pudp);
+    }
+
+    if (r < 0) {
+	if (sp->test->debug)
+	    printf("Write failed with errno %d: %s\n", errno, strerror(errno));
 	return r;
+    }
 
     sp->result->bytes_sent += r;
     sp->result->bytes_sent_this_interval += r;
 
-    if (sp->test->debug)
-	printf("sent %d bytes of %d, total %" PRIu64 "\n", r, sp->settings->blksize, sp->result->bytes_sent);
+    if (sp->test->debug) {
+	if (sp->settings->send_recvmmsg == 0 || r > 0)
+	    printf("sent %d bytes of %d, total %" PRIu64 "\n", r, size, sp->result->bytes_sent);
+	else
+	    printf("no bytes sent (yet) by sendmmsg\n");
+    }
 
     return r;
 }
@@ -316,7 +443,7 @@ iperf_udp_buffercheck(struct iperf_test *test, int s)
 	i_errno = IESETBUF2;
 	return -1;
     }
-    if (test->settings->blksize > sndbuf_actual) {
+    if (BUFSIZE(test) > sndbuf_actual) {
 	char str[80];
 	snprintf(str, sizeof(str),
 		 "Block size %d > sending socket buffer size %d",
@@ -338,7 +465,7 @@ iperf_udp_buffercheck(struct iperf_test *test, int s)
 	i_errno = IESETBUF2;
 	return -1;
     }
-    if (test->settings->blksize > rcvbuf_actual) {
+    if (BUFSIZE(test) > rcvbuf_actual) {
 	char str[80];
 	snprintf(str, sizeof(str),
 		 "Block size %d > receiving socket buffer size %d",
@@ -403,7 +530,7 @@ iperf_udp_accept(struct iperf_test *test)
      */
     if (rc > 0) {
 	if (test->settings->socket_bufsize == 0) {
-	    int bufsize = test->settings->blksize + UDP_BUFFER_EXTRA;
+	    int bufsize = BUFSIZE(test) + UDP_BUFFER_EXTRA;
 	    printf("Increasing socket buffer size to %d\n",
 		bufsize);
 	    test->settings->socket_bufsize = bufsize;
@@ -515,7 +642,7 @@ iperf_udp_connect(struct iperf_test *test)
      */
     if (rc > 0) {
 	if (test->settings->socket_bufsize == 0) {
-	    int bufsize = test->settings->blksize + UDP_BUFFER_EXTRA;
+	    int bufsize = BUFSIZE(test) + UDP_BUFFER_EXTRA;
 	    printf("Increasing socket buffer size to %d\n",
 		bufsize);
 	    test->settings->socket_bufsize = bufsize;

@@ -68,6 +68,10 @@
 #include <openssl/evp.h>
 #endif // HAVE_SSL
 
+
+/* macro to calculate buffer size used for the stream */
+#define BUFSIZE(prefix) (((prefix)->settings->blksize + sizeof(int)) * (((prefix)->settings->send_recvmmsg == 0 || (prefix)->settings->burst == 0)? 1 : (prefix)->settings->burst))
+
 typedef uint64_t iperf_size_t;
 
 struct iperf_interval_results
@@ -157,6 +161,7 @@ struct iperf_settings
     EVP_PKEY  *client_rsa_pubkey;
 #endif // HAVE_SSL
     int	      connect_timeout;	    /* socket connection timeout, in ms */
+    int       send_recvmmsg;        /* use sendmmsg/recvmmsg for UDP if supported by platform */
 };
 
 struct iperf_test;
@@ -197,6 +202,7 @@ struct iperf_stream
     int       omitted_outoforder_packets;
     int       cnt_error;
     int       omitted_cnt_error;
+    int       sendmmsg_buffered_packets_count;	/* number of buffered packets for sendmmsg */
     uint64_t  target;
 
     struct sockaddr_storage local_addr;

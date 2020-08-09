@@ -43,6 +43,7 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/uio.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -931,6 +932,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
 	{"pacing-timer", required_argument, NULL, OPT_PACING_TIMER},
 	{"connect-timeout", required_argument, NULL, OPT_CONNECT_TIMEOUT},
+	{"send-recvmmsg", no_argument, NULL, OPT_SEND_RECVMMSG},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -1343,6 +1345,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->settings->connect_timeout = unit_atoi(optarg);
 		client_flag = 1;
 		break;
+#ifdef HAVE_SEND_RECVMMSG
+	    case OPT_SEND_RECVMMSG:
+		test->settings->send_recvmmsg = 1;
+		client_flag = 1;
+		break;
+#endif /* HAVE_SEND_RECV_MMSG */
 	    case 'h':
 		usage_long(stdout);
 		exit(0);
@@ -1467,6 +1475,22 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	test->settings->bitrate_limit_stats_per_interval =
 	    (test->settings->bitrate_limit_interval <= test->stats_interval ?
 	    1 : round(test->settings->bitrate_limit_interval/test->stats_interval) );
+    }
+    
+    /* Ensure sendmmsg/recvmmsg are used only if supported */
+#ifdef HAVE_SEND_RECVMMSG
+    if (test->protocol->id != Pudp || test->diskfile_name != (char *)0)
+#endif
+	    test->settings->send_recvmmsg = 0;
+    if (test->settings->send_recvmmsg == 1) {
+	/* Ensure non-zero burst number of packets when sendmmsg/recvmmsg are used */ 
+	if (test->settings->burst == 0)
+	    test->settings->burst = 1;
+#ifdef UIO_MAXIOV
+	/* Ensure burst size is appropriate for sendmmsg() */
+	else if (test->settings->burst > UIO_MAXIOV)
+	    test->settings->burst = UIO_MAXIOV;
+#endif
     }
 
     /* Show warning if JSON output is used with explicit report format */
@@ -1610,7 +1634,8 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 	}
 	if (!streams_active)
 	    break;
-    }
+    } /*for*/
+
     if (test->settings->burst != 0) {
 	iperf_time_now(&now);
 	SLIST_FOREACH(sp, &test->streams, streams)
@@ -1874,6 +1899,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "pacing_timer", test->settings->pacing_timer);
 	if (test->settings->burst)
 	    cJSON_AddNumberToObject(j, "burst", test->settings->burst);
+	if (test->settings->send_recvmmsg)
+	    cJSON_AddNumberToObject(j, "send_recvmmsg", test->settings->send_recvmmsg);
 	if (test->settings->tos)
 	    cJSON_AddNumberToObject(j, "TOS", test->settings->tos);
 	if (test->settings->flowlabel)
@@ -1982,6 +2009,8 @@ get_parameters(struct iperf_test *test)
 	    test->settings->pacing_timer = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "burst")) != NULL)
 	    test->settings->burst = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "send_recvmmsg")) != NULL)
+	    test->settings->send_recvmmsg = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "TOS")) != NULL)
 	    test->settings->tos = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "flowlabel")) != NULL)
@@ -2510,6 +2539,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->bytes = 0;
     testp->settings->blocks = 0;
     testp->settings->connect_timeout = -1;
+    testp->settings->send_recvmmsg = 0;
     memset(testp->cookie, 0, COOKIE_SIZE);
 
     testp->multisend = 10;	/* arbitrary */
@@ -2793,6 +2823,7 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->burst = 0;
     test->settings->mss = 0;
     test->settings->tos = 0;
+    test->settings->send_recvmmsg = 0;
 
 #if defined(HAVE_SSL)
     if (test->settings->authtoken) {
@@ -2854,6 +2885,7 @@ iperf_reset_stats(struct iperf_test *test)
         sp->omitted_cnt_error = sp->cnt_error;
         sp->omitted_outoforder_packets = sp->outoforder_packets;
 	sp->jitter = 0;
+	sp->sendmmsg_buffered_packets_count = 0;
 	rp = sp->result;
         rp->bytes_sent_omit = rp->bytes_sent;
         rp->bytes_received = 0;
@@ -3804,9 +3836,15 @@ void
 iperf_free_stream(struct iperf_stream *sp)
 {
     struct iperf_interval_results *irp, *nirp;
+    int r;
 
     /* XXX: need to free interval list too! */
-    munmap(sp->buffer, sp->test->settings->blksize);
+    r = munmap(sp->buffer, BUFSIZE(sp->test));
+    if (r < 0)
+        printf("Failed to release stream buffer at %p with size %ld  - errno=%d: %s)\n", sp->buffer, BUFSIZE(sp->test), errno, strerror(errno));
+    else if (sp->test->debug)
+        printf("Successfully released stream buffer at %p with size %ld\n", sp->buffer, BUFSIZE(sp->test));
+
     close(sp->buffer_fd);
     if (sp->diskfile_fd >= 0)
 	close(sp->diskfile_fd);
@@ -3880,19 +3918,22 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         free(sp);
         return NULL;
     }
-    if (ftruncate(sp->buffer_fd, test->settings->blksize) < 0) {
+    if (ftruncate(sp->buffer_fd, BUFSIZE(test)) < 0) {
         i_errno = IECREATESTREAM;
         free(sp->result);
         free(sp);
         return NULL;
     }
-    sp->buffer = (char *) mmap(NULL, test->settings->blksize, PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
+
+    sp->buffer = (char *) mmap(NULL, BUFSIZE(test), PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
     if (sp->buffer == MAP_FAILED) {
         i_errno = IECREATESTREAM;
         free(sp->result);
         free(sp);
         return NULL;
     }
+    else if (sp->test->debug)
+        printf("Successfully allocated stream buffer at addr %p with length %ld\n", sp->buffer, BUFSIZE(test));
 
     /* Set socket */
     sp->socket = s;
@@ -3900,11 +3941,13 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     sp->snd = test->protocol->send;
     sp->rcv = test->protocol->recv;
 
+    sp->sendmmsg_buffered_packets_count = 0;
+
     if (test->diskfile_name != (char*) 0) {
 	sp->diskfile_fd = open(test->diskfile_name, sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC), S_IRUSR|S_IWUSR);
 	if (sp->diskfile_fd == -1) {
 	    i_errno = IEFILE;
-            munmap(sp->buffer, sp->test->settings->blksize);
+            munmap(sp->buffer, BUFSIZE(sp->test));
             free(sp->result);
             free(sp);
 	    return NULL;
@@ -3918,13 +3961,13 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 
     /* Initialize stream */
     if (test->repeating_payload)
-        fill_with_repeating_pattern(sp->buffer, test->settings->blksize);
+        fill_with_repeating_pattern(sp->buffer, BUFSIZE(test));
     else
-        ret = readentropy(sp->buffer, test->settings->blksize);
+        ret = readentropy(sp->buffer, BUFSIZE(test));
 
     if ((ret < 0) || (iperf_init_stream(sp, test) < 0)) {
         close(sp->buffer_fd);
-        munmap(sp->buffer, sp->test->settings->blksize);
+        munmap(sp->buffer, BUFSIZE(sp->test));
         free(sp->result);
         free(sp);
         return NULL;
@@ -4013,7 +4056,7 @@ diskfile_send(struct iperf_stream *sp)
 
     /* if needed, read enough data from the disk to fill up the buffer */
     if (sp->diskfile_left < sp->test->settings->blksize && !sp->test->done) {
-	r = read(sp->diskfile_fd, sp->buffer, sp->test->settings->blksize -
+	r = read(sp->diskfile_fd, sp->buffer, BUFSIZE(sp->test) -
 		 sp->diskfile_left);
 	rtot += r;
 	if (sp->test->debug) {
@@ -4042,7 +4085,7 @@ diskfile_send(struct iperf_stream *sp)
     sp->diskfile_left = sp->test->settings->blksize - r;
     if (sp->diskfile_left && sp->diskfile_left < sp->test->settings->blksize) {
 	memcpy(sp->buffer,
-	       sp->buffer + (sp->test->settings->blksize - sp->diskfile_left),
+	       sp->buffer + (BUFSIZE(sp->test) - sp->diskfile_left),
 	       sp->diskfile_left);
 	if (sp->test->debug)
 	    printf("Shifting %d bytes by %d\n", sp->diskfile_left, (sp->test->settings->blksize - sp->diskfile_left));

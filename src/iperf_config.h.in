@@ -87,6 +87,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Define to 1 if sendmmsg/recvmmsg functions are supported */
+#define HAVE_SEND_RECVMMSG 1
+
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 

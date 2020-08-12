@@ -584,7 +584,6 @@ iperf_run_client(struct iperf_test * test)
     return 0;
 
   cleanup_and_fail:
-    iperf_printf(test, "cleanup_and_fail\n");
     iperf_client_end(test);
     if (test->json_output)
 	iperf_json_finish(test);

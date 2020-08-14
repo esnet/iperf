@@ -68,7 +68,9 @@
 #include <openssl/evp.h>
 #endif // HAVE_SSL
 
+#if !defined(__IPERF_API_H)
 typedef uint64_t iperf_size_t;
+#endif // __IPERF_API_H
 
 struct iperf_interval_results
 {

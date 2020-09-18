@@ -51,11 +51,17 @@ host=$1
 # -n flag
 ./src/iperf3 -c $host -n 5M  
 ./src/iperf3 -c $host -n 5M -u -b1G
+# -n flag with -R
+./src/iperf3 -c $host -n 5M -R
+./src/iperf3 -c $host -n 5M -u -b1G -R
 # conflicting -n -t flags
 ./src/iperf3 -c $host -n 5M -t 5
 # -k mode
 ./src/iperf3 -c $host -k 1K  
 ./src/iperf3 -c $host -k 1K -u -b1G
+# -k mode with -R
+./src/iperf3 -c $host -k 1K -R
+./src/iperf3 -c $host -k 1K -u -b1G -R
 # CPU affinity
 ./src/iperf3 -c $host -A 2/2
 ./src/iperf3 -c $host -A 2/2 -u -b1G

@@ -539,11 +539,20 @@ iperf_run_client(struct iperf_test * test)
             iperf_time_now(&now);
             tmr_run(&now);
 
-	    /* Is the test done yet? */
+	    /*
+	     * Is the test done yet?  We have to be out of omitting
+	     * mode, and then we have to have fulfilled one of the
+	     * ending criteria, either by times, bytes, or blocks.
+	     * The bytes and blocks tests needs to handle both the
+	     * cases of the client being the sender and the client
+	     * being the receiver.
+	     */
 	    if ((!test->omitting) &&
 	        ((test->duration != 0 && test->done) ||
-	         (test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes) ||
-	         (test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks))) {
+	         (test->settings->bytes != 0 && (test->bytes_sent >= test->settings->bytes ||
+						 test->bytes_received >= test->settings->bytes)) ||
+	         (test->settings->blocks != 0 && (test->blocks_sent >= test->settings->blocks ||
+						  test->blocks_received >= test->settings->blocks)))) {
 
 		// Unset non-blocking for non-UDP tests
 		if (test->protocol->id != Pudp) {

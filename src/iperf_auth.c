@@ -35,6 +35,8 @@
 #define _WITH_GETLINE
 #include <stdio.h>
 #include <termios.h>
+#include <inttypes.h>
+#include <stdint.h>
 
 #if defined(HAVE_SSL)
 
@@ -45,7 +47,7 @@
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 
-const char *auth_text_format = "user: %s\npwd:  %s\nts:   %ld";
+const char *auth_text_format = "user: %s\npwd:  %s\nts:   %"PRId64;
 
 void sha256(const char *string, char outputBuffer[65])
 {
@@ -291,7 +293,7 @@ int encode_auth_setting(const char *username, const char *password, EVP_PKEY *pu
     if (text == NULL) {
 	return -1;
     }
-    snprintf(text, text_len, auth_text_format, username, password, utc_seconds);
+    snprintf(text, text_len, auth_text_format, username, password, (int64_t)utc_seconds);
 
     unsigned char *encrypted = NULL;
     int encrypted_len;
@@ -309,7 +311,8 @@ int encode_auth_setting(const char *username, const char *password, EVP_PKEY *pu
 int decode_auth_setting(int enable_debug, const char *authtoken, EVP_PKEY *private_key, char **username, char **password, time_t *ts){
     unsigned char *encrypted_b64 = NULL;
     size_t encrypted_len_b64;
-    Base64Decode(authtoken, &encrypted_b64, &encrypted_len_b64);        
+    int64_t utc_seconds;
+    Base64Decode(authtoken, &encrypted_b64, &encrypted_len_b64);
 
     unsigned char *plaintext = NULL;
     int plaintext_len;
@@ -331,7 +334,7 @@ int decode_auth_setting(int enable_debug, const char *authtoken, EVP_PKEY *priva
 	return -1;
     }
 
-    int rc = sscanf((char *) plaintext, auth_text_format, s_username, s_password, ts);
+    int rc = sscanf((char *) plaintext, auth_text_format, s_username, s_password, &utc_seconds);
     if (rc != 3) {
 	free(s_password);
 	free(s_username);
@@ -344,6 +347,7 @@ int decode_auth_setting(int enable_debug, const char *authtoken, EVP_PKEY *priva
     }
     *username = s_username;
     *password = s_password;
+    *ts = (time_t)utc_seconds;
     OPENSSL_free(plaintext);
     return (0);
 }

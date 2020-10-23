@@ -345,8 +345,8 @@ iperf_connect(struct iperf_test *test)
     // set TCP_NODELAY for lower latency on control messages
     int flag = 1;
     if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int))) {
-	i_errno = IESETNODELAY;
-	return -1;
+        i_errno = IESETNODELAY;
+        return -1;
     }
 
     if (Nwrite(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) < 0) {

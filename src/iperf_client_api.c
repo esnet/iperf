@@ -51,12 +51,14 @@
 #endif /* TCP_CA_NAME_MAX */
 #endif /* HAVE_TCP_CONGESTION */
 
+
 int
 iperf_create_streams(struct iperf_test *test, int sender)
 {
     int i, s;
 #if defined(HAVE_TCP_CONGESTION)
     int saved_errno;
+    static int sender_id = 0; /* use this to set congestion control based on even or odd */
 #endif /* HAVE_TCP_CONGESTION */
     struct iperf_stream *sp;
 
@@ -72,13 +74,19 @@ iperf_create_streams(struct iperf_test *test, int sender)
 #if defined(HAVE_TCP_CONGESTION)
 	if (test->protocol->id == Ptcp) {
 	    if (test->congestion) {
-		if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
-		    saved_errno = errno;
-		    close(s);
-		    errno = saved_errno;
-		    i_errno = IESETCONGESTION;
-		    return -1;
+                if(sender_id % 2 == 0) { /* only do this for even numbered senders */
+	            /*
+	            printf("setting cong cntrl on stream %d to %s \n",sender_id,test->congestion);
+		    */
+		    if (setsockopt(s, IPPROTO_TCP, TCP_CONGESTION, test->congestion, strlen(test->congestion)) < 0) {
+		        saved_errno = errno;
+		        close(s);
+		        errno = saved_errno;
+		        i_errno = IESETCONGESTION;
+		        return -1;
+		    } 
 		} 
+                sender_id++;
 	    }
 	    {
 		socklen_t len = TCP_CA_NAME_MAX;
@@ -339,13 +347,6 @@ iperf_connect(struct iperf_test *test)
 	test->ctrl_sck = netdial(test->settings->domain, Ptcp, test->bind_address, 0, test->server_hostname, test->server_port, test->settings->connect_timeout);
     if (test->ctrl_sck < 0) {
         i_errno = IECONNECT;
-        return -1;
-    }
-
-    // set TCP_NODELAY for lower latency on control messages
-    int flag = 1;
-    if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int))) {
-        i_errno = IESETNODELAY;
         return -1;
     }
 

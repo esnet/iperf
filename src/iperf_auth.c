@@ -64,10 +64,10 @@ void sha256(const char *string, char outputBuffer[65])
     outputBuffer[64] = 0;
 }
 
-int check_authentication(const char *username, const char *password, const time_t ts, const char *filename){
+int check_authentication(const char *username, const char *password, const time_t ts, const char *filename, int drift_threshold){
     time_t t = time(NULL);
     time_t utc_seconds = mktime(localtime(&t));
-    if ( (utc_seconds - ts) > 10 || (utc_seconds - ts) < -10 ) {
+    if ( (utc_seconds - ts) > drift_threshold || (utc_seconds - ts) < -drift_threshold ) {
         return 1;
     }
 

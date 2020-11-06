@@ -17,7 +17,7 @@ jobs:
       with:
         msystem: MSYS
         update: true
-        install: autoconf automake gcc zip git
+        install: make gcc zip git
     - name: get-hash
       id: hash
       run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"

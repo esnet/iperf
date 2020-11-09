@@ -1,6 +1,18 @@
 iperf3 Project News
 ===================
 
+2020-08-17:  iperf-3.9 released
+---------------------------------
+
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.9.tar.gz
+| SHA256:  ``24b63a26382325f759f11d421779a937b63ca1bc17c44587d2fcfedab60ac038  iperf-3.9.tar.gz``
+
+iperf 3.9 adds a ``--timestamps`` flag, which prepends a timestamp to
+each output line.  A new ``--server-bitrate-limit`` flag has been
+added as a server command-line argument, and allows an iperf3 server
+to enforce a maximum throughput rate.  More information on these new
+features can be found in the release notes.
+
 2020-06-10:  iperf-3.8.1 released
 ---------------------------------
 

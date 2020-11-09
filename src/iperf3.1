@@ -1,4 +1,4 @@
-.TH IPERF3 1 "July 2020" ESnet "User Manuals"
+.TH IPERF3 1 "September 2020" ESnet "User Manuals"
 .SH NAME
 iperf3 \- perform network throughput tests
 .SH SYNOPSIS
@@ -153,13 +153,16 @@ send output to a log file.
 force flushing output at every interval.
 Used to avoid buffering when sending output to pipe.
 .TP
-.BR --timestamps " [\fIformat\fR]"
+.BR --timestamps "[\fB=\fIformat\fR]"
 prepend a timestamp at the start of each output line.
 By default, timestamps have the format emitted by
 .BR ctime ( 1 ).
-Optionally, a format specification can be passed to customize the
+Optionally, \fC=\fR followed by
+a format specification can be passed to customize the
 timestamps, see
 .BR strftime ( 3 ).
+If this optional format is given, the \fC=\fR must immediately
+follow the \fB--timestamps\fR option with no whitespace intervening.
 .TP
 .BR -d ", " --debug " "
 emit debugging output.

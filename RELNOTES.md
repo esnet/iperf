@@ -1,6 +1,31 @@
 iperf3 Release Notes
 ====================
 
+iperf 3.9 2020-08-17
+--------------------
+
+* Notable user-visible changes
+
+  * A --timestamps flag has been added, which prepends a timestamp to
+    each output line.  An optional argument to this flag, which is a
+    format specification to strftime(3), allows for custom timestamp
+    formats (#909, #1028).
+
+  * A --server-bitrate-limit flag has been added as a server-side
+    command-line argument.  It allows a server to enforce a maximum
+    throughput rate; client connections that specify a higher bitrate
+    or exceed this bitrate during a test will be terminated.  The
+    bitrate is expressed in bits per second, with an optional trailing
+    slash and integer count that specifies an averaging interval over
+    which to enforce the limit (#999).
+
+  * A bug that caused increased CPU usage with the --bidir option has
+    been fixed (#1011).
+
+* Notable developer-visible changes
+
+  * Fixed various minor memory leaks (#1023).
+
 iperf 3.8.1 2020-06-10
 ----------------------
 

@@ -45,7 +45,9 @@ struct iperf_interval_results;
 struct iperf_stream;
 struct iperf_time;
 
+#if !defined(__IPERF_H)
 typedef uint64_t iperf_size_t;
+#endif // __IPERF_H
 
 /* default settings */
 #define Ptcp SOCK_STREAM

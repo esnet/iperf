@@ -342,6 +342,13 @@ iperf_connect(struct iperf_test *test)
         return -1;
     }
 
+    // set TCP_NODELAY for lower latency on control messages
+    int flag = 1;
+    if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int))) {
+        i_errno = IESETNODELAY;
+        return -1;
+    }
+
     if (Nwrite(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) < 0) {
         i_errno = IESENDCOOKIE;
         return -1;
@@ -539,11 +546,20 @@ iperf_run_client(struct iperf_test * test)
             iperf_time_now(&now);
             tmr_run(&now);
 
-	    /* Is the test done yet? */
+	    /*
+	     * Is the test done yet?  We have to be out of omitting
+	     * mode, and then we have to have fulfilled one of the
+	     * ending criteria, either by times, bytes, or blocks.
+	     * The bytes and blocks tests needs to handle both the
+	     * cases of the client being the sender and the client
+	     * being the receiver.
+	     */
 	    if ((!test->omitting) &&
 	        ((test->duration != 0 && test->done) ||
-	         (test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes) ||
-	         (test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks))) {
+	         (test->settings->bytes != 0 && (test->bytes_sent >= test->settings->bytes ||
+						 test->bytes_received >= test->settings->bytes)) ||
+	         (test->settings->blocks != 0 && (test->blocks_sent >= test->settings->blocks ||
+						  test->blocks_received >= test->settings->blocks)))) {
 
 		// Unset non-blocking for non-UDP tests
 		if (test->protocol->id != Pudp) {
@@ -584,7 +600,6 @@ iperf_run_client(struct iperf_test * test)
     return 0;
 
   cleanup_and_fail:
-    iperf_printf(test, "cleanup_and_fail\n");
     iperf_client_end(test);
     if (test->json_output)
 	iperf_json_finish(test);

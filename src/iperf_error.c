@@ -424,8 +424,8 @@ iperf_strerror(int int_errno)
 	case IETOTALRATE:
 	    snprintf(errstr, len, "total required bandwidth is larger than server limit");
             break;
-    case IEDRIFTTHRESHOLD:
-	    snprintf(errstr, len, "drift threshold must be a positive number");
+    case IESKEWTHRESHOLD:
+	    snprintf(errstr, len, "skew threshold must be a positive number");
             break;
 	default:
 	    snprintf(errstr, len, "int_errno=%d", int_errno);

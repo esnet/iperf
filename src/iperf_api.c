@@ -642,9 +642,9 @@ iperf_set_test_server_authorized_users(struct iperf_test *ipt, const char *serve
 }
 
 void
-iperf_set_test_server_drift_threshold(struct iperf_test *ipt, int server_drift_threshold)
+iperf_set_test_server_skew_threshold(struct iperf_test *ipt, int server_skew_threshold)
 {
-    ipt->server_drift_threshold = server_drift_threshold;
+    ipt->server_skew_threshold = server_skew_threshold;
 }
 
 void
@@ -933,7 +933,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     {"rsa-public-key-path", required_argument, NULL, OPT_CLIENT_RSA_PUBLIC_KEY},
     {"rsa-private-key-path", required_argument, NULL, OPT_SERVER_RSA_PRIVATE_KEY},
     {"authorized-users-path", required_argument, NULL, OPT_SERVER_AUTHORIZED_USERS},
-    {"time-drift-threshold", required_argument, NULL, OPT_SERVER_DRIFT_THRESHOLD},
+    {"time-skew-threshold", required_argument, NULL, OPT_SERVER_SKEW_THRESHOLD},
 #endif /* HAVE_SSL */
 	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
 	{"pacing-timer", required_argument, NULL, OPT_PACING_TIMER},
@@ -1341,10 +1341,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         case OPT_SERVER_AUTHORIZED_USERS:
             test->server_authorized_users = strdup(optarg);
             break;
-        case OPT_SERVER_DRIFT_THRESHOLD:
-            test->server_drift_threshold = atoi(optarg);
-            if(test->server_drift_threshold <= 0){
-                i_errno = IEDRIFTTHRESHOLD;
+        case OPT_SERVER_SKEW_THRESHOLD:
+            test->server_skew_threshold = atoi(optarg);
+            if(test->server_skew_threshold <= 0){
+                i_errno = IESKEWTHRESHOLD;
                 return -1;
             }
             break;
@@ -1411,7 +1411,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     if (test->role == 'c' && (server_rsa_private_key || test->server_authorized_users)){
         i_errno = IESERVERONLY;
         return -1;
-    } else if (test->role == 'c' && (test->server_drift_threshold != 0)){
+    } else if (test->role == 'c' && (test->server_skew_threshold != 0)){
         i_errno = IESERVERONLY;
         return -1;
     } else if (test->role == 's' && (server_rsa_private_key || test->server_authorized_users) && 
@@ -1427,9 +1427,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	    free(server_rsa_private_key);
 	    server_rsa_private_key = NULL;
 
-        if(test->server_drift_threshold == 0){
-            // Set default value for time drift threshold
-            test->server_drift_threshold=10;
+        if(test->server_skew_threshold == 0){
+            // Set default value for time skew threshold
+            test->server_skew_threshold=10;
         }
     }
 
@@ -1744,7 +1744,7 @@ int test_is_authorized(struct iperf_test *test){
 	if (rc) {
 	    return -1;
 	}
-        int ret = check_authentication(username, password, ts, test->server_authorized_users, test->server_drift_threshold);
+        int ret = check_authentication(username, password, ts, test->server_authorized_users, test->server_skew_threshold);
         if (ret == 0){
             iperf_printf(test, report_authentication_succeeded, username, ts);
             free(username);

@@ -210,8 +210,8 @@ the executable.
                  hashes; more information on the structure of  the  file  can  be
                  found in the EXAMPLES section.
 
-          --time-drift-threshold seconds
-                 time drift threshold (in seconds) between the server and client
+          --time-skew-threshold seconds
+                 time skew threshold (in seconds) between the server and client
                  during the authentication process.
    
    CLIENT SPECIFIC OPTIONS

@@ -182,6 +182,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  --udp-counters-64bit      use 64-bit counters in UDP test packets\n"
                            "  --repeating-payload       use repeating pattern in payload, instead of\n"
                            "                            randomized payload (like in iperf2)\n"
+                           "  --wait-all-received  #    maximum time in seconds to wait for receiver to receive all data\n"
+                           "                            (default 0 - no wait); implies `--repeating-payload` for non-udp\n"
 #if defined(HAVE_SSL)
                            "  --username                username for authentication\n"
                            "  --rsa-public-key-path     path to the RSA public key used to encrypt\n"

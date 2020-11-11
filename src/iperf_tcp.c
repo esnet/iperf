@@ -64,8 +64,25 @@ iperf_tcp_recv(struct iperf_stream *sp)
 
     /* Only count bytes received while we're in the correct state. */
     if (sp->test->state == TEST_RUNNING) {
-	sp->result->bytes_received += r;
-	sp->result->bytes_received_this_interval += r;
+        // If sender waits for receiver to receive last packet - 
+        // check whether test-end packet received and change state accordingly
+        int i = r;
+        if (sp->test->settings->wait_all_received > 0) {
+                for (i = 0; i < r; i++) {
+                        if (sp->buffer[i] == LAST_PACKET)
+                                break;
+                }
+        }
+        if (i < r) { // Last packet identified
+                if (sp->test->debug) {
+                        iperf_printf(sp->test, "iperf_tcp_recv: Received last packet\n");
+                }
+                if (iperf_set_send_state(sp->test, TEST_END) != 0)
+                        return -1;
+        } else {
+            sp->result->bytes_received += r;
+            sp->result->bytes_received_this_interval += r;
+        }
     }
     else {
 	if (sp->test->debug)
@@ -87,14 +104,24 @@ iperf_tcp_send(struct iperf_stream *sp)
 
     if (sp->test->zerocopy)
 	r = Nsendfile(sp->buffer_fd, sp->socket, sp->buffer, sp->settings->blksize);
-    else
+    else {
+	// When test ended indicate that to the receiver (if not sending a file)
+	if (sp->test->state == TEST_WAIT_ALL_RECEIVED) {
+	    *sp->buffer = LAST_PACKET;
+            if (sp->test->debug) {
+                iperf_printf(sp->test,"iperf_tcp_send: Sending last packet\n");
+            }
+        }
 	r = Nwrite(sp->socket, sp->buffer, sp->settings->blksize, Ptcp);
+    }
 
     if (r < 0)
         return r;
 
-    sp->result->bytes_sent += r;
-    sp->result->bytes_sent_this_interval += r;
+    if (sp->test->state != TEST_WAIT_ALL_RECEIVED) {
+        sp->result->bytes_sent += r;
+        sp->result->bytes_sent_this_interval += r;
+    }
 
     if (sp->test->debug)
 	printf("sent %d bytes of %d, total %" PRIu64 "\n", r, sp->settings->blksize, sp->result->bytes_sent);

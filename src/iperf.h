@@ -152,6 +152,7 @@ struct iperf_settings
     iperf_size_t blocks;            /* number of blocks (packets) to send */
     char      unit_format;          /* -f */
     int       num_ostreams;         /* SCTP initmsg settings */
+    int       wait_all_received;   /* maximum time in seconds to wait for all data to be receieved */
 #if defined(HAVE_SSL)
     char      *authtoken;           /* Authentication token */
     char      *client_username;

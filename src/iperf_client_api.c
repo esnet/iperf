@@ -284,6 +284,13 @@ iperf_handle_message_client(struct iperf_test *test)
                 test->on_test_finish(test);
             iperf_client_end(test);
             break;
+        case TEST_END:
+            // Receiver Server indicate that last packet was received
+            test->state = TEST_END;
+            if (test->debug) {
+                iperf_printf(test,"iperf_handle_message_client: Server indicatated that last packet was received\n");
+            }
+            break;
         case IPERF_DONE:
             break;
         case SERVER_TERMINATE:
@@ -561,19 +568,59 @@ iperf_run_client(struct iperf_test * test)
 	         (test->settings->blocks != 0 && (test->blocks_sent >= test->settings->blocks ||
 						  test->blocks_received >= test->settings->blocks)))) {
 
-		// Unset non-blocking for non-UDP tests
-		if (test->protocol->id != Pudp) {
-		    SLIST_FOREACH(sp, &test->streams, streams) {
-			setnonblocking(sp->socket, 0);
-		    }
-		}
+            // Unset non-blocking for non-UDP tests
+            if (test->protocol->id != Pudp) {
+                SLIST_FOREACH(sp, &test->streams, streams) {
+                setnonblocking(sp->socket, 0);
+                }
+            }
 
-		/* Yes, done!  Send TEST_END. */
-		test->done = 1;
-		cpu_util(test->cpu_util);
-		test->stats_callback(test);
-		if (iperf_set_send_state(test, TEST_END) != 0)
-                    goto cleanup_and_fail;
+            if (test->mode == SENDER && !test->zerocopy && test->settings->wait_all_received > 0) {
+                // If client is sender and not sending from a file -
+                // if required, send packt to each stream indicating end of data.
+                test->state = TEST_WAIT_ALL_RECEIVED;            
+                if (test->debug) {
+                    iperf_printf(test,"iperf_run_client: before sending last packet, test->state=%d\n", test->state);
+                }
+                // Send last packet - retry few times if fails (best effort)
+                register struct iperf_stream *sp;
+                int i;
+                SLIST_FOREACH(sp, &test->streams, streams) {
+                    // If UDP send last packet few times for redundancy, otherwise send once
+                    if (test->protocol->id == Pudp) {
+                        iperf_printf(test,"iperf_run_client: sending end packets\n");
+                        for (i = 0; i < 3; sp->snd(sp), i++);
+                    } else {
+                        iperf_printf(test,"iperf_run_client: sending tcp end packets\n");
+                        for (i = 0; i < 3 && sp->snd(sp) < 0; i++);
+                    }
+                }
+                // Wait until the server received the last packet (or timeout if takes too long)
+                for (i = 0; test->state != TEST_END && i < test->settings->wait_all_received; i++) {
+                    if (test->debug) {
+                        iperf_printf(test,"iperf_run_client: In loop of waiting for Server indicatation that last packet was received\n");
+                    }
+                    FD_ZERO(&read_set);
+                    FD_SET(test->ctrl_sck, &read_set);
+                    iperf_time_now(&now);
+                    timeout = tmr_timeout(&now);
+                    result = select(test->max_fd + 1, &read_set, NULL, NULL, timeout);
+                    if (result > 0) {
+                            iperf_handle_message_client(test);
+                            if (test->state == TEST_END)
+                                break;
+                        FD_CLR(test->ctrl_sck, &read_set);
+                    }
+                    sleep(1);
+                }
+            }
+
+            /* Yes, done!  Send TEST_END. */
+            test->done = 1;
+            cpu_util(test->cpu_util);
+            test->stats_callback(test);
+            if (iperf_set_send_state(test, TEST_END) != 0)
+                        goto cleanup_and_fail;
 	    }
 	}
 	// If we're in reverse mode, continue draining the data

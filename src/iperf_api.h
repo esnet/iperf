@@ -98,16 +98,14 @@ typedef uint64_t iperf_size_t;
 #define DISPLAY_RESULTS 14
 #define IPERF_START 15
 #define IPERF_DONE 16
-#define TEST_WAIT_DATA_RECEIVED 17
+#define TEST_WAIT_ALL_RECEIVED 17
 #define ACCESS_DENIED (-1)
 #define SERVER_ERROR (-2)
 
-/* >>>>> #382 ADD */
 /* Special Packet Numbers and end of test constants */
 #define TEST_END_PACKET_NUMBER 0
 #define NOT_LAST_PACKET '0'
 #define LAST_PACKET '\0'
-/* <<<<< #382 ADD */
 
 /* Getter routines for some fields inside iperf_test. */
 int	iperf_get_verbose( struct iperf_test* ipt );

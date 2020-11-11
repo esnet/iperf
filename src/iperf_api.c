@@ -1237,7 +1237,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		    iperf_set_test_timestamp_format(test, TIMESTAMP_FORMAT);
 		}
                 break;
-            /* >>>>>> #382 ADD */
             case OPT_WAIT_ALL_RECEIVED:
                 test->settings->wait_all_received = atoi(optarg);
                 if (test->settings->wait_all_received < 0) {
@@ -1247,7 +1246,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 // Force readable payload to allow detecting last packet indication
 		client_flag = 1;
                 break;
-            /* <<<<<<< #382 ADD */
             case 'O':
                 test->omit = atoi(optarg);
                 if (test->omit < 0 || test->omit > 60) {
@@ -1451,11 +1449,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     if ((test->settings->bytes != 0 || test->settings->blocks != 0) && ! duration_flag)
         test->duration = 0;
 
-    /* >>>>>> #382 ADD */
     // If not-udp, force readable payload to allow detecting last packet indication 
     if (test->protocol->id != Pudp && test->settings->wait_all_received > 0)
         test->repeating_payload = 1;
-    /* <<<<<<< #382 ADD */
 
     /* Disallow specifying multiple test end conditions. The code actually
     ** works just fine without this prohibition. As soon as any one of the
@@ -1910,7 +1906,7 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "udp_counters_64bit", iperf_get_test_udp_counters_64bit(test));
 	if (test->repeating_payload)
 	    cJSON_AddNumberToObject(j, "repeating_payload", test->repeating_payload);
-        cJSON_AddNumberToObject(j, "wait_all_received", test->settings->wait_all_received); /* >>>> #382 <<<< */
+        cJSON_AddNumberToObject(j, "wait_all_received", test->settings->wait_all_received);
 #if defined(HAVE_SSL)
 	/* Send authentication parameters */
 	if (test->settings->client_username && test->settings->client_password && test->settings->client_rsa_pubkey){
@@ -2019,7 +2015,7 @@ get_parameters(struct iperf_test *test)
 	    iperf_set_test_udp_counters_64bit(test, 1);
 	if ((j_p = cJSON_GetObjectItem(j, "repeating_payload")) != NULL)
 	    test->repeating_payload = 1;
-	if ((j_p = cJSON_GetObjectItem(j, "wait_all_received")) != NULL) /* >>>> #382 <<<< */
+	if ((j_p = cJSON_GetObjectItem(j, "wait_all_received")) != NULL)
             test->settings->wait_all_received = j_p->valueint;
 #if defined(HAVE_SSL)
 	if ((j_p = cJSON_GetObjectItem(j, "authtoken")) != NULL)
@@ -2531,7 +2527,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->bytes = 0;
     testp->settings->blocks = 0;
     testp->settings->connect_timeout = -1;
-    testp->settings->wait_all_received = 0; // Default must be zero to allow randomized payload // >>> #382 <<<
+    testp->settings->wait_all_received = 0; // Default must be zero to allow randomized payload
     memset(testp->cookie, 0, COOKIE_SIZE);
 
     testp->multisend = 10;	/* arbitrary */
@@ -3943,7 +3939,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         fill_with_repeating_pattern(sp->buffer, test->settings->blksize);
     else
         ret = readentropy(sp->buffer, test->settings->blksize);
-    *sp->buffer = NOT_LAST_PACKET; /* Changed when last packet is sent */ /* >>>> #382 <<<<< */
+    *sp->buffer = NOT_LAST_PACKET; /* Changed when last packet is sent */
 
     if ((ret < 0) || (iperf_init_stream(sp, test) < 0)) {
         close(sp->buffer_fd);

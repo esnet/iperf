@@ -284,7 +284,6 @@ iperf_handle_message_client(struct iperf_test *test)
                 test->on_test_finish(test);
             iperf_client_end(test);
             break;
-        /* >>>>>>>> #382 ADD */
         case TEST_END:
             // Receiver Server indicate that last packet was received
             test->state = TEST_END;
@@ -292,7 +291,6 @@ iperf_handle_message_client(struct iperf_test *test)
                 iperf_printf(test,"iperf_handle_message_client: Server indicatated that last packet was received\n");
             }
             break;
-        /* <<<<<<<< #382 ADD */
         case IPERF_DONE:
             break;
         case SERVER_TERMINATE:
@@ -577,11 +575,10 @@ iperf_run_client(struct iperf_test * test)
                 }
             }
 
-            /* >>>>>>> #382 ADD ***************************/
             if (test->mode == SENDER && !test->zerocopy && test->settings->wait_all_received > 0) {
                 // If client is sender and not sending from a file -
                 // if required, send packt to each stream indicating end of data.
-                test->state = TEST_WAIT_DATA_RECEIVED;            
+                test->state = TEST_WAIT_ALL_RECEIVED;            
                 if (test->debug) {
                     iperf_printf(test,"iperf_run_client: before sending last packet, test->state=%d\n", test->state);
                 }
@@ -617,7 +614,6 @@ iperf_run_client(struct iperf_test * test)
                     sleep(1);
                 }
             }
-            /* <<<<<<<< #382 ADD ***************************/
 
             /* Yes, done!  Send TEST_END. */
             test->done = 1;

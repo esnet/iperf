@@ -140,7 +140,6 @@ iperf_udp_recv(struct iperf_stream *sp)
 	 * sp->packet_count + 1 arrive next).
 	 */
 
-        /* >>>>> #382 ADD and following `else` for `if` */
         // If test-end packet received change state accordingly 
         if (pcount == TEST_END_PACKET_NUMBER) {
                 if (sp->test->debug) {
@@ -148,7 +147,6 @@ iperf_udp_recv(struct iperf_stream *sp)
                 }
                 if (iperf_set_send_state(sp->test, TEST_END) != 0)
                         return -1;
-        /* <<<<<<<<< #382 ADD and following `else` for `if` */
 	} else if (pcount >= sp->packet_count + 1) {
 
 	    /* Forward, but is there a gap in sequence numbers? */
@@ -250,10 +248,9 @@ iperf_udp_send(struct iperf_stream *sp)
 
 	sec = htonl(before.secs);
 	usec = htonl(before.usecs);
-	/* >>>>> #382 REPLACE next */
-	// pcount = htonl(sp->packet_count);
+
 	// When test ended indicate that to the receiver 
-	if (sp->test->state == TEST_WAIT_DATA_RECEIVED) {
+	if (sp->test->state == TEST_WAIT_ALL_RECEIVED) {
 		pcount = TEST_END_PACKET_NUMBER;
                 if (sp->test->debug) {
                         iperf_printf(sp->test,"iperf_udp_send: Sending last packet\n");
@@ -261,7 +258,6 @@ iperf_udp_send(struct iperf_stream *sp)
         } else {
 		pcount = htonl(sp->packet_count);
         }
-	/* <<<<<<< #382 REPLACE next */
 
 	memcpy(sp->buffer, &sec, sizeof(sec));
 	memcpy(sp->buffer+4, &usec, sizeof(usec));
@@ -274,8 +270,7 @@ iperf_udp_send(struct iperf_stream *sp)
     if (r < 0)
 	return r;
 
-    /* >>>>> #382 ADD next if <<<< */
-    if (sp->test->state != TEST_WAIT_DATA_RECEIVED) {
+    if (sp->test->state != TEST_WAIT_ALL_RECEIVED) {
         sp->result->bytes_sent += r;
         sp->result->bytes_sent_this_interval += r;
     }

@@ -66,7 +66,6 @@ iperf_sctp_recv(struct iperf_stream *sp)
 
     /* Only count bytes received while we're in the correct state. */
     if (sp->test->state == TEST_RUNNING) {
-        /* >>>>> #382 ADD */
         // If sender waits for receiver to receive last packet - 
         // check whether test-end packet received and change state accordingly
         int i = r;
@@ -83,7 +82,6 @@ iperf_sctp_recv(struct iperf_stream *sp)
                 if (iperf_set_send_state(sp->test, TEST_END) != 0)
                         return -1;
         } else {
-        /* <<<<<<<< #382 ADD */
                 sp->result->bytes_received += r;
                 sp->result->bytes_received_this_interval += r;
         }
@@ -111,22 +109,19 @@ iperf_sctp_send(struct iperf_stream *sp)
 #if defined(HAVE_SCTP_H)
     int r;
 
-    /* >>>>> #382 ADD */
     // When test ended indicate that to the receiver 
-    if (sp->test->state == TEST_WAIT_DATA_RECEIVED) {
+    if (sp->test->state == TEST_WAIT_ALL_RECEIVED) {
             *sp->buffer = LAST_PACKET;
             if (test->debug) {
                 iperf_printf(test,"iperf_sctp_send: Sending last packet\n");
             }
     }
-    /* <<<<<<< #382 ADD */
 
     r = Nwrite(sp->socket, sp->buffer, sp->settings->blksize, Psctp);
     if (r < 0)
         return r;    
 
-    /* >>>>> #382 ADD next if <<<< */
-    if (sp->test->state != TEST_WAIT_DATA_RECEIVED) {
+    if (sp->test->state != TEST_WAIT_ALL_RECEIVED) {
         sp->result->bytes_sent += r;
         sp->result->bytes_sent_this_interval += r;
     }

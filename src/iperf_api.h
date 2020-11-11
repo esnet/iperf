@@ -79,6 +79,7 @@ typedef uint64_t iperf_size_t;
 #define OPT_BIDIRECTIONAL 20
 #define OPT_SERVER_BITRATE_LIMIT 21
 #define OPT_TIMESTAMPS 22
+#define OPT_WAIT_ALL_RECEIVED 23
 
 /* states */
 #define TEST_START 1
@@ -97,8 +98,16 @@ typedef uint64_t iperf_size_t;
 #define DISPLAY_RESULTS 14
 #define IPERF_START 15
 #define IPERF_DONE 16
+#define TEST_WAIT_DATA_RECEIVED 17
 #define ACCESS_DENIED (-1)
 #define SERVER_ERROR (-2)
+
+/* >>>>> #382 ADD */
+/* Special Packet Numbers and end of test constants */
+#define TEST_END_PACKET_NUMBER 0
+#define NOT_LAST_PACKET '0'
+#define LAST_PACKET '\0'
+/* <<<<< #382 ADD */
 
 /* Getter routines for some fields inside iperf_test. */
 int	iperf_get_verbose( struct iperf_test* ipt );
@@ -361,6 +370,7 @@ enum {
     IEBADPORT = 26,	    // Bad port number
     IETOTALRATE = 27,       // Total required bandwidth is larger than server's limit
     IETOTALINTERVAL = 28,   // Invalid time interval for calculating average data rate
+    IEWAITRECEIVED = 29,    // Bogus value for --wait-all_received
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

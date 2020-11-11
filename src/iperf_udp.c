@@ -139,7 +139,17 @@ iperf_udp_recv(struct iperf_stream *sp)
 	 * far (so we're expecting to see the packet with sequence number
 	 * sp->packet_count + 1 arrive next).
 	 */
-	if (pcount >= sp->packet_count + 1) {
+
+        /* >>>>> #382 ADD and following `else` for `if` */
+        // If test-end packet received change state accordingly 
+        if (pcount == TEST_END_PACKET_NUMBER) {
+                if (sp->test->debug) {
+                        iperf_printf(sp->test,"iperf_udp_recv: Received last packet\n");
+                }
+                if (iperf_set_send_state(sp->test, TEST_END) != 0)
+                        return -1;
+        /* <<<<<<<<< #382 ADD and following `else` for `if` */
+	} else if (pcount >= sp->packet_count + 1) {
 
 	    /* Forward, but is there a gap in sequence numbers? */
 	    if (pcount > sp->packet_count + 1) {
@@ -240,8 +250,19 @@ iperf_udp_send(struct iperf_stream *sp)
 
 	sec = htonl(before.secs);
 	usec = htonl(before.usecs);
-	pcount = htonl(sp->packet_count);
-	
+	/* >>>>> #382 REPLACE next */
+	// pcount = htonl(sp->packet_count);
+	// When test ended indicate that to the receiver 
+	if (sp->test->state == TEST_WAIT_DATA_RECEIVED) {
+		pcount = TEST_END_PACKET_NUMBER;
+                if (sp->test->debug) {
+                        iperf_printf(sp->test,"iperf_udp_send: Sending last packet\n");
+            }
+        } else {
+		pcount = htonl(sp->packet_count);
+        }
+	/* <<<<<<< #382 REPLACE next */
+
 	memcpy(sp->buffer, &sec, sizeof(sec));
 	memcpy(sp->buffer+4, &usec, sizeof(usec));
 	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
@@ -253,8 +274,11 @@ iperf_udp_send(struct iperf_stream *sp)
     if (r < 0)
 	return r;
 
-    sp->result->bytes_sent += r;
-    sp->result->bytes_sent_this_interval += r;
+    /* >>>>> #382 ADD next if <<<< */
+    if (sp->test->state != TEST_WAIT_DATA_RECEIVED) {
+        sp->result->bytes_sent += r;
+        sp->result->bytes_sent_this_interval += r;
+    }
 
     if (sp->test->debug)
 	printf("sent %d bytes of %d, total %" PRIu64 "\n", r, sp->settings->blksize, sp->result->bytes_sent);

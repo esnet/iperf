@@ -286,6 +286,7 @@ struct iperf_test
 #if defined(HAVE_SSL)
     char      *server_authorized_users;
     EVP_PKEY  *server_rsa_private_key;
+    int       server_skew_threshold;
 #endif // HAVE_SSL
 
     /* boolean variables for Options */

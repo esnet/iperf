@@ -209,6 +209,10 @@ the executable.
                  The  file  is  a  comma separated list of usernames and password
                  hashes; more information on the structure of  the  file  can  be
                  found in the EXAMPLES section.
+
+          --time-skew-threshold seconds
+                 time skew threshold (in seconds) between the server and client
+                 during the authentication process.
    
    CLIENT SPECIFIC OPTIONS
           -c, --client host

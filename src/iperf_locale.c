@@ -128,6 +128,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 			   "                            authentication credentials\n"
                            "  --authorized-users-path   path to the configuration file containing user\n"
                            "                            credentials\n"
+                           "  --time-skew-threshold    time skew threshold (in seconds) between the server\n"
+                           "                            and client during the authentication process\n"
 #endif //HAVE_SSL
                            "Client specific:\n"
                            "  -c, --client    <host>    run in client mode, connecting to <host>\n"

@@ -642,6 +642,12 @@ iperf_set_test_server_authorized_users(struct iperf_test *ipt, const char *serve
 }
 
 void
+iperf_set_test_server_skew_threshold(struct iperf_test *ipt, int server_skew_threshold)
+{
+    ipt->server_skew_threshold = server_skew_threshold;
+}
+
+void
 iperf_set_test_server_rsa_privkey(struct iperf_test *ipt, const char *server_rsa_privkey_base64)
 {
     ipt->server_rsa_private_key = load_privkey_from_base64(server_rsa_privkey_base64);
@@ -927,6 +933,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     {"rsa-public-key-path", required_argument, NULL, OPT_CLIENT_RSA_PUBLIC_KEY},
     {"rsa-private-key-path", required_argument, NULL, OPT_SERVER_RSA_PRIVATE_KEY},
     {"authorized-users-path", required_argument, NULL, OPT_SERVER_AUTHORIZED_USERS},
+    {"time-skew-threshold", required_argument, NULL, OPT_SERVER_SKEW_THRESHOLD},
 #endif /* HAVE_SSL */
 	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
 	{"pacing-timer", required_argument, NULL, OPT_PACING_TIMER},
@@ -1334,6 +1341,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         case OPT_SERVER_AUTHORIZED_USERS:
             test->server_authorized_users = strdup(optarg);
             break;
+        case OPT_SERVER_SKEW_THRESHOLD:
+            test->server_skew_threshold = atoi(optarg);
+            if(test->server_skew_threshold <= 0){
+                i_errno = IESKEWTHRESHOLD;
+                return -1;
+            }
+            break;
 #endif /* HAVE_SSL */
 	    case OPT_PACING_TIMER:
 		test->settings->pacing_timer = unit_atoi(optarg);
@@ -1397,6 +1411,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     if (test->role == 'c' && (server_rsa_private_key || test->server_authorized_users)){
         i_errno = IESERVERONLY;
         return -1;
+    } else if (test->role == 'c' && (test->server_skew_threshold != 0)){
+        i_errno = IESERVERONLY;
+        return -1;
     } else if (test->role == 's' && (server_rsa_private_key || test->server_authorized_users) && 
         !(server_rsa_private_key && test->server_authorized_users)) {
          i_errno = IESETSERVERAUTH;
@@ -1407,8 +1424,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             i_errno = IESETSERVERAUTH;
             return -1;
         }
-	free(server_rsa_private_key);
-	server_rsa_private_key = NULL;
+	    free(server_rsa_private_key);
+	    server_rsa_private_key = NULL;
+
+        if(test->server_skew_threshold == 0){
+            // Set default value for time skew threshold
+            test->server_skew_threshold=10;
+        }
     }
 
 #endif //HAVE_SSL
@@ -1722,7 +1744,7 @@ int test_is_authorized(struct iperf_test *test){
 	if (rc) {
 	    return -1;
 	}
-        int ret = check_authentication(username, password, ts, test->server_authorized_users);
+        int ret = check_authentication(username, password, ts, test->server_authorized_users, test->server_skew_threshold);
         if (ret == 0){
             iperf_printf(test, report_authentication_succeeded, username, ts);
             free(username);

@@ -405,8 +405,10 @@ iperf_connect(struct iperf_test *test)
 	    else {
 		test->settings->blksize = DEFAULT_UDP_BLKSIZE;
 	    }
+	    if (test->settings->blksize_max < test->settings->blksize )
+	    	test->settings->blksize_max = test->settings->blksize;
 	    if (test->verbose) {
-		printf("Setting UDP block size to %d\n", test->settings->blksize);
+		printf("Setting UDP block size to %d, max block size to %d\n", test->settings->blksize, test->settings->blksize_max);
 	    }
 	}
 
@@ -456,6 +458,7 @@ iperf_run_client(struct iperf_test * test)
 {
     int startup;
     int result = 0;
+    float min_sleep_time;
     fd_set read_set, write_set;
     struct iperf_time now;
     struct timeval* timeout = NULL;

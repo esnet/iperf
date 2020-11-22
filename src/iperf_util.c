@@ -45,10 +45,12 @@
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <math.h>
 
 #include "cjson.h"
 #include "iperf.h"
 #include "iperf_api.h"
+#include "iperf_time.h"
 
 /*
  * Read entropy from /dev/urandom
@@ -565,3 +567,71 @@ getline(char **buf, size_t *bufsiz, FILE *fp)
 }
 
 #endif
+
+
+/*
+ * Sleep for number of miliseconds
+ */
+void iperf_sleep(int sleep_time)
+{
+#ifdef __WINDOWS__
+	sleep(sleep_timer);
+#else
+	struct timespec ts;
+	int res;
+	ts.tv_sec = sleep_time / 1000;
+	ts.tv_nsec = (sleep_time % 1000) * 1000000;
+	do {
+		res = nanosleep(&ts, NULL);
+	} while (res && errno == EINTR);
+#endif
+}
+
+
+/*
+ * Since different OS support different minimum resolution of possible
+ * sleep time, calculate estimated average actual minimum sleep time
+ * (assume minimum sleep time is greater than 1 ms)
+ */
+float calculate_minimum_sleep_time()
+{
+	struct iperf_time start_time, end_time, diff_time;
+	int n, i;
+	float delta;
+    static float min_sleep_time = 0;
+
+    if (min_sleep_time == 0) {   // Not calculated yet
+        n = 10;
+        iperf_time_now(&start_time);
+        for (i = 0; i < n; i++)
+            iperf_sleep(1);
+        iperf_time_now(&end_time);
+        iperf_time_diff(&start_time, &end_time, &diff_time);
+        delta = ((float)iperf_time_in_usecs(&diff_time))/1000;
+        min_sleep_time = delta/n;
+    }
+
+	return min_sleep_time;
+}
+
+/*
+ * Sleep for required time, but since there is a minimum sleep time then sleep time
+ * may be much longer than required (e.g. is min time is 15ms and required sleep time is 2ms).
+ * Therefore retuen estimation of the factor between required sleep time and actual sleep time.
+ */
+int sleep_by_min_sleep_time(int sleep_time)
+{
+	float min_sleep_time;
+    int num_of_min_sleeps;
+
+    min_sleep_time = calculate_minimum_sleep_time();
+    num_of_min_sleeps = round(min_sleep_time / (float)sleep_time);
+    if (num_of_min_sleeps == 0)
+        num_of_min_sleeps = 1;
+
+    iperf_sleep(sleep_time);
+
+    return num_of_min_sleeps;
+}
+
+

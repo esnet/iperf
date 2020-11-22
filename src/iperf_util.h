@@ -56,6 +56,12 @@ cJSON* iperf_json_printf(const char *format, ...);
 
 void iperf_dump_fdset(FILE *fp, const char *str, int nfds, fd_set *fds);
 
+void iperf_sleep(int sleep_timer);
+
+float calculate_minimum_sleep_time();
+
+int sleep_by_min_sleep_time(int sleep_time);
+
 #ifndef HAVE_DAEMON
 extern int daemon(int nochdir, int noclose);
 #endif /* HAVE_DAEMON */

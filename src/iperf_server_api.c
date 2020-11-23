@@ -444,9 +444,6 @@ iperf_run_server(struct iperf_test *test)
         return -2;
     }
 
-    // Begin calculating CPU utilization
-    cpu_util(NULL);
-
     test->state = IPERF_START;
     send_streams_accepted = 0;
     rec_streams_accepted = 0;
@@ -630,6 +627,9 @@ iperf_run_server(struct iperf_test *test)
 			i_errno = IETOTALRATE;
 			return -1;
 		    }
+
+		    // Begin calculating CPU utilization
+		    cpu_util(NULL);
 
 		    if (iperf_set_send_state(test, TEST_START) != 0) {
 			cleanup_server(test);

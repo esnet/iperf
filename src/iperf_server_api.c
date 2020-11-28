@@ -377,6 +377,9 @@ cleanup_server(struct iperf_test *test)
     if (test->listener) {
 	close(test->listener);
     }
+    if (test->prot_listener > -1) {     // May remain open if create socket failed
+	close(test->prot_listener);
+    }
 
     /* Cancel any remaining timers. */
     if (test->stats_timer != NULL) {

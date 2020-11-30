@@ -1746,12 +1746,16 @@ int test_is_authorized(struct iperf_test *test){
 	}
         int ret = check_authentication(username, password, ts, test->server_authorized_users, test->server_skew_threshold);
         if (ret == 0){
-            iperf_printf(test, report_authentication_succeeded, username, ts);
+            if (test->debug) {
+              iperf_printf(test, report_authentication_succeeded, username, ts);
+            }
             free(username);
             free(password);
             return 0;
         } else {
-            iperf_printf(test, report_authentication_failed, username, ts);
+            if (test->debug) {
+                iperf_printf(test, report_authentication_failed, username, ts);
+            }
             free(username);
             free(password);
             return -1;

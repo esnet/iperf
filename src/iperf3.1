@@ -409,7 +409,11 @@ path to the RSA public key used to encrypt authentication credentials
 The authentication feature of iperf3 requires an RSA public keypair.
 The public key is used to encrypt the authentication token containing the 
 user credentials, while the private key is used to decrypt the authentication token.
-An example of a set of UNIX/Linux commands to generate correct keypair follows:
+The private key must be in PEM format and additionally must not have a
+password set.
+The public key must be in PEM format and use SubjectPrefixKeyInfo encoding.
+An example of a set of UNIX/Linux commands using OpenSSL
+to generate a correctly-formed keypair follows:
 .sp 1 
 .in +.5i
 > openssl genrsa -des3 -out private.pem 2048

@@ -89,6 +89,7 @@
 #include "version.h"
 #if defined(HAVE_SSL)
 #include <openssl/bio.h>
+#include <openssl/err.h>
 #include "iperf_auth.h"
 #endif /* HAVE_SSL */
 
@@ -1397,6 +1398,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             return -1;
         } 
         if (test_load_pubkey_from_file(client_rsa_public_key) < 0){
+            iperf_err(test, "%s\n", ERR_error_string(ERR_get_error(), NULL));
             i_errno = IESETCLIENTAUTH;
             return -1;
         }
@@ -1421,6 +1423,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     } else if (test->role == 's' && server_rsa_private_key) {
         test->server_rsa_private_key = load_privkey_from_file(server_rsa_private_key);
         if (test->server_rsa_private_key == NULL){
+            iperf_err(test, "%s\n", ERR_error_string(ERR_get_error(), NULL));
             i_errno = IESETSERVERAUTH;
             return -1;
         }

@@ -89,6 +89,7 @@
 #include "version.h"
 #if defined(HAVE_SSL)
 #include <openssl/bio.h>
+#include <openssl/err.h>
 #include "iperf_auth.h"
 #endif /* HAVE_SSL */
 
@@ -1397,6 +1398,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             return -1;
         } 
         if (test_load_pubkey_from_file(client_rsa_public_key) < 0){
+            iperf_err(test, "%s\n", ERR_error_string(ERR_get_error(), NULL));
             i_errno = IESETCLIENTAUTH;
             return -1;
         }
@@ -1421,6 +1423,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     } else if (test->role == 's' && server_rsa_private_key) {
         test->server_rsa_private_key = load_privkey_from_file(server_rsa_private_key);
         if (test->server_rsa_private_key == NULL){
+            iperf_err(test, "%s\n", ERR_error_string(ERR_get_error(), NULL));
             i_errno = IESETSERVERAUTH;
             return -1;
         }
@@ -1539,7 +1542,7 @@ iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP)
     double seconds;
     uint64_t bits_per_second;
 
-    if (sp->test->done || sp->test->settings->rate == 0 || sp->test->settings->burst != 0)
+    if (sp->test->done || sp->test->settings->rate == 0)
         return;
     iperf_time_diff(&sp->result->start_time_fixed, nowP, &temp_time);
     seconds = iperf_time_in_secs(&temp_time);
@@ -1598,6 +1601,7 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
     register int multisend, r, streams_active;
     register struct iperf_stream *sp;
     struct iperf_time now;
+    int no_throttle_check;
 
     /* Can we do multisend mode? */
     if (test->settings->burst != 0)
@@ -1607,8 +1611,11 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
     else
         multisend = 1;	/* nope */
 
+    /* Should bitrate throttle be checked for every send */
+    no_throttle_check = test->settings->rate != 0 && test->settings->burst == 0;
+
     for (; multisend > 0; --multisend) {
-	if (test->settings->rate != 0 && test->settings->burst == 0)
+	if (no_throttle_check)
 	    iperf_time_now(&now);
 	streams_active = 0;
 	SLIST_FOREACH(sp, &test->streams, streams) {
@@ -1623,7 +1630,8 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 		streams_active = 1;
 		test->bytes_sent += r;
 		++test->blocks_sent;
-		iperf_check_throttle(sp, &now);
+                if (no_throttle_check)
+		    iperf_check_throttle(sp, &now);
 		if (multisend > 1 && test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes)
 		    break;
 		if (multisend > 1 && test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks)
@@ -1633,7 +1641,7 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 	if (!streams_active)
 	    break;
     }
-    if (test->settings->burst != 0) {
+    if (!no_throttle_check) {   /* Throttle check if was not checked for each send */
 	iperf_time_now(&now);
 	SLIST_FOREACH(sp, &test->streams, streams)
 	    if (sp->sender)
@@ -1746,12 +1754,16 @@ int test_is_authorized(struct iperf_test *test){
 	}
         int ret = check_authentication(username, password, ts, test->server_authorized_users, test->server_skew_threshold);
         if (ret == 0){
-            iperf_printf(test, report_authentication_succeeded, username, ts);
+            if (test->debug) {
+              iperf_printf(test, report_authentication_succeeded, username, ts);
+            }
             free(username);
             free(password);
             return 0;
         } else {
-            iperf_printf(test, report_authentication_failed, username, ts);
+            if (test->debug) {
+                iperf_printf(test, report_authentication_failed, username, ts);
+            }
             free(username);
             free(password);
             return -1;

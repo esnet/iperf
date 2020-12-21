@@ -212,10 +212,10 @@ iperf_sctp_listen(struct iperf_test *test)
     }
 
     if (test->bind_dev) {
-#ifdef SO_BINDTODEVICE
+#if defined(SO_BINDTODEVICE)
         if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE,
                        test->bind_dev, IFNAMSIZ) < 0)
-#endif
+#endif // SO_BINDTODEVICE
         {
             saved_errno = errno;
             close(s);
@@ -351,10 +351,10 @@ iperf_sctp_connect(struct iperf_test *test)
     }
 
     if (test->bind_dev) {
-#ifdef SO_BINDTODEVICE
+#if defined(SO_BINDTODEVICE)
         if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE,
                        test->bind_dev, IFNAMSIZ) < 0)
-#endif
+#endif // SO_BINDTODEVICE
         {
             saved_errno = errno;
             close(s);

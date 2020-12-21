@@ -317,6 +317,16 @@ get_optional_features(void)
     numfeatures++;
 #endif /* HAVE_SSL */
 
+#if defined(HAVE_SO_BINDTODEVICE)
+    if (numfeatures > 0) {
+	strncat(features, ", ",
+		sizeof(features) - strlen(features) - 1);
+    }
+    strncat(features, "bind to device",
+	sizeof(features) - strlen(features) - 1);
+    numfeatures++;
+#endif /* HAVE_SO_BINDTODEVICE */
+
     if (numfeatures == 0) {
 	strncat(features, "None", 
 		sizeof(features) - strlen(features) - 1);

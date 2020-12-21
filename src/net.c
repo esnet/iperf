@@ -150,10 +150,10 @@ netdial(int domain, int proto, const char *local, const char *bind_dev, int loca
     }
 
     if (bind_dev) {
-#ifdef SO_BINDTODEVICE
+#if defined(HAVE_SO_BINDTODEVICE)
         if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE,
                        bind_dev, IFNAMSIZ) < 0)
-#endif
+#endif // HAVE_SO_BINDTODEVICE
         {
             saved_errno = errno;
             close(s);
@@ -272,10 +272,10 @@ netannounce(int domain, int proto, const char *local, const char *bind_dev, int 
     }
 
     if (bind_dev) {
-#ifdef SO_BINDTODEVICE
+#if defined(HAVE_SO_BINDTODEVICE)
         if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE,
                        bind_dev, IFNAMSIZ) < 0)
-#endif
+#endif // HAVE_SO_BINDTODEVICE
         {
             saved_errno = errno;
             close(s);

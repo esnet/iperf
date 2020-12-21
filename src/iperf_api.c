@@ -906,7 +906,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"bidir", no_argument, NULL, OPT_BIDIRECTIONAL},
         {"window", required_argument, NULL, 'w'},
         {"bind", required_argument, NULL, 'B'},
+#if defined(HAVE_SO_BINDTODEVICE)
         {"bind-dev", required_argument, NULL, OPT_BIND_DEV},
+#endif /* HAVE_SO_BINDTODEVICE */
         {"cport", required_argument, NULL, OPT_CLIENT_PORT},
         {"set-mss", required_argument, NULL, 'M'},
         {"no-delay", no_argument, NULL, 'N'},
@@ -1160,9 +1162,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             case 'B':
                 test->bind_address = strdup(optarg);
                 break;
+#if defined (HAVE_SO_BINDTODEVICE)
             case OPT_BIND_DEV:
                 test->bind_dev = strdup(optarg);
                 break;
+#endif /* HAVE_SO_BINDTODEVICE */
             case OPT_CLIENT_PORT:
 		portno = atoi(optarg);
 		if (portno < 1 || portno > 65535) {

@@ -1629,7 +1629,8 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 		}
 		streams_active = 1;
 		test->bytes_sent += r;
-		++test->blocks_sent;
+		if (!sp->pending_size)
+		    ++test->blocks_sent;
                 if (no_throttle_check)
 		    iperf_check_throttle(sp, &now);
 		if (multisend > 1 && test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes)
@@ -3927,6 +3928,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         free(sp);
         return NULL;
     }
+    sp->pending_size = 0;
 
     /* Set socket */
     sp->socket = s;

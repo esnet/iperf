@@ -151,8 +151,11 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -t, --time      #         time in seconds to transmit for (default %d secs)\n"
                            "  -n, --bytes     #[KMG]    number of bytes to transmit (instead of -t)\n"
                            "  -k, --blockcount #[KMG]   number of blocks (packets) to transmit (instead of -t or -n)\n"
-                           "  -l, --length    #[KMG]    length of buffer to read or write\n"
+                           "  -l, --length    #[KMG][/#[KMG]]    length of buffer to read or write\n"
 			   "                            (default %d KB for TCP, dynamic or %d for UDP)\n"
+                           "                            optional for UDP - slash and maximum second size; when specified,\n"
+			   "                            random packet length between the two sizes range is used\n"
+
                            "  --cport         <port>    bind to a specific client port (TCP and UDP, default: ephemeral port)\n"
                            "  -P, --parallel  #         number of parallel client streams to run\n"
                            "  -R, --reverse             run in reverse mode (server sends, client receives)\n"
@@ -169,6 +172,9 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -S, --tos N               set the IP type of service, 0-255.\n"
                            "                            The usual prefixes for octal and hex can be used,\n"
                            "                            i.e. 52, 064 and 0x34 all specify the same value.\n"
+
+                           "  --gap-time #[KMG][/#[KMG]]  for UDP - time in miliseconds to wait between packets sending;\n"
+			   "                              when range is given - each gap time is random time in the range.\n"
 
                            "  --dscp N or --dscp val    set the IP dscp value, either 0-63 or symbolic.\n"
                            "                            Numeric values can be specified in decimal,\n"
@@ -261,13 +267,13 @@ const char wait_server_threads[] =
 "Waiting for server threads to complete. Interrupt again to force quit.\n";
 
 const char test_start_time[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %d second test, tos %d\n";
+"Starting Test: protocol: %s, %d streams, %d byte blocks with %d max bytes, gap between packets %d to %d ms, omitting %d seconds, %d second test, tos %d\n";
 
 const char test_start_bytes[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %llu bytes to send, tos %d\n";
+"Starting Test: protocol: %s, %d streams, %d byte blocks with %d max bytes, gap between packets %d to %d ms, omitting %d seconds, %llu bytes to send, tos %d\n";
 
 const char test_start_blocks[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %d blocks to send, tos %d\n";
+"Starting Test: protocol: %s, %d streams, %d byte blocks with %d max bytes, gap between packets %d to %d ms, omitting %d seconds, %d blocks to send, tos %d\n";
 
 
 /* -------------------------------------------------------------------

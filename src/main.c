@@ -134,6 +134,10 @@ run(struct iperf_test *test)
     /* Ignore SIGPIPE to simplify error handling */
     signal(SIGPIPE, SIG_IGN);
 
+    calculate_minimum_sleep_time();  // Init min sleep() time
+    if (test->debug)
+        printf("Minimum sleep() time is %f[ms]\n", calculate_minimum_sleep_time());
+
     switch (test->role) {
         case 's':
 	    if (test->daemon) {

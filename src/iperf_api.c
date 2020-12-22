@@ -231,6 +231,24 @@ iperf_get_test_blksize(struct iperf_test *ipt)
     return ipt->settings->blksize;
 }
 
+int
+iperf_get_test_blksize_max(struct iperf_test *ipt)
+{
+    return ipt->settings->blksize_max;
+}
+
+int
+iperf_get_test_gap_time(struct iperf_test *ipt)
+{
+    return ipt->settings->gap_time;
+}
+
+int
+iperf_get_test_gap_time_max(struct iperf_test *ipt)
+{
+    return ipt->settings->gap_time_max;
+}
+
 FILE *
 iperf_get_test_outfile (struct iperf_test *ipt)
 {
@@ -430,6 +448,24 @@ void
 iperf_set_test_blksize(struct iperf_test *ipt, int blksize)
 {
     ipt->settings->blksize = blksize;
+}
+
+void
+iperf_set_test_blksize_max(struct iperf_test *ipt, int blksize_max)
+{
+    ipt->settings->blksize_max = blksize_max;
+}
+
+void
+iperf_set_test_gap_time(struct iperf_test *ipt, int gap_time)
+{
+    ipt->settings->gap_time = gap_time;
+}
+
+void
+iperf_set_test_sleep_timer_max(struct iperf_test *ipt, int gap_time)
+{
+    ipt->settings->gap_time_max = gap_time;
 }
 
 void
@@ -756,15 +792,15 @@ void
 iperf_on_test_start(struct iperf_test *test)
 {
     if (test->json_output) {
-	cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d  omit: %d  duration: %d  bytes: %d  blocks: %d  reverse: %d  tos: %d", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->omit, (int64_t) test->duration, (int64_t) test->settings->bytes, (int64_t) test->settings->blocks, test->reverse?(int64_t)1:(int64_t)0, (int64_t) test->settings->tos));
+	cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d   blksize_max: %d  gap_time: %d  gap_time_max: %d omit: %d  duration: %d  bytes: %d  blocks: %d  reverse: %d  tos: %d", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->settings->blksize_max, (int64_t) test->settings->gap_time, (int64_t) test->settings->gap_time_max, (int64_t) test->omit, (int64_t) test->duration, (int64_t) test->settings->bytes, (int64_t) test->settings->blocks, test->reverse?(int64_t)1:(int64_t)0, (int64_t) test->settings->tos));
     } else {
 	if (test->verbose) {
 	    if (test->settings->bytes)
-		iperf_printf(test, test_start_bytes, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->settings->bytes, test->settings->tos);
+		iperf_printf(test, test_start_bytes, test->protocol->name, test->num_streams, test->settings->blksize, test->settings->blksize_max, test->settings->gap_time, test->settings->gap_time_max, test->omit, test->settings->bytes, test->settings->tos);
 	    else if (test->settings->blocks)
-		iperf_printf(test, test_start_blocks, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->settings->blocks, test->settings->tos);
+		iperf_printf(test, test_start_blocks, test->protocol->name, test->num_streams, test->settings->blksize, test->settings->blksize_max, test->settings->gap_time, test->settings->gap_time_max, test->omit, test->settings->blocks, test->settings->tos);
 	    else
-		iperf_printf(test, test_start_time, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->duration, test->settings->tos);
+		iperf_printf(test, test_start_time, test->protocol->name, test->num_streams, test->settings->blksize, test->settings->blksize_max, test->settings->gap_time, test->settings->gap_time_max, test->omit, test->duration, test->settings->tos);
 	}
     }
 }
@@ -939,6 +975,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
 	{"pacing-timer", required_argument, NULL, OPT_PACING_TIMER},
 	{"connect-timeout", required_argument, NULL, OPT_CONNECT_TIMEOUT},
+        {"gap-time", required_argument, NULL, OPT_GAP_TIME},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -946,6 +983,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     int flag;
     int portno;
     int blksize;
+    int blksize_max;
     int server_flag, client_flag, rate_flag, duration_flag;
     char *endptr;
 #if defined(HAVE_CPU_AFFINITY)
@@ -956,6 +994,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     double farg;
 
     blksize = 0;
+    blksize_max = 0;
     server_flag = client_flag = rate_flag = duration_flag = 0;
 #if defined(HAVE_SSL)
     char *client_username = NULL, *client_rsa_public_key = NULL, *server_rsa_private_key = NULL;
@@ -1105,7 +1144,21 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
             case 'l':
-                blksize = unit_atoi(optarg);
+ 		slash = strchr(optarg, '/');
+		if (slash) {
+		    *slash = '\0';
+		    ++slash;
+		    blksize_max = atoi(slash);
+		    if (blksize_max <= 0) {
+			i_errno = IEUDPBLOCKSIZE;
+			return -1;
+		    }
+		}
+		blksize = unit_atoi(optarg);
+		if (blksize <= 0 && blksize_max > 0) {
+			i_errno = IEUDPBLOCKSIZE;
+			return -1;
+		}
 		client_flag = 1;
                 break;
             case 'P':
@@ -1358,6 +1411,23 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->settings->connect_timeout = unit_atoi(optarg);
 		client_flag = 1;
 		break;
+            case OPT_GAP_TIME:
+ 		slash = strchr(optarg, '/');
+		if (slash) {
+		    *slash = '\0';
+		    ++slash;
+		    test->settings->gap_time_max = atoi(slash);
+		}
+		test->settings->gap_time = unit_atoi(optarg);
+		if (test->settings->gap_time_max == 0)
+		    test->settings->gap_time_max = test->settings->gap_time;
+		if (test->settings->gap_time < 0 || test->settings->gap_time_max < 0
+                                || test->settings->gap_time > test->settings->gap_time_max) {
+			i_errno = IEGAP;
+			return -1;
+		}
+		client_flag = 1;
+                break;
 	    case 'h':
 		usage_long(stdout);
 		exit(0);
@@ -1446,17 +1516,22 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	    blksize = DEFAULT_TCP_BLKSIZE;
     }
     if ((test->protocol->id != Pudp && blksize <= 0) 
-	|| blksize > MAX_BLOCKSIZE) {
+	|| blksize > MAX_BLOCKSIZE || blksize_max > MAX_BLOCKSIZE) {
 	i_errno = IEBLOCKSIZE;
 	return -1;
     }
-    if (test->protocol->id == Pudp &&
-	(blksize > 0 &&
-	    (blksize < MIN_UDP_BLOCKSIZE || blksize > MAX_UDP_BLOCKSIZE))) {
-	i_errno = IEUDPBLOCKSIZE;
-	return -1;
+
+    if (blksize_max == 0)
+	blksize_max = blksize;
+    if (test->protocol->id == Pudp) {
+        if (test->protocol->id == Pudp &&
+	        (blksize > 0 && (blksize < MIN_UDP_BLOCKSIZE || blksize_max > MAX_UDP_BLOCKSIZE))) {
+	    i_errno = IEUDPBLOCKSIZE;
+	    return -1;
+        }
     }
     test->settings->blksize = blksize;
+    test->settings->blksize_max = blksize_max;
 
     if (!rate_flag)
 	test->settings->rate = test->protocol->id == Pudp ? UDP_RATE : 0;
@@ -1683,6 +1758,8 @@ iperf_init_test(struct iperf_test *test)
     struct iperf_time now;
     struct iperf_stream *sp;
 
+    srand(time(0)); /* reset random seed using current time for each new test */
+
     if (test->protocol->init) {
         if (test->protocol->init(test) < 0)
             return -1;
@@ -1901,12 +1978,18 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "window", test->settings->socket_bufsize);
 	if (test->settings->blksize)
 	    cJSON_AddNumberToObject(j, "len", test->settings->blksize);
+        if (test->settings->blksize_max)
+	    cJSON_AddNumberToObject(j, "len_max", test->settings->blksize_max);
 	if (test->settings->rate)
 	    cJSON_AddNumberToObject(j, "bandwidth", test->settings->rate);
 	if (test->settings->fqrate)
 	    cJSON_AddNumberToObject(j, "fqrate", test->settings->fqrate);
 	if (test->settings->pacing_timer)
 	    cJSON_AddNumberToObject(j, "pacing_timer", test->settings->pacing_timer);
+        if (test->settings->gap_time)
+	    cJSON_AddNumberToObject(j, "gap_time", test->settings->gap_time);
+	if (test->settings->gap_time_max)
+	    cJSON_AddNumberToObject(j, "gap_time_max", test->settings->gap_time_max);
 	if (test->settings->burst)
 	    cJSON_AddNumberToObject(j, "burst", test->settings->burst);
 	if (test->settings->tos)
@@ -2009,12 +2092,18 @@ get_parameters(struct iperf_test *test)
 	    test->settings->socket_bufsize = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "len")) != NULL)
 	    test->settings->blksize = j_p->valueint;
+        if ((j_p = cJSON_GetObjectItem(j, "len_max")) != NULL)
+	    test->settings->blksize_max = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "bandwidth")) != NULL)
 	    test->settings->rate = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "fqrate")) != NULL)
 	    test->settings->fqrate = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "pacing_timer")) != NULL)
 	    test->settings->pacing_timer = j_p->valueint;
+        if ((j_p = cJSON_GetObjectItem(j, "gap_time")) != NULL)
+	    test->settings->gap_time = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "gap_time_max")) != NULL)
+	    test->settings->gap_time_max = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "burst")) != NULL)
 	    test->settings->burst = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "TOS")) != NULL)
@@ -2534,12 +2623,15 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->unit_format = 'a';
     testp->settings->socket_bufsize = 0;    /* use autotuning */
     testp->settings->blksize = DEFAULT_TCP_BLKSIZE;
+    testp->settings->blksize_max = testp->settings->blksize;
     testp->settings->rate = 0;
     testp->settings->bitrate_limit = 0;
     testp->settings->bitrate_limit_interval = 5;
     testp->settings->bitrate_limit_stats_per_interval = 0;
     testp->settings->fqrate = 0;
     testp->settings->pacing_timer = 1000;
+    testp->settings->gap_time = 0;
+    testp->settings->gap_time_max = 0;
     testp->settings->burst = 0;
     testp->settings->mss = 0;
     testp->settings->bytes = 0;
@@ -2824,10 +2916,13 @@ iperf_reset_test(struct iperf_test *test)
     test->num_streams = 1;
     test->settings->socket_bufsize = 0;
     test->settings->blksize = DEFAULT_TCP_BLKSIZE;
+    test->settings->blksize_max = test->settings->blksize;
     test->settings->rate = 0;
     test->settings->burst = 0;
     test->settings->mss = 0;
     test->settings->tos = 0;
+    test->settings->gap_time = 0;
+    test->settings->gap_time_max = 0;
 
 #if defined(HAVE_SSL)
     if (test->settings->authtoken) {
@@ -3841,7 +3936,7 @@ iperf_free_stream(struct iperf_stream *sp)
     struct iperf_interval_results *irp, *nirp;
 
     /* XXX: need to free interval list too! */
-    munmap(sp->buffer, sp->test->settings->blksize);
+    munmap(sp->buffer, sp->test->settings->blksize_max);
     close(sp->buffer_fd);
     if (sp->diskfile_fd >= 0)
 	close(sp->diskfile_fd);
@@ -3915,13 +4010,13 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         free(sp);
         return NULL;
     }
-    if (ftruncate(sp->buffer_fd, test->settings->blksize) < 0) {
+    if (ftruncate(sp->buffer_fd, test->settings->blksize_max) < 0) {
         i_errno = IECREATESTREAM;
         free(sp->result);
         free(sp);
         return NULL;
     }
-    sp->buffer = (char *) mmap(NULL, test->settings->blksize, PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
+    sp->buffer = (char *) mmap(NULL, test->settings->blksize_max, PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
     if (sp->buffer == MAP_FAILED) {
         i_errno = IECREATESTREAM;
         free(sp->result);
@@ -3929,6 +4024,8 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         return NULL;
     }
     sp->pending_size = 0;
+
+    sp->gap_packet_count = 0;
 
     /* Set socket */
     sp->socket = s;
@@ -3940,7 +4037,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 	sp->diskfile_fd = open(test->diskfile_name, sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC), S_IRUSR|S_IWUSR);
 	if (sp->diskfile_fd == -1) {
 	    i_errno = IEFILE;
-            munmap(sp->buffer, sp->test->settings->blksize);
+            munmap(sp->buffer, sp->test->settings->blksize_max);
             free(sp->result);
             free(sp);
 	    return NULL;
@@ -3954,13 +4051,13 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 
     /* Initialize stream */
     if (test->repeating_payload)
-        fill_with_repeating_pattern(sp->buffer, test->settings->blksize);
+        fill_with_repeating_pattern(sp->buffer, test->settings->blksize_max);
     else
-        ret = readentropy(sp->buffer, test->settings->blksize);
+        ret = readentropy(sp->buffer, test->settings->blksize_max);
 
     if ((ret < 0) || (iperf_init_stream(sp, test) < 0)) {
         close(sp->buffer_fd);
-        munmap(sp->buffer, sp->test->settings->blksize);
+        munmap(sp->buffer, sp->test->settings->blksize_max);
         free(sp->result);
         free(sp);
         return NULL;
@@ -4048,13 +4145,13 @@ diskfile_send(struct iperf_stream *sp)
     static int rtot;
 
     /* if needed, read enough data from the disk to fill up the buffer */
-    if (sp->diskfile_left < sp->test->settings->blksize && !sp->test->done) {
-	r = read(sp->diskfile_fd, sp->buffer, sp->test->settings->blksize -
+    if (sp->diskfile_left < sp->test->settings->blksize_max && !sp->test->done) {
+	r = read(sp->diskfile_fd, sp->buffer, sp->test->settings->blksize_max -
 		 sp->diskfile_left);
 	rtot += r;
 	if (sp->test->debug) {
 	    printf("read %d bytes from file, %d total\n", r, rtot);
-	    if (r != sp->test->settings->blksize - sp->diskfile_left)
+	    if (r != sp->test->settings->blksize_max - sp->diskfile_left)
 		printf("possible eof\n");
 	}
 	/* If there's no data left in the file or in the buffer, we're done */
@@ -4075,13 +4172,13 @@ diskfile_send(struct iperf_stream *sp)
      * front of the buffer so they can hopefully go out on the next
      * pass.
      */
-    sp->diskfile_left = sp->test->settings->blksize - r;
-    if (sp->diskfile_left && sp->diskfile_left < sp->test->settings->blksize) {
+    sp->diskfile_left = sp->test->settings->blksize_max - r;
+    if (sp->diskfile_left && sp->diskfile_left < sp->test->settings->blksize_max) {
 	memcpy(sp->buffer,
-	       sp->buffer + (sp->test->settings->blksize - sp->diskfile_left),
+	       sp->buffer + (sp->test->settings->blksize_max - sp->diskfile_left),
 	       sp->diskfile_left);
 	if (sp->test->debug)
-	    printf("Shifting %d bytes by %d\n", sp->diskfile_left, (sp->test->settings->blksize - sp->diskfile_left));
+	    printf("Shifting %d bytes by %d\n", sp->diskfile_left, (sp->test->settings->blksize_max - sp->diskfile_left));
     }
     return r;
 }

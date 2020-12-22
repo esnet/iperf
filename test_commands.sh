@@ -72,4 +72,14 @@ host=$1
 # test congestion control option (linux only)
 ./src/iperf3 -c $host -C reno -V
 
-
+###### test different UDP traffic profiles with random packet size and wait before sending packet
+# -l flag - fixed packet length
+./src/iperf3 -c $host -u -d -k 7 -l 1000
+# -l flag - random length change in range
+./src/iperf3 -c $host -u -d -k 7 -l 500/1200
+# --sleep flag - fixed gap time before each packet sending
+./src/iperf3 -c $host -u -d -k 7 -l 500/1200 --gap 100
+# --sleep flag - random gap time in tange before each packet sending
+./src/iperf3 -c $host -u -d -k 7 -l 100/1200 --gap 100/1000
+# -R flag - a UDP traffic profile with reverse option
+./src/iperf3 -c $host -u -d -k 250 -l 100/200 --gap 5/50 -R

@@ -48,6 +48,7 @@
 #include "net.h"
 #include "cjson.h"
 #include "portable_endian.h"
+#include <math.h>
 
 #if defined(HAVE_INTTYPES_H)
 # include <inttypes.h>
@@ -72,19 +73,27 @@ iperf_udp_recv(struct iperf_stream *sp)
     uint64_t  pcount;
     int       r;
     int       size = sp->settings->blksize;
+	int       size_max = sp->settings->blksize_max;
     int       first_packet = 0;
     double    transit = 0, d = 0;
     struct iperf_time sent_time, arrival_time, temp_time;
 
-    r = Nread(sp->socket, sp->buffer, size, Pudp);
+    /* If fixed size - read it all, otherwise read next message (as expected size is unknown) */
+    if (size == size_max)
+    	r = Nread(sp->socket, sp->buffer, size, Pudp);
+    else
+    	r = Pread(sp->socket, sp->buffer, size_max, Pudp);
 
     /*
      * If we got an error in the read, or if we didn't read anything
      * because the underlying read(2) got a EAGAIN, then skip packet
      * processing.
      */
-    if (r <= 0)
+    if (r <= 0) {
+	if (sp->test->debug)
+	    fprintf(stderr, "iperf_udp_recv: No bytes read: %d;\n", r);
         return r;
+    }
 
     /* Only count bytes received while we're in the correct state. */
     if (sp->test->state == TEST_RUNNING) {
@@ -124,7 +133,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	}
 
 	if (sp->test->debug)
-	    fprintf(stderr, "pcount %" PRIu64 " packet_count %d\n", pcount, sp->packet_count);
+	    fprintf(stderr, "pcount %" PRIu64 " packet_count %d size %d\n", pcount, sp->packet_count, r);
 
 	/*
 	 * Try to handle out of order packets.  The way we do this
@@ -166,7 +175,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 		sp->cnt_error--;
 	
 	    /* Log the out-of-order packet */
-	    if (sp->test->debug) 
+	    if (sp->test->debug  || (sp->test->verbose && (sp->test->settings->gap_time != sp->test->settings->gap_time_max))) 
 		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count + 1, sp->socket);
 	}
 
@@ -213,8 +222,35 @@ int
 iperf_udp_send(struct iperf_stream *sp)
 {
     int r;
-    int       size = sp->settings->blksize;
+    int size, size_max;
+    int gap_time , gap_time_max, gap_packet_count;
     struct iperf_time before;
+
+    /* calculate block size to send */
+    size = sp->settings->blksize;
+    size_max = sp->settings->blksize_max;
+    if (size_max > size) {
+        size += round(((float)rand()/RAND_MAX)*(size_max - size));
+    }
+    
+    /* Sleep gap time after sending the packet */
+    gap_time_max = sp->settings->gap_time_max;
+    gap_time = 0;
+    if (gap_time_max > 0) {
+        if (sp->gap_packet_count > 0)   // No need to wait to average smapp gap times
+            sp->gap_packet_count--;
+        else {  // Wait before sending the packet
+            gap_time = sp->settings->gap_time;
+            if (gap_time < gap_time_max)
+	        gap_time += round(((float)rand()/RAND_MAX)*(gap_time_max - gap_time));
+	    if (gap_time > 0) {
+                /* wait before sending the packt */
+                gap_packet_count = sleep_by_min_sleep_time(gap_time);
+                /* set numebr of packets that will not require wait - in case gap is small */
+                sp->gap_packet_count = gap_packet_count - 1;
+	    }
+        }
+    }
 
     iperf_time_now(&before);
 
@@ -257,7 +293,7 @@ iperf_udp_send(struct iperf_stream *sp)
     sp->result->bytes_sent_this_interval += r;
 
     if (sp->test->debug)
-	printf("sent %d bytes of %d, total %" PRIu64 "\n", r, sp->settings->blksize, sp->result->bytes_sent);
+	printf("sent %d bytes of %d after waiting %d[ms], total %" PRIu64 "\n", r, size, gap_time, sp->result->bytes_sent);
 
     return r;
 }

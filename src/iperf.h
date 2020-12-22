@@ -137,12 +137,15 @@ struct iperf_settings
     int       domain;               /* AF_INET or AF_INET6 */
     int       socket_bufsize;       /* window size for TCP */
     int       blksize;              /* size of read/writes (-l) */
+    int       blksize_max;          /* maximum UDP read/write size */
     iperf_size_t  rate;                 /* target data rate for application pacing*/
     iperf_size_t  bitrate_limit;   /* server's maximum allowed total data rate for all streams*/
     double        bitrate_limit_interval;  /* interval for avaraging total data rate */
     int           bitrate_limit_stats_per_interval;     /* calculated number of stats periods for averaging total data rate */
     uint64_t  fqrate;               /* target data rate for FQ pacing*/
-    int	      pacing_timer;	    /* pacing timer in microseconds */
+    int	      pacing_timer;	        /* pacing timer in microseconds */
+    int       gap_time;             /* (minimum) gap time between packets in miliseconds */
+    int       gap_time_max;         /* maximum gap time between packets in miliseconds */
     int       burst;                /* packets per burst */
     int       mss;                  /* for TCP MSS */
     int       ttl;                  /* IP TTL option */
@@ -186,7 +189,7 @@ struct iperf_stream
     int       pending_size;     /* pending data to send */
     int       diskfile_fd;	/* file to send, file descriptor */
     int	      diskfile_left;	/* remaining file data on disk */
-
+    int	      gap_packet_count; /* number of packets that do not require wait - to average sleep time for small gaps */
     /*
      * for udp measurements - This can be a structure outside stream, and
      * stream can have a pointer to this

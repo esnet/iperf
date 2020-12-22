@@ -2531,12 +2531,7 @@ program_transform_name=`$as_echo "$program_transform_name" | sed "$ac_script"`
 am_aux_dir=`cd "$ac_aux_dir" && pwd`
 
 if test x"${MISSING+set}" != xset; then
-  case $am_aux_dir in
-  *\ * | *\	*)
-    MISSING="\${SHELL} \"$am_aux_dir/missing\"" ;;
-  *)
-    MISSING="\${SHELL} $am_aux_dir/missing" ;;
-  esac
+  MISSING="\${SHELL} '$am_aux_dir/missing'"
 fi
 # Use eval to expand $SHELL
 if eval "$MISSING --is-lightweight"; then
@@ -13947,6 +13942,37 @@ $as_echo "$iperf3_cv_header_so_max_pacing_rate" >&6; }
 if test "x$iperf3_cv_header_so_max_pacing_rate" = "xyes"; then
 
 $as_echo "#define HAVE_SO_MAX_PACING_RATE 1" >>confdefs.h
+
+fi
+
+# Check for SO_BINDTODEVICE sockopt (believed to be Linux only)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking SO_BINDTODEVICE socket option" >&5
+$as_echo_n "checking SO_BINDTODEVICE socket option... " >&6; }
+if ${iperf3_cv_header_so_bindtodevice+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/socket.h>
+#ifdef SO_BINDTODEVICE
+  yes
+#endif
+
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "yes" >/dev/null 2>&1; then :
+  iperf3_cv_header_so_bindtodevice=yes
+else
+  iperf3_cv_header_so_bindtodevice=no
+fi
+rm -f conftest*
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $iperf3_cv_header_so_bindtodevice" >&5
+$as_echo "$iperf3_cv_header_so_bindtodevice" >&6; }
+if test "x$iperf3_cv_header_so_bindtodevice" = "xyes"; then
+
+$as_echo "#define HAVE_SO_BINDTODEVICE 1" >>confdefs.h
 
 fi
 

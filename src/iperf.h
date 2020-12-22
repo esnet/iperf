@@ -40,6 +40,7 @@
 # define _GNU_SOURCE
 #endif
 #include <netinet/tcp.h>
+#include <net/if.h> // for IFNAMSIZ
 
 #if defined(HAVE_CPUSET_SETAFFINITY)
 #include <sys/param.h>
@@ -258,6 +259,7 @@ struct iperf_test
     char     *server_hostname;                  /* -c option */
     char     *tmp_template;
     char     *bind_address;                     /* first -B option */
+    char     *bind_dev;                         /* bind to network device */
     TAILQ_HEAD(xbind_addrhead, xbind_entry) xbind_addrs; /* all -X opts */
     int       bind_port;                        /* --cport option */
     int       server_port;

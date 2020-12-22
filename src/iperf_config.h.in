@@ -48,6 +48,9 @@
 /* Define to 1 if you have the `SetProcessAffinityMask' function. */
 #undef HAVE_SETPROCESSAFFINITYMASK
 
+/* Have SO_BINDTODEVICE sockopt. */
+#undef HAVE_SO_BINDTODEVICE
+
 /* Have SO_MAX_PACING_RATE sockopt. */
 #undef HAVE_SO_MAX_PACING_RATE
 

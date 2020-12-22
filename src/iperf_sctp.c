@@ -211,6 +211,21 @@ iperf_sctp_listen(struct iperf_test *test)
         }
     }
 
+    if (test->bind_dev) {
+#if defined(SO_BINDTODEVICE)
+        if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE,
+                       test->bind_dev, IFNAMSIZ) < 0)
+#endif // SO_BINDTODEVICE
+        {
+            saved_errno = errno;
+            close(s);
+            freeaddrinfo(res);
+            i_errno = IEBINDDEV;
+            errno = saved_errno;
+            return -1;
+        }
+    }
+
 #if defined(IPV6_V6ONLY) && !defined(__OpenBSD__)
     if (res->ai_family == AF_INET6 && (test->settings->domain == AF_UNSPEC || 
         test->settings->domain == AF_INET6)) {
@@ -284,7 +299,7 @@ iperf_sctp_connect(struct iperf_test *test)
 #if defined(HAVE_SCTP_H)
     int s, opt, saved_errno;
     char portstr[6];
-    struct addrinfo hints, *local_res, *server_res;
+    struct addrinfo hints, *local_res = NULL, *server_res = NULL;
 
     if (test->bind_address) {
         memset(&hints, 0, sizeof(hints));
@@ -309,8 +324,7 @@ iperf_sctp_connect(struct iperf_test *test)
 
     s = socket(server_res->ai_family, SOCK_STREAM, IPPROTO_SCTP);
     if (s < 0) {
-	if (test->bind_address)
-	    freeaddrinfo(local_res);
+	freeaddrinfo(local_res);
 	freeaddrinfo(server_res);
         i_errno = IESTREAMCONNECT;
         return -1;
@@ -332,6 +346,22 @@ iperf_sctp_connect(struct iperf_test *test)
             freeaddrinfo(server_res);
             errno = saved_errno;
             i_errno = IESETBUF;
+            return -1;
+        }
+    }
+
+    if (test->bind_dev) {
+#if defined(SO_BINDTODEVICE)
+        if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE,
+                       test->bind_dev, IFNAMSIZ) < 0)
+#endif // SO_BINDTODEVICE
+        {
+            saved_errno = errno;
+            close(s);
+            freeaddrinfo(local_res);
+            freeaddrinfo(server_res);
+            i_errno = IEBINDDEV;
+            errno = saved_errno;
             return -1;
         }
     }

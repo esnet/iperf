@@ -96,9 +96,11 @@ test by specifying the --get-server-output flag.
 Either the client or the server can produce its output in a JSON
 structure, useful for integration with other programs, by passing it
 the -J flag.
-Because the contents of the JSON structure are only competely known
+Normally the contents of the JSON structure are only competely known
 after the test has finished, no JSON output will be emitted until the
 end of the test.
+By enabling line-delimited JSON multiple objects will be emitted to
+provide a real-time parsable JSON output.
 .PP
 iperf3 has a (overly) large set of command-line options that can be
 used to set the parameters of a test.
@@ -152,6 +154,9 @@ give more detailed output
 .TP
 .BR -J ", " --json " "
 output in JSON format
+.TP
+.BR --json-stream " "
+output in line-delimited JSON format
 .TP
 .BR --logfile " \fIfile\fR"
 send output to a log file.

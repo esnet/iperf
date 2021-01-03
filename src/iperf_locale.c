@@ -111,6 +111,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 #endif /* HAVE_SO_BINDTODEVICE */
                            "  -V, --verbose             more detailed output\n"
                            "  -J, --json                output in JSON format\n"
+                           "  --json-stream             output in line-delimited JSON format\n"
                            "  --logfile f               send output to a log file\n"
                            "  --forceflush              force flushing output at every interval\n"
                            "  --timestamps<=format>     emit a timestamp at the start of each output line\n"

@@ -440,7 +440,7 @@ iperf_udp_accept(struct iperf_test *test)
     /*
      * Create a new "listening" socket to replace the one we were using before.
      */
-    test->prot_listener = netannounce(test->settings->domain, Pudp, test->bind_address, test->server_port);
+    test->prot_listener = netannounce(test->settings->domain, Pudp, test->bind_address, test->bind_dev, test->server_port);
     if (test->prot_listener < 0) {
         i_errno = IESTREAMLISTEN;
         return -1;
@@ -472,7 +472,7 @@ iperf_udp_listen(struct iperf_test *test)
 {
     int s;
 
-    if ((s = netannounce(test->settings->domain, Pudp, test->bind_address, test->server_port)) < 0) {
+    if ((s = netannounce(test->settings->domain, Pudp, test->bind_address, test->bind_dev, test->server_port)) < 0) {
         i_errno = IESTREAMLISTEN;
         return -1;
     }
@@ -499,7 +499,7 @@ iperf_udp_connect(struct iperf_test *test)
     int rc;
 
     /* Create and bind our local socket. */
-    if ((s = netdial(test->settings->domain, Pudp, test->bind_address, test->bind_port, test->server_hostname, test->server_port, -1)) < 0) {
+    if ((s = netdial(test->settings->domain, Pudp, test->bind_address, test->bind_dev, test->bind_port, test->server_hostname, test->server_port, -1)) < 0) {
         i_errno = IESTREAMCONNECT;
         return -1;
     }

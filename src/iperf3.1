@@ -139,6 +139,10 @@ CPUs).
 .TP
 .BR -B ", " --bind " \fIhost\fR"
 bind to the specific interface associated with address \fIhost\fR.
+.BR --bind-dev " \fIdev\R"
+bind to the specified network interface.
+This option uses SO_BINDTODEVICE, and may require root permissions.
+(Available on Linux and possibly other systems.)
 .TP
 .BR -V ", " --verbose " "
 give more detailed output 

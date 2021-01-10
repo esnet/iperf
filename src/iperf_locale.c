@@ -133,6 +133,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "                            credentials\n"
                            "  --time-skew-threshold    time skew threshold (in seconds) between the server\n"
                            "                            and client during the authentication process\n"
+                           "  --idle-timeout #         restart server if is idle for #[sec] to overcome\n"
+                           "                           stacked server for different reasone\n"
 #endif //HAVE_SSL
                            "Client specific:\n"
                            "  -c, --client    <host>    run in client mode, connecting to <host>\n"

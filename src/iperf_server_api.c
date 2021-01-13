@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2020 The Regents of the University of
+ * iperf, Copyright (c) 2014-2021 The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -547,7 +547,16 @@ iperf_run_server(struct iperf_test *test)
 				i_errno = IESETCONGESTION;
 				return -1;
 			    }
-			    test->congestion_used = strdup(ca);
+                            /* 
+                             * If not the first connection, discard prior
+                             * congestion algorithm name so we don't leak
+                             * duplicated strings.  We probably don't need
+                             * the old string anyway.
+                             */
+                            if (test->congestion_used != NULL) {
+                                free(test->congestion_used);
+                            }
+                            test->congestion_used = strdup(ca);
 			    if (test->debug) {
 				printf("Congestion algorithm is %s\n", test->congestion_used);
 			    }

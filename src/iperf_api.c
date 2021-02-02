@@ -4202,24 +4202,46 @@ static int
 diskfile_send(struct iperf_stream *sp)
 {
     int r;
+    int buffer_left=0; // represents total data in buffer to be sent out 
     static int rtot;
 
     /* if needed, read enough data from the disk to fill up the buffer */
     if (sp->diskfile_left < sp->test->settings->blksize && !sp->test->done) {
-	r = read(sp->diskfile_fd, sp->buffer, sp->test->settings->blksize -
-		 sp->diskfile_left);
-	rtot += r;
-	if (sp->test->debug) {
-	    printf("read %d bytes from file, %d total\n", r, rtot);
-	    if (r != sp->test->settings->blksize - sp->diskfile_left)
-		printf("possible eof\n");
-	}
-	/* If there's no data left in the file or in the buffer, we're done */
-	if (r == 0 && sp->diskfile_left == 0) {
-	    sp->test->done = 1;
-	    if (sp->test->debug)
-		printf("done\n");
-	}
+    	r = read(sp->diskfile_fd, sp->buffer, sp->test->settings->blksize -
+    		 sp->diskfile_left);
+        buffer_left = r + sp->diskfile_left;
+    	rtot += r;
+    	if (sp->test->debug) {
+    	    printf("read %d bytes from file, %d total\n", r, rtot);	    
+    	}
+
+        // a.k.a.  buffer_left != sp->test->settings->blksize
+        if (r != sp->test->settings->blksize - sp->diskfile_left){
+            if (sp->test->debug) 
+                printf("possible eof\n");
+            // setting data size to be sent, 
+            // which is less than full block/buffer size 
+            // (to be used by iperf_tcp_send, etc.)
+            sp->pending_size = buffer_left; 
+        }
+
+    	
+    	if (r == 0 && sp->diskfile_left == 0) {
+        // a.k.a. buffer_left == 0
+    	    sp->test->done = 1;
+    	    if (sp->test->debug)
+    		  printf("done\n");
+    	}
+    }
+
+    // If there's no data left in the file or in the buffer, we're done. 
+    // No more data available to be sent.  
+    // Return without sending data to the network 
+    if( sp->test->done || buffer_left == 0 ){
+        if (sp->test->debug)
+              printf("already done\n");
+        sp->test->done = 1;
+        return 0;
     }
 
     r = sp->snd2(sp);
@@ -4232,7 +4254,7 @@ diskfile_send(struct iperf_stream *sp)
      * front of the buffer so they can hopefully go out on the next
      * pass.
      */
-    sp->diskfile_left = sp->test->settings->blksize - r;
+    sp->diskfile_left = buffer_left - r;
     if (sp->diskfile_left && sp->diskfile_left < sp->test->settings->blksize) {
 	memcpy(sp->buffer,
 	       sp->buffer + (sp->test->settings->blksize - sp->diskfile_left),

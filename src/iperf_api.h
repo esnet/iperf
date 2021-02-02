@@ -140,6 +140,7 @@ char*	iperf_get_extra_data( struct iperf_test* ipt );
 char*	iperf_get_iperf_version(void);
 int	iperf_get_test_no_delay( struct iperf_test* ipt );
 int	iperf_get_test_connect_timeout( struct iperf_test* ipt );
+char*   iperf_get_test_congestion_control(struct iperf_test* ipt);
 
 /* Setter routines for some fields inside iperf_test. */
 void	iperf_set_verbose( struct iperf_test* ipt, int verbose );
@@ -177,6 +178,7 @@ void    iperf_set_test_tos( struct iperf_test* ipt, int tos );
 void	iperf_set_test_extra_data( struct iperf_test* ipt, const char *dat );
 void    iperf_set_test_bidirectional( struct iperf_test* ipt, int bidirectional);
 void    iperf_set_test_no_delay( struct iperf_test* ipt, int no_delay);
+void    iperf_set_test_congestion_control(struct iperf_test* ipt, char* cc);
 
 #if defined(HAVE_SSL)
 void    iperf_set_test_client_username(struct iperf_test *ipt, const char *client_username);

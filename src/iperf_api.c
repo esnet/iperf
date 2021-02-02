@@ -394,6 +394,12 @@ iperf_get_test_idle_timeout(struct iperf_test *ipt)
     return ipt->settings->idle_timeout;
 }
 
+char*
+iperf_get_test_congestion_control(struct iperf_test* ipt)
+{
+    return ipt->congestion;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -729,6 +735,12 @@ void
 iperf_set_test_idle_timeout(struct iperf_test* ipt, int to)
 {
     ipt->settings->idle_timeout = to;
+}
+
+void
+iperf_set_test_congestion_control(struct iperf_test* ipt, char* cc)
+{
+    ipt->congestion = strdup(cc);
 }
 
 

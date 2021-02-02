@@ -388,6 +388,12 @@ iperf_get_test_connect_timeout(struct iperf_test *ipt)
     return ipt->settings->connect_timeout;
 }
 
+int
+iperf_get_dont_fragment(struct iperf_test *ipt)
+{
+    return ipt->settings->dont_fragment;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -719,6 +725,11 @@ iperf_set_test_connect_timeout(struct iperf_test* ipt, int ct)
     ipt->settings->connect_timeout = ct;
 }
 
+void
+iperf_set_dont_fragment(struct iperf_test* ipt, int dnf)
+{
+    ipt->settings->dont_fragment = dnf;
+}
 
 /********************** Get/set test protocol structure ***********************/
 
@@ -950,6 +961,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     {"rsa-private-key-path", required_argument, NULL, OPT_SERVER_RSA_PRIVATE_KEY},
     {"authorized-users-path", required_argument, NULL, OPT_SERVER_AUTHORIZED_USERS},
     {"time-skew-threshold", required_argument, NULL, OPT_SERVER_SKEW_THRESHOLD},
+    {"dont-fragment", no_argument, NULL, OPT_DONT_FRAGMENT},
 #endif /* HAVE_SSL */
 	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
 	{"pacing-timer", required_argument, NULL, OPT_PACING_TIMER},
@@ -1368,6 +1380,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 i_errno = IESKEWTHRESHOLD;
                 return -1;
             }
+            break;
+        case OPT_DONT_FRAGMENT:
+            test->settings->dont_fragment = 1;
+            client_flag = 1;
             break;
 #endif /* HAVE_SSL */
 	    case OPT_PACING_TIMER:
@@ -1947,6 +1963,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "udp_counters_64bit", iperf_get_test_udp_counters_64bit(test));
 	if (test->repeating_payload)
 	    cJSON_AddNumberToObject(j, "repeating_payload", test->repeating_payload);
+	if (test->settings->dont_fragment)
+	    cJSON_AddNumberToObject(j, "DONT_FRAGMENT", test->settings->dont_fragment);
 #if defined(HAVE_SSL)
 	/* Send authentication parameters */
 	if (test->settings->client_username && test->settings->client_password && test->settings->client_rsa_pubkey){
@@ -2055,6 +2073,8 @@ get_parameters(struct iperf_test *test)
 	    iperf_set_test_udp_counters_64bit(test, 1);
 	if ((j_p = cJSON_GetObjectItem(j, "repeating_payload")) != NULL)
 	    test->repeating_payload = 1;
+	if ((j_p = cJSON_GetObjectItem(j, "DONT_FRAGMENT")) != NULL)
+	    test->settings->dont_fragment = j_p->valueint;
 #if defined(HAVE_SSL)
 	if ((j_p = cJSON_GetObjectItem(j, "authtoken")) != NULL)
         test->settings->authtoken = strdup(j_p->valuestring);
@@ -2850,6 +2870,7 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->burst = 0;
     test->settings->mss = 0;
     test->settings->tos = 0;
+    test->settings->dont_fragment = 0;
 
 #if defined(HAVE_SSL)
     if (test->settings->authtoken) {
@@ -4027,6 +4048,20 @@ iperf_init_stream(struct iperf_stream *sp, struct iperf_test *test)
                 i_errno = IESETTOS;
                 return -1;
             }
+        }
+    }
+
+    /* Set Do-Not-Fragment */
+    if (test->settings->dont_fragment) {
+#if defined(__CYGWIN__) || defined(_WIN32) || defined(_WIN64) || defined(__WINDOWS__)
+        opt = 0;
+        if (setsockopt(sp->socket, IPPROTO_IP, IP_DONTFRAGMENT, &opt, sizeof(opt)) < 0) {
+#else   // Not Windows
+        opt = IP_PMTUDISC_DO;
+        if (setsockopt(sp->socket, IPPROTO_IP, IP_MTU_DISCOVER, &opt, sizeof(opt)) < 0) {
+#endif
+            i_errno = IESETDONTFRAGMENT;
+            return -1;
         }
     }
 

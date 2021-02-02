@@ -427,6 +427,9 @@ iperf_strerror(int int_errno)
     case IESKEWTHRESHOLD:
 	    snprintf(errstr, len, "skew threshold must be a positive number");
             break;
+        case IESETDONTFRAGMENT:
+	    snprintf(errstr, len, "unable to set IP Do-Not-Fragment flag");
+            break;
 	default:
 	    snprintf(errstr, len, "int_errno=%d", int_errno);
 	    perr = 1;

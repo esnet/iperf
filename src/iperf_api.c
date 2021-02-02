@@ -1560,6 +1560,23 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     if (!rate_flag)
 	test->settings->rate = test->protocol->id == Pudp ? UDP_RATE : 0;
 
+    /* if no bytes or blocks specified, nor a duration_flag, and we have -F,
+    ** get the file-size as the bytes count to be transferred
+    */
+    if (test->settings->bytes == 0 && 
+        test->settings->blocks == 0 && 
+        ! duration_flag &&
+        test->diskfile_name != (char*) 0 &&
+        test->role == 'c'
+        ){
+        struct stat st;
+        stat(test->diskfile_name, &st);
+        iperf_size_t file_bytes = st.st_size;
+        test->settings->bytes = file_bytes;        
+        if (test->debug)
+            printf("End condition set to file-size: %d bytes\n", test->settings->bytes);
+    }    
+
     if ((test->settings->bytes != 0 || test->settings->blocks != 0) && ! duration_flag)
         test->duration = 0;
 

@@ -389,6 +389,12 @@ iperf_get_test_connect_timeout(struct iperf_test *ipt)
 }
 
 int
+iperf_get_test_idle_timeout(struct iperf_test *ipt)
+{
+    return ipt->settings->idle_timeout;
+}
+
+int
 iperf_get_dont_fragment(struct iperf_test *ipt)
 {
     return ipt->settings->dont_fragment;
@@ -726,10 +732,17 @@ iperf_set_test_connect_timeout(struct iperf_test* ipt, int ct)
 }
 
 void
+iperf_set_test_idle_timeout(struct iperf_test* ipt, int to)
+{
+    ipt->settings->idle_timeout = to;
+}
+
+void
 iperf_set_dont_fragment(struct iperf_test* ipt, int dnf)
 {
     ipt->settings->dont_fragment = dnf;
 }
+
 
 /********************** Get/set test protocol structure ***********************/
 
@@ -966,6 +979,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
 	{"pacing-timer", required_argument, NULL, OPT_PACING_TIMER},
 	{"connect-timeout", required_argument, NULL, OPT_CONNECT_TIMEOUT},
+        {"idle-timeout", required_argument, NULL, OPT_IDLE_TIMEOUT},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -1287,6 +1301,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             case 'F':
                 test->diskfile_name = optarg;
                 break;
+            case OPT_IDLE_TIMEOUT:
+                test->settings->idle_timeout = atoi(optarg);
+                if (test->settings->idle_timeout < 1 || test->settings->idle_timeout > MAX_TIME) {
+                    i_errno = IEIDLETIMEOUT;
+                    return -1;
+                }
+		server_flag = 1;
+	        break;
             case 'A':
 #if defined(HAVE_CPU_AFFINITY)
                 test->affinity = strtol(optarg, &endptr, 0);

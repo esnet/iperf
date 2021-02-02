@@ -126,6 +126,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 			   "  --server-bitrate-limit #[KMG][/#]   server's total bit rate limit (default 0 = no limit)\n"
 			   "                            (optional slash and number of secs interval for averaging\n"
 			   "                            total data rate.  Default is 5 seconds)\n"
+                           "  --idle-timeout #         restart server if is idle for #[sec] to overcome\n"
+                           "                           stacked server for different reasone\n"
 #if defined(HAVE_SSL)
                            "  --rsa-private-key-path    path to the RSA private key used to decrypt\n"
 			   "                            authentication credentials\n"

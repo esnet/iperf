@@ -151,6 +151,7 @@ run(struct iperf_test *test)
             for (;;) {
 		int rc;
 		rc = iperf_run_server(test);
+                test->server_last_run_rc =rc;
 		if (rc < 0) {
 		    iperf_err(test, "error - %s", iperf_strerror(i_errno));
 		    if (rc < -1) {
@@ -158,7 +159,7 @@ run(struct iperf_test *test)
 		    }
                 }
                 iperf_reset_test(test);
-                if (iperf_get_test_one_off(test)) {
+                if (iperf_get_test_one_off(test) && rc != 2) {
 		    /* Authentication failure doesn't count for 1-off test */
 		    if (rc < 0 && i_errno == IEAUTHTEST) {
 			continue;

@@ -427,7 +427,13 @@ iperf_strerror(int int_errno)
     case IESKEWTHRESHOLD:
 	    snprintf(errstr, len, "skew threshold must be a positive number");
             break;
-        case IESETDONTFRAGMENT:
+	case IEIDLETIMEOUT:
+	    snprintf(errstr, len, "idle timeout parameter is not positive or larget then allowed limit");
+            break;
+	case IENOMSG:
+	    snprintf(errstr, len, "no message was received for %d seconds", NO_MSG_RCVD_TIMEOUT);
+            break;
+    case IESETDONTFRAGMENT:
 	    snprintf(errstr, len, "unable to set IP Do-Not-Fragment flag");
             break;
 	default:

@@ -427,6 +427,12 @@ iperf_strerror(int int_errno)
     case IESKEWTHRESHOLD:
 	    snprintf(errstr, len, "skew threshold must be a positive number");
             break;
+	case IEIDLETIMEOUT:
+	    snprintf(errstr, len, "idle timeout parameter is not positive or larget then allowed limit");
+            break;
+	case IENOMSG:
+	    snprintf(errstr, len, "no message was received for %d seconds", NO_MSG_RCVD_TIMEOUT);
+            break;
 	default:
 	    snprintf(errstr, len, "int_errno=%d", int_errno);
 	    perr = 1;

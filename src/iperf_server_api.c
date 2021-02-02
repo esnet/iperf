@@ -87,11 +87,15 @@ iperf_server_listen(struct iperf_test *test)
     }
 
     if (!test->json_output) {
-	iperf_printf(test, "-----------------------------------------------------------\n");
-	iperf_printf(test, "Server listening on %d\n", test->server_port);
-	iperf_printf(test, "-----------------------------------------------------------\n");
-	if (test->forceflush)
-	    iflush(test);
+        if (test->server_last_run_rc != 2)
+            test->server_test_number +=1;
+        if (test->debug || test->server_last_run_rc != 2) {
+	    iperf_printf(test, "-----------------------------------------------------------\n");
+	    iperf_printf(test, "Server listening on %d (test #%d)\n", test->server_port, test->server_test_number);
+	    iperf_printf(test, "-----------------------------------------------------------\n");
+	    if (test->forceflush)
+	        iflush(test);
+        }
     }
 
     FD_ZERO(&test->read_set);
@@ -417,8 +421,12 @@ iperf_run_server(struct iperf_test *test)
     fd_set read_set, write_set;
     struct iperf_stream *sp;
     struct iperf_time now;
+    struct iperf_time last_receive_time;
+    struct iperf_time diff_time;
     struct timeval* timeout;
+    struct timeval default_timeout;
     int flag;
+    int64_t t_usecs;
 
     if (test->logfile)
         if (iperf_open_logfile(test) < 0)
@@ -447,6 +455,8 @@ iperf_run_server(struct iperf_test *test)
         return -2;
     }
 
+    iperf_time_now(&last_receive_time); // Initialize last time something was received
+
     test->state = IPERF_START;
     send_streams_accepted = 0;
     rec_streams_accepted = 0;
@@ -465,14 +475,59 @@ iperf_run_server(struct iperf_test *test)
 
 	iperf_time_now(&now);
 	timeout = tmr_timeout(&now);
-        result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
 
+        // Ensure select() will timeout to allow handling error cases that require server restart
+        if (timeout == NULL) {
+            default_timeout.tv_sec = 0;
+            if (test->state == IPERF_START) {
+                if (test-> settings->idle_timeout > 0)
+                    default_timeout.tv_sec = test-> settings->idle_timeout;
+            } else {
+                default_timeout.tv_sec = NO_MSG_RCVD_TIMEOUT;
+            }
+            if (default_timeout.tv_sec > 0) {
+                default_timeout.tv_usec = 0;
+                timeout = &default_timeout;
+            }
+        }
+
+        result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
         if (result < 0 && errno != EINTR) {
-	    cleanup_server(test);
+            cleanup_server(test);
             i_errno = IESELECT;
             return -1;
+        } else if (result == 0) {
+            // If nothing was received during the last ... time
+            // then probably something got stack either at the client, server or network,
+            // and Test should forced to end.
+            iperf_time_now(&now);
+            t_usecs = 0;
+            if (iperf_time_diff(&now, &last_receive_time, &diff_time) == 0) {
+                t_usecs = iperf_time_in_usecs(&diff_time);
+                if (test->state == IPERF_START) {
+                    if (test->settings->idle_timeout > 0 && t_usecs >= test->settings->idle_timeout * SEC_TO_US) {
+                        test->server_forced_idle_restarts_count += 1;
+                        if (test->debug)
+                            printf("Server restart (#%d) in idle state as no connection request was received for %d sec\n",
+                                test->server_forced_idle_restarts_count, test-> settings->idle_timeout);
+                        cleanup_server(test);
+                        return 2;
+                    }
+                }
+                else if (t_usecs > NO_MSG_RCVD_TIMEOUT * SEC_TO_US) {
+                    test->server_forced_no_msg_restarts_count += 1;
+                    i_errno = IENOMSG;
+                    iperf_err(test, "Server restart (#%d) in active test as no message was received for %d sec",
+                        test->server_forced_no_msg_restarts_count, NO_MSG_RCVD_TIMEOUT);
+                    cleanup_server(test);
+                    return -1;
+                }
+
+            }
         }
+
 	if (result > 0) {
+            iperf_time_now(&last_receive_time);
             if (FD_ISSET(test->listener, &read_set)) {
                 if (test->state != CREATE_STREAMS) {
                     if (iperf_accept(test) < 0) {

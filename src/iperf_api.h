@@ -81,6 +81,7 @@ typedef uint64_t iperf_size_t;
 #define OPT_TIMESTAMPS 22
 #define OPT_SERVER_SKEW_THRESHOLD 23
 #define OPT_BIND_DEV 24
+#define OPT_IDLE_TIMEOUT 25
 
 /* states */
 #define TEST_START 1
@@ -365,6 +366,7 @@ enum {
     IETOTALRATE = 27,       // Total required bandwidth is larger than server's limit
     IETOTALINTERVAL = 28,   // Invalid time interval for calculating average data rate
     IESKEWTHRESHOLD = 29,   // Invalid value specified as skew threshold
+    IEIDLETIMEOUT = 30,     // Invalid value specified as idle state timeout
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)
@@ -410,6 +412,7 @@ enum {
     IESETBUF2= 141,	    // Socket buffer size incorrect (written value != read value)
     IEAUTHTEST = 142,       // Test authorization failed
     IEBINDDEV = 143,        // Unable to bind-to-device (check perror, maybe permissions?)
+    IENOMSG = 144,          // No message was received for NO_MSG_RCVD_TIMEOUT time period
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

@@ -555,7 +555,7 @@ iperf_run_client(struct iperf_test * test)
 	     * being the receiver.
 	     */
 	    if ((!test->omitting) &&
-	        ((test->duration != 0 && test->done) ||
+	        (test->done ||
 	         (test->settings->bytes != 0 && (test->bytes_sent >= test->settings->bytes ||
 						 test->bytes_received >= test->settings->bytes)) ||
 	         (test->settings->blocks != 0 && (test->blocks_sent >= test->settings->blocks ||

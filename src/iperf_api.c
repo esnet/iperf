@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2020, The Regents of the University of
+ * iperf, Copyright (c) 2014-2021, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -1631,7 +1631,8 @@ iperf_check_total_rate(struct iperf_test *test, iperf_size_t last_interval_bytes
     }
 
     if (bits_per_second  > test->settings->bitrate_limit) {
-	iperf_err(test, "Total throughput of %" PRIu64 " bps exceeded %" PRIu64 " bps limit", bits_per_second, test->settings->bitrate_limit);
+        if (! test->json_output)
+            iperf_err(test, "Total throughput of %" PRIu64 " bps exceeded %" PRIu64 " bps limit", bits_per_second, test->settings->bitrate_limit);
 	test->bitrate_limit_exceeded = 1;
     }
 }

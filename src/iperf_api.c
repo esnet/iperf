@@ -1336,7 +1336,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		break;
 	    case 'I':
 		test->pidfile = strdup(optarg);
-		server_flag = 1;
 	        break;
 	    case OPT_LOGFILE:
 		test->logfile = strdup(optarg);

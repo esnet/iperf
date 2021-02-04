@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2020, The Regents of the University of
+ * iperf, Copyright (c) 2014-2021, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -4231,7 +4231,7 @@ iperf_create_pidfile(struct iperf_test *test)
 	    return -1;
 	}
 	snprintf(buf, sizeof(buf), "%d", getpid()); /* no trailing newline */
-	if (write(fd, buf, strlen(buf) + 1) < 0) {
+	if (write(fd, buf, strlen(buf)) < 0) {
 	    return -1;
 	}
 	if (close(fd) < 0) {

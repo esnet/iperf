@@ -117,6 +117,9 @@ set server port to listen on/connect to to \fIn\fR (default 5201)
 pause \fIn\fR seconds between periodic throughput reports;
 default is 1, use 0 to disable
 .TP
+.BR -I ", " --pidfile " \fIfile\fR"
+write a file with the process ID, most useful when running as a daemon.
+.TP
 .BR -F ", " --file " \fIname\fR"
 Use a file as the source (on the sender) or sink (on the receiver) of
 data, rather than just generating random data or throwing it away.
@@ -185,9 +188,6 @@ run in server mode
 .TP
 .BR -D ", " --daemon " "
 run the server in background as a daemon
-.TP
-.BR -I ", " --pidfile " \fIfile\fR"
-write a file with the process ID, most useful when running as a daemon.
 .TP
 .BR -1 ", " --one-off
 handle one client connection, then exit.

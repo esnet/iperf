@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2020, The Regents of the University of
+ * iperf, Copyright (c) 2014-2021, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -400,6 +400,12 @@ iperf_get_dont_fragment(struct iperf_test *ipt)
     return ipt->settings->dont_fragment;
 }
 
+char*
+iperf_get_test_congestion_control(struct iperf_test* ipt)
+{
+    return ipt->congestion;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -741,6 +747,12 @@ void
 iperf_set_dont_fragment(struct iperf_test* ipt, int dnf)
 {
     ipt->settings->dont_fragment = dnf;
+}
+
+void
+iperf_set_test_congestion_control(struct iperf_test* ipt, char* cc)
+{
+    ipt->congestion = strdup(cc);
 }
 
 
@@ -1349,7 +1361,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		break;
 	    case 'I':
 		test->pidfile = strdup(optarg);
-		server_flag = 1;
 	        break;
 	    case OPT_LOGFILE:
 		test->logfile = strdup(optarg);
@@ -4268,7 +4279,7 @@ iperf_create_pidfile(struct iperf_test *test)
 	    return -1;
 	}
 	snprintf(buf, sizeof(buf), "%d", getpid()); /* no trailing newline */
-	if (write(fd, buf, strlen(buf) + 1) < 0) {
+	if (write(fd, buf, strlen(buf)) < 0) {
 	    return -1;
 	}
 	if (close(fd) < 0) {

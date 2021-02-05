@@ -15,6 +15,9 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
+/* Have IP_MTU_DISCOVER/IP_DONTFRAG sockopt. */
+#undef HAVE_DONT_FRAGMENT
+
 /* Define to 1 if you have the <endian.h> header file. */
 #undef HAVE_ENDIAN_H
 

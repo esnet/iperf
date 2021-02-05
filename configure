@@ -13976,6 +13976,41 @@ $as_echo "#define HAVE_SO_BINDTODEVICE 1" >>confdefs.h
 
 fi
 
+# Check for IP DF support
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking IP_MTU_DISCOVER or IP_DONTFRAG socket option" >&5
+$as_echo_n "checking IP_MTU_DISCOVER or IP_DONTFRAG socket option... " >&6; }
+if ${iperf3_cv_header_dontfragment+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/socket.h>
+#include <netinet/ip.h>
+#ifdef IP_MTU_DISCOVER
+  yes
+#endif
+#ifdef IP_DONTFRAG
+  yes
+#endif
+
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "yes" >/dev/null 2>&1; then :
+  iperf3_cv_header_dontfragment=yes
+else
+  iperf3_cv_header_dontfragment=no
+fi
+rm -f conftest*
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $iperf3_cv_header_dontfragment" >&5
+$as_echo "$iperf3_cv_header_dontfragment" >&6; }
+if test "x$iperf3_cv_header_dontfragment" = "xyes"; then
+
+$as_echo "#define HAVE_DONT_FRAGMENT 1" >>confdefs.h
+
+fi
+
 # Check if we need -lrt for clock_gettime
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing clock_gettime" >&5
 $as_echo_n "checking for library containing clock_gettime... " >&6; }

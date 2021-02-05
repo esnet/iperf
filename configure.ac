@@ -243,6 +243,7 @@ AC_CACHE_CHECK([IP_MTU_DISCOVER or IP_DONTFRAG socket option],
 AC_EGREP_CPP(yes,
 [#include <sys/socket.h>
 #include <netinet/ip.h>
+#include <netinet/in.h>
 #ifdef IP_MTU_DISCOVER
   yes
 #endif

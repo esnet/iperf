@@ -1673,6 +1673,10 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 	SLIST_FOREACH(sp, &test->streams, streams) {
 	    if ((sp->green_light && sp->sender &&
 		 (write_setP == NULL || FD_ISSET(sp->socket, write_setP)))) {
+        if (multisend > 1 && test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes)
+            break;
+        if (multisend > 1 && test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks)
+            break;
 		if ((r = sp->snd(sp)) < 0) {
 		    if (r == NET_SOFTERROR)
 			break;
@@ -1685,10 +1689,6 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 		    ++test->blocks_sent;
                 if (no_throttle_check)
 		    iperf_check_throttle(sp, &now);
-		if (multisend > 1 && test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes)
-		    break;
-		if (multisend > 1 && test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks)
-		    break;
 	    }
 	}
 	if (!streams_active)

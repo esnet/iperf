@@ -237,6 +237,23 @@ if test "x$iperf3_cv_header_so_bindtodevice" = "xyes"; then
     AC_DEFINE([HAVE_SO_BINDTODEVICE], [1], [Have SO_BINDTODEVICE sockopt.])
 fi
 
+# Check for IP DF support
+AC_CACHE_CHECK([IP_MTU_DISCOVER or IP_DONTFRAG socket option],
+[iperf3_cv_header_dontfragment],
+AC_EGREP_CPP(yes,
+[#include <sys/socket.h>
+#include <netinet/ip.h>
+#ifdef IP_MTU_DISCOVER
+  yes
+#endif
+#ifdef IP_DONTFRAG
+  yes
+#endif
+],iperf3_cv_header_dontfragment=yes,iperf3_cv_header_dontfragment=no))
+if test "x$iperf3_cv_header_dontfragment" = "xyes"; then
+    AC_DEFINE([HAVE_DONT_FRAGMENT], [1], [Have IP_MTU_DISCOVER/IP_DONTFRAG sockopt.])
+fi
+
 # Check if we need -lrt for clock_gettime
 AC_SEARCH_LIBS(clock_gettime, [rt posix4])
 # Check for clock_gettime support

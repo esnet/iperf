@@ -1642,7 +1642,8 @@ iperf_check_total_rate(struct iperf_test *test, iperf_size_t last_interval_bytes
     }
 
     if (bits_per_second  > test->settings->bitrate_limit) {
-	iperf_err(test, "Total throughput of %" PRIu64 " bps exceeded %" PRIu64 " bps limit", bits_per_second, test->settings->bitrate_limit);
+        if (iperf_get_verbose(test))
+            iperf_err(test, "Total throughput of %" PRIu64 " bps exceeded %" PRIu64 " bps limit", bits_per_second, test->settings->bitrate_limit);
 	test->bitrate_limit_exceeded = 1;
     }
 }

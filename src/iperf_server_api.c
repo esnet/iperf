@@ -517,8 +517,9 @@ iperf_run_server(struct iperf_test *test)
                 else if (t_usecs > NO_MSG_RCVD_TIMEOUT * SEC_TO_US) {
                     test->server_forced_no_msg_restarts_count += 1;
                     i_errno = IENOMSG;
-                    iperf_err(test, "Server restart (#%d) in active test as no message was received for %d sec",
-                        test->server_forced_no_msg_restarts_count, NO_MSG_RCVD_TIMEOUT);
+                    if (iperf_get_verbose(test))
+                        iperf_err(test, "Server restart (#%d) in active test as no message was received for %d sec",
+                                  test->server_forced_no_msg_restarts_count, NO_MSG_RCVD_TIMEOUT);
                     cleanup_server(test);
                     return -1;
                 }
@@ -688,8 +689,9 @@ iperf_run_server(struct iperf_test *test)
 		    /* Ensure that total requested data rate is not above limit */
 		    iperf_size_t total_requested_rate = test->num_streams * test->settings->rate * (test->mode == BIDIRECTIONAL? 2 : 1);
 		    if (test->settings->bitrate_limit > 0 && total_requested_rate > test->settings->bitrate_limit) {
-			iperf_err(test, "Client total requested throughput rate of %" PRIu64 " bps exceeded %" PRIu64 " bps limit",
-				total_requested_rate, test->settings->bitrate_limit);
+                        if (iperf_get_verbose(test))
+                            iperf_err(test, "Client total requested throughput rate of %" PRIu64 " bps exceeded %" PRIu64 " bps limit",
+                                      total_requested_rate, test->settings->bitrate_limit);
 			cleanup_server(test);
 			i_errno = IETOTALRATE;
 			return -1;

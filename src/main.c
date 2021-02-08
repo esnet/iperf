@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014, 2015, 2017, 2019, The Regents of the University of
+ * iperf, Copyright (c) 2014-2021, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -154,6 +154,12 @@ run(struct iperf_test *test)
                 test->server_last_run_rc =rc;
 		if (rc < 0) {
 		    iperf_err(test, "error - %s", iperf_strerror(i_errno));
+                    if (test->json_output) {
+                        if (iperf_json_finish(test) < 0)
+                            return -1;
+                    }
+                    iflush(test);
+
 		    if (rc < -1) {
 		        iperf_errexit(test, "exiting");
 		    }

@@ -1,4 +1,4 @@
-# iperf, Copyright (c) 2014-2020, The Regents of the University of
+# iperf, Copyright (c) 2014-2021, The Regents of the University of
 # California, through Lawrence Berkeley National Laboratory (subject
 # to receipt of any required approvals from the U.S. Dept. of
 # Energy).  All rights reserved.
@@ -248,6 +248,9 @@ AC_EGREP_CPP(yes,
   yes
 #endif
 #ifdef IP_DONTFRAG
+  yes
+#endif
+#ifdef IP_DONTFRAGMENT
   yes
 #endif
 ],iperf3_cv_header_dontfragment=yes,iperf3_cv_header_dontfragment=no))

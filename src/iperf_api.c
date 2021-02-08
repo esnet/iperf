@@ -4093,8 +4093,16 @@ iperf_init_stream(struct iperf_stream *sp, struct iperf_test *test)
     }
 
 #if defined(HAVE_DONT_FRAGMENT)
-    /* Set Don't Fragment */
-    if (test->settings->dont_fragment) {
+    /* Set Don't Fragment (DF). Only applicable to IPv4/UDP tests. */
+    if (iperf_get_test_protocol_id(test) == Pudp &&
+        getsockdomain(sp->socket) == AF_INET &&
+        iperf_get_dont_fragment(test)) {
+
+        /*
+         * There are multiple implementations of this feature depending on the OS.
+         * We need to handle separately Linux, UNIX, and Windows, as well as
+         * the case that DF isn't supported at all (such as on macOS).
+         */
 #if defined(IP_MTU_DISCOVER) /* Linux version of IP_DONTFRAG */
         opt = IP_PMTUDISC_DO;
         if (setsockopt(sp->socket, IPPROTO_IP, IP_MTU_DISCOVER, &opt, sizeof(opt)) < 0) {
@@ -4102,15 +4110,23 @@ iperf_init_stream(struct iperf_stream *sp, struct iperf_test *test)
             return -1;
         }
 #else
-#if defined(IP_DONTFRAG) /* UNIX and Windows do IP_DONTFRAG */
+#if defined(IP_DONTFRAG) /* UNIX does IP_DONTFRAG */
         opt = 1;
         if (setsockopt(sp->socket, IPPROTO_IP, IP_DONTFRAG, &opt, sizeof(opt)) < 0) {
             i_errno = IESETDONTFRAGMENT;
             return -1;
         }
 #else
+#if defined(IP_DONTFRAGMENT) /* Windows does IP_DONTFRAGMENT */
+        opt = 1;
+        if (setsockopt(sp->socket, IPPROTO_IP, IP_DONTFRAGMENT, &opt, sizeof(opt)) < 0) {
+            i_errno = IESETDONTFRAGMENT;
+            return -1;
+        }
+#else
 	i_errno = IESETDONTFRAGMENT;
 	return -1;
+#endif /* IP_DONTFRAGMENT */
 #endif /* IP_DONTFRAG */
 #endif /* IP_MTU_DISCOVER */
     }

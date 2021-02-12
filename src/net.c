@@ -26,6 +26,9 @@
  */
 #include "iperf_config.h"
 
+// iperf.h include should preceed netinet/tcp.h for _GNU_SOURCE definition
+#include "iperf.h"
+
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
@@ -61,7 +64,6 @@
 #include <poll.h>
 #endif /* HAVE_POLL_H */
 
-#include "iperf.h"
 #include "iperf_util.h"
 #include "net.h"
 #include "timer.h"

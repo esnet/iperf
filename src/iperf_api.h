@@ -82,6 +82,7 @@ typedef uint64_t iperf_size_t;
 #define OPT_SERVER_SKEW_THRESHOLD 23
 #define OPT_BIND_DEV 24
 #define OPT_IDLE_TIMEOUT 25
+#define OPT_DONT_FRAGMENT 26
 
 /* states */
 #define TEST_START 1
@@ -140,6 +141,7 @@ char*	iperf_get_extra_data( struct iperf_test* ipt );
 char*	iperf_get_iperf_version(void);
 int	iperf_get_test_no_delay( struct iperf_test* ipt );
 int	iperf_get_test_connect_timeout( struct iperf_test* ipt );
+int	iperf_get_dont_fragment( struct iperf_test* ipt );
 char*   iperf_get_test_congestion_control(struct iperf_test* ipt);
 
 /* Setter routines for some fields inside iperf_test. */
@@ -178,6 +180,7 @@ void    iperf_set_test_tos( struct iperf_test* ipt, int tos );
 void	iperf_set_test_extra_data( struct iperf_test* ipt, const char *dat );
 void    iperf_set_test_bidirectional( struct iperf_test* ipt, int bidirectional);
 void    iperf_set_test_no_delay( struct iperf_test* ipt, int no_delay);
+void    iperf_set_dont_fragment( struct iperf_test* ipt, int dont_fragment );
 void    iperf_set_test_congestion_control(struct iperf_test* ipt, char* cc);
 
 #if defined(HAVE_SSL)
@@ -415,6 +418,7 @@ enum {
     IEAUTHTEST = 142,       // Test authorization failed
     IEBINDDEV = 143,        // Unable to bind-to-device (check perror, maybe permissions?)
     IENOMSG = 144,          // No message was received for NO_MSG_RCVD_TIMEOUT time period
+    IESETDONTFRAGMENT = 145,    // Unable to set IP Do-Not-Fragment
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

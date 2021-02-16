@@ -327,6 +327,16 @@ get_optional_features(void)
     numfeatures++;
 #endif /* HAVE_SO_BINDTODEVICE */
 
+#if defined(HAVE_DONT_FRAGMENT)
+    if (numfeatures > 0) {
+	strncat(features, ", ",
+		sizeof(features) - strlen(features) - 1);
+    }
+    strncat(features, "support IPv4 don't fragment",
+	sizeof(features) - strlen(features) - 1);
+    numfeatures++;
+#endif /* HAVE_DONT_FRAGMENT */
+
     if (numfeatures == 0) {
 	strncat(features, "None", 
 		sizeof(features) - strlen(features) - 1);

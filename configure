@@ -7431,11 +7431,16 @@ $as_echo "$lt_cv_ld_force_load" >&6; }
       _lt_dar_allow_undefined='$wl-undefined ${wl}suppress' ;;
     darwin1.*)
       _lt_dar_allow_undefined='$wl-flat_namespace $wl-undefined ${wl}suppress' ;;
-    darwin*)
-      case ${MACOSX_DEPLOYMENT_TARGET},$host in
-	10.[012],*|,*powerpc*)
+    darwin*) # darwin 5.x on
+      # if running on 10.5 or later, the deployment target defaults
+      # to the OS version, if on x86, and 10.4, the deployment
+      # target defaults to 10.4. Don't you love it?
+      case ${MACOSX_DEPLOYMENT_TARGET-10.0},$host in
+	10.0,*86*-darwin8*|10.0,*-darwin[91]*)
+	  _lt_dar_allow_undefined='$wl-undefined ${wl}dynamic_lookup' ;;
+	10.[012][,.]*)
 	  _lt_dar_allow_undefined='$wl-flat_namespace $wl-undefined ${wl}suppress' ;;
-	*)
+	10.*)
 	  _lt_dar_allow_undefined='$wl-undefined ${wl}dynamic_lookup' ;;
       esac
     ;;
@@ -13973,6 +13978,45 @@ $as_echo "$iperf3_cv_header_so_bindtodevice" >&6; }
 if test "x$iperf3_cv_header_so_bindtodevice" = "xyes"; then
 
 $as_echo "#define HAVE_SO_BINDTODEVICE 1" >>confdefs.h
+
+fi
+
+# Check for IP DF support
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking IP_MTU_DISCOVER or IP_DONTFRAG socket option" >&5
+$as_echo_n "checking IP_MTU_DISCOVER or IP_DONTFRAG socket option... " >&6; }
+if ${iperf3_cv_header_dontfragment+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/socket.h>
+#include <netinet/ip.h>
+#include <netinet/in.h>
+#ifdef IP_MTU_DISCOVER
+  yes
+#endif
+#ifdef IP_DONTFRAG
+  yes
+#endif
+#ifdef IP_DONTFRAGMENT
+  yes
+#endif
+
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "yes" >/dev/null 2>&1; then :
+  iperf3_cv_header_dontfragment=yes
+else
+  iperf3_cv_header_dontfragment=no
+fi
+rm -f conftest*
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $iperf3_cv_header_dontfragment" >&5
+$as_echo "$iperf3_cv_header_dontfragment" >&6; }
+if test "x$iperf3_cv_header_dontfragment" = "xyes"; then
+
+$as_echo "#define HAVE_DONT_FRAGMENT 1" >>confdefs.h
 
 fi
 

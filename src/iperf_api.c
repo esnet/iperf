@@ -394,6 +394,12 @@ iperf_get_test_idle_timeout(struct iperf_test *ipt)
     return ipt->settings->idle_timeout;
 }
 
+int
+iperf_get_dont_fragment(struct iperf_test *ipt)
+{
+    return ipt->settings->dont_fragment;
+}
+
 char*
 iperf_get_test_congestion_control(struct iperf_test* ipt)
 {
@@ -738,6 +744,12 @@ iperf_set_test_idle_timeout(struct iperf_test* ipt, int to)
 }
 
 void
+iperf_set_dont_fragment(struct iperf_test* ipt, int dnf)
+{
+    ipt->settings->dont_fragment = dnf;
+}
+
+void
 iperf_set_test_congestion_control(struct iperf_test* ipt, char* cc)
 {
     ipt->congestion = strdup(cc);
@@ -968,6 +980,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"get-server-output", no_argument, NULL, OPT_GET_SERVER_OUTPUT},
 	{"udp-counters-64bit", no_argument, NULL, OPT_UDP_COUNTERS_64BIT},
  	{"no-fq-socket-pacing", no_argument, NULL, OPT_NO_FQ_SOCKET_PACING},
+#if defined(HAVE_DONT_FRAGMENT)
+	{"dont-fragment", no_argument, NULL, OPT_DONT_FRAGMENT},
+#endif /* HAVE_DONT_FRAGMENT */
 #if defined(HAVE_SSL)
     {"username", required_argument, NULL, OPT_CLIENT_USERNAME},
     {"rsa-public-key-path", required_argument, NULL, OPT_CLIENT_RSA_PUBLIC_KEY},
@@ -1381,6 +1396,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		return -1;
 #endif
 		break;
+#if defined(HAVE_DONT_FRAGMENT)
+        case OPT_DONT_FRAGMENT:
+            test->settings->dont_fragment = 1;
+            client_flag = 1;
+            break;
+#endif /* HAVE_DONT_FRAGMENT */
 #if defined(HAVE_SSL)
         case OPT_CLIENT_USERNAME:
             client_username = strdup(optarg);
@@ -1980,6 +2001,10 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "udp_counters_64bit", iperf_get_test_udp_counters_64bit(test));
 	if (test->repeating_payload)
 	    cJSON_AddNumberToObject(j, "repeating_payload", test->repeating_payload);
+#if defined(HAVE_DONT_FRAGMENT)
+	if (test->settings->dont_fragment)
+	    cJSON_AddNumberToObject(j, "dont_fragment", test->settings->dont_fragment);
+#endif /* HAVE_DONT_FRAGMENT */
 #if defined(HAVE_SSL)
 	/* Send authentication parameters */
 	if (test->settings->client_username && test->settings->client_password && test->settings->client_rsa_pubkey){
@@ -2088,6 +2113,10 @@ get_parameters(struct iperf_test *test)
 	    iperf_set_test_udp_counters_64bit(test, 1);
 	if ((j_p = cJSON_GetObjectItem(j, "repeating_payload")) != NULL)
 	    test->repeating_payload = 1;
+#if defined(HAVE_DONT_FRAGMENT)
+	if ((j_p = cJSON_GetObjectItem(j, "dont_fragment")) != NULL)
+	    test->settings->dont_fragment = j_p->valueint;
+#endif /* HAVE_DONT_FRAGMENT */
 #if defined(HAVE_SSL)
 	if ((j_p = cJSON_GetObjectItem(j, "authtoken")) != NULL)
         test->settings->authtoken = strdup(j_p->valuestring);
@@ -2883,6 +2912,7 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->burst = 0;
     test->settings->mss = 0;
     test->settings->tos = 0;
+    test->settings->dont_fragment = 0;
 
 #if defined(HAVE_SSL)
     if (test->settings->authtoken) {
@@ -4063,6 +4093,45 @@ iperf_init_stream(struct iperf_stream *sp, struct iperf_test *test)
         }
     }
 
+#if defined(HAVE_DONT_FRAGMENT)
+    /* Set Don't Fragment (DF). Only applicable to IPv4/UDP tests. */
+    if (iperf_get_test_protocol_id(test) == Pudp &&
+        getsockdomain(sp->socket) == AF_INET &&
+        iperf_get_dont_fragment(test)) {
+
+        /*
+         * There are multiple implementations of this feature depending on the OS.
+         * We need to handle separately Linux, UNIX, and Windows, as well as
+         * the case that DF isn't supported at all (such as on macOS).
+         */
+#if defined(IP_MTU_DISCOVER) /* Linux version of IP_DONTFRAG */
+        opt = IP_PMTUDISC_DO;
+        if (setsockopt(sp->socket, IPPROTO_IP, IP_MTU_DISCOVER, &opt, sizeof(opt)) < 0) {
+            i_errno = IESETDONTFRAGMENT;
+            return -1;
+        }
+#else
+#if defined(IP_DONTFRAG) /* UNIX does IP_DONTFRAG */
+        opt = 1;
+        if (setsockopt(sp->socket, IPPROTO_IP, IP_DONTFRAG, &opt, sizeof(opt)) < 0) {
+            i_errno = IESETDONTFRAGMENT;
+            return -1;
+        }
+#else
+#if defined(IP_DONTFRAGMENT) /* Windows does IP_DONTFRAGMENT */
+        opt = 1;
+        if (setsockopt(sp->socket, IPPROTO_IP, IP_DONTFRAGMENT, &opt, sizeof(opt)) < 0) {
+            i_errno = IESETDONTFRAGMENT;
+            return -1;
+        }
+#else
+	i_errno = IESETDONTFRAGMENT;
+	return -1;
+#endif /* IP_DONTFRAGMENT */
+#endif /* IP_DONTFRAG */
+#endif /* IP_MTU_DISCOVER */
+    }
+#endif /* HAVE_DONT_FRAGMENT */
     return 0;
 }
 

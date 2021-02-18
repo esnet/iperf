@@ -1,4 +1,4 @@
-# iperf, Copyright (c) 2014-2020, The Regents of the University of
+# iperf, Copyright (c) 2014-2021, The Regents of the University of
 # California, through Lawrence Berkeley National Laboratory (subject
 # to receipt of any required approvals from the U.S. Dept. of
 # Energy).  All rights reserved.
@@ -235,6 +235,27 @@ AC_EGREP_CPP(yes,
 ],iperf3_cv_header_so_bindtodevice=yes,iperf3_cv_header_so_bindtodevice=no))
 if test "x$iperf3_cv_header_so_bindtodevice" = "xyes"; then
     AC_DEFINE([HAVE_SO_BINDTODEVICE], [1], [Have SO_BINDTODEVICE sockopt.])
+fi
+
+# Check for IP DF support
+AC_CACHE_CHECK([IP_MTU_DISCOVER or IP_DONTFRAG socket option],
+[iperf3_cv_header_dontfragment],
+AC_EGREP_CPP(yes,
+[#include <sys/socket.h>
+#include <netinet/ip.h>
+#include <netinet/in.h>
+#ifdef IP_MTU_DISCOVER
+  yes
+#endif
+#ifdef IP_DONTFRAG
+  yes
+#endif
+#ifdef IP_DONTFRAGMENT
+  yes
+#endif
+],iperf3_cv_header_dontfragment=yes,iperf3_cv_header_dontfragment=no))
+if test "x$iperf3_cv_header_dontfragment" = "xyes"; then
+    AC_DEFINE([HAVE_DONT_FRAGMENT], [1], [Have IP_MTU_DISCOVER/IP_DONTFRAG sockopt.])
 fi
 
 # Check if we need -lrt for clock_gettime

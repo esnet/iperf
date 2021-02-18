@@ -1,4 +1,4 @@
-.TH IPERF3 1 "September 2020" ESnet "User Manuals"
+.TH IPERF3 1 "February 2021" ESnet "User Manuals"
 .SH NAME
 iperf3 \- perform network throughput tests
 .SH SYNOPSIS
@@ -396,6 +396,10 @@ The same payload is used in iperf2 (ASCII '0..9' repeating).
 It might help to test and reveal problems in networking gear with hardware
 compression (including some WiFi access points), where iperf2 and iperf3
 perform differently, just based on payload entropy.
+.TP
+.BR --dont-fragment
+Set the IPv4 Don't Fragment (DF) bit on outgoing packets.
+Only applicable to tests doing UDP over IPv4.
 .TP
 .BR --username " \fIusername\fR" 
 username to use for authentication to the iperf server (if built with

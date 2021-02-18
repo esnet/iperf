@@ -433,6 +433,9 @@ iperf_strerror(int int_errno)
 	case IENOMSG:
 	    snprintf(errstr, len, "no message was received for %d seconds", NO_MSG_RCVD_TIMEOUT);
             break;
+    case IESETDONTFRAGMENT:
+	    snprintf(errstr, len, "unable to set IP Do-Not-Fragment flag");
+            break;
 	default:
 	    snprintf(errstr, len, "int_errno=%d", int_errno);
 	    perr = 1;

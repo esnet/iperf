@@ -189,6 +189,9 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  --udp-counters-64bit      use 64-bit counters in UDP test packets\n"
                            "  --repeating-payload       use repeating pattern in payload, instead of\n"
                            "                            randomized payload (like in iperf2)\n"
+#if defined(HAVE_DONT_FRAGMENT)
+                           "  --dont-fragment           set IPv4 Don't Fragment flag\n"
+#endif /* HAVE_DONT_FRAGMENT */
 #if defined(HAVE_SSL)
                            "  --username                username for authentication\n"
                            "  --rsa-public-key-path     path to the RSA public key used to encrypt\n"

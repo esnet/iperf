@@ -460,6 +460,12 @@ iperf_run_client(struct iperf_test * test)
     struct iperf_time now;
     struct timeval* timeout = NULL;
     struct iperf_stream *sp;
+    struct iperf_time last_receive_time;
+    struct iperf_time diff_time;
+    struct timeval used_timeout;
+    int64_t t_usecs;
+    int64_t timeout_us;
+    int64_t rcv_timeout_us;
 
     if (test->logfile)
         if (iperf_open_logfile(test) < 0)
@@ -489,6 +495,10 @@ iperf_run_client(struct iperf_test * test)
 
     /* Begin calculating CPU utilization */
     cpu_util(NULL);
+    if (test->mode != SENDER)
+        rcv_timeout_us = (test->settings->rcv_timeout.secs * SEC_TO_US) + test->settings->rcv_timeout.usecs;
+    else
+        rcv_timeout_us = 0;
 
     startup = 1;
     while (test->state != IPERF_DONE) {
@@ -496,12 +506,44 @@ iperf_run_client(struct iperf_test * test)
 	memcpy(&write_set, &test->write_set, sizeof(fd_set));
 	iperf_time_now(&now);
 	timeout = tmr_timeout(&now);
+
+        // In reverse active mode client ensures data is received
+        if (test->state == TEST_RUNNING && rcv_timeout_us > 0) {
+            timeout_us = -1;
+            if (timeout != NULL) {
+                used_timeout.tv_sec = timeout->tv_sec;
+                used_timeout.tv_usec = timeout->tv_usec;
+                timeout_us = (timeout->tv_sec * SEC_TO_US) + timeout->tv_usec;
+            }
+            if (timeout_us < 0 || timeout_us > rcv_timeout_us) {
+                used_timeout.tv_sec = test->settings->rcv_timeout.secs;
+                used_timeout.tv_usec = test->settings->rcv_timeout.usecs;
+            }
+            timeout = &used_timeout;
+        }
+
 	result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
 	if (result < 0 && errno != EINTR) {
   	    i_errno = IESELECT;
 	    goto cleanup_and_fail;
-	}
+        } else if (result == 0 && test->state == TEST_RUNNING && rcv_timeout_us > 0) {
+            // If nothing was received in non-reverse running state then probably something got stack -
+            // either client, server or network, and test should be terminated.
+            iperf_time_now(&now);
+            if (iperf_time_diff(&now, &last_receive_time, &diff_time) == 0) {
+                t_usecs = iperf_time_in_usecs(&diff_time);
+                if (t_usecs > rcv_timeout_us) {
+                    i_errno = IENOMSG;
+                    goto cleanup_and_fail;
+                }
+
+            }
+        }
+        
 	if (result > 0) {
+            if (rcv_timeout_us > 0) {
+                iperf_time_now(&last_receive_time);
+            }
 	    if (FD_ISSET(test->ctrl_sck, &read_set)) {
  	        if (iperf_handle_message_client(test) < 0) {
 		    goto cleanup_and_fail;

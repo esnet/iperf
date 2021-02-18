@@ -117,7 +117,7 @@ usage()
 void
 usage_long(FILE *f)
 {
-    fprintf(f, usage_longstr, UDP_RATE / (1024*1024), DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE);
+    fprintf(f, usage_longstr, DEFAULT_NO_MSG_RCVD_TIMEOUT, UDP_RATE / (1024*1024), DEFAULT_PACING_TIMER, DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE);
 }
 
 
@@ -398,6 +398,12 @@ int
 iperf_get_dont_fragment(struct iperf_test *ipt)
 {
     return ipt->settings->dont_fragment;
+}
+
+struct iperf_time*
+iperf_get_test_rcv_timeout(struct iperf_test *ipt)
+{
+    return &ipt->settings->rcv_timeout;
 }
 
 char*
@@ -750,6 +756,13 @@ iperf_set_dont_fragment(struct iperf_test* ipt, int dnf)
 }
 
 void
+iperf_set_test_rcv_timeout(struct iperf_test* ipt, struct iperf_time* to)
+{
+    ipt->settings->rcv_timeout.secs = to->secs;
+    ipt->settings->rcv_timeout.usecs = to->usecs;
+}
+
+void
 iperf_set_test_congestion_control(struct iperf_test* ipt, char* cc)
 {
     ipt->congestion = strdup(cc);
@@ -994,6 +1007,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"pacing-timer", required_argument, NULL, OPT_PACING_TIMER},
 	{"connect-timeout", required_argument, NULL, OPT_CONNECT_TIMEOUT},
         {"idle-timeout", required_argument, NULL, OPT_IDLE_TIMEOUT},
+        {"rcv-timeout", required_argument, NULL, OPT_RCV_TIMEOUT},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -1001,7 +1015,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     int flag;
     int portno;
     int blksize;
-    int server_flag, client_flag, rate_flag, duration_flag;
+    int server_flag, client_flag, rate_flag, duration_flag, rcv_timeout_flag;
     char *endptr;
 #if defined(HAVE_CPU_AFFINITY)
     char* comma;
@@ -1009,9 +1023,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     char* slash;
     struct xbind_entry *xbe;
     double farg;
+    int rcv_timeout_in = 0;
 
     blksize = 0;
-    server_flag = client_flag = rate_flag = duration_flag = 0;
+    server_flag = client_flag = rate_flag = duration_flag = rcv_timeout_flag = 0;
 #if defined(HAVE_SSL)
     char *client_username = NULL, *client_rsa_public_key = NULL, *server_rsa_private_key = NULL;
 #endif /* HAVE_SSL */
@@ -1323,6 +1338,16 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 }
 		server_flag = 1;
 	        break;
+            case OPT_RCV_TIMEOUT:
+                rcv_timeout_in = atoi(optarg);
+                if (rcv_timeout_in < MIN_NO_MSG_RCVD_TIMEOUT || rcv_timeout_in > MAX_TIME * SEC_TO_mS) {
+                    i_errno = IERCVTIMEOUT;
+                    return -1;
+                }
+                test->settings->rcv_timeout.secs = rcv_timeout_in / SEC_TO_mS;
+                test->settings->rcv_timeout.usecs = (rcv_timeout_in % SEC_TO_mS) * mS_TO_US;
+                rcv_timeout_flag = 1;
+	        break;
             case 'A':
 #if defined(HAVE_CPU_AFFINITY)
                 test->affinity = strtol(optarg, &endptr, 0);
@@ -1488,6 +1513,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         return -1;
     } else if (test->role == 'c' && (test->server_skew_threshold != 0)){
         i_errno = IESERVERONLY;
+        return -1;
+    } else if (test->role == 'c' && rcv_timeout_flag && test->mode == SENDER){
+        i_errno = IERVRSONLYRCVTIMEOUT;
         return -1;
     } else if (test->role == 's' && (server_rsa_private_key || test->server_authorized_users) && 
         !(server_rsa_private_key && test->server_authorized_users)) {
@@ -2621,12 +2649,15 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->bitrate_limit_interval = 5;
     testp->settings->bitrate_limit_stats_per_interval = 0;
     testp->settings->fqrate = 0;
-    testp->settings->pacing_timer = 1000;
+    testp->settings->pacing_timer = DEFAULT_PACING_TIMER;
     testp->settings->burst = 0;
     testp->settings->mss = 0;
     testp->settings->bytes = 0;
     testp->settings->blocks = 0;
     testp->settings->connect_timeout = -1;
+    testp->settings->rcv_timeout.secs = DEFAULT_NO_MSG_RCVD_TIMEOUT / SEC_TO_mS;
+    testp->settings->rcv_timeout.usecs = (DEFAULT_NO_MSG_RCVD_TIMEOUT % SEC_TO_mS) * mS_TO_US;
+
     memset(testp->cookie, 0, COOKIE_SIZE);
 
     testp->multisend = 10;	/* arbitrary */

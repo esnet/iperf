@@ -970,6 +970,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"zerocopy", no_argument, NULL, 'Z'},
         {"omit", required_argument, NULL, 'O'},
         {"file", required_argument, NULL, 'F'},
+        {"reliable", required_argument, NULL, 'r'},
         {"repeating-payload", no_argument, NULL, OPT_REPEATING_PAYLOAD},
         {"timestamps", optional_argument, NULL, OPT_TIMESTAMPS},
 #if defined(HAVE_CPU_AFFINITY)
@@ -1029,7 +1030,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     char *client_username = NULL, *client_rsa_public_key = NULL, *server_rsa_private_key = NULL;
 #endif /* HAVE_SSL */
 
-    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:rA:T:C:dI:hX:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
 		portno = atoi(optarg);
@@ -1327,6 +1328,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'F':
                 test->diskfile_name = optarg;
+                break;
+            case 'r':
+                test->reliable_receive_in_full = 1;
                 break;
             case OPT_IDLE_TIMEOUT:
                 test->settings->idle_timeout = atoi(optarg);
@@ -2637,6 +2641,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->omit = OMIT;
     testp->duration = DURATION;
     testp->diskfile_name = (char*) 0;
+    testp->reliable_receive_in_full = 0;
     testp->affinity = -1;
     testp->server_affinity = -1;
     TAILQ_INIT(&testp->xbind_addrs);

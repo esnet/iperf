@@ -527,7 +527,7 @@ iperf_run_server(struct iperf_test *test)
                     test->server_forced_no_msg_restarts_count += 1;
                     i_errno = IENOMSG;
                     if (iperf_get_verbose(test))
-                        iperf_err(test, "Server restart (#%d) in active test as message receive timed-out",
+                        iperf_err(test, "Server restart (#%d) during active test due to idle data for receiving data",
                                   test->server_forced_no_msg_restarts_count);
                     cleanup_server(test);
                     return -1;

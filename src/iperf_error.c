@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2020, The Regents of the University of
+ * iperf, Copyright (c) 2014-2021, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -439,7 +439,7 @@ iperf_strerror(int int_errno)
 	    snprintf(errstr, len, "idle timeout parameter is not positive or larget then allowed limit");
             break;
 	case IENOMSG:
-	    snprintf(errstr, len, "message receiving timedout");
+	    snprintf(errstr, len, "idle timeout for receiving data");
             break;
     case IESETDONTFRAGMENT:
 	    snprintf(errstr, len, "unable to set IP Do-Not-Fragment flag");

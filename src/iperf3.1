@@ -171,6 +171,11 @@ timestamps, see
 If this optional format is given, the \fC=\fR must immediately
 follow the \fB--timestamps\fR option with no whitespace intervening.
 .TP
+.BR --rcv-timeout " \fI#\fR"
+set idle timeout for receiving data during active tests. The receiver
+will halt a test if no data is received from the sender for this
+number of ms (default to 12000 ms, or 2 minutes).
+.TP
 .BR -d ", " --debug " "
 emit debugging output.
 Primarily (perhaps exclusively) of use to developers.

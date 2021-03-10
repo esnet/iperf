@@ -604,7 +604,9 @@ iperf_run_server(struct iperf_test *test)
 			{
 			    socklen_t len = TCP_CA_NAME_MAX;
 			    char ca[TCP_CA_NAME_MAX + 1];
-			    if (getsockopt(s, IPPROTO_TCP, TCP_CONGESTION, ca, &len) < 0) {
+                            int rc;
+			    rc = getsockopt(s, IPPROTO_TCP, TCP_CONGESTION, ca, &len);
+                            if (rc < 0 && test->congestion) {
 				saved_errno = errno;
 				close(s);
 				cleanup_server(test);
@@ -621,7 +623,11 @@ iperf_run_server(struct iperf_test *test)
                             if (test->congestion_used != NULL) {
                                 free(test->congestion_used);
                             }
-                            test->congestion_used = strdup(ca);
+                            // Set actual used congestion alg, or set to unknown if could not get it
+                            if (rc < 0)
+                                test->congestion_used = strdup("unknown");
+                            else
+                                test->congestion_used = strdup(ca);
 			    if (test->debug) {
 				printf("Congestion algorithm is %s\n", test->congestion_used);
 			    }

@@ -440,8 +440,11 @@ iperf_client_end(struct iperf_test *test)
     /* show final summary */
     test->reporter_callback(test);
 
-    if (iperf_set_send_state(test, IPERF_DONE) != 0)
-        return -1;
+    // Send response only if no error in server
+    if (test->state > 0) {
+        if (iperf_set_send_state(test, IPERF_DONE) != 0)
+            return -1;
+    }
 
     /* Close control socket */
     if (test->ctrl_sck)

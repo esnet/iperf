@@ -34,7 +34,7 @@
 int
 main(int argc, char **argv)
 {
-    char     cookie[37];
+    char     cookie[37 + 1];
     make_cookie(cookie);
     printf("cookie: '%s'\n", cookie);
     if (strlen(cookie) != 36)

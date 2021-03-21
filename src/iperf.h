@@ -352,7 +352,7 @@ struct iperf_test
     uint server_forced_no_msg_restarts_count;    /* count number of forced server restarts to make sure it is not stack */
     uint server_test_number;                     /* count number of tests performed by a server */
 
-    char      cookie[COOKIE_SIZE];
+    char      cookie[COOKIE_SIZE + 1];
 //    struct iperf_stream *streams;               /* pointer to list of struct stream */
     SLIST_HEAD(slisthead, iperf_stream) streams;
     struct iperf_settings *settings;

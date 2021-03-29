@@ -827,6 +827,8 @@ iperf_on_test_start(struct iperf_test *test)
 	    else
 		iperf_printf(test, test_start_time, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->duration, test->settings->tos);
 	}
+	if (test->title)
+	  iperf_printf(test, test_start_title, test->title);
     }
 }
 

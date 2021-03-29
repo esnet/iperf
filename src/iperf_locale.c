@@ -185,7 +185,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 #endif /* HAVE_FLOWLABEL */
                            "  -Z, --zerocopy            use a 'zero copy' method of sending data\n"
                            "  -O, --omit N              omit the first n seconds\n"
-                           "  -T, --title str           prefix every output line with this string\n"
+                           "  -T, --title str           prefix every output line with this string; Logged on the server\n"
                            "  --extra-data str          data string to include in client and server JSON\n"
                            "  --get-server-output       get results from server\n"
                            "  --udp-counters-64bit      use 64-bit counters in UDP test packets\n"
@@ -282,6 +282,8 @@ const char test_start_bytes[] =
 const char test_start_blocks[] =
 "Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %d blocks to send, tos %d\n";
 
+const char test_start_title[] =
+"Client set test title: %s\n";
 
 /* -------------------------------------------------------------------
  * reports

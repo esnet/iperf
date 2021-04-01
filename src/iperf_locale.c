@@ -283,7 +283,7 @@ const char test_start_blocks[] =
 "Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %d blocks to send, tos %d\n";
 
 const char test_start_title[] =
-"Client set test title: %s\n";
+"Test title: %s\n";
 
 /* -------------------------------------------------------------------
  * reports

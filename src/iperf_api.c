@@ -4557,10 +4557,11 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
 	char linebuffer[1024];
 	int i = 0;
 	if (ct) {
-	    i = sprintf(linebuffer, "%s", ct);
+	    i = snprintf(linebuffer, sizeof(linebuffer), "%s", ct);
 	}
 	va_start(argp, format);
-	r = vsnprintf(linebuffer + i, sizeof(linebuffer), format, argp);
+	r = vsnprintf(linebuffer + i, sizeof(linebuffer) - i, format, argp);
+        r += i;
 	va_end(argp);
 	fprintf(test->outfile, "%s", linebuffer);
 

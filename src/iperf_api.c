@@ -4512,7 +4512,8 @@ iperf_clearaffinity(struct iperf_test *test)
 #endif /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY nor HAVE_SETPROCESSAFFINITYMASK */
 }
 
-char iperf_timestr[100];
+static char iperf_timestr[100];
+static char linebuffer[1024];
 
 int
 iperf_printf(struct iperf_test *test, const char* format, ...)
@@ -4564,7 +4565,6 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
         r += r0;
     }
     else if (test->role == 's') {
-	char linebuffer[1024];
 	if (ct) {
 	    r0 = snprintf(linebuffer, sizeof(linebuffer), "%s", ct);
             if (r0 < 0)

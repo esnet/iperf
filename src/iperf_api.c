@@ -4518,7 +4518,7 @@ int
 iperf_printf(struct iperf_test *test, const char* format, ...)
 {
     va_list argp;
-    int r = -1;
+    int r = 0, r0;
     time_t now;
     struct tm *ltm = NULL;
     char *ct = NULL;
@@ -4545,24 +4545,38 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
      */
     if (test->role == 'c') {
 	if (ct) {
-	    fprintf(test->outfile, "%s", ct);
+            r0 = fprintf(test->outfile, "%s", ct);
+            if (r0 < 0)
+                return r0;
+            r += r0;
 	}
-	if (test->title)
-	    fprintf(test->outfile, "%s:  ", test->title);
+	if (test->title) {
+	    r0 = fprintf(test->outfile, "%s:  ", test->title);
+            if (r0 < 0)
+                return r0;
+            r += r0;
+        }
 	va_start(argp, format);
-	r = vfprintf(test->outfile, format, argp);
+	r0 = vfprintf(test->outfile, format, argp);
 	va_end(argp);
+        if (r0 < 0)
+            return r0;
+        r += r0;
     }
     else if (test->role == 's') {
 	char linebuffer[1024];
-	int i = 0;
 	if (ct) {
-	    i = snprintf(linebuffer, sizeof(linebuffer), "%s", ct);
+	    r0 = snprintf(linebuffer, sizeof(linebuffer), "%s", ct);
+            if (r0 < 0)
+                return r0;
+            r += r0;
 	}
 	va_start(argp, format);
-	r = vsnprintf(linebuffer + i, sizeof(linebuffer) - i, format, argp);
-        r += i;
+	r0 = vsnprintf(linebuffer + r, sizeof(linebuffer) - r, format, argp);
 	va_end(argp);
+        if (r0 < 0)
+            return r0;
+        r += r0;
 	fprintf(test->outfile, "%s", linebuffer);
 
 	if (test->role == 's' && iperf_get_test_get_server_output(test)) {

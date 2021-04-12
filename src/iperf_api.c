@@ -4571,12 +4571,15 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
                 return r0;
             r += r0;
 	}
-	va_start(argp, format);
-	r0 = vsnprintf(linebuffer + r, sizeof(linebuffer) - r, format, argp);
-	va_end(argp);
-        if (r0 < 0)
-            return r0;
-        r += r0;
+        /* Should always be true as long as sizeof(ct) < sizeof(linebuffer) */
+        if (r < sizeof(linebuffer)) {
+            va_start(argp, format);
+            r0 = vsnprintf(linebuffer + r, sizeof(linebuffer) - r, format, argp);
+            va_end(argp);
+            if (r0 < 0)
+                return r0;
+            r += r0;
+        }
 	fprintf(test->outfile, "%s", linebuffer);
 
 	if (test->role == 's' && iperf_get_test_get_server_output(test)) {

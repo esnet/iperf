@@ -155,10 +155,10 @@ iperf_accept(struct iperf_test *test)
 	 */
         if (Nwrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp) < 0) {
             if (test->debug)
-                printf("failed to send ACCESS_DENIED to an unsolicited connection requist during active test\n");
+                printf("failed to send ACCESS_DENIED to an unsolicited connection request during active test\n");
         } else {
             if (test->debug)
-                printf("successfully sent ACCESS_DENIED to an unsolicited connection requist during active test\n");
+                printf("successfully sent ACCESS_DENIED to an unsolicited connection request during active test\n");
         }
         close(s);
     }

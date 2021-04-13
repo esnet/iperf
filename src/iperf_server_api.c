@@ -150,10 +150,15 @@ iperf_accept(struct iperf_test *test)
 	/*
 	 * Don't try to read from the socket.  It could block an ongoing test. 
 	 * Just send ACCESS_DENIED.
+         * Also, if sending failed, don't return an error, as the request is not related
+         * to the ongoing test, and returning an error will terminate the test.
 	 */
         if (Nwrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp) < 0) {
-            i_errno = IESENDMESSAGE;
-            return -1;
+            if (test->debug)
+                printf("failed to send ACCESS_DENIED to an unsolicited connection requist during active test\n");
+        } else {
+            if (test->debug)
+                printf("successfully sent ACCESS_DENIED to an unsolicited connection requist during active test\n");
         }
         close(s);
     }

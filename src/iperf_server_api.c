@@ -580,6 +580,8 @@ iperf_run_server(struct iperf_test *test)
                         return -1;
 		    }
 
+                    if (!is_closed(s)) {
+
 #if defined(HAVE_TCP_CONGESTION)
 		    if (test->protocol->id == Ptcp) {
 			if (test->congestion) {
@@ -639,8 +641,6 @@ iperf_run_server(struct iperf_test *test)
 			}
 		    }
 #endif /* HAVE_TCP_CONGESTION */
-
-                    if (!is_closed(s)) {
 
                         if (rec_streams_accepted != streams_to_rec) {
                             flag = 0;

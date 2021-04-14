@@ -4512,14 +4512,13 @@ iperf_clearaffinity(struct iperf_test *test)
 #endif /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY nor HAVE_SETPROCESSAFFINITYMASK */
 }
 
-static char iperf_timestr[100];
-static char linebuffer[1024];
+char iperf_timestr[100];
 
 int
 iperf_printf(struct iperf_test *test, const char* format, ...)
 {
     va_list argp;
-    int r = 0, r0;
+    int r = -1;
     time_t now;
     struct tm *ltm = NULL;
     char *ct = NULL;
@@ -4546,40 +4545,23 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
      */
     if (test->role == 'c') {
 	if (ct) {
-            r0 = fprintf(test->outfile, "%s", ct);
-            if (r0 < 0)
-                return r0;
-            r += r0;
+	    fprintf(test->outfile, "%s", ct);
 	}
-	if (test->title) {
-	    r0 = fprintf(test->outfile, "%s:  ", test->title);
-            if (r0 < 0)
-                return r0;
-            r += r0;
-        }
+	if (test->title)
+	    fprintf(test->outfile, "%s:  ", test->title);
 	va_start(argp, format);
-	r0 = vfprintf(test->outfile, format, argp);
+	r = vfprintf(test->outfile, format, argp);
 	va_end(argp);
-        if (r0 < 0)
-            return r0;
-        r += r0;
     }
     else if (test->role == 's') {
+	char linebuffer[1024];
+	int i = 0;
 	if (ct) {
-	    r0 = snprintf(linebuffer, sizeof(linebuffer), "%s", ct);
-            if (r0 < 0)
-                return r0;
-            r += r0;
+	    i = sprintf(linebuffer, "%s", ct);
 	}
-        /* Should always be true as long as sizeof(ct) < sizeof(linebuffer) */
-        if (r < sizeof(linebuffer)) {
-            va_start(argp, format);
-            r0 = vsnprintf(linebuffer + r, sizeof(linebuffer) - r, format, argp);
-            va_end(argp);
-            if (r0 < 0)
-                return r0;
-            r += r0;
-        }
+	va_start(argp, format);
+	r = vsnprintf(linebuffer + i, sizeof(linebuffer), format, argp);
+	va_end(argp);
 	fprintf(test->outfile, "%s", linebuffer);
 
 	if (test->role == 's' && iperf_get_test_get_server_output(test)) {

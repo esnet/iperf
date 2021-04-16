@@ -4202,21 +4202,22 @@ static int
 diskfile_send(struct iperf_stream *sp)
 {
     int r;
-    int buffer_left=0; // represents total data in buffer to be sent out 
+    int buffer_left = sp->diskfile_left; // represents total data in buffer to be sent out
     static int rtot;
 
     /* if needed, read enough data from the disk to fill up the buffer */
     if (sp->diskfile_left < sp->test->settings->blksize && !sp->test->done) {
     	r = read(sp->diskfile_fd, sp->buffer, sp->test->settings->blksize -
     		 sp->diskfile_left);
-        buffer_left = r + sp->diskfile_left;
+        buffer_left += r;
     	rtot += r;
     	if (sp->test->debug) {
     	    printf("read %d bytes from file, %d total\n", r, rtot);	    
     	}
 
-        // a.k.a.  buffer_left != sp->test->settings->blksize
-        if (r != sp->test->settings->blksize - sp->diskfile_left){
+        // If the buffer doesn't contain a full buffer at this point,
+        // adjust the size of the data to send.
+        if (buffer_left != sp->test->settings->blksize) {
             if (sp->test->debug) 
                 printf("possible eof\n");
             // setting data size to be sent, 
@@ -4224,10 +4225,9 @@ diskfile_send(struct iperf_stream *sp)
             // (to be used by iperf_tcp_send, etc.)
             sp->pending_size = buffer_left; 
         }
-
     	
-    	if (r == 0 && sp->diskfile_left == 0) {
-        // a.k.a. buffer_left == 0
+        // If there's no work left, we're done.
+        if (buffer_left == 0) {
     	    sp->test->done = 1;
     	    if (sp->test->debug)
     		  printf("done\n");

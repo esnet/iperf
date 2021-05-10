@@ -375,6 +375,7 @@ iperf_tcp_connect(struct iperf_test *test)
     socklen_t optlen;
     int saved_errno;
     int rcvbuf_actual, sndbuf_actual;
+    useconds_t sleepTime;
 
     if (test->bind_address) {
         memset(&hints, 0, sizeof(hints));
@@ -396,6 +397,12 @@ iperf_tcp_connect(struct iperf_test *test)
         i_errno = IESTREAMCONNECT;
         return -1;
     }
+
+    /* for CC hack, sleep for a random number of usec between 0 and 500 ms */ 
+    srand(time(0));
+    sleepTime = (useconds_t)(((rand() % 5) + 1) * 1000); 
+    /* printf("DEBUG: sleeping for %d us \n", sleepTime); */
+    usleep(sleepTime);
 
     if ((s = socket(server_res->ai_family, SOCK_STREAM, 0)) < 0) {
 	if (test->bind_address)

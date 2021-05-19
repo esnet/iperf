@@ -277,6 +277,7 @@ int has_tcpinfo_retransmits(void);
 void save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp);
 long get_total_retransmits(struct iperf_interval_results *irp);
 long get_snd_cwnd(struct iperf_interval_results *irp);
+long get_snd_wnd(struct iperf_interval_results *irp);
 long get_rtt(struct iperf_interval_results *irp);
 long get_rttvar(struct iperf_interval_results *irp);
 long get_pmtu(struct iperf_interval_results *irp);

@@ -39,7 +39,11 @@
 #ifndef _GNU_SOURCE
 # define _GNU_SOURCE
 #endif
+#ifdef HAVE_LINUX_TCP_H
+#include <linux/tcp.h>
+#else
 #include <netinet/tcp.h>
+#endif
 #include <net/if.h> // for IFNAMSIZ
 
 #if defined(HAVE_CPUSET_SETAFFINITY)
@@ -100,6 +104,7 @@ struct iperf_interval_results
     int interval_retrans;
     int interval_sacks;
     int snd_cwnd;
+    int snd_wnd;
     TAILQ_ENTRY(iperf_interval_results) irlistentries;
     void     *custom_data;
     int rtt;
@@ -123,6 +128,7 @@ struct iperf_stream_result
     int stream_sum_rtt;
     int stream_count_rtt;
     int stream_max_snd_cwnd;
+    int stream_max_snd_wnd;
     struct iperf_time start_time;
     struct iperf_time end_time;
     struct iperf_time start_time_fixed;

@@ -113,6 +113,8 @@ AC_ARG_WITH([sctp],
     ]
 )
 
+AC_CHECK_HEADERS([linux/tcp.h])
+
 # Check for SCTP support
 if $try_sctp; then
 AC_CHECK_HEADERS([sys/socket.h])
@@ -256,6 +258,19 @@ AC_EGREP_CPP(yes,
 ],iperf3_cv_header_dontfragment=yes,iperf3_cv_header_dontfragment=no))
 if test "x$iperf3_cv_header_dontfragment" = "xyes"; then
     AC_DEFINE([HAVE_DONT_FRAGMENT], [1], [Have IP_MTU_DISCOVER/IP_DONTFRAG sockopt.])
+fi
+
+AC_CHECK_MEMBER([struct tcp_info.tcpi_snd_wnd],
+[iperf3_cv_header_tcp_info_snd_wnd=yes], [iperf3_cv_header_tcp_info_snd_wnd=no],
+[#ifdef HAVE_LINUX_TCP_H
+#include <linux/tcp.h>
+#else
+#include <netinet/tcp.h>
+#endif
+])
+
+if test "x$iperf3_cv_header_tcp_info_snd_wnd" = "xyes"; then
+  AC_DEFINE([HAVE_TCP_INFO_SND_WND], [1], [Have tcpi_snd_wnd field in tcp_info.])
 fi
 
 # Check if we need -lrt for clock_gettime

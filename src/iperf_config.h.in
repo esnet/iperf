@@ -30,6 +30,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if you have the <linux/tcp.h> header file. */
+#undef HAVE_LINUX_TCP_H
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
@@ -89,6 +92,9 @@
 
 /* Have TCP_CONGESTION sockopt. */
 #undef HAVE_TCP_CONGESTION
+
+/* Have tcpi_snd_wnd field in tcp_info. */
+#undef HAVE_TCP_INFO_SND_WND
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H

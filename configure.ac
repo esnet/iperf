@@ -24,7 +24,7 @@
 # file for complete information.
 
 # Initialize the autoconf system for the specified tool, version and mailing list
-AC_INIT(iperf, 3.9+, https://github.com/esnet/iperf, iperf, https://software.es.net/iperf/)
+AC_INIT([iperf],[3.9+],[https://github.com/esnet/iperf],[iperf],[https://software.es.net/iperf/])
 m4_include([config/ax_check_openssl.m4])
 m4_include([config/iperf_config_static_bin.m4])
 AC_LANG(C)
@@ -49,7 +49,7 @@ AC_CANONICAL_HOST
 AC_PROG_CC
 AC_PROG_RANLIB
 AC_PROG_LN_S
-AC_PROG_LIBTOOL
+LT_INIT
 
 # Add -Wall if we are using GCC.
 if test "x$GCC" = "xyes"; then
@@ -62,7 +62,15 @@ AC_ARG_ENABLE([profiling],
 AM_CONDITIONAL([ENABLE_PROFILING], [test x$enable_profiling = xyes])
 
 # Checks for header files.
-AC_HEADER_STDC
+m4_warn([obsolete],
+[The preprocessor macro `STDC_HEADERS' is obsolete.
+  Except in unusual embedded environments, you can safely include all
+  ISO C90 headers unconditionally.])dnl
+# Autoupdate added the next two lines to ensure that your configure
+# script's behavior did not change.  They are probably safe to remove.
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 
 # Check for systems which need -lsocket and -lnsl
 #AX_LIB_SOCKET_NSL
@@ -278,4 +286,5 @@ AC_SEARCH_LIBS(clock_gettime, [rt posix4])
 # Check for clock_gettime support
 AC_CHECK_FUNCS([clock_gettime])
 
-AC_OUTPUT([Makefile src/Makefile src/version.h examples/Makefile iperf3.spec])
+AC_CONFIG_FILES([Makefile src/Makefile src/version.h examples/Makefile iperf3.spec])
+AC_OUTPUT

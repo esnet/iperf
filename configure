@@ -1747,6 +1747,66 @@ printf "%s\n" "$ac_res" >&6; }
   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
 
 } # ac_fn_c_check_func
+
+# ac_fn_c_check_member LINENO AGGR MEMBER VAR INCLUDES
+# ----------------------------------------------------
+# Tries to find if the field MEMBER exists in type AGGR, after including
+# INCLUDES, setting cache variable VAR accordingly.
+ac_fn_c_check_member ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $2.$3" >&5
+printf %s "checking for $2.$3... " >&6; }
+if eval test \${$4+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$5
+int
+main (void)
+{
+static $2 ac_aggr;
+if (ac_aggr.$3)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  eval "$4=yes"
+else $as_nop
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$5
+int
+main (void)
+{
+static $2 ac_aggr;
+if (sizeof ac_aggr.$3)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  eval "$4=yes"
+else $as_nop
+  eval "$4=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+eval ac_res=\$$4
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_c_check_member
 ac_configure_args_raw=
 for ac_arg
 do
@@ -14031,6 +14091,14 @@ else $as_nop
 fi
 
 
+ac_fn_c_check_header_compile "$LINENO" "linux/tcp.h" "ac_cv_header_linux_tcp_h" "$ac_includes_default"
+if test "x$ac_cv_header_linux_tcp_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_LINUX_TCP_H 1" >>confdefs.h
+
+fi
+
+
 # Check for SCTP support
 if $try_sctp; then
 ac_fn_c_check_header_compile "$LINENO" "sys/socket.h" "ac_cv_header_sys_socket_h" "$ac_includes_default"
@@ -14847,6 +14915,27 @@ printf "%s\n" "$iperf3_cv_header_dontfragment" >&6; }
 if test "x$iperf3_cv_header_dontfragment" = "xyes"; then
 
 printf "%s\n" "#define HAVE_DONT_FRAGMENT 1" >>confdefs.h
+
+fi
+
+ac_fn_c_check_member "$LINENO" "struct tcp_info" "tcpi_snd_wnd" "ac_cv_member_struct_tcp_info_tcpi_snd_wnd" "#ifdef HAVE_LINUX_TCP_H
+#include <linux/tcp.h>
+#else
+#include <netinet/tcp.h>
+#endif
+
+"
+if test "x$ac_cv_member_struct_tcp_info_tcpi_snd_wnd" = xyes
+then :
+  iperf3_cv_header_tcp_info_snd_wnd=yes
+else $as_nop
+  iperf3_cv_header_tcp_info_snd_wnd=no
+fi
+
+
+if test "x$iperf3_cv_header_tcp_info_snd_wnd" = "xyes"; then
+
+printf "%s\n" "#define HAVE_TCP_INFO_SND_WND 1" >>confdefs.h
 
 fi
 

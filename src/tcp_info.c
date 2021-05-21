@@ -145,6 +145,26 @@ get_snd_cwnd(struct iperf_interval_results *irp)
 
 /*************************************************************/
 /*
+ * Return snd_wnd in octets.
+ */
+long
+get_snd_wnd(struct iperf_interval_results *irp)
+{
+#if !defined(HAVE_TCP_INFO_SND_WND)
+    return -1;
+#elif defined(linux) && defined(TCP_MD5SIG)
+    return irp->tcpInfo.tcpi_snd_wnd;
+#elif defined(__FreeBSD__) && __FreeBSD_version >= 600000
+    return irp->tcpInfo.tcpi_snd_wnd;
+#elif defined(__NetBSD__) && defined(TCP_INFO)
+    return irp->tcpInfo.tcpi_snd_wnd * irp->tcpInfo.tcpi_snd_mss;
+#else
+    return -1;
+#endif
+}
+
+/*************************************************************/
+/*
  * Return rtt in usec.
  */
 long

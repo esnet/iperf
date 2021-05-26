@@ -1,6 +1,62 @@
 iperf3 Release Notes
 ====================
 
+iperf 3.10 2021-05-xx
+---------------------
+
+* Notable user-visible changes
+
+  * Fix a bug where some --reverse tests didn't terminate (#982 /
+    #1054).
+
+  * Responsiveness of control connections is slightly improved (#1045
+    / #1046 / #1063).
+
+  * The allowable clock skew when doing authentication between client
+    and server is now configurable with the new --time-skew-threshold
+    (#1065 / #1070).
+
+  * Bitrate throttling using the -b option now works when a burst size
+    is specified (#1090).
+
+  * A bug with calculating CPU utilization has been fixed (#1076 /
+    #1077).
+
+  * A --bind-dev option to support binding sockets to a given network
+    interface has been added to make iperf3 work better with
+    multi-homed machines and/or VRFs (#817 / #1089 / #1097).
+
+  * --pidfile now works with --client mode (#1110).
+
+  * The server is now less likely to get stuck due to network errors
+    (#1101, #1125), controlled by the new --rcv-timeout option.
+
+  * Fixed a few bugs in termination conditions for byte or
+    block-limited tests (#1113, #1114, #1115).
+
+  * Added tcp_info.snd_wnd to JSON output (#1148).
+
+  * Some bugs with garbled JSON output have been fixed (#1086, #1118,
+    #1143 / #1146).
+
+  * Support for setting the IPv4 don't-fragment (DF) bit has been
+    added with the new --dont-fragment option (#1119).
+
+  * A failure with not being able to read the congestion control
+    algorithm under WSL1 has been fixed (#1061 / #1126).
+
+  * Error handling and error messages now make more sense in cases
+    where sockets were not successfully opened (#1129 / #1132 /
+    #1136, #1135 / #1138, #1128 / #1139).
+
+  * Some buffer overflow hazards were fixed (#1134).
+
+* Notable developer-visible changes
+
+  * It is now possible to use the API to set/get the congestion
+    control algorithm (#1036 / #1112).
+
+
 iperf 3.9 2020-08-17
 --------------------
 

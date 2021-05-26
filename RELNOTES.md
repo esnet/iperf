@@ -34,7 +34,10 @@ iperf 3.10 2021-05-xx
   * Fixed a few bugs in termination conditions for byte or
     block-limited tests (#1113, #1114, #1115).
 
-  * Some bugs with garbled JSON output have been fixed (#1086, #1118).
+  * Added tcp_info.snd_wnd to JSON output (#1148).
+
+  * Some bugs with garbled JSON output have been fixed (#1086, #1118,
+    #1143 / #1146).
 
   * Support for setting the IPv4 don't-fragment (DF) bit has been
     added with the new --dont-fragment option (#1119).

@@ -1,6 +1,17 @@
 iperf3 Project News
 ===================
 
+2021-05-26:  iperf-3.10 released
+---------------------------------
+
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.10.tar.gz
+| SHA256:  ``4390982928542256c17d6dd1f56eede9092649ebfd8a97c8cecfad12d238ad57  iperf-3.10.tar.gz``
+
+iperf 3.10 is principally a bugfix release. A few new features have
+been added (``--time-skew-threshold``, ``--bind-dev``,
+``--rcv-timeout``, and ``--dont-fragment``).  More information on
+these new features can be found in the release notes.
+
 2020-08-17:  iperf-3.9 released
 ---------------------------------
 

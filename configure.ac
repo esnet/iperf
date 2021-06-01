@@ -62,13 +62,6 @@ AC_ARG_ENABLE([profiling],
 AM_CONDITIONAL([ENABLE_PROFILING], [test x$enable_profiling = xyes])
 
 # Checks for header files.
-m4_warn([obsolete],
-[The preprocessor macro `STDC_HEADERS' is obsolete.
-  Except in unusual embedded environments, you can safely include all
-  ISO C90 headers unconditionally.])dnl
-# Autoupdate added the next two lines to ensure that your configure
-# script's behavior did not change.  They are probably safe to remove.
-AC_CHECK_INCLUDES_DEFAULT
 AC_PROG_EGREP
 
 
@@ -173,12 +166,11 @@ fi
 # Check for TCP_CONGESTION sockopt (believed to be Linux and FreeBSD only)
 AC_CACHE_CHECK([TCP_CONGESTION socket option],
 [iperf3_cv_header_tcp_congestion],
-AC_EGREP_CPP(yes,
-[#include <netinet/tcp.h>
-#ifdef TCP_CONGESTION
-  yes
-#endif
-],iperf3_cv_header_tcp_congestion=yes,iperf3_cv_header_tcp_congestion=no))
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <netinet/tcp.h>]],
+                   [[int foo = TCP_CONGESTION;]])],
+  iperf3_cv_header_tcp_congestion=yes,
+  iperf3_cv_header_tcp_congestion=no))
 if test "x$iperf3_cv_header_tcp_congestion" = "xyes"; then
     AC_DEFINE([HAVE_TCP_CONGESTION], [1], [Have TCP_CONGESTION sockopt.])
 fi
@@ -189,13 +181,12 @@ fi
 # copy, see src/flowlabel.h for more details).
 AC_CACHE_CHECK([IPv6 flowlabel support],
 [iperf3_cv_header_flowlabel],
-AC_EGREP_CPP(yes,
-[#include <sys/types.h>
-#include <linux/in6.h>
-#ifdef IPV6_FLOWLABEL_MGR
-  yes
-#endif
-],iperf3_cv_header_flowlabel=yes,iperf3_cv_header_flowlabel=no))
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <sys/types.h>]],
+                   [[#include <linux/in6.h>]],
+                   [[int foo = IPV6_FLOWLABEL_MGR;]])],
+  iperf3_cv_header_flowlabel=yes,
+  iperf3_cv_header_flowlabel=no))
 if test "x$iperf3_cv_header_flowlabel" = "xyes"; then
     AC_DEFINE([HAVE_FLOWLABEL], [1], [Have IPv6 flowlabel support.])
 fi
@@ -224,12 +215,11 @@ AC_CHECK_FUNCS([getline])
 # Check for packet pacing socket option (Linux only for now).
 AC_CACHE_CHECK([SO_MAX_PACING_RATE socket option],
 [iperf3_cv_header_so_max_pacing_rate],
-AC_EGREP_CPP(yes,
-[#include <sys/socket.h>
-#ifdef SO_MAX_PACING_RATE
-  yes
-#endif
-],iperf3_cv_header_so_max_pacing_rate=yes,iperf3_cv_header_so_max_pacing_rate=no))
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <sys/socket.h>]],
+                   [[int foo = SO_MAX_PACING_RATE;]])],
+  iperf3_cv_header_so_max_pacing_rate=yes,
+  iperf3_cv_header_so_max_pacing_rate=no))
 if test "x$iperf3_cv_header_so_max_pacing_rate" = "xyes"; then
     AC_DEFINE([HAVE_SO_MAX_PACING_RATE], [1], [Have SO_MAX_PACING_RATE sockopt.])
 fi
@@ -237,12 +227,11 @@ fi
 # Check for SO_BINDTODEVICE sockopt (believed to be Linux only)
 AC_CACHE_CHECK([SO_BINDTODEVICE socket option],
 [iperf3_cv_header_so_bindtodevice],
-AC_EGREP_CPP(yes,
-[#include <sys/socket.h>
-#ifdef SO_BINDTODEVICE
-  yes
-#endif
-],iperf3_cv_header_so_bindtodevice=yes,iperf3_cv_header_so_bindtodevice=no))
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <sys/socket.h>]],
+                   [[int foo = SO_BINDTODEVICE;]])],
+  iperf3_cv_header_so_bindtodevice=yes,
+  iperf3_cv_header_so_bindtodevice=no))
 if test "x$iperf3_cv_header_so_bindtodevice" = "xyes"; then
     AC_DEFINE([HAVE_SO_BINDTODEVICE], [1], [Have SO_BINDTODEVICE sockopt.])
 fi

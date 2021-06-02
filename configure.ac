@@ -183,8 +183,8 @@ fi
 AC_CACHE_CHECK([IPv6 flowlabel support],
 [iperf3_cv_header_flowlabel],
 AC_COMPILE_IFELSE(
-  [AC_LANG_PROGRAM([[#include <sys/types.h>]],
-                   [[#include <linux/in6.h>]],
+  [AC_LANG_PROGRAM([[#include <sys/types.h>
+                     #include <linux/in6.h>]],
                    [[int foo = IPV6_FLOWLABEL_MGR;]])],
   iperf3_cv_header_flowlabel=yes,
   iperf3_cv_header_flowlabel=no))
@@ -292,6 +292,9 @@ if test "x$iperf3_cv_header_dontfragment" = "xyes"; then
     AC_DEFINE([HAVE_DONT_FRAGMENT], [1], [Have IP_MTU_DISCOVER/IP_DONTFRAG/IP_DONTFRAGMENT sockopt.])
 fi
 
+#
+# Check for tcpi_snd_wnd in struct tcp_info
+#
 AC_CHECK_MEMBER([struct tcp_info.tcpi_snd_wnd],
 [iperf3_cv_header_tcp_info_snd_wnd=yes], [iperf3_cv_header_tcp_info_snd_wnd=no],
 [#ifdef HAVE_LINUX_TCP_H

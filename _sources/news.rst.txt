@@ -1,8 +1,18 @@
 iperf3 Project News
 ===================
 
+2021-06-02:  iperf-3.10.1 released
+----------------------------------
+
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.10.1.tar.gz
+| SHA256:  ``03bc9760cc54a245191d46bfc8edaf8a4750f0e87abca6764486972044d6715a  iperf-3.10.1.tar.gz``
+
+iperf 3.10.1 fixes a problem with the configure script that made it
+make not work correctly in some circumstances. It is functionally
+identical to iperf 3.10.
+
 2021-05-26:  iperf-3.10 released
----------------------------------
+--------------------------------
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.10.tar.gz
 | SHA256:  ``4390982928542256c17d6dd1f56eede9092649ebfd8a97c8cecfad12d238ad57  iperf-3.10.tar.gz``

@@ -62,13 +62,6 @@ AC_ARG_ENABLE([profiling],
     AS_HELP_STRING([--enable-profiling], [Enable iperf3 profiling binary]))
 AM_CONDITIONAL([ENABLE_PROFILING], [test x$enable_profiling = xyes])
 
-# Checks for header files.
-AC_PROG_EGREP
-
-
-# Check for systems which need -lsocket and -lnsl
-#AX_LIB_SOCKET_NSL
-
 # Check for the math library (needed by cjson on some platforms)
 AC_SEARCH_LIBS(floor, [m], [], [
 echo "floor()"

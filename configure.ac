@@ -240,8 +240,8 @@ fi
 AC_CACHE_CHECK([IP_MTU_DISCOVER socket option],
 [iperf3_cv_header_ip_mtu_discover],
 AC_COMPILE_IFELSE(
-  [AC_LANG_PROGRAM([[#include <sys/socket.h>
-                     #include <netinet/ip.h>
+  [AC_LANG_PROGRAM([[#include <sys/types.h>
+                     #include <sys/socket.h>
                      #include <netinet/in.h>]],
                    [[int foo = IP_MTU_DISCOVER;]])],
   iperf3_cv_header_ip_mtu_discover=yes,
@@ -254,8 +254,8 @@ fi
 AC_CACHE_CHECK([IP_DONTFRAG socket option],
 [iperf3_cv_header_ip_dontfrag],
 AC_COMPILE_IFELSE(
-  [AC_LANG_PROGRAM([[#include <sys/socket.h>
-                     #include <netinet/ip.h>,
+  [AC_LANG_PROGRAM([[#include <sys/types.h>
+                     #include <sys/socket.h>
                      #include <netinet/in.h>]],
                    [[int foo = IP_DONTFRAG;]])],
   iperf3_cv_header_ip_dontfrag=yes,
@@ -268,8 +268,8 @@ fi
 AC_CACHE_CHECK([IP_DONTFRAGMENT socket option],
 [iperf3_cv_header_ip_dontfragment],
 AC_COMPILE_IFELSE(
-  [AC_LANG_PROGRAM([[#include <sys/socket.h>,
-                     #include <netinet/ip.h>,
+  [AC_LANG_PROGRAM([[#include <sys/types.h>
+                     #include <sys/socket.h>
                      #include <netinet/in.h>]],
                    [[int foo = IP_DONTFRAGMENT;]])],
   iperf3_cv_header_ip_dontfragment=yes,
@@ -279,14 +279,14 @@ if test "x$iperf3_cv_header_ip_dontfragment" = "xyes"; then
 fi
 
 # Check for IP DF support
-AC_CACHE_CHECK([IP_MTU_DISCOVER or IP_DONTFRAG socket option],
+AC_CACHE_CHECK([any kind of DF socket option],
 [iperf3_cv_header_dontfragment],
 [if test "x$iperf3_cv_header_ip_mtu_discovery" = "xyes" -o "x$iperf3_cv_header_ip_dontfrag" = "xyes" -o "x$iperf3_cv_header_ip_dontfragment" = "xyes"; then
   iperf3_cv_header_dontfragment=yes
 fi])
 
 if test "x$iperf3_cv_header_dontfragment" = "xyes"; then
-    AC_DEFINE([HAVE_DONT_FRAGMENT], [1], [Have IP_MTU_DISCOVER/IP_DONTFRAG sockopt.])
+    AC_DEFINE([HAVE_DONT_FRAGMENT], [1], [Have IP_MTU_DISCOVER/IP_DONTFRAG/IP_DONTFRAGMENT sockopt.])
 fi
 
 AC_CHECK_MEMBER([struct tcp_info.tcpi_snd_wnd],

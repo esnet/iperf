@@ -236,23 +236,55 @@ if test "x$iperf3_cv_header_so_bindtodevice" = "xyes"; then
     AC_DEFINE([HAVE_SO_BINDTODEVICE], [1], [Have SO_BINDTODEVICE sockopt.])
 fi
 
+# Check for IP_MTU_DISCOVER (mostly on Linux)
+AC_CACHE_CHECK([IP_MTU_DISCOVER socket option],
+[iperf3_cv_header_ip_mtu_discover],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <sys/socket.h>
+                     #include <netinet/ip.h>
+                     #include <netinet/in.h>]],
+                   [[int foo = IP_MTU_DISCOVER;]])],
+  iperf3_cv_header_ip_mtu_discover=yes,
+  iperf3_cv_header_ip_mtu_discover=no))
+if test "x$iperf3_cv_header_ip_mtu_discover" = "xyes"; then
+    AC_DEFINE([HAVE_IP_MTU_DISCOVER], [1], [Have IP_MTU_DISCOVER sockopt.])
+fi
+
+# Check for IP_DONTFRAG (BSD?)
+AC_CACHE_CHECK([IP_DONTFRAG socket option],
+[iperf3_cv_header_ip_dontfrag],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <sys/socket.h>
+                     #include <netinet/ip.h>,
+                     #include <netinet/in.h>]],
+                   [[int foo = IP_DONTFRAG;]])],
+  iperf3_cv_header_ip_dontfrag=yes,
+  iperf3_cv_header_ip_dontfrag=no))
+if test "x$iperf3_cv_header_ip_dontfrag" = "xyes"; then
+    AC_DEFINE([HAVE_IP_DONTFRAG], [1], [Have IP_DONTFRAG sockopt.])
+fi
+
+# Check for IP_DONTFRAGMENT (Windows?)
+AC_CACHE_CHECK([IP_DONTFRAGMENT socket option],
+[iperf3_cv_header_ip_dontfragment],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <sys/socket.h>,
+                     #include <netinet/ip.h>,
+                     #include <netinet/in.h>]],
+                   [[int foo = IP_DONTFRAGMENT;]])],
+  iperf3_cv_header_ip_dontfragment=yes,
+  iperf3_cv_header_ip_dontfragment=no))
+if test "x$iperf3_cv_header_ip_dontfragment" = "xyes"; then
+    AC_DEFINE([HAVE_IP_DONTFRAGMENT], [1], [Have IP_DONTFRAGMENT sockopt.])
+fi
+
 # Check for IP DF support
 AC_CACHE_CHECK([IP_MTU_DISCOVER or IP_DONTFRAG socket option],
 [iperf3_cv_header_dontfragment],
-AC_EGREP_CPP(yes,
-[#include <sys/socket.h>
-#include <netinet/ip.h>
-#include <netinet/in.h>
-#ifdef IP_MTU_DISCOVER
-  yes
-#endif
-#ifdef IP_DONTFRAG
-  yes
-#endif
-#ifdef IP_DONTFRAGMENT
-  yes
-#endif
-],iperf3_cv_header_dontfragment=yes,iperf3_cv_header_dontfragment=no))
+[if test "x$iperf3_cv_header_ip_mtu_discovery" = "xyes" -o "x$iperf3_cv_header_ip_dontfrag" = "xyes" -o "x$iperf3_cv_header_ip_dontfragment" = "xyes"; then
+  iperf3_cv_header_dontfragment=yes
+fi])
+
 if test "x$iperf3_cv_header_dontfragment" = "xyes"; then
     AC_DEFINE([HAVE_DONT_FRAGMENT], [1], [Have IP_MTU_DISCOVER/IP_DONTFRAG sockopt.])
 fi

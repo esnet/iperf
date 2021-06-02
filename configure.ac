@@ -40,7 +40,7 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 LT_INIT
 
 AM_MAINTAINER_MODE
-AM_CONFIG_HEADER(src/iperf_config.h)
+AC_CONFIG_HEADERS(src/iperf_config.h)
 
 AC_CANONICAL_HOST
 

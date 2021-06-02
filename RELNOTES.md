@@ -1,6 +1,19 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.10.1 2021-06-03
+-----------------------
+
+* Notable user-visible changes
+
+  * Fixed a problem with autoconf scripts that made builds fail in
+    some environments (#1154 / #1155).
+
+* Developer-visible changes
+
+  * GNU autoconf 2.71 or newer is now required to regenerate iperf3's
+    configure scripts.
+
 iperf 3.10 2021-05-26
 ---------------------
 

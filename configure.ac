@@ -24,6 +24,7 @@
 # file for complete information.
 
 # Initialize the autoconf system for the specified tool, version and mailing list
+AC_PREREQ([2.71])
 AC_INIT([iperf],[3.10],[https://github.com/esnet/iperf],[iperf],[https://software.es.net/iperf/])
 m4_include([config/ax_check_openssl.m4])
 m4_include([config/iperf_config_static_bin.m4])
@@ -40,7 +41,7 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 LT_INIT
 
 AM_MAINTAINER_MODE
-AM_CONFIG_HEADER(src/iperf_config.h)
+AC_CONFIG_HEADERS(src/iperf_config.h)
 
 AC_CANONICAL_HOST
 
@@ -60,20 +61,6 @@ fi
 AC_ARG_ENABLE([profiling],
     AS_HELP_STRING([--enable-profiling], [Enable iperf3 profiling binary]))
 AM_CONDITIONAL([ENABLE_PROFILING], [test x$enable_profiling = xyes])
-
-# Checks for header files.
-m4_warn([obsolete],
-[The preprocessor macro `STDC_HEADERS' is obsolete.
-  Except in unusual embedded environments, you can safely include all
-  ISO C90 headers unconditionally.])dnl
-# Autoupdate added the next two lines to ensure that your configure
-# script's behavior did not change.  They are probably safe to remove.
-AC_CHECK_INCLUDES_DEFAULT
-AC_PROG_EGREP
-
-
-# Check for systems which need -lsocket and -lnsl
-#AX_LIB_SOCKET_NSL
 
 # Check for the math library (needed by cjson on some platforms)
 AC_SEARCH_LIBS(floor, [m], [], [
@@ -173,12 +160,11 @@ fi
 # Check for TCP_CONGESTION sockopt (believed to be Linux and FreeBSD only)
 AC_CACHE_CHECK([TCP_CONGESTION socket option],
 [iperf3_cv_header_tcp_congestion],
-AC_EGREP_CPP(yes,
-[#include <netinet/tcp.h>
-#ifdef TCP_CONGESTION
-  yes
-#endif
-],iperf3_cv_header_tcp_congestion=yes,iperf3_cv_header_tcp_congestion=no))
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <netinet/tcp.h>]],
+                   [[int foo = TCP_CONGESTION;]])],
+  iperf3_cv_header_tcp_congestion=yes,
+  iperf3_cv_header_tcp_congestion=no))
 if test "x$iperf3_cv_header_tcp_congestion" = "xyes"; then
     AC_DEFINE([HAVE_TCP_CONGESTION], [1], [Have TCP_CONGESTION sockopt.])
 fi
@@ -189,13 +175,12 @@ fi
 # copy, see src/flowlabel.h for more details).
 AC_CACHE_CHECK([IPv6 flowlabel support],
 [iperf3_cv_header_flowlabel],
-AC_EGREP_CPP(yes,
-[#include <sys/types.h>
-#include <linux/in6.h>
-#ifdef IPV6_FLOWLABEL_MGR
-  yes
-#endif
-],iperf3_cv_header_flowlabel=yes,iperf3_cv_header_flowlabel=no))
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <sys/types.h>
+                     #include <linux/in6.h>]],
+                   [[int foo = IPV6_FLOWLABEL_MGR;]])],
+  iperf3_cv_header_flowlabel=yes,
+  iperf3_cv_header_flowlabel=no))
 if test "x$iperf3_cv_header_flowlabel" = "xyes"; then
     AC_DEFINE([HAVE_FLOWLABEL], [1], [Have IPv6 flowlabel support.])
 fi
@@ -224,12 +209,11 @@ AC_CHECK_FUNCS([getline])
 # Check for packet pacing socket option (Linux only for now).
 AC_CACHE_CHECK([SO_MAX_PACING_RATE socket option],
 [iperf3_cv_header_so_max_pacing_rate],
-AC_EGREP_CPP(yes,
-[#include <sys/socket.h>
-#ifdef SO_MAX_PACING_RATE
-  yes
-#endif
-],iperf3_cv_header_so_max_pacing_rate=yes,iperf3_cv_header_so_max_pacing_rate=no))
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <sys/socket.h>]],
+                   [[int foo = SO_MAX_PACING_RATE;]])],
+  iperf3_cv_header_so_max_pacing_rate=yes,
+  iperf3_cv_header_so_max_pacing_rate=no))
 if test "x$iperf3_cv_header_so_max_pacing_rate" = "xyes"; then
     AC_DEFINE([HAVE_SO_MAX_PACING_RATE], [1], [Have SO_MAX_PACING_RATE sockopt.])
 fi
@@ -237,37 +221,73 @@ fi
 # Check for SO_BINDTODEVICE sockopt (believed to be Linux only)
 AC_CACHE_CHECK([SO_BINDTODEVICE socket option],
 [iperf3_cv_header_so_bindtodevice],
-AC_EGREP_CPP(yes,
-[#include <sys/socket.h>
-#ifdef SO_BINDTODEVICE
-  yes
-#endif
-],iperf3_cv_header_so_bindtodevice=yes,iperf3_cv_header_so_bindtodevice=no))
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <sys/socket.h>]],
+                   [[int foo = SO_BINDTODEVICE;]])],
+  iperf3_cv_header_so_bindtodevice=yes,
+  iperf3_cv_header_so_bindtodevice=no))
 if test "x$iperf3_cv_header_so_bindtodevice" = "xyes"; then
     AC_DEFINE([HAVE_SO_BINDTODEVICE], [1], [Have SO_BINDTODEVICE sockopt.])
 fi
 
-# Check for IP DF support
-AC_CACHE_CHECK([IP_MTU_DISCOVER or IP_DONTFRAG socket option],
-[iperf3_cv_header_dontfragment],
-AC_EGREP_CPP(yes,
-[#include <sys/socket.h>
-#include <netinet/ip.h>
-#include <netinet/in.h>
-#ifdef IP_MTU_DISCOVER
-  yes
-#endif
-#ifdef IP_DONTFRAG
-  yes
-#endif
-#ifdef IP_DONTFRAGMENT
-  yes
-#endif
-],iperf3_cv_header_dontfragment=yes,iperf3_cv_header_dontfragment=no))
-if test "x$iperf3_cv_header_dontfragment" = "xyes"; then
-    AC_DEFINE([HAVE_DONT_FRAGMENT], [1], [Have IP_MTU_DISCOVER/IP_DONTFRAG sockopt.])
+# Check for IP_MTU_DISCOVER (mostly on Linux)
+AC_CACHE_CHECK([IP_MTU_DISCOVER socket option],
+[iperf3_cv_header_ip_mtu_discover],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <sys/types.h>
+                     #include <sys/socket.h>
+                     #include <netinet/in.h>]],
+                   [[int foo = IP_MTU_DISCOVER;]])],
+  iperf3_cv_header_ip_mtu_discover=yes,
+  iperf3_cv_header_ip_mtu_discover=no))
+if test "x$iperf3_cv_header_ip_mtu_discover" = "xyes"; then
+    AC_DEFINE([HAVE_IP_MTU_DISCOVER], [1], [Have IP_MTU_DISCOVER sockopt.])
 fi
 
+# Check for IP_DONTFRAG (BSD?)
+AC_CACHE_CHECK([IP_DONTFRAG socket option],
+[iperf3_cv_header_ip_dontfrag],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <sys/types.h>
+                     #include <sys/socket.h>
+                     #include <netinet/in.h>]],
+                   [[int foo = IP_DONTFRAG;]])],
+  iperf3_cv_header_ip_dontfrag=yes,
+  iperf3_cv_header_ip_dontfrag=no))
+if test "x$iperf3_cv_header_ip_dontfrag" = "xyes"; then
+    AC_DEFINE([HAVE_IP_DONTFRAG], [1], [Have IP_DONTFRAG sockopt.])
+fi
+
+# Check for IP_DONTFRAGMENT (Windows?)
+AC_CACHE_CHECK([IP_DONTFRAGMENT socket option],
+[iperf3_cv_header_ip_dontfragment],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <sys/types.h>
+                     #include <sys/socket.h>
+                     #include <netinet/in.h>]],
+                   [[int foo = IP_DONTFRAGMENT;]])],
+  iperf3_cv_header_ip_dontfragment=yes,
+  iperf3_cv_header_ip_dontfragment=no))
+if test "x$iperf3_cv_header_ip_dontfragment" = "xyes"; then
+    AC_DEFINE([HAVE_IP_DONTFRAGMENT], [1], [Have IP_DONTFRAGMENT sockopt.])
+fi
+
+# Check for IP DF support
+AC_CACHE_CHECK([any kind of DF socket option],
+[iperf3_cv_header_dontfragment],
+[if test "x$iperf3_cv_header_ip_mtu_discover" = "xyes" -o "x$iperf3_cv_header_ip_dontfrag" = "xyes" -o "x$iperf3_cv_header_ip_dontfragment" = "xyes"; then
+  iperf3_cv_header_dontfragment=yes
+else
+  iperf3_cv_header_dontfragment=no
+fi])
+
+if test "x$iperf3_cv_header_dontfragment" = "xyes"; then
+    AC_DEFINE([HAVE_DONT_FRAGMENT], [1], [Have IP_MTU_DISCOVER/IP_DONTFRAG/IP_DONTFRAGMENT sockopt.])
+fi
+
+#
+# Check for tcpi_snd_wnd in struct tcp_info
+#
 AC_CHECK_MEMBER([struct tcp_info.tcpi_snd_wnd],
 [iperf3_cv_header_tcp_info_snd_wnd=yes], [iperf3_cv_header_tcp_info_snd_wnd=no],
 [#ifdef HAVE_LINUX_TCP_H

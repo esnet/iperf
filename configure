@@ -662,7 +662,6 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
-CPP
 OPENSSL_LDFLAGS
 OPENSSL_LIBS
 OPENSSL_INCLUDES
@@ -814,8 +813,7 @@ CFLAGS
 LDFLAGS
 LIBS
 CPPFLAGS
-LT_SYS_LIBRARY_PATH
-CPP'
+LT_SYS_LIBRARY_PATH'
 
 
 # Initialize some variables set by options.
@@ -13690,88 +13688,6 @@ else
 fi
 
 
-# Checks for header files.
-# Autoupdate added the next two lines to ensure that your configure
-# script's behavior did not change.  They are probably safe to remove.
-
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for egrep" >&5
-printf %s "checking for egrep... " >&6; }
-if test ${ac_cv_path_EGREP+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  if echo a | $GREP -E '(a|b)' >/dev/null 2>&1
-   then ac_cv_path_EGREP="$GREP -E"
-   else
-     if test -z "$EGREP"; then
-  ac_path_EGREP_found=false
-  # Loop through the user's path and test for each of PROGNAME-LIST
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH$PATH_SEPARATOR/usr/xpg4/bin
-do
-  IFS=$as_save_IFS
-  case $as_dir in #(((
-    '') as_dir=./ ;;
-    */) ;;
-    *) as_dir=$as_dir/ ;;
-  esac
-    for ac_prog in egrep
-   do
-    for ac_exec_ext in '' $ac_executable_extensions; do
-      ac_path_EGREP="$as_dir$ac_prog$ac_exec_ext"
-      as_fn_executable_p "$ac_path_EGREP" || continue
-# Check for GNU ac_path_EGREP and select it if it is found.
-  # Check for GNU $ac_path_EGREP
-case `"$ac_path_EGREP" --version 2>&1` in
-*GNU*)
-  ac_cv_path_EGREP="$ac_path_EGREP" ac_path_EGREP_found=:;;
-*)
-  ac_count=0
-  printf %s 0123456789 >"conftest.in"
-  while :
-  do
-    cat "conftest.in" "conftest.in" >"conftest.tmp"
-    mv "conftest.tmp" "conftest.in"
-    cp "conftest.in" "conftest.nl"
-    printf "%s\n" 'EGREP' >> "conftest.nl"
-    "$ac_path_EGREP" 'EGREP$' < "conftest.nl" >"conftest.out" 2>/dev/null || break
-    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
-    as_fn_arith $ac_count + 1 && ac_count=$as_val
-    if test $ac_count -gt ${ac_path_EGREP_max-0}; then
-      # Best one so far, save it but keep looking for a better one
-      ac_cv_path_EGREP="$ac_path_EGREP"
-      ac_path_EGREP_max=$ac_count
-    fi
-    # 10*(2^10) chars as input seems more than enough
-    test $ac_count -gt 10 && break
-  done
-  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
-esac
-
-      $ac_path_EGREP_found && break 3
-    done
-  done
-  done
-IFS=$as_save_IFS
-  if test -z "$ac_cv_path_EGREP"; then
-    as_fn_error $? "no acceptable egrep could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" "$LINENO" 5
-  fi
-else
-  ac_cv_path_EGREP=$EGREP
-fi
-
-   fi
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_path_EGREP" >&5
-printf "%s\n" "$ac_cv_path_EGREP" >&6; }
- EGREP="$ac_cv_path_EGREP"
-
-
-
-
-# Check for systems which need -lsocket and -lnsl
-#AX_LIB_SOCKET_NSL
-
 # Check for the math library (needed by cjson on some platforms)
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing floor" >&5
 printf %s "checking for library containing floor... " >&6; }
@@ -14524,195 +14440,24 @@ if test ${iperf3_cv_header_tcp_congestion+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
-    CPP         C preprocessor
-ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking how to run the C preprocessor" >&5
-printf %s "checking how to run the C preprocessor... " >&6; }
-# On Suns, sometimes $CPP names a directory.
-if test -n "$CPP" && test -d "$CPP"; then
-  CPP=
-fi
-if test -z "$CPP"; then
-  if test ${ac_cv_prog_CPP+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-      # Double quotes because $CC needs to be expanded
-    for CPP in "$CC -E" "$CC -E -traditional-cpp" cpp /lib/cpp
-    do
-      ac_preproc_ok=false
-for ac_c_preproc_warn_flag in '' yes
-do
-  # Use a header file that comes with gcc, so configuring glibc
-  # with a fresh cross-compiler works.
-  # On the NeXT, cc -E runs the code through the compiler's parser,
-  # not just through cpp. "Syntax error" is here to catch this case.
-
-# ac_fn_c_try_cpp LINENO
-# ----------------------
-# Try to preprocess conftest.$ac_ext, and return whether this succeeded.
-ac_fn_c_try_cpp ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  if { { ac_try="$ac_cpp conftest.$ac_ext"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
-printf "%s\n" "$ac_try_echo"; } >&5
-  (eval "$ac_cpp conftest.$ac_ext") 2>conftest.err
-  ac_status=$?
-  if test -s conftest.err; then
-    grep -v '^ *+' conftest.err >conftest.er1
-    cat conftest.er1 >&5
-    mv -f conftest.er1 conftest.err
-  fi
-  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; } > conftest.i && {
-	 test -z "$ac_c_preproc_warn_flag$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       }
-then :
-  ac_retval=0
-else $as_nop
-  printf "%s\n" "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-    ac_retval=1
-fi
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-  as_fn_set_status $ac_retval
-
-} # ac_fn_c_try_cpp
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <limits.h>
-		     Syntax error
-_ACEOF
-if ac_fn_c_try_cpp "$LINENO"
-then :
-
-else $as_nop
-  # Broken: fails on valid input.
-continue
-fi
-rm -f conftest.err conftest.i conftest.$ac_ext
-
-  # OK, works on sane cases.  Now check whether nonexistent headers
-  # can be detected and how.
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <ac_nonexistent.h>
-_ACEOF
-if ac_fn_c_try_cpp "$LINENO"
-then :
-  # Broken: success on invalid input.
-continue
-else $as_nop
-  # Passes both tests.
-ac_preproc_ok=:
-break
-fi
-rm -f conftest.err conftest.i conftest.$ac_ext
-
-done
-# Because of `break', _AC_PREPROC_IFELSE's cleaning code was skipped.
-rm -f conftest.i conftest.err conftest.$ac_ext
-if $ac_preproc_ok
-then :
-  break
-fi
-
-    done
-    ac_cv_prog_CPP=$CPP
-
-fi
-  CPP=$ac_cv_prog_CPP
-else
-  ac_cv_prog_CPP=$CPP
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $CPP" >&5
-printf "%s\n" "$CPP" >&6; }
-ac_preproc_ok=false
-for ac_c_preproc_warn_flag in '' yes
-do
-  # Use a header file that comes with gcc, so configuring glibc
-  # with a fresh cross-compiler works.
-  # On the NeXT, cc -E runs the code through the compiler's parser,
-  # not just through cpp. "Syntax error" is here to catch this case.
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <limits.h>
-		     Syntax error
-_ACEOF
-if ac_fn_c_try_cpp "$LINENO"
-then :
-
-else $as_nop
-  # Broken: fails on valid input.
-continue
-fi
-rm -f conftest.err conftest.i conftest.$ac_ext
-
-  # OK, works on sane cases.  Now check whether nonexistent headers
-  # can be detected and how.
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <ac_nonexistent.h>
-_ACEOF
-if ac_fn_c_try_cpp "$LINENO"
-then :
-  # Broken: success on invalid input.
-continue
-else $as_nop
-  # Passes both tests.
-ac_preproc_ok=:
-break
-fi
-rm -f conftest.err conftest.i conftest.$ac_ext
-
-done
-# Because of `break', _AC_PREPROC_IFELSE's cleaning code was skipped.
-rm -f conftest.i conftest.err conftest.$ac_ext
-if $ac_preproc_ok
-then :
-
-else $as_nop
-  { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-printf "%s\n" "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "C preprocessor \"$CPP\" fails sanity check
-See \`config.log' for more details" "$LINENO" 5; }
-fi
-
-ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <netinet/tcp.h>
-#ifdef TCP_CONGESTION
-  yes
-#endif
-
+int
+main (void)
+{
+int foo = TCP_CONGESTION;
+  ;
+  return 0;
+}
 _ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "yes" >/dev/null 2>&1
+if ac_fn_c_try_compile "$LINENO"
 then :
   iperf3_cv_header_tcp_congestion=yes
 else $as_nop
   iperf3_cv_header_tcp_congestion=no
 fi
-rm -rf conftest*
-
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $iperf3_cv_header_tcp_congestion" >&5
 printf "%s\n" "$iperf3_cv_header_tcp_congestion" >&6; }
@@ -14735,21 +14480,22 @@ else $as_nop
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <sys/types.h>
-#include <linux/in6.h>
-#ifdef IPV6_FLOWLABEL_MGR
-  yes
-#endif
-
+                     #include <linux/in6.h>
+int
+main (void)
+{
+int foo = IPV6_FLOWLABEL_MGR;
+  ;
+  return 0;
+}
 _ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "yes" >/dev/null 2>&1
+if ac_fn_c_try_compile "$LINENO"
 then :
   iperf3_cv_header_flowlabel=yes
 else $as_nop
   iperf3_cv_header_flowlabel=no
 fi
-rm -rf conftest*
-
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $iperf3_cv_header_flowlabel" >&5
 printf "%s\n" "$iperf3_cv_header_flowlabel" >&6; }
@@ -14821,20 +14567,21 @@ else $as_nop
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <sys/socket.h>
-#ifdef SO_MAX_PACING_RATE
-  yes
-#endif
-
+int
+main (void)
+{
+int foo = SO_MAX_PACING_RATE;
+  ;
+  return 0;
+}
 _ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "yes" >/dev/null 2>&1
+if ac_fn_c_try_compile "$LINENO"
 then :
   iperf3_cv_header_so_max_pacing_rate=yes
 else $as_nop
   iperf3_cv_header_so_max_pacing_rate=no
 fi
-rm -rf conftest*
-
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $iperf3_cv_header_so_max_pacing_rate" >&5
 printf "%s\n" "$iperf3_cv_header_so_max_pacing_rate" >&6; }
@@ -14854,20 +14601,21 @@ else $as_nop
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <sys/socket.h>
-#ifdef SO_BINDTODEVICE
-  yes
-#endif
-
+int
+main (void)
+{
+int foo = SO_BINDTODEVICE;
+  ;
+  return 0;
+}
 _ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "yes" >/dev/null 2>&1
+if ac_fn_c_try_compile "$LINENO"
 then :
   iperf3_cv_header_so_bindtodevice=yes
 else $as_nop
   iperf3_cv_header_so_bindtodevice=no
 fi
-rm -rf conftest*
-
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $iperf3_cv_header_so_bindtodevice" >&5
 printf "%s\n" "$iperf3_cv_header_so_bindtodevice" >&6; }
@@ -14877,47 +14625,139 @@ printf "%s\n" "#define HAVE_SO_BINDTODEVICE 1" >>confdefs.h
 
 fi
 
-# Check for IP DF support
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking IP_MTU_DISCOVER or IP_DONTFRAG socket option" >&5
-printf %s "checking IP_MTU_DISCOVER or IP_DONTFRAG socket option... " >&6; }
-if test ${iperf3_cv_header_dontfragment+y}
+# Check for IP_MTU_DISCOVER (mostly on Linux)
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking IP_MTU_DISCOVER socket option" >&5
+printf %s "checking IP_MTU_DISCOVER socket option... " >&6; }
+if test ${iperf3_cv_header_ip_mtu_discover+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#include <sys/socket.h>
-#include <netinet/ip.h>
-#include <netinet/in.h>
-#ifdef IP_MTU_DISCOVER
-  yes
-#endif
-#ifdef IP_DONTFRAG
-  yes
-#endif
-#ifdef IP_DONTFRAGMENT
-  yes
-#endif
-
+#include <sys/types.h>
+                     #include <sys/socket.h>
+                     #include <netinet/in.h>
+int
+main (void)
+{
+int foo = IP_MTU_DISCOVER;
+  ;
+  return 0;
+}
 _ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "yes" >/dev/null 2>&1
+if ac_fn_c_try_compile "$LINENO"
 then :
-  iperf3_cv_header_dontfragment=yes
+  iperf3_cv_header_ip_mtu_discover=yes
 else $as_nop
+  iperf3_cv_header_ip_mtu_discover=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $iperf3_cv_header_ip_mtu_discover" >&5
+printf "%s\n" "$iperf3_cv_header_ip_mtu_discover" >&6; }
+if test "x$iperf3_cv_header_ip_mtu_discover" = "xyes"; then
+
+printf "%s\n" "#define HAVE_IP_MTU_DISCOVER 1" >>confdefs.h
+
+fi
+
+# Check for IP_DONTFRAG (BSD?)
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking IP_DONTFRAG socket option" >&5
+printf %s "checking IP_DONTFRAG socket option... " >&6; }
+if test ${iperf3_cv_header_ip_dontfrag+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/types.h>
+                     #include <sys/socket.h>
+                     #include <netinet/in.h>
+int
+main (void)
+{
+int foo = IP_DONTFRAG;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  iperf3_cv_header_ip_dontfrag=yes
+else $as_nop
+  iperf3_cv_header_ip_dontfrag=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $iperf3_cv_header_ip_dontfrag" >&5
+printf "%s\n" "$iperf3_cv_header_ip_dontfrag" >&6; }
+if test "x$iperf3_cv_header_ip_dontfrag" = "xyes"; then
+
+printf "%s\n" "#define HAVE_IP_DONTFRAG 1" >>confdefs.h
+
+fi
+
+# Check for IP_DONTFRAGMENT (Windows?)
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking IP_DONTFRAGMENT socket option" >&5
+printf %s "checking IP_DONTFRAGMENT socket option... " >&6; }
+if test ${iperf3_cv_header_ip_dontfragment+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/types.h>
+                     #include <sys/socket.h>
+                     #include <netinet/in.h>
+int
+main (void)
+{
+int foo = IP_DONTFRAGMENT;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  iperf3_cv_header_ip_dontfragment=yes
+else $as_nop
+  iperf3_cv_header_ip_dontfragment=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $iperf3_cv_header_ip_dontfragment" >&5
+printf "%s\n" "$iperf3_cv_header_ip_dontfragment" >&6; }
+if test "x$iperf3_cv_header_ip_dontfragment" = "xyes"; then
+
+printf "%s\n" "#define HAVE_IP_DONTFRAGMENT 1" >>confdefs.h
+
+fi
+
+# Check for IP DF support
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking any kind of DF socket option" >&5
+printf %s "checking any kind of DF socket option... " >&6; }
+if test ${iperf3_cv_header_dontfragment+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  if test "x$iperf3_cv_header_ip_mtu_discover" = "xyes" -o "x$iperf3_cv_header_ip_dontfrag" = "xyes" -o "x$iperf3_cv_header_ip_dontfragment" = "xyes"; then
+  iperf3_cv_header_dontfragment=yes
+else
   iperf3_cv_header_dontfragment=no
 fi
-rm -rf conftest*
-
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $iperf3_cv_header_dontfragment" >&5
 printf "%s\n" "$iperf3_cv_header_dontfragment" >&6; }
+
 if test "x$iperf3_cv_header_dontfragment" = "xyes"; then
 
 printf "%s\n" "#define HAVE_DONT_FRAGMENT 1" >>confdefs.h
 
 fi
 
+#
+# Check for tcpi_snd_wnd in struct tcp_info
+#
 ac_fn_c_check_member "$LINENO" "struct tcp_info" "tcpi_snd_wnd" "ac_cv_member_struct_tcp_info_tcpi_snd_wnd" "#ifdef HAVE_LINUX_TCP_H
 #include <linux/tcp.h>
 #else
@@ -15104,6 +14944,7 @@ DEFS=-DHAVE_CONFIG_H
 
 ac_libobjs=
 ac_ltlibobjs=
+U=
 for ac_i in : $LIBOBJS; do test "x$ac_i" = x: && continue
   # 1. Remove the extension, and $U if already installed.
   ac_script='s/\$U\././;s/\.o$//;s/\.obj$//'

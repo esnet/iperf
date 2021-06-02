@@ -281,8 +281,10 @@ fi
 # Check for IP DF support
 AC_CACHE_CHECK([any kind of DF socket option],
 [iperf3_cv_header_dontfragment],
-[if test "x$iperf3_cv_header_ip_mtu_discovery" = "xyes" -o "x$iperf3_cv_header_ip_dontfrag" = "xyes" -o "x$iperf3_cv_header_ip_dontfragment" = "xyes"; then
+[if test "x$iperf3_cv_header_ip_mtu_discover" = "xyes" -o "x$iperf3_cv_header_ip_dontfrag" = "xyes" -o "x$iperf3_cv_header_ip_dontfragment" = "xyes"; then
   iperf3_cv_header_dontfragment=yes
+else
+  iperf3_cv_header_dontfragment=no
 fi])
 
 if test "x$iperf3_cv_header_dontfragment" = "xyes"; then

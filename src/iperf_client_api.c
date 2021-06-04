@@ -74,7 +74,7 @@ iperf_create_streams(struct iperf_test *test, int sender)
 #if defined(HAVE_TCP_CONGESTION)
 	if (test->protocol->id == Ptcp) {
 	    if (test->congestion) {
-                if(sender_id % 2 == 0) { /* only do this for even numbered senders */
+                if(sender_id % 2 == 0) { /* CC testing hack: only do this for even numbered senders */
 	            /*
 	            printf("setting cong cntrl on stream %d to %s \n",sender_id,test->congestion);
 		    */
@@ -85,7 +85,14 @@ iperf_create_streams(struct iperf_test *test, int sender)
 		        i_errno = IESETCONGESTION;
 		        return -1;
 		    } 
-		} 
+		} else { /* for CC hack: sleep N seconds to give even numbered streams (eg: cubic) a head start */ 
+                    int sleep_time = 1;
+                    /*
+	            printf("default cong cntrl on stream %d \n",sender_id);
+	            printf("sleeping for %d seconds to let stream %d have a head start \n",sleep_time, sender_id-1);
+                    */
+		    sleep(sleep_time);
+                }
                 sender_id++;
 	    }
 	    {

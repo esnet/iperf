@@ -817,6 +817,10 @@ iperf_on_test_start(struct iperf_test *test)
 {
     if (test->json_output) {
 	cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d  omit: %d  duration: %d  bytes: %d  blocks: %d  reverse: %d  tos: %d", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->omit, (int64_t) test->duration, (int64_t) test->settings->bytes, (int64_t) test->settings->blocks, test->reverse?(int64_t)1:(int64_t)0, (int64_t) test->settings->tos));
+        if (test->forceflush) {
+            char *test_start = cJSON_Print(test->json_top);
+            printf("%s\n", test_start);
+        }
     } else {
 	if (test->verbose) {
 	    if (test->settings->bytes)
@@ -3278,9 +3282,15 @@ iperf_print_intermediate(struct iperf_test *test)
                 if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
                     if (test->sender_has_retransmits == 1 && stream_must_be_sender) {
                         /* Interval sum, TCP with retransmits. */
-                        if (test->json_output)
+                        if (test->json_output) {
                             cJSON_AddItemToObject(json_interval, "sum", iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d  omitted: %b sender: %b", (double) start_time, (double) end_time, (double) irp->interval_duration, (int64_t) bytes, bandwidth * 8, (int64_t) retransmits, irp->omitted, stream_must_be_sender)); /* XXX irp->omitted or test->omitting? */
-                        else
+                            if (test->forceflush) {
+                                cJSON *json = cJSON_CreateObject();
+                                cJSON_AddItemToObject(json, "interval", json_interval);
+                                char *json_ival = cJSON_Print(json);
+                                printf("%s\n", json_ival);
+                            }
+                        } else
                             iperf_printf(test, report_sum_bw_retrans_format, mbuf, start_time, end_time, ubuf, nbuf, retransmits, irp->omitted?report_omitted:""); /* XXX irp->omitted or test->omitting? */
                     } else {
                         /* Interval sum, TCP without retransmits. */
@@ -3757,6 +3767,12 @@ iperf_print_results(struct iperf_test *test)
                 if (rcv_congestion) {
                     cJSON_AddStringToObject(test->json_end, "receiver_tcp_congestion", rcv_congestion);
                 }
+            }
+            if (test->forceflush) {
+                cJSON *json = cJSON_CreateObject();
+                cJSON_AddItemToObject(json, "end", test->json_end);
+                char *json_end = cJSON_Print(json);
+                printf("%s\n", json_end);
             }
         }
         else {

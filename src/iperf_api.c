@@ -1007,6 +1007,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"connect-timeout", required_argument, NULL, OPT_CONNECT_TIMEOUT},
         {"idle-timeout", required_argument, NULL, OPT_IDLE_TIMEOUT},
         {"rcv-timeout", required_argument, NULL, OPT_RCV_TIMEOUT},
+        {"no-fsync", no_argument, NULL, OPT_NO_FSYNC},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -1328,6 +1329,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'F':
                 test->diskfile_name = optarg;
+                break;
+            case OPT_NO_FSYNC:
+                test->no_fsync = 1;
                 break;
             case OPT_IDLE_TIMEOUT:
                 test->settings->idle_timeout = atoi(optarg);
@@ -2619,6 +2623,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->omit = OMIT;
     testp->duration = DURATION;
     testp->diskfile_name = (char*) 0;
+    testp->no_fsync = 0;
     testp->affinity = -1;
     testp->server_affinity = -1;
     TAILQ_INIT(&testp->xbind_addrs);
@@ -4277,7 +4282,9 @@ diskfile_recv(struct iperf_stream *sp)
     r = sp->rcv2(sp);
     if (r > 0) {
 	(void) write(sp->diskfile_fd, sp->buffer, r);
-	(void) fsync(sp->diskfile_fd);
+        if (!sp->test->no_fsync) {
+	    (void) fsync(sp->diskfile_fd);
+        }
     }
     return r;
 }

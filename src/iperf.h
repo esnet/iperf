@@ -274,7 +274,8 @@ struct iperf_test
     int       server_port;
     int       omit;                             /* duration of omit period (-O flag) */
     int       duration;                         /* total duration of test (-t flag) */
-    char     *diskfile_name;			/* -F option */
+    char      *diskfile_name;			/* -F option */
+    int       no_fsync;                         /* --no_fsync option */
     int       affinity, server_affinity;	/* -A option */
 #if defined(HAVE_CPUSET_SETAFFINITY)
     cpuset_t cpumask;

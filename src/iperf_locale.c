@@ -102,6 +102,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -i, --interval  #         seconds between periodic throughput reports\n"
                            "  -I, --pidfile file        write PID file\n"
                            "  -F, --file name           xmit/recv the specified file\n"
+                           "  --no-fsync                do not fsync output file after writing to it\n"
+                           "                            (default is fsync after each write)\n"
 #if defined(HAVE_CPU_AFFINITY)
                            "  -A, --affinity n/n,m      set CPU affinity\n"
 #endif /* HAVE_CPU_AFFINITY */

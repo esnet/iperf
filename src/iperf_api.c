@@ -1007,6 +1007,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"connect-timeout", required_argument, NULL, OPT_CONNECT_TIMEOUT},
         {"idle-timeout", required_argument, NULL, OPT_IDLE_TIMEOUT},
         {"rcv-timeout", required_argument, NULL, OPT_RCV_TIMEOUT},
+        {"multipath", no_argument, NULL, 'm'},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -1030,7 +1031,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     char *client_username = NULL, *client_rsa_public_key = NULL, *server_rsa_private_key = NULL;
 #endif /* HAVE_SSL */
 
-    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:mM:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
 		portno = atoi(optarg);
@@ -1102,6 +1103,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 }
 		iperf_set_test_role(test, 'c');
 		iperf_set_test_server_hostname(test, optarg);
+                break;
+            case 'm':
+                set_protocol(test, Ptcp);
+                test->multipath = 1;
                 break;
             case 'u':
                 set_protocol(test, Pudp);
@@ -2000,6 +2005,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddTrueToObject(j, "reverse");
 	if (test->bidirectional)
 	            cJSON_AddTrueToObject(j, "bidirectional");
+	if (test->multipath)
+	    cJSON_AddTrueToObject(j, "multipath");
 	if (test->settings->socket_bufsize)
 	    cJSON_AddNumberToObject(j, "window", test->settings->socket_bufsize);
 	if (test->settings->blksize)
@@ -2112,6 +2119,8 @@ get_parameters(struct iperf_test *test)
 	    iperf_set_test_reverse(test, 1);
         if ((j_p = cJSON_GetObjectItem(j, "bidirectional")) != NULL)
             iperf_set_test_bidirectional(test, 1);
+	if ((j_p = cJSON_GetObjectItem(j, "multipath")) != NULL)
+	    test->multipath = 1;
 	if ((j_p = cJSON_GetObjectItem(j, "window")) != NULL)
 	    test->settings->socket_bufsize = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "len")) != NULL)

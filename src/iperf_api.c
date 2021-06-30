@@ -901,9 +901,8 @@ iperf_on_connect(struct iperf_test *test)
 	    else {
 		cJSON_AddNumberToObject(test->json_start, "tcp_mss_default", test->ctrl_sck_mss);
 	    }
-        if (test->settings->rate)
-            cJSON_AddNumberToObject(test->json_start, "target_bitrate", test->settings->rate);
         }
+        cJSON_AddNumberToObject(test->json_start, "target_bitrate", test->settings->rate);
     } else if (test->verbose) {
         iperf_printf(test, report_cookie, test->cookie);
         if (test->protocol->id == SOCK_STREAM) {

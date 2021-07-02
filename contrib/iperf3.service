@@ -3,8 +3,29 @@ Description=iperf3
 Requires=network.target
 
 [Service]
+User=nobody
+Group=nogroup
 ExecStart=/usr/bin/iperf3 -s
 Restart=on-failure
+CapabilityBoundingSet=
+NoNewPrivileges=true
+PrivateDevices=yes
+PrivateTmp=yes
+PrivateUsers=true
+ProtectClock=true
+ProtectControlGroups=yes
+ProtectHome=tmpfs
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectSystem=strict
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=cgroup ipc mnt pid user uts
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+PrivateMounts=true
 
 [Install]
 WantedBy=multi-user.target

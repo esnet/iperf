@@ -341,6 +341,7 @@ struct iperf_test
     double remote_cpu_util[3];                     /* cpu utilization for the remote host/client - total, user, system */
 
     int       num_streams;                      /* total streams in the test (-P) */
+    int       max_streams;			/* maximum number of streams */
 
     iperf_size_t bytes_sent;
     iperf_size_t blocks_sent;
@@ -415,7 +416,6 @@ struct iperf_test
 #define MAX_TIME 86400
 #define MAX_BURST 1000
 #define MAX_MSS (9 * 1024)
-#define MAX_STREAMS 128
 
 #define TIMESTAMP_FORMAT "%c "
 

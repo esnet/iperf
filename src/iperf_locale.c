@@ -101,7 +101,10 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -f, --format   [kmgtKMGT] format to report: Kbits, Mbits, Gbits, Tbits\n"
                            "  -i, --interval  #         seconds between periodic throughput reports\n"
                            "  -I, --pidfile file        write PID file\n"
-                           "  -F, --file name           xmit/recv the specified file\n"
+                           "  -F, --file name[,(append|#)]  xmit/recv the specified file\n"
+                           "                            (optional second argument after comma: \n"
+                           "                             # file offset to read from for sender,\n"
+                           "                             'append' content to file for receiver )\n"
 #if defined(HAVE_CPU_AFFINITY)
                            "  -A, --affinity n/n,m      set CPU affinity\n"
 #endif /* HAVE_CPU_AFFINITY */

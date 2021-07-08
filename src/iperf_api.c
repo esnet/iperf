@@ -1326,6 +1326,23 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
             case 'F':
+                comma = strchr(optarg, ',');
+                if (comma) {
+                    *comma = '\0';
+                    ++comma;
+                    // If present second paramter may either be,
+                    //  - 'aapend' (for receiver)
+                    //  - # to seek in the file (for sender)
+                    if( strcmp(comma, "append")==0 ){
+                        // append to file, not overwriting
+                        test->diskfile_append = 1;
+                    }
+                    else{
+                        // seek in file
+                        test->diskfile_seek = atoi(comma);
+                    }
+                }
+                // process first parameter which is a file path
                 test->diskfile_name = optarg;
                 break;
             case OPT_IDLE_TIMEOUT:
@@ -1572,6 +1589,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         struct stat st;
         if( stat(test->diskfile_name, &st) == 0 ){
             iperf_size_t file_bytes = st.st_size;
+            // if we are seeking in file, decrease file size by seek value
+            file_bytes -= test->diskfile_seek;
             test->settings->bytes = file_bytes;        
             if (test->debug)
                 printf("End condition set to file-size: %d bytes\n", test->settings->bytes);
@@ -2637,6 +2656,8 @@ iperf_defaults(struct iperf_test *testp)
     testp->omit = OMIT;
     testp->duration = DURATION;
     testp->diskfile_name = (char*) 0;
+    testp->diskfile_seek = 0;
+    testp->diskfile_append = 0;
     testp->affinity = -1;
     testp->server_affinity = -1;
     TAILQ_INIT(&testp->xbind_addrs);
@@ -4077,7 +4098,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     sp->rcv = test->protocol->recv;
 
     if (test->diskfile_name != (char*) 0) {
-	sp->diskfile_fd = open(test->diskfile_name, sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC), S_IRUSR|S_IWUSR);
+	sp->diskfile_fd = open(test->diskfile_name, sender ? O_RDONLY : (O_WRONLY|O_CREAT|(sp->test->diskfile_append ? O_APPEND : O_TRUNC)), S_IRUSR|S_IWUSR);
 	if (sp->diskfile_fd == -1) {
 	    i_errno = IEFILE;
             munmap(sp->buffer, sp->test->settings->blksize);
@@ -4085,7 +4106,16 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
             free(sp);
 	    return NULL;
 	}
-        sp->snd2 = sp->snd;
+    // Seek to file location if asked for
+    if(test->diskfile_seek > 0){
+        if(lseek(sp->diskfile_fd, test->diskfile_seek,SEEK_SET) < 0){
+            // Error !
+            i_errno = IEFILE;
+            return NULL;
+        }
+    }
+
+    sp->snd2 = sp->snd;
 	sp->snd = diskfile_send;
 	sp->rcv2 = sp->rcv;
 	sp->rcv = diskfile_recv;

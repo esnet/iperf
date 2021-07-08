@@ -165,7 +165,9 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -R, --reverse             run in reverse mode (server sends, client receives)\n"
                            "  --bidir                   run in bidirectional mode.\n"
                            "                            Client and server send and receive data.\n"
-                           "  -w, --window    #[KMG]    set window size / socket buffer size\n"
+                           "  -w, --window    #[KMG]    set send/receive socket buffer sizes\n"
+                           "                            (indirectly sets TCP window size)\n"
+
 #if defined(HAVE_TCP_CONGESTION)
                            "  -C, --congestion <algo>   set TCP congestion control algorithm (Linux and FreeBSD only)\n"
 #endif /* HAVE_TCP_CONGESTION */

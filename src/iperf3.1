@@ -316,7 +316,13 @@ test in both directions (normal and reverse), with both the client and
 server sending and receiving data simultaneously
 .TP
 .BR -w ", " --window " \fIn\fR[KMGT]"
-window size / socket buffer size (this gets sent to the server and used on that side too)
+set socket buffer size / window size.
+This value gets sent to the server and used on that side too; on both
+sides this option sets both the sending and receiving socket buffer sizes.
+This option can be used to set (indirectly) the maximum TCP window size.
+Note that on Linux systems, the effective maximum window size is approximately
+double what is specified by this option (this behavior is not a bug in iperf3
+but a "feature" of the Linux kernel, as documented by tcp(7) and socket(7)).
 .TP
 .BR -M ", " --set-mss " \fIn\fR"
 set TCP/SCTP maximum segment size (MTU - 40 bytes)

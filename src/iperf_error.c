@@ -438,6 +438,15 @@ iperf_strerror(int int_errno)
 	case IEIDLETIMEOUT:
 	    snprintf(errstr, len, "idle timeout parameter is not positive or larget then allowed limit");
             break;
+	case IEBINDDEV:
+	    snprintf(errstr, len, "Unable to bind-to-device (check perror, maybe permissions?)");
+            break;
+    case IEBINDDEVNOSUPPORT:
+	    snprintf(errstr, len, "`<ip>%%<dev>` is not supported as system does not support bind to device");
+            break;
+    case IEHOSTDEV:
+	    snprintf(errstr, len, "host device name (ip%%<dev>) is supported (and required) only for IPv6 link-local address");
+            break;        
 	case IENOMSG:
 	    snprintf(errstr, len, "idle timeout for receiving data");
             break;

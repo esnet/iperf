@@ -425,7 +425,9 @@ enum {
     IEAUTHTEST = 142,       // Test authorization failed
     IEBINDDEV = 143,        // Unable to bind-to-device (check perror, maybe permissions?)
     IENOMSG = 144,          // No message was received for NO_MSG_RCVD_TIMEOUT time period
-    IESETDONTFRAGMENT = 145,    // Unable to set IP Do-Not-Fragment
+    IESETDONTFRAGMENT = 145,   // Unable to set IP Do-Not-Fragment
+    IEBINDDEVNOSUPPORT = 146,  // `ip%%dev` is not supported as system does not support bind to device
+    IEHOSTDEV = 147,        // host device name (ip%%<dev>) is supported (and required) only for IPv6 link-local address
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

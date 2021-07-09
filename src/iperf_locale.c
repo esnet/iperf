@@ -105,9 +105,12 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 #if defined(HAVE_CPU_AFFINITY)
                            "  -A, --affinity n/n,m      set CPU affinity\n"
 #endif /* HAVE_CPU_AFFINITY */
-                           "  -B, --bind      <host>    bind to the interface associated with the address <host>\n"
 #if defined(HAVE_SO_BINDTODEVICE)
-                           "  --bind-dev      <dev>     bind to the network interface with SO_BINDTODEVICE\n"
+                           "  -B, --bind <host>[%<dev>] bind to the interface associated with the address <host>\n"
+                           "                            (optional <dev> equivalent to `--bind-dev <dev>`)\n"
+                           "  --bind-dev <dev>          bind to the network interface with SO_BINDTODEVICE\n"
+#else /* HAVE_SO_BINDTODEVICE */
+                           "  -B, --bind      <host>    bind to the interface associated with the address <host>\n"
 #endif /* HAVE_SO_BINDTODEVICE */
                            "  -V, --verbose             more detailed output\n"
                            "  -J, --json                output in JSON format\n"
@@ -139,7 +142,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "                            and client during the authentication process\n"
 #endif //HAVE_SSL
                            "Client specific:\n"
-                           "  -c, --client    <host>    run in client mode, connecting to <host>\n"
+                           "  -c, --client <host>[%<dev>] run in client mode, connecting to <host>\n"
+                           "                              %<dev> is supported and required when <host> is IPv6 Link-local\n"
 #if defined(HAVE_SCTP_H)
                            "  --sctp                    use SCTP rather than TCP\n"
                            "  -X, --xbind <name>        bind SCTP association to links\n"

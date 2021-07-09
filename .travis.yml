@@ -5,6 +5,7 @@ compiler:
 os:
    - linux
    - osx
+   - freebsd
  
 notifications:
   slack:

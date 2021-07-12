@@ -625,6 +625,13 @@ iperf_run_client(struct iperf_test * test)
 		test->stats_callback(test);
 		if (iperf_set_send_state(test, TEST_END) != 0)
                     goto cleanup_and_fail;
+        // sending total bytes count for server,
+        //  to be used if needed for reliable data saving in file on server (-F)
+        int32_t netBytesSent = htonl(test->bytes_sent);
+        if (Nwrite(test->ctrl_sck, (char*) &netBytesSent, sizeof(netBytesSent), Ptcp) < 0) {
+            i_errno = IECTRLWRITE;
+            return -1;
+        }
 	    }
 	}
 	// If we're in reverse mode, continue draining the data

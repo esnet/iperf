@@ -228,6 +228,10 @@ run in client mode, connecting to the specified server.
 By default, a test consists of sending data from the client to the
 server, unless the \-R flag is specified.
 .TP
+.BR -m ", " --multipath " "
+use multipath variant for the current protocol. This only applies to
+TCP and enables MPTCP usage.
+.TP
 .BR --sctp
 use SCTP rather than TCP (FreeBSD and Linux)
 .TP

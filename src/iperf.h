@@ -275,6 +275,8 @@ struct iperf_test
     int       omit;                             /* duration of omit period (-O flag) */
     int       duration;                         /* total duration of test (-t flag) */
     char     *diskfile_name;			/* -F option */
+    int       diskfile_seek;            /* optional with -F option (sender only) */ 
+    int       diskfile_append;          /* optional with -F option (receiver only) */
     int       affinity, server_affinity;	/* -A option */
 #if defined(HAVE_CPUSET_SETAFFINITY)
     cpuset_t cpumask;

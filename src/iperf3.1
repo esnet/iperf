@@ -120,7 +120,7 @@ default is 1, use 0 to disable
 .BR -I ", " --pidfile " \fIfile\fR"
 write a file with the process ID, most useful when running as a daemon.
 .TP
-.BR -F ", " --file " \fIname\fR"
+.BR -F ", " --file " \fIname[,(append|#)]\fR"
 Use a file as the source (on the sender) or sink (on the receiver) of
 data, rather than just generating random data or throwing it away.
 This feature is used for finding whether or not the storage subsystem
@@ -128,6 +128,10 @@ is the bottleneck for file transfers.
 It does not turn iperf3 into a file transfer tool.
 The length, attributes, and in some cases contents of the received
 file may not match those of the original file.
+Optional second parameter after filename: for sender, it
+may be a number showing the offset in the file to start reading from.
+For receiver, 'append' will tell the server to append the received 
+bytes to the end of file (default behaviour is to overwrite the file).
 .TP
 .BR -A ", " --affinity " \fIn/n,m\fR"
 Set the CPU affinity, if possible (Linux, FreeBSD, and Windows only).

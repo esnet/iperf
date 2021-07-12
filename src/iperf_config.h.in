@@ -54,6 +54,9 @@
 /* Have SCTP support. */
 #undef HAVE_SCTP_H
 
+/* Have sd-daemon support. */
+#undef HAVE_SD_DAEMON_H
+
 /* Define to 1 if you have the `sendfile' function. */
 #undef HAVE_SENDFILE
 

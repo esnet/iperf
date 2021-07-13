@@ -119,12 +119,13 @@ timeout_connect(int s, const struct sockaddr *name, socklen_t namelen,
  * Copyright: http://swtch.com/libtask/COPYRIGHT
 */
 
-/* make connection to server */
+/* create a socket */
 int
-netdial(int domain, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, int timeout)
+create_socket(int domain, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, struct addrinfo **server_res_out)
 {
     struct addrinfo hints, *local_res = NULL, *server_res = NULL;
     int s, saved_errno;
+    char portstr[6];
 
     if (local) {
         memset(&hints, 0, sizeof(hints));
@@ -137,8 +138,12 @@ netdial(int domain, int proto, const char *local, const char *bind_dev, int loca
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = domain;
     hints.ai_socktype = proto;
-    if ((gerror = getaddrinfo(server, NULL, &hints, &server_res)) != 0)
+    snprintf(portstr, sizeof(portstr), "%d", port);
+    if ((gerror = getaddrinfo(server, portstr, &hints, &server_res)) != 0) {
+	if (local)
+	    freeaddrinfo(local_res);
         return -1;
+    }
 
     s = socket(server_res->ai_family, proto, 0);
     if (s < 0) {
@@ -204,6 +209,8 @@ netdial(int domain, int proto, const char *local, const char *bind_dev, int loca
 	}
 	/* Unknown protocol */
 	else {
+	    close(s);
+	    freeaddrinfo(server_res);
 	    errno = EAFNOSUPPORT;
             return -1;
 	}
@@ -217,7 +224,22 @@ netdial(int domain, int proto, const char *local, const char *bind_dev, int loca
         }
     }
 
-    ((struct sockaddr_in *) server_res->ai_addr)->sin_port = htons(port);
+    *server_res_out = server_res;
+    return s;
+}
+
+/* make connection to server */
+int
+netdial(int domain, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, int timeout)
+{
+    struct addrinfo *server_res = NULL;
+    int s, saved_errno;
+
+    s = create_socket(domain, proto, local, bind_dev, local_port, server, port, &server_res);
+    if (s < 0) {
+      return -1;
+    }
+
     if (timeout_connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen, timeout) < 0 && errno != EINPROGRESS) {
 	saved_errno = errno;
 	close(s);

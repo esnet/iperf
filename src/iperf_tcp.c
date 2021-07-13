@@ -369,101 +369,16 @@ iperf_tcp_listen(struct iperf_test *test)
 int
 iperf_tcp_connect(struct iperf_test *test)
 {
-    struct addrinfo hints, *local_res, *server_res;
-    char portstr[6];
+    struct addrinfo *server_res;
     int s, opt;
     socklen_t optlen;
     int saved_errno;
     int rcvbuf_actual, sndbuf_actual;
 
-    if (test->bind_address) {
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_family = test->settings->domain;
-        hints.ai_socktype = SOCK_STREAM;
-        if ((gerror = getaddrinfo(test->bind_address, NULL, &hints, &local_res)) != 0) {
-            i_errno = IESTREAMCONNECT;
-            return -1;
-        }
-    }
-
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = test->settings->domain;
-    hints.ai_socktype = SOCK_STREAM;
-    snprintf(portstr, sizeof(portstr), "%d", test->server_port);
-    if ((gerror = getaddrinfo(test->server_hostname, portstr, &hints, &server_res)) != 0) {
-	if (test->bind_address)
-	    freeaddrinfo(local_res);
-        i_errno = IESTREAMCONNECT;
-        return -1;
-    }
-
-    if ((s = socket(server_res->ai_family, SOCK_STREAM, 0)) < 0) {
-	if (test->bind_address)
-	    freeaddrinfo(local_res);
-	freeaddrinfo(server_res);
-        i_errno = IESTREAMCONNECT;
-        return -1;
-    }
-
-    /*
-     * Various ways to bind the local end of the connection.
-     * 1.  --bind (with or without --cport).
-     */
-    if (test->bind_address) {
-        struct sockaddr_in *lcladdr;
-        lcladdr = (struct sockaddr_in *)local_res->ai_addr;
-        lcladdr->sin_port = htons(test->bind_port);
-
-        if (bind(s, (struct sockaddr *) local_res->ai_addr, local_res->ai_addrlen) < 0) {
-	    saved_errno = errno;
-	    close(s);
-	    freeaddrinfo(local_res);
-	    freeaddrinfo(server_res);
-	    errno = saved_errno;
-            i_errno = IESTREAMCONNECT;
-            return -1;
-        }
-        freeaddrinfo(local_res);
-    }
-    /* --cport, no --bind */
-    else if (test->bind_port) {
-	size_t addrlen;
-	struct sockaddr_storage lcl;
-
-	/* IPv4 */
-	if (server_res->ai_family == AF_INET) {
-	    struct sockaddr_in *lcladdr = (struct sockaddr_in *) &lcl;
-	    lcladdr->sin_family = AF_INET;
-	    lcladdr->sin_port = htons(test->bind_port);
-	    lcladdr->sin_addr.s_addr = INADDR_ANY;
-	    addrlen = sizeof(struct sockaddr_in);
-	}
-	/* IPv6 */
-	else if (server_res->ai_family == AF_INET6) {
-	    struct sockaddr_in6 *lcladdr = (struct sockaddr_in6 *) &lcl;
-	    lcladdr->sin6_family = AF_INET6;
-	    lcladdr->sin6_port = htons(test->bind_port);
-	    lcladdr->sin6_addr = in6addr_any;
-	    addrlen = sizeof(struct sockaddr_in6);
-	}
-	/* Unknown protocol */
-	else {
-	    saved_errno = errno;
-	    close(s);
-	    freeaddrinfo(server_res);
-	    errno = saved_errno;
-            i_errno = IEPROTOCOL;
-            return -1;
-	}
-
-        if (bind(s, (struct sockaddr *) &lcl, addrlen) < 0) {
-	    saved_errno = errno;
-	    close(s);
-	    freeaddrinfo(server_res);
-	    errno = saved_errno;
-            i_errno = IESTREAMCONNECT;
-            return -1;
-        }
+    s = create_socket(test->settings->domain, SOCK_STREAM, test->bind_address, test->bind_dev, test->bind_port, test->server_hostname, test->server_port, &server_res);
+    if (s < 0) {
+	i_errno = IESTREAMCONNECT;
+	return -1;
     }
 
     /* Set socket options */

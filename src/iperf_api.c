@@ -1032,6 +1032,21 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
+            	slash = strchr(optarg, '/');
+		if (slash) {
+		    *slash = '\0';
+		    ++slash;
+                    if (*slash != '\0') {
+                        test->num_of_server_ports = atoi(slash);
+                        if (test->num_of_server_ports < 1 || test->num_of_server_ports > MAX_STREAMS) {
+                            i_errno = IENUMPORTS;
+                            return -1;
+                        }
+                        if (test->num_of_server_ports > 1) {
+                            server_flag = 1;
+                        }
+                    }
+		}
 		portno = atoi(optarg);
 		if (portno < 1 || portno > 65535) {
 		    i_errno = IEBADPORT;
@@ -1916,6 +1931,26 @@ iperf_exchange_parameters(struct iperf_test *test)
         if (get_parameters(test) < 0)
             return -1;
 
+        // Check spcific conditions required for UDP under Cygwin as it does not support parallel stream using same port
+        if (test->protocol->id == Pudp) {
+            // Ensure UDP ports pool size if large enough for the required number of streams
+            if (test->num_of_server_ports > 1) {
+                if (test->num_of_server_ports < test->num_streams) {
+                    i_errno = IEPORTNUM;
+                    return -1;
+                }
+            }
+#if defined(__CYGWIN__)
+            else {
+                // Parallel UDP streams under Cygwin must use different port number per stream
+                if (test->num_streams > 1) {
+                    i_errno = IECYGWINPORTSUDP;
+                    return -1;
+                }
+            }
+#endif /* __CYGWIN__ */
+        }
+
 #if defined(HAVE_SSL)
         if (test_is_authorized(test) < 0){
             if (iperf_set_send_state(test, SERVER_ERROR) != 0)
@@ -1931,7 +1966,7 @@ iperf_exchange_parameters(struct iperf_test *test)
 #endif //HAVE_SSL
 
         if ((s = test->protocol->listen(test)) < 0) {
-	        if (iperf_set_send_state(test, SERVER_ERROR) != 0)
+	    if (iperf_set_send_state(test, SERVER_ERROR) != 0)
                 return -1;
             err = htonl(i_errno);
             if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
@@ -2649,6 +2684,8 @@ iperf_defaults(struct iperf_test *testp)
     testp->congestion_used = NULL;
     testp->remote_congestion_used = NULL;
     testp->server_port = PORT;
+    testp->num_of_server_ports = 0;
+    testp->server_udp_streams_accepted = 0;
     testp->ctrl_sck = -1;
     testp->prot_listener = -1;
     testp->other_side_has_retransmits = 0;
@@ -2922,6 +2959,7 @@ iperf_reset_test(struct iperf_test *test)
     test->mode = RECEIVER;
     test->sender_has_retransmits = 0;
     set_protocol(test, Ptcp);
+    test->server_udp_streams_accepted = 0;
     test->omit = OMIT;
     test->duration = DURATION;
     test->server_affinity = -1;

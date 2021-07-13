@@ -272,6 +272,8 @@ struct iperf_test
     TAILQ_HEAD(xbind_addrhead, xbind_entry) xbind_addrs; /* all -X opts */
     int       bind_port;                        /* --cport option */
     int       server_port;
+    int       num_of_server_ports;              /* second value of --port option */
+    int       server_udp_streams_accepted;          /* offset of last server port used - 0 means none used (max `num_of_server_ports`) */
     int       omit;                             /* duration of omit period (-O flag) */
     int       duration;                         /* total duration of test (-t flag) */
     char     *diskfile_name;			/* -F option */
@@ -396,6 +398,9 @@ struct iperf_test
 #define UDP_RATE (1024 * 1024) /* 1 Mbps */
 #define OMIT 0 /* seconds */
 #define DURATION 10 /* seconds */
+
+#define UDP_STREAM_INIT_REQ_DATAGRAM 123456789
+#define UDP_STREAM_INIT_RESP_DATAGRAM 987654321
 
 #define SEC_TO_NS 1000000000LL	/* too big for enum/const on some platforms */
 #define MAX_RESULT_STRING 4096

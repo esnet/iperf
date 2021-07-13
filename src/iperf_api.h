@@ -379,6 +379,9 @@ enum {
     IEIDLETIMEOUT = 30,     // Invalid value specified as idle state timeout
     IERCVTIMEOUT = 31,      // Illegal message receive timeout
     IERVRSONLYRCVTIMEOUT = 32,  // Client receive timeout is valid only in reverse mode
+    IENUMPORTS = 33,        // number of ports is less than 1 or larger than server limit
+    IEPORTNUM = 34,         // requested number of parallel streams is larger than the number of ports set for the server
+    IECYGWINPORTSUDP = 35,  // different port (parameter `-p #/<num of ports>`) should be available for parallel UDP streams under Cygwin
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

@@ -68,5 +68,5 @@ your work.
 
 We expect that iperf3 interactions via the issue tracker, mailing
 lists, and so forth will be conducted civilly.  Language that is
-deemed appropriate or abusive may be removed, and we reserve the right
+deemed inappropriate or abusive may be removed, and we reserve the right
 to ban users from accessing the project for repeated offense.

@@ -48,6 +48,7 @@ extern const char wait_server_threads[] ;
 extern const char test_start_time[];
 extern const char test_start_bytes[];
 extern const char test_start_blocks[];
+extern const char test_start_title[];
 
 extern const char report_time[] ;
 extern const char report_connecting[] ;

@@ -85,7 +85,10 @@ iperf_create_streams(struct iperf_test *test, int sender)
 		        i_errno = IESETCONGESTION;
 		        return -1;
 		    } 
-		} else { /* for CC hack: sleep N seconds to give even numbered streams (eg: cubic) a head start */ 
+		} 
+#ifdef ADD_SLEEP /* did not seem to really matter, so removing for now */
+		else { 
+			/* for CC hack: sleep N seconds to give even numbered streams (eg: cubic) a head start */ 
                     int sleep_time = 1;
                     /*
 	            printf("default cong cntrl on stream %d \n",sender_id);
@@ -93,6 +96,7 @@ iperf_create_streams(struct iperf_test *test, int sender)
                     */
 		    sleep(sleep_time);
                 }
+#endif
                 sender_id++;
 	    }
 	    {

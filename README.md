@@ -102,7 +102,7 @@ Relation to iperf 2.x
 
 Although iperf2 and iperf3 both measure network performance,
 they are not compatible with each other.
-The projects (as of late mid-2021) are in active, but separate, development.
+The projects (as of mid-2021) are in active, but separate, development.
 The continuing iperf2 development
 project can be found at https://sourceforge.net/projects/iperf2/.
 

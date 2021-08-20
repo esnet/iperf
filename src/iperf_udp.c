@@ -575,6 +575,7 @@ iperf_udp_connect(struct iperf_test *test)
         struct timeval timeout;
 
         timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
 
         memcpy(&read_set, &test->read_set, sizeof(fd_set));
         result = select(test->max_fd + 1, &read_set, NULL, NULL, &timeout);

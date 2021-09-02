@@ -195,7 +195,13 @@ run in server mode
 run the server in background as a daemon
 .TP
 .BR -1 ", " --one-off
-handle one client connection, then exit.
+handle one client connection, then exit.  If an idle time is set, the
+server will exit after that amount of time with no connection.
+.TP
+.BR --idle-timeout " \fIn\fR"
+restart the server after \fIn\fR seconds in case it gets stuck.  In
+one-off mode, this is the number of seconds the server will wait
+before exiting.
 .TP
 .BR --server-bitrate-limit " \fIn\fR[KMGT]"
 set a limit on the server side, which will cause a test to abort if

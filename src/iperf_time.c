@@ -89,13 +89,13 @@ iperf_time_in_usecs(struct iperf_time *time)
 double
 iperf_time_in_secs(struct iperf_time *time)
 {
-    return time->secs + time->usecs / 1000000.0; 
+    return time->secs + time->usecs / 1000000.0;
 }
 
 /* iperf_time_compare
  *
  * Compare two timestamps
- * 
+ *
  * Returns -1 if time1 is earlier, 1 if time1 is later,
  * or 0 if the timestamps are equal.
  */
@@ -121,7 +121,7 @@ iperf_time_compare(struct iperf_time *time1, struct iperf_time *time2)
  *
  * Returns 1 if the time1 is less than or equal to time2, otherwise 0.
  */
-int 
+int
 iperf_time_diff(struct iperf_time *time1, struct iperf_time *time2, struct iperf_time *diff)
 {
     int past = 0;
@@ -132,7 +132,7 @@ iperf_time_diff(struct iperf_time *time1, struct iperf_time *time2, struct iperf
         diff->secs = 0;
         diff->usecs = 0;
         past = 1;
-    } 
+    }
     else if (cmp == 1) {
         diff->secs = time1->secs - time2->secs;
         diff->usecs = time1->usecs;

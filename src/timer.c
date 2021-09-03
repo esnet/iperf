@@ -203,7 +203,7 @@ void
 tmr_reset( struct iperf_time* nowP, Timer* t )
 {
     struct iperf_time now;
-    
+
     getnow( nowP, &now );
     t->time = now;
     iperf_time_add_usecs( &t->time, t->usecs );

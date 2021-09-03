@@ -78,7 +78,7 @@ iperf_create_streams(struct iperf_test *test, int sender)
 		    errno = saved_errno;
 		    i_errno = IESETCONGESTION;
 		    return -1;
-		} 
+		}
 	    }
 	    {
 		socklen_t len = TCP_CA_NAME_MAX;
@@ -172,7 +172,7 @@ create_client_timers(struct iperf_test * test)
             i_errno = IEINITTEST;
             return -1;
 	}
-    } 
+    }
     if (test->stats_interval != 0) {
         test->stats_timer = tmr_create(&now, client_stats_timer_proc, cd, test->stats_interval * SEC_TO_US, 1);
         if (test->stats_timer == NULL) {
@@ -548,7 +548,7 @@ iperf_run_client(struct iperf_test * test)
 
             }
         }
-        
+
 	if (result > 0) {
             if (rcv_timeout_us > 0) {
                 iperf_time_now(&last_receive_time);

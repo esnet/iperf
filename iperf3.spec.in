@@ -3,8 +3,8 @@ Version: @VERSION@
 Release:	1%{?dist}
 Summary: Measurement tool for TCP/UDP bandwidth performance
 
-Group:	 Applications/Internet	
-License: BSD	
+Group:	 Applications/Internet
+License: BSD
 URL:	 https://github.com/esnet/iperf
 Source0: https://downloads.es.net/pub/iperf/iperf-%{version}.tar.gz
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
@@ -98,9 +98,8 @@ rm -rf $RPM_BUILD_ROOT
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
 
 * Wed Apr 06 2011 G.Balaji <balajig81@gmail.com> 3.0b4-2
-- Changed the Spec name, removed static libs generation and devel 
+- Changed the Spec name, removed static libs generation and devel
 - package.
 
 * Sat Mar 26 2011 G.Balaji <balajig81@gmail.com> 3.0b4-1
 - Initial Version
-

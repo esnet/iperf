@@ -54,7 +54,7 @@ main(int argc, char **argv)
     const char sha256String[] = "This is a SHA256 test.";
     const char sha256Digest[] = "4816482f8b4149f687a1a33d61a0de6b611364ec0fb7adffa59ff2af672f7232"; /* echo -n "This is a SHA256 test." | shasum -a256 */
     char sha256Output[65];
-    
+
     sha256(sha256String, sha256Output);
     assert(strcmp(sha256Output, sha256Digest) == 0);
 

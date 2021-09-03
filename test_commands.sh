@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # This is a set of commands to run and verify they work before doing a new release.
-# Eventually they should also use the -J flag to generate JSON output, and a program should 
+# Eventually they should also use the -J flag to generate JSON output, and a program should
 # be written to check the output.
 # Be sure to test both client and server on Linux, BSD, and OSX
 #
@@ -35,7 +35,7 @@ host=$1
 # SCTP
 ./src/iperf3 -c "$host" --sctp -V -t 5
 # parallel streams
-./src/iperf3 -c "$host" -P 3 -t 5 
+./src/iperf3 -c "$host" -P 3 -t 5
 ./src/iperf3 -c "$host" -u -P 3 -t 5
 # reverse mode
 ./src/iperf3 -c "$host" -P 2 -t 5 -R
@@ -44,12 +44,12 @@ host=$1
 ./src/iperf3 -c "$host" -P 2 -t 5 --bidir
 ./src/iperf3 -c "$host" -u -P 2 -t 5 --bidir
 # zero copy
-./src/iperf3 -c "$host" -Z -t 5 
+./src/iperf3 -c "$host" -Z -t 5
 ./src/iperf3 -c "$host" -Z -t 5 -R
 # window size
-./src/iperf3 -c "$host" -t 5 -w 8M 
+./src/iperf3 -c "$host" -t 5 -w 8M
 # -n flag
-./src/iperf3 -c "$host" -n 5M  
+./src/iperf3 -c "$host" -n 5M
 ./src/iperf3 -c "$host" -n 5M -u -b1G
 # -n flag with -R
 ./src/iperf3 -c "$host" -n 5M -R
@@ -57,7 +57,7 @@ host=$1
 # conflicting -n -t flags
 ./src/iperf3 -c "$host" -n 5M -t 5
 # -k mode
-./src/iperf3 -c "$host" -k 1K  
+./src/iperf3 -c "$host" -k 1K
 ./src/iperf3 -c "$host" -k 1K -u -b1G
 # -k mode with -R
 ./src/iperf3 -c "$host" -k 1K -R
@@ -71,5 +71,3 @@ host=$1
 ./src/iperf3 -c "$host" -M 1000 -V
 # test congestion control option (linux only)
 ./src/iperf3 -c "$host" -C reno -V
-
-

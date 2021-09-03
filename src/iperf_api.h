@@ -429,7 +429,7 @@ enum {
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)
-    IESTREAMLISTEN = 202,   // Unable to start stream listener (check perror) 
+    IESTREAMLISTEN = 202,   // Unable to start stream listener (check perror)
     IESTREAMCONNECT = 203,  // Unable to connect stream (check herror/perror)
     IESTREAMACCEPT = 204,   // Unable to accepte stream connection (check perror)
     IESTREAMWRITE = 205,    // Unable to write to stream socket (check perror)

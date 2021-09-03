@@ -34,7 +34,7 @@
 #include "iperf.h"
 #include "units.h"
 
-int 
+int
 main(int argc, char **argv)
 {
     iperf_size_t llu;

@@ -24,4 +24,3 @@ help to run ``./bootstrap.sh`` first from the top-level directory.
 By default, the ``libiperf`` library is built in both shared and
 static forms.  Either can be suppressed by using the
 ``--disabled-shared`` or ``--disable-static`` configure-time options.
-

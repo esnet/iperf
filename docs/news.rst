@@ -412,4 +412,3 @@ During development, there were various distributions of the source
 code unofficially released carrying a 3.0.0 version number.  Because
 of the possibility for confusion, this first public release of iperf3
 was numbered 3.0.1.
-

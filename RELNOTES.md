@@ -366,7 +366,7 @@ iperf 3.2 2017-06-26
     is primarily a cosmetic change to prevent these fairly meaningless
     intervals from showing up in the output (#278).
 
-  * Compatiblity note: Users running iperf3 3.2 or newer from the
+  * Compatibility note: Users running iperf3 3.2 or newer from the
     bwctl utility will need to obtain version 1.6.3 or newer of bwctl.
     Note that bwctl, a component of the perfSONAR toolkit, has been
     deprecated in favor of pScheduler since the release of perfSONAR
@@ -871,7 +871,7 @@ iperf 3.0b3 2010-07-23
   * Better error handling
       * All errors now handled with iperf_error()
       * All functions that can return errors return NULL or -1 on error and set i_errno appropriately
-  * Iperf API intruduced
+  * Iperf API introduced
       * Support for adding new protocols
       * Added support for callback functions
           * on_connect - executes after a connection is made to the server

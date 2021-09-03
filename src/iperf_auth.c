@@ -246,7 +246,7 @@ int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned ch
     BIO_free(bioBuff);
 
     if (encryptedtext_len < 0) {
-      /* We probably shoudln't be printing stuff like this */
+      /* We probably shouldn't be printing stuff like this */
       fprintf(stderr, "%s\n", ERR_error_string(ERR_get_error(), NULL));
     }
 
@@ -273,7 +273,7 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
     BIO_free(bioBuff);
 
     if (plaintext_len < 0) {
-      /* We probably shoudln't be printing stuff like this */
+      /* We probably shouldn't be printing stuff like this */
       fprintf(stderr, "%s\n", ERR_error_string(ERR_get_error(), NULL));
     }
 

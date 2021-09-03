@@ -116,7 +116,7 @@ How can I build on a system that doesn't support profiled executables?
 
      And then run ``./bootstrap.sh``, that will regenerate the project
      Makefiles to make the exclusion of the profiled iperf3 executable
-     permanant (within that source tree).
+     permanent (within that source tree).
 
 I'm seeing quite a bit of unexpected UDP loss. Why?
   First, confirm you are using iperf 3.1.5 or higher. There was an

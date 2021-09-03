@@ -274,7 +274,7 @@ iperf_tcp_listen(struct iperf_test *test)
         }
 
 	/*
-	 * If we got an IPv6 socket, figure out if it shoudl accept IPv4
+	 * If we got an IPv6 socket, figure out if it should accept IPv4
 	 * connections as well.  See documentation in netannounce() for
 	 * more details.
 	 */

@@ -1676,7 +1676,7 @@ iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP)
     }
 }
 
-/* Verify that average traffic is not greater than the specifid limit */
+/* Verify that average traffic is not greater than the specified limit */
 void
 iperf_check_total_rate(struct iperf_test *test, iperf_size_t last_interval_bytes_transferred)
 {
@@ -1688,7 +1688,7 @@ iperf_check_total_rate(struct iperf_test *test, iperf_size_t last_interval_bytes
     if (test->done || test->settings->bitrate_limit == 0)    // Continue only if check should be done
         return;
     
-    /* Add last inetrval's transffered bytes to the array */
+    /* Add last inetrval's transferred bytes to the array */
     if (++test->bitrate_limit_last_interval_index >= test->settings->bitrate_limit_stats_per_interval)
         test->bitrate_limit_last_interval_index = 0;
     test->bitrate_limit_intervals_traffic_bytes[test->bitrate_limit_last_interval_index] = last_interval_bytes_transferred;
@@ -2386,7 +2386,7 @@ get_results(struct iperf_test *test)
 				    sp->peer_packet_count = pcount;
 				    sp->result->bytes_received = bytes_transferred;
 				    /*
-				     * We have to handle the possibilty that
+				     * We have to handle the possibility that
 				     * start_time and end_time might not be
 				     * available; this is the case for older (pre-3.2)
 				     * servers.
@@ -2871,7 +2871,7 @@ iperf_free_test(struct iperf_test *test)
         }
     }
 
-    /* Free interval's traffic array for avrage rate calculations */
+    /* Free interval's traffic array for average rate calculations */
     if (test->bitrate_limit_intervals_traffic_bytes != NULL)
         free(test->bitrate_limit_intervals_traffic_bytes);
 
@@ -3175,7 +3175,7 @@ iperf_print_intermediate(struct iperf_test *test)
 
 	    /*
 	     * If the interval is at least 10% the normal interval
-	     * length, or if there were actual bytes transferrred,
+	     * length, or if there were actual bytes transferred,
 	     * then we want to keep this interval.
 	     */
 	    if (interval_len >= test->stats_interval * 0.10 ||
@@ -3447,7 +3447,7 @@ iperf_print_results(struct iperf_test *test)
          * the streams.  It's possible to not have any streams at all
          * if the client got interrupted before it got to do anything.
          *
-         * Also note that we try to keep seperate values for the sender
+         * Also note that we try to keep separate values for the sender
          * and receiver ending times.  Earlier iperf (3.1 and earlier)
          * servers didn't send that to the clients, so in this case we fall
          * back to using the client's ending timestamp.  The fallback is

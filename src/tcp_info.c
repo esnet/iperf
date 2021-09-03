@@ -33,7 +33,7 @@
  * Note that this is only really useful on Linux.
  * XXX: only standard on linux versions 2.4 and later
  #
- * FreeBSD has a limitted implementation that only includes the following:
+ * FreeBSD has a limited implementation that only includes the following:
  *   tcpi_snd_ssthresh, tcpi_snd_cwnd, tcpi_rcv_space, tcpi_rtt
  * Based on information on http://wiki.freebsd.org/8.0TODO, I dont think this will be
  * fixed before v8.1 at the earliest.

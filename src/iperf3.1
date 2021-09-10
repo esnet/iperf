@@ -6,7 +6,7 @@ iperf3 \- perform network throughput tests
 .I options
 .B ]
 .br
-.B iperf3 -c 
+.B iperf3 -c
 .I server
 .B [
 .I options
@@ -96,7 +96,7 @@ test by specifying the --get-server-output flag.
 Either the client or the server can produce its output in a JSON
 structure, useful for integration with other programs, by passing it
 the -J flag.
-Because the contents of the JSON structure are only competely known
+Because the contents of the JSON structure are only completely known
 after the test has finished, no JSON output will be emitted until the
 end of the test.
 .PP
@@ -137,7 +137,7 @@ In addition, on the client side you can override the server's
 affinity for just that one test, using the \fIn,m\fR form of
 argument.
 Note that when using this feature, a process will only be bound
-to a single CPU (as opposed to a set containing potentialy multiple
+to a single CPU (as opposed to a set containing potentially multiple
 CPUs).
 .TP
 .BR -B ", " --bind " \fIhost\fR"
@@ -148,7 +148,7 @@ This option uses SO_BINDTODEVICE, and may require root permissions.
 (Available on Linux and possibly other systems.)
 .TP
 .BR -V ", " --verbose " "
-give more detailed output 
+give more detailed output
 .TP
 .BR -J ", " --json " "
 output in JSON format
@@ -213,12 +213,12 @@ the data rate is 5 seconds by default, but can be specified by adding
 a '/' and a number to the bitrate specifier.
 .TP
 .BR --rsa-private-key-path " \fIfile\fR"
-path to the RSA private key (not password-protected) used to decrypt 
+path to the RSA private key (not password-protected) used to decrypt
 authentication credentials from the client (if built with OpenSSL
 support).
-.TP          
+.TP
 .BR --authorized-users-path " \fIfile\fR"
-path to the configuration file containing authorized users credentials to run 
+path to the configuration file containing authorized users credentials to run
 iperf tests (if built with OpenSSL support).
 The file is a comma separated list of usernames and password hashes;
 more information on the structure of the file can be found in the
@@ -418,41 +418,41 @@ perform differently, just based on payload entropy.
 Set the IPv4 Don't Fragment (DF) bit on outgoing packets.
 Only applicable to tests doing UDP over IPv4.
 .TP
-.BR --username " \fIusername\fR" 
+.BR --username " \fIusername\fR"
 username to use for authentication to the iperf server (if built with
 OpenSSL support).
 The password will be prompted for interactively when the test is run.  Note,
 the password to use can also be specified via the IPERF3_PASSWORD environment
 variable. If this variable is present, the password prompt will be skipped.
 .TP
-.BR --rsa-public-key-path " \fIfile\fR" 
+.BR --rsa-public-key-path " \fIfile\fR"
 path to the RSA public key used to encrypt authentication credentials
 (if built with OpenSSL support)
 
 .SH EXAMPLES
 .SS "Authentication - RSA Keypair"
 The authentication feature of iperf3 requires an RSA public keypair.
-The public key is used to encrypt the authentication token containing the 
+The public key is used to encrypt the authentication token containing the
 user credentials, while the private key is used to decrypt the authentication token.
 The private key must be in PEM format and additionally must not have a
 password set.
 The public key must be in PEM format and use SubjectPrefixKeyInfo encoding.
 An example of a set of UNIX/Linux commands using OpenSSL
 to generate a correctly-formed keypair follows:
-.sp 1 
+.sp 1
 .in +.5i
 > openssl genrsa -des3 -out private.pem 2048
 .sp 0
 > openssl rsa -in private.pem -outform PEM -pubout -out public.pem
 .sp 0
-> openssl rsa -in private.pem -out private_not_protected.pem -outform PEM  
+> openssl rsa -in private.pem -out private_not_protected.pem -outform PEM
 .in -.5i
 .sp 1
 After these commands, the public key will be contained in the file
 public.pem and the private key will be contained in the file
 private_not_protected.pem.
 .SS "Authentication - Authorized users configuration file"
-A simple plaintext file must be provided to the iperf3 server in order to specify 
+A simple plaintext file must be provided to the iperf3 server in order to specify
 the authorized user credentials.
 The file is a simple list of comma-separated pairs of a username and a
 corresponding password hash.
@@ -461,7 +461,7 @@ The file can also contain commented lines (starting with the \fC#\fR
 character).
 An example of commands to generate the password hash on a UNIX/Linux system
 is given below:
-.sp 1 
+.sp 1
 .in +.5i
 > S_USER=mario S_PASSWD=rossi
 .sp 0

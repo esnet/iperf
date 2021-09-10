@@ -163,11 +163,11 @@ EVP_PKEY *load_pubkey_from_file(const char *file) {
     if (file) {
       key = BIO_new_file(file, "r");
       pkey = PEM_read_bio_PUBKEY(key, NULL, NULL, NULL);
- 
+
       BIO_free(key);
     }
     return (pkey);
-}   
+}
 
 EVP_PKEY *load_pubkey_from_base64(const char *buffer) {
     unsigned char *key = NULL;
@@ -246,18 +246,18 @@ int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned ch
     BIO_free(bioBuff);
 
     if (encryptedtext_len < 0) {
-      /* We probably shoudln't be printing stuff like this */
+      /* We probably shouldn't be printing stuff like this */
       fprintf(stderr, "%s\n", ERR_error_string(ERR_get_error(), NULL));
     }
 
-    return encryptedtext_len;  
+    return encryptedtext_len;
 }
 
 int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedtext_len, EVP_PKEY *private_key, unsigned char **plaintext) {
     RSA *rsa = NULL;
     unsigned char *rsa_buffer = NULL, pad = RSA_PKCS1_PADDING;
     int plaintext_len, rsa_buffer_len, keysize;
-    
+
     rsa = EVP_PKEY_get1_RSA(private_key);
 
     keysize = RSA_size(rsa);
@@ -273,7 +273,7 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
     BIO_free(bioBuff);
 
     if (plaintext_len < 0) {
-      /* We probably shoudln't be printing stuff like this */
+      /* We probably shouldn't be printing stuff like this */
       fprintf(stderr, "%s\n", ERR_error_string(ERR_get_error(), NULL));
     }
 
@@ -385,5 +385,3 @@ ssize_t iperf_getpass (char **lineptr, size_t *n, FILE *stream) {
 
     return nread;
 }
-
-

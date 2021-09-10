@@ -241,7 +241,7 @@ netannounce(int domain, int proto, const char *local, const char *bind_dev, int 
 
     snprintf(portstr, 6, "%d", port);
     memset(&hints, 0, sizeof(hints));
-    /* 
+    /*
      * If binding to the wildcard address with no explicit address
      * family specified, then force us to get an AF_INET6 socket.  On
      * CentOS 6 and MacOS, getaddrinfo(3) with AF_UNSPEC in ai_family,
@@ -262,7 +262,7 @@ netannounce(int domain, int proto, const char *local, const char *bind_dev, int 
     hints.ai_socktype = proto;
     hints.ai_flags = AI_PASSIVE;
     if ((gerror = getaddrinfo(local, portstr, &hints, &res)) != 0)
-        return -1; 
+        return -1;
 
     s = socket(res->ai_family, proto, 0);
     if (s < 0) {
@@ -285,7 +285,7 @@ netannounce(int domain, int proto, const char *local, const char *bind_dev, int 
     }
 
     opt = 1;
-    if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, 
+    if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
 		   (char *) &opt, sizeof(opt)) < 0) {
 	saved_errno = errno;
 	close(s);
@@ -307,7 +307,7 @@ netannounce(int domain, int proto, const char *local, const char *bind_dev, int 
 	    opt = 0;
 	else
 	    opt = 1;
-	if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, 
+	if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY,
 		       (char *) &opt, sizeof(opt)) < 0) {
 	    saved_errno = errno;
 	    close(s);
@@ -327,7 +327,7 @@ netannounce(int domain, int proto, const char *local, const char *bind_dev, int 
     }
 
     freeaddrinfo(res);
-    
+
     if (proto == SOCK_STREAM) {
         if (listen(s, INT_MAX) < 0) {
 	    saved_errno = errno;

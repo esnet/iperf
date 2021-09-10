@@ -62,7 +62,7 @@ main(int argc, char **argv)
     // XXX: Setting the process affinity requires root on most systems.
     //      Is this a feature we really need?
 #ifdef TEST_PROC_AFFINITY
-    /* didnt seem to work.... */
+    /* didn't seem to work.... */
     /*
      * increasing the priority of the process to minimise packet generation
      * delay
@@ -74,7 +74,7 @@ main(int argc, char **argv)
         fprintf(stderr, "setting priority to valid level\n");
         rc = setpriority(PRIO_PROCESS, 0, 0);
     }
-    
+
     /* setting the affinity of the process  */
     cpu_set_t cpu_set;
     int affinity = -1;

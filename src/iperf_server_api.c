@@ -141,14 +141,14 @@ iperf_accept(struct iperf_test *test)
             return -1;
         if (iperf_exchange_parameters(test) < 0)
             return -1;
-	if (test->server_affinity != -1) 
+	if (test->server_affinity != -1)
 	    if (iperf_setaffinity(test, test->server_affinity) != 0)
 		return -1;
         if (test->on_connect)
             test->on_connect(test);
     } else {
 	/*
-	 * Don't try to read from the socket.  It could block an ongoing test. 
+	 * Don't try to read from the socket.  It could block an ongoing test.
 	 * Just send ACCESS_DENIED.
          * Also, if sending failed, don't return an error, as the request is not related
          * to the ongoing test, and returning an error will terminate the test.
@@ -325,7 +325,7 @@ create_server_timers(struct iperf_test * test)
 
 static void
 server_omit_timer_proc(TimerClientData client_data, struct iperf_time *nowP)
-{   
+{
     struct iperf_test *test = client_data.p;
 
     test->omit_timer = NULL;
@@ -345,7 +345,7 @@ static int
 create_server_omit_timer(struct iperf_test * test)
 {
     struct iperf_time now;
-    TimerClientData cd; 
+    TimerClientData cd;
 
     if (test->omit == 0) {
 	test->omit_timer = NULL;
@@ -353,11 +353,11 @@ create_server_omit_timer(struct iperf_test * test)
     } else {
 	if (iperf_time_now(&now) < 0) {
 	    i_errno = IEINITTEST;
-	    return -1; 
+	    return -1;
 	}
 	test->omitting = 1;
 	cd.p = test;
-	test->omit_timer = tmr_create(&now, server_omit_timer_proc, cd, test->omit * SEC_TO_US, 0); 
+	test->omit_timer = tmr_create(&now, server_omit_timer_proc, cd, test->omit * SEC_TO_US, 0);
 	if (test->omit_timer == NULL) {
 	    i_errno = IEINITTEST;
 	    return -1;
@@ -439,7 +439,7 @@ iperf_run_server(struct iperf_test *test)
         if (iperf_open_logfile(test) < 0)
             return -1;
 
-    if (test->affinity != -1) 
+    if (test->affinity != -1)
 	if (iperf_setaffinity(test, test->affinity) != 0)
 	    return -2;
 
@@ -475,7 +475,7 @@ iperf_run_server(struct iperf_test *test)
 	if (test->bitrate_limit_exceeded) {
 	    cleanup_server(test);
             i_errno = IETOTALRATE;
-            return -1;	
+            return -1;
 	}
 
         memcpy(&read_set, &test->read_set, sizeof(fd_set));
@@ -576,12 +576,12 @@ iperf_run_server(struct iperf_test *test)
 		    cleanup_server(test);
                     return -1;
 		}
-                FD_CLR(test->ctrl_sck, &read_set);                
+                FD_CLR(test->ctrl_sck, &read_set);
             }
 
             if (test->state == CREATE_STREAMS) {
                 if (FD_ISSET(test->prot_listener, &read_set)) {
-    
+
                     if ((s = test->protocol->accept(test)) < 0) {
 			cleanup_server(test);
                         return -1;
@@ -613,7 +613,7 @@ iperf_run_server(struct iperf_test *test)
 				    i_errno = IESETCONGESTION;
 				    return -1;
 				}
-			    } 
+			    }
 			}
 			{
 			    socklen_t len = TCP_CA_NAME_MAX;
@@ -628,7 +628,7 @@ iperf_run_server(struct iperf_test *test)
 				i_errno = IESETCONGESTION;
 				return -1;
 			    }
-                            /* 
+                            /*
                              * If not the first connection, discard prior
                              * congestion algorithm name so we don't leak
                              * duplicated strings.  We probably don't need
@@ -696,7 +696,7 @@ iperf_run_server(struct iperf_test *test)
                     if (test->protocol->id != Ptcp) {
                         FD_CLR(test->prot_listener, &test->read_set);
                         close(test->prot_listener);
-                    } else { 
+                    } else {
                         if (test->no_delay || test->settings->mss || test->settings->socket_bufsize) {
                             FD_CLR(test->listener, &test->read_set);
                             close(test->listener);
@@ -794,11 +794,11 @@ iperf_run_server(struct iperf_test *test)
     if (test->json_output) {
 	if (iperf_json_finish(test) < 0)
 	    return -1;
-    } 
+    }
 
     iflush(test);
 
-    if (test->server_affinity != -1) 
+    if (test->server_affinity != -1)
 	if (iperf_clearaffinity(test) != 0)
 	    return -1;
 

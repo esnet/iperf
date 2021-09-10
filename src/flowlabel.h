@@ -30,8 +30,8 @@
 
 #include <linux/types.h>
 
-/*                                                                                                                                                                             
-   It is just a stripped copy of the Linux kernel header "linux/in6.h" 
+/*
+   It is just a stripped copy of the Linux kernel header "linux/in6.h"
    "Flow label" things are still not defined in "netinet/in*.h" headers,
    but we cannot use "linux/in6.h" immediately because it currently
    conflicts with "netinet/in.h" .

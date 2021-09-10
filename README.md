@@ -60,7 +60,7 @@ Invoking iperf3
 iperf3 includes a manual page listing all of the command-line options.
 The manual page is the most up-to-date reference to the various flags and parameters.
 
-For sample command line usage, see: 
+For sample command line usage, see:
 
 https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/
 
@@ -119,7 +119,7 @@ Some iperf2 options are not available in iperf3:
 
     -r, --tradeoff           Do a bidirectional test individually
     -T, --ttl                time-to-live, for multicast (default 1)
-    -x, --reportexclude [CDMSV]   exclude C(connection) D(data) M(multicast) 
+    -x, --reportexclude [CDMSV]   exclude C(connection) D(data) M(multicast)
                                   S(settings) V(server) reports
     -y, --reportstyle C      report as a Comma-Separated Values
 

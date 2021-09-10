@@ -76,7 +76,7 @@ iperf_tcp_recv(struct iperf_stream *sp)
 }
 
 
-/* iperf_tcp_send 
+/* iperf_tcp_send
  *
  * sends the data for TCP
  */
@@ -274,7 +274,7 @@ iperf_tcp_listen(struct iperf_test *test)
         }
 
 	/*
-	 * If we got an IPv6 socket, figure out if it shoudl accept IPv4
+	 * If we got an IPv6 socket, figure out if it should accept IPv4
 	 * connections as well.  See documentation in netannounce() for
 	 * more details.
 	 */
@@ -282,9 +282,9 @@ iperf_tcp_listen(struct iperf_test *test)
 	if (res->ai_family == AF_INET6 && (test->settings->domain == AF_UNSPEC || test->settings->domain == AF_INET)) {
 	    if (test->settings->domain == AF_UNSPEC)
 		opt = 0;
-	    else 
+	    else
 		opt = 1;
-	    if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, 
+	    if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY,
 			   (char *) &opt, sizeof(opt)) < 0) {
 		saved_errno = errno;
 		close(s);
@@ -314,7 +314,7 @@ iperf_tcp_listen(struct iperf_test *test)
 
         test->listener = s;
     }
-    
+
     /* Read back and verify the sender socket buffer size */
     optlen = sizeof(sndbuf_actual);
     if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &sndbuf_actual, &optlen) < 0) {
@@ -589,7 +589,7 @@ iperf_tcp_connect(struct iperf_test *test)
 		errno = saved_errno;
                 i_errno = IESETFLOW;
                 return -1;
-            } 
+            }
 	}
     }
 #endif /* HAVE_FLOWLABEL */

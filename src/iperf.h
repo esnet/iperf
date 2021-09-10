@@ -79,7 +79,7 @@ typedef uint64_t iperf_size_t;
 
 struct iperf_interval_results
 {
-    iperf_size_t bytes_transferred; /* bytes transfered in this interval */
+    iperf_size_t bytes_transferred; /* bytes transferred in this interval */
     struct iperf_time interval_start_time;
     struct iperf_time interval_end_time;
     float     interval_duration;
@@ -146,7 +146,7 @@ struct iperf_settings
     int       blksize;              /* size of read/writes (-l) */
     iperf_size_t  rate;                 /* target data rate for application pacing*/
     iperf_size_t  bitrate_limit;   /* server's maximum allowed total data rate for all streams*/
-    double        bitrate_limit_interval;  /* interval for avaraging total data rate */
+    double        bitrate_limit_interval;  /* interval for averaging total data rate */
     int           bitrate_limit_stats_per_interval;     /* calculated number of stats periods for averaging total data rate */
     uint64_t  fqrate;               /* target data rate for FQ pacing*/
     int	      pacing_timer;	    /* pacing timer in microseconds */
@@ -183,7 +183,7 @@ struct iperf_stream
     int       socket;
     int       id;
     int       sender;
-	/* XXX: is settings just a pointer to the same struct in iperf_test? if not, 
+	/* XXX: is settings just a pointer to the same struct in iperf_test? if not,
 		should it be? */
     struct iperf_settings *settings;	/* pointer to structure settings */
 
@@ -325,7 +325,7 @@ struct iperf_test
     fd_set    read_set;                         /* set of read sockets */
     fd_set    write_set;                        /* set of write sockets */
 
-    /* Interval related members */ 
+    /* Interval related members */
     int       omitting;
     double    stats_interval;
     double    reporter_interval;
@@ -350,7 +350,7 @@ struct iperf_test
 
     iperf_size_t bitrate_limit_stats_count;               /* Number of stats periods accumulated for server's total bitrate average */
     iperf_size_t *bitrate_limit_intervals_traffic_bytes;  /* Pointer to a cyclic array that includes the last interval's bytes transferred */
-    iperf_size_t bitrate_limit_last_interval_index;       /* Index of the last interval traffic insrted into the cyclic array */
+    iperf_size_t bitrate_limit_last_interval_index;       /* Index of the last interval traffic inserted into the cyclic array */
     int          bitrate_limit_exceeded;                  /* Set by callback routine when average data rate exceeded the server's bitrate limit */
 
     int server_last_run_rc;                      /* Save last server run rc for next test */

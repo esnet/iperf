@@ -400,7 +400,7 @@ iperf_strerror(int int_errno)
             perr = 1;
             break;
         case IESETCONGESTION:
-            snprintf(errstr, len, "unable to set TCP_CONGESTION: " 
+            snprintf(errstr, len, "unable to set TCP_CONGESTION: "
                                   "Supplied congestion control algorithm not supported on this host");
             break;
 	case IEPIDFILE:
@@ -436,7 +436,7 @@ iperf_strerror(int int_errno)
 	    snprintf(errstr, len, "skew threshold must be a positive number");
             break;
 	case IEIDLETIMEOUT:
-	    snprintf(errstr, len, "idle timeout parameter is not positive or larget then allowed limit");
+	    snprintf(errstr, len, "idle timeout parameter is not positive or larger than allowed limit");
             break;
 	case IENOMSG:
 	    snprintf(errstr, len, "idle timeout for receiving data");

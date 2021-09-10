@@ -7,7 +7,7 @@ State of the iperf3 World, as seen from ESnet...
 ------------------------------------------------
 
 iperf3 was originally written to be a "better", more maintainable
-follow-on to iperf2.  This was seen to be necessary to fill the 
+follow-on to iperf2.  This was seen to be necessary to fill the
 requirements for the perfSONAR project (http://www.perfsonar.net).
 
 In the past few years, iperf2 development has been restarted by Bob

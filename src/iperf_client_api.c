@@ -651,13 +651,13 @@ iperf_run_client(struct iperf_test * test)
     return 0;
 
   cleanup_and_fail:
-    iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
     iperf_client_end(test);
     if (test->json_output) {
-	if (iperf_json_finish(test) < 0)
-	    return -1;  // It is o.k. that error will be logged later outside the JSON output since its creation failed
+        cJSON_AddStringToObject(test->json_top, "error", iperf_strerror(i_errno));
+        iperf_json_finish(test);
+        iflush(test);
+        return 0;
     }
     iflush(test);
-    return 0;   // Return 0 and not -1 since all terminating function were done here.
-                // Also prevents error message logging outside the already closed JSON output.
+    return -1;
 }

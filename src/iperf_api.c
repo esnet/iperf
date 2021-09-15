@@ -2048,6 +2048,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "udp_counters_64bit", iperf_get_test_udp_counters_64bit(test));
 	if (test->repeating_payload)
 	    cJSON_AddNumberToObject(j, "repeating_payload", test->repeating_payload);
+	if (test->zerocopy)
+	    cJSON_AddNumberToObject(j, "zerocopy", test->zerocopy);
 #if defined(HAVE_DONT_FRAGMENT)
 	if (test->settings->dont_fragment)
 	    cJSON_AddNumberToObject(j, "dont_fragment", test->settings->dont_fragment);
@@ -2160,6 +2162,8 @@ get_parameters(struct iperf_test *test)
 	    iperf_set_test_udp_counters_64bit(test, 1);
 	if ((j_p = cJSON_GetObjectItem(j, "repeating_payload")) != NULL)
 	    test->repeating_payload = 1;
+	if ((j_p = cJSON_GetObjectItem(j, "zerocopy")) != NULL)
+	    test->zerocopy = 1;
 #if defined(HAVE_DONT_FRAGMENT)
 	if ((j_p = cJSON_GetObjectItem(j, "dont_fragment")) != NULL)
 	    test->settings->dont_fragment = j_p->valueint;
@@ -2676,6 +2680,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->connect_timeout = -1;
     testp->settings->rcv_timeout.secs = DEFAULT_NO_MSG_RCVD_TIMEOUT / SEC_TO_mS;
     testp->settings->rcv_timeout.usecs = (DEFAULT_NO_MSG_RCVD_TIMEOUT % SEC_TO_mS) * mS_TO_US;
+    testp->zerocopy = 0;
 
     memset(testp->cookie, 0, COOKIE_SIZE);
 
@@ -2963,6 +2968,7 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->mss = 0;
     test->settings->tos = 0;
     test->settings->dont_fragment = 0;
+    test->zerocopy = 0;
 
 #if defined(HAVE_SSL)
     if (test->settings->authtoken) {

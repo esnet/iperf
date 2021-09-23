@@ -140,9 +140,12 @@ Note that when using this feature, a process will only be bound
 to a single CPU (as opposed to a set containing potentially multiple
 CPUs).
 .TP
-.BR -B ", " --bind " \fIhost\fR"
+.BR -B ", " --bind " \fIhost\fR[\fB%\fIdev\fR]"
 bind to the specific interface associated with address \fIhost\fR.
-.BR --bind-dev " \fIdev\R"
+If an optional interface is specified, it is treated as a shortcut
+for \fB--bind-dev \fIdev\fR.
+Note that a percent sign and interface device name are required for IPv6 link-local address literals.
+.BR --bind-dev " \fIdev\fR"
 bind to the specified network interface.
 This option uses SO_BINDTODEVICE, and may require root permissions.
 (Available on Linux and possibly other systems.)
@@ -229,10 +232,13 @@ time skew threshold (in seconds) between the server and client
 during the authentication process.
 .SH "CLIENT SPECIFIC OPTIONS"
 .TP
-.BR -c ", " --client " \fIhost\fR"
+.BR -c ", " --client " \fIhost\fR[\fB%\fIdev\fR]"
 run in client mode, connecting to the specified server.
 By default, a test consists of sending data from the client to the
 server, unless the \-R flag is specified.
+If an optional interface is specified, it is treated as a shortcut
+for \fB--bind-dev \fIdev\fR.
+Note that a percent sign and interface device name are required for IPv6 link-local address literals.
 .TP
 .BR --sctp
 use SCTP rather than TCP (FreeBSD and Linux)

@@ -143,7 +143,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 #endif //HAVE_SSL
                            "Client specific:\n"
                            "  -c, --client <host>[%<dev>] run in client mode, connecting to <host>\n"
-                           "                              %<dev> is supported and required when <host> is IPv6 Link-local\n"
+                           "                              (option <dev> equivalent to `--bind-dev <dev>`)\n"
 #if defined(HAVE_SCTP_H)
                            "  --sctp                    use SCTP rather than TCP\n"
                            "  -X, --xbind <name>        bind SCTP association to links\n"

@@ -1574,7 +1574,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             iperf_size_t file_bytes = st.st_size;
             test->settings->bytes = file_bytes;
             if (test->debug)
-                printf("End condition set to file-size: %d bytes\n", test->settings->bytes);
+                printf("End condition set to file-size: %lu bytes\n", test->settings->bytes);
         }
         // if failing to read file stat, it should fallback to default duration mode
     }
@@ -4306,7 +4306,7 @@ diskfile_recv(struct iperf_stream *sp)
 
     r = sp->rcv2(sp);
     if (r > 0) {
-	(void) write(sp->diskfile_fd, sp->buffer, r);
+	(void) (write(sp->diskfile_fd, sp->buffer, r) + 1);
     }
     return r;
 }

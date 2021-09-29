@@ -56,7 +56,7 @@ iperf_create_streams(struct iperf_test *test, int sender)
 {
     if (NULL == test)
     {
-        printf("No test\n");
+        iperf_err("No test\n");
         return -1;
     }
     int i, s;
@@ -103,7 +103,7 @@ iperf_create_streams(struct iperf_test *test, int sender)
                 else
                     test->congestion_used = strdup(ca);
 		if (test->debug) {
-		    printf("Congestion algorithm is %s\n", test->congestion_used);
+		    iperf_err("Congestion algorithm is %s\n", test->congestion_used);
 		}
 	    }
 	}
@@ -165,7 +165,7 @@ create_client_timers(struct iperf_test * test)
     TimerClientData cd;
     if (NULL == test)
     {
-        printf("No test\n");
+        iperf_err("No test\n");
         i_errno = IEINITTEST;
         return -1;
     }
@@ -226,7 +226,7 @@ create_client_omit_timer(struct iperf_test * test)
     TimerClientData cd;
     if (NULL == test)
     {
-        printf("No test\n");
+        iperf_err("No test\n");
         return -1;
     }
 
@@ -257,7 +257,7 @@ iperf_handle_message_client(struct iperf_test *test)
 
     if (NULL == test)
     {
-        printf("No test\n");
+        iperf_err("No test\n");
 	i_errno = IEINITTEST;
         return -1;
     }
@@ -358,7 +358,7 @@ iperf_connect(struct iperf_test *test)
 {
     if (NULL == test)
     {
-        printf("No test\n");
+        iperf_err("No test\n");
         return -1;
     }
     FD_ZERO(&test->read_set);
@@ -465,7 +465,7 @@ iperf_client_end(struct iperf_test *test)
 {
     if (NULL == test)
     {
-        printf("No test\n");
+        iperf_err("No test\n");
         return -1;
     }
     struct iperf_stream *sp;
@@ -510,7 +510,7 @@ iperf_run_client(struct iperf_test * test)
 
     if (NULL == test)
     {
-        printf("No test\n");
+        iperf_err("No test\n");
         return -1;
     }
 

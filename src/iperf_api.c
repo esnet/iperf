@@ -925,6 +925,54 @@ iperf_on_test_finish(struct iperf_test *test)
 
 /******************************************************************************/
 
+/*
+ * iperf_parse_hostname tries to split apart a string into hostname %
+ * interface parts, which are returned in **p and **p1, if they
+ * exist. If the %interface part is detected, and it's not an IPv6
+ * link local address, then returns 1, else returns 0.
+ *
+ * Modifies the string pointed to by spec in-place due to the use of
+ * strtok(3). The caller should strdup(3) or otherwise copy the string
+ * if an unmodified copy is needed.
+ */
+int
+iperf_parse_hostname(struct iperf_test *test, char *spec, char **p, char **p1) {
+    struct in6_addr ipv6_addr;
+
+    // Format is <addr>[%<device>]
+    if ((*p = strtok(spec, "%")) != NULL &&
+        (*p1 = strtok(NULL, "%")) != NULL) {
+
+        /*
+         * If an IPv6 literal for a link-local address, then
+         * tell the caller to leave the "%" in the hostname.
+         */
+        if (inet_pton(AF_INET6, *p, &ipv6_addr) == 1 &&
+            IN6_IS_ADDR_LINKLOCAL(&ipv6_addr)) {
+            if (test->debug) {
+                iperf_printf(test, "IPv6 link-local address literal detected\n");
+            }
+            return 0;
+        }
+        /*
+         * Other kind of address or FQDN. The interface name after
+         * "%" is a shorthand for --bind-dev.
+         */
+        else {
+            if (test->debug) {
+                iperf_printf(test, "p %s p1 %s\n", *p, *p1);
+            }
+            return 1;
+        }
+    }
+    else {
+        if (test->debug) {
+            iperf_printf(test, "noparse\n");
+        }
+        return 0;
+    }
+}
+
 int
 iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 {
@@ -1020,7 +1068,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif /* HAVE_CPU_AFFINITY */
     char* slash;
     char *p, *p1;
-    struct in6_addr ipv6_addr;
     struct xbind_entry *xbe;
     double farg;
     int rcv_timeout_in = 0;
@@ -1104,38 +1151,16 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		iperf_set_test_role(test, 'c');
 		iperf_set_test_server_hostname(test, optarg);
 
-                /*
-                 * See if there's a "%", if so, get the name and
-                 * address part.
-                 */
-                if ((p = strtok(optarg, "%")) != NULL && 
-                    (p1 = strtok(NULL, "%")) != NULL) {
-
-                    /*
-                     * If it's an IPv6 literal for link-local, then
-                     * leave the "%" in the hostname.
-                     */
-                    if (inet_pton(AF_INET6, p, &ipv6_addr) == 1 &&
-                        IN6_IS_ADDR_LINKLOCAL(&ipv6_addr)) {
-                        if (test->debug)
-                            iperf_printf(test, "IPv6 link local address literal detected\n");
-                    }
-
-                    /*
-                     * Any other kind of address, or FQDN. The interface
-                     * name after "%" is a shorthand for --bind-dev.
-                     */
-                    else {
+                if (iperf_parse_hostname(test, optarg, &p, &p1)) {
 #if defined(HAVE_SO_BINDTODEVICE)
-                        /* Get rid of the hostname we saved earlier. */
-                        free(iperf_get_test_server_hostname(test));
-                        iperf_set_test_server_hostname(test, p);
-                        iperf_set_test_bind_dev(test, p1);
+                    /* Get rid of the hostname we saved earlier. */
+                    free(iperf_get_test_server_hostname(test));
+                    iperf_set_test_server_hostname(test, p);
+                    iperf_set_test_bind_dev(test, p1);
 #else /* HAVE_SO_BINDTODEVICE */
-                        i_errno = IEBINDDEVNOSUPPORT;
-                        return -1;
+                    i_errno = IEBINDDEVNOSUPPORT;
+                    return -1;
 #endif /* HAVE_SO_BINDTODEVICE */
-                    }
                 }
                 break;
             case 'u':
@@ -1252,35 +1277,16 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             case 'B':
                 iperf_set_test_bind_address(test, optarg);
 
-                // IP address format is <addr>[%<device>]
-                if ((p = strtok(optarg, "%")) != NULL &&
-                    (p1 = strtok(NULL, "%")) != NULL) {
-
-                    /*
-                     * If it's an IPv6 literal for link-local, then
-                     * leave the "%" in the hostname.
-                     */
-                    if (inet_pton(AF_INET6, p, &ipv6_addr) == 1 &&
-                        IN6_IS_ADDR_LINKLOCAL(&ipv6_addr)) {
-                        if (test->debug)
-                            iperf_printf(test, "IPv6 link local address literal detected\n");
-                    }
-
-                    /*
-                     * Other kind of address or FQDN.  The interface name
-                     * after "%" is a shorthand for --bind-dev.
-                     */
-                    else {
+                if (iperf_parse_hostname(test, optarg, &p, &p1)) {
 #if defined(HAVE_SO_BINDTODEVICE)
-                        /* Get rid of the hostname we saved earlier. */
-                        free(iperf_get_test_bind_address(test));
-                        iperf_set_test_bind_address(test, p);
-                        iperf_set_test_bind_dev(test, p1);
+                    /* Get rid of the hostname we saved earlier. */
+                    free(iperf_get_test_server_hostname(test));
+                    iperf_set_test_server_hostname(test, p);
+                    iperf_set_test_bind_dev(test, p1);
 #else /* HAVE_SO_BINDTODEVICE */
-                        i_errno = IEBINDDEVNOSUPPORT;
-                        return -1;
+                    i_errno = IEBINDDEVNOSUPPORT;
+                    return -1;
 #endif /* HAVE_SO_BINDTODEVICE */
-                    }
                 }
                 break;
 #if defined (HAVE_SO_BINDTODEVICE)

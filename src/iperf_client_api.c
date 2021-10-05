@@ -103,7 +103,7 @@ iperf_create_streams(struct iperf_test *test, int sender)
                 else
                     test->congestion_used = strdup(ca);
 		if (test->debug) {
-		    iperf_err("Congestion algorithm is %s\n", test->congestion_used);
+		    printf("Congestion algorithm is %s\n", test->congestion_used);
 		}
 	    }
 	}

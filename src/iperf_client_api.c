@@ -54,6 +54,11 @@
 int
 iperf_create_streams(struct iperf_test *test, int sender)
 {
+    if (NULL == test)
+    {
+        iperf_err(NULL, "No test\n");
+        return -1;
+    }
     int i, s;
 #if defined(HAVE_TCP_CONGESTION)
     int saved_errno;
@@ -158,6 +163,12 @@ create_client_timers(struct iperf_test * test)
 {
     struct iperf_time now;
     TimerClientData cd;
+    if (NULL == test)
+    {
+        iperf_err(NULL, "No test\n");
+        i_errno = IEINITTEST;
+        return -1;
+    }
 
     if (iperf_time_now(&now) < 0) {
 	i_errno = IEINITTEST;
@@ -213,6 +224,11 @@ create_client_omit_timer(struct iperf_test * test)
 {
     struct iperf_time now;
     TimerClientData cd;
+    if (NULL == test)
+    {
+        iperf_err(NULL, "No test\n");
+        return -1;
+    }
 
     if (test->omit == 0) {
 	test->omit_timer = NULL;
@@ -239,6 +255,12 @@ iperf_handle_message_client(struct iperf_test *test)
     int rval;
     int32_t err;
 
+    if (NULL == test)
+    {
+        iperf_err(NULL, "No test\n");
+	i_errno = IEINITTEST;
+        return -1;
+    }
     /*!!! Why is this read() and not Nread()? */
     if ((rval = read(test->ctrl_sck, (char*) &test->state, sizeof(signed char))) <= 0) {
         if (rval == 0) {
@@ -334,6 +356,11 @@ iperf_handle_message_client(struct iperf_test *test)
 int
 iperf_connect(struct iperf_test *test)
 {
+    if (NULL == test)
+    {
+        iperf_err(NULL, "No test\n");
+        return -1;
+    }
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);
 
@@ -436,6 +463,11 @@ iperf_connect(struct iperf_test *test)
 int
 iperf_client_end(struct iperf_test *test)
 {
+    if (NULL == test)
+    {
+        iperf_err(NULL, "No test\n");
+        return -1;
+    }
     struct iperf_stream *sp;
 
     /* Close all stream sockets */
@@ -475,6 +507,12 @@ iperf_run_client(struct iperf_test * test)
     int64_t t_usecs;
     int64_t timeout_us;
     int64_t rcv_timeout_us;
+
+    if (NULL == test)
+    {
+        iperf_err(NULL, "No test\n");
+        return -1;
+    }
 
     if (test->logfile)
         if (iperf_open_logfile(test) < 0)

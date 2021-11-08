@@ -3366,7 +3366,7 @@ iperf_print_intermediate(struct iperf_test *test)
              * With BIDIR give a different JSON object name to the one sent/receive sums.
              * The different name is given to the data sent from the server, which is
              * the "reverse" channel.  This makes sure that the name reported on the server
-             * and client are compatible, and the names are the same as with non-bdir,
+             * and client are compatible, and the names are the same as with non-bidir,
              * except for when reverse is used.
              */
             sum_name = "sum";
@@ -3374,7 +3374,7 @@ iperf_print_intermediate(struct iperf_test *test)
                 if ((test->role == 'c' && !stream_must_be_sender) ||
                     (test->role != 'c' && stream_must_be_sender))
                 {
-                    sum_name = "sum_bdir_reverse";
+                    sum_name = "sum_bidir_reverse";
                 }
             }
 
@@ -3768,7 +3768,7 @@ iperf_print_results(struct iperf_test *test)
              * With BIDIR give a different JSON object name to the one sent/receive sums.
              * The different name is given to the data sent from the server, which is
              * the "reverse" channel.  This makes sure that the name reported on the server
-             * and client are compatible, and the names are the same as with non-bdir,
+             * and client are compatible, and the names are the same as with non-bidir,
              * except for when reverse is used.
              */
             sum_name = "sum";
@@ -3778,9 +3778,9 @@ iperf_print_results(struct iperf_test *test)
                 if ((test->role == 'c' && !stream_must_be_sender) ||
                     (test->role != 'c' && stream_must_be_sender))
                 {
-                    sum_name = "sum_bdir_reverse";
-                    sum_sent_name = "sum_sent_bdir_reverse";
-                    sum_received_name = "sum_received_bdir_reverse";
+                    sum_name = "sum_bidir_reverse";
+                    sum_sent_name = "sum_sent_bidir_reverse";
+                    sum_received_name = "sum_received_bidir_reverse";
                 }
 
             }

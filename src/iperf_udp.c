@@ -317,7 +317,7 @@ iperf_udp_buffercheck(struct iperf_test *test, int s)
 	return -1;
     }
     if (test->settings->blksize > sndbuf_actual) {
-	char str[80];
+	char str[WARN_STR_LEN];
 	snprintf(str, sizeof(str),
 		 "Block size %d > sending socket buffer size %d",
 		 test->settings->blksize, sndbuf_actual);
@@ -339,7 +339,7 @@ iperf_udp_buffercheck(struct iperf_test *test, int s)
 	return -1;
     }
     if (test->settings->blksize > rcvbuf_actual) {
-	char str[80];
+	char str[WARN_STR_LEN];
 	snprintf(str, sizeof(str),
 		 "Block size %d > receiving socket buffer size %d",
 		 test->settings->blksize, rcvbuf_actual);

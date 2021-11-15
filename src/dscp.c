@@ -136,10 +136,11 @@ parse_qos(const char *cp)
 			return ipqos[i].value;
 	}
 	/* Try parsing as an integer */
+    /* Max DSCP value is 2**6 - 1 */
 	val = strtol(cp, &ep, 0);
-	if (*cp == '\0' || *ep != '\0' || val < 0 || val > 255)
+	if (*cp == '\0' || *ep != '\0' || val < 0 || val > 63)
 		return -1;
-	return val;
+	return val << 2;
 }
 
 const char *

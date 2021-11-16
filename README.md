@@ -30,6 +30,8 @@ For more information see: https://software.es.net/iperf
 
 Source code and issue tracker: https://github.com/esnet/iperf
 
+Discussion forums: https://github.com/esnet/iperf/discussions
+
 Obtaining iperf3
 ----------------
 

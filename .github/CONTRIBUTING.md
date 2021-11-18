@@ -14,19 +14,20 @@ FreeBSD, and macOS.  Support may be provided on a best-effort basis to
 other UNIX-like platforms.  We cannot provide support for building
 and/or running iperf3 on Windows, iOS, or Android.
 
-Before asking for help, please use your favorite search engine or
-questions site (such as Stack Overflow) to see if your question might
-have been asked (and maybe even answered) before.
-https://fasterdata.es.net/ has some information on the use of various
-bandwidth measurement tools, including iperf3.  The iperf3
-documentation Web site at http://software.es.net/iperf/ contains
-various bits of helpful information, including a list of
+Before asking for help, please check with your favorite search engine
+or the
+[iperf3 Discussions site on GitHub](http://github.com/esnet/iperf/discussions)
+to see if your question might have been asked (and maybe even
+answered) before.  https://fasterdata.es.net/ has some information on
+the use of various bandwidth measurement tools, including iperf3.  The
+iperf3 documentation Web site at http://software.es.net/iperf/
+contains various bits of helpful information, including a list of
 [frequently-asked questions](http://software.es.net/iperf/faq.html).
 
 We specifically discourage the use of the issue tracker on the iperf3
 GitHub project page for asking questions.  Questions posted in the
-form of issues may go unanswered.  Please use a questions site
-such as [Stack Overflow](http://www.stackoverflow.com)
+form of issues may go unanswered.  Please use the
+[iperf3 Discussions site on GitHub](http://github.com/esnet/iperf/discussions)
 to ask questions of the community or
 alternatively use the iperf3 mailing list at
 iperf-dev@googlegroups.com (posting requires joining the list).

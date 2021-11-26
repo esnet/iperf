@@ -1,0 +1,19 @@
+TCP 
+
+divides the data(coming from the application layer) into proper sized chunks and then passes these chunks onto the network. 
+It acknowledges received packets, waits for the acknowledgments of the packets it sent and sets timeout to resend the packets 
+if acknowledgements are not received in time. The term ‘reliable connection’ is used where it is not desired to loose any information
+that is being transferred over the network through this connection. So, the protocol used for this type of connection must provide the 
+mechanism to achieve this desired characteristic. For example, while downloading a file, it is not desired to loose any information(bytes) 
+as it may lead to corruption of downloaded content.
+
+
+
+UDP
+
+provides a comparatively simpler but unreliable service by sending packets from one host to another. 
+UDP does not take any extra measures to ensure that the data sent is received by the target host or not. 
+The term ‘unreliable connection’ are used where loss of some information does not hamper the task being 
+fulfilled through this connection. For example while streaming a video, loss of few bytes of information 
+due to some reason is acceptable as this does not harm the user experience much.
+

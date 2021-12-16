@@ -2913,7 +2913,7 @@ iperf_free_test(struct iperf_test *test)
     if (test->logfile) {
 	free(test->logfile);
 	test->logfile = NULL;
-	if (test->outfile) {
+	if (test->outfile && test->outfile != stdout) {
 	    fclose(test->outfile);
 	    test->outfile = NULL;
 	}

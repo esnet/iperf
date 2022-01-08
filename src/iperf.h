@@ -421,4 +421,11 @@ struct iperf_test
 
 extern int gerror; /* error value from getaddrinfo(3), for use in internal error handling */
 
+/* UDP "connect" message and reply (textual value for Wireshark, etc. readability - legacy was numeric) */
+#define UDP_CONNECT_MSG 0x36373839   // "6789" - legacy value was 123456789
+#define UDP_CONNECT_REPLY 0x39383736 // "9876" - legacy value was 987654321
+
+/* In Reverse mode, maxmimum number of packtes to wait for "accept" response - to handle out of order packets */
+#define MAX_REVERSE_OUT_OF_ORDER_PACKETS 2
+
 #endif /* !__IPERF_H */

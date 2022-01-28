@@ -1,6 +1,39 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.11 2022-01-31
+-----------------------
+
+* Notable user-visible changes
+
+  * Update links to Discussions in documentation
+
+  * Fix DSCP so that TOS = DSCP * 4 (#1162)
+
+  * Fix --bind-dev for TCP streams (#1153)
+
+  * Fix interface specification so doesn't overlap with IPv6 link-local addresses for -c and -B (#1157, #1180)
+
+  * Add get/set test_unit_format function declaration to iperf_api.h
+
+  * Auto adjustment of test-end condition for file transfers (-F), if no end condition is set, it will automatically adjust it to file size in bytes
+
+  * Exit if idle time expires waiting for a connection in one-off mode (#1187, #1197)
+
+  * Support zerocopy by reverse mode (#1204)
+
+  * Update help and manpage text for #1157, support bind device
+
+  * Consistently print target_bandwidth in JSON start section (#1177)
+
+  * Test bitrate added to JSON output (#1168)
+
+  * Remove fsync call after every write to receiving --file (#1176, #1159)
+
+  * Update documentation for -w (#1175)
+
+  * Fix for #952, different JSON object names for bidir reverse channel
+
 iperf-3.10.1 2021-06-03
 -----------------------
 

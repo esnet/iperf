@@ -4,6 +4,7 @@ iperf3 Project News
 2022-01-28:  iperf-3.11 released
 ----------------------------------
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.11.tar.gz
+| SHA256:  ``de8cb409fad61a0574f4cb07eb19ce1159707403ac2dc01b5d175e91240b7e5f``
 
 iperf 3.11 is principally a bugfix release. Also GitHub
 Discussions are now supported.

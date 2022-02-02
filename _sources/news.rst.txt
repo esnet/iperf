@@ -1,6 +1,15 @@
 iperf3 Project News
 ===================
 
+2022-01-28:  iperf-3.11 released
+----------------------------------
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.11.tar.gz
+| SHA256:  ``de8cb409fad61a0574f4cb07eb19ce1159707403ac2dc01b5d175e91240b7e5f``
+
+iperf 3.11 is principally a bugfix release. Also GitHub
+Discussions are now supported.
+
+
 2021-06-02:  iperf-3.10.1 released
 ----------------------------------
 
@@ -410,6 +419,5 @@ https://github.com/esnet/iperf
 
 During development, there were various distributions of the source
 code unofficially released carrying a 3.0.0 version number.  Because
-of the possiblity for confusion, this first public release of iperf3
+of the possibility for confusion, this first public release of iperf3
 was numbered 3.0.1.
-

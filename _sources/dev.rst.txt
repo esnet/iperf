@@ -25,7 +25,7 @@ Bug Reports
 -----------
 
 Before submitting a bug report, try checking out the latest version of
-the code, and confirm that it's not already fixed. Also see the :doc:`faq`. 
+the code, and confirm that it's not already fixed. Also see the :doc:`faq`.
 Then submit to the iperf3 issue tracker on GitHub:
 
 https://github.com/esnet/iperf/issues
@@ -47,7 +47,7 @@ for a complete list of iperf3 options)::
     -T, --title str           prefix every output line with this string
     -F, --file name           xmit/recv the specified file
     -A, --affinity n/n,m      set CPU affinity (Linux and FreeBSD only)
-    -k, --blockcount #[KMG]   number of blocks (packets) to transmit (instead 
+    -k, --blockcount #[KMG]   number of blocks (packets) to transmit (instead
                               of -t or -n)
     -L, --flowlabel           set IPv6 flow label (Linux only)
 
@@ -62,7 +62,7 @@ Deprecated flags (currently no plans to support)::
     -d, --dualtest           Do a bidirectional test simultaneously
     -r, --tradeoff           Do a bidirectional test individually
     -T, --ttl                time-to-live, for multicast (default 1)
-    -x, --reportexclude [CDMSV]   exclude C(connection) D(data) M(multicast) 
+    -x, --reportexclude [CDMSV]   exclude C(connection) D(data) M(multicast)
                                   S(settings) V(server) reports
     -y, --reportstyle C      report as a Comma-Separated Values
 
@@ -176,7 +176,7 @@ Release Engineering Checklist
 7. For extra points, actually try downloading, compiling, and
    smoke-testing the results of the tarball on all supported
    platforms.
-   
+
 8. Plug the SHA256 checksum into the release announcement.
 
 9. PGP-sign the release announcement text using ``gpg --clearsign``.
@@ -233,7 +233,7 @@ Code Authors
 The main authors of iperf3 are (in alphabetical order):  Jon Dugan,
 Seth Elliott, Bruce A. Mah, Jeff Poskanzer, Kaustubh Prabhu.
 Additional code contributions have come from (also in alphabetical
-order):  Mark Ashley, Aaron Brown, Aeneas Jaißle, Susant Sahani, 
+order):  Mark Ashley, Aaron Brown, Aeneas Jaißle, Susant Sahani,
 Bruce Simpson, Brian Tierney.
 
 iperf3 contains some original code from iperf2.  The authors of iperf2

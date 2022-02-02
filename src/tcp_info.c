@@ -218,6 +218,24 @@ get_pmtu(struct iperf_interval_results *irp)
 }
 
 /*************************************************************/
+/*
+ * Return number of reordering events seen.
+ */
+long
+get_reorder(struct iperf_interval_results *irp)
+{
+	/* TCP_REPAIR_ON is unrelated, but both that define
+	 * and the tcpi_reord_seen field were added in Linux 4.19
+	 * (similar situation as has_tcpinfo_retransmits()).
+	 */
+#if defined(linux) && defined(TCP_REPAIR_ON)
+    return irp->tcpInfo.tcpi_reord_seen;
+#else
+    return -1;
+#endif
+}
+
+/*************************************************************/
 void
 build_tcpinfo_message(struct iperf_interval_results *r, char *message)
 {

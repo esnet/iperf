@@ -437,7 +437,7 @@ iperf_run_server(struct iperf_test *test)
 
     if (test->logfile)
         if (iperf_open_logfile(test) < 0)
-            return -1;
+            return -2;
 
     if (test->affinity != -1)
 	if (iperf_setaffinity(test, test->affinity) != 0)

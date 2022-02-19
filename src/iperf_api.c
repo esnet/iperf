@@ -4335,6 +4335,10 @@ iperf_add_stream(struct iperf_test *test, struct iperf_stream *sp)
         sp->id = 1;
     } else {
         // for (n = test->streams, i = 2; n->next; n = n->next, ++i);
+        // NOTE: this would ideally be set to 1, however this will not
+        //       be changed since it is not causing a significant problem
+        //       and changing it would break multi-stream tests between old
+        //       and new iperf3 versions.
         i = 2;
         SLIST_FOREACH(n, &test->streams, streams) {
             prev = n;

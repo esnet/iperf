@@ -130,6 +130,16 @@ iperf_accept(struct iperf_test *test)
             return -1;
         }
 
+#if defined(HAVE_TCP_USER_TIMEOUT)
+        int opt;
+        if ((opt = test->settings->snd_timeout)) {
+            if (setsockopt(s, IPPROTO_TCP, TCP_USER_TIMEOUT, &opt, sizeof(opt)) < 0) {
+                i_errno = IESETUSERTIMEOUT;
+                return -1;
+            }
+        }
+#endif /* HAVE_TCP_USER_TIMEOUT */
+
         if (Nread(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) < 0) {
             i_errno = IERECVCOOKIE;
             return -1;
@@ -588,6 +598,22 @@ iperf_run_server(struct iperf_test *test)
 		    }
 
                     if (!is_closed(s)) {
+
+#if defined(HAVE_TCP_USER_TIMEOUT)
+		    if (test->protocol->id == Ptcp) {
+                        int opt;
+                        if ((opt = test->settings->snd_timeout)) {
+                            if (setsockopt(s, IPPROTO_TCP, TCP_USER_TIMEOUT, &opt, sizeof(opt)) < 0) {
+                                saved_errno = errno;
+                                close(s);
+                                cleanup_server(test);
+                                errno = saved_errno;
+                                i_errno = IESETUSERTIMEOUT;
+                                return -1;
+                            }
+                        }
+                    }
+#endif /* HAVE_TCP_USER_TIMEOUT */
 
 #if defined(HAVE_TCP_CONGESTION)
 		    if (test->protocol->id == Ptcp) {

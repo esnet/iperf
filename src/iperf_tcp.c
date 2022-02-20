@@ -421,6 +421,18 @@ iperf_tcp_connect(struct iperf_test *test)
             return -1;
         }
     }
+#if defined(HAVE_TCP_USER_TIMEOUT)
+    if ((opt = test->settings->snd_timeout)) {
+        if (setsockopt(s, IPPROTO_TCP, TCP_USER_TIMEOUT, &opt, sizeof(opt)) < 0) {
+	    saved_errno = errno;
+	    close(s);
+	    freeaddrinfo(server_res);
+	    errno = saved_errno;
+            i_errno = IESETUSERTIMEOUT;
+            return -1;
+        }
+    }
+#endif /* HAVE_TCP_USER_TIMEOUT */
 
     /* Read back and verify the sender socket buffer size */
     optlen = sizeof(sndbuf_actual);

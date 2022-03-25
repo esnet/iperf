@@ -411,6 +411,12 @@ iperf_get_test_congestion_control(struct iperf_test* ipt)
     return ipt->congestion;
 }
 
+int
+iperf_get_test_mss(struct iperf_test *ipt)
+{
+    return ipt->settings->mss;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -767,6 +773,11 @@ iperf_set_test_congestion_control(struct iperf_test* ipt, char* cc)
     ipt->congestion = strdup(cc);
 }
 
+void
+iperf_set_test_mss(struct iperf_test *ipt, int mss)
+{
+    ipt->settings->mss = mss;
+}
 
 /********************** Get/set test protocol structure ***********************/
 

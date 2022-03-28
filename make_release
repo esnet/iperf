@@ -16,8 +16,8 @@ dirname=`echo "$tag $proj" | awk '{
   gsub(/-RELEASE/, "", $1);
   print $2"-"$1 }'`
 
-# echo tag $tag
-# echo dirname $dirname
+echo tag $tag
+echo dirname $dirname
 
 do_tag ()
 {

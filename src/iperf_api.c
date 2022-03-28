@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2021, The Regents of the University of
+ * iperf, Copyright (c) 2014-2022, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -1659,7 +1659,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             iperf_size_t file_bytes = st.st_size;
             test->settings->bytes = file_bytes;
             if (test->debug)
-                printf("End condition set to file-size: %d bytes\n", test->settings->bytes);
+                printf("End condition set to file-size: %"PRIu64" bytes\n", test->settings->bytes);
         }
         // if failing to read file stat, it should fallback to default duration mode
     }
@@ -4346,6 +4346,10 @@ iperf_add_stream(struct iperf_test *test, struct iperf_stream *sp)
         sp->id = 1;
     } else {
         // for (n = test->streams, i = 2; n->next; n = n->next, ++i);
+        // NOTE: this would ideally be set to 1, however this will not
+        //       be changed since it is not causing a significant problem
+        //       and changing it would break multi-stream tests between old
+        //       and new iperf3 versions.
         i = 2;
         SLIST_FOREACH(n, &test->streams, streams) {
             prev = n;
@@ -4438,7 +4442,7 @@ diskfile_recv(struct iperf_stream *sp)
 
     r = sp->rcv2(sp);
     if (r > 0) {
-	(void) write(sp->diskfile_fd, sp->buffer, r);
+	(void) (write(sp->diskfile_fd, sp->buffer, r) + 1);
     }
     return r;
 }

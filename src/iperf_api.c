@@ -279,6 +279,12 @@ iperf_get_test_repeating_payload(struct iperf_test *ipt)
 }
 
 int
+iperf_get_test_bind_port(struct iperf_test *ipt)
+{
+    return ipt->bind_port;
+}
+
+int
 iperf_get_test_server_port(struct iperf_test *ipt)
 {
     return ipt->server_port;
@@ -525,6 +531,12 @@ void
 iperf_set_test_burst(struct iperf_test *ipt, int burst)
 {
     ipt->settings->burst = burst;
+}
+
+void
+iperf_set_test_bind_port(struct iperf_test *ipt, int bind_port)
+{
+    ipt->bind_port = bind_port;
 }
 
 void

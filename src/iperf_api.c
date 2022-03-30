@@ -279,6 +279,12 @@ iperf_get_test_repeating_payload(struct iperf_test *ipt)
 }
 
 int
+iperf_get_test_bind_port(struct iperf_test *ipt)
+{
+    return ipt->bind_port;
+}
+
+int
 iperf_get_test_server_port(struct iperf_test *ipt)
 {
     return ipt->server_port;
@@ -411,6 +417,12 @@ iperf_get_test_congestion_control(struct iperf_test* ipt)
     return ipt->congestion;
 }
 
+int
+iperf_get_test_mss(struct iperf_test *ipt)
+{
+    return ipt->settings->mss;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -519,6 +531,12 @@ void
 iperf_set_test_burst(struct iperf_test *ipt, int burst)
 {
     ipt->settings->burst = burst;
+}
+
+void
+iperf_set_test_bind_port(struct iperf_test *ipt, int bind_port)
+{
+    ipt->bind_port = bind_port;
 }
 
 void
@@ -767,6 +785,11 @@ iperf_set_test_congestion_control(struct iperf_test* ipt, char* cc)
     ipt->congestion = strdup(cc);
 }
 
+void
+iperf_set_test_mss(struct iperf_test *ipt, int mss)
+{
+    ipt->settings->mss = mss;
+}
 
 /********************** Get/set test protocol structure ***********************/
 

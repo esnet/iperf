@@ -4431,6 +4431,7 @@ diskfile_recv(struct iperf_stream *sp)
 
     r = sp->rcv2(sp);
     if (r > 0) {
+	// NOTE: Currently ignoring the return value of writing to disk
 	(void) (write(sp->diskfile_fd, sp->buffer, r) + 1);
     }
     return r;

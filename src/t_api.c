@@ -40,6 +40,24 @@
 
 #include "units.h"
 
+int test_iperf_set_test_bind_port(struct iperf_test *test)
+{
+    int port;
+    port = iperf_get_test_bind_port(test);
+    iperf_set_test_bind_port(test, 5202);
+    port = iperf_get_test_bind_port(test);
+    assert(port == 5202);
+    return 0;
+}
+
+int test_iperf_set_mss(struct iperf_test *test)
+{
+    int mss = iperf_get_test_mss(test);
+    iperf_set_test_mss(test, 535);
+    mss = iperf_get_test_mss(test);
+    assert(mss == 535);
+    return 0;
+}
 
 int
 main(int argc, char **argv)
@@ -61,5 +79,14 @@ main(int argc, char **argv)
     gint = iperf_get_test_connect_timeout(test);
     assert(sint == gint);
 
+    int ret;
+    ret = test_iperf_set_test_bind_port(test);
+
+    ret += test_iperf_set_mss(test);
+
+    if (ret < 0)
+    {
+        return -1;
+    }
     return 0;
 }

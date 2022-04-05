@@ -1077,6 +1077,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"connect-timeout", required_argument, NULL, OPT_CONNECT_TIMEOUT},
         {"idle-timeout", required_argument, NULL, OPT_IDLE_TIMEOUT},
         {"rcv-timeout", required_argument, NULL, OPT_RCV_TIMEOUT},
+#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)
+        {"gsro", no_argument, NULL, OPT_GSRO},
+#endif
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -1551,6 +1554,16 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->settings->connect_timeout = unit_atoi(optarg);
 		client_flag = 1;
 		break;
+#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)
+            case OPT_GSRO:
+#ifdef HAVE_UDP_SEGMENT
+		test->settings->gso = 1;
+#endif
+#ifdef HAVE_UDP_GRO
+		test->settings->gro = 1;
+#endif
+		break;
+#endif
 	    case 'h':
 		usage_long(stdout);
 		exit(0);
@@ -1652,6 +1665,15 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	i_errno = IEUDPBLOCKSIZE;
 	return -1;
     }
+
+#ifdef HAVE_UDP_SEGMENT
+    if (test->protocol->id == Pudp && test->settings->gso) {
+        test->settings->gso_dg_size = blksize;
+        /* use the multiple of datagram size for the best efficiency. */
+        test->settings->gso_bf_size = (test->settings->gso_bf_size / test->settings->gso_dg_size) * test->settings->gso_dg_size;
+    }
+#endif
+
     test->settings->blksize = blksize;
 
     if (!rate_flag)
@@ -2231,8 +2253,16 @@ get_parameters(struct iperf_test *test)
             iperf_set_test_bidirectional(test, 1);
 	if ((j_p = cJSON_GetObjectItem(j, "window")) != NULL)
 	    test->settings->socket_bufsize = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "len")) != NULL)
+	if ((j_p = cJSON_GetObjectItem(j, "len")) != NULL) {
 	    test->settings->blksize = j_p->valueint;
+#ifdef HAVE_UDP_SEGMENT
+	    if (test->protocol->id == Pudp && test->settings->gso == 1) {
+	        test->settings->gso_dg_size = j_p->valueint;
+	        /* use the multiple of datagram size for the best efficiency. */
+	        test->settings->gso_bf_size = (test->settings->gso_bf_size / test->settings->gso_dg_size) * test->settings->gso_dg_size;
+	    }
+#endif
+	}
 	if ((j_p = cJSON_GetObjectItem(j, "bandwidth")) != NULL)
 	    test->settings->rate = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "fqrate")) != NULL)
@@ -2771,6 +2801,15 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->fqrate = 0;
     testp->settings->pacing_timer = DEFAULT_PACING_TIMER;
     testp->settings->burst = 0;
+#ifdef HAVE_UDP_SEGMENT
+    testp->settings->gso = GSO_DEF;
+    testp->settings->gso_dg_size = 0;
+    testp->settings->gso_bf_size = GSO_BF_MAX_SIZE;
+#endif
+#ifdef HAVE_UDP_GRO
+    testp->settings->gro = GRO_DEF;
+    testp->settings->gro_bf_size = GRO_BF_MAX_SIZE;
+#endif
     testp->settings->mss = 0;
     testp->settings->bytes = 0;
     testp->settings->blocks = 0;
@@ -3064,6 +3103,13 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->burst = 0;
     test->settings->mss = 0;
     test->settings->tos = 0;
+#ifdef HAVE_UDP_SEGMENT
+    test->settings->gso_dg_size = 0;
+    test->settings->gso_bf_size = GSO_BF_MAX_SIZE;
+#endif
+#ifdef HAVE_UDP_GRO
+    test->settings->gro_bf_size = GRO_BF_MAX_SIZE;
+#endif
     test->settings->dont_fragment = 0;
     test->zerocopy = 0;
 
@@ -4157,6 +4203,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 {
     struct iperf_stream *sp;
     int ret = 0;
+    int size;
 
     char template[1024];
     if (test->tmp_template) {
@@ -4211,13 +4258,24 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         free(sp);
         return NULL;
     }
-    if (ftruncate(sp->buffer_fd, test->settings->blksize) < 0) {
+    size = test->settings->blksize;
+#ifdef HAVE_UDP_SEGMENT
+    if (test->protocol->id == Pudp && test->settings->gso && (size < test->settings->gso_bf_size))
+        size = test->settings->gso_bf_size;
+#endif
+#ifdef HAVE_UDP_GRO
+    if (test->protocol->id == Pudp && test->settings->gro && (size < test->settings->gro_bf_size))
+        size = test->settings->gro_bf_size;
+#endif
+    if (sp->test->debug)
+        printf("Buffer %d bytes\n", size);
+    if (ftruncate(sp->buffer_fd, size) < 0) {
         i_errno = IECREATESTREAM;
         free(sp->result);
         free(sp);
         return NULL;
     }
-    sp->buffer = (char *) mmap(NULL, test->settings->blksize, PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
+    sp->buffer = (char *) mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
     if (sp->buffer == MAP_FAILED) {
         i_errno = IECREATESTREAM;
         free(sp->result);

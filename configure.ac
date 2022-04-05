@@ -301,6 +301,30 @@ if test "x$iperf3_cv_header_tcp_info_snd_wnd" = "xyes"; then
   AC_DEFINE([HAVE_TCP_INFO_SND_WND], [1], [Have tcpi_snd_wnd field in tcp_info.])
 fi
 
+# Check for UDP_SEGMENT sockopt
+AC_CACHE_CHECK([UDP_SEGMENT socket option],
+[iperf3_cv_header_udp_segment],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <linux/udp.h>]],
+                   [[int foo = UDP_SEGMENT;]])],
+  iperf3_cv_header_udp_segment=yes,
+  iperf3_cv_header_udp_segment=no))
+if test "x$iperf3_cv_header_udp_segment" = "xyes"; then
+    AC_DEFINE([HAVE_UDP_SEGMENT], [1], [Have UDP_SEGMENT sockopt.])
+fi
+
+# Check for UDP_GRO sockopt
+AC_CACHE_CHECK([UDP_GRO socket option],
+[iperf3_cv_header_udp_gro],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <linux/udp.h>]],
+                   [[int foo = UDP_SEGMENT;]])],
+  iperf3_cv_header_udp_gro=yes,
+  iperf3_cv_header_udp_gro=no))
+if test "x$iperf3_cv_header_udp_gro" = "xyes"; then
+    AC_DEFINE([HAVE_UDP_GRO], [1], [Have UDP_GRO sockopt.])
+fi
+
 # Check if we need -lrt for clock_gettime
 AC_SEARCH_LIBS(clock_gettime, [rt posix4])
 # Check for clock_gettime support

@@ -38,6 +38,12 @@ int Nsendfile(int fromfd, int tofd, const char *buf, size_t count) /* __attribut
 int setnonblocking(int fd, int nonblocking);
 int getsockdomain(int sock);
 int parse_qos(const char *tos);
+#ifdef HAVE_UDP_GRO
+int Nread_gro(int fd, char *buf, size_t count, int prot, int *dgram_sz);
+#endif
+#ifdef HAVE_UDP_SEGMENT
+int Nwrite_gso(int fd, const char *buf, size_t count, int prot, uint16_t gso_size);
+#endif
 
 #define NET_SOFTERROR -1
 #define NET_HARDERROR -2

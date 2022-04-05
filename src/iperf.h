@@ -169,6 +169,15 @@ struct iperf_settings
     int	      connect_timeout;	    /* socket connection timeout, in ms */
     int       idle_timeout;         /* server idle time timeout */
     struct iperf_time rcv_timeout;  /* Timeout for receiving messages in active mode, in us */
+#ifdef HAVE_UDP_SEGMENT
+    int       gso;
+    int       gso_dg_size;
+    int       gso_bf_size;
+#endif
+#ifdef HAVE_UDP_GRO
+    int       gro;
+    int       gro_bf_size;
+#endif
 };
 
 struct iperf_test;

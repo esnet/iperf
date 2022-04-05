@@ -39,6 +39,7 @@
 #endif
 #include <sys/time.h>
 #include <sys/select.h>
+#include <linux/udp.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -75,7 +76,25 @@ iperf_udp_recv(struct iperf_stream *sp)
     int       first_packet = 0;
     double    transit = 0, d = 0;
     struct iperf_time sent_time, arrival_time, temp_time;
+#ifdef HAVE_UDP_GRO
+    int       tmp_r;
+    int       dgram_sz;
+    int       cnt = 0;
+    char      *dgram_buf;
 
+    if (sp->test->settings->gro) {
+	size = sp->settings->gro_bf_size;
+	r = Nread_gro(sp->socket, sp->buffer, size, Pudp, &dgram_sz);
+	if (dgram_sz == -1) {
+	    /*
+	     * For corner case where the socket configuration is
+	     * successful but the kernel network layer doesn't provide
+	     * GRO-format data or ancillary info.
+	     */
+            dgram_sz = sp->settings->blksize;
+	}
+    } else
+#endif
     r = Nread(sp->socket, sp->buffer, size, Pudp);
 
     /*
@@ -100,6 +119,41 @@ iperf_udp_recv(struct iperf_stream *sp)
 	sp->result->bytes_received += r;
 	sp->result->bytes_received_this_interval += r;
 
+	if (sp->test->debug)
+	    printf("received %d bytes of %d, total %" PRIu64 "\n", r, size, sp->result->bytes_received);
+
+#ifdef HAVE_UDP_GRO
+	dgram_buf = sp->buffer;
+	tmp_r = r;
+	while (tmp_r > 0) {
+	    cnt++;
+	    if (sp->test->debug)
+		printf("%d (%d) remaining %d\n", cnt, dgram_sz, tmp_r);
+
+	    if (sp->test->udp_counters_64bit) {
+		memcpy(&sec, dgram_buf, sizeof(sec));
+		memcpy(&usec, dgram_buf+4, sizeof(usec));
+		memcpy(&pcount, dgram_buf+8, sizeof(pcount));
+		sec = ntohl(sec);
+		usec = ntohl(usec);
+		pcount = be64toh(pcount);
+		sent_time.secs = sec;
+		sent_time.usecs = usec;
+	    }
+	    else {
+		uint32_t pc;
+		memcpy(&sec, dgram_buf, sizeof(sec));
+		memcpy(&usec, dgram_buf+4, sizeof(usec));
+		memcpy(&pc, dgram_buf+8, sizeof(pc));
+		sec = ntohl(sec);
+		usec = ntohl(usec);
+		pcount = ntohl(pc);
+		sent_time.secs = sec;
+		sent_time.usecs = usec;
+	    }
+	    dgram_buf += dgram_sz;
+	    tmp_r -= dgram_sz;
+#else
 	/* Dig the various counters out of the incoming UDP packet */
 	if (sp->test->udp_counters_64bit) {
 	    memcpy(&sec, sp->buffer, sizeof(sec));
@@ -122,6 +176,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    sent_time.secs = sec;
 	    sent_time.usecs = usec;
 	}
+#endif /* HAVE_UDP_GRO */
 
 	if (sp->test->debug)
 	    fprintf(stderr, "pcount %" PRIu64 " packet_count %d\n", pcount, sp->packet_count);
@@ -195,6 +250,9 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    d = -d;
 	sp->prev_transit = transit;
 	sp->jitter += (d - sp->jitter) / 16.0;
+#ifdef HAVE_UDP_GRO
+	} // while (tmp_r > 0)
+#endif
     }
     else {
 	if (sp->test->debug)
@@ -216,6 +274,61 @@ iperf_udp_send(struct iperf_stream *sp)
     int       size = sp->settings->blksize;
     struct iperf_time before;
 
+#ifdef HAVE_UDP_SEGMENT
+    int       dgram_sz;
+    int       buf_sz;
+    int       cnt = 0;
+    char      *dgram_buf;
+
+    if (sp->test->settings->gso) {
+	dgram_sz = sp->settings->gso_dg_size;
+	buf_sz = sp->settings->gso_bf_size;
+    } else {
+	dgram_sz = buf_sz = size;
+    }
+
+    dgram_buf = sp->buffer;
+
+    while (buf_sz > 0) {
+	    cnt++;
+
+	    if (sp->test->debug)
+		    printf("%d (%d) remaining %d\n", cnt, dgram_sz, buf_sz);
+
+	    iperf_time_now(&before);
+	    ++sp->packet_count;
+
+	    if (sp->test->udp_counters_64bit) {
+
+		    uint32_t  sec, usec;
+		    uint64_t  pcount;
+
+		    sec = htonl(before.secs);
+		    usec = htonl(before.usecs);
+		    pcount = htobe64(sp->packet_count);
+
+		    memcpy(dgram_buf, &sec, sizeof(sec));
+		    memcpy(dgram_buf+4, &usec, sizeof(usec));
+		    memcpy(dgram_buf+8, &pcount, sizeof(pcount));
+
+	    }
+	    else {
+
+		    uint32_t  sec, usec, pcount;
+
+		    sec = htonl(before.secs);
+		    usec = htonl(before.usecs);
+		    pcount = htonl(sp->packet_count);
+
+		    memcpy(dgram_buf, &sec, sizeof(sec));
+		    memcpy(dgram_buf+4, &usec, sizeof(usec));
+		    memcpy(dgram_buf+8, &pcount, sizeof(pcount));
+
+	    }
+	    dgram_buf += dgram_sz;
+	    buf_sz -= dgram_sz;
+    }
+#else
     iperf_time_now(&before);
 
     ++sp->packet_count;
@@ -247,7 +360,14 @@ iperf_udp_send(struct iperf_stream *sp)
 	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
 
     }
+#endif /* HAVE_UDP_SEGMENT */
 
+#ifdef HAVE_UDP_SEGMENT
+    if (sp->test->settings->gso) {
+        size = sp->settings->gso_bf_size;
+        r = Nwrite_gso(sp->socket, sp->buffer, size, Pudp, sp->test->settings->gso_dg_size);
+    } else
+#endif
     r = Nwrite(sp->socket, sp->buffer, size, Pudp);
 
     if (r < 0)
@@ -257,7 +377,7 @@ iperf_udp_send(struct iperf_stream *sp)
     sp->result->bytes_sent_this_interval += r;
 
     if (sp->test->debug)
-	printf("sent %d bytes of %d, total %" PRIu64 "\n", r, sp->settings->blksize, sp->result->bytes_sent);
+	printf("sent %d bytes of %d, total %" PRIu64 "\n", r, size, sp->result->bytes_sent);
 
     return r;
 }
@@ -356,6 +476,42 @@ iperf_udp_buffercheck(struct iperf_test *test, int s)
     return rc;
 }
 
+#ifdef HAVE_UDP_SEGMENT
+int
+iperf_udp_gso(struct iperf_test *test, int s)
+{
+    int rc;
+    int gso = test->settings->gso_dg_size;
+
+    rc = setsockopt(s, IPPROTO_UDP, UDP_SEGMENT, (char*) &gso, sizeof(gso));
+    if (rc) {
+	iperf_printf(test, "No GSO (%d)\n", rc);
+        test->settings->gso = 0;
+    } else
+	iperf_printf(test, "GSO (%d)\n", gso);
+
+    return rc;
+}
+#endif
+
+#ifdef HAVE_UDP_GRO
+int
+iperf_udp_gro(struct iperf_test *test, int s)
+{
+    int rc;
+    int gro = 1;
+
+    rc = setsockopt(s, IPPROTO_UDP, UDP_GRO, (char*) &gro, sizeof(gro));
+    if (rc) {
+	iperf_printf(test, "No GRO (%d)\n", rc);
+        test->settings->gro = 0;
+    } else
+	iperf_printf(test, "GRO\n");
+
+    return rc;
+}
+#endif
+
 /*
  * iperf_udp_accept
  *
@@ -414,6 +570,15 @@ iperf_udp_accept(struct iperf_test *test)
 		return rc;
 	}
     }
+
+#ifdef HAVE_UDP_SEGMENT
+    if (test->settings->gso)
+        iperf_udp_gso(test, s);
+#endif
+#ifdef HAVE_UDP_GRO
+    if (test->settings->gro)
+        iperf_udp_gro(test, s);
+#endif
 
 #if defined(HAVE_SO_MAX_PACING_RATE)
     /* If socket pacing is specified, try it. */
@@ -513,6 +678,16 @@ iperf_udp_connect(struct iperf_test *test)
     if (rc < 0)
 	/* error */
 	return rc;
+
+#ifdef HAVE_UDP_SEGMENT
+    if (test->settings->gso)
+        iperf_udp_gso(test, s);
+#endif
+#ifdef HAVE_UDP_GRO
+    if (test->settings->gro)
+        iperf_udp_gro(test, s);
+#endif
+
     /*
      * If the socket buffer was too small, but it was the default
      * size, then try explicitly setting it to something larger.

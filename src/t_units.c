@@ -74,34 +74,34 @@ main(int argc, char **argv)
     assert(llu == unit_atoi("3t"));
 
     unit_snprintf(s, 11, 1024.0, 'A');
-    assert(strncmp(s, "1.00 KByte", 11) == 0);
+    assert(strncmp(s, "1.00 KiB", 11) == 0);
 
     unit_snprintf(s, 11, 1024.0 * 1024.0, 'A');
-    assert(strncmp(s, "1.00 MByte", 11) == 0);
+    assert(strncmp(s, "1.00 MiB", 11) == 0);
 
     unit_snprintf(s, 11, 1000.0, 'k');
-    assert(strncmp(s, "8.00 Kbit", 11) == 0);
+    assert(strncmp(s, "8.00 kbit", 11) == 0);
 
     unit_snprintf(s, 11, 1000.0 * 1000.0, 'a');
     assert(strncmp(s, "8.00 Mbit", 11) == 0);
 
     d = 4.0 * 1024 * 1024 * 1024;
     unit_snprintf(s, 11, d, 'A');
-    assert(strncmp(s, "4.00 GByte", 11) == 0);
+    assert(strncmp(s, "4.00 GiB", 11) == 0);
 
     unit_snprintf(s, 11, d, 'a');
     assert(strncmp(s, "34.4 Gbit", 11) == 0);
 
     d = 4.0 * 1024 * 1024 * 1024 * 1024;
     unit_snprintf(s, 11, d, 'A');
-    assert(strncmp(s, "4.00 TByte", 11) == 0);
+    assert(strncmp(s, "4.00 TiB", 11) == 0);
 
     unit_snprintf(s, 11, d, 'a');
     assert(strncmp(s, "35.2 Tbit", 11) == 0);
 
     d = 4.0 * 1024 * 1024 * 1024 * 1024 * 1024;
     unit_snprintf(s, 11, d, 'A');
-    assert(strncmp(s, "4096 TByte", 11) == 0);
+    assert(strncmp(s, "4096 TiB", 11) == 0);
 
     unit_snprintf(s, 11, d, 'a');
     assert(strncmp(s, "36029 Tbit", 11) == 0);

@@ -237,17 +237,17 @@ extern    "C"
     const char *label_byte[] =
     {
 	"Byte",
-	"KByte",
-	"MByte",
-	"GByte",
-	"TByte"
+	"KiB",
+	"MiB",
+	"GiB",
+	"TiB"
     };
 
 /* labels for bit formats [kmgt] */
     const char *label_bit[] =
     {
 	"bit",
-	"Kbit",
+	"kbit",
 	"Mbit",
 	"Gbit",
 	"Tbit"
@@ -258,8 +258,8 @@ extern    "C"
  *
  * Given a number in bytes and a format, converts the number and
  * prints it out with a bits or bytes label.
- *   B, K, M, G, A for Byte, Kbyte, Mbyte, Gbyte, adaptive byte
- *   b, k, m, g, a for bit,  Kbit,  Mbit,  Gbit,  adaptive bit
+ *   B, K, M, G, A for Byte, KiB, MiB, GiB, adaptive byte
+ *   b, k, m, g, a for bit,  kbit, Mbit , Gbit,  adaptive bit
  * adaptive picks the "best" one based on the number.
  * s should be at least 11 chars long
  * (4 digits + space + 5 chars max + null)

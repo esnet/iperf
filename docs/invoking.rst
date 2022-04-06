@@ -130,7 +130,8 @@ the executable.
                  set server port to listen on/connect to to n (default 5201)
    
           -f, --format
-                 [kmgtKMGT]   format to report: Kbits/Mbits/Gbits/Tbits
+                 [kmgtKMGT]   format to report: kmgt for kbit/Mbit/Gbit/Tbit or KMGT for KiB/MiB/GiB/TiB
+
    
           -i, --interval n
                  pause n seconds between periodic throughput reports; default  is

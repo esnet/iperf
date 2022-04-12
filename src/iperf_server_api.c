@@ -424,7 +424,7 @@ iperf_run_server(struct iperf_test *test)
     int saved_errno;
 #endif /* HAVE_TCP_CONGESTION */
     fd_set read_set, write_set;
-    struct iperf_stream *sp;
+    struct iperf_stream *sp1, *sp2;
     struct iperf_time now;
     struct iperf_time last_receive_time;
     struct iperf_time diff_time;
@@ -652,22 +652,39 @@ iperf_run_server(struct iperf_test *test)
                         if (rec_streams_accepted != streams_to_rec) {
                             flag = 0;
                             ++rec_streams_accepted;
+                            if (test->same_socket)
+                                ++send_streams_accepted;
                         } else if (send_streams_accepted != streams_to_send) {
                             flag = 1;
                             ++send_streams_accepted;
                         }
 
                         if (flag != -1) {
-                            sp = iperf_new_stream(test, s, flag);
-                            if (!sp) {
+                            sp1 = NULL;
+                            sp2 = NULL;
+
+                            sp1 = iperf_new_stream(test, s, flag);
+                            if (!sp1) {
                                 cleanup_server(test);
                                 return -1;
                             }
+                            if (test->same_socket) {
+                                sp2 = iperf_new_stream(test, s, 1 - flag);
+                                if (!sp2) {
+                                    cleanup_server(test);
+                                    return -1;
+                                }
+                            }
 
-                            if (sp->sender)
+                            if (test->same_socket) {
                                 FD_SET(s, &test->write_set);
-                            else
                                 FD_SET(s, &test->read_set);
+                            } else {
+                                if (sp1->sender)
+                                    FD_SET(s, &test->write_set);
+                                else
+                                    FD_SET(s, &test->read_set);
+                            }
 
                             if (s > test->max_fd) test->max_fd = s;
 
@@ -678,12 +695,15 @@ iperf_run_server(struct iperf_test *test)
                              * maintain interactivity with the control channel.
                              */
                             if (test->protocol->id != Pudp ||
-                                !sp->sender) {
+                                test->same_socket || !sp1->sender) {
                                 setnonblocking(s, 1);
                             }
 
-                            if (test->on_new_stream)
-                                test->on_new_stream(sp);
+                            if (test->on_new_stream) {
+                                test->on_new_stream(sp1);
+                                if (sp2 != NULL)
+                                    test->on_new_stream(sp2);
+                            }
 
                             flag = -1;
                         }

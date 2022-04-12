@@ -749,6 +749,12 @@ iperf_set_test_bidirectional(struct iperf_test* ipt, int bidirectional)
 }
 
 void
+iperf_set_test_samesocket(struct iperf_test* ipt, int same_socket)
+{
+    ipt->same_socket = same_socket;
+}
+
+void
 iperf_set_test_no_delay(struct iperf_test* ipt, int no_delay)
 {
     ipt->no_delay = no_delay;
@@ -1021,7 +1027,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"length", required_argument, NULL, 'l'},
         {"parallel", required_argument, NULL, 'P'},
         {"reverse", no_argument, NULL, 'R'},
-        {"bidir", no_argument, NULL, OPT_BIDIRECTIONAL},
+        {"bidir", optional_argument, NULL, OPT_BIDIRECTIONAL},
         {"window", required_argument, NULL, 'w'},
         {"bind", required_argument, NULL, 'B'},
 #if defined(HAVE_SO_BINDTODEVICE)
@@ -1282,6 +1288,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     return -1;
                 }
                 iperf_set_test_bidirectional(test, 1);
+                if (optarg) {
+                    if (atoi(optarg) == 1)
+                        iperf_set_test_samesocket(test, 1);
+                }
                 client_flag = 1;
                 break;
             case 'w':
@@ -2114,7 +2124,9 @@ send_parameters(struct iperf_test *test)
 	if (test->reverse)
 	    cJSON_AddTrueToObject(j, "reverse");
 	if (test->bidirectional)
-	            cJSON_AddTrueToObject(j, "bidirectional");
+	    cJSON_AddTrueToObject(j, "bidirectional");
+	if (test->same_socket)
+	    cJSON_AddTrueToObject(j, "same_socket");
 	if (test->settings->socket_bufsize)
 	    cJSON_AddNumberToObject(j, "window", test->settings->socket_bufsize);
 	if (test->settings->blksize)
@@ -2229,6 +2241,8 @@ get_parameters(struct iperf_test *test)
 	    iperf_set_test_reverse(test, 1);
         if ((j_p = cJSON_GetObjectItem(j, "bidirectional")) != NULL)
             iperf_set_test_bidirectional(test, 1);
+        if ((j_p = cJSON_GetObjectItem(j, "same_socket")) != NULL)
+            iperf_set_test_samesocket(test, 1);
 	if ((j_p = cJSON_GetObjectItem(j, "window")) != NULL)
 	    test->settings->socket_bufsize = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "len")) != NULL)
@@ -2760,6 +2774,8 @@ iperf_defaults(struct iperf_test *testp)
     testp->stats_interval = testp->reporter_interval = 1;
     testp->num_streams = 1;
 
+    testp->same_socket = 0;
+
     testp->settings->domain = AF_UNSPEC;
     testp->settings->unit_format = 'a';
     testp->settings->socket_bufsize = 0;    /* use autotuning */
@@ -3022,6 +3038,7 @@ iperf_reset_test(struct iperf_test *test)
     test->remote_congestion_used = NULL;
     test->role = 's';
     test->mode = RECEIVER;
+    test->same_socket = 0;
     test->sender_has_retransmits = 0;
     set_protocol(test, Ptcp);
     test->omit = OMIT;

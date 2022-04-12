@@ -322,7 +322,7 @@ extern jmp_buf env;
 /* Client routines. */
 int iperf_run_client(struct iperf_test *);
 int iperf_connect(struct iperf_test *);
-int iperf_create_streams(struct iperf_test *, int sender);
+int iperf_create_streams(struct iperf_test *, int sender, int use_same_socket);
 int iperf_handle_message_client(struct iperf_test *);
 int iperf_client_end(struct iperf_test *);
 

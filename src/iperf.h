@@ -261,6 +261,7 @@ struct iperf_test
 {
     char      role;                             /* 'c' lient or 's' erver */
     enum iperf_mode mode;
+    int       same_socket;                      /* --bidir option value - used if mode == BIDIRECTIONAL */
     int       sender_has_retransmits;
     int       other_side_has_retransmits;       /* used if mode == BIDIRECTIONAL */
     struct protocol *protocol;

@@ -52,7 +52,7 @@
 #endif /* HAVE_TCP_CONGESTION */
 
 int
-iperf_create_streams(struct iperf_test *test, int sender)
+iperf_create_streams(struct iperf_test *test, int sender, int use_same_socket)
 {
     if (NULL == test)
     {
@@ -63,7 +63,7 @@ iperf_create_streams(struct iperf_test *test, int sender)
 #if defined(HAVE_TCP_CONGESTION)
     int saved_errno;
 #endif /* HAVE_TCP_CONGESTION */
-    struct iperf_stream *sp;
+    struct iperf_stream *sp, *sp_same;
 
     int orig_bind_port = test->bind_port;
     for (i = 0; i < test->num_streams; ++i) {
@@ -71,11 +71,22 @@ iperf_create_streams(struct iperf_test *test, int sender)
         test->bind_port = orig_bind_port;
 	if (orig_bind_port) {
 	    test->bind_port += i;
-            // If Bidir make sure send and receive ports are different
-            if (!sender && test->mode == BIDIRECTIONAL)
+            // If Bidir using different sockets, make sure send and receive ports are different
+            if (!sender && test->mode == BIDIRECTIONAL && !test->same_socket)
                 test->bind_port += test->num_streams;
         }
-        s = test->protocol->connect(test);
+
+        if (!use_same_socket)
+            s = test->protocol->connect(test);
+        else {
+            // When using same socket for both directions - reuse already created sockets
+            if (i == 0)
+                sp_same = SLIST_FIRST(&test->streams);
+            else
+                sp_same = SLIST_NEXT(sp_same, streams);
+            s = sp_same->socket;
+        }
+
         test->bind_port = orig_bind_port;
         if (s < 0)
             return -1;
@@ -115,7 +126,10 @@ iperf_create_streams(struct iperf_test *test, int sender)
 	}
 #endif /* HAVE_TCP_CONGESTION */
 
-	if (sender)
+	if (test->same_socket) {
+	    FD_SET(s, &test->write_set);
+            FD_SET(s, &test->read_set);
+        } else if (sender)
 	    FD_SET(s, &test->write_set);
 	else
 	    FD_SET(s, &test->read_set);
@@ -288,12 +302,12 @@ iperf_handle_message_client(struct iperf_test *test)
         case CREATE_STREAMS:
             if (test->mode == BIDIRECTIONAL)
             {
-                if (iperf_create_streams(test, 1) < 0)
+                if (iperf_create_streams(test, 1, 0) < 0)
                     return -1;
-                if (iperf_create_streams(test, 0) < 0)
+                if (iperf_create_streams(test, 0, test->same_socket) < 0)
                     return -1;
             }
-            else if (iperf_create_streams(test, test->mode) < 0)
+            else if (iperf_create_streams(test, test->mode, 0) < 0)
                 return -1;
             break;
         case TEST_START:

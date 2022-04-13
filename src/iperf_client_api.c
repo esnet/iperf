@@ -369,8 +369,13 @@ iperf_connect(struct iperf_test *test)
     }
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);
-
-    make_cookie(test->cookie);
+    
+    if (strlen(test->custom_uuid) > 0) {
+      strncpy(test->cookie, test->custom_uuid, COOKIE_SIZE);
+    }
+    else {
+      make_cookie(test->cookie);    
+    }
 
     /* Create and connect the control channel */
     if (test->ctrl_sck < 0)

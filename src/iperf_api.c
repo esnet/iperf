@@ -894,7 +894,7 @@ iperf_on_connect(struct iperf_test *test)
 	if (test->json_output)
 	    cJSON_AddItemToObject(test->json_start, "connecting_to", iperf_json_printf("host: %s  port: %d", test->server_hostname, (int64_t) test->server_port));
 	else {
-	    iperf_printf(test, report_connecting, test->server_hostname, test->server_port);
+	    iperf_printf(test, report_connecting, test->server_hostname, test->server_port, test->cookie);
 	    if (test->reverse)
 		iperf_printf(test, report_reverse, test->server_hostname);
 	}
@@ -1014,7 +1014,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"udp", no_argument, NULL, 'u'},
         {"bitrate", required_argument, NULL, 'b'},
         {"bandwidth", required_argument, NULL, 'b'},
-	{"server-bitrate-limit", required_argument, NULL, OPT_SERVER_BITRATE_LIMIT},
+	    {"server-bitrate-limit", required_argument, NULL, OPT_SERVER_BITRATE_LIMIT},
         {"time", required_argument, NULL, 't'},
         {"bytes", required_argument, NULL, 'n'},
         {"blockcount", required_argument, NULL, 'k'},
@@ -1046,6 +1046,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_CPU_AFFINITY)
         {"affinity", required_argument, NULL, 'A'},
 #endif /* HAVE_CPU_AFFINITY */
+        {"custom-uuid", required_argument, NULL, 'U'},
         {"title", required_argument, NULL, 'T'},
 #if defined(HAVE_TCP_CONGESTION)
         {"congestion", required_argument, NULL, 'C'},
@@ -1101,7 +1102,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     char *client_username = NULL, *client_rsa_public_key = NULL, *server_rsa_private_key = NULL;
 #endif /* HAVE_SSL */
 
-    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:U:T:C:dI:hX:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
 		portno = atoi(optarg);
@@ -1464,6 +1465,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 i_errno = IEUNIMP;
                 return -1;
 #endif /* HAVE_CPU_AFFINITY */
+                break;
+            case 'U':
+                test->custom_uuid = strdup(optarg);
+		client_flag = 1;
                 break;
             case 'T':
                 test->title = strdup(optarg);
@@ -2907,6 +2912,8 @@ iperf_free_test(struct iperf_test *test)
     free(test->settings);
     if (test->title)
 	free(test->title);
+    if (test->custom_uuid)
+    free(test->custom_uuid);
     if (test->extra_data)
 	free(test->extra_data);
     if (test->congestion)
@@ -3093,6 +3100,10 @@ iperf_reset_test(struct iperf_test *test)
 	free(test->title);
 	test->title = NULL;
     }
+    if (test->custom_uuid) {
+	free(test->custom_uuid);
+	test->custom_uuid = NULL;
+    }    
     if (test->extra_data) {
 	free(test->extra_data);
 	test->extra_data = NULL;

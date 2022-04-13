@@ -192,6 +192,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -Z, --zerocopy            use a 'zero copy' method of sending data\n"
                            "  -O, --omit N              omit the first n seconds\n"
                            "  -T, --title str           prefix every output line with this string\n"
+                           "  -U, --custom_uuid str     set a custom 36-character string as the cookie\n"
                            "  --extra-data str          data string to include in client and server JSON\n"
                            "  --get-server-output       get results from server\n"
                            "  --udp-counters-64bit      use 64-bit counters in UDP test packets\n"
@@ -297,7 +298,7 @@ const char report_time[] =
 "Time: %s\n";
 
 const char report_connecting[] =
-"Connecting to host %s, port %d\n";
+"Connecting to host %s, port %d, cookie %s\n";
 
 const char report_authentication_succeeded[] =
 "Authentication succeeded for user '%s' ts %ld\n";

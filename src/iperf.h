@@ -285,7 +285,8 @@ struct iperf_test
     char     *congestion_used;			/* what was actually used */
     char     *remote_congestion_used;		/* what the other side used */
     char     *pidfile;				/* -P option */
-
+    char     *custom_uuid;          /* -U option */
+    
     char     *logfile;				/* --logfile option */
     FILE     *outfile;
 
@@ -359,6 +360,7 @@ struct iperf_test
     uint server_test_number;                     /* count number of tests performed by a server */
 
     char      cookie[COOKIE_SIZE];
+    
 //    struct iperf_stream *streams;               /* pointer to list of struct stream */
     SLIST_HEAD(slisthead, iperf_stream) streams;
     struct iperf_settings *settings;

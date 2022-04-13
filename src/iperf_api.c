@@ -894,7 +894,7 @@ iperf_on_connect(struct iperf_test *test)
 	if (test->json_output)
 	    cJSON_AddItemToObject(test->json_start, "connecting_to", iperf_json_printf("host: %s  port: %d", test->server_hostname, (int64_t) test->server_port));
 	else {
-	    iperf_printf(test, report_connecting, test->server_hostname, test->server_port, test->cookie);
+	    iperf_printf(test, report_connecting, test->server_hostname, test->server_port);
 	    if (test->reverse)
 		iperf_printf(test, report_reverse, test->server_hostname);
 	}
@@ -2750,6 +2750,7 @@ iperf_defaults(struct iperf_test *testp)
     CPU_ZERO(&testp->cpumask);
 #endif /* HAVE_CPUSET_SETAFFINITY */
     testp->title = NULL;
+    testp->custom_uuid = NULL;
     testp->extra_data = NULL;
     testp->congestion = NULL;
     testp->congestion_used = NULL;

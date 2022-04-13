@@ -298,7 +298,7 @@ const char report_time[] =
 "Time: %s\n";
 
 const char report_connecting[] =
-"Connecting to host %s, port %d, cookie %s\n";
+"Connecting to host %s, port %d\n";
 
 const char report_authentication_succeeded[] =
 "Authentication succeeded for user '%s' ts %ld\n";

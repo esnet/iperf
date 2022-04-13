@@ -297,6 +297,12 @@ iperf_get_test_server_hostname(struct iperf_test *ipt)
 }
 
 char*
+iperf_get_test_custom_uuid(struct iperf_test *ipt)
+{
+    return ipt->custom_uuid;
+}
+
+char*
 iperf_get_test_template(struct iperf_test *ipt)
 {
     return ipt->tmp_template;
@@ -608,6 +614,12 @@ void
 iperf_set_test_server_hostname(struct iperf_test *ipt, const char *server_hostname)
 {
     ipt->server_hostname = strdup(server_hostname);
+}
+
+void
+iperf_set_test_custom_uuid(struct iperf_test *ipt, const char *custom_uuid)
+{
+    ipt->custom_uuid = strdup(custom_uuid);
 }
 
 void

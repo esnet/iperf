@@ -445,8 +445,8 @@ has_sendfile(void)
 int
 Nsendfile(int fromfd, int tofd, const char *buf, size_t count)
 {
-    off_t offset;
 #if defined(HAVE_SENDFILE)
+    off_t offset;
 #if defined(__FreeBSD__) || (defined(__APPLE__) && defined(__MACH__) && defined(MAC_OS_X_VERSION_10_6))
     off_t sent;
 #endif

@@ -1099,6 +1099,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     int blksize;
     int server_flag, client_flag, rate_flag, duration_flag, rcv_timeout_flag;
     char *endptr;
+    test->custom_uuid = "";
 #if defined(HAVE_CPU_AFFINITY)
     char* comma;
 #endif /* HAVE_CPU_AFFINITY */

@@ -370,8 +370,8 @@ iperf_connect(struct iperf_test *test)
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);
     
-    if (strlen(test->custom_uuid) > 0) {
-      strncpy(test->cookie, test->custom_uuid, COOKIE_SIZE);
+    if (strlen(test->custom_uuid) == 36) {
+       strncpy(test->cookie, test->custom_uuid, COOKIE_SIZE);
     }
     else {
       make_cookie(test->cookie);    

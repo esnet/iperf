@@ -362,6 +362,9 @@ iperf_handle_message_client(struct iperf_test *test)
 int
 iperf_connect(struct iperf_test *test)
 {
+    int opt;
+    socklen_t len;
+
     if (NULL == test)
     {
         iperf_err(NULL, "No test\n");
@@ -388,6 +391,15 @@ iperf_connect(struct iperf_test *test)
         return -1;
     }
 
+#if defined(HAVE_TCP_USER_TIMEOUT)
+    if ((opt = test->settings->snd_timeout)) {
+        if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_USER_TIMEOUT, &opt, sizeof(opt)) < 0) {
+        i_errno = IESETUSERTIMEOUT;
+        return -1;
+        }
+    }
+#endif /* HAVE_TCP_USER_TIMEOUT */
+
     if (Nwrite(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) < 0) {
         i_errno = IESENDCOOKIE;
         return -1;
@@ -395,9 +407,6 @@ iperf_connect(struct iperf_test *test)
 
     FD_SET(test->ctrl_sck, &test->read_set);
     if (test->ctrl_sck > test->max_fd) test->max_fd = test->ctrl_sck;
-
-    int opt;
-    socklen_t len;
 
     len = sizeof(opt);
     if (getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_MAXSEG, &opt, &len) < 0) {

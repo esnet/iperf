@@ -119,8 +119,11 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  --timestamps<=format>     emit a timestamp at the start of each output line\n"
                            "                            (optional \"=\" and format string as per strftime(3))\n"
 
-                           "  --rcv-timeout #           idle timeout for receiving data\n"
-                           "                            (default %d ms)\n"
+                           "  --rcv-timeout #           idle timeout for receiving data (default %d ms)\n"
+#if defined(HAVE_TCP_USER_TIMEOUT)
+                           "  --snd-timeout #           idle timeout for sending TCP data by setting TCP_USER_TIMEOUT,\n"
+                           "                            including for Control-socket (default is system settings)\n"
+#endif /* HAVE_TCP_USER_TIMEOUT */
                            "  -d, --debug               emit debugging output\n"
                            "  -v, --version             show version information and quit\n"
                            "  -h, --help                show this message and quit\n"

@@ -105,6 +105,9 @@
 /* Have tcpi_snd_wnd field in tcp_info. */
 #undef HAVE_TCP_INFO_SND_WND
 
+/* Have TCP_USER_TIMEOUT sockopt. */
+#undef HAVE_TCP_USER_TIMEOUT
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 

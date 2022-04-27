@@ -7355,6 +7355,16 @@ func_mode_link ()
 	    *" $arg "*) ;;
 	    * ) func_append new_inherited_linker_flags " $arg" ;;
 	esac
+
+	# As we are forced to pass -nostdlib to g++ during linking, the option
+	# -pthread{,s} is not in effect;  add the -lpthread to $deplist
+	# explicitly to link correctly.
+	if test "$tagname" = CXX -a x"$with_gcc" = xyes; then
+	  case "$arg" in
+	    -pthread*) func_append deplibs " -lpthread" ;;
+	  esac
+	fi
+
 	continue
 	;;
 

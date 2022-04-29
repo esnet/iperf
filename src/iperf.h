@@ -258,6 +258,15 @@ enum iperf_mode {
 	BIDIRECTIONAL = -1
 };
 
+enum debug_level {
+    DEBUG_LEVEL_ERROR = 1,
+    DEBUG_LEVEL_WARN = 2,
+    DEBUG_LEVEL_INFO = 3,
+    DEBUG_LEVEL_DEBUG = 4,
+    DEBUG_LEVEL_MAX = 4
+};
+
+
 struct iperf_test
 {
     char      role;                             /* 'c' lient or 's' erver */
@@ -312,6 +321,7 @@ struct iperf_test
     int	      json_output;                      /* -J option - JSON output */
     int	      zerocopy;                         /* -Z option - use sendfile */
     int       debug;				/* -d option - enable debug */
+    enum      debug_level debug_level;          /* -d option option - level of debug messages to show */
     int	      get_server_output;		/* --get-server-output */
     int	      udp_counters_64bit;		/* --use-64-bit-udp-counters */
     int       forceflush; /* --forceflush - flushing output at every interval */

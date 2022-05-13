@@ -30,25 +30,5 @@
 # script to regenerate all of the autotools-built files.
 # Normally, this is only of use to developers.
 
-# Figure out how to invoke libtoolize.  On MacOS (with MacPorts)
-# it's invoked as glibtoolize.
-if libtoolize --version >/dev/null 2>&1; then
-  libtoolize=libtoolize
-elif glibtoolize --version >/dev/null 2>&1; then
-  libtoolize=glibtoolize
-else
-  libtoolize=""
-fi
-if [ "x$libtoolize" = "x" ]; then
-  echo "Can't find libtoolize, exiting."
-  exit 1
-fi
-
-# Execute the various autotools commands in the correct order.
-set -x
-$libtoolize --copy --force --automake
-aclocal -I config
-autoheader
-automake --add-missing --copy
-autoconf
+autoreconf -fi
 rm -rf config.cache

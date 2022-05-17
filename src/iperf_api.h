@@ -312,11 +312,13 @@ void iperf_reset_stats(struct iperf_test * test);
 
 struct protocol *get_protocol(struct iperf_test *, int);
 int set_protocol(struct iperf_test *, int);
+void iperf_set_on_new_output_callback(struct iperf_test* ipt, void (*callback)());
 
 void iperf_on_new_stream(struct iperf_stream *);
 void iperf_on_test_start(struct iperf_test *);
 void iperf_on_connect(struct iperf_test *);
 void iperf_on_test_finish(struct iperf_test *);
+void iperf_on_new_output(const char* format, ...);
 
 extern jmp_buf env;
 

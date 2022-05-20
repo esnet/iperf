@@ -65,7 +65,7 @@
 #	define __LITTLE_ENDIAN LITTLE_ENDIAN
 #	define __PDP_ENDIAN    PDP_ENDIAN
 
-#elif defined(__sun) && defined(__SVR4)
+#elif (defined(__sun) && defined(__SVR4)) || defined(__PASE__)
 
 #	include <sys/types.h>
 #	include <netinet/in.h>

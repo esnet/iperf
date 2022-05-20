@@ -462,6 +462,12 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "unable to set TCP/SCTP MSS");
             perr = 1;
             break;
+        case IEGAP:
+	    snprintf(errstr, len, "gap time must be either 'e' with limitted bit trate, or n1[/n2] where n1<=n2 are non-negative integers of miliseconds");
+	    break;
+        case IEGAPCONDITIONS:
+	    snprintf(errstr, len, "When --gap is set either or both --bitrate and --pacing-timer cannot be set");
+	    break;
 	default:
 	    snprintf(errstr, len, "int_errno=%d", int_errno);
 	    perr = 1;

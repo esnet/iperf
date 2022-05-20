@@ -157,6 +157,9 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -b, --bitrate #[KMG][/#]  target bitrate in bits/sec (0 for unlimited)\n"
                            "                            (default %d Mbit/sec for UDP, unlimited for TCP)\n"
                            "                            (optional slash and packet count for burst mode)\n"
+                           "  --gap #[SMU][/#[SMU]]     range for random time to delay between (burst of) packets sending;\n"
+			   "                            if the optional end-of-tange second value (after slash) is not defined,\n"
+                           "                            the default is 5 times the start-of-tange value (units default is [ms])\n"
 			   "  --pacing-timer #[KMG]     set the timing for pacing, in microseconds (default %d)\n"
 #if defined(HAVE_SO_MAX_PACING_RATE)
                            "  --fq-rate #[KMG]          enable fair-queuing based socket pacing in\n"
@@ -214,6 +217,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 
 			   "\n"
                            "[KMG] indicates options that support a K/M/G suffix for kilo-, mega-, or giga-\n"
+                           "[SMU] indicates options that support a S/M/U time suffix for Sec, Mili, or Micro\n"
 			   "\n"
 #ifdef PACKAGE_URL
                            "iperf3 homepage at: " PACKAGE_URL "\n"
@@ -282,15 +286,26 @@ const char window_default[] =
 const char wait_server_threads[] =
 "Waiting for server threads to complete. Interrupt again to force quit.\n";
 
+const char test_start_begin[] =
+"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds";
+
 const char test_start_time[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %d second test, tos %d\n";
+", %d second test";
 
 const char test_start_bytes[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %llu bytes to send, tos %d\n";
+", %llu bytes to send";
 
 const char test_start_blocks[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %d blocks to send, tos %d\n";
+", %d blocks to send";
 
+const char test_start_gap[] =
+", gap between packets %d to %d us";
+
+const char test_start_rate[] =
+", %d bps";
+
+const char test_start_end[] =
+", tos %d\n";
 
 /* -------------------------------------------------------------------
  * reports

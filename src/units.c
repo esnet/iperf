@@ -198,6 +198,43 @@ extern    "C"
 	          return (iperf_size_t) n;
     }				/* end unit_atof */
 
+
+/* -------------------------------------------------------------------
+ * unit_time_atoi
+ *
+ * Similar to unit_atof, for time, with default of [ms].
+ * Return [us].
+ * ------------------------------------------------------------------- */
+
+    uint64_t unit_time_atoi(const char *s)
+    {
+	uint64_t n = 0;
+	char suffix = '\0';
+
+	assert(s != NULL);
+
+	/* scan the number and any suffices */
+	sscanf(s, "%lu%c", &n, &suffix);
+
+	/* convert according to [Tt Gg Mm Kk] */
+	switch (suffix)
+	{
+            case 's': case 'S':
+                n *= SEC_TO_US;
+                break;
+            case 'm': case 'M':
+                n *= mS_TO_US;
+                break;
+            case 'u': case 'U':
+                break;
+            default:
+                n *= mS_TO_US;
+                break;
+	}
+	return n;
+    } /* end unit_time_atoi */
+
+
 /* -------------------------------------------------------------------
  * constants for byte_printf
  * ------------------------------------------------------------------- */

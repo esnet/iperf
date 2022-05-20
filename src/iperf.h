@@ -151,6 +151,8 @@ struct iperf_settings
     uint64_t  fqrate;               /* target data rate for FQ pacing*/
     int	      pacing_timer;	    /* pacing timer in microseconds */
     int       burst;                /* packets per burst */
+    uint64_t  gap_time;             /* (minimum) gap time between packets in miliseconds */
+    uint64_t  gap_time_max;         /* maximum gap time between packets in miliseconds */
     int       mss;                  /* for TCP MSS */
     int       ttl;                  /* IP TTL option */
     int       tos;                  /* type of service bit */

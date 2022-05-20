@@ -49,6 +49,28 @@
 #include "net.h"
 #include "units.h"
 
+#ifdef __PASE__
+static int pase_daemon()
+{
+    switch (fork()) {
+    case -1:
+        return -1;
+
+    case 0:
+        break;
+
+    default:
+        exit(0);
+    }
+
+    if (setsid() == -1) {
+        return -1;
+    }
+
+    return umask(0);
+}
+#define daemon(x,r) pase_daemon()
+#endif
 
 static int run(struct iperf_test *test);
 

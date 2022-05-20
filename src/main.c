@@ -41,11 +41,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+
 #include "iperf.h"
 #include "iperf_api.h"
 #include "iperf_util.h"
 #include "iperf_locale.h"
-#include "queue.h"
 #include "net.h"
 #include "units.h"
 

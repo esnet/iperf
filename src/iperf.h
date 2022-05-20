@@ -28,7 +28,9 @@
 #define __IPERF_H
 
 #include "iperf_config.h"
-
+#ifdef _AIX
+#include "queue.h"
+#endif
 #include <sys/time.h>
 #include <sys/types.h>
 #ifdef HAVE_STDINT_H

@@ -36,11 +36,7 @@
 #include <assert.h>
 #include <netdb.h>
 #include <string.h>
-#ifdef _AIX
-#include <sys/fcntl.h>
-#else
 #include <fcntl.h>
-#endif
 #include <limits.h>
 
 #ifdef HAVE_SENDFILE

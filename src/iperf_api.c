@@ -423,6 +423,18 @@ iperf_get_test_mss(struct iperf_test *ipt)
     return ipt->settings->mss;
 }
 
+uint64_t
+iperf_get_test_gap_time(struct iperf_test *ipt)
+{
+    return ipt->settings->gap_time;
+}
+
+uint64_t
+iperf_get_test_gap_time_max(struct iperf_test *ipt)
+{
+    return ipt->settings->gap_time_max;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -791,6 +803,18 @@ iperf_set_test_mss(struct iperf_test *ipt, int mss)
     ipt->settings->mss = mss;
 }
 
+void
+iperf_set_test_gap_time(struct iperf_test *ipt, uint64_t gap_time)
+{
+    ipt->settings->gap_time = gap_time;
+}
+
+void
+iperf_set_test_gap_time_max(struct iperf_test *ipt, uint64_t gap_time)
+{
+    ipt->settings->gap_time_max = gap_time;
+}
+
 /********************** Get/set test protocol structure ***********************/
 
 struct protocol *
@@ -839,15 +863,23 @@ void
 iperf_on_test_start(struct iperf_test *test)
 {
     if (test->json_output) {
-	cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d  omit: %d  duration: %d  bytes: %d  blocks: %d  reverse: %d  tos: %d  target_bitrate: %d", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->omit, (int64_t) test->duration, (int64_t) test->settings->bytes, (int64_t) test->settings->blocks, test->reverse?(int64_t)1:(int64_t)0, (int64_t) test->settings->tos, (int64_t) test->settings->rate));
+	cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d  omit: %d  duration: %d  bytes: %d  blocks: %d  reverse: %d  tos: %d  target_bitrate: %d  gap_time: %llu  gap_time_max: %llu", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->omit, (int64_t) test->duration, (int64_t) test->settings->bytes, (int64_t) test->settings->blocks, test->reverse?(int64_t)1:(int64_t)0, (int64_t) test->settings->tos, (int64_t) test->settings->rate, (int64_t) test->settings->gap_time, (int64_t) test->settings->gap_time_max));
     } else {
 	if (test->verbose) {
+            iperf_printf(test, test_start_begin, test->protocol->name, test->num_streams, test->settings->blksize, test->omit);
 	    if (test->settings->bytes)
-		iperf_printf(test, test_start_bytes, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->settings->bytes, test->settings->tos);
+		iperf_printf(test, test_start_bytes, test->settings->bytes);
 	    else if (test->settings->blocks)
-		iperf_printf(test, test_start_blocks, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->settings->blocks, test->settings->tos);
+		iperf_printf(test, test_start_blocks, test->settings->blocks);
 	    else
-		iperf_printf(test, test_start_time, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->duration, test->settings->tos);
+		iperf_printf(test, test_start_time, test->duration);
+
+            if (test->settings->gap_time_max > 0)
+                iperf_printf(test, test_start_gap, test->settings->gap_time, test->settings->gap_time_max);
+            else if (test->settings->rate > 0)
+                iperf_printf(test, test_start_rate, test->settings->rate);
+
+            iperf_printf(test, test_start_end, test->settings->tos);
 	}
     }
 }
@@ -1078,6 +1110,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"idle-timeout", required_argument, NULL, OPT_IDLE_TIMEOUT},
         {"rcv-timeout", required_argument, NULL, OPT_RCV_TIMEOUT},
         {"snd-timeout", required_argument, NULL, OPT_SND_TIMEOUT},
+        {"gap", required_argument, NULL, OPT_GAP_TIME},
         {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -1095,6 +1128,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     struct xbind_entry *xbe;
     double farg;
     int rcv_timeout_in = 0;
+    int pacing_timer_flag = 0;
 
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = rcv_timeout_flag = snd_timeout_flag =0;
@@ -1222,7 +1256,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		    }
 		}
                 test->settings->rate = unit_atof_rate(optarg);
-		rate_flag = 1;
+		if (test->settings->rate != 0)
+                    rate_flag = 1;
 		client_flag = 1;
                 break;
             case OPT_SERVER_BITRATE_LIMIT:
@@ -1426,6 +1461,24 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             case 'F':
                 test->diskfile_name = optarg;
                 break;
+            case OPT_GAP_TIME:  // Gap-time option is in [ms] but saving in [us]
+                slash = strchr(optarg, '/');
+                if (slash) {
+                    *slash = '\0';
+                    ++slash;
+                    test->settings->gap_time_max = unit_time_atoi(slash);
+                }
+                test->settings->gap_time = unit_time_atoi(optarg);
+                if (test->settings->gap_time_max == 0)
+                    test->settings->gap_time_max = test->settings->gap_time * 5;
+                if (test->settings->gap_time < 0 || test->settings->gap_time_max < 0
+                    || test->settings->gap_time > test->settings->gap_time_max)
+                {
+                    i_errno = IEGAP;
+                    return -1;
+                }
+                client_flag = 1;
+                break;
             case OPT_IDLE_TIMEOUT:
                 test->settings->idle_timeout = atoi(optarg);
                 if (test->settings->idle_timeout < 1 || test->settings->idle_timeout > MAX_TIME) {
@@ -1556,6 +1609,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif /* HAVE_SSL */
 	    case OPT_PACING_TIMER:
 		test->settings->pacing_timer = unit_atoi(optarg);
+                pacing_timer_flag = 1;
 		client_flag = 1;
 		break;
 	    case OPT_CONNECT_TIMEOUT:
@@ -1665,8 +1719,19 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     }
     test->settings->blksize = blksize;
 
-    if (!rate_flag)
+    /* Disallow setting gap and either/bot bitrate or pace, as gap practically sets both */
+    if (test->settings->gap_time != 0 && (rate_flag || pacing_timer_flag != 0)) {
+        i_errno = IEGAPCONDITIONS;
+        return -1;
+    }
+
+    /* Set UDP default rate if rate was not set */
+    if (!rate_flag && test->settings->gap_time == 0)
 	test->settings->rate = test->protocol->id == Pudp ? UDP_RATE : 0;
+
+    /* If gap was set and bust was not set - set burst to 1 */
+    if (test->settings->burst == 0 && test->settings->gap_time != 0)
+        test->settings->burst = 1;
 
     /* if no bytes or blocks specified, nor a duration_flag, and we have -F,
     ** get the file-size as the bytes count to be transferred
@@ -1831,6 +1896,8 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
     register struct iperf_stream *sp;
     struct iperf_time now;
     int no_throttle_check;
+    uint64_t gap_time;
+    uint64_t gap_time_max = test->settings->gap_time_max;
 
     /* Can we do multisend mode? */
     if (test->settings->burst != 0)
@@ -1850,10 +1917,10 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 	SLIST_FOREACH(sp, &test->streams, streams) {
 	    if ((sp->green_light && sp->sender &&
 		 (write_setP == NULL || FD_ISSET(sp->socket, write_setP)))) {
-        if (multisend > 1 && test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes)
-            break;
-        if (multisend > 1 && test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks)
-            break;
+                if (multisend > 1 && test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes)
+                    break;
+                if (multisend > 1 && test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks)
+                    break;
 		if ((r = sp->snd(sp)) < 0) {
 		    if (r == NET_SOFTERROR)
 			break;
@@ -1871,12 +1938,31 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 	if (!streams_active)
 	    break;
     }
+
     if (!no_throttle_check) {   /* Throttle check if was not checked for each send */
 	iperf_time_now(&now);
-	SLIST_FOREACH(sp, &test->streams, streams)
-	    if (sp->sender)
-	        iperf_check_throttle(sp, &now);
+	SLIST_FOREACH(sp, &test->streams, streams) {
+	    if (sp->sender) {                
+                if (gap_time_max == 0) { // No throtling check when gap time is set
+	            iperf_check_throttle(sp, &now);
+                } else {
+                    // if message sent and gap delay between messages is defined - set time for next send
+                    if (sp->green_light) { 
+                        sp->green_light = 0;           
+                        gap_time = test->settings->gap_time;
+                        if (gap_time < gap_time_max) { // Add randome gap delta in case of range
+                            gap_time += round(((float)rand()/RAND_MAX)*(gap_time_max - gap_time));
+                        }
+                        if (test->debug) {
+                            printf("Gap time for sending next message is %lu us\n", gap_time);
+                        }
+                        iperf_create_send_gap_timer(sp, gap_time, &now);
+                    }
+                }
+            }
+        }
     }
+
     if (write_setP != NULL)
 	SLIST_FOREACH(sp, &test->streams, streams)
 	    if (FD_ISSET(sp->socket, write_setP))
@@ -1911,6 +1997,8 @@ iperf_init_test(struct iperf_test *test)
 {
     struct iperf_time now;
     struct iperf_stream *sp;
+
+    srand(time(0)); /* reset random seed using current time for each new test */
 
     if (test->protocol->init) {
         if (test->protocol->init(test) < 0)
@@ -1965,6 +2053,28 @@ iperf_create_send_timers(struct iperf_test * test)
 		return -1;
 	    }
 	}
+    }
+    return 0;
+}
+
+static void
+send_gap_timer_proc(TimerClientData client_data, struct iperf_time *nowP)
+{
+    struct iperf_stream *sp = client_data.p;
+
+    /* Timer indicates the end of gap time - time for sending the next message */
+    sp->green_light = 1;
+}
+
+int
+iperf_create_send_gap_timer(struct iperf_stream *sp, uint64_t gap_time, struct iperf_time *nowP)
+{
+    TimerClientData cd;
+
+    cd.p = sp;
+    if ( tmr_create(nowP, send_gap_timer_proc, cd, gap_time, 0) == NULL) {
+	i_errno = IENEWTIMER;
+	return -1;
     }
     return 0;
 }
@@ -2158,6 +2268,10 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "repeating_payload", test->repeating_payload);
 	if (test->zerocopy)
 	    cJSON_AddNumberToObject(j, "zerocopy", test->zerocopy);
+        if (test->settings->gap_time)
+	    cJSON_AddNumberToObject(j, "gap_time", test->settings->gap_time);
+	if (test->settings->gap_time_max)
+	    cJSON_AddNumberToObject(j, "gap_time_max", test->settings->gap_time_max);          
 #if defined(HAVE_DONT_FRAGMENT)
 	if (test->settings->dont_fragment)
 	    cJSON_AddNumberToObject(j, "dont_fragment", test->settings->dont_fragment);
@@ -2272,6 +2386,10 @@ get_parameters(struct iperf_test *test)
 	    test->repeating_payload = 1;
 	if ((j_p = cJSON_GetObjectItem(j, "zerocopy")) != NULL)
 	    test->zerocopy = j_p->valueint;
+        if ((j_p = cJSON_GetObjectItem(j, "gap_time")) != NULL)
+	    test->settings->gap_time = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "gap_time_max")) != NULL)
+	    test->settings->gap_time_max = j_p->valueint;
 #if defined(HAVE_DONT_FRAGMENT)
 	if ((j_p = cJSON_GetObjectItem(j, "dont_fragment")) != NULL)
 	    test->settings->dont_fragment = j_p->valueint;
@@ -3077,6 +3195,8 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->tos = 0;
     test->settings->dont_fragment = 0;
     test->zerocopy = 0;
+    test->settings->gap_time = 0;
+    test->settings->gap_time_max = 0;
 
 #if defined(HAVE_SSL)
     if (test->settings->authtoken) {

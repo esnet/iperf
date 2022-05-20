@@ -90,6 +90,7 @@ typedef uint64_t iperf_size_t;
 #define OPT_DONT_FRAGMENT 26
 #define OPT_RCV_TIMEOUT 27
 #define OPT_SND_TIMEOUT 28
+#define OPT_GAP_TIME 29
 
 /* states */
 #define TEST_START 1
@@ -153,6 +154,8 @@ int	iperf_get_test_connect_timeout( struct iperf_test* ipt );
 int	iperf_get_dont_fragment( struct iperf_test* ipt );
 char*   iperf_get_test_congestion_control(struct iperf_test* ipt);
 int iperf_get_test_mss(struct iperf_test* ipt);
+uint64_t iperf_get_test_gap_time( struct iperf_test* ipt );
+uint64_t iperf_get_test_gap_time_max( struct iperf_test* ipt );
 
 /* Setter routines for some fields inside iperf_test. */
 void	iperf_set_verbose( struct iperf_test* ipt, int verbose );
@@ -195,7 +198,8 @@ void    iperf_set_test_no_delay( struct iperf_test* ipt, int no_delay);
 void    iperf_set_dont_fragment( struct iperf_test* ipt, int dont_fragment );
 void    iperf_set_test_congestion_control(struct iperf_test* ipt, char* cc);
 void    iperf_set_test_mss(struct iperf_test* ipt, int mss);
-
+void    iperf_set_test_gap_time( struct iperf_test* ipt, uint64_t sleep_timer );
+void    iperf_set_test_gap_time_max( struct iperf_test* ipt, uint64_t sleep_timer_max );
 #if defined(HAVE_SSL)
 void    iperf_set_test_client_username(struct iperf_test *ipt, const char *client_username);
 void    iperf_set_test_client_password(struct iperf_test *ipt, const char *client_password);
@@ -305,6 +309,7 @@ void warning(const char *);
 int iperf_exchange_results(struct iperf_test *);
 int iperf_init_test(struct iperf_test *);
 int iperf_create_send_timers(struct iperf_test *);
+int iperf_create_send_gap_timer(struct iperf_stream *sp, uint64_t gap_time, struct iperf_time *nowP);
 int iperf_parse_arguments(struct iperf_test *, int, char **);
 int iperf_open_logfile(struct iperf_test *);
 void iperf_reset_test(struct iperf_test *);
@@ -389,6 +394,8 @@ enum {
     IERCVTIMEOUT = 31,      // Illegal message receive timeout
     IERVRSONLYRCVTIMEOUT = 32,  // Client receive timeout is valid only in reverse mode
     IESNDTIMEOUT = 33,      // Illegal message send timeout
+    IEGAP = 34,             // Illegal gap time value
+    IEGAPCONDITIONS = 35,   // When --gap is set either or both --bitrate and --pacing-timer cannot be set
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

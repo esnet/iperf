@@ -106,7 +106,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -A, --affinity n/n,m      set CPU affinity\n"
 #endif /* HAVE_CPU_AFFINITY */
 #if defined(HAVE_SO_BINDTODEVICE)
-                           "  -B, --bind <host>[%<dev>] bind to the interface associated with the address <host>\n"
+                           "  -B, --bind <host>[%%<dev>] bind to the interface associated with the address <host>\n"
                            "                            (optional <dev> equivalent to `--bind-dev <dev>`)\n"
                            "  --bind-dev <dev>          bind to the network interface with SO_BINDTODEVICE\n"
 #else /* HAVE_SO_BINDTODEVICE */
@@ -146,7 +146,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "                            and client during the authentication process\n"
 #endif //HAVE_SSL
                            "Client specific:\n"
-                           "  -c, --client <host>[%<dev>] run in client mode, connecting to <host>\n"
+                           "  -c, --client <host>[%%<dev>] run in client mode, connecting to <host>\n"
                            "                              (option <dev> equivalent to `--bind-dev <dev>`)\n"
 #if defined(HAVE_SCTP_H)
                            "  --sctp                    use SCTP rather than TCP\n"

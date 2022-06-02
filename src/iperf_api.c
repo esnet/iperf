@@ -1078,7 +1078,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"idle-timeout", required_argument, NULL, OPT_IDLE_TIMEOUT},
         {"rcv-timeout", required_argument, NULL, OPT_RCV_TIMEOUT},
         {"snd-timeout", required_argument, NULL, OPT_SND_TIMEOUT},
-        {"debug", no_argument, NULL, 'd'},
+        {"debug", optional_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
     };
@@ -1491,6 +1491,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		break;
 	    case 'd':
 		test->debug = 1;
+                test->debug_level = DEBUG_LEVEL_MAX;
+                if (optarg) {
+                    test->debug_level = atoi(optarg);
+                    if (test->debug_level < 0)
+                        test->debug_level = DEBUG_LEVEL_MAX;
+                }
 		break;
 	    case 'I':
 		test->pidfile = strdup(optarg);

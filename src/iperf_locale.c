@@ -226,7 +226,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 
 #ifdef OBSOLETE /* from old iperf: no longer supported. Add some of these back someday */
   "-d, --dualtest           Do a bidirectional test simultaneously\n"
-  "-L, --listenport #       port to recieve bidirectional tests back on\n"
+  "-L, --listenport #       port to receive bidirectional tests back on\n"
   "-I, --stdin              input the data to be transmitted from stdin\n"
   "-F, --fileinput <name>   input the data to be transmitted from a file\n"
   "-r, --tradeoff           Do a bidirectional test individually\n"

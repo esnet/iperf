@@ -437,7 +437,7 @@ extern int gerror; /* error value from getaddrinfo(3), for use in internal error
 #define UDP_CONNECT_REPLY 0x39383736        // "9876" - legacy value was 987654321
 #define LEGACY_UDP_CONNECT_REPLY 987654321  // Old servers may still reply with the legacy value
 
-/* In Reverse mode, maxmimum number of packtes to wait for "accept" response - to handle out of order packets */
+/* In Reverse mode, maximum number of packets to wait for "accept" response - to handle out of order packets */
 #define MAX_REVERSE_OUT_OF_ORDER_PACKETS 2
 
 #endif /* !__IPERF_H */

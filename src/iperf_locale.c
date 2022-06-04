@@ -106,7 +106,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -A, --affinity n/n,m      set CPU affinity\n"
 #endif /* HAVE_CPU_AFFINITY */
 #if defined(HAVE_SO_BINDTODEVICE)
-                           "  -B, --bind <host>[%<dev>] bind to the interface associated with the address <host>\n"
+                           "  -B, --bind <host>[%%<dev>] bind to the interface associated with the address <host>\n"
                            "                            (optional <dev> equivalent to `--bind-dev <dev>`)\n"
                            "  --bind-dev <dev>          bind to the network interface with SO_BINDTODEVICE\n"
 #else /* HAVE_SO_BINDTODEVICE */
@@ -124,7 +124,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  --snd-timeout #           timeout for unacknowledged TCP data\n"
                            "                            (in ms, default is system settings)\n"
 #endif /* HAVE_TCP_USER_TIMEOUT */
-                           "  -d, --debug               emit debugging output\n"
+                           "  -d, --debug[=#]           emit debugging output\n"
+                           "                            (optional optional \"=\" and debug level: 1-4. Default is 4 - all messages)\n"
                            "  -v, --version             show version information and quit\n"
                            "  -h, --help                show this message and quit\n"
                            "Server specific:\n"
@@ -145,7 +146,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "                            and client during the authentication process\n"
 #endif //HAVE_SSL
                            "Client specific:\n"
-                           "  -c, --client <host>[%<dev>] run in client mode, connecting to <host>\n"
+                           "  -c, --client <host>[%%<dev>] run in client mode, connecting to <host>\n"
                            "                              (option <dev> equivalent to `--bind-dev <dev>`)\n"
 #if defined(HAVE_SCTP_H)
                            "  --sctp                    use SCTP rather than TCP\n"
@@ -225,7 +226,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 
 #ifdef OBSOLETE /* from old iperf: no longer supported. Add some of these back someday */
   "-d, --dualtest           Do a bidirectional test simultaneously\n"
-  "-L, --listenport #       port to recieve bidirectional tests back on\n"
+  "-L, --listenport #       port to receive bidirectional tests back on\n"
   "-I, --stdin              input the data to be transmitted from stdin\n"
   "-F, --fileinput <name>   input the data to be transmitted from a file\n"
   "-r, --tradeoff           Do a bidirectional test individually\n"

@@ -891,7 +891,7 @@ iperf 3.0b4 2010-08-02
   * Setting TCP window size (-w) is now supported
   * Updates to iperf_error
       * Added new errors
-      * Should generate more relavent messages
+      * Should generate more relevant messages
   * Stream list now managed by queue.h macros
   * Test structures are now kept intact after a test is run (for API users)
   * Improved interval timer granularity

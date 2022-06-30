@@ -568,7 +568,7 @@ iperf_udp_connect(struct iperf_test *test)
      */
     buf = UDP_CONNECT_MSG;
     if (test->debug) {
-        printf("Sending Connect message to Sockt %d\n", s);
+        printf("Sending Connect message to Socket %d\n", s);
     }
     if (write(s, &buf, sizeof(buf)) < 0) {
         // XXX: Should this be changed to IESTREAMCONNECT?

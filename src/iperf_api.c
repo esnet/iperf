@@ -3603,12 +3603,12 @@ iperf_print_results(struct iperf_test *test)
     }
 
     /*
-     * We must to sum streams separately.
-     * For bidirectional mode we must to display
+     * We must sum streams separately.
+     * For bidirectional mode we must display
      * information about sender and receiver streams.
      * For client side we must handle sender streams
      * firstly and receiver streams for server side.
-     * The following design allows us to do this.
+     * The following design allows us to do that.
      */
 
     if (test->mode == BIDIRECTIONAL) {
@@ -3643,6 +3643,7 @@ iperf_print_results(struct iperf_test *test)
         double sender_time = 0.0, receiver_time = 0.0;
         struct iperf_time temp_time;
         double bandwidth;
+        iperf_size_t bytes_count;
 
         char mbuf[UNIT_LEN];
         int stream_must_be_sender = current_mode * current_mode;
@@ -3790,7 +3791,7 @@ iperf_print_results(struct iperf_test *test)
                          * information for both the sender and receiver
                          * side.
                          *
-                         * The JSON format as currently defined only includes one
+                         * The JSON format as currently defined to only include one
                          * value for the number of packets.  We usually want that
                          * to be the sender's value (how many packets were sent
                          * by the sender).  However this value might not be
@@ -3800,8 +3801,19 @@ iperf_print_results(struct iperf_test *test)
                          * is the case, then use the receiver's count of packets
                          * instead.
                          */
+                        // Choose sum of sent/received bytes count based on mode
                         int64_t packet_count = sender_packet_count ? sender_packet_count : receiver_packet_count;
-                        cJSON_AddItemToObject(json_summary_stream, "udp", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f  out_of_order: %d sender: %b", (int64_t) sp->socket, (double) start_time, (double) sender_time, (double) sender_time, (int64_t) bytes_sent, bandwidth * 8, (double) sp->jitter * 1000.0, (int64_t) (sp->cnt_error - sp->omitted_cnt_error), (int64_t) (packet_count - sp->omitted_packet_count), (double) lost_percent, (int64_t) (sp->outoforder_packets - sp->omitted_outoforder_packets), stream_must_be_sender));
+                        if (test->mode == SENDER)
+                            bytes_count = bytes_sent;
+                        else if (test->mode == RECEIVER)
+                            bytes_count = bytes_received;
+                        else { // BIDIRECTIONAL
+                            if (stream_must_be_sender)
+                                bytes_count = bytes_sent;
+                            else
+                                bytes_count = bytes_received;
+                        }
+                        cJSON_AddItemToObject(json_summary_stream, "udp", iperf_json_printf("socket: %d  start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f  out_of_order: %d sender: %b", (int64_t) sp->socket, (double) start_time, (double) sender_time, (double) sender_time, (int64_t) bytes_count, bandwidth * 8, (double) sp->jitter * 1000.0, (int64_t) (sp->cnt_error - sp->omitted_cnt_error), (int64_t) (packet_count - sp->omitted_packet_count), (double) lost_percent, (int64_t) (sp->outoforder_packets - sp->omitted_outoforder_packets), stream_must_be_sender));
                     }
                     else {
                         /*
@@ -3895,7 +3907,7 @@ iperf_print_results(struct iperf_test *test)
                 }
             }
         }
-        }
+        } // End of if at least one steram
 
         if (test->num_streams > 1 || test->json_output) {
             /*
@@ -3989,7 +4001,8 @@ iperf_print_results(struct iperf_test *test)
                      * structure is not recommended due to
                      * ambiguities between the sender and receiver.
                      */
-                    cJSON_AddItemToObject(test->json_end, sum_name, iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f sender: %b", (double) start_time, (double) receiver_time, (double) receiver_time, (int64_t) total_sent, bandwidth * 8, (double) avg_jitter * 1000.0, (int64_t) lost_packets, (int64_t) total_packets, (double) lost_percent, stream_must_be_sender));
+                    bytes_count = stream_must_be_sender ? total_sent : total_received;
+                    cJSON_AddItemToObject(test->json_end, sum_name, iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f sender: %b", (double) start_time, (double) receiver_time, (double) receiver_time, (int64_t) bytes_count, bandwidth * 8, (double) avg_jitter * 1000.0, (int64_t) lost_packets, (int64_t) total_packets, (double) lost_percent, stream_must_be_sender));
                     /*
                      * Separate sum_sent and sum_received structures.
                      * Using these structures to get the most complete
@@ -4087,7 +4100,7 @@ iperf_print_results(struct iperf_test *test)
                 }
             }
         }
-    }
+    } // Loop between lower and upper modes
 
     /* Set real sender_has_retransmits for current side */
     if (test->mode == BIDIRECTIONAL)

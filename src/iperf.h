@@ -73,6 +73,8 @@
 #include <openssl/evp.h>
 #endif // HAVE_SSL
 
+#include <pthread.h>
+
 #if !defined(__IPERF_API_H)
 typedef uint64_t iperf_size_t;
 #endif // __IPERF_API_H
@@ -174,6 +176,8 @@ struct iperf_test;
 struct iperf_stream
 {
     struct iperf_test* test;
+
+    pthread_t thr;
 
     /* configurable members */
     int       local_port;

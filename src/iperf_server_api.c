@@ -66,6 +66,19 @@
 #endif /* TCP_CA_NAME_MAX */
 #endif /* HAVE_TCP_CONGESTION */
 
+void *
+iperf_server_worker_start(void *s) {
+    struct iperf_stream *sp = (struct iperf_stream *) s;
+    struct iperf_test *test = sp->test;
+
+    while (1) {
+        if (test->debug_level >= DEBUG_LEVEL_INFO) {
+            iperf_printf(test, "Thread FD %d\n", sp->socket);
+        }
+        sleep(1);
+    }
+}
+
 int
 iperf_server_listen(struct iperf_test *test)
 {
@@ -382,6 +395,22 @@ static void
 cleanup_server(struct iperf_test *test)
 {
     struct iperf_stream *sp;
+
+    /* Cancel threads */
+    SLIST_FOREACH(sp, &test->streams, streams) {
+        if (pthread_cancel(sp->thr) != 0) {
+            perror("pthread_cancel");
+        }
+        if (pthread_join(sp->thr, NULL) != 0) {
+            perror("pthread_join");
+        }
+        if (test->debug >= DEBUG_LEVEL_INFO) {
+            iperf_printf(test, "Thread FD %d cancelled\n", sp->socket);
+        }
+    }
+    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+        iperf_printf(test, "All threads cancelled\n");
+    }
 
     /* Close open streams */
     SLIST_FOREACH(sp, &test->streams, streams) {
@@ -798,6 +827,23 @@ iperf_run_server(struct iperf_test *test)
 			cleanup_server(test);
                         return -1;
 		    }
+
+                    /* Create and spin up threads */
+                    pthread_attr_t attr;
+                    pthread_attr_init(&attr);
+
+                    SLIST_FOREACH(sp, &test->streams, streams) {
+                        if (pthread_create(&(sp->thr), &attr, &iperf_server_worker_start, sp) != 0) {
+                            perror("pthread_create");
+                        }
+                        if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                            iperf_printf(test, "Thread FD %d created\n", sp->socket);
+                        }
+                    }
+                    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                        iperf_printf(test, "All threads created\n");
+                    }
+                    pthread_attr_destroy(&attr);
                 }
             }
 

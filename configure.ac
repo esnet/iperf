@@ -49,9 +49,7 @@ AC_CANONICAL_HOST
 # Checks for tools: c compiler, ranlib (used for creating static libraries),
 # symlinks and libtool
 AC_PROG_CC
-AC_PROG_RANLIB
 AC_PROG_LN_S
-LT_INIT
 
 # Add -Wall if we are using GCC.
 if test "x$GCC" = "xyes"; then
@@ -147,7 +145,7 @@ if test "x$with_openssl" = "xno"; then
     AC_MSG_WARN( [Building without OpenSSL; disabling iperf_auth functionality.] )
 else
     # Check for OPENSSL support
-    havs_ssl=false
+    have_ssl=false
     AX_CHECK_OPENSSL(
         [ AC_DEFINE([HAVE_SSL], [1], [OpenSSL Is Available])
           have_ssl=true ],

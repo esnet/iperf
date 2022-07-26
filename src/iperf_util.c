@@ -337,6 +337,16 @@ get_optional_features(void)
     numfeatures++;
 #endif /* HAVE_DONT_FRAGMENT */
 
+#if defined(HAVE_PTHREAD)
+    if (numfeatures > 0) {
+	strncat(features, ", ",
+		sizeof(features) - strlen(features) - 1);
+    }
+    strncat(features, "POSIX threads",
+	sizeof(features) - strlen(features) - 1);
+    numfeatures++;
+#endif /* HAVE_PTHREAD */
+
     if (numfeatures == 0) {
 	strncat(features, "None",
 		sizeof(features) - strlen(features) - 1);

@@ -27,6 +27,7 @@
 AC_PREREQ([2.71])
 AC_INIT([iperf],[3.15],[https://github.com/esnet/iperf],[iperf],[https://software.es.net/iperf/])
 m4_include([config/ax_check_openssl.m4])
+m4_include([config/ax_pthread.m4])
 m4_include([config/iperf_config_static_bin.m4])
 AC_LANG(C)
 
@@ -82,6 +83,15 @@ exit 1
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
+
+AX_PTHREAD(
+[AC_DEFINE([HAVE_PTHREAD],[1],[Define if you have POSIX threads libraries and header files.])
+LIBS="$PTHREAD_LIBS $LIBS"
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
+CC="$PTHREAD_CC"
+CXX="$PTHREAD_CXX"
+])
 
 # Check for poll.h (it's in POSIX so everyone should have it?)
 AC_CHECK_HEADERS([poll.h])

@@ -2119,10 +2119,8 @@ send_parameters(struct iperf_test *test)
 	if (test->server_affinity != -1)
 	    cJSON_AddNumberToObject(j, "server_affinity", test->server_affinity);
 	cJSON_AddNumberToObject(j, "time", test->duration);
-	if (test->settings->bytes)
-	    cJSON_AddNumberToObject(j, "num", test->settings->bytes);
-	if (test->settings->blocks)
-	    cJSON_AddNumberToObject(j, "blockcount", test->settings->blocks);
+        cJSON_AddNumberToObject(j, "num", test->settings->bytes);
+        cJSON_AddNumberToObject(j, "blockcount", test->settings->blocks);
 	if (test->settings->mss)
 	    cJSON_AddNumberToObject(j, "MSS", test->settings->mss);
 	if (test->no_delay)
@@ -2232,8 +2230,10 @@ get_parameters(struct iperf_test *test)
 	    test->server_affinity = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "time")) != NULL)
 	    test->duration = j_p->valueint;
+        test->settings->bytes = 0;
 	if ((j_p = cJSON_GetObjectItem(j, "num")) != NULL)
 	    test->settings->bytes = j_p->valueint;
+        test->settings->blocks = 0;
 	if ((j_p = cJSON_GetObjectItem(j, "blockcount")) != NULL)
 	    test->settings->blocks = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "MSS")) != NULL)

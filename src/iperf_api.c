@@ -1756,6 +1756,20 @@ int iperf_open_logfile(struct iperf_test *test)
     return 0;
 }
 
+/*
+ * Close logfile
+ */
+int iperf_close_logfile(struct iperf_test *test)
+{
+    int rc;
+
+    rc = fclose(test->outfile);
+    if (rc != 0) {
+        return -1;
+    }
+    return 0;
+}
+
 int
 iperf_set_send_state(struct iperf_test *test, signed char state)
 {

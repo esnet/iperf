@@ -381,6 +381,7 @@ static void
 cleanup_server(struct iperf_test *test)
 {
     struct iperf_stream *sp;
+    iperf_close_logfile(test);
 
     /* Close open streams */
     SLIST_FOREACH(sp, &test->streams, streams) {

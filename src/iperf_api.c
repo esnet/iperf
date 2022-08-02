@@ -1756,6 +1756,14 @@ int iperf_open_logfile(struct iperf_test *test)
     return 0;
 }
 
+void iperf_close_logfile(struct iperf_test *test)
+{
+    if (test->outfile && test->outfile != stdout) {
+        fclose(test->outfile);
+        test->outfile = NULL;
+    }
+}
+
 int
 iperf_set_send_state(struct iperf_test *test, signed char state)
 {
@@ -2954,10 +2962,7 @@ iperf_free_test(struct iperf_test *test)
     if (test->logfile) {
 	free(test->logfile);
 	test->logfile = NULL;
-	if (test->outfile && test->outfile != stdout) {
-	    fclose(test->outfile);
-	    test->outfile = NULL;
-	}
+        iperf_close_logfile(test);
     }
 
     if (test->server_output_text) {

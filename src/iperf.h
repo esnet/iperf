@@ -101,14 +101,14 @@ struct iperf_interval_results
     /* Just placeholders, never accessed. */
     char *tcpInfo;
 #endif
-    int interval_retrans;
-    int snd_cwnd;
-    int snd_wnd;
+    long interval_retrans;
+    long snd_cwnd;
+    long snd_wnd;
     TAILQ_ENTRY(iperf_interval_results) irlistentries;
     void     *custom_data;
-    int rtt;
-    int rttvar;
-    int pmtu;
+    long rtt;
+    long rttvar;
+    long pmtu;
 };
 
 struct iperf_stream_result
@@ -118,14 +118,14 @@ struct iperf_stream_result
     iperf_size_t bytes_received_this_interval;
     iperf_size_t bytes_sent_this_interval;
     iperf_size_t bytes_sent_omit;
-    int stream_prev_total_retrans;
-    int stream_retrans;
-    int stream_max_rtt;
-    int stream_min_rtt;
-    int stream_sum_rtt;
+    long stream_prev_total_retrans;
+    long stream_retrans;
+    long stream_max_rtt;
+    long stream_min_rtt;
+    long stream_sum_rtt;
     int stream_count_rtt;
-    int stream_max_snd_cwnd;
-    int stream_max_snd_wnd;
+    long stream_max_snd_cwnd;
+    long stream_max_snd_wnd;
     struct iperf_time start_time;
     struct iperf_time end_time;
     struct iperf_time start_time_fixed;

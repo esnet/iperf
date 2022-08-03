@@ -2777,6 +2777,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->remote_congestion_used = NULL;
     testp->server_port = PORT;
     testp->ctrl_sck = -1;
+    testp->listener = -1;
     testp->prot_listener = -1;
     testp->other_side_has_retransmits = 0;
 
@@ -3056,6 +3057,7 @@ iperf_reset_test(struct iperf_test *test)
     test->state = 0;
 
     test->ctrl_sck = -1;
+    test->listener = -1;
     test->prot_listener = -1;
 
     test->bytes_sent = 0;

@@ -467,6 +467,18 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "unable to set TCP USER_TIMEOUT");
             perr = 1;
             break;
+	case IEPTHREADCREATE:
+            snprintf(errstr, len, "unable to create thread");
+            perr = 1;
+            break;
+	case IEPTHREADCANCEL:
+            snprintf(errstr, len, "unable to cancel thread");
+            perr = 1;
+            break;
+	case IEPTHREADJOIN:
+            snprintf(errstr, len, "unable to join thread");
+            perr = 1;
+            break;
 	default:
 	    snprintf(errstr, len, "int_errno=%d", int_errno);
 	    perr = 1;

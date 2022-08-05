@@ -636,7 +636,10 @@ iperf_run_client(struct iperf_test * test)
 
                 /* Create and spin up threads */
                 pthread_attr_t attr;
-                pthread_attr_init(&attr);
+                if (pthread_attr_init(&attr) != 0) {
+                    i_errno = IEPTHREADATTRINIT;
+                    goto cleanup_and_fail;
+                }
 
                 SLIST_FOREACH(sp, &test->streams, streams) {
                     if (pthread_create(&(sp->thr), &attr, &iperf_client_worker_start, sp) != 0) {
@@ -650,7 +653,10 @@ iperf_run_client(struct iperf_test * test)
                 if (test->debug_level >= DEBUG_LEVEL_INFO) {
                     iperf_printf(test, "All threads created\n");
                 }
-                pthread_attr_destroy(&attr);
+                if (pthread_attr_destroy(&attr) != 0) {
+                    i_errno = IEPTHREADATTRDESTROY;
+                    goto cleanup_and_fail;
+                }
 
 		// Set non-blocking for non-UDP tests
 		if (test->protocol->id != Pudp) {

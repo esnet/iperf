@@ -47,6 +47,10 @@ iperf_err(struct iperf_test *test, const char *format, ...)
     struct tm *ltm = NULL;
     char *ct = NULL;
 
+    if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
+        perror("iperf_err: pthread_mutex_lock");
+    }
+
     /* Timestamp if requested */
     if (test != NULL && test->timestamps) {
 	time(&now);
@@ -74,6 +78,10 @@ iperf_err(struct iperf_test *test, const char *format, ...)
 	}
     }
     va_end(argp);
+
+    if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
+        perror("iperf_err: pthread_mutex_unlock");
+    }
 }
 
 /* Do a printf to stderr or log file as appropriate, then exit. */
@@ -85,6 +93,10 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
     time_t now;
     struct tm *ltm = NULL;
     char *ct = NULL;
+
+    if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
+        perror("iperf_errexit: pthread_mutex_lock");
+    }
 
     /* Timestamp if requested */
     if (test != NULL && test->timestamps) {
@@ -114,6 +126,11 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
 	    }
 	    fprintf(stderr, "iperf3: %s\n", str);
 	}
+
+    if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
+        perror("iperf_errexit: pthread_mutex_unlock");
+    }
+
     va_end(argp);
     if (test)
         iperf_delete_pidfile(test);

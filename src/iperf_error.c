@@ -479,6 +479,14 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "unable to join thread");
             perr = 1;
             break;
+	case IEPTHREADATTRINIT:
+            snprintf(errstr, len, "unable to create thread attributes");
+            perr = 1;
+            break;
+	case IEPTHREADATTRDESTROY:
+            snprintf(errstr, len, "unable to destroy thread attributes");
+            perr = 1;
+            break;
 	default:
 	    snprintf(errstr, len, "int_errno=%d", int_errno);
 	    perr = 1;

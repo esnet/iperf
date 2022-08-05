@@ -71,12 +71,13 @@ iperf_server_worker_start(void *s) {
     struct iperf_stream *sp = (struct iperf_stream *) s;
     struct iperf_test *test = sp->test;
 
-    while (1) {
+    while (! (test->done)) {
         if (test->debug_level >= DEBUG_LEVEL_INFO) {
             iperf_printf(test, "Thread FD %d\n", sp->socket);
         }
         sleep(1);
     }
+    return NULL;
 }
 
 int
@@ -399,22 +400,19 @@ cleanup_server(struct iperf_test *test)
     /* Cancel threads */
     int i_errno_save = i_errno;
     SLIST_FOREACH(sp, &test->streams, streams) {
-        if (pthread_cancel(sp->thr) != 0) {
-            i_errno = IEPTHREADCANCEL;
-            iperf_err(test, "cleanup_server - %s", iperf_strerror(i_errno));
-        }
+        sp->done = 1;
         if (pthread_join(sp->thr, NULL) != 0) {
             i_errno = IEPTHREADJOIN;
             iperf_err(test, "cleanup_server - %s", iperf_strerror(i_errno));
         }
         if (test->debug >= DEBUG_LEVEL_INFO) {
-            iperf_printf(test, "Thread FD %d cancelled\n", sp->socket);
+            iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
         }
     }
     i_errno = i_errno_save;
 
     if (test->debug_level >= DEBUG_LEVEL_INFO) {
-        iperf_printf(test, "All threads cancelled\n");
+        iperf_printf(test, "All threads stopped\n");
     }
 
     /* Close open streams */

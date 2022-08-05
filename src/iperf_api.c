@@ -2763,6 +2763,7 @@ struct iperf_test *
 iperf_new_test()
 {
     struct iperf_test *test;
+    int rc;
 
     test = (struct iperf_test *) malloc(sizeof(struct iperf_test));
     if (!test) {
@@ -2771,6 +2772,21 @@ iperf_new_test()
     }
     /* initialize everything to zero */
     memset(test, 0, sizeof(struct iperf_test));
+
+    /* Initialize mutex for printing output */
+    pthread_mutexattr_t mutexattr;
+    pthread_mutexattr_init(&mutexattr);
+    rc = pthread_mutexattr_settype(&mutexattr, PTHREAD_MUTEX_ERRORCHECK);
+    if (rc != 0) {
+        errno = rc;
+        perror("iperf_new_test: pthread_mutexattr_settype");
+    }
+
+    if (pthread_mutex_init(&(test->print_mutex), &mutexattr) != 0) {
+        perror("iperf_new_test: pthread_mutex_init");
+    }
+
+    pthread_mutexattr_destroy(&mutexattr);
 
     test->settings = (struct iperf_settings *) malloc(sizeof(struct iperf_settings));
     if (!test->settings) {
@@ -3023,6 +3039,14 @@ iperf_free_test(struct iperf_test *test)
         prot = SLIST_FIRST(&test->protocols);
         SLIST_REMOVE_HEAD(&test->protocols, protocols);
         free(prot);
+    }
+
+    /* Destroy print mutex. iperf_printf() doesn't work after this point */
+    int rc;
+    rc = pthread_mutex_destroy(&(test->print_mutex));
+    if (rc != 0) {
+        errno = rc;
+        perror("iperf_free_test: pthread_mutex_destroy");
     }
 
     if (test->logfile) {
@@ -4746,7 +4770,14 @@ iperf_json_finish(struct iperf_test *test)
     cJSON_free(str);
     if (test->json_output_string == NULL)
         return -1;
+
+    if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
+        perror("iperf_json_finish: pthread_mutex_lock");
+    }
     fprintf(test->outfile, "%s\n", test->json_output_string);
+    if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
+        perror("iperf_json_finish: pthread_mutex_unlock");
+    }
     iflush(test);
     cJSON_Delete(test->json_top);
     test->json_top = test->json_start = test->json_connected = test->json_intervals = test->json_server_output = test->json_end = NULL;
@@ -4853,6 +4884,10 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
     struct tm *ltm = NULL;
     char *ct = NULL;
 
+    if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
+        perror("iperf_print: pthread_mutex_lock");
+    }
+
     /* Timestamp if requested */
     if (iperf_get_test_timestamps(test)) {
 	time(&now);
@@ -4876,28 +4911,36 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
     if (test->role == 'c') {
 	if (ct) {
             r0 = fprintf(test->outfile, "%s", ct);
-            if (r0 < 0)
-                return r0;
+            if (r0 < 0) {
+                r = r0;
+                goto bottom;
+            }
             r += r0;
 	}
 	if (test->title) {
 	    r0 = fprintf(test->outfile, "%s:  ", test->title);
-            if (r0 < 0)
-                return r0;
+            if (r0 < 0) {
+                r = r0;
+                goto bottom;
+            }
             r += r0;
         }
 	va_start(argp, format);
 	r0 = vfprintf(test->outfile, format, argp);
 	va_end(argp);
-        if (r0 < 0)
-            return r0;
+        if (r0 < 0) {
+            r = r0;
+            goto bottom;
+        }
         r += r0;
     }
     else if (test->role == 's') {
 	if (ct) {
 	    r0 = snprintf(linebuffer, sizeof(linebuffer), "%s", ct);
-            if (r0 < 0)
-                return r0;
+            if (r0 < 0) {
+                r = r0;
+                goto bottom;
+            }
             r += r0;
 	}
         /* Should always be true as long as sizeof(ct) < sizeof(linebuffer) */
@@ -4905,8 +4948,10 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
             va_start(argp, format);
             r0 = vsnprintf(linebuffer + r, sizeof(linebuffer) - r, format, argp);
             va_end(argp);
-            if (r0 < 0)
-                return r0;
+            if (r0 < 0) {
+                r = r0;
+                goto bottom;
+            }
             r += r0;
         }
 	fprintf(test->outfile, "%s", linebuffer);
@@ -4917,11 +4962,34 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
 	    TAILQ_INSERT_TAIL(&(test->server_output_list), l, textlineentries);
 	}
     }
+
+  bottom:
+    if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
+        perror("iperf_print: pthread_mutex_unlock");
+    }
+
     return r;
 }
 
 int
 iflush(struct iperf_test *test)
 {
-    return fflush(test->outfile);
+    int rc2;
+
+    int rc;
+    rc = pthread_mutex_lock(&(test->print_mutex));
+    if (rc != 0) {
+        errno = rc;
+        perror("iflush: pthread_mutex_lock");
+    }
+
+    rc2 = fflush(test->outfile);
+
+    rc = pthread_mutex_unlock(&(test->print_mutex));
+    if (rc != 0) {
+        errno = rc;
+        perror("iflush: pthread_mutex_unlock");
+    }
+
+    return rc2;
 }

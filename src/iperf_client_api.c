@@ -56,12 +56,13 @@ iperf_client_worker_start(void *s) {
     struct iperf_stream *sp = (struct iperf_stream *) s;
     struct iperf_test *test = sp->test;
 
-    while (1) {
+    while (! (test->done)) {
         if (test->debug_level >= DEBUG_LEVEL_INFO) {
             iperf_printf(test, "Thread FD %d\n", sp->socket);
         }
         sleep(1);
     }
+    return NULL;
 }
 
 int
@@ -706,22 +707,18 @@ iperf_run_client(struct iperf_test * test)
                 /* Cancel sender threads */
                 SLIST_FOREACH(sp, &test->streams, streams) {
                     if (sp->sender) {
-                        if (pthread_cancel(sp->thr) != 0) {
-                            i_errno = IEPTHREADCANCEL;
-                            goto cleanup_and_fail;
-                        }
+                        sp->done = 1;
                         if (pthread_join(sp->thr, NULL) != 0) {
                             i_errno = IEPTHREADJOIN;
                             goto cleanup_and_fail;
                         }
-                        sp->thr = 0;
                         if (test->debug_level >= DEBUG_LEVEL_INFO) {
-                            iperf_printf(test, "Thread FD %d cancelled\n", sp->socket);
+                            iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
                         }
                     }
                 }
                 if (test->debug_level >= DEBUG_LEVEL_INFO) {
-                    iperf_printf(test, "Sender threads cancelled\n");
+                    iperf_printf(test, "Sender threads stopped\n");
                 }
 
 		// Unset non-blocking for non-UDP tests
@@ -753,22 +750,18 @@ iperf_run_client(struct iperf_test * test)
     /* Cancel receiver threads */
     SLIST_FOREACH(sp, &test->streams, streams) {
         if (!sp->sender) {
-            if (pthread_cancel(sp->thr) != 0) {
-                i_errno = IEPTHREADCANCEL;
-                goto cleanup_and_fail;
-            }
+            sp->done = 1;
             if (pthread_join(sp->thr, NULL) != 0) {
                 i_errno = IEPTHREADJOIN;
                 goto cleanup_and_fail;
             }
-            sp->thr = 0;
             if (test->debug_level >= DEBUG_LEVEL_INFO) {
-                iperf_printf(test, "Thread FD %d cancelled\n", sp->socket);
+                iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
             }
         }
     }
     if (test->debug_level >= DEBUG_LEVEL_INFO) {
-        iperf_printf(test, "Receiver threads cancelled\n");
+        iperf_printf(test, "Receiver threads stopped\n");
     }
 
     if (test->json_output) {
@@ -787,20 +780,17 @@ iperf_run_client(struct iperf_test * test)
     /* Cancel all threads */
     i_errno_save = i_errno;
     SLIST_FOREACH(sp, &test->streams, streams) {
-        if (pthread_cancel(sp->thr) != 0) {
-            i_errno = IEPTHREADCANCEL;
-            iperf_err(test, "cleanup_and_fail - %s", iperf_strerror(i_errno));
-        }
+        sp->done = 1;
         if (pthread_join(sp->thr, NULL) != 0) {
             i_errno = IEPTHREADCANCEL;
             iperf_err(test, "cleanup_and_fail - %s", iperf_strerror(i_errno));
         }
         if (test->debug >= DEBUG_LEVEL_INFO) {
-            iperf_printf(test, "Thread FD %d cancelled\n", sp->socket);
+            iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
         }
     }
     if (test->debug_level >= DEBUG_LEVEL_INFO) {
-        iperf_printf(test, "All threads cancelled\n");
+        iperf_printf(test, "All threads stopped\n");
     }
     i_errno = i_errno_save;
 

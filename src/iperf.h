@@ -178,6 +178,7 @@ struct iperf_stream
     struct iperf_test* test;
 
     pthread_t thr;
+    int       done;
 
     /* configurable members */
     int       local_port;
@@ -271,6 +272,8 @@ enum debug_level {
 
 struct iperf_test
 {
+    pthread_mutex_t print_mutex;
+
     char      role;                             /* 'c' lient or 's' erver */
     enum iperf_mode mode;
     int       sender_has_retransmits;

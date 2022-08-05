@@ -835,7 +835,10 @@ iperf_run_server(struct iperf_test *test)
 
                     /* Create and spin up threads */
                     pthread_attr_t attr;
-                    pthread_attr_init(&attr);
+                    if (pthread_attr_init(&attr) != 0) {
+                        i_errno = IEPTHREADATTRINIT;
+                        cleanup_server(test);
+                    };
 
                     SLIST_FOREACH(sp, &test->streams, streams) {
                         if (pthread_create(&(sp->thr), &attr, &iperf_server_worker_start, sp) != 0) {
@@ -850,7 +853,10 @@ iperf_run_server(struct iperf_test *test)
                     if (test->debug_level >= DEBUG_LEVEL_INFO) {
                         iperf_printf(test, "All threads created\n");
                     }
-                    pthread_attr_destroy(&attr);
+                    if (pthread_attr_destroy(&attr) != 0) {
+                        i_errno = IEPTHREADATTRDESTROY;
+                        cleanup_server(test);
+                    };
                 }
             }
 

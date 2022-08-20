@@ -409,12 +409,14 @@ Nwrite(int fd, const char *buf, size_t count, int prot)
 #if (EAGAIN != EWOULDBLOCK)
 		case EWOULDBLOCK:
 #endif
+		if (count == nleft)
+		    return NET_SOFTERROR;
 		return count - nleft;
 
-		case ENOBUFS:
-		return NET_SOFTERROR;
+                case ENOBUFS :
+                return NET_SOFTERROR;
 
-		default:
+                default:
 		return NET_HARDERROR;
 	    }
 	} else if (r == 0)

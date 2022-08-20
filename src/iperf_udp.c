@@ -250,8 +250,15 @@ iperf_udp_send(struct iperf_stream *sp)
 
     r = Nwrite(sp->socket, sp->buffer, size, Pudp);
 
-    if (r < 0)
-	return r;
+    if (r <= 0) {
+        --sp->packet_count;     /* Don't count messages that no data was sent from them.
+                                 * Allows "resending" a massage with the same numbering */
+        if (r < 0) {
+            if (r == NET_SOFTERROR && sp->test->debug_level >= DEBUG_LEVEL_INFO)
+                printf("UDP send failed on NET_SOFTERROR. errno=%s\n", strerror(errno));
+            return r;
+        }
+    }
 
     sp->result->bytes_sent += r;
     sp->result->bytes_sent_this_interval += r;

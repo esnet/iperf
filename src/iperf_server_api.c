@@ -460,14 +460,16 @@ iperf_run_server(struct iperf_test *test)
             return -2;
 
     if (test->affinity != -1)
-	if (iperf_setaffinity(test, test->affinity) != 0)
+	if (iperf_setaffinity(test, test->affinity) != 0) {
             cleanup_server(test);
 	    return -2;
+        }
 
     if (test->json_output)
-	if (iperf_json_start(test) < 0)
+	if (iperf_json_start(test) < 0) {
             cleanup_server(test);
 	    return -2;
+        }
 
     if (test->json_output) {
 	cJSON_AddItemToObject(test->json_start, "version", cJSON_CreateString(version));

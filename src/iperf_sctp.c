@@ -165,6 +165,7 @@ iperf_sctp_listen(struct iperf_test *test)
     int s, opt, saved_errno;
 
     close(test->listener);
+    test->listener = -1;
 
     snprintf(portstr, 6, "%d", test->server_port);
     memset(&hints, 0, sizeof(hints));

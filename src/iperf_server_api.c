@@ -208,6 +208,7 @@ iperf_handle_message_server(struct iperf_test *test)
                 FD_CLR(sp->socket, &test->read_set);
                 FD_CLR(sp->socket, &test->write_set);
                 close(sp->socket);
+                sp->socket = -1;
             }
             test->reporter_callback(test);
 	    if (iperf_set_send_state(test, EXCHANGE_RESULTS) != 0)
@@ -238,6 +239,7 @@ iperf_handle_message_server(struct iperf_test *test)
                 FD_CLR(sp->socket, &test->read_set);
                 FD_CLR(sp->socket, &test->write_set);
                 close(sp->socket);
+                sp->socket = -1;
             }
             test->state = IPERF_DONE;
             break;
@@ -267,6 +269,7 @@ server_timer_proc(TimerClientData client_data, struct iperf_time *nowP)
         iperf_free_stream(sp);
     }
     close(test->ctrl_sck);
+    test->ctrl_sck = -1;
 }
 
 static void
@@ -381,23 +384,30 @@ static void
 cleanup_server(struct iperf_test *test)
 {
     struct iperf_stream *sp;
+    iperf_close_logfile(test);
 
     /* Close open streams */
     SLIST_FOREACH(sp, &test->streams, streams) {
-	FD_CLR(sp->socket, &test->read_set);
-	FD_CLR(sp->socket, &test->write_set);
-	close(sp->socket);
+	if (sp->socket > -1) {
+            FD_CLR(sp->socket, &test->read_set);
+            FD_CLR(sp->socket, &test->write_set);
+            close(sp->socket);
+            sp->socket = -1;
+	}
     }
 
     /* Close open test sockets */
-    if (test->ctrl_sck) {
+    if (test->ctrl_sck > -1) {
 	close(test->ctrl_sck);
+        test->ctrl_sck = -1;
     }
-    if (test->listener) {
+    if (test->listener > -1) {
 	close(test->listener);
+        test->listener = -1;
     }
     if (test->prot_listener > -1) {     // May remain open if create socket failed
 	close(test->prot_listener);
+        test->prot_listener = -1;
     }
 
     /* Cancel any remaining timers. */
@@ -450,12 +460,16 @@ iperf_run_server(struct iperf_test *test)
             return -2;
 
     if (test->affinity != -1)
-	if (iperf_setaffinity(test, test->affinity) != 0)
+	if (iperf_setaffinity(test, test->affinity) != 0) {
+            cleanup_server(test);
 	    return -2;
+        }
 
     if (test->json_output)
-	if (iperf_json_start(test) < 0)
+	if (iperf_json_start(test) < 0) {
+            cleanup_server(test);
 	    return -2;
+        }
 
     if (test->json_output) {
 	cJSON_AddItemToObject(test->json_start, "version", cJSON_CreateString(version));
@@ -469,6 +483,7 @@ iperf_run_server(struct iperf_test *test)
 
     // Open socket and listen
     if (iperf_server_listen(test) < 0) {
+	cleanup_server(test);
         return -2;
     }
 
@@ -722,11 +737,12 @@ iperf_run_server(struct iperf_test *test)
                     if (test->protocol->id != Ptcp) {
                         FD_CLR(test->prot_listener, &test->read_set);
                         close(test->prot_listener);
+                        test->prot_listener = -1;
                     } else {
                         if (test->no_delay || test->settings->mss || test->settings->socket_bufsize) {
                             FD_CLR(test->listener, &test->read_set);
                             close(test->listener);
-			    test->listener = 0;
+			    test->listener = -1;
                             if ((s = netannounce(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, test->server_port)) < 0) {
 				cleanup_server(test);
                                 i_errno = IELISTEN;

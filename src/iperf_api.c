@@ -1756,6 +1756,14 @@ int iperf_open_logfile(struct iperf_test *test)
     return 0;
 }
 
+void iperf_close_logfile(struct iperf_test *test)
+{
+    if (test->outfile && test->outfile != stdout) {
+        fclose(test->outfile);
+        test->outfile = NULL;
+    }
+}
+
 int
 iperf_set_send_state(struct iperf_test *test, signed char state)
 {
@@ -2769,6 +2777,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->remote_congestion_used = NULL;
     testp->server_port = PORT;
     testp->ctrl_sck = -1;
+    testp->listener = -1;
     testp->prot_listener = -1;
     testp->other_side_has_retransmits = 0;
 
@@ -2954,10 +2963,7 @@ iperf_free_test(struct iperf_test *test)
     if (test->logfile) {
 	free(test->logfile);
 	test->logfile = NULL;
-	if (test->outfile && test->outfile != stdout) {
-	    fclose(test->outfile);
-	    test->outfile = NULL;
-	}
+        iperf_close_logfile(test);
     }
 
     if (test->server_output_text) {
@@ -3051,6 +3057,7 @@ iperf_reset_test(struct iperf_test *test)
     test->state = 0;
 
     test->ctrl_sck = -1;
+    test->listener = -1;
     test->prot_listener = -1;
 
     test->bytes_sent = 0;

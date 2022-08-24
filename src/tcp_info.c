@@ -165,6 +165,51 @@ get_snd_wnd(struct iperf_interval_results *irp)
 
 /*************************************************************/
 /*
+ * Check if tcp_info supports acked & received bytes
+ */
+int
+has_tcpinfo_snd_rcv_bytes(void)
+{
+#if defined(linux) && defined(TCP_SAVE_SYN)
+    /* TCP_SAVE_SYN similar to TCP_MD5SIG added to check if the
+    ** tcpi_bytes_acked, tcpi_bytes_received field exists.
+    */
+    return 1;
+#else
+    return 0;
+#endif
+}
+
+/*************************************************************/
+/*
+ * Return tcpi_bytes_acked in octets.
+ */
+long
+get_acked_bytes(struct iperf_interval_results *irp)
+{
+#if defined(linux) && defined(TCP_SAVE_SYN)
+    return irp->tcpInfo.tcpi_bytes_acked;
+#else
+    return -1;
+#endif
+}
+
+/*************************************************************/
+/*
+ * Return tcpi_bytes_received in octets.
+ */
+long
+get_bytes_received(struct iperf_interval_results *irp)
+{
+#if defined(linux) && defined(TCP_SAVE_SYN)
+    return irp->tcpInfo.tcpi_bytes_received;
+#else
+    return -1;
+#endif
+}
+
+/*************************************************************/
+/*
  * Return rtt in usec.
  */
 long

@@ -3185,10 +3185,6 @@ iperf_stats_callback(struct iperf_test *test)
     temp.omitted = test->omitting;
     SLIST_FOREACH(sp, &test->streams, streams) {
         rp = sp->result;
-	temp.bytes_transferred = sp->sender ? rp->bytes_sent_this_interval : rp->bytes_received_this_interval;
-
-        // Total bytes transferred this interval
-	total_interval_bytes_transferred += rp->bytes_sent_this_interval + rp->bytes_received_this_interval;
 
 	irp = TAILQ_LAST(&rp->interval_results, irlisthead);
         /* result->end_time contains timestamp of previous interval */
@@ -3234,7 +3230,15 @@ iperf_stats_callback(struct iperf_test *test)
 		    temp.rttvar = get_rttvar(&temp);
 		    temp.pmtu = get_pmtu(&temp);
 		}
-	    }
+        if(has_tcpinfo_snd_rcv_bytes()) {
+            long current_bytes_received = get_bytes_received(&temp);
+            rp->bytes_received_this_interval = current_bytes_received - rp->last_bytes_received;
+            rp->last_bytes_received = current_bytes_received;
+            long current_bytes_sent = get_acked_bytes(&temp);
+            rp->bytes_sent_this_interval = current_bytes_sent - rp->last_bytes_sent;
+            rp->last_bytes_sent = current_bytes_sent;
+        }
+ 	    }
 	} else {
 	    if (irp == NULL) {
 		temp.interval_packet_count = sp->packet_count;
@@ -3250,9 +3254,13 @@ iperf_stats_callback(struct iperf_test *test)
 	    temp.outoforder_packets = sp->outoforder_packets;
 	    temp.cnt_error = sp->cnt_error;
 	}
+        temp.bytes_transferred = sp->sender ? rp->bytes_sent_this_interval : rp->bytes_received_this_interval;
         add_to_interval_list(rp, &temp);
         rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;
     }
+
+    // Total bytes transferred this interval
+    total_interval_bytes_transferred += rp->bytes_sent_this_interval + rp->bytes_received_this_interval;
 
     /* Verify that total server's throughput is not above specified limit */
     if (test->role == 's') {

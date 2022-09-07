@@ -143,7 +143,7 @@ nl='
 '
 IFS="$sp	$nl"
 
-# There are apparently some retarded systems that use ';' as a PATH separator!
+# There are apparently some systems that use ';' as a PATH separator!
 if test "${PATH_SEPARATOR+set}" != set; then
   PATH_SEPARATOR=:
   (PATH='/bin;/bin'; FPATH=$PATH; sh -c :) >/dev/null 2>&1 && {
@@ -2688,7 +2688,6 @@ libtool_validate_options ()
         && test yes != "$build_old_libs" \
         && func_fatal_configuration "not configured to build any kind of library"
 
-      # Darwin sucks
       eval std_shrext=\"$shrext_cmds\"
 
       # Only execute mode is allowed to have -dlopen flags.

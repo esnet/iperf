@@ -208,7 +208,6 @@ iperf_handle_message_server(struct iperf_test *test)
                 FD_CLR(sp->socket, &test->read_set);
                 FD_CLR(sp->socket, &test->write_set);
                 close(sp->socket);
-                sp->socket = -1;
             }
             test->reporter_callback(test);
 	    if (iperf_set_send_state(test, EXCHANGE_RESULTS) != 0)
@@ -239,7 +238,6 @@ iperf_handle_message_server(struct iperf_test *test)
                 FD_CLR(sp->socket, &test->read_set);
                 FD_CLR(sp->socket, &test->write_set);
                 close(sp->socket);
-                sp->socket = -1;
             }
             test->state = IPERF_DONE;
             break;
@@ -392,7 +390,6 @@ cleanup_server(struct iperf_test *test)
             FD_CLR(sp->socket, &test->read_set);
             FD_CLR(sp->socket, &test->write_set);
             close(sp->socket);
-            sp->socket = -1;
 	}
     }
 

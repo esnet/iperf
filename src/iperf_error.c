@@ -118,7 +118,7 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
     exit(1);
 }
 
-int i_errno;
+int i_errno = 0;
 
 char *
 iperf_strerror(int int_errno)

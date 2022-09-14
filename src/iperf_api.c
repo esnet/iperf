@@ -1572,7 +1572,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		usage_long(stdout);
 		exit(0);
             default:
-                usage_long(stderr);
+                fprintf(stderr, "\n");
+                usage();
                 exit(1);
         }
     }

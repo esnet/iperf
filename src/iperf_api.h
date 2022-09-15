@@ -365,6 +365,7 @@ void iperf_err(struct iperf_test *test, const char *format, ...) __attribute__ (
 void iperf_errexit(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3),noreturn));
 char *iperf_strerror(int);
 extern int i_errno;
+extern const char *errarg;
 enum {
     IENONE = 0,             // No error
     /* Parameter errors */
@@ -402,6 +403,7 @@ enum {
     IERVRSONLYRCVTIMEOUT = 32,  // Client receive timeout is valid only in reverse mode
     IESNDTIMEOUT = 33,      // Illegal message send timeout
     IEUDPFILETRANSFER = 34, // Cannot transfer file using UDP
+    IEUNITVAL = 35,         // Invalid unit value or suffix
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

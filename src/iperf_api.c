@@ -1304,8 +1304,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 if (iperf_parse_hostname(test, optarg, &p, &p1)) {
 #if defined(HAVE_SO_BINDTODEVICE)
                     /* Get rid of the hostname we saved earlier. */
-                    free(iperf_get_test_server_hostname(test));
-                    iperf_set_test_server_hostname(test, p);
+                    free(iperf_get_test_bind_address(test));
+                    iperf_set_test_bind_address(test, p);
                     iperf_set_test_bind_dev(test, p1);
 #else /* HAVE_SO_BINDTODEVICE */
                     i_errno = IEBINDDEVNOSUPPORT;

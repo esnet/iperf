@@ -381,7 +381,7 @@ loop_end:
     }
     else
     {
-        item->valueint = (int)number;
+        item->valueint = (int64_t)number;
     }
 
     item->type = cJSON_Number;
@@ -403,7 +403,7 @@ CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number)
     }
     else
     {
-        object->valueint = (int)number;
+        object->valueint = (int64_t)number;
     }
 
     return object->valuedouble = number;
@@ -466,7 +466,7 @@ static unsigned char* ensure(printbuffer * const p, size_t needed)
 
     if (needed > LLONG_MAX)
     {
-        /* sizes bigger than INT_MAX are currently not supported */
+        /* sizes bigger than LLONG_MAX are currently not supported */
         return NULL;
     }
 
@@ -574,10 +574,10 @@ static cJSON_bool print_number(const cJSON * const item, printbuffer * const out
     {
         length = sprintf((char*)number_buffer, "null");
     }
-	else if(d == (double)item->valueint)
-	{
-		length = sprintf((char*)number_buffer, "%ld", item->valueint);
-	}
+    else if(d == (double)item->valueint)
+    {
+        length = sprintf((char*)number_buffer, "%ld", item->valueint);
+    }
     else
     {
         /* Try 15 decimal places of precision to avoid nonsignificant nonzero digits */
@@ -2457,7 +2457,7 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateNumber(double num)
         }
         else
         {
-            item->valueint = (int)num;
+            item->valueint = (int64_t)num;
         }
     }
 

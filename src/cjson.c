@@ -90,6 +90,18 @@
 #endif
 #endif
 
+#if defined(HAVE_INTTYPES_H)
+# include <inttypes.h>
+#else
+# ifndef PRIu64
+#  if sizeof(long) == 8
+#   define PRIu64		"lu"
+#  else
+#   define PRIu64		"llu"
+#  endif
+# endif
+#endif
+
 typedef struct {
     const unsigned char *json;
     size_t position;
@@ -576,7 +588,7 @@ static cJSON_bool print_number(const cJSON * const item, printbuffer * const out
     }
     else if(d == (double)item->valueint)
     {
-        length = sprintf((char*)number_buffer, "%ld", item->valueint);
+        length = sprintf((char*)number_buffer, "%" PRIu64, item->valueint);
     }
     else
     {

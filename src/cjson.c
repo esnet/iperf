@@ -37,6 +37,7 @@
 #pragma warning (disable : 4001)
 #endif
 
+#include "iperf_config.h"
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -61,7 +62,6 @@
 #endif
 
 #include "cjson.h"
-#include "iperf_config.h"
 
 /* define our own boolean type */
 #ifdef true
@@ -88,6 +88,18 @@
 #else
 #define NAN 0.0/0.0
 #endif
+#endif
+
+#if defined(HAVE_INTTYPES_H)
+# include <inttypes.h>
+#else
+# ifndef PRIu64
+#  if sizeof(long) == 8
+#   define PRIu64		"lu"
+#  else
+#   define PRIu64		"llu"
+#  endif
+# endif
 #endif
 
 typedef struct {
@@ -381,7 +393,7 @@ loop_end:
     }
     else
     {
-        item->valueint = (int)number;
+        item->valueint = (int64_t)number;
     }
 
     item->type = cJSON_Number;
@@ -403,7 +415,7 @@ CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number)
     }
     else
     {
-        object->valueint = (int)number;
+        object->valueint = (int64_t)number;
     }
 
     return object->valuedouble = number;
@@ -464,9 +476,9 @@ static unsigned char* ensure(printbuffer * const p, size_t needed)
         return NULL;
     }
 
-    if (needed > LLONG_MAX)
+    if (needed > SIZE_MAX)
     {
-        /* sizes bigger than INT_MAX are currently not supported */
+        /* sizes bigger than SIZE_MAX are currently not supported */
         return NULL;
     }
 
@@ -481,12 +493,12 @@ static unsigned char* ensure(printbuffer * const p, size_t needed)
     }
 
     /* calculate new buffer size */
-    if (needed > (LLONG_MAX / 2))
+    if (needed > (SIZE_MAX / 2))
     {
-        /* overflow of int, use LLONG_MAX if possible */
-        if (needed <= LLONG_MAX)
+        /* overflow of int, use SIZE_MAX if possible */
+        if (needed <= SIZE_MAX)
         {
-            newsize = LLONG_MAX;
+            newsize = SIZE_MAX;
         }
         else
         {
@@ -574,10 +586,10 @@ static cJSON_bool print_number(const cJSON * const item, printbuffer * const out
     {
         length = sprintf((char*)number_buffer, "null");
     }
-	else if(d == (double)item->valueint)
-	{
-		length = sprintf((char*)number_buffer, "%ld", item->valueint);
-	}
+    else if(d == (double)item->valueint)
+    {
+        length = sprintf((char*)number_buffer, "%" PRIu64, item->valueint);
+    }
     else
     {
         /* Try 15 decimal places of precision to avoid nonsignificant nonzero digits */
@@ -2457,7 +2469,7 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateNumber(double num)
         }
         else
         {
-            item->valueint = (int)num;
+            item->valueint = (int64_t)num;
         }
     }
 

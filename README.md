@@ -18,7 +18,7 @@ such as nuttcp and netperf, but were missing from the original iperf.
 These include, for example, a zero-copy mode and optional JSON output.
 Note that iperf3 is *not* backwards compatible with the original iperf.
 
-Primary development for iperf3 takes place on CentOS Linux, FreeBSD,
+Primary development for iperf3 takes place on Ubuntu Linux, FreeBSD,
 and macOS.  At this time, these are the only officially supported
 platforms, however there have been some reports of success with
 OpenBSD, NetBSD, Android, Solaris, and other Linux distributions.

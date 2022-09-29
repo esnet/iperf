@@ -1,8 +1,64 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.12 2022-09-xx
+---------------------
+
+* Notable user-visible changes
+
+  * cJSON has been updated to version 1.7.15 (#1383).
+
+  * The --bind <host>%<dev> option syntax now works properly (#1360 /
+    #1371).
+
+  * A server-side file descriptor leak with the --logfile option has
+    been fixed (#1369 / #1360 / #1369 / #1389 / #1393).
+
+  * A bug that caused some large values from TCP_INFO to be misprinted
+    as negative numbers has been fixed (#1372).
+
+  * Using the -k or -n flags with --reverse no longer leak into future
+    tests (#1363 / #1364).
+
+  * There are now various debug level options available with the
+    --debug option. These can be used to adjust the amount of
+    debugging output (#1327).
+
+  * A new --snd-timeout option has been added to set a termination
+    timeout for idle TCP connections (#1215 / #1282).
+
+  * iperf3 is slightly more robust to out-of-order packets during UDP
+    connection setup in --reverse mode (#914 / #1123 / #1182 / #1212 /
+    #1260).
+
+  * iperf3 will now use different ports for each direction when the
+    --cport and --bdir options are set (#1249 / #1259).
+
+  * The iperf3 server will now exit if it can't open its log file
+    (#1225 / #1251).
+
+  * Various help message and output fixes have been made (#1299 /
+    #1330 / #1345 / #1350).
+
+  * Various compiler warnings have been fixed (#1211 / #1316).
+
+* Developer-visible changes
+
+  * Operation of bootstrap.sh has been fixed and simplified (#1335 /
+    #1325).
+    
+  * Flow label support / compatibility under Linux has been improved
+    (#1310).
+    
+  * Various minor memory leaks have been fixed (#1332 / #1333).
+
+  * A getter/setter has been added for the bind_port parameter
+    (--cport option). (#1303, #1305)
+
+  * Various internal documentation improvements (#1265 / #1285 / #1304).
+
 iperf-3.11 2022-01-31
------------------------
+---------------------
 
 * Notable user-visible changes
 

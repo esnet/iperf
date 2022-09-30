@@ -1,7 +1,7 @@
 iperf3 Release Notes
 ====================
 
-iperf-3.12 2022-09-xx
+iperf-3.12 2022-09-30
 ---------------------
 
 * Notable user-visible changes

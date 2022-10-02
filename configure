@@ -2667,7 +2667,7 @@ else
 fi
 
 
-if test "x$enable_static_bin" == xyes
+if test "x$enable_static_bin" = xyes
 then :
   LDFLAGS="$LDFLAGS --static"
 

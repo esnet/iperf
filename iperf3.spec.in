@@ -9,11 +9,9 @@ URL:	 https://github.com/esnet/iperf
 Source0: https://downloads.es.net/pub/iperf/iperf-%{version}.tar.gz
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
-%if 0%{?el5}
-BuildRequires: e2fsprogs-devel, openssl-devel
-%else
+BuildRequires: autoconf
+BuildRequires: gcc
 BuildRequires: openssl-devel
-%endif
 
 %description
 iperf3 is a tool for active measurements of the maximum achievable
@@ -59,47 +57,3 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/libiperf.la
 %{_libdir}/*.so
 %{_libdir}/*.so.*
-
-%changelog
-* Fri Aug 29 2014 Aaron Brown <aaron@internet2.edu> 3.0.7-1
-- Update to 3.0.7
-
-* Tue Jul 29 2014 Aaron Brown <aaron@internet2.edu> 3.0.6-1
-- Update to 3.0.6
-
-* Mon Jun 16 2014 Aaron Brown <aaron@internet2.edu> 3.0.5-1
-- Update to 3.0.5
-
-* Wed Apr 2 2014 Susant Sahani <ssahani@redhat.com> 3.0.3-2
-- Moved static library to devel section only .
-
-* Sun Mar 30 2014 Susant Sahani <ssahani@redhat.com> 3.0.3-1
-- Update to 3.0.3 and added devel rpm support
-
-* Tue Mar 11 2014 Susant Sahani <ssahani@redhat.com> 3.0.2-1
-- Update to 3.0.2
-
-* Tue Jan 14 2014 Susant Sahani <ssahani@redhat.com> 3.0.1-1
-- Update to 3.0.1
-
-* Fri Oct 25 2013 Steven Roberts <strobert@strobe.net> 3.0-1
-- Update to 3.0
-
-* Sat May 04 2013 Kevin Fenzi <kevin@scrye.com> 3.0-0.4.b5
-- Update to 3.0b5
-
-* Thu Feb 14 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.0-0.3.b4
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_19_Mass_Rebuild
-
-* Thu Jul 19 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.0-0.2.b4
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
-
-* Fri Jan 13 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.0-0.1.b4
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
-
-* Wed Apr 06 2011 G.Balaji <balajig81@gmail.com> 3.0b4-2
-- Changed the Spec name, removed static libs generation and devel
-- package.
-
-* Sat Mar 26 2011 G.Balaji <balajig81@gmail.com> 3.0b4-1
-- Initial Version

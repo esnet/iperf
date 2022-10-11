@@ -116,7 +116,7 @@ usage()
 void
 usage_long(FILE *f)
 {
-    fprintf(f, usage_longstr, DEFAULT_NO_MSG_RCVD_TIMEOUT, UDP_RATE / (1024*1024), DEFAULT_PACING_TIMER, DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE);
+    fprintf(f, usage_longstr, DEFAULT_NO_MSG_RCVD_TIMEOUT, DEFAULT_UDP_CONNECT_RETRY_NUM, DEFAULT_UDP_CONNECT_RETRY_TIMEOUT, UDP_RATE / (1024*1024), DEFAULT_PACING_TIMER, DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE);
 }
 
 
@@ -1012,6 +1012,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"server", no_argument, NULL, 's'},
         {"client", required_argument, NULL, 'c'},
         {"udp", no_argument, NULL, 'u'},
+        {"udp-retry", optional_argument, NULL, OPT_UDP_RETRIES},
         {"bitrate", required_argument, NULL, 'b'},
         {"bandwidth", required_argument, NULL, 'b'},
 	{"server-bitrate-limit", required_argument, NULL, OPT_SERVER_BITRATE_LIMIT},
@@ -1095,6 +1096,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     struct xbind_entry *xbe;
     double farg;
     int rcv_timeout_in = 0;
+    int udp_retries_timeout_specified = 0;
 
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = rcv_timeout_flag = snd_timeout_flag =0;
@@ -1189,6 +1191,36 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'u':
                 set_protocol(test, Pudp);
+		client_flag = 1;
+                break;
+            case OPT_UDP_RETRIES:
+                set_protocol(test, Pudp); /* UDP connection retries implies UDP */
+                test->settings->udp_connect_retries = DEFAULT_UDP_CONNECT_RETRY_NUM;
+                test->settings->udp_connect_retry_timeout = DEFAULT_UDP_CONNECT_RETRY_TIMEOUT;
+                udp_retries_timeout_specified = 0;
+                if (optarg) {
+                    slash = strchr(optarg, '/');
+                    if (slash) {
+                        *slash = '\0';
+                        ++slash;
+                        if (strlen(optarg) > 0) { /* if retries timeout was specified */
+                            udp_retries_timeout_specified = 1;
+                            test->settings->udp_connect_retry_timeout = atof(slash);
+                            if (test->settings->udp_connect_retry_timeout < 1 || test->settings->udp_connect_retries > MAX_TIME) {
+                                i_errno = IEUDPCONNECT;
+                                return -1;
+                            }
+                        }
+                    }
+                    if (strlen(optarg) > 0) { /* if retries number was specified */
+                        test->settings->udp_connect_retries = atof(optarg);
+                        if (test->settings->udp_connect_retries < 1 ||
+                            (udp_retries_timeout_specified && test->settings->udp_connect_retries == 1)) {
+                            i_errno = IEUDPCONNECT;
+                            return -1;                        
+                        }
+                    }
+                }
 		client_flag = 1;
                 break;
             case OPT_SCTP:
@@ -2170,6 +2202,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "repeating_payload", test->repeating_payload);
 	if (test->zerocopy)
 	    cJSON_AddNumberToObject(j, "zerocopy", test->zerocopy);
+        cJSON_AddNumberToObject(j, "udpconretry", test->settings->udp_connect_retries);
+        cJSON_AddNumberToObject(j, "udpconretry_timeout", test->settings->udp_connect_retry_timeout);
 #if defined(HAVE_DONT_FRAGMENT)
 	if (test->settings->dont_fragment)
 	    cJSON_AddNumberToObject(j, "dont_fragment", test->settings->dont_fragment);
@@ -2286,6 +2320,10 @@ get_parameters(struct iperf_test *test)
 	    test->repeating_payload = 1;
 	if ((j_p = cJSON_GetObjectItem(j, "zerocopy")) != NULL)
 	    test->zerocopy = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "udpconretry")) != NULL)
+	    test->settings->udp_connect_retries = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "udpconretry_timeout")) != NULL)
+	    test->settings->udp_connect_retry_timeout = j_p->valueint;
 #if defined(HAVE_DONT_FRAGMENT)
 	if ((j_p = cJSON_GetObjectItem(j, "dont_fragment")) != NULL)
 	    test->settings->dont_fragment = j_p->valueint;
@@ -2804,6 +2842,9 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->connect_timeout = -1;
     testp->settings->rcv_timeout.secs = DEFAULT_NO_MSG_RCVD_TIMEOUT / SEC_TO_mS;
     testp->settings->rcv_timeout.usecs = (DEFAULT_NO_MSG_RCVD_TIMEOUT % SEC_TO_mS) * mS_TO_US;
+    testp->settings->udp_connect_retries = 1;
+    testp->settings->udp_connect_retry_timeout = DEFAULT_UDP_CONNECT_RETRY_TIMEOUT;
+
     testp->zerocopy = 0;
 
     memset(testp->cookie, 0, COOKIE_SIZE);
@@ -3091,6 +3132,9 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->tos = 0;
     test->settings->dont_fragment = 0;
     test->zerocopy = 0;
+
+    test->settings->udp_connect_retries = 1;
+    test->settings->udp_connect_retry_timeout = DEFAULT_UDP_CONNECT_RETRY_TIMEOUT;
 
 #if defined(HAVE_SSL)
     if (test->settings->authtoken) {

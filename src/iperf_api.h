@@ -56,9 +56,11 @@ typedef uint64_t iperf_size_t;
 #define DEFAULT_UDP_BLKSIZE 1460 /* default is dynamically set, else this */
 #define DEFAULT_TCP_BLKSIZE (128 * 1024)  /* default read/write block size */
 #define DEFAULT_SCTP_BLKSIZE (64 * 1024)
-#define DEFAULT_PACING_TIMER 1000
-#define DEFAULT_NO_MSG_RCVD_TIMEOUT 120000
-#define MIN_NO_MSG_RCVD_TIMEOUT 100
+#define DEFAULT_PACING_TIMER 1000 /* [ms] */
+#define DEFAULT_NO_MSG_RCVD_TIMEOUT 120000 /* [ms] */
+#define MIN_NO_MSG_RCVD_TIMEOUT 100 /* [ms] */
+#define DEFAULT_UDP_CONNECT_RETRY_NUM 3
+#define DEFAULT_UDP_CONNECT_RETRY_TIMEOUT 10 /* [sec] */
 
 #define WARN_STR_LEN 128
 
@@ -90,6 +92,7 @@ typedef uint64_t iperf_size_t;
 #define OPT_DONT_FRAGMENT 26
 #define OPT_RCV_TIMEOUT 27
 #define OPT_SND_TIMEOUT 28
+#define OPT_UDP_RETRIES 29
 
 /* states */
 #define TEST_START 1
@@ -390,6 +393,7 @@ enum {
     IERCVTIMEOUT = 31,      // Illegal message receive timeout
     IERVRSONLYRCVTIMEOUT = 32,  // Client receive timeout is valid only in reverse mode
     IESNDTIMEOUT = 33,      // Illegal message send timeout
+    IEUDPCONNECT = 34,      // illegal optional arguments for udp-retry option
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)
@@ -450,6 +454,9 @@ enum {
     IESTREAMREAD = 206,     // Unable to read from stream (check perror)
     IESTREAMCLOSE = 207,    // Stream has closed unexpectedly
     IESTREAMID = 208,       // Stream has invalid ID
+    IESTREAMCNCTSEND = 209, // Failed to send stream connection mesage/reply (UDP) 
+    IESTREAMCNCTED = 210,   // Server did not receive a response that all streams are connected (UDP)
+    IESTREAMCNCTEDREPLY = 211, // Client did not receive ack reply that the server received the response that all streams are connected (UDP)
     /* Timer errors */
     IENEWTIMER = 300,       // Unable to create new timer (check perror)
     IEUPDATETIMER = 301,    // Unable to update timer (check perror)

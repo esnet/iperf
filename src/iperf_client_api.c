@@ -39,6 +39,7 @@
 
 #include "iperf.h"
 #include "iperf_api.h"
+#include "iperf_udp.h"
 #include "iperf_util.h"
 #include "iperf_locale.h"
 #include "iperf_time.h"
@@ -295,6 +296,10 @@ iperf_handle_message_client(struct iperf_test *test)
             }
             else if (iperf_create_streams(test, test->mode) < 0)
                 return -1;
+            if (test->protocol->id == Pudp) {
+                if (iperf_udp_send_all_streams_connected_msgs(test) < 0)
+                    return -1;
+            }
             break;
         case TEST_START:
             if (iperf_init_test(test) < 0)

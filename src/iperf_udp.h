@@ -53,6 +53,13 @@ int iperf_udp_send(struct iperf_stream *) /* __attribute__((hot)) */;
  */
 int iperf_udp_accept(struct iperf_test *);
 
+/*
+ * iperf_udp_bind_to_accepted
+ *
+ * Bind tockt to address from accepted message
+ */
+int
+iperf_udp_bind_to_accepted(struct iperf_test *test, int s, struct sockaddr_storage *sa_peer, socklen_t sa_peer_len);
 
 int iperf_udp_listen(struct iperf_test *);
 
@@ -60,5 +67,12 @@ int iperf_udp_connect(struct iperf_test *);
 
 int iperf_udp_init(struct iperf_test *);
 
+int iperf_udp_send_all_streams_connected_msgs(struct iperf_test *test);
+
+int iperf_udp_send_connect_msg(struct iperf_test *test, int s, int msg_type, int repeat_flag);
+
+unsigned int iperf_udp_acceppt_all_streams_connected_msgs(struct iperf_test *test, int msg_type, int control_socket, struct sockaddr_storage *sa_peer, socklen_t *sa_peer_len);
+
+int iperf_udp_discard_old_connect_messages(struct iperf_test *test, fd_set *read_set, int send_connect_reply_flag);
 
 #endif

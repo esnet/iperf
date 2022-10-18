@@ -704,7 +704,6 @@ iperf_run_client(struct iperf_test * test)
     return 0;
 
   cleanup_and_fail:
-    cleanup_and_fail:
     iperf_client_end(test);
     iflush(test);
     return -1;

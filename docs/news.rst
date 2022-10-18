@@ -1,6 +1,15 @@
 iperf3 Project News
 ===================
 
+2022-09-30:  iperf-3.12 released
+----------------------------------
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.12.tar.gz
+| SHA256:  ``72034ecfb6a7d6d67e384e19fb6efff3236ca4f7ed4c518d7db649c447e1ffd6``
+
+iperf 3.12 is principally a bugfix release, although it includes an
+updated version of cJSON and adds a few new features.
+
+
 2022-01-28:  iperf-3.11 released
 ----------------------------------
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.11.tar.gz

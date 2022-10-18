@@ -704,15 +704,8 @@ iperf_run_client(struct iperf_test * test)
     return 0;
 
   cleanup_and_fail:
+    cleanup_and_fail:
     iperf_client_end(test);
-    if (test->json_output) {
-        cJSON_AddStringToObject(test->json_top, "error", iperf_strerror(i_errno));
-        iperf_json_finish(test);
-        iflush(test);
-        // Return 0 and not -1 since all terminating function were done here.
-        // Also prevents error message logging outside the already closed JSON output.
-        return 0;
-    }
     iflush(test);
     return -1;
 }

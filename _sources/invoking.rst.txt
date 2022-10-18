@@ -163,10 +163,12 @@ the executable.
                  bind to the specific interface associated with address host.  If
                  an optional interface is specified, it is treated as a  shortcut
                  for  --bind-dev  dev.   Note  that  a percent sign and interface
-                 device name are required for IPv6 link-local  address  literals.
-                 --bind-dev  dev  bind  to the specified network interface.  This
-                 option uses SO_BINDTODEVICE, and may require  root  permissions.
-                 (Available on Linux and possibly other systems.)
+                 device name are required for IPv6 link-local address literals.
+   
+          --bind-dev dev
+                 bind to the  specified  network  interface.   This  option  uses
+                 SO_BINDTODEVICE,  and  may require root permissions.  (Available
+                 on Linux and possibly other systems.)
    
           -V, --verbose
                  give more detailed output
@@ -178,24 +180,33 @@ the executable.
                  send output to a log file.
    
           --forceflush
-                 force  flushing output at every interval.  Used to avoid buffer-
+                 force flushing output at every interval.  Used to avoid  buffer-
                  ing when sending output to pipe.
    
           --timestamps[=format]
-                 prepend a timestamp at  the  start  of  each  output  line.   By
-                 default,   timestamps  have  the  format  emitted  by  ctime(1).
-                 Optionally, = followed by a format specification can  be  passed
-                 to  customize the timestamps, see strftime(3).  If this optional
-                 format is given, the = must immediately follow the  --timestamps
+                 prepend  a  timestamp  at  the  start  of  each output line.  By
+                 default,  timestamps  have  the  format  emitted  by   ctime(1).
+                 Optionally,  =  followed by a format specification can be passed
+                 to customize the timestamps, see strftime(3).  If this  optional
+                 format  is given, the = must immediately follow the --timestamps
                  option with no whitespace intervening.
    
           --rcv-timeout #
-                 set  idle  timeout  for  receiving data during active tests. The
+                 set idle timeout for receiving data  during  active  tests.  The
                  receiver will halt a test if no data is received from the sender
                  for this number of ms (default to 12000 ms, or 2 minutes).
    
+          --snd-timeout #
+                 set timeout for unacknowledged TCP data (on both test  and  con-
+                 trol connections) This option can be used to force a faster test
+                 timeout in case of  a  network  partition  during  a  test.  The
+                 required  parameter is specified in ms, and defaults to the sys-
+                 tem settings.  This functionality depends on the  TCP_USER_TIME-
+                 OUT socket option, and will not work on systems that do not sup-
+                 port it.
+   
           -d, --debug
-                 emit  debugging  output.  Primarily (perhaps exclusively) of use
+                 emit debugging output.  Primarily (perhaps exclusively)  of  use
                  to developers.
    
           -v, --version
@@ -213,48 +224,48 @@ the executable.
                  run the server in background as a daemon
    
           -1, --one-off
-                 handle one client connection, then exit.  If  an  idle  time  is
+                 handle  one  client  connection,  then exit.  If an idle time is
                  set, the server will exit after that amount of time with no con-
                  nection.
    
           --idle-timeout n
-                 restart the server after n seconds in case it  gets  stuck.   In
+                 restart  the  server  after n seconds in case it gets stuck.  In
                  one-off mode, this is the number of seconds the server will wait
                  before exiting.
    
           --server-bitrate-limit n[KMGT]
                  set a limit on the server side, which will cause a test to abort
-                 if  the  client specifies a test of more than n bits per second,
+                 if the client specifies a test of more than n bits  per  second,
                  or if the average data sent or received by the client (including
-                 all  data  streams)  is  greater  than  n  bits per second.  The
-                 default limit is zero, which implies  no  limit.   The  interval
+                 all data streams) is  greater  than  n  bits  per  second.   The
+                 default  limit  is  zero,  which implies no limit.  The interval
                  over which to average the data rate is 5 seconds by default, but
-                 can be specified by adding a '/' and a  number  to  the  bitrate
+                 can  be  specified  by  adding a '/' and a number to the bitrate
                  specifier.
    
           --rsa-private-key-path file
-                 path  to  the  RSA  private key (not password-protected) used to
-                 decrypt authentication credentials from  the  client  (if  built
+                 path to the RSA private key  (not  password-protected)  used  to
+                 decrypt  authentication  credentials  from  the client (if built
                  with OpenSSL support).
    
           --authorized-users-path file
-                 path  to the configuration file containing authorized users cre-
-                 dentials to run iperf tests (if  built  with  OpenSSL  support).
-                 The  file  is  a  comma separated list of usernames and password
-                 hashes; more information on the structure of  the  file  can  be
+                 path to the configuration file containing authorized users  cre-
+                 dentials  to  run  iperf  tests (if built with OpenSSL support).
+                 The file is a comma separated list  of  usernames  and  password
+                 hashes;  more  information  on  the structure of the file can be
                  found in the EXAMPLES section.
    
           --time-skew-thresholdsecond seconds
-                 time  skew  threshold (in seconds) between the server and client
+                 time skew threshold (in seconds) between the server  and  client
                  during the authentication process.
    
    CLIENT SPECIFIC OPTIONS
           -c, --client host[%dev]
-                 run in client mode, connecting  to  the  specified  server.   By
-                 default,  a test consists of sending data from the client to the
-                 server, unless the -R flag is specified.  If an optional  inter-
-                 face  is  specified,  it is treated as a shortcut for --bind-dev
-                 dev.  Note that a percent sign and  interface  device  name  are
+                 run  in  client  mode,  connecting  to the specified server.  By
+                 default, a test consists of sending data from the client to  the
+                 server,  unless the -R flag is specified.  If an optional inter-
+                 face is specified, it is treated as a  shortcut  for  --bind-dev
+                 dev.   Note  that  a  percent sign and interface device name are
                  required for IPv6 link-local address literals.
    
           --sctp use SCTP rather than TCP (FreeBSD and Linux)
@@ -263,42 +274,42 @@ the executable.
                  use UDP rather than TCP
    
           --connect-timeout n
-                 set  timeout  for establishing the initial control connection to
-                 the server, in milliseconds.  The default behavior is the  oper-
-                 ating  system's  timeout for TCP connection establishment.  Pro-
-                 viding a shorter value may speed up detection of a  down  iperf3
+                 set timeout for establishing the initial control  connection  to
+                 the  server, in milliseconds.  The default behavior is the oper-
+                 ating system's timeout for TCP connection  establishment.   Pro-
+                 viding  a  shorter value may speed up detection of a down iperf3
                  server.
    
           -b, --bitrate n[KMGT]
-                 set  target  bitrate  to n bits/sec (default 1 Mbit/sec for UDP,
-                 unlimited for TCP/SCTP).  If  there  are  multiple  streams  (-P
-                 flag),  the  throughput  limit  is  applied  separately  to each
-                 stream.  You can also add a '/' and  a  number  to  the  bitrate
+                 set target bitrate to n bits/sec (default 1  Mbit/sec  for  UDP,
+                 unlimited  for  TCP/SCTP).   If  there  are multiple streams (-P
+                 flag), the  throughput  limit  is  applied  separately  to  each
+                 stream.   You  can  also  add  a '/' and a number to the bitrate
                  specifier.  This is called "burst mode".  It will send the given
-                 number of packets without  pausing,  even  if  that  temporarily
-                 exceeds  the  specified  throughput  limit.   Setting the target
-                 bitrate to 0 will disable bitrate  limits  (particularly  useful
+                 number  of  packets  without  pausing,  even if that temporarily
+                 exceeds the specified  throughput  limit.   Setting  the  target
+                 bitrate  to  0  will disable bitrate limits (particularly useful
                  for UDP tests).  This throughput limit is implemented internally
-                 inside iperf3, and is available on all platforms.  Compare  with
-                 the  --fq-rate flag.  This option replaces the --bandwidth flag,
+                 inside  iperf3, and is available on all platforms.  Compare with
+                 the --fq-rate flag.  This option replaces the --bandwidth  flag,
                  which is now deprecated but (at least for now) still accepted.
    
           --pacing-timer n[KMGT]
-                 set  pacing  timer  interval  in  microseconds   (default   1000
-                 microseconds,  or 1 ms).  This controls iperf3's internal pacing
-                 timer for the -b/--bitrate  option.   The  timer  fires  at  the
-                 interval  set  by  this parameter.  Smaller values of the pacing
-                 timer parameter smooth out the traffic emitted  by  iperf3,  but
-                 potentially  at  the  cost  of  performance due to more frequent
+                 set   pacing   timer  interval  in  microseconds  (default  1000
+                 microseconds, or 1 ms).  This controls iperf3's internal  pacing
+                 timer  for  the  -b/--bitrate  option.   The  timer fires at the
+                 interval set by this parameter.  Smaller values  of  the  pacing
+                 timer  parameter  smooth  out the traffic emitted by iperf3, but
+                 potentially at the cost of  performance  due  to  more  frequent
                  timer processing.
    
           --fq-rate n[KMGT]
                  Set a rate to be used with fair-queueing based socket-level pac-
-                 ing,  in bits per second.  This pacing (if specified) will be in
-                 addition to any pacing due to iperf3's internal throughput  pac-
-                 ing  (-b/--bitrate flag), and both can be specified for the same
-                 test.  Only available on platforms  supporting  the  SO_MAX_PAC-
-                 ING_RATE  socket  option (currently only Linux).  The default is
+                 ing, in bits per second.  This pacing (if specified) will be  in
+                 addition  to any pacing due to iperf3's internal throughput pac-
+                 ing (-b/--bitrate flag), and both can be specified for the  same
+                 test.   Only  available  on platforms supporting the SO_MAX_PAC-
+                 ING_RATE socket option (currently only Linux).  The  default  is
                  no fair-queueing based pacing.
    
           --no-fq-socket-pacing
@@ -315,37 +326,37 @@ the executable.
                  number of blocks (packets) to transmit (instead of -t or -n)
    
           -l, --length n[KMGT]
-                 length  of  buffer to read or write.  For TCP tests, the default
+                 length of buffer to read or write.  For TCP tests,  the  default
                  value is 128KB.  In the case of UDP, iperf3 tries to dynamically
-                 determine  a  reasonable  sending size based on the path MTU; if
-                 that cannot be determined it uses 1460 bytes as a sending  size.
+                 determine a reasonable sending size based on the  path  MTU;  if
+                 that  cannot be determined it uses 1460 bytes as a sending size.
                  For SCTP tests, the default size is 64KB.
    
           --cport port
-                 bind  data  streams  to  a specific client port (for TCP and UDP
+                 bind data streams to a specific client port  (for  TCP  and  UDP
                  only, default is to use an ephemeral port)
    
           -P, --parallel n
-                 number of parallel client streams to run. Note  that  iperf3  is
-                 single  threaded,  so  if you are CPU bound, this will not yield
+                 number  of  parallel  client streams to run. Note that iperf3 is
+                 single threaded, so if you are CPU bound, this  will  not  yield
                  higher throughput.
    
           -R, --reverse
-                 reverse the direction of a test, so that the server  sends  data
+                 reverse  the  direction of a test, so that the server sends data
                  to the client
    
           --bidir
-                 test  in  both  directions  (normal  and reverse), with both the
+                 test in both directions (normal  and  reverse),  with  both  the
                  client and server sending and receiving data simultaneously
    
           -w, --window n[KMGT]
-                 set socket buffer size / window size.  This value gets  sent  to
-                 the  server and used on that side too; on both sides this option
-                 sets both the sending and receiving socket buffer  sizes.   This
-                 option  can  be  used to set (indirectly) the maximum TCP window
-                 size.  Note that on Linux systems, the effective maximum  window
-                 size  is  approximately  double what is specified by this option
-                 (this behavior is not a bug in iperf3 but  a  "feature"  of  the
+                 set  socket  buffer size / window size.  This value gets sent to
+                 the server and used on that side too; on both sides this  option
+                 sets  both  the sending and receiving socket buffer sizes.  This
+                 option can be used to set (indirectly) the  maximum  TCP  window
+                 size.   Note that on Linux systems, the effective maximum window
+                 size is approximately double what is specified  by  this  option
+                 (this  behavior  is  not  a bug in iperf3 but a "feature" of the
                  Linux kernel, as documented by tcp(7) and socket(7)).
    
           -M, --set-mss n
@@ -365,100 +376,100 @@ the executable.
                  can be used, i.e. 52, 064 and 0x34 all specify the same value.
    
           --dscp dscp
-                 set the IP DSCP bits.  Both  numeric  and  symbolic  values  are
-                 accepted.  Numeric values can be specified in decimal, octal and
-                 hex (see --tos above). To set both the DSCP  bits  and  the  ECN
+                 set  the  IP  DSCP  bits.   Both numeric and symbolic values are
+                 accepted. Numeric values can be specified in decimal, octal  and
+                 hex  (see  --tos  above).  To set both the DSCP bits and the ECN
                  bits, use --tos.
    
           -L, --flowlabel n
                  set the IPv6 flow label (currently only supported on Linux)
    
           -X, --xbind name
-                 Bind  SCTP  associations  to  a  specific  subset of links using
-                 sctp_bindx(3).  The --B flag will be ignored  if  this  flag  is
+                 Bind SCTP associations to  a  specific  subset  of  links  using
+                 sctp_bindx(3).   The  --B  flag  will be ignored if this flag is
                  specified.  Normally SCTP will include the protocol addresses of
-                 all active links on the local host when setting up  an  associa-
-                 tion.  Specifying at least one --X name will disable this behav-
-                 iour.  This flag must be specified for each link to be  included
-                 in  the association, and is supported for both iperf servers and
+                 all  active  links on the local host when setting up an associa-
+                 tion. Specifying at least one --X name will disable this  behav-
+                 iour.   This flag must be specified for each link to be included
+                 in the association, and is supported for both iperf servers  and
                  clients (the latter are supported by passing the first --X argu-
-                 ment  to  bind(2)).  Hostnames are accepted as arguments and are
-                 resolved using getaddrinfo(3).  If the  --4  or  --6  flags  are
-                 specified,  names  which  do not resolve to addresses within the
+                 ment to bind(2)).  Hostnames are accepted as arguments  and  are
+                 resolved  using  getaddrinfo(3).   If  the  --4 or --6 flags are
+                 specified, names which do not resolve to  addresses  within  the
                  specified protocol family will be ignored.
    
           --nstreams n
                  Set number of SCTP streams.
    
           -Z, --zerocopy
-                 Use a "zero copy" method of sending data, such  as  sendfile(2),
+                 Use  a  "zero copy" method of sending data, such as sendfile(2),
                  instead of the usual write(2).
    
           -O, --omit n
-                 Omit the first n seconds of the test, to skip past the TCP slow-
-                 start period.
+                 Perform pre-test for N seconds and omit the pre-test statistics,
+                 to skip past the TCP slow-start period.
    
           -T, --title str
                  Prefix every output line with this string.
    
           --extra-data str
-                 Specify an extra data string field to be included in  JSON  out-
+                 Specify  an  extra data string field to be included in JSON out-
                  put.
    
           -C, --congestion algo
-                 Set  the  congestion control algorithm (Linux and FreeBSD only).
-                 An older --linux-congestion synonym for this  flag  is  accepted
+                 Set the congestion control algorithm (Linux and  FreeBSD  only).
+                 An  older  --linux-congestion  synonym for this flag is accepted
                  but is deprecated.
    
           --get-server-output
                  Get the output from the server.  The output format is determined
                  by the server (in particular, if the server was invoked with the
-                 --json  flag,  the  output  will be in JSON format, otherwise it
-                 will be in human-readable format).  If the client  is  run  with
-                 --json,  the  server output is included in a JSON object; other-
-                 wise it is appended at the bottom of the human-readable  output.
+                 --json flag, the output will be in  JSON  format,  otherwise  it
+                 will  be  in  human-readable format).  If the client is run with
+                 --json, the server output is included in a JSON  object;  other-
+                 wise  it is appended at the bottom of the human-readable output.
    
           --udp-counters-64bit
                  Use 64-bit counters in UDP test packets.  The use of this option
-                 can help prevent counter overflows during long  or  high-bitrate
-                 UDP  tests.   Both client and server need to be running at least
-                 version 3.1 for this option to work.  It may become the  default
+                 can  help  prevent counter overflows during long or high-bitrate
+                 UDP tests.  Both client and server need to be running  at  least
+                 version  3.1 for this option to work.  It may become the default
                  behavior at some point in the future.
    
           --repeating-payload
-                 Use  repeating pattern in payload, instead of random bytes.  The
-                 same payload is used in iperf2  (ASCII  '0..9'  repeating).   It
-                 might  help  to test and reveal problems in networking gear with
-                 hardware compression (including some WiFi access points),  where
-                 iperf2  and  iperf3  perform  differently, just based on payload
+                 Use repeating pattern in payload, instead of random bytes.   The
+                 same  payload  is  used  in iperf2 (ASCII '0..9' repeating).  It
+                 might help to test and reveal problems in networking  gear  with
+                 hardware  compression (including some WiFi access points), where
+                 iperf2 and iperf3 perform differently,  just  based  on  payload
                  entropy.
    
           --dont-fragment
-                 Set the IPv4 Don't Fragment (DF) bit on outgoing packets.   Only
+                 Set  the IPv4 Don't Fragment (DF) bit on outgoing packets.  Only
                  applicable to tests doing UDP over IPv4.
    
           --username username
                  username to use for authentication to the iperf server (if built
                  with OpenSSL support).  The password will be prompted for inter-
-                 actively  when  the  test is run.  Note, the password to use can
-                 also be specified via the IPERF3_PASSWORD environment  variable.
-                 If  this  variable  is  present,  the  password  prompt  will be
+                 actively when the test is run.  Note, the password  to  use  can
+                 also  be specified via the IPERF3_PASSWORD environment variable.
+                 If this  variable  is  present,  the  password  prompt  will  be
                  skipped.
    
           --rsa-public-key-path file
-                 path to the RSA public key used to encrypt  authentication  cre-
+                 path  to  the RSA public key used to encrypt authentication cre-
                  dentials (if built with OpenSSL support)
    
    
    EXAMPLES
       Authentication - RSA Keypair
-          The  authentication  feature  of iperf3 requires an RSA public keypair.
-          The public key is used to encrypt the authentication  token  containing
-          the  user  credentials,  while  the  private key is used to decrypt the
-          authentication token.  The private key must be in PEM format and  addi-
-          tionally  must  not have a password set.  The public key must be in PEM
-          format and use SubjectPrefixKeyInfo encoding.  An example of a  set  of
-          UNIX/Linux  commands  using OpenSSL to generate a correctly-formed key-
+          The authentication feature of iperf3 requires an  RSA  public  keypair.
+          The  public  key is used to encrypt the authentication token containing
+          the user credentials, while the private key  is  used  to  decrypt  the
+          authentication  token.  The private key must be in PEM format and addi-
+          tionally must not have a password set.  The public key must be  in  PEM
+          format  and  use SubjectPrefixKeyInfo encoding.  An example of a set of
+          UNIX/Linux commands using OpenSSL to generate a  correctly-formed  key-
           pair follows:
    
                > openssl genrsa -des3 -out private.pem 2048
@@ -467,16 +478,16 @@ the executable.
                form PEM
    
           After these commands, the public key will be contained in the file pub-
-          lic.pem  and  the  private  key  will  be  contained  in  the file pri-
+          lic.pem and the  private  key  will  be  contained  in  the  file  pri-
           vate_not_protected.pem.
    
       Authentication - Authorized users configuration file
-          A simple plaintext file must be provided to the iperf3 server in  order
-          to  specify the authorized user credentials.  The file is a simple list
-          of comma-separated pairs of a username  and  a  corresponding  password
-          hash.   The password hash is a SHA256 hash of the string "{$user}$pass-
-          word".  The file can also contain commented lines (starting with the  #
-          character).   An example of commands to generate the password hash on a
+          A  simple plaintext file must be provided to the iperf3 server in order
+          to specify the authorized user credentials.  The file is a simple  list
+          of  comma-separated  pairs  of  a username and a corresponding password
+          hash.  The password hash is a SHA256 hash of the string  "{$user}$pass-
+          word".   The file can also contain commented lines (starting with the #
+          character).  An example of commands to generate the password hash on  a
           UNIX/Linux system is given below:
    
                > S_USER=mario S_PASSWD=rossi
@@ -500,7 +511,8 @@ the executable.
    
    
    
-   ESnet                            January 2022                        IPERF3(1)
+   ESnet                           September 2022                       IPERF3(1)
+
 
 The iperf3 manual page will typically be installed in manual
 section 1.

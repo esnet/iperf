@@ -94,9 +94,9 @@ struct iperf_interval_results
     int       cnt_error;
 
     int omitted;
-#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)) && \
+#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && \
 	defined(TCP_INFO)
-    struct tcp_info tcpInfo; /* getsockopt(TCP_INFO) for Linux, {Free,Net}BSD */
+    struct tcp_info tcpInfo; /* getsockopt(TCP_INFO) for Linux, {Free,Net,Open}BSD */
 #else
     /* Just placeholders, never accessed. */
     char *tcpInfo;

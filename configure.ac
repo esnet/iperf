@@ -305,6 +305,7 @@ AC_CHECK_MEMBER([struct tcp_info.tcpi_snd_wnd],
 [#ifdef HAVE_LINUX_TCP_H
 #include <linux/tcp.h>
 #else
+#include <sys/types.h>
 #include <netinet/tcp.h>
 #endif
 ])

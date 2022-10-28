@@ -52,16 +52,27 @@
 #endif /* HAVE_TCP_CONGESTION */
 
 void *
-iperf_client_worker_start(void *s) {
+iperf_client_worker_run(void *s) {
     struct iperf_stream *sp = (struct iperf_stream *) s;
     struct iperf_test *test = sp->test;
 
     while (! (test->done)) {
-        if (test->debug_level >= DEBUG_LEVEL_INFO) {
-            iperf_printf(test, "Thread FD %d\n", sp->socket);
+        if (sp->sender) {
+            if (iperf_send_mt(sp) < 0) {
+                goto cleanup_and_fail;
+            }
         }
-        sleep(1);
+        else {
+            if (iperf_recv_mt(sp) < 0) {
+                goto cleanup_and_fail;
+            }
+        }
     }
+    return NULL;
+
+  cleanup_and_fail:
+    /* XXX */
+    test->done = 0;
     return NULL;
 }
 
@@ -128,12 +139,6 @@ iperf_create_streams(struct iperf_test *test, int sender)
 	    }
 	}
 #endif /* HAVE_TCP_CONGESTION */
-
-	if (sender)
-	    FD_SET(s, &test->write_set);
-	else
-	    FD_SET(s, &test->read_set);
-	if (s > test->max_fd) test->max_fd = s;
 
         sp = iperf_new_stream(test, s, sender);
         if (!sp)
@@ -643,7 +648,7 @@ iperf_run_client(struct iperf_test * test)
                 }
 
                 SLIST_FOREACH(sp, &test->streams, streams) {
-                    if (pthread_create(&(sp->thr), &attr, &iperf_client_worker_start, sp) != 0) {
+                    if (pthread_create(&(sp->thr), &attr, &iperf_client_worker_run, sp) != 0) {
                         i_errno = IEPTHREADCREATE;
                         goto cleanup_and_fail;
                     }
@@ -666,24 +671,6 @@ iperf_run_client(struct iperf_test * test)
 		    }
 		}
 	    }
-
-
-	    if (test->mode == BIDIRECTIONAL)
-	    {
-                if (iperf_send(test, &write_set) < 0)
-                    goto cleanup_and_fail;
-                if (iperf_recv(test, &read_set) < 0)
-                    goto cleanup_and_fail;
-	    } else if (test->mode == SENDER) {
-                // Regular mode. Client sends.
-                if (iperf_send(test, &write_set) < 0)
-                    goto cleanup_and_fail;
-	    } else {
-                // Reverse mode. Client receives.
-                if (iperf_recv(test, &read_set) < 0)
-                    goto cleanup_and_fail;
-	    }
-
 
             /* Run the timers. */
             iperf_time_now(&now);
@@ -735,15 +722,6 @@ iperf_run_client(struct iperf_test * test)
 		if (iperf_set_send_state(test, TEST_END) != 0)
                     goto cleanup_and_fail;
 	    }
-	}
-	// If we're in reverse mode, continue draining the data
-	// connection(s) even if test is over.  This prevents a
-	// deadlock where the server side fills up its pipe(s)
-	// and gets blocked, so it can't receive state changes
-	// from the client side.
-	else if (test->mode == RECEIVER && test->state == TEST_END) {
-	    if (iperf_recv(test, &read_set) < 0)
-		goto cleanup_and_fail;
 	}
     }
 

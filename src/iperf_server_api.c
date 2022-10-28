@@ -67,16 +67,27 @@
 #endif /* HAVE_TCP_CONGESTION */
 
 void *
-iperf_server_worker_start(void *s) {
+iperf_server_worker_run(void *s) {
     struct iperf_stream *sp = (struct iperf_stream *) s;
     struct iperf_test *test = sp->test;
 
     while (! (test->done)) {
-        if (test->debug_level >= DEBUG_LEVEL_INFO) {
-            iperf_printf(test, "Thread FD %d\n", sp->socket);
+        if (sp->sender) {
+            if (iperf_send_mt(sp) < 0) {
+                goto cleanup_and_fail;
+            }
         }
-        sleep(1);
+        else {
+            if (iperf_recv_mt(sp) < 0) {
+                goto cleanup_and_fail;
+            }
+        }
     }
+    return NULL;
+
+  cleanup_and_fail:
+    /* XXX */
+    test->done = 0;
     return NULL;
 }
 
@@ -741,11 +752,6 @@ iperf_run_server(struct iperf_test *test)
                                 return -1;
                             }
 
-                            if (sp->sender)
-                                FD_SET(s, &test->write_set);
-                            else
-                                FD_SET(s, &test->read_set);
-
                             if (s > test->max_fd) test->max_fd = s;
 
                             /*
@@ -839,7 +845,7 @@ iperf_run_server(struct iperf_test *test)
                     };
 
                     SLIST_FOREACH(sp, &test->streams, streams) {
-                        if (pthread_create(&(sp->thr), &attr, &iperf_server_worker_start, sp) != 0) {
+                        if (pthread_create(&(sp->thr), &attr, &iperf_server_worker_run, sp) != 0) {
                             i_errno = IEPTHREADCREATE;
                             cleanup_server(test);
                             return -1;
@@ -857,31 +863,6 @@ iperf_run_server(struct iperf_test *test)
                     };
                 }
             }
-
-            if (test->state == TEST_RUNNING) {
-                if (test->mode == BIDIRECTIONAL) {
-                    if (iperf_recv(test, &read_set) < 0) {
-                        cleanup_server(test);
-                        return -1;
-                    }
-                    if (iperf_send(test, &write_set) < 0) {
-                        cleanup_server(test);
-                        return -1;
-                    }
-                } else if (test->mode == SENDER) {
-                    // Reverse mode. Server sends.
-                    if (iperf_send(test, &write_set) < 0) {
-			cleanup_server(test);
-                        return -1;
-		    }
-                } else {
-                    // Regular mode. Server receives.
-                    if (iperf_recv(test, &read_set) < 0) {
-			cleanup_server(test);
-                        return -1;
-		    }
-                }
-	    }
         }
 
 	if (result == 0 ||

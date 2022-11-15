@@ -307,7 +307,7 @@ const char report_authentication_succeeded[] =
 "Authentication succeeded for user '%s' ts %ld\n";
 
 const char report_authentication_failed[] =
-"Authentication failed for user '%s' ts %ld\n";
+"Authentication failed with return code %d for user '%s' ts %ld\n";
 
 const char report_reverse[] =
 "Reverse mode, remote host %s is sending\n";

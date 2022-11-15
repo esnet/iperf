@@ -2006,7 +2006,7 @@ int test_is_authorized(struct iperf_test *test){
             return 0;
         } else {
             if (test->debug) {
-                iperf_printf(test, report_authentication_failed, username, ts);
+                iperf_printf(test, report_authentication_failed, ret, username, ts);
             }
             free(username);
             free(password);

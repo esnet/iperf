@@ -187,7 +187,7 @@ void	iperf_set_test_zerocopy( struct iperf_test* ipt, int zerocopy );
 void	iperf_set_test_get_server_output( struct iperf_test* ipt, int get_server_output );
 void	iperf_set_test_unit_format(struct iperf_test *ipt, char unit_format);
 void	iperf_set_test_bind_address( struct iperf_test* ipt, const char *bind_address );
-void    iperf_set_test_bind_dev(struct iperf_test *ipt, char *bnd_dev);
+void    iperf_set_test_bind_dev(struct iperf_test *ipt, const char *bnd_dev);
 void	iperf_set_test_udp_counters_64bit( struct iperf_test* ipt, int udp_counters_64bit );
 void	iperf_set_test_one_off( struct iperf_test* ipt, int one_off );
 void    iperf_set_test_tos( struct iperf_test* ipt, int tos );

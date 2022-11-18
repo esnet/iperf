@@ -609,6 +609,9 @@ iperf_run_server(struct iperf_test *test)
                         return -1;
 		    }
 
+		    /* apply other common socket options */
+		    iperf_common_sockopts(test, s);
+
                     if (!is_closed(s)) {
 
 #if defined(HAVE_TCP_USER_TIMEOUT)

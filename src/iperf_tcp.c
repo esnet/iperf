@@ -545,6 +545,9 @@ iperf_tcp_connect(struct iperf_test *test)
 	}
     }
 
+    /* Set common socket options */
+    iperf_common_sockopts(test, s);
+
     if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS) {
 	saved_errno = errno;
 	close(s);

@@ -556,7 +556,11 @@ iperf_udp_connect(struct iperf_test *test)
     }
 
     /* Set common socket options */
-    iperf_common_sockopts(test, s);
+    if (iperf_common_sockopts(test, s) < 0)
+    {
+        fprintf(stderr, "iperf_common_sockopts failed\n");
+	perror("setsockopt");
+    }
 
 #ifdef SO_RCVTIMEO
     /* 30 sec timeout for a case when there is a network problem. */

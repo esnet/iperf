@@ -610,7 +610,11 @@ iperf_run_server(struct iperf_test *test)
 		    }
 
 		    /* apply other common socket options */
-		    iperf_common_sockopts(test, s);
+		    if (iperf_common_sockopts(test, s) < 0)
+	            {
+			cleanup_server(test);
+                        return -1;
+		    }
 
                     if (!is_closed(s)) {
 

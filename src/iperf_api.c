@@ -4320,20 +4320,8 @@ iperf_common_sockopts(struct iperf_test *test, int s)
 	if (getsockdomain(s) == AF_INET6) {
 #ifdef IPV6_TCLASS
 	    if (setsockopt(s, IPPROTO_IPV6, IPV6_TCLASS, &opt, sizeof(opt)) < 0) {
-		fprintf(stderr, "ERROR: with setsockopt for IPV6_TCLASS\n");
-		perror("IPV6_TCLASS setsockopt error:");
                 i_errno = IESETCOS;
                 return -1;
-            }
-
-	    /* if the control connection was established with a mapped v4 address
-	       then set IP_TOS on v6 stream socket as well */
-	    if (iperf_get_mapped_v4(test)) {
-		if (setsockopt(s, IPPROTO_IP, IP_TOS, &opt, sizeof(opt)) < 0) {
-                    /* ignore any failure of v4 TOS in IPv6 case */
-		    fprintf(stderr, "ERROR: v4 TOS in IPv6\n");
-		    perror("v4 TOS error");
-                }
             }
 #else
             i_errno = IESETCOS;

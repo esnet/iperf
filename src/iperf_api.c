@@ -709,7 +709,7 @@ iperf_set_test_bind_address(struct iperf_test *ipt, const char *bnd_address)
 }
 
 void
-iperf_set_test_bind_dev(struct iperf_test *ipt, char *bnd_dev)
+iperf_set_test_bind_dev(struct iperf_test *ipt, const char *bnd_dev)
 {
     ipt->bind_dev = strdup(bnd_dev);
 }

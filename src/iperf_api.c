@@ -423,6 +423,12 @@ iperf_get_test_mss(struct iperf_test *ipt)
     return ipt->settings->mss;
 }
 
+int
+iperf_get_mapped_v4(struct iperf_test* ipt)
+{
+    return ipt->mapped_v4;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -573,6 +579,12 @@ void
 iperf_set_test_timestamp_format(struct iperf_test *ipt, const char *tf)
 {
     ipt->timestamp_format = strdup(tf);
+}
+
+void
+iperf_set_mapped_v4(struct iperf_test *ipt, const int val)
+{
+    ipt->mapped_v4 = val;
 }
 
 static void
@@ -856,8 +868,10 @@ iperf_on_test_start(struct iperf_test *test)
 ** old IPv4 format, which is easier on the eyes of network veterans.
 **
 ** If the v6 address is not v4-mapped it is left alone.
+**
+** Returns 1 if the v6 address is v4-mapped, 0 otherwise.
 */
-static void
+static int
 mapped_v4_to_regular_v4(char *str)
 {
     char *prefix = "::ffff:";
@@ -867,7 +881,9 @@ mapped_v4_to_regular_v4(char *str)
     if (strncmp(str, prefix, prefix_len) == 0) {
 	int str_len = strlen(str);
 	memmove(str, str + prefix_len, str_len - prefix_len + 1);
+	return 1;
     }
+    return 0;
 }
 
 void
@@ -910,7 +926,9 @@ iperf_on_connect(struct iperf_test *test)
             inet_ntop(AF_INET6, &sa_in6P->sin6_addr, ipr, sizeof(ipr));
 	    port = ntohs(sa_in6P->sin6_port);
         }
-	mapped_v4_to_regular_v4(ipr);
+	if (mapped_v4_to_regular_v4(ipr)) {
+	    iperf_set_mapped_v4(test, 1);
+	}
 	if (test->json_output)
 	    cJSON_AddItemToObject(test->json_start, "accepted_connection", iperf_json_printf("host: %s  port: %d", ipr, (int64_t) port));
 	else
@@ -4293,10 +4311,46 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 
 /**************************************************************************/
 int
+iperf_common_sockopts(struct iperf_test *test, int s)
+{
+    int opt;
+
+    /* Set IP TOS */
+    if ((opt = test->settings->tos)) {
+	if (getsockdomain(s) == AF_INET6) {
+#ifdef IPV6_TCLASS
+	    if (setsockopt(s, IPPROTO_IPV6, IPV6_TCLASS, &opt, sizeof(opt)) < 0) {
+                i_errno = IESETCOS;
+                return -1;
+            }
+
+	    /* if the control connection was established with a mapped v4 address
+	       then set IP_TOS on v6 stream socket as well */
+	    if (iperf_get_mapped_v4(test)) {
+		if (setsockopt(s, IPPROTO_IP, IP_TOS, &opt, sizeof(opt)) < 0) {
+                    /* ignore any failure of v4 TOS in IPv6 case */
+                }
+            }
+#else
+            i_errno = IESETCOS;
+            return -1;
+#endif
+        } else {
+            if (setsockopt(s, IPPROTO_IP, IP_TOS, &opt, sizeof(opt)) < 0) {
+                i_errno = IESETTOS;
+                return -1;
+            }
+        }
+    }
+    return 0;
+}
+
+/**************************************************************************/
+int
 iperf_init_stream(struct iperf_stream *sp, struct iperf_test *test)
 {
-    socklen_t len;
     int opt;
+    socklen_t len;
 
     len = sizeof(struct sockaddr_storage);
     if (getsockname(sp->socket, (struct sockaddr *) &sp->local_addr, &len) < 0) {
@@ -4307,26 +4361,6 @@ iperf_init_stream(struct iperf_stream *sp, struct iperf_test *test)
     if (getpeername(sp->socket, (struct sockaddr *) &sp->remote_addr, &len) < 0) {
         i_errno = IEINITSTREAM;
         return -1;
-    }
-
-    /* Set IP TOS */
-    if ((opt = test->settings->tos)) {
-        if (getsockdomain(sp->socket) == AF_INET6) {
-#ifdef IPV6_TCLASS
-            if (setsockopt(sp->socket, IPPROTO_IPV6, IPV6_TCLASS, &opt, sizeof(opt)) < 0) {
-                i_errno = IESETCOS;
-                return -1;
-            }
-#else
-            i_errno = IESETCOS;
-            return -1;
-#endif
-        } else {
-            if (setsockopt(sp->socket, IPPROTO_IP, IP_TOS, &opt, sizeof(opt)) < 0) {
-                i_errno = IESETTOS;
-                return -1;
-            }
-        }
     }
 
 #if defined(HAVE_DONT_FRAGMENT)
@@ -4368,6 +4402,7 @@ iperf_init_stream(struct iperf_stream *sp, struct iperf_test *test)
 #endif /* IP_MTU_DISCOVER */
     }
 #endif /* HAVE_DONT_FRAGMENT */
+
     return 0;
 }
 

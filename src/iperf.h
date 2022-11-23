@@ -297,6 +297,7 @@ struct iperf_test
     FILE     *outfile;
 
     int       ctrl_sck;
+    int       mapped_v4;
     int       listener;
     int       prot_listener;
 

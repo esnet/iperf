@@ -609,6 +609,13 @@ iperf_run_server(struct iperf_test *test)
                         return -1;
 		    }
 
+		    /* apply other common socket options */
+                    if (iperf_common_sockopts(test, s) < 0)
+                    {
+                        cleanup_server(test);
+                        return -1;
+                    }
+
                     if (!is_closed(s)) {
 
 #if defined(HAVE_TCP_USER_TIMEOUT)

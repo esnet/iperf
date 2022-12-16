@@ -332,6 +332,34 @@ if test "x$iperf3_cv_header_dontfragment" = "xyes"; then
     AC_DEFINE([HAVE_DONT_FRAGMENT], [1], [Have IP_MTU_DISCOVER/IP_DONTFRAG/IP_DONTFRAGMENT sockopt.])
 fi
 
+# Check for IP_PKTINFO (Linux only)
+AC_CACHE_CHECK([IP_PKTINFO socket option],
+[iperf3_cv_header_ip_pktinfo],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <netinet/in.h>]],
+		   [[int foo = IP_PKTINFO;]])],
+  iperf3_cv_header_ip_pktinfo=yes,
+  iperf3_cv_header_ip_pktinfo=no))
+if test "x$iperf3_cv_header_ip_pktinfo" = "xyes"; then
+    AC_DEFINE([HAVE_IP_PKTINFO], [1], [Have IP_PKTINFO sockopt.])
+fi
+
+# Check for IP_RECVDSTADDR (BSD?)
+AC_CACHE_CHECK([IP_RECVDSTADDR socket option],
+[iperf3_cv_header_ip_recvdstaddr],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <netinet/in.h>]],
+		   [[int foo = IP_RECVDSTADDR;]])],
+  iperf3_cv_header_ip_recvdstaddr=yes,
+  iperf3_cv_header_ip_recvdstaddr=no))
+if test "x$iperf3_cv_header_ip_recvdstaddr" = "xyes"; then
+    AC_DEFINE([HAVE_IP_RECVDSTADDR], [1], [Have IP_RECVDSTADDR sockopt.])
+fi
+
+if test "x$iperf3_cv_header_ip_pktinfo$iperf3_cv_header_ip_recvdstaddr" = "xnono"; then
+    AC_MSG_ERROR([neither IP_PKTINFO nor IP_RECVDSTADDR is available])
+fi
+
 #
 # Check for tcpi_snd_wnd in struct tcp_info
 #

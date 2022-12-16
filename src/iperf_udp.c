@@ -364,27 +364,93 @@ iperf_udp_buffercheck(struct iperf_test *test, int s)
 int
 iperf_udp_accept(struct iperf_test *test)
 {
-    struct sockaddr_storage sa_peer;
-    unsigned int buf;
-    socklen_t len;
-    int       sz, s;
-    int	      rc;
-
-    /*
-     * Get the current outstanding socket.  This socket will be used to handle
-     * data transfers and a new "listening" socket will be created.
-     */
-    s = test->prot_listener;
+    struct sockaddr_storage	sa_peer, sa_local;
+    unsigned int		buf;
+    socklen_t			len, len_local;
+    int				sz, s;
+    int				rc;
+    char			cbuffer[CMSG_SPACE
+#ifdef HAVE_IP_PKTINFO
+					(sizeof (struct in_pktinfo)
+					 > sizeof (struct in6_pktinfo)?
+					 sizeof (struct in_pktinfo):
+					 sizeof (struct in6_pktinfo))
+#elif defined(HAVE_IP_RECVDSTADDR)
+					(sizeof (struct in_addr)
+					 > sizeof (struct in6_pktinfo)?
+					 sizeof (struct in_addr):
+					 sizeof (struct in6_pktinfo))
+#endif
+				];
+    struct cmsghdr		*cm;
+    struct msghdr		msg;
+    struct iovec		iov;
 
     /*
      * Grab the UDP packet sent by the client.  From that we can extract the
      * client's address, and then use that information to bind the remote side
      * of the socket to the client.
      */
-    len = sizeof(sa_peer);
-    if ((sz = recvfrom(test->prot_listener, &buf, sizeof(buf), 0, (struct sockaddr *) &sa_peer, &len)) < 0) {
-        i_errno = IESTREAMACCEPT;
-        return -1;
+    len = len_local = sizeof(sa_peer);
+
+    memset(cbuffer, 0, sizeof cbuffer);
+
+    msg.msg_name       = &sa_peer;
+    msg.msg_namelen    = len;
+    msg.msg_iov        = &iov;
+    msg.msg_iovlen     = 1;
+    msg.msg_control    = cbuffer;
+    msg.msg_controllen = sizeof cbuffer;
+    msg.msg_flags      = 0;
+
+    iov.iov_base = &buf;
+    iov.iov_len  = sizeof buf;
+
+    /* Get the address of the local socket to determine the domain and port. */
+    if (getsockname(test->prot_listener, (struct sockaddr *) &sa_local,
+		    &len_local) < 0) {
+	i_errno = IESTREAMACCEPT;
+	return -1;
+    }
+
+    if ((sz = recvmsg(test->prot_listener, &msg, 0)) < 0) {
+	i_errno = IESTREAMACCEPT;
+	return -1;
+    }
+
+    /* Parse the retrieved ancillary data and retrieve the incoming
+       packet's destination address. */
+    for (cm = CMSG_FIRSTHDR(&msg); cm != NULL; cm = CMSG_NXTHDR(&msg, cm))
+	switch (sa_local.ss_family) {
+	case AF_INET:
+#ifdef HAVE_IP_PKTINFO
+	    if (cm->cmsg_level == IPPROTO_IP && cm->cmsg_type == IP_PKTINFO
+		&& cm->cmsg_len >= CMSG_LEN(sizeof (struct in_pktinfo)))
+	      memcpy(&((struct sockaddr_in *) &sa_local)->sin_addr,
+		     CMSG_DATA(cm) + offsetof(struct in_pktinfo, ipi_addr),
+		     sizeof (struct in_addr));
+#elif defined(HAVE_IP_RECVDSTADDR)
+	    if (cm->cmsg_level == IPPROTO_IP && cm->cmsg_type == IP_RECVDSTADDR
+		&& cm->cmsg_len >= CMSG_LEN(sizeof (struct in_addr)))
+	      memcpy(&((struct sockaddr_in *) &sa_local)->sin_addr,
+		     CMSG_DATA(cm), sizeof (struct in_addr));
+#endif
+	    break;
+	case AF_INET6:
+	    if (cm->cmsg_level == IPPROTO_IPV6 && cm->cmsg_type == IPV6_PKTINFO
+		&& cm->cmsg_len >= CMSG_LEN(sizeof (struct in6_pktinfo)))
+	      memcpy(&((struct sockaddr_in6 *) &sa_local)->sin6_addr,
+		     CMSG_DATA(cm) + offsetof(struct in6_pktinfo, ipi6_addr),
+		     sizeof (struct in6_addr));
+	}
+
+    /* Open and bind the session socket. */
+    s = netannounce_sockaddr(test->settings->domain, Pudp,
+			     (struct sockaddr *) &sa_local, len_local,
+			     test->bind_dev, 0);
+    if (s < 0) {
+	i_errno = IESTREAMACCEPT;
+	return -1;
     }
 
     if (connect(s, (struct sockaddr *) &sa_peer, len) < 0) {
@@ -437,15 +503,6 @@ iperf_udp_accept(struct iperf_test *test)
 		printf("Setting application pacing to %u\n", rate);
 	    }
 	}
-    }
-
-    /*
-     * Create a new "listening" socket to replace the one we were using before.
-     */
-    test->prot_listener = netannounce(test->settings->domain, Pudp, test->bind_address, test->bind_dev, test->server_port);
-    if (test->prot_listener < 0) {
-        i_errno = IESTREAMLISTEN;
-        return -1;
     }
 
     FD_SET(test->prot_listener, &test->read_set);

@@ -4611,8 +4611,8 @@ iperf_create_pidfile(struct iperf_test *test)
 	}
 	snprintf(buf, sizeof(buf), "%d", getpid()); /* no trailing newline */
 	if (write(fd, buf, strlen(buf)) < 0) {
-        (void)close(fd);
-	    return -1;
+		(void)close(fd);
+		return -1;
 	}
 	if (close(fd) < 0) {
 	    return -1;

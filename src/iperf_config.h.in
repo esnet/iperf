@@ -39,6 +39,12 @@
 /* Have IP_MTU_DISCOVER sockopt. */
 #undef HAVE_IP_MTU_DISCOVER
 
+/* Have IP_PKTINFO sockopt. */
+#undef HAVE_IP_PKTINFO
+
+/* Have IP_RECVDSTADDR sockopt. */
+#undef HAVE_IP_RECVDSTADDR
+
 /* Define to 1 if you have the <linux/tcp.h> header file. */
 #undef HAVE_LINUX_TCP_H
 

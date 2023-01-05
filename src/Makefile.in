@@ -533,7 +533,6 @@ EGREP = @EGREP@
 ETAGS = @ETAGS@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
-FILECMD = @FILECMD@
 GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -630,6 +629,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+AM_CPPFLAGS = -D_GNU_SOURCE -D__APPLE_USE_RFC_3542
 lib_LTLIBRARIES = libiperf.la                                   # Build and install an iperf library
 include_HEADERS = iperf_api.h                                   # Defines the headers that get installed with the program
 

@@ -1,3 +1,5 @@
+AM_CPPFLAGS = -D_GNU_SOURCE -D__APPLE_USE_RFC_3542
+
 lib_LTLIBRARIES         = libiperf.la                                   # Build and install an iperf library
 bin_PROGRAMS            = iperf3                                        # Build and install an iperf binary
 if ENABLE_PROFILING

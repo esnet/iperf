@@ -225,6 +225,12 @@ iperf_get_test_reverse(struct iperf_test *ipt)
 }
 
 int
+iperf_get_test_bidirectional(struct iperf_test *ipt)
+{
+    return ipt->bidirectional;
+}
+
+int
 iperf_get_test_blksize(struct iperf_test *ipt)
 {
     return ipt->settings->blksize;

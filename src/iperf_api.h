@@ -38,6 +38,7 @@
 extern "C" { /* open extern "C" */
 #endif
 
+#include <stdatomic.h>
 
 struct iperf_test;
 struct iperf_stream_result;
@@ -46,7 +47,8 @@ struct iperf_stream;
 struct iperf_time;
 
 #if !defined(__IPERF_H)
-typedef uint64_t iperf_size_t;
+typedef uint_fast64_t iperf_size_t;
+typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #endif // __IPERF_H
 
 /* default settings */

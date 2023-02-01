@@ -459,7 +459,7 @@ iperf_strerror(int int_errno)
 	    snprintf(errstr, len, "unable to set IP Do-Not-Fragment flag");
             break;
         case IESETUSERTIMEOUT:
-            snprintf(errstr, len, "unable to set TCP/SCTP MSS");
+            snprintf(errstr, len, "unable to set TCP USER_TIMEOUT");
             perr = 1;
             break;
 	default:

@@ -382,7 +382,6 @@ static void
 cleanup_server(struct iperf_test *test)
 {
     struct iperf_stream *sp;
-    iperf_close_logfile(test);
 
     /* Close open streams */
     SLIST_FOREACH(sp, &test->streams, streams) {
@@ -561,7 +560,7 @@ iperf_run_server(struct iperf_test *test)
                 else if (test->mode != SENDER && t_usecs > rcv_timeout_us) {
                     test->server_forced_no_msg_restarts_count += 1;
                     i_errno = IENOMSG;
-                    if (iperf_get_verbose(test) || test->debug_level > 0)
+                    if (iperf_get_verbose(test))
                         iperf_err(test, "Server restart (#%d) during active test due to idle timeout for receiving data",
                                   test->server_forced_no_msg_restarts_count);
                     cleanup_server(test);

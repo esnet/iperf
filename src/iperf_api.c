@@ -3041,6 +3041,8 @@ iperf_reset_test(struct iperf_test *test)
     struct iperf_stream *sp;
     int i;
 
+    iperf_close_logfile(test);
+
     /* Free streams */
     while (!SLIST_EMPTY(&test->streams)) {
         sp = SLIST_FIRST(&test->streams);

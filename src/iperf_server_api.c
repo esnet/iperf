@@ -382,7 +382,6 @@ static void
 cleanup_server(struct iperf_test *test)
 {
     struct iperf_stream *sp;
-    iperf_close_logfile(test);
 
     /* Close open streams */
     SLIST_FOREACH(sp, &test->streams, streams) {
@@ -390,6 +389,7 @@ cleanup_server(struct iperf_test *test)
             FD_CLR(sp->socket, &test->read_set);
             FD_CLR(sp->socket, &test->write_set);
             close(sp->socket);
+            sp->socket = -1;
 	}
     }
 
@@ -561,7 +561,7 @@ iperf_run_server(struct iperf_test *test)
                     test->server_forced_no_msg_restarts_count += 1;
                     i_errno = IENOMSG;
                     if (iperf_get_verbose(test))
-                        iperf_err(test, "Server restart (#%d) during active test due to idle data for receiving data",
+                        iperf_err(test, "Server restart (#%d) during active test due to idle timeout for receiving data",
                                   test->server_forced_no_msg_restarts_count);
                     cleanup_server(test);
                     return -1;

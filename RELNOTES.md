@@ -1,6 +1,45 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.13 2023-02-16
+---------------------
+
+* Notable user-visible changes
+
+  * fq-rate (PR #1461, Issue #1366), and bidirectional flag (Issue #1428,
+    PR #1429) were added to the JSON output.
+
+  * Added support for OpenBSD including cleaning up endian handling (PR #1396)
+    and support for TCP_INFO on systems where it was implemented (PR #1397).
+
+  * Fixed bug in how TOS is set in mapped v4 (PR #1427).
+
+  * Corrected documentation, such as updating binary download links and text
+    (Issue #1459), updating version on iperf3 websites, and fixing an
+    incorrect error message (Issue #1441).
+
+  * Fixed crash on rcv-timeout with JSON logfile (#1463, #1460, issue #1360,
+    PR #1369).
+
+  * Fixed a bug that prevented TOS/DSCP from getting set correctly for reverse
+    tests (PR #1427, Issue #638).
+
+* Developer-visible changes
+
+  * Getter and setter are now available for bind_dev (PR #1419).
+
+  * Added missing getter for bidirectional tests (PR #1453).
+
+  * Added minor changes to clean up .gitignore and error messages (#1408).
+
+  * Made sure configure scripts are runnable with /bin/sh (PR #1398).
+
+  * Cleaned up RPM spec, such as adding missing RPM build dependencies, dropping
+    EL5 and removing outdated %changelog (PR #1401) to make.
+
+  * Added a fix for a resource leak bug in function iperf_create_pidfile(#1443).
+
+
 iperf-3.12 2022-09-30
 ---------------------
 

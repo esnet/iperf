@@ -150,7 +150,7 @@ responsibility for the content of these pages.
 Copyright
 ---------
 
-iperf, Copyright (c) 2014-2022, The Regents of the University of
+iperf, Copyright (c) 2014-2023, The Regents of the University of
 California, through Lawrence Berkeley National Laboratory (subject
 to receipt of any required approvals from the U.S. Dept. of
 Energy).  All rights reserved.

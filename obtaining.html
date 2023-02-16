@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Obtaining iperf3 &#8212; iperf3 3.12 documentation</title>
+    <title>Obtaining iperf3 &#8212; iperf3 3.13 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/bootstrap-sphinx.css" />
     <link rel="stylesheet" href="_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
@@ -144,20 +144,25 @@
 <p>Note that ESnet does not distribute binary packages of iperf3.  All of
 the packages listed in this section are provided by third parties, who
 are solely responsible for their contents.  This is an incomplete list
-of binary packages:</p>
+of binary packages for various operating systems and distributions:</p>
 <ul class="simple">
-<li><p>FreeBSD:  <a class="reference external" href="http://freshports.org/benchmarks/iperf3">benchmarks/iperf3</a> in the FreeBSD Ports Collection</p></li>
-<li><p>Fedora / CentOS: <a class="reference external" href="https://apps.fedoraproject.org/packages/iperf3/">iperf3</a> and
+<li><p>FreeBSD: via the FreeBSD Ports Collection with <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">pkg</span> <span class="pre">install</span>
+<span class="pre">benchmarks/iperf3</span></code>.</p></li>
+<li><p>Fedora / RedHat Linux / CentOS / Rocky: <a class="reference external" href="https://apps.fedoraproject.org/packages/iperf3/">iperf3</a> and
 <a class="reference external" href="https://apps.fedoraproject.org/packages/iperf3-devel">iperf3-devel</a> in Fedora
 19 and 20 and in Fedora EPEL 5, 6, and 7.  iperf3 is included as a
 part of RedHat Enterprise Linux 7.4 and later (as well as CentOS 7.4
-and later).</p></li>
+and later, and all versions of Rocky Linux), and can generally be
+installed with <code class="docutils literal notranslate"><span class="pre">yum</span> <span class="pre">install</span> <span class="pre">iperf3</span></code>.</p></li>
 <li><p>Ubuntu:  <a class="reference external" href="https://launchpad.net/ubuntu/+source/iperf3">iperf3</a>,
 is available in Trusty (backports), and as a part of the main
-release in Vivid and newer.</p></li>
-<li><p>macOS:  via HomeBrew.</p></li>
-<li><p>Windows:  <a class="reference external" href="https://iperf.fr/iperf-download.php#windows">iperf3 binaries for Windows</a> are available from
-iperf.fr (and other sources).</p></li>
+release in Vivid and newer. It can generally be installed with
+<code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">iperf3</span></code>.</p></li>
+<li><p>macOS:  via HomeBrew with <code class="docutils literal notranslate"><span class="pre">brew</span> <span class="pre">install</span> <span class="pre">iperf3</span></code> or MacPorts with
+<code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">port</span> <span class="pre">install</span> <span class="pre">iperf3</span></code>.</p></li>
+<li><p>Windows:  iperf3 binaries for Windows (built with <a class="reference external" href="https://www.cygwin.com/">Cygwin</a>) can be found in a variety of
+locations, including <a class="reference external" href="https://files.budman.pw/">https://files.budman.pw/</a>
+(<a class="reference external" href="https://www.neowin.net/forum/topic/1234695-iperf/">discussion thread</a>).</p></li>
 </ul>
 </section>
 <section id="source-distributions">
@@ -214,7 +219,7 @@ NetBSD, OpenBSD, Windows, Solaris, Android, and iOS.</p>
         
         </p>
         <p>
-            &copy; Copyright 2014-2022, ESnet.<br/>
+            &copy; Copyright 2014-2023, ESnet.<br/>
           Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 5.2.3.<br/>
         </p>
       </div>

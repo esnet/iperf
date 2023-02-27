@@ -106,6 +106,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define OPT_SKIP_RX_COPY 32
 #define OPT_JSON_STREAM_FULL_OUTPUT 33
 #define OPT_SERVER_MAX_DURATION 34
+#define OPT_SOCK_PRIO 35
 
 /* states */
 #define TEST_START 1
@@ -444,6 +445,7 @@ enum {
     IECNTLKA = 36,          // Control connection Keepalive period should be larger than the full retry period (interval * count)
     IEMAXSERVERTESTDURATIONEXCEEDED = 37, // Client's duration exceeds server's maximum duration
     IEUNITVAL = 38,         // Invalid unit value or suffix
+    IEBADSOPRIO = 39,       // Bad socket priority value
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)
@@ -504,6 +506,7 @@ enum {
     IESETCNTLKAINTERVAL = 157, // Unable to set/get socket keepalive TCP retry interval (TCP_KEEPINTVL) option
     IESETCNTLKACOUNT = 158,    // Unable to set/get socket keepalive TCP number of retries (TCP_KEEPCNT) option
     IEPTHREADSIGMASK=159,      // Unable to initialize sub thread signal mask (check perror)
+    IESETSOPRIO = 160,      // Unable to set socket priority (check perror)
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

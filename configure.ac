@@ -277,6 +277,18 @@ if test "x$iperf3_cv_header_so_bindtodevice" = "xyes"; then
     AC_DEFINE([HAVE_SO_BINDTODEVICE], [1], [Have SO_BINDTODEVICE sockopt.])
 fi
 
+# Check for SO_PRIORITY sockopt (believed to be Linux only)
+AC_CACHE_CHECK([SO_PRIORITY socket option],
+[iperf3_cv_header_so_priority],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <sys/socket.h>]],
+                   [[int foo = SO_PRIORITY;]])],
+  iperf3_cv_header_so_priority=yes,
+  iperf3_cv_header_so_priority=no))
+if test "x$iperf3_cv_header_so_priority" = "xyes"; then
+    AC_DEFINE([HAVE_SO_PRIORITY], [1], [Have SO_PRIORITY sockopt.])
+fi
+
 # Check for IP_MTU_DISCOVER (mostly on Linux)
 AC_CACHE_CHECK([IP_MTU_DISCOVER socket option],
 [iperf3_cv_header_ip_mtu_discover],

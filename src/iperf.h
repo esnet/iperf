@@ -170,6 +170,9 @@ struct iperf_settings
     int       mss;                  /* for TCP MSS */
     int       ttl;                  /* IP TTL option */
     int       tos;                  /* type of service bit */
+#if defined(HAVE_SO_PRIORITY)
+    int       sock_prio;            /* protocol-defined priority, -1 indicates not set */
+#endif // HAVE_SO_PRIORITY
     int       flowlabel;            /* IPv6 flow label */
     iperf_size_t bytes;             /* number of bytes to send */
     iperf_size_t blocks;            /* number of blocks (packets) to send */

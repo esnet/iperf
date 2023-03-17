@@ -462,6 +462,9 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "unable to set TCP USER_TIMEOUT");
             perr = 1;
             break;
+        case IEMISSINGOPTARG:
+	    snprintf(errstr, len, "a mandatory argument for an option is missing or is negativefor");
+            break;
 	default:
 	    snprintf(errstr, len, "int_errno=%d", int_errno);
 	    perr = 1;

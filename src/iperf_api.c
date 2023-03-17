@@ -1121,6 +1121,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     struct xbind_entry *xbe;
     double farg;
     int rcv_timeout_in = 0;
+    int option_index = 0;
 
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = rcv_timeout_flag = snd_timeout_flag =0;
@@ -1128,7 +1129,15 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     char *client_username = NULL, *client_rsa_public_key = NULL, *server_rsa_private_key = NULL;
 #endif /* HAVE_SSL */
 
-    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, &option_index)) != -1) {
+        if (optarg && *optarg == '-') {
+            if ((flag >= 'A' && flag <= 'Z') || (flag >= 'a' && flag <= 'z'))
+                iperf_err(test, "Argument for option '%c' is missing or is negative", flag);
+            else
+                iperf_err(test, "Argument for option '%s' is missing or is negative", longopts[option_index].name);
+            i_errno = IEMISSINGOPTARG;
+            return -1;
+        }
         switch (flag) {
             case 'p':
 		portno = atoi(optarg);

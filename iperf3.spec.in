@@ -44,7 +44,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%%doc README.md INSTALL LICENSE RELEASE_NOTES
+%%doc README.md INSTALL LICENSE RELNOTES.md
 %{_mandir}/man1/iperf3.1.gz
 %{_mandir}/man3/libiperf.3.gz
 %{_bindir}/iperf3

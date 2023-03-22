@@ -162,9 +162,10 @@ EVP_PKEY *load_pubkey_from_file(const char *file) {
 
     if (file) {
       key = BIO_new_file(file, "r");
-      pkey = PEM_read_bio_PUBKEY(key, NULL, NULL, NULL);
-
-      BIO_free(key);
+      if (key != NULL) {
+          pkey = PEM_read_bio_PUBKEY(key, NULL, NULL, NULL);
+          BIO_free(key);
+      }
     }
     return (pkey);
 }
@@ -188,9 +189,10 @@ EVP_PKEY *load_privkey_from_file(const char *file) {
 
     if (file) {
       key = BIO_new_file(file, "r");
-      pkey = PEM_read_bio_PrivateKey(key, NULL, NULL, NULL);
-
-      BIO_free(key);
+      if (key != NULL) {
+          pkey = PEM_read_bio_PrivateKey(key, NULL, NULL, NULL);
+          BIO_free(key);
+      }
     }
     return (pkey);
 }

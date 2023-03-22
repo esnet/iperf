@@ -1626,15 +1626,15 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
         char *client_password = NULL;
         size_t s;
+        if (test_load_pubkey_from_file(client_rsa_public_key) < 0){
+            iperf_err(test, "%s\n", ERR_error_string(ERR_get_error(), NULL));
+            i_errno = IESETCLIENTAUTH;
+            return -1;
+        }
         /* Need to copy env var, so we can do a common free */
         if ((client_password = getenv("IPERF3_PASSWORD")) != NULL)
              client_password = strdup(client_password);
         else if (iperf_getpass(&client_password, &s, stdin) < 0){
-            i_errno = IESETCLIENTAUTH;
-            return -1;
-        }
-        if (test_load_pubkey_from_file(client_rsa_public_key) < 0){
-            iperf_err(test, "%s\n", ERR_error_string(ERR_get_error(), NULL));
             i_errno = IESETCLIENTAUTH;
             return -1;
         }

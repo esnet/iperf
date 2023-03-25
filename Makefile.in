@@ -162,8 +162,8 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/iperf3.spec.in \
 	$(top_srcdir)/config/missing \
 	$(top_srcdir)/config/mkinstalldirs INSTALL README.md \
 	config/compile config/config.guess config/config.sub \
-	config/install-sh config/ltmain.sh config/missing \
-	config/mkinstalldirs
+	config/depcomp config/install-sh config/ltmain.sh \
+	config/missing config/mkinstalldirs
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)

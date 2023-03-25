@@ -362,6 +362,7 @@ iperf_udp_buffercheck(struct iperf_test *test, int s)
     if (rcvbuf_actual_item == NULL) {
 	cJSON_AddNumberToObject(test->json_start, "rcvbuf_actual", rcvbuf_actual);
     }
+    }
 
     return rc;
 }

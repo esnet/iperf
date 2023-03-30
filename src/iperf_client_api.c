@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2022, The Regents of the University of
+ * iperf, Copyright (c) 2014-2023, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -56,7 +56,7 @@ iperf_client_worker_run(void *s) {
     struct iperf_stream *sp = (struct iperf_stream *) s;
     struct iperf_test *test = sp->test;
 
-    while (! (test->done)) {
+    while (! (test->done) && ! (sp->done)) {
         if (sp->sender) {
             if (iperf_send_mt(sp) < 0) {
                 goto cleanup_and_fail;
@@ -71,8 +71,6 @@ iperf_client_worker_run(void *s) {
     return NULL;
 
   cleanup_and_fail:
-    /* XXX */
-    test->done = 0;
     return NULL;
 }
 

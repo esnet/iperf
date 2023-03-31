@@ -1,6 +1,8 @@
 iperf3:  A TCP, UDP, and SCTP network bandwidth measurement tool
 ================================================================
 
+(Multithreaded beta release)
+
 Summary
 -------
 

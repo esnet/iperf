@@ -201,6 +201,7 @@ struct iperf_stream
      */
     int       packet_count;
     int	      peer_packet_count;
+    int	      peer_omitted_packet_count;
     int       omitted_packet_count;
     double    jitter;
     double    prev_transit;

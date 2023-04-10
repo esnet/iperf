@@ -1676,6 +1676,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     }
 
 #endif //HAVE_SSL
+
+    // File cannot be transferred using UDP because of the UDP packets header (packet number, etc.)
+    if(test->role == 'c' && test->diskfile_name != (char*) 0 && test->protocol->id == Pudp) {
+        i_errno = IEUDPFILETRANSFER;
+        return -1;
+    }
+
     if (blksize == 0) {
 	if (test->protocol->id == Pudp)
 	    blksize = 0;	/* try to dynamically determine from MSS */

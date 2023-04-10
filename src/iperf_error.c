@@ -350,6 +350,9 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "send timeout value is incorrect or not in range");
             perr = 1;
             break;
+        case IEUDPFILETRANSFER:
+            snprintf(errstr, len, "cannot transfer file using UDP");
+            break;
         case IERVRSONLYRCVTIMEOUT:
             snprintf(errstr, len, "client receive timeout is valid only in receiving mode");
             perr = 1;

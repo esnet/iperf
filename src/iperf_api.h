@@ -38,8 +38,15 @@
 extern "C" { /* open extern "C" */
 #endif
 
+/*
+ * Atomic types highly desired, but if not, we approximate what we need
+ * with normal integers and warn.
+ */
 #ifdef HAVE_STDATOMIC_H
 #include <stdatomic.h>
+#else
+#warning "No <stdatomic.h> available"
+typedef u_int64_t atomic_uint_fast64_t;
 #endif // HAVE_STDATOMIC_H
 
 struct iperf_test;

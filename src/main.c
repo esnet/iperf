@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2022, The Regents of the University of
+ * iperf, Copyright (c) 2014-2023, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -58,6 +58,24 @@ int
 main(int argc, char **argv)
 {
     struct iperf_test *test;
+
+    /*
+     * Atomics check. We prefer to have atomic types (which is
+     * basically on any compiler supporting C11 or better). If we
+     * don't have them, we try to approximate the type we need with a
+     * regular integer, but complain if they're not lock-free. We only
+     * know how to check this on GCC. GCC on CentOS 7 / RHEL 7 is the
+     * targeted use case for these check.
+     */
+#ifndef HAVE_STDATOMIC_H
+#ifdef __GNUC__
+    if (! __atomic_always_lock_free (sizeof (u_int64_t), 0)) {
+#endif // __GNUC__
+        fprintf(stderr, "Warning: Cannot guarantee lock-free operation with 64-bit data types\n");
+#ifdef __GNUC__
+    }
+#endif // __GNUC__
+#endif // HAVE_STDATOMIC_H
 
     // XXX: Setting the process affinity requires root on most systems.
     //      Is this a feature we really need?

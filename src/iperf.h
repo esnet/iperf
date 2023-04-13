@@ -77,12 +77,18 @@
 #include <pthread.h>
 #endif // HAVE_PTHREAD
 
+/*
+ * Atomic types highly desired, but if not, we approximate what we need
+ * with normal integers and warn.
+ */
 #ifdef HAVE_STDATOMIC_H
 #include <stdatomic.h>
+#else
+#warning "No <stdatomic.h> available."
+typedef uint64_t atomic_uint_fast64_t;
 #endif // HAVE_STDATOMIC_H
 
 #if !defined(__IPERF_API_H)
-//typedef uint64_t iperf_size_t;
 typedef uint_fast64_t iperf_size_t;
 typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #endif // __IPERF_API_H

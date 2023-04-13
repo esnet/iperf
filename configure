@@ -15085,6 +15085,15 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+# Atomics
+ac_fn_c_check_header_compile "$LINENO" "stdatomic.h" "ac_cv_header_stdatomic_h" "$ac_includes_default"
+if test "x$ac_cv_header_stdatomic_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_STDATOMIC_H 1" >>confdefs.h
+
+fi
+
+
 # Check for poll.h (it's in POSIX so everyone should have it?)
 ac_fn_c_check_header_compile "$LINENO" "poll.h" "ac_cv_header_poll_h" "$ac_includes_default"
 if test "x$ac_cv_header_poll_h" = xyes

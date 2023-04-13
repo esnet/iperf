@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2020, The Regents of the University of
+ * iperf, Copyright (c) 2014-2020, 2023, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -73,8 +73,13 @@
 #include <openssl/evp.h>
 #endif // HAVE_SSL
 
+#ifdef HAVE_PTHREAD
 #include <pthread.h>
+#endif // HAVE_PTHREAD
+
+#ifdef HAVE_STDATOMIC_H
 #include <stdatomic.h>
+#endif // HAVE_STDATOMIC_H
 
 #if !defined(__IPERF_API_H)
 //typedef uint64_t iperf_size_t;

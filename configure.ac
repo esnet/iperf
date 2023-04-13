@@ -91,6 +91,9 @@ CC="$PTHREAD_CC"
 CXX="$PTHREAD_CXX"
 ])
 
+# Atomics
+AC_CHECK_HEADERS([stdatomic.h])
+
 # Check for poll.h (it's in POSIX so everyone should have it?)
 AC_CHECK_HEADERS([poll.h])
 

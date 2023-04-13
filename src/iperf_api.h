@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2022, The Regents of the University of
+ * iperf, Copyright (c) 2014-2023, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -38,7 +38,9 @@
 extern "C" { /* open extern "C" */
 #endif
 
+#ifdef HAVE_STDATOMIC_H
 #include <stdatomic.h>
+#endif // HAVE_STDATOMIC_H
 
 struct iperf_test;
 struct iperf_stream_result;

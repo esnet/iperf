@@ -662,12 +662,6 @@ iperf_run_client(struct iperf_test * test)
                     goto cleanup_and_fail;
                 }
 
-		// Set non-blocking for non-UDP tests
-		if (test->protocol->id != Pudp) {
-		    SLIST_FOREACH(sp, &test->streams, streams) {
-			setnonblocking(sp->socket, 1);
-		    }
-		}
 	    }
 
             /* Run the timers. */
@@ -705,13 +699,6 @@ iperf_run_client(struct iperf_test * test)
                 if (test->debug_level >= DEBUG_LEVEL_INFO) {
                     iperf_printf(test, "Sender threads stopped\n");
                 }
-
-		// Unset non-blocking for non-UDP tests
-		if (test->protocol->id != Pudp) {
-		    SLIST_FOREACH(sp, &test->streams, streams) {
-			setnonblocking(sp->socket, 0);
-		    }
-		}
 
 		/* Yes, done!  Send TEST_END. */
 		test->done = 1;

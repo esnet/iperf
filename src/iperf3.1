@@ -1,4 +1,4 @@
-.TH IPERF3 1 "September 2022" ESnet "User Manuals"
+.TH IPERF3 1 "April 2023" ESnet "User Manuals"
 .SH NAME
 iperf3 \- perform network throughput tests
 .SH SYNOPSIS
@@ -326,7 +326,9 @@ bind data streams to a specific client port (for TCP and UDP only,
 default is to use an ephemeral port)
 .TP
 .BR -P ", " --parallel " \fIn\fR"
-number of parallel client streams to run. Note that iperf3 is single threaded, so if you are CPU bound, this will not yield higher throughput.
+number of parallel client streams to run. iperf3 will spawn off a
+separate thread for each test stream. Using multiple streams may
+result in higher throughput than a single stream.
 .TP
 .BR -R ", " --reverse
 reverse the direction of a test, so that the server sends data to the

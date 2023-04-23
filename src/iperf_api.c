@@ -4231,7 +4231,11 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
             tempdir = getenv("TMP");
         }
         if (tempdir == 0){
+#if defined(__ANDROID__)
+            tempdir = "/data/local/tmp";
+#else
             tempdir = "/tmp";
+#endif
         }
         snprintf(template, sizeof(template) / sizeof(char), "%s/iperf3.XXXXXX", tempdir);
     }

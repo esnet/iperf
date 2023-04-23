@@ -4230,6 +4230,11 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         if (tempdir == 0){
             tempdir = getenv("TMP");
         }
+#if defined(ANDROID) || defined(_ANDROID_)
+        if (tempdir == 0 && getenv("ANDROID_ART_ROOT")) {
+            tempdir = "/data/local/tmp";
+        }
+#endif
         if (tempdir == 0){
 #if defined(__ANDROID__)
             tempdir = "/data/local/tmp";

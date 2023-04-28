@@ -56,6 +56,10 @@ iperf_client_worker_run(void *s) {
     struct iperf_stream *sp = (struct iperf_stream *) s;
     struct iperf_test *test = sp->test;
 
+    /* Allow this thread to be cancelled even if it's in a syscall */
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+
     while (! (test->done) && ! (sp->done)) {
         if (sp->sender) {
             if (iperf_send_mt(sp) < 0) {
@@ -536,6 +540,7 @@ iperf_run_client(struct iperf_test * test)
     struct iperf_time last_receive_time;
     struct iperf_time diff_time;
     struct timeval used_timeout;
+    iperf_size_t last_receive_blocks;
     int64_t t_usecs;
     int64_t timeout_us;
     int64_t rcv_timeout_us;
@@ -580,6 +585,9 @@ iperf_run_client(struct iperf_test * test)
     else
         rcv_timeout_us = 0;
 
+    iperf_time_now(&last_receive_time); // Initialize last time something was received
+    last_receive_blocks = 0;
+
     startup = 1;
     while (test->state != IPERF_DONE) {
 	memcpy(&read_set, &test->read_set, sizeof(fd_set));
@@ -595,6 +603,10 @@ iperf_run_client(struct iperf_test * test)
                 used_timeout.tv_usec = timeout->tv_usec;
                 timeout_us = (timeout->tv_sec * SEC_TO_US) + timeout->tv_usec;
             }
+            /* Cap the maximum select timeout at 1 second */
+            if (timeout_us > SEC_TO_US) {
+                timeout_us = SEC_TO_US;
+            }
             if (timeout_us < 0 || timeout_us > rcv_timeout_us) {
                 used_timeout.tv_sec = test->settings->rcv_timeout.secs;
                 used_timeout.tv_usec = test->settings->rcv_timeout.usecs;
@@ -607,23 +619,32 @@ iperf_run_client(struct iperf_test * test)
   	    i_errno = IESELECT;
 	    goto cleanup_and_fail;
         } else if (result == 0 && test->state == TEST_RUNNING && rcv_timeout_us > 0) {
-            // If nothing was received in non-reverse running state then probably something got stack -
-            // either client, server or network, and test should be terminated.
+            /*
+             * If nothing was received in non-reverse running state
+             * then probably something got stuck - either client,
+             * server or network, and test should be terminated./
+             */
             iperf_time_now(&now);
             if (iperf_time_diff(&now, &last_receive_time, &diff_time) == 0) {
                 t_usecs = iperf_time_in_usecs(&diff_time);
                 if (t_usecs > rcv_timeout_us) {
-                    i_errno = IENOMSG;
-                    goto cleanup_and_fail;
+                    /* Idle timeout if no new blocks received */
+                    if (test->blocks_received == last_receive_blocks) {
+                        i_errno = IENOMSG;
+                        goto cleanup_and_fail;
+                    }
                 }
 
             }
         }
 
+        /* See if the test is making progress */
+        if (test->blocks_received > last_receive_blocks) {
+            last_receive_blocks = test->blocks_received;
+            last_receive_time = now;
+        }
+
 	if (result > 0) {
-            if (rcv_timeout_us > 0) {
-                iperf_time_now(&last_receive_time);
-            }
 	    if (FD_ISSET(test->ctrl_sck, &read_set)) {
  	        if (iperf_handle_message_client(test) < 0) {
 		    goto cleanup_and_fail;
@@ -687,6 +708,10 @@ iperf_run_client(struct iperf_test * test)
                 SLIST_FOREACH(sp, &test->streams, streams) {
                     if (sp->sender) {
                         sp->done = 1;
+                        if (pthread_cancel(sp->thr) != 0) {
+                            i_errno = IEPTHREADCANCEL;
+                            goto cleanup_and_fail;
+                        }
                         if (pthread_join(sp->thr, NULL) != 0) {
                             i_errno = IEPTHREADJOIN;
                             goto cleanup_and_fail;
@@ -714,6 +739,10 @@ iperf_run_client(struct iperf_test * test)
     SLIST_FOREACH(sp, &test->streams, streams) {
         if (!sp->sender) {
             sp->done = 1;
+            if (pthread_cancel(sp->thr) != 0) {
+                i_errno = IEPTHREADCANCEL;
+                goto cleanup_and_fail;
+            }
             if (pthread_join(sp->thr, NULL) != 0) {
                 i_errno = IEPTHREADJOIN;
                 goto cleanup_and_fail;
@@ -744,9 +773,13 @@ iperf_run_client(struct iperf_test * test)
     i_errno_save = i_errno;
     SLIST_FOREACH(sp, &test->streams, streams) {
         sp->done = 1;
-        if (pthread_join(sp->thr, NULL) != 0) {
+        if (pthread_cancel(sp->thr) != 0) {
             i_errno = IEPTHREADCANCEL;
-            iperf_err(test, "cleanup_and_fail - %s", iperf_strerror(i_errno));
+            iperf_err(test, "cleanup_and_fail in cancel - %s", iperf_strerror(i_errno));
+        }
+        if (pthread_join(sp->thr, NULL) != 0) {
+            i_errno = IEPTHREADJOIN;
+            iperf_err(test, "cleanup_and_fail in join - %s", iperf_strerror(i_errno));
         }
         if (test->debug >= DEBUG_LEVEL_INFO) {
             iperf_printf(test, "Thread FD %d stopped\n", sp->socket);

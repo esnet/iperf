@@ -71,6 +71,10 @@ iperf_server_worker_run(void *s) {
     struct iperf_stream *sp = (struct iperf_stream *) s;
     struct iperf_test *test = sp->test;
 
+    /* Allow this thread to be cancelled even if it's in a syscall */
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+
     while (! (test->done) && ! (sp->done)) {
         if (sp->sender) {
             if (iperf_send_mt(sp) < 0) {
@@ -410,9 +414,13 @@ cleanup_server(struct iperf_test *test)
     int i_errno_save = i_errno;
     SLIST_FOREACH(sp, &test->streams, streams) {
         sp->done = 1;
+        if (pthread_cancel(sp->thr) != 0) {
+            i_errno = IEPTHREADCANCEL;
+            iperf_err(test, "cleanup_server in cancel - %s", iperf_strerror(i_errno));
+        }
         if (pthread_join(sp->thr, NULL) != 0) {
             i_errno = IEPTHREADJOIN;
-            iperf_err(test, "cleanup_server - %s", iperf_strerror(i_errno));
+            iperf_err(test, "cleanup_server in join - %s", iperf_strerror(i_errno));
         }
         if (test->debug >= DEBUG_LEVEL_INFO) {
             iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
@@ -488,6 +496,7 @@ iperf_run_server(struct iperf_test *test)
     struct iperf_time diff_time;
     struct timeval* timeout;
     struct timeval used_timeout;
+    iperf_size_t last_receive_blocks;
     int flag;
     int64_t t_usecs;
     int64_t timeout_us;
@@ -526,6 +535,7 @@ iperf_run_server(struct iperf_test *test)
     }
 
     iperf_time_now(&last_receive_time); // Initialize last time something was received
+    last_receive_blocks = 0;
 
     test->state = IPERF_START;
     send_streams_accepted = 0;
@@ -561,6 +571,10 @@ iperf_run_server(struct iperf_test *test)
                 used_timeout.tv_usec = timeout->tv_usec;
                 timeout_us = (timeout->tv_sec * SEC_TO_US) + timeout->tv_usec;
             }
+            /* Cap the maximum select timeout at 1 second */
+            if (timeout_us > SEC_TO_US) {
+                timeout_us = SEC_TO_US;
+            }
             if (timeout_us < 0 || timeout_us > rcv_timeout_us) {
                 used_timeout.tv_sec = test->settings->rcv_timeout.secs;
                 used_timeout.tv_usec = test->settings->rcv_timeout.usecs;
@@ -574,13 +588,18 @@ iperf_run_server(struct iperf_test *test)
             i_errno = IESELECT;
             return -1;
         } else if (result == 0) {
-            // If nothing was received during the specified time (per state)
-            // then probably something got stack either at the client, server or network,
-            // and Test should be forced to end.
+            /*
+             * If nothing was received during the specified time (per
+             * state) then probably something got stuck either at the
+             * client, server or network, and test should be forced to
+             * end.
+            */
             iperf_time_now(&now);
             t_usecs = 0;
             if (iperf_time_diff(&now, &last_receive_time, &diff_time) == 0) {
                 t_usecs = iperf_time_in_usecs(&diff_time);
+
+                /* We're in the state where we're still accepting connections */
                 if (test->state == IPERF_START) {
                     if (test->settings->idle_timeout > 0 && t_usecs >= test->settings->idle_timeout * SEC_TO_US) {
                         test->server_forced_idle_restarts_count += 1;
@@ -598,21 +617,33 @@ iperf_run_server(struct iperf_test *test)
                         return 2;
                     }
                 }
-                else if (test->mode != SENDER && t_usecs > rcv_timeout_us) {
-                    test->server_forced_no_msg_restarts_count += 1;
-                    i_errno = IENOMSG;
-                    if (iperf_get_verbose(test))
-                        iperf_err(test, "Server restart (#%d) during active test due to idle timeout for receiving data",
-                                  test->server_forced_no_msg_restarts_count);
-                    cleanup_server(test);
-                    return -1;
-                }
 
+                /*
+                 * Running a test. If we're receiving, be sure we're making
+                 * progress (sender hasn't died/crashed).
+                 */
+                else if (test->mode != SENDER && t_usecs > rcv_timeout_us) {
+                    /* Idle timeout if no new blocks received */
+                    if (test->blocks_received == last_receive_blocks) {
+                        test->server_forced_no_msg_restarts_count += 1;
+                        i_errno = IENOMSG;
+                        if (iperf_get_verbose(test))
+                            iperf_err(test, "Server restart (#%d) during active test due to idle timeout for receiving data",
+                                      test->server_forced_no_msg_restarts_count);
+                        cleanup_server(test);
+                        return -1;
+                    }
+                }
             }
         }
 
+        /* See if the test is making progress */
+        if (test->blocks_received > last_receive_blocks) {
+            last_receive_blocks = test->blocks_received;
+            last_receive_time = now;
+        }
+
 	if (result > 0) {
-            iperf_time_now(&last_receive_time);
             if (FD_ISSET(test->listener, &read_set)) {
                 if (test->state != CREATE_STREAMS) {
                     if (iperf_accept(test) < 0) {

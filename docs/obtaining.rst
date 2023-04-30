@@ -14,9 +14,9 @@ of binary packages for various operating systems and distributions:
 * FreeBSD: via the FreeBSD Ports Collection with ``sudo pkg install
   benchmarks/iperf3``.
 * Fedora / RedHat Linux / CentOS / Rocky: `iperf3
-  <https://apps.fedoraproject.org/packages/iperf3/>`_ and
+  <https://packages.fedoraproject.org/pkgs/iperf3/iperf3/>`_ and
   `iperf3-devel
-  <https://apps.fedoraproject.org/packages/iperf3-devel>`_ in Fedora
+  <https://packages.fedoraproject.org/pkgs/iperf3/iperf3-devel/`_ in Fedora
   19 and 20 and in Fedora EPEL 5, 6, and 7.  iperf3 is included as a
   part of RedHat Enterprise Linux 7.4 and later (as well as CentOS 7.4
   and later, and all versions of Rocky Linux), and can generally be

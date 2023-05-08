@@ -669,6 +669,7 @@ iperf_run_client(struct iperf_test * test)
                 SLIST_FOREACH(sp, &test->streams, streams) {
                     if (pthread_create(&(sp->thr), &attr, &iperf_client_worker_run, sp) != 0) {
                         i_errno = IEPTHREADCREATE;
+			sp->thr = (pthread_t) NULL;
                         goto cleanup_and_fail;
                     }
                     if (test->debug_level >= DEBUG_LEVEL_INFO) {
@@ -794,13 +795,16 @@ iperf_run_client(struct iperf_test * test)
             errno = rc;
             iperf_err(test, "cleanup_and_fail in pthread_cancel - %s", iperf_strerror(i_errno));
         }
-        rc = pthread_join(sp->thr, NULL); 
+	if (sp->thr != (pthread_t)NULL)
+	{
+            rc = pthread_join(sp->thr, NULL); 
+	}
         if (rc != 0 && rc != ESRCH) {
             i_errno = IEPTHREADJOIN;
             errno = rc;
             iperf_err(test, "cleanup_and_fail in pthread_join - %s", iperf_strerror(i_errno));
         }
-        if (test->debug >= DEBUG_LEVEL_INFO) {
+        if (test->debug_level >= DEBUG_LEVEL_INFO) {
             iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
         }
     }

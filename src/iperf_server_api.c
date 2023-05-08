@@ -427,7 +427,7 @@ cleanup_server(struct iperf_test *test)
             errno = rc;
             iperf_err(test, "cleanup_server in pthread_join - %s", iperf_strerror(i_errno));
         }
-        if (test->debug >= DEBUG_LEVEL_INFO) {
+        if (test->debug_level >= DEBUG_LEVEL_INFO) {
             iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
         }
     }

@@ -373,37 +373,37 @@ const char report_bw_udp_sender_header_bidir[] =
 "[ ID][Role] Interval           Transfer     Bitrate         Total Datagrams\n";
 
 const char report_bw_format[] =
-"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec                  %s\n";
+"[%3d]%s %6.2f-%-6.2f s  %ss  %ss/s                  %s\n";
 
 const char report_bw_retrans_format[] =
-"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %3u             %s\n";
+"[%3d]%s %6.2f-%-6.2f s  %ss  %s/s  %3u             %s\n";
 
 const char report_bw_retrans_cwnd_format[] =
-"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %3u   %ss       %s\n";
+"[%3d]%s %6.2f-%-6.2f s  %ss  %s/s  %3u   %ss       %s\n";
 
 const char report_bw_udp_format[] =
-"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)  %s\n";
+"[%3d]%s %6.2f-%-6.2f s  %ss  %s/s  %5.3f ms  %d/%d (%.2g%%)  %s\n";
 
 const char report_bw_udp_format_no_omitted_error[] =
 "[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  Unknown/%d  %s\n";
 
 const char report_bw_udp_sender_format[] =
-"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %d  %s\n";
+"[%3d]%s %6.2f-%-6.2f s  %ss  %s/s %s %d  %s\n";
 
 const char report_summary[] =
 "Test Complete. Summary Results:\n";
 
 const char report_sum_bw_format[] =
-"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec                  %s\n";
+"[SUM]%s %6.2f-%-6.2f s  %ss  %s/s                  %s\n";
 
 const char report_sum_bw_retrans_format[] =
-"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %3d             %s\n";
+"[SUM]%s %6.2f-%-6.2f s  %ss  %s/s  %3d             %s\n";
 
 const char report_sum_bw_udp_format[] =
-"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)  %s\n";
+"[SUM]%s %6.2f-%-6.2f s  %ss  %s/s  %5.3f ms  %d/%d (%.2g%%)  %s\n";
 
 const char report_sum_bw_udp_sender_format[] =
-"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %d  %s\n";
+"[SUM]%s %6.2f-%-6.2f s  %ss  %s/s %s %d  %s\n";
 
 const char report_omitted[] = "(omitted)";
 

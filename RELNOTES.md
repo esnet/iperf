@@ -1,6 +1,23 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.13-mt-beta3
+-------------------
+Multithreaded beta release.
+
+* Notable user-visible changes
+
+  * Fix a bug related to idle timeouts, so that the --rcv-timeout
+    option works correctly.
+
+  * Make shutdown of threads more tolerant in the face of various
+    orders of operations at the end of tests.
+
+* Developer-visible changes
+
+  * Pulled in various (unreleased) changes, primarily bugfixes, from
+    the master branch.
+
 iperf-3.13-mt-beta2
 -------------------
 Multithreaded beta release.

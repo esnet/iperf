@@ -43,6 +43,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <time.h>
 #include <sched.h>
 #include <setjmp.h>
 #include <signal.h>
@@ -461,6 +462,54 @@ create_server_omit_timer(struct iperf_test * test)
 	    i_errno = IEINITTEST;
 	    return -1;
 	}
+    }
+
+    return 0;
+}
+
+/*
+ * Wait until txstart epoch while still servicing control channel messages.
+ * Returns:
+ *   0  - reached start time
+ *   1  - test ended/terminated while waiting
+ *  -1  - error
+ */
+static int
+wait_for_txstart_epoch(struct iperf_test *test)
+{
+    while (test->txstart_epoch != 0 && time(NULL) < test->txstart_epoch) {
+        fd_set read_set;
+        struct timeval timeout;
+        time_t remaining = test->txstart_epoch - time(NULL);
+        int result;
+
+        if (remaining < 1) {
+            remaining = 1;
+        }
+
+        timeout.tv_sec = remaining > 1 ? 1 : remaining;
+        timeout.tv_usec = 0;
+
+        FD_ZERO(&read_set);
+        FD_SET(test->ctrl_sck, &read_set);
+
+        result = select(test->ctrl_sck + 1, &read_set, NULL, NULL, &timeout);
+        if (result < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            i_errno = IESELECT;
+            return -1;
+        }
+
+        if (result > 0 && FD_ISSET(test->ctrl_sck, &read_set)) {
+            if (iperf_handle_message_server(test) < 0) {
+                return -1;
+            }
+            if (test->state == IPERF_DONE) {
+                return 1;
+            }
+        }
     }
 
     return 0;
@@ -933,6 +982,22 @@ iperf_run_server(struct iperf_test *test)
 
 		    // Begin calculating CPU utilization
 		    cpu_util(NULL);
+
+                    if (test->txstart_epoch != 0 && test->txstart_epoch > time(NULL)) {
+                        int wait_rc;
+                        iperf_printf(test,
+                                     "Server delaying test start until %lu\n",
+                                     (unsigned long) test->txstart_epoch);
+                        wait_rc = wait_for_txstart_epoch(test);
+                        if (wait_rc < 0) {
+                            cleanup_server(test);
+                            return -1;
+                        }
+                        if (wait_rc > 0) {
+                            cleanup_server(test);
+                            return 0;
+                        }
+                    }
 
 		    if (iperf_set_send_state(test, TEST_START) != 0) {
 			cleanup_server(test);

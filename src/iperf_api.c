@@ -1194,6 +1194,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"gsro", no_argument, NULL, OPT_GSRO},
         {"debug", optional_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
+        {"tx-starttime", required_argument, NULL, OPT_TX_START_EPOCH},
         {NULL, 0, NULL, 0}
     };
     int flag;
@@ -1703,6 +1704,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		break;
 	    case OPT_FORCEFLUSH:
 		test->forceflush = 1;
+		break;
+	    case OPT_TX_START_EPOCH:
+		test->txstart_epoch = atol(optarg);
 		break;
 	    case OPT_GET_SERVER_OUTPUT:
 		test->get_server_output = 1;
@@ -2480,6 +2484,15 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "gro", test->settings->gro);
 	    cJSON_AddNumberToObject(j, "gro_bf_size", test->settings->gro_bf_size);
 	}
+	if (test->txstart_epoch) {
+	    time_t now = time(NULL);
+	    double delay = (double) (test->txstart_epoch - now);
+	    if (delay < 0) {
+		delay = 0;
+	    }
+	    cJSON_AddNumberToObject(j, "txstart_epoch", (double) test->txstart_epoch);
+	    cJSON_AddNumberToObject(j, "txstart_delay", delay);
+	}
 	if (test->settings->tos)
 	    cJSON_AddNumberToObject(j, "TOS", test->settings->tos);
 	if (test->settings->flowlabel)
@@ -2746,6 +2759,10 @@ get_parameters(struct iperf_test *test)
 	        test->settings->burst = j_p->valueint;
             }
         }
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "txstart_epoch", cJSON_Number)) != NULL)
+	    test->txstart_epoch = (time_t) j_p->valuedouble;
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "txstart_delay", cJSON_Number)) != NULL)
+	    test->txstart_epoch = time(NULL) + (time_t) j_p->valuedouble;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "TOS", cJSON_Number)) != NULL){
             if (j_p->valueint < 0 || j_p->valueint > 255){
                 i_errno = IEBADTOS;

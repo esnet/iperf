@@ -350,6 +350,25 @@ iperf_handle_message_client(struct iperf_test *test)
                 return -1;
             break;
         case TEST_START:
+            if (test->txstart_epoch != 0) {
+                int ret = 0;
+                struct timespec request;
+                request.tv_sec = test->txstart_epoch;
+                request.tv_nsec = 0; /* Do not consider nanosecond precision */
+
+                ret = clock_nanosleep(CLOCK_REALTIME,
+                                      TIMER_ABSTIME,
+                                      &request,
+                                      NULL);
+
+                if (ret) {
+                    iperf_err(test,
+                              "Failed to sleep until request %lu\n, errno %d",
+                              test->txstart_epoch,
+                              ret);
+                    return -1;
+                }
+            }
             if (iperf_init_test(test) < 0)
                 return -1;
             if (create_client_timers(test) < 0)
@@ -648,6 +667,14 @@ iperf_run_client(struct iperf_test * test)
         rcv_timeout_us = (test->settings->rcv_timeout.secs * SEC_TO_US) + test->settings->rcv_timeout.usecs;
     else
         rcv_timeout_us = 0;
+
+    if (test->txstart_epoch != 0 && test->txstart_epoch > time(NULL)) {
+        iperf_printf(test,
+                     "Client scheduled to start at %lu, attempt to sleep for %lds\n",
+                     (unsigned long) test->txstart_epoch,
+                     (long) (test->txstart_epoch - time(NULL)));
+        iflush(test);
+    }
 
     iperf_time_now(&last_receive_time); // Initialize last time something was received
     last_receive_blocks = 0;

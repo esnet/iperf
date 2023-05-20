@@ -4725,35 +4725,38 @@ iperf_json_start(struct iperf_test *test)
 int
 iperf_json_finish(struct iperf_test *test)
 {
-    if (test->title) {
-        cJSON_AddStringToObject(test->json_top, "title", test->title);
+    if (test->json_top) {
+        if (test->title) {
+            cJSON_AddStringToObject(test->json_top, "title", test->title);
+        }
+        if (test->extra_data) {
+            cJSON_AddStringToObject(test->json_top, "extra_data", test->extra_data);
+        }
+        /* Include server output */
+        if (test->json_server_output) {
+            cJSON_AddItemToObject(test->json_top, "server_output_json", test->json_server_output);
+        }
+        if (test->server_output_text) {
+            cJSON_AddStringToObject(test->json_top, "server_output_text", test->server_output_text);
+        }
+        // Get ASCII rendering of JSON structure.  Then make our
+        // own copy of it and return the storage that cJSON allocated
+        // on our behalf.  We keep our own copy around.
+        char *str = cJSON_Print(test->json_top);
+        if (str == NULL) {
+            return -1;
+        }
+        test->json_output_string = strdup(str);
+        cJSON_free(str);
+        if (test->json_output_string == NULL) {
+            return -1;
+        }
+        fprintf(test->outfile, "%s\n", test->json_output_string);
+        iflush(test);
+        cJSON_Delete(test->json_top);
+        test->json_top = NULL;
     }
-    if (test->extra_data) {
-        cJSON_AddStringToObject(test->json_top, "extra_data", test->extra_data);
-    }
-    /* Include server output */
-    if (test->json_server_output) {
-        cJSON_AddItemToObject(test->json_top, "server_output_json", test->json_server_output);
-    }
-    if (test->server_output_text) {
-        cJSON_AddStringToObject(test->json_top, "server_output_text", test->server_output_text);
-    }
-    // Get ASCII rendering of JSON structure.  Then make our
-    // own copy of it and return the storage that cJSON allocated
-    // on our behalf.  We keep our own copy around.
-    char *str = cJSON_Print(test->json_top);
-    if (str == NULL) {
-        return -1;
-    }
-    test->json_output_string = strdup(str);
-    cJSON_free(str);
-    if (test->json_output_string == NULL) {
-        return -1;
-    }
-    fprintf(test->outfile, "%s\n", test->json_output_string);
-    iflush(test);
-    cJSON_Delete(test->json_top);
-    test->json_top = test->json_start = test->json_connected = test->json_intervals = test->json_server_output = test->json_end = NULL;
+    test->json_start = test->json_connected = test->json_intervals = test->json_server_output = test->json_end = NULL;
     return 0;
 }
 

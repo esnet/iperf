@@ -171,11 +171,12 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  --cport         <port>    bind to a specific client port (TCP and UDP, default: ephemeral port)\n"
                            "  -P, --parallel  #         number of parallel client streams to run\n"
                            "  -R, --reverse             run in reverse mode (server sends, client receives)\n"
-                           "  --bidir                   run in bidirectional mode.\n"
+                           "  --bidir<=#[KMG]>          run in bidirectional mode.\n"
                            "                            Client and server send and receive data.\n"
+                           "                            (optional \"=\" and target bitrate for server - default is\n"
+                           "                            the same as --bitrate)\n"
                            "  -w, --window    #[KMG]    set send/receive socket buffer sizes\n"
                            "                            (indirectly sets TCP window size)\n"
-
 #if defined(HAVE_TCP_CONGESTION)
                            "  -C, --congestion <algo>   set TCP congestion control algorithm (Linux and FreeBSD only)\n"
 #endif /* HAVE_TCP_CONGESTION */

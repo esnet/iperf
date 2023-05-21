@@ -75,6 +75,7 @@
 
 #if !defined(__IPERF_API_H)
 typedef uint64_t iperf_size_t;
+#define UNLIMITTED_BITRATE_FLAG ((2^64) - 1)  // Indicate unlimitted bitrate for initialization - equivalent to 0
 #endif // __IPERF_API_H
 
 struct iperf_interval_results
@@ -141,7 +142,8 @@ struct iperf_settings
     int       domain;               /* AF_INET or AF_INET6 */
     int       socket_bufsize;       /* window size for TCP */
     int       blksize;              /* size of read/writes (-l) */
-    iperf_size_t  rate;                 /* target data rate for application pacing*/
+    iperf_size_t  rate;                 /* target data rate for application pacing */
+    iperf_size_t  server_rate_setting;  /* target data rate for server pacing.  Default is `rate` */
     iperf_size_t  bitrate_limit;   /* server's maximum allowed total data rate for all streams*/
     double        bitrate_limit_interval;  /* interval for averaging total data rate */
     int           bitrate_limit_stats_per_interval;     /* calculated number of stats periods for averaging total data rate */

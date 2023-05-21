@@ -165,6 +165,12 @@ iperf_get_test_rate(struct iperf_test *ipt)
 }
 
 uint64_t
+iperf_get_test_server_rate_setting(struct iperf_test *ipt)
+{
+    return ipt->settings->server_rate_setting;
+}
+
+uint64_t
 iperf_get_test_bitrate_limit(struct iperf_test *ipt)
 {
     return ipt->settings->bitrate_limit;
@@ -495,6 +501,12 @@ void
 iperf_set_test_rate(struct iperf_test *ipt, uint64_t rate)
 {
     ipt->settings->rate = rate;
+}
+
+void
+iperf_set_test_server_rate_setting(struct iperf_test *ipt, uint64_t rate)
+{
+    ipt->settings->server_rate_setting = rate;
 }
 
 void
@@ -1047,7 +1059,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"length", required_argument, NULL, 'l'},
         {"parallel", required_argument, NULL, 'P'},
         {"reverse", no_argument, NULL, 'R'},
-        {"bidir", no_argument, NULL, OPT_BIDIRECTIONAL},
+        {"bidir", optional_argument, NULL, OPT_BIDIRECTIONAL},
         {"window", required_argument, NULL, 'w'},
         {"bind", required_argument, NULL, 'B'},
 #if defined(HAVE_SO_BINDTODEVICE)
@@ -1310,6 +1322,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 }
                 iperf_set_test_bidirectional(test, 1);
                 client_flag = 1;
+                if (optarg) {
+		    test->settings->server_rate_setting = unit_atof_rate(optarg);
+		}
                 break;
             case 'w':
                 // XXX: This is a socket buffer, not specific to TCP
@@ -1726,6 +1741,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         }
         // if failing to read file stat, it should fallback to default duration mode
     }
+    
+    if (test->settings->server_rate_setting == UNLIMITTED_BITRATE_FLAG)  // Allow server unlimited (0) bitrate but not client
+        test->settings->server_rate_setting = test->settings->rate;
 
     if ((test->settings->bytes != 0 || test->settings->blocks != 0) && ! duration_flag)
         test->duration = 0;
@@ -2176,8 +2194,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "window", test->settings->socket_bufsize);
 	if (test->settings->blksize)
 	    cJSON_AddNumberToObject(j, "len", test->settings->blksize);
-	if (test->settings->rate)
-	    cJSON_AddNumberToObject(j, "bandwidth", test->settings->rate);
+	if (test->settings->server_rate_setting)
+	    cJSON_AddNumberToObject(j, "bandwidth", test->settings->server_rate_setting);
 	if (test->settings->fqrate)
 	    cJSON_AddNumberToObject(j, "fqrate", test->settings->fqrate);
 	if (test->settings->pacing_timer)
@@ -2871,6 +2889,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->rcv_timeout.usecs = (DEFAULT_NO_MSG_RCVD_TIMEOUT % SEC_TO_mS) * mS_TO_US;
     testp->zerocopy = 0;
 
+    testp->settings->server_rate_setting = UNLIMITTED_BITRATE_FLAG;  // Allow setting unlimitted (0) bitrate
     memset(testp->cookie, 0, COOKIE_SIZE);
 
     testp->multisend = 10;	/* arbitrary */
@@ -3154,6 +3173,7 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->blksize = DEFAULT_TCP_BLKSIZE;
     test->settings->rate = 0;
     test->settings->burst = 0;
+    test->settings->server_rate_setting = UNLIMITTED_BITRATE_FLAG;  // Allow setting unlimitted (0) bitrate
     test->settings->mss = 0;
     test->settings->tos = 0;
     test->settings->dont_fragment = 0;

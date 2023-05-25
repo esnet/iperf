@@ -512,7 +512,7 @@ iperf_run_client(struct iperf_test * test)
 {
     int startup;
     int result = 0;
-    fd_set read_set, write_set;
+    fd_set startup_read_set, read_set, write_set;
     struct iperf_time now;
     struct timeval* timeout = NULL;
     struct iperf_stream *sp;
@@ -563,6 +563,8 @@ iperf_run_client(struct iperf_test * test)
         rcv_timeout_us = 0;
 
     startup = 1;
+    FD_ZERO(&startup_read_set);
+    memcpy(&startup_read_set, &test->read_set, sizeof(fd_set));
     while (test->state != IPERF_DONE) {
 	memcpy(&read_set, &test->read_set, sizeof(fd_set));
 	memcpy(&write_set, &test->write_set, sizeof(fd_set));
@@ -584,7 +586,7 @@ iperf_run_client(struct iperf_test * test)
             timeout = &used_timeout;
         }
 
-	result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
+	result = select(test->max_fd + 1, (startup)? &startup_read_set : &read_set, (startup)? NULL : &write_set, NULL, timeout);
 	if (result < 0 && errno != EINTR) {
   	    i_errno = IESELECT;
 	    goto cleanup_and_fail;

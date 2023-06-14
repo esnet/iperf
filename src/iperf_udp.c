@@ -34,6 +34,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <sys/stat.h>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
@@ -60,6 +61,113 @@
 #  endif
 # endif
 #endif
+
+void prepare_diagnostic_files (struct iperf_stream *sp)
+{
+    /* File to store all packet seq# gap and OutOrderPackets */   
+    sp->udpRecvOOOPktsFileName = (char*) malloc (200);
+    sp->udpRecvMissingPktsFileName = (char*) malloc (200);
+
+    time_t rawtime;
+    time (&rawtime);
+
+    if (sp->test->role == 's') {
+        sprintf (sp->udpRecvOOOPktsFileName, "udpRecvOOOPkts%02d.txt", sp->id);
+        sprintf (sp->udpRecvMissingPktsFileName, "udpRecvMissingPkts%02d.txt", sp->id);
+    } else {
+        sprintf (sp->udpRecvOOOPktsFileName, "udpRecvOOOPkts%02d.tmp", sp->id);
+        sprintf (sp->udpRecvMissingPktsFileName, "udpRecvMissingPkts%02d.tmp", sp->id);
+    }
+ 
+    fflush(stdout);
+
+    sp->udpRecvOutOfOrderPackets = fopen (sp->udpRecvOOOPktsFileName, "w+");
+    sp->udpRecvMissingPackets = fopen (sp->udpRecvMissingPktsFileName, "w+");
+}
+
+void finalize_diagnostic_files (struct iperf_stream *sp)
+{
+    fclose (sp->udpRecvOutOfOrderPackets);
+    fclose (sp->udpRecvMissingPackets);
+
+    if ((sp->test->role == 'c' && sp->test->reverse == 1) || (sp->test->role == 's')) {
+        char cwd[500];
+        if (getcwd(cwd, sizeof(cwd)) == NULL) {
+            printf ("getcwd has been failed\n");
+        }
+
+        char absoluteDirOOO [1000];
+        char absoluteDirMissing [1000];
+        char absoluteTemp [1000];
+        char cmd [5000];
+
+        sprintf (absoluteDirOOO, "%s/%s", cwd, sp->udpRecvOOOPktsFileName);
+        sprintf (absoluteDirMissing, "%s/%s", cwd, sp->udpRecvMissingPktsFileName);
+        sprintf (absoluteTemp, "%s/tmpdiff.txt", cwd);
+
+        int ooosize = 0;
+        int missingsize = 0;
+
+        struct stat st;
+        stat(sp->udpRecvOOOPktsFileName, &st);
+        ooosize = st.st_size;
+
+        printf ("\n-----------------------------------------------------------\n");
+        printf ("[ER} %s has been created to store the list of out of order iperf udp packets\n", sp->udpRecvOOOPktsFileName);
+        if (ooosize == 0) {
+            printf ("[ER] No out of order iperf udp packets detected (ignore this message if -R is used by client)\n");
+        } else {
+            printf ("[ER] Out of order iperf udp packets detected (count: %d)\n", sp->outoforder_packets);
+
+            sprintf (cmd, "sort -n %s > %s", absoluteDirOOO, absoluteTemp);
+            if (system (cmd) != -1) {
+                remove (absoluteDirOOO);
+                rename (absoluteTemp, absoluteDirOOO);
+            } else {
+                printf ("Failed to run %s\n", cmd);
+            }
+        }
+
+        stat(sp->udpRecvMissingPktsFileName, &st);
+        missingsize = st.st_size;
+
+        if (ooosize != 0 && missingsize != 0) {
+            sprintf (cmd, "comm -23 %s %s > %s", absoluteDirMissing, absoluteDirOOO, absoluteTemp);
+            if (system (cmd) > -1) {
+                    remove (absoluteDirMissing);
+                    rename (absoluteTemp, absoluteDirMissing);
+            } else {
+                    printf ("Failed to run %s\n", cmd);
+            }
+        }
+
+        stat(sp->udpRecvMissingPktsFileName, &st);
+        missingsize = st.st_size;
+
+        printf ("[ER] %s has been created to store the list of lost iperf udp packets\n", sp->udpRecvMissingPktsFileName);
+
+        if (missingsize == 0) {
+            printf ("[ER] No lost iperf udp packets detected (ignore this message if -R is used by client)\n");
+        } else {
+            printf ("[ER] Lost iperf udp packets detected (count :%d)\n", sp->cnt_error);
+        }
+    } else { // (test->role == 'c' && test->reverse == 0)
+        char cwd[500];
+
+        if (getcwd(cwd, sizeof(cwd)) == NULL) {
+            printf ("getcwd has been failed\n");
+        }        
+
+        char absoluteDirOOO [1000];
+        char absoluteDirMissing [1000];
+
+        sprintf (absoluteDirOOO, "%s/%s", cwd, sp->udpRecvOOOPktsFileName);
+        sprintf (absoluteDirMissing, "%s/%s", cwd, sp->udpRecvMissingPktsFileName);
+
+        remove (absoluteDirOOO);        
+        remove (absoluteDirMissing);        
+    }
+}
 
 /* iperf_udp_recv
  *
@@ -123,8 +231,12 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    sent_time.usecs = usec;
 	}
 
-	if (sp->test->debug_level >= DEBUG_LEVEL_DEBUG)
+    /***** added *****/
+    // printf("pcount %" PRIu64 " packet_count %d\n", pcount, sp->packet_count);
+
+	if (sp->test->debug_level >= DEBUG_LEVEL_DEBUG) {
 	    fprintf(stderr, "pcount %" PRIu64 " packet_count %d\n", pcount, sp->packet_count);
+    }
 
 	/*
 	 * Try to handle out of order packets.  The way we do this
@@ -143,8 +255,14 @@ iperf_udp_recv(struct iperf_stream *sp)
 
 	    /* Forward, but is there a gap in sequence numbers? */
 	    if (pcount > sp->packet_count + 1) {
-		/* There's a gap so count that as a loss. */
-		sp->cnt_error += (pcount - 1) - sp->packet_count;
+            /* There's a gap so count that as a loss. */
+            sp->cnt_error += (pcount - 1) - sp->packet_count;
+
+            // [sp->packet_count + 1, pcount) is missing 
+            
+            for (uint64_t i = sp->packet_count + 1; i < pcount; i++) {
+                fprintf(sp->udpRecvMissingPackets, "%"PRIu64"\n", i);
+            }            
 	    }
 	    /* Update the highest sequence number seen so far. */
 	    sp->packet_count = pcount;
@@ -166,8 +284,11 @@ iperf_udp_recv(struct iperf_stream *sp)
 		sp->cnt_error--;
 
 	    /* Log the out-of-order packet */
-	    if (sp->test->debug)
-		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count + 1, sp->socket);
+	    if (sp->test->debug) {
+		    fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count + 1, sp->socket);
+        }
+
+        fprintf(sp->udpRecvOutOfOrderPackets, "%"PRIu64"\n", pcount);        
 	}
 
 	/*

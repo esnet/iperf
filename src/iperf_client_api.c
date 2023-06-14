@@ -42,6 +42,7 @@
 #include "iperf_util.h"
 #include "iperf_locale.h"
 #include "iperf_time.h"
+#include "iperf_udp.h"
 #include "net.h"
 #include "timer.h"
 
@@ -126,8 +127,9 @@ iperf_create_streams(struct iperf_test *test, int sender)
             return -1;
 
         /* Perform the new stream callback */
-        if (test->on_new_stream)
+        if (test->on_new_stream) {
             test->on_new_stream(sp);
+        }
     }
 
     return 0;

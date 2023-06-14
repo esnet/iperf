@@ -111,6 +111,7 @@ struct iperf_interval_results
     long pmtu;
 };
 
+#define MAX_SEQMSG_TO_PROCESS 500
 struct iperf_stream_result
 {
     iperf_size_t bytes_received;
@@ -201,7 +202,6 @@ struct iperf_stream
      */
     int       packet_count;
     int	      peer_packet_count;
-    int	      peer_omitted_packet_count;
     int       omitted_packet_count;
     double    jitter;
     double    prev_transit;
@@ -210,6 +210,15 @@ struct iperf_stream
     int       cnt_error;
     int       omitted_cnt_error;
     uint64_t  target;
+
+    /* ER Test Field */
+    char     *serverUdpRecvOOOPktsFileName;
+    char     *serverUdpRecvMissingPktsFileName;
+    char     *udpRecvOOOPktsFileName;
+    char     *udpRecvMissingPktsFileName;
+    FILE     *udpRecvOutOfOrderPackets;
+    FILE     *udpRecvMissingPackets;    
+    char     *connectionstring;
 
     struct sockaddr_storage local_addr;
     struct sockaddr_storage remote_addr;

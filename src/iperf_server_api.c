@@ -381,16 +381,18 @@ create_server_omit_timer(struct iperf_test * test)
 static void
 cleanup_server(struct iperf_test *test)
 {
+    //sleep (2);
+
     struct iperf_stream *sp;
 
     /* Close open streams */
     SLIST_FOREACH(sp, &test->streams, streams) {
-	if (sp->socket > -1) {
+        if (sp->socket > -1) {
             FD_CLR(sp->socket, &test->read_set);
             FD_CLR(sp->socket, &test->write_set);
             close(sp->socket);
             sp->socket = -1;
-	}
+        }
     }
 
     /* Close open test sockets */
@@ -578,6 +580,7 @@ iperf_run_server(struct iperf_test *test)
 			cleanup_server(test);
                         return -1;
                     }
+
                     FD_CLR(test->listener, &read_set);
 
                     // Set streams number

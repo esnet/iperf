@@ -57,6 +57,8 @@ static int run(struct iperf_test *test);
 int
 main(int argc, char **argv)
 {
+    printf ("ER iperf3 v0.31\n");
+
     struct iperf_test *test;
 
     // XXX: Setting the process affinity requires root on most systems.
@@ -101,7 +103,7 @@ main(int argc, char **argv)
     if (iperf_parse_arguments(test, argc, argv) < 0) {
         iperf_err(test, "parameter error - %s", iperf_strerror(i_errno));
         fprintf(stderr, "\n");
-        usage();
+        usage_long(stdout);
         exit(1);
     }
 
@@ -136,44 +138,46 @@ run(struct iperf_test *test)
 
     switch (test->role) {
         case 's':
-	    if (test->daemon) {
-		int rc;
-		rc = daemon(0, 0);
-		if (rc < 0) {
-		    i_errno = IEDAEMON;
-		    iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
-		}
-	    }
-	    if (iperf_create_pidfile(test) < 0) {
-		i_errno = IEPIDFILE;
-		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
-	    }
-            for (;;) {
-		int rc;
-		rc = iperf_run_server(test);
-                test->server_last_run_rc = rc;
-		if (rc < 0) {
-		    iperf_err(test, "error - %s", iperf_strerror(i_errno));
-                    if (test->json_output) {
-                        if (iperf_json_finish(test) < 0)
-                            return -1;
-                    }
-                    iflush(test);
-
-		    if (rc < -1) {
-		        iperf_errexit(test, "exiting");
-		    }
+            if (test->daemon) {
+                int rc;
+                rc = daemon(0, 0);
+                if (rc < 0) {
+                    i_errno = IEDAEMON;
+                    iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
                 }
-                iperf_reset_test(test);
-                if (iperf_get_test_one_off(test) && rc != 2) {
-		    /* Authentication failure doesn't count for 1-off test */
-		    if (rc < 0 && i_errno == IEAUTHTEST) {
-			continue;
-		    }
-		    break;
-		}
             }
-	    iperf_delete_pidfile(test);
+            if (iperf_create_pidfile(test) < 0) {
+                i_errno = IEPIDFILE;
+                iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
+            }
+            for (;;) {
+                int rc;
+                rc = iperf_run_server(test);
+
+                test->server_last_run_rc = rc;
+                if (rc < 0) {
+                    iperf_err(test, "error - %s", iperf_strerror(i_errno));
+                            if (test->json_output) {
+                                if (iperf_json_finish(test) < 0)
+                                    return -1;
+                            }
+                            iflush(test);
+
+                    if (rc < -1) {
+                        iperf_errexit(test, "exiting");
+                    }
+                        }
+
+                        iperf_reset_test(test);
+                        if (iperf_get_test_one_off(test) && rc != 2) {
+                    /* Authentication failure doesn't count for 1-off test */
+                    if (rc < 0 && i_errno == IEAUTHTEST) {
+                    continue;
+                    }
+                    break;
+                }
+            }
+	        iperf_delete_pidfile(test);
             break;
 	case 'c':
 	    if (iperf_create_pidfile(test) < 0) {
@@ -181,7 +185,8 @@ run(struct iperf_test *test)
 		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 	    }
 	    if (iperf_run_client(test) < 0)
-		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
+    		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
+
 	    iperf_delete_pidfile(test);
             break;
         default:

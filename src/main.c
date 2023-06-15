@@ -57,6 +57,8 @@ static int run(struct iperf_test *test);
 int
 main(int argc, char **argv)
 {
+    printf ("ER iperf3 v0.4\n");
+
     struct iperf_test *test;
 
     // XXX: Setting the process affinity requires root on most systems.

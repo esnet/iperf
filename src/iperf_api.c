@@ -2520,14 +2520,14 @@ get_results(struct iperf_test *test)
     cJSON *j_retransmits;
     cJSON *j_jitter;
     cJSON *j_errors;
-    cJSON* j_omitted_errors;
+    cJSON *j_omitted_errors;
     cJSON *j_packets;
-    cJSON* j_omitted_packets;
+    cJSON *j_omitted_packets;
     cJSON *j_server_output;
     cJSON *j_start_time, *j_end_time;
     int sid, cerror, pcount, omitted_cerror, omitted_pcount;
     
-    cJSON* j_outoforder;
+    cJSON *j_outoforder;
     cJSON *j_eroutoforder;
     cJSON *j_ermissing;    
     FILE *serverOOOPktsFileList = fopen("serverOOOPktsFileList.txt", "w+");
@@ -3893,6 +3893,7 @@ iperf_print_results(struct iperf_test *test)
                     /* Sender summary, UDP. */
                     if (sender_packet_count - sender_omitted_packet_count > 0) {
                         lost_percent = 100.0 * (sp->cnt_error - sp->omitted_cnt_error) / (sender_packet_count - sender_omitted_packet_count);
+                    }
                     else {
                         lost_percent = 0.0;
                     }
@@ -3988,6 +3989,7 @@ iperf_print_results(struct iperf_test *test)
                     if (! test->json_output) {
                         if (receiver_packet_count - receiver_omitted_packet_count > 0 && sp->omitted_cnt_error > -1) {
                             lost_percent = 100.0 * (sp->cnt_error - sp->omitted_cnt_error) / (receiver_packet_count - receiver_omitted_packet_count);
+                        }
                         else {
                             lost_percent = 0.0;
                         }

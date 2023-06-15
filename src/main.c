@@ -57,7 +57,7 @@ static int run(struct iperf_test *test);
 int
 main(int argc, char **argv)
 {
-    printf ("ER iperf3 v0.31\n");
+    printf ("ER iperf3 v0.5\n");
 
     struct iperf_test *test;
 
@@ -103,7 +103,7 @@ main(int argc, char **argv)
     if (iperf_parse_arguments(test, argc, argv) < 0) {
         iperf_err(test, "parameter error - %s", iperf_strerror(i_errno));
         fprintf(stderr, "\n");
-        usage_long(stdout);
+        usage_long();
         exit(1);
     }
 

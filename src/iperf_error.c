@@ -228,7 +228,7 @@ iperf_strerror(int int_errno)
             perr = 1;
             break;
         case IECONNECT:
-            snprintf(errstr, len, "unable to connect to server");
+            snprintf(errstr, len, "unable to connect to server - server may have stopped running or use a different port, firewall issue, etc.");
             perr = 1;
 	    herr = 1;
             break;
@@ -257,7 +257,7 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "control socket has closed unexpectedly");
             break;
         case IEMESSAGE:
-            snprintf(errstr, len, "received an unknown control message");
+            snprintf(errstr, len, "received an unknown control message (ensure other side is iperf3 and not iperf)");
             break;
         case IESENDMESSAGE:
             snprintf(errstr, len, "unable to send control message - port may not be available, the other side may have stopped running, etc.");

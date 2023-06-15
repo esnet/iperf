@@ -78,6 +78,7 @@ extern const char report_bw_format[] ;
 extern const char report_bw_retrans_format[] ;
 extern const char report_bw_retrans_cwnd_format[] ;
 extern const char report_bw_udp_format[] ;
+extern const char report_bw_udp_format_no_omitted_error[] ;
 extern const char report_bw_udp_sender_format[] ;
 extern const char report_summary[] ;
 extern const char report_sum_bw_format[] ;

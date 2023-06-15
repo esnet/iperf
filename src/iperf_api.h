@@ -38,6 +38,7 @@
 extern "C" { /* open extern "C" */
 #endif
 
+#include "cjson.h"
 
 struct iperf_test;
 struct iperf_stream_result;
@@ -331,6 +332,15 @@ void iperf_on_connect(struct iperf_test *);
 void iperf_on_test_finish(struct iperf_test *);
 
 extern jmp_buf env;
+
+/* End-to-end lost and out of order packet check routines */
+void begin_diagnostic(struct iperf_stream *);
+void stop_diagnostic(struct iperf_stream *);
+void send_diagnostic_results(struct iperf_stream *, cJSON *);
+void get_diagnostic_results(struct iperf_stream *, cJSON *, FILE *, FILE *, int);
+void close_diagnostic_file_list(FILE *, FILE *);
+void delete_diagnostic_file_list();
+void delete_diagnostic_files(struct iperf_stream *);
 
 /* Client routines. */
 int iperf_run_client(struct iperf_test *);

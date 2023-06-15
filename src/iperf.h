@@ -111,7 +111,6 @@ struct iperf_interval_results
     long pmtu;
 };
 
-#define MAX_SEQMSG_TO_PROCESS 500
 struct iperf_stream_result
 {
     iperf_size_t bytes_received;

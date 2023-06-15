@@ -27,10 +27,6 @@
 #ifndef __IPERF_UDP_H
 #define __IPERF_UDP_H
 
-/* udp missing / out of order packet check */
-void prepare_diagnostic_files (struct iperf_stream *sp);
-void finalize_diagnostic_files (struct iperf_stream *sp);
-
 /**
  * iperf_udp_recv -- receives the client data for UDP
  *

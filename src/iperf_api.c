@@ -2424,55 +2424,11 @@ send_results(struct iperf_test *test)
 
             // Debugging Files for ExpressRoute
             if (test->role == 's' || (test->role == 'c' && test->reverse == 1)) {      
-                finalize_diagnostic_files (sp);              
-
+                stop_diagnostic (sp);              
                 if (sp->test->role == 's') {
-                    cJSON_AddStringToObject(j_stream, "udpRecvOOOPktsFileName", sp->udpRecvOOOPktsFileName);
-                    cJSON_AddStringToObject(j_stream, "udpRecvMissingPktsFileName", sp->udpRecvMissingPktsFileName);
-
-                    char *strbuf = malloc((sizeof(uint64_t) + 2)* (MAX_SEQMSG_TO_PROCESS + 1));
-
-                    {
-                        sprintf (strbuf, "Out of Order Packet Count: %d\n%s\n", sp->outoforder_packets, sp->connectionstring);
-                        FILE* pIn = fopen(sp->udpRecvOOOPktsFileName, "r");
-                        int lineCount = sp->outoforder_packets > MAX_SEQMSG_TO_PROCESS ? MAX_SEQMSG_TO_PROCESS : sp->outoforder_packets;
-                        int c = strlen(strbuf);
-                        
-                        char ch = getc(pIn);
-                        while (ch > 0 && lineCount > 0) {
-                            if (ch == '\n')
-                                lineCount--;
-                            strbuf [c++] = ch;
-                            ch = getc(pIn);
-                        }
-                        
-                        strbuf [c] = '\0';
-                        cJSON_AddStringToObject(j_stream, "udpRecvOOOPktsSeq", strbuf);
-                        fclose (pIn);
-                    }
-
-                    {
-                        sprintf (strbuf, "Lost Packet Count: %d\n%s\n", sp->cnt_error, sp->connectionstring);
-                        FILE* pIn = fopen(sp->udpRecvMissingPktsFileName, "r");
-                        int lineCount = sp->cnt_error > MAX_SEQMSG_TO_PROCESS ? MAX_SEQMSG_TO_PROCESS : sp->cnt_error;
-                        int c = strlen(strbuf);
-
-                        char ch = getc(pIn);
-                        while (ch > 0 && lineCount > 0) {
-                            if (ch == '\n')
-                                lineCount--;
-                            strbuf [c++] = ch;
-                            ch = getc(pIn);
-                        }
-
-                        strbuf [c] = '\0';
-                        cJSON_AddStringToObject(j_stream, "udpRecvMissingPktsSeq", strbuf);
-                        fclose (pIn);
-                    }                    
-
-                    free (strbuf);   
-                    free (sp->connectionstring);                 
-                }                
+                    send_diagnostic_results(sp, j_stream);
+                    delete_diagnostic_files(sp);
+                }
             }          
 
 		    iperf_time_diff(&sp->result->start_time, &sp->result->start_time, &temp_time);
@@ -2495,6 +2451,9 @@ send_results(struct iperf_test *test)
 	    }
 	}
 	cJSON_Delete(j);
+    if (test->role == 's') {
+        delete_diagnostic_file_list();
+    }
     }
     return r;
 }
@@ -2528,11 +2487,9 @@ get_results(struct iperf_test *test)
     int sid, cerror, pcount, omitted_cerror, omitted_pcount;
     
     cJSON *j_outoforder;
-    cJSON *j_eroutoforder;
-    cJSON *j_ermissing;    
-    FILE *serverOOOPktsFileList = fopen("serverOOOPktsFileList.txt", "w+");
-    FILE *serverMissingPktsFileList = fopen("serverMissingPktsFileList.txt", "w+");
-    
+    FILE* serverOOOPktsFileList = fopen("serverOOOPktsFileList.txt", "w+");
+    FILE* serverMissingPktsFileList = fopen("serverMissingPktsFileList.txt", "w+");
+
     double jitter;
     iperf_size_t bytes_transferred;
     int retransmits;
@@ -2616,53 +2573,7 @@ get_results(struct iperf_test *test)
                 }
                 else {
                     if (test->role == 'c') {
-                        j_eroutoforder = cJSON_GetObjectItem (j_stream, "udpRecvOOOPktsFileName");
-                        j_ermissing = cJSON_GetObjectItem (j_stream, "udpRecvMissingPktsFileName");
-
-                        sp->serverUdpRecvOOOPktsFileName = strdup(j_eroutoforder->valuestring);
-                        sp->serverUdpRecvMissingPktsFileName = strdup(j_ermissing->valuestring);
-
-                        {
-                            cJSON *j_OOOPkts = cJSON_GetObjectItem (j_stream, "udpRecvOOOPktsSeq");
-                            char *out = strdup(j_OOOPkts->valuestring);
-                            FILE* pOut = fopen (sp->serverUdpRecvOOOPktsFileName, "w+");
-                            fprintf (pOut, "%s", out);
-                            fprintf (serverOOOPktsFileList, "%s\n", sp->serverUdpRecvOOOPktsFileName);
-
-                            if(test->reverse == 1) {
-                                FILE* pIn = fopen (sp->udpRecvOOOPktsFileName, "r");
-                                char c = fgetc(pIn);;
-                                while (c > 0) {
-                                    fputc(c, pOut); 
-                                     c = fgetc(pIn);
-                                }
-                                fclose (pIn);
-                            }
-
-                            remove (sp->udpRecvOOOPktsFileName);
-                            fclose (pOut);                            
-                        }
-
-                        {
-                            cJSON *j_MissingPkts = cJSON_GetObjectItem (j_stream, "udpRecvMissingPktsSeq");
-                            char *out = strdup(j_MissingPkts->valuestring);
-                            FILE* pOut = fopen (sp->serverUdpRecvMissingPktsFileName, "w+");
-                            fprintf (pOut, "%s", out);
-                            fprintf (serverMissingPktsFileList, "%s\n", sp->serverUdpRecvMissingPktsFileName);
-
-                            if(test->reverse == 1) {
-                                FILE* pIn = fopen (sp->udpRecvMissingPktsFileName, "r");
-                                char c = fgetc(pIn);;
-                                while (c > 0) {
-                                    fputc(c, pOut); 
-                                     c = fgetc(pIn);
-                                }
-                                fclose (pIn);
-                            }
-
-                            remove (sp->udpRecvMissingPktsFileName);
-                            fclose (pOut);                                                               
-                        }
+                        get_diagnostic_results(sp, j_stream, serverOOOPktsFileList, serverMissingPktsFileList, test->reverse);
                     }                      
 
                     if (sp->sender) {
@@ -2742,8 +2653,7 @@ get_results(struct iperf_test *test)
 	    }
 	}
 
-    fclose (serverOOOPktsFileList);
-    fclose (serverMissingPktsFileList);
+    close_diagnostic_file_list(serverOOOPktsFileList, serverMissingPktsFileList);
 
 	j_remote_congestion_used = cJSON_GetObjectItem(j, "congestion_used");
 	if (j_remote_congestion_used != NULL) {
@@ -4508,7 +4418,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     iperf_add_stream(test, sp);
 
     if (test->role == 's' || (test->role == 'c' && test->reverse == 1)) {      
-        prepare_diagnostic_files(sp);
+        begin_diagnostic(sp);
     }      
 
     return sp;
@@ -5066,3 +4976,248 @@ iflush(struct iperf_test *test)
 {
     return fflush(test->outfile);
 }
+
+void 
+begin_diagnostic(struct iperf_stream* sp)
+{
+    /* File to store all packet seq# gap and OutOrderPackets */
+    sp->udpRecvOOOPktsFileName = (char*)malloc(200);
+    sp->udpRecvMissingPktsFileName = (char*)malloc(200);
+
+    time_t rawtime;
+    time(&rawtime);
+
+    if (sp->test->role == 's') {
+        sprintf(sp->udpRecvOOOPktsFileName, "udpRecvOOOPkts%02d.txt", sp->id);
+        sprintf(sp->udpRecvMissingPktsFileName, "udpRecvMissingPkts%02d.txt", sp->id);
+    }
+    else {
+        sprintf(sp->udpRecvOOOPktsFileName, "udpRecvOOOPkts%02d.tmp", sp->id);
+        sprintf(sp->udpRecvMissingPktsFileName, "udpRecvMissingPkts%02d.tmp", sp->id);
+    }
+
+    fflush(stdout);
+
+    sp->udpRecvOutOfOrderPackets = fopen(sp->udpRecvOOOPktsFileName, "w+");
+    sp->udpRecvMissingPackets = fopen(sp->udpRecvMissingPktsFileName, "w+");
+}
+
+void 
+stop_diagnostic(struct iperf_stream* sp)
+{
+    fclose(sp->udpRecvOutOfOrderPackets);
+    fclose(sp->udpRecvMissingPackets);
+
+    if ((sp->test->role == 'c' && sp->test->reverse == 1) || (sp->test->role == 's')) {
+        char cwd[500];
+        if (getcwd(cwd, sizeof(cwd)) == NULL) {
+            printf("getcwd has been failed\n");
+        }
+
+        char absoluteDirOOO[1000];
+        char absoluteDirMissing[1000];
+        char absoluteTemp[1000];
+        char cmd[5000];
+
+        sprintf(absoluteDirOOO, "%s/%s", cwd, sp->udpRecvOOOPktsFileName);
+        sprintf(absoluteDirMissing, "%s/%s", cwd, sp->udpRecvMissingPktsFileName);
+        sprintf(absoluteTemp, "%s/tmpdiff.txt", cwd);
+
+        int ooosize = 0;
+        int missingsize = 0;
+
+        struct stat st;
+        stat(sp->udpRecvOOOPktsFileName, &st);
+        ooosize = st.st_size;
+
+        if (ooosize != 0) {
+            sprintf(cmd, "sort -n %s > %s", absoluteDirOOO, absoluteTemp);
+            if (system(cmd) != -1) {
+                remove(absoluteDirOOO);
+                rename(absoluteTemp, absoluteDirOOO);
+            }
+            else {
+                printf("Failed to run %s\n", cmd);
+            }
+        }
+
+        stat(sp->udpRecvMissingPktsFileName, &st);
+        missingsize = st.st_size;
+
+        if (ooosize != 0 && missingsize != 0) {
+            sprintf(cmd, "comm -23 %s %s > %s", absoluteDirMissing, absoluteDirOOO, absoluteTemp);
+            if (system(cmd) > -1) {
+                remove(absoluteDirMissing);
+                rename(absoluteTemp, absoluteDirMissing);
+            }
+            else {
+                printf("Failed to run %s\n", cmd);
+            }
+        }
+    }
+    else { // (test->role == 'c' && test->reverse == 0)
+        char cwd[500];
+
+        if (getcwd(cwd, sizeof(cwd)) == NULL) {
+            printf("getcwd has been failed\n");
+        }
+
+        char absoluteDirOOO[1000];
+        char absoluteDirMissing[1000];
+
+        sprintf(absoluteDirOOO, "%s/%s", cwd, sp->udpRecvOOOPktsFileName);
+        sprintf(absoluteDirMissing, "%s/%s", cwd, sp->udpRecvMissingPktsFileName);
+
+        remove(absoluteDirOOO);
+        remove(absoluteDirMissing);
+    }
+}
+
+void
+send_diagnostic_results(struct iperf_stream* sp, cJSON* j_stream)
+{
+    cJSON_AddStringToObject(j_stream, "udpRecvOOOPktsFileName", sp->udpRecvOOOPktsFileName);
+    cJSON_AddStringToObject(j_stream, "udpRecvMissingPktsFileName", sp->udpRecvMissingPktsFileName);
+
+    int max_seqmsgcount_to_send = 500;
+
+    char* strbuf = malloc((sizeof(uint64_t) + 2) * (max_seqmsgcount_to_send + 1));
+
+    {
+        sprintf(strbuf, "Out of Order Packet Count: %d\n%s\n", sp->outoforder_packets, sp->connectionstring);
+        FILE* pIn = fopen(sp->udpRecvOOOPktsFileName, "r");
+        int lineCount = sp->outoforder_packets > max_seqmsgcount_to_send ? max_seqmsgcount_to_send : sp->outoforder_packets;
+        int c = strlen(strbuf);
+
+        char ch = getc(pIn);
+        while (ch > 0 && lineCount > 0) {
+            if (ch == '\n')
+                lineCount--;
+            strbuf[c++] = ch;
+            ch = getc(pIn);
+        }
+
+        strbuf[c] = '\0';
+        cJSON_AddStringToObject(j_stream, "udpRecvOOOPktsSeq", strbuf);
+        fclose(pIn);
+    }
+
+    {
+        sprintf(strbuf, "Lost Packet Count: %d\n%s\n", sp->cnt_error, sp->connectionstring);
+        FILE* pIn = fopen(sp->udpRecvMissingPktsFileName, "r");
+        int lineCount = sp->cnt_error > max_seqmsgcount_to_send ? max_seqmsgcount_to_send : sp->cnt_error;
+        int c = strlen(strbuf);
+
+        char ch = getc(pIn);
+        while (ch > 0 && lineCount > 0) {
+            if (ch == '\n')
+                lineCount--;
+            strbuf[c++] = ch;
+            ch = getc(pIn);
+        }
+
+        strbuf[c] = '\0';
+        cJSON_AddStringToObject(j_stream, "udpRecvMissingPktsSeq", strbuf);
+        fclose(pIn);
+    }
+
+    free(strbuf);
+    free(sp->connectionstring);
+}
+
+void
+get_diagnostic_results(struct iperf_stream* sp, cJSON* j_stream, FILE * serverOOOPktsFileList, FILE * serverMissingPktsFileList, int reverse)
+{
+    cJSON *j_outoforder = cJSON_GetObjectItem(j_stream, "udpRecvOOOPktsFileName");
+    cJSON *j_lost = cJSON_GetObjectItem(j_stream, "udpRecvMissingPktsFileName");
+
+    sp->serverUdpRecvOOOPktsFileName = strdup(j_outoforder->valuestring);
+    sp->serverUdpRecvMissingPktsFileName = strdup(j_lost->valuestring);
+
+    {
+        cJSON* j_OOOPkts = cJSON_GetObjectItem(j_stream, "udpRecvOOOPktsSeq");
+        char* out = strdup(j_OOOPkts->valuestring);
+        FILE* pOut = fopen(sp->serverUdpRecvOOOPktsFileName, "w+");
+        fprintf(pOut, "%s", out);
+        fprintf(serverOOOPktsFileList, "%s\n", sp->serverUdpRecvOOOPktsFileName);
+
+        if (reverse == 1) {
+            FILE* pIn = fopen(sp->udpRecvOOOPktsFileName, "r");
+            char c = fgetc(pIn);;
+            while (c > 0) {
+                fputc(c, pOut);
+                c = fgetc(pIn);
+            }
+            fclose(pIn);
+        }
+
+        remove(sp->udpRecvOOOPktsFileName);
+        fclose(pOut);
+    }
+
+    {
+        cJSON* j_MissingPkts = cJSON_GetObjectItem(j_stream, "udpRecvMissingPktsSeq");
+        char* out = strdup(j_MissingPkts->valuestring);
+        FILE* pOut = fopen(sp->serverUdpRecvMissingPktsFileName, "w+");
+        fprintf(pOut, "%s", out);
+        fprintf(serverMissingPktsFileList, "%s\n", sp->serverUdpRecvMissingPktsFileName);
+
+        if (reverse == 1) {
+            FILE* pIn = fopen(sp->udpRecvMissingPktsFileName, "r");
+            char c = fgetc(pIn);;
+            while (c > 0) {
+                fputc(c, pOut);
+                c = fgetc(pIn);
+            }
+            fclose(pIn);
+        }
+
+        remove(sp->udpRecvMissingPktsFileName);
+        fclose(pOut);
+    }
+}
+
+void
+close_diagnostic_file_list(FILE *serverOOOPktsFileList, FILE *serverMissingPktsFileList)
+{
+    fclose(serverOOOPktsFileList);
+    fclose(serverMissingPktsFileList);
+}
+
+void
+delete_diagnostic_file_list()
+{
+    char cwd[500];
+
+    if (getcwd(cwd, sizeof(cwd)) == NULL) {
+        printf("getcwd has been failed\n");
+    }
+
+    char absoluteDirOOO[1000];
+    char absoluteDirMissing[1000];
+
+    sprintf(absoluteDirOOO, "%s/%s", cwd, "serverOOOPktsFileList.txt");
+    sprintf(absoluteDirMissing, "%s/%s", cwd, "serverMissingPktsFileList.txt");
+
+    remove(absoluteDirOOO);
+    remove(absoluteDirMissing);
+}
+
+void delete_diagnostic_files(struct iperf_stream* sp)
+{
+    char cwd[500];
+
+    if (getcwd(cwd, sizeof(cwd)) == NULL) {
+        printf("getcwd has been failed\n");
+    }
+
+    char absoluteDirOOO[1000];
+    char absoluteDirMissing[1000];
+
+    sprintf(absoluteDirOOO, "%s/%s", cwd, sp->udpRecvOOOPktsFileName);
+    sprintf(absoluteDirMissing, "%s/%s", cwd, sp->udpRecvMissingPktsFileName);
+
+    remove(absoluteDirOOO);
+    remove(absoluteDirMissing);
+}
+

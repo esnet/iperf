@@ -1927,8 +1927,8 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
     }
     if (write_setP != NULL)
 	SLIST_FOREACH(sp, &test->streams, streams)
-	    if (FD_ISSET(sp->socket, write_setP))	
-		FD_CLR(sp->socket, write_setP);	
+	    if (FD_ISSET(sp->socket, write_setP))
+		FD_CLR(sp->socket, write_setP);
 
     return 0;
 }
@@ -2396,15 +2396,16 @@ send_results(struct iperf_test *test)
 		cJSON_AddStringToObject(j, "server_output_text", output);
         free(output);
 	    }
-	} 
-	j_streams = cJSON_CreateArray();
+	}
+
+    j_streams = cJSON_CreateArray();
 	if (j_streams == NULL) {
 	    i_errno = IEPACKAGERESULTS;
 	    r = -1;
 	} else {
 	    cJSON_AddItemToObject(j, "streams", j_streams);
-        SLIST_FOREACH(sp, &test->streams, streams) {
-		j_stream = cJSON_CreateObject();
+	    SLIST_FOREACH(sp, &test->streams, streams) {
+            j_stream = cJSON_CreateObject();
 		if (j_stream == NULL) {
 		    i_errno = IEPACKAGERESULTS;
 		    r = -1;
@@ -3763,7 +3764,7 @@ iperf_print_results(struct iperf_test *test)
                     receiver_total_packets += (receiver_packet_count - receiver_omitted_packet_count);
                     lost_packets += sp->cnt_error;
                     if (sp->omitted_cnt_error > -1)
-                         lost_packets -= sp->omitted_cnt_error;	
+                         lost_packets -= sp->omitted_cnt_error;
                     avg_jitter += sp->jitter;
                 }
 

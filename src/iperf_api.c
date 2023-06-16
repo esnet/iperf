@@ -1927,8 +1927,8 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
     }
     if (write_setP != NULL)
 	SLIST_FOREACH(sp, &test->streams, streams)
-        if (FD_ISSET(sp->socket, write_setP))
-            FD_CLR(sp->socket, write_setP);
+	    if (FD_ISSET(sp->socket, write_setP))	
+		FD_CLR(sp->socket, write_setP);	
 
     return 0;
 }
@@ -2417,10 +2417,10 @@ send_results(struct iperf_test *test)
 		    cJSON_AddNumberToObject(j_stream, "retransmits", retransmits);
 		    cJSON_AddNumberToObject(j_stream, "jitter", sp->jitter);
 		    cJSON_AddNumberToObject(j_stream, "errors", sp->cnt_error);
-            cJSON_AddNumberToObject(j_stream, "omitted_errors", sp->omitted_cnt_error);
-            cJSON_AddNumberToObject(j_stream, "outoforder", sp->outoforder_packets);
-            cJSON_AddNumberToObject(j_stream, "omitted_packets", sp->omitted_packet_count);
+		    cJSON_AddNumberToObject(j_stream, "omitted_errors", sp->omitted_cnt_error);
+		    cJSON_AddNumberToObject(j_stream, "outoforder", sp->outoforder_packets);
 		    cJSON_AddNumberToObject(j_stream, "packets", sp->packet_count);
+		    cJSON_AddNumberToObject(j_stream, "omitted_packets", sp->omitted_packet_count);            
 
             // Debugging Files for ExpressRoute
             if (test->role == 's' || (test->role == 'c' && test->reverse == 1)) {      
@@ -2451,9 +2451,9 @@ send_results(struct iperf_test *test)
 	    }
 	}
 	cJSON_Delete(j);
-    if (test->role == 's') {
+	if (test->role == 's')
         delete_diagnostic_file_list();
-    }
+
     }
     return r;
 }
@@ -2537,17 +2537,17 @@ get_results(struct iperf_test *test)
 			i_errno = IERECVRESULTS;
 			r = -1;
 		    } else {
-			j_id = cJSON_GetObjectItem(j_stream, "id");
-			j_bytes = cJSON_GetObjectItem(j_stream, "bytes");
-			j_retransmits = cJSON_GetObjectItem(j_stream, "retransmits");
-			j_jitter = cJSON_GetObjectItem(j_stream, "jitter");
-			j_errors = cJSON_GetObjectItem(j_stream, "errors");
-            j_outoforder = cJSON_GetObjectItem(j_stream, "outoforder");
+            j_id = cJSON_GetObjectItem(j_stream, "id");
+            j_bytes = cJSON_GetObjectItem(j_stream, "bytes");
+            j_retransmits = cJSON_GetObjectItem(j_stream, "retransmits");
+            j_jitter = cJSON_GetObjectItem(j_stream, "jitter");
+            j_errors = cJSON_GetObjectItem(j_stream, "errors");
             j_omitted_errors = cJSON_GetObjectItem(j_stream, "omitted_errors");
-			j_packets = cJSON_GetObjectItem(j_stream, "packets");
-            j_omitted_packets = cJSON_GetObjectItem(j_stream, "omitted_packets");
-			j_start_time = cJSON_GetObjectItem(j_stream, "start_time");
-			j_end_time = cJSON_GetObjectItem(j_stream, "end_time");            
+            j_packets = cJSON_GetObjectItem(j_stream, "packets");
+            j_omitted_packets = cJSON_GetObjectItem(j_stream, "omitted_packets");	
+            j_start_time = cJSON_GetObjectItem(j_stream, "start_time");
+            j_end_time = cJSON_GetObjectItem(j_stream, "end_time");
+            j_outoforder = cJSON_GetObjectItem(j_stream, "outoforder");                        
 			if (j_id == NULL || j_bytes == NULL || j_retransmits == NULL || j_jitter == NULL || j_errors == NULL || j_packets == NULL) {
 			    i_errno = IERECVRESULTS;
 			    r = -1;
@@ -2567,11 +2567,12 @@ get_results(struct iperf_test *test)
                     omitted_pcount = j_omitted_packets->valueint;
                 }
                 SLIST_FOREACH(sp, &test->streams, streams)
+				    if (sp->id == sid) break;	
                 if (sp == NULL) {
                     i_errno = IESTREAMID;
                     r = -1;
                 }
-                else {
+                else {                    
                     if (test->role == 'c') {
                         get_diagnostic_results(sp, j_stream, serverOOOPktsFileList, serverMissingPktsFileList, test->reverse);
                     }                      
@@ -3585,6 +3586,7 @@ iperf_print_intermediate(struct iperf_test *test)
 static void
 iperf_print_results(struct iperf_test *test)
 {
+
     cJSON *json_summary_streams = NULL;
 
     int lower_mode, upper_mode;
@@ -3761,7 +3763,7 @@ iperf_print_results(struct iperf_test *test)
                     receiver_total_packets += (receiver_packet_count - receiver_omitted_packet_count);
                     lost_packets += sp->cnt_error;
                     if (sp->omitted_cnt_error > -1)
-                        lost_packets -= sp->omitted_cnt_error;
+                         lost_packets -= sp->omitted_cnt_error;	
                     avg_jitter += sp->jitter;
                 }
 
@@ -3840,7 +3842,7 @@ iperf_print_results(struct iperf_test *test)
                                 iperf_printf(test, report_sender_not_available_format, sp->socket);
                         }
                         else {
-                            iperf_printf(test, report_bw_udp_format, sp->socket, mbuf, start_time, sender_time, ubuf, nbuf, 0.0, 0, (sender_packet_count - sender_omitted_packet_count), (double)0, report_sender);
+                            iperf_printf(test, report_bw_udp_format, sp->socket, mbuf, start_time, sender_time, ubuf, nbuf, 0.0, 0, (sender_packet_count - sender_omitted_packet_count), (double) 0, report_sender);
                         }
                         if ((sp->outoforder_packets - sp->omitted_outoforder_packets) > 0)
                           iperf_printf(test, report_sum_outoforder, mbuf, start_time, sender_time, (sp->outoforder_packets - sp->omitted_outoforder_packets));
@@ -3911,8 +3913,7 @@ iperf_print_results(struct iperf_test *test)
                         else {
                             if (sp->omitted_cnt_error > -1) {
                                 iperf_printf(test, report_bw_udp_format, sp->socket, mbuf, start_time, receiver_time, ubuf, nbuf, sp->jitter * 1000.0, (sp->cnt_error - sp->omitted_cnt_error), (receiver_packet_count - receiver_omitted_packet_count), lost_percent, report_receiver);
-                            }
-                            else {
+                            } else {
                                 iperf_printf(test, report_bw_udp_format_no_omitted_error, sp->socket, mbuf, start_time, receiver_time, ubuf, nbuf, sp->jitter * 1000.0, (receiver_packet_count - receiver_omitted_packet_count), report_receiver);
                             }
                         }

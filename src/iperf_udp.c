@@ -34,7 +34,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
-#include <sys/stat.h>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
@@ -62,7 +61,7 @@
 # endif
 #endif
 
- /* iperf_udp_recv
+/* iperf_udp_recv
  *
  * receives the data for UDP
  */
@@ -124,12 +123,8 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    sent_time.usecs = usec;
 	}
 
-    /***** added *****/
-    // printf("pcount %" PRIu64 " packet_count %d\n", pcount, sp->packet_count);
-
-	if (sp->test->debug_level >= DEBUG_LEVEL_DEBUG) {
+	if (sp->test->debug_level >= DEBUG_LEVEL_DEBUG)
 	    fprintf(stderr, "pcount %" PRIu64 " packet_count %d\n", pcount, sp->packet_count);
-    }
 
 	/*
 	 * Try to handle out of order packets.  The way we do this
@@ -177,10 +172,9 @@ iperf_udp_recv(struct iperf_stream *sp)
 		sp->cnt_error--;
 
 	    /* Log the out-of-order packet */
-	    if (sp->test->debug) {
+	    if (sp->test->debug)
 		    fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count + 1, sp->socket);
-        }
-
+        
         fprintf(sp->udpRecvOutOfOrderPackets, "%"PRIu64"\n", pcount);        
 	}
 

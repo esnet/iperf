@@ -146,11 +146,7 @@ iperf_udp_recv(struct iperf_stream *sp)
             /* There's a gap so count that as a loss. */
             sp->cnt_error += (pcount - 1) - sp->packet_count;
 
-            // [sp->packet_count + 1, pcount) is missing 
-            
-            for (uint64_t i = sp->packet_count + 1; i < pcount; i++) {
-                fprintf(sp->udpRecvMissingPackets, "%"PRIu64"\n", i);
-            }            
+            record_diagnostic_lost_packetseqnum(sp, pcount);         
 	    }
 	    /* Update the highest sequence number seen so far. */
 	    sp->packet_count = pcount;
@@ -174,8 +170,8 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    /* Log the out-of-order packet */
 	    if (sp->test->debug)
 		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count + 1, sp->socket);
-                
-        fprintf(sp->udpRecvOutOfOrderPackets, "%"PRIu64"\n", pcount);        
+
+        record_diagnostic_outoforder_packetseqnum(sp, pcount);
 	}
 
 	/*
@@ -211,7 +207,6 @@ iperf_udp_recv(struct iperf_stream *sp)
 
     return r;
 }
-
 
 /* iperf_udp_send
  *
@@ -633,4 +628,17 @@ int
 iperf_udp_init(struct iperf_test *test)
 {
     return 0;
+}
+
+void record_diagnostic_lost_packetseqnum(struct iperf_stream *sp, int pcount)
+{
+    // [sp->packet_count + 1, pcount) is missing 
+    for (uint64_t i = sp->packet_count + 1; i < pcount; i++) {
+        fprintf(sp->udpRecvMissingPackets, "%"PRIu64"\n", i);
+    }        
+}
+
+void record_diagnostic_outoforder_packetseqnum(struct iperf_stream *sp, int pcount)
+{
+    fprintf(sp->udpRecvOutOfOrderPackets, "%"PRIu64"\n", pcount);     
 }

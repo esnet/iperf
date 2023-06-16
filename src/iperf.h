@@ -211,13 +211,13 @@ struct iperf_stream
     int       omitted_cnt_error;
     uint64_t  target;
 
-    /* ER Test Field */
-    char     *serverUdpRecvOOOPktsFileName;
-    char     *serverUdpRecvMissingPktsFileName;
-    char     *udpRecvOOOPktsFileName;
-    char     *udpRecvMissingPktsFileName;
-    FILE     *udpRecvOutOfOrderPackets;
-    FILE     *udpRecvMissingPackets;    
+    /* for udp end-to-end out of order and lost packet diagnostic */
+    char     *udp_outoforderpkt_diagnostic_fname_remote;
+    char     *udp_lostpkt_diagnostic_fname_remote;
+    char     *udp_outoforderpkt_diagnostic_fname;
+    char     *udp_lostpkt_diagnostic_fname;
+    FILE     *udp_outoforderpkt_diagnostic_fp;
+    FILE     *udp_lostpkt_diagnostic_fp;    
     char     *connectionstring;
 
     struct sockaddr_storage local_addr;

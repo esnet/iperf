@@ -60,8 +60,8 @@ int iperf_udp_connect(struct iperf_test *);
 
 int iperf_udp_init(struct iperf_test *);
 
-void record_diagnostic_lost_packetseqnum(struct iperf_stream *, int);
+void record_diagnostic_lost_packetseqnum(struct iperf_stream *, uint64_t);
 
-void record_diagnostic_outoforder_packetseqnum(struct iperf_stream *, int);
+void record_diagnostic_outoforder_packetseqnum(struct iperf_stream *, uint64_t);
 
 #endif

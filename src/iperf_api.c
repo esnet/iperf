@@ -2488,8 +2488,8 @@ get_results(struct iperf_test *test)
     int sid, cerror, pcount, omitted_cerror, omitted_pcount;
     
     cJSON *j_outoforder;
-    FILE* serverOOOPktsFileList = fopen("serverOOOPktsFileList.txt", "w+");
-    FILE* serverMissingPktsFileList = fopen("serverMissingPktsFileList.txt", "w+");
+    FILE* remote_udp_outoforderpkt_diagnostic_filelist_fp = fopen("remote_udp_outoforderpkt_diagnostic_filelist.txt", "w+");
+    FILE* remote_udp_lostpkt_diagnostic_filelist_fp = fopen("remote_udp_lostpkt_diagnostic_filelist.txt", "w+");
 
     double jitter;
     iperf_size_t bytes_transferred;
@@ -2575,7 +2575,7 @@ get_results(struct iperf_test *test)
                 }
                 else {                    
                     if (test->role == 'c') {
-                        get_diagnostic_results(sp, j_stream, serverOOOPktsFileList, serverMissingPktsFileList, test->reverse);
+                        get_diagnostic_results(sp, j_stream, remote_udp_outoforderpkt_diagnostic_filelist_fp, remote_udp_lostpkt_diagnostic_filelist_fp, test->reverse);
                     }                      
 
                     if (sp->sender) {
@@ -2655,7 +2655,7 @@ get_results(struct iperf_test *test)
 	    }
 	}
 
-    close_diagnostic_file_list(serverOOOPktsFileList, serverMissingPktsFileList);
+    close_diagnostic_file_list(remote_udp_outoforderpkt_diagnostic_filelist_fp, remote_udp_lostpkt_diagnostic_filelist_fp);
 
 	j_remote_congestion_used = cJSON_GetObjectItem(j, "congestion_used");
 	if (j_remote_congestion_used != NULL) {
@@ -3764,7 +3764,7 @@ iperf_print_results(struct iperf_test *test)
                     receiver_total_packets += (receiver_packet_count - receiver_omitted_packet_count);
                     lost_packets += sp->cnt_error;
                     if (sp->omitted_cnt_error > -1)
-                         lost_packets -= sp->omitted_cnt_error;
+                         lost_packets -= sp->omitted_cnt_error;	
                     avg_jitter += sp->jitter;
                 }
 
@@ -4115,20 +4115,6 @@ iperf_print_results(struct iperf_test *test)
             }
         }
     }   
-
-    {
-        struct iperf_stream *sp = NULL;
-        SLIST_FOREACH(sp, &test->streams, streams) {
-            // ER Debugging files created by server 
-            if (test->role == 'c' && test->reverse == 0) {
-                iperf_printf(test, "\n-----------------------------------------------------------\n");
-                iperf_printf(test, "[ER] Server has created the following file to record out of order iperf udp packets: %s (count: %d)\n", sp->serverUdpRecvOOOPktsFileName, sp->outoforder_packets);
-                sp->serverUdpRecvOOOPktsFileName = NULL;
-                iperf_printf(test, "[ER] Server has created the following file to record lost iperf udp packets: %s (count: %d)\n", sp->serverUdpRecvMissingPktsFileName, sp->cnt_error);
-                sp->serverUdpRecvMissingPktsFileName = NULL;
-            }        
-        }    
-    }    
 
     /* Set real sender_has_retransmits for current side */
     if (test->mode == BIDIRECTIONAL)
@@ -4983,32 +4969,32 @@ void
 begin_diagnostic(struct iperf_stream* sp)
 {
     /* File to store all packet seq# gap and OutOrderPackets */
-    sp->udpRecvOOOPktsFileName = (char*)malloc(200);
-    sp->udpRecvMissingPktsFileName = (char*)malloc(200);
+    sp->udp_outoforderpkt_diagnostic_fname = (char*)malloc(200);
+    sp->udp_lostpkt_diagnostic_fname = (char*)malloc(200);
 
     time_t rawtime;
     time(&rawtime);
 
     if (sp->test->role == 's') {
-        sprintf(sp->udpRecvOOOPktsFileName, "udpRecvOOOPkts%02d.txt", sp->id);
-        sprintf(sp->udpRecvMissingPktsFileName, "udpRecvMissingPkts%02d.txt", sp->id);
+        sprintf(sp->udp_outoforderpkt_diagnostic_fname, "udp_diagnostic_outoforderpkts%02d.txt", sp->id);
+        sprintf(sp->udp_lostpkt_diagnostic_fname, "udp_diagnostic_lostpkts%02d.txt", sp->id);
     }
     else {
-        sprintf(sp->udpRecvOOOPktsFileName, "udpRecvOOOPkts%02d.tmp", sp->id);
-        sprintf(sp->udpRecvMissingPktsFileName, "udpRecvMissingPkts%02d.tmp", sp->id);
+        sprintf(sp->udp_outoforderpkt_diagnostic_fname, "udp_diagnostic_outoforderpkts%02d.tmp", sp->id);
+        sprintf(sp->udp_lostpkt_diagnostic_fname, "udp_diagnostic_lostpkts%02d.tmp", sp->id);
     }
 
     fflush(stdout);
 
-    sp->udpRecvOutOfOrderPackets = fopen(sp->udpRecvOOOPktsFileName, "w+");
-    sp->udpRecvMissingPackets = fopen(sp->udpRecvMissingPktsFileName, "w+");
+    sp->udp_outoforderpkt_diagnostic_fp = fopen(sp->udp_outoforderpkt_diagnostic_fname, "w+");
+    sp->udp_lostpkt_diagnostic_fp = fopen(sp->udp_lostpkt_diagnostic_fname, "w+");
 }
 
 void 
 stop_diagnostic(struct iperf_stream* sp)
 {
-    fclose(sp->udpRecvOutOfOrderPackets);
-    fclose(sp->udpRecvMissingPackets);
+    fclose(sp->udp_outoforderpkt_diagnostic_fp);
+    fclose(sp->udp_lostpkt_diagnostic_fp);
 
     if ((sp->test->role == 'c' && sp->test->reverse == 1) || (sp->test->role == 's')) {
         char cwd[500];
@@ -5017,19 +5003,19 @@ stop_diagnostic(struct iperf_stream* sp)
         }
 
         char absoluteDirOOO[1000];
-        char absoluteDirMissing[1000];
+        char absoluteDirLost[1000];
         char absoluteTemp[1000];
         char cmd[5000];
 
-        sprintf(absoluteDirOOO, "%s/%s", cwd, sp->udpRecvOOOPktsFileName);
-        sprintf(absoluteDirMissing, "%s/%s", cwd, sp->udpRecvMissingPktsFileName);
+        sprintf(absoluteDirOOO, "%s/%s", cwd, sp->udp_outoforderpkt_diagnostic_fname);
+        sprintf(absoluteDirLost, "%s/%s", cwd, sp->udp_lostpkt_diagnostic_fname);
         sprintf(absoluteTemp, "%s/tmpdiff.txt", cwd);
 
         int ooosize = 0;
         int missingsize = 0;
 
         struct stat st;
-        stat(sp->udpRecvOOOPktsFileName, &st);
+        stat(sp->udp_outoforderpkt_diagnostic_fname, &st);
         ooosize = st.st_size;
 
         if (ooosize != 0) {
@@ -5043,14 +5029,14 @@ stop_diagnostic(struct iperf_stream* sp)
             }
         }
 
-        stat(sp->udpRecvMissingPktsFileName, &st);
+        stat(sp->udp_lostpkt_diagnostic_fname, &st);
         missingsize = st.st_size;
 
         if (ooosize != 0 && missingsize != 0) {
-            sprintf(cmd, "comm -23 %s %s > %s", absoluteDirMissing, absoluteDirOOO, absoluteTemp);
+            sprintf(cmd, "comm -23 %s %s > %s", absoluteDirLost, absoluteDirOOO, absoluteTemp);
             if (system(cmd) > -1) {
-                remove(absoluteDirMissing);
-                rename(absoluteTemp, absoluteDirMissing);
+                remove(absoluteDirLost);
+                rename(absoluteTemp, absoluteDirLost);
             }
             else {
                 printf("Failed to run %s\n", cmd);
@@ -5065,21 +5051,21 @@ stop_diagnostic(struct iperf_stream* sp)
         }
 
         char absoluteDirOOO[1000];
-        char absoluteDirMissing[1000];
+        char absoluteDirLost[1000];
 
-        sprintf(absoluteDirOOO, "%s/%s", cwd, sp->udpRecvOOOPktsFileName);
-        sprintf(absoluteDirMissing, "%s/%s", cwd, sp->udpRecvMissingPktsFileName);
+        sprintf(absoluteDirOOO, "%s/%s", cwd, sp->udp_outoforderpkt_diagnostic_fname);
+        sprintf(absoluteDirLost, "%s/%s", cwd, sp->udp_lostpkt_diagnostic_fname);
 
         remove(absoluteDirOOO);
-        remove(absoluteDirMissing);
+        remove(absoluteDirLost);
     }
 }
 
 void
 send_diagnostic_results(struct iperf_stream* sp, cJSON* j_stream)
 {
-    cJSON_AddStringToObject(j_stream, "udpRecvOOOPktsFileName", sp->udpRecvOOOPktsFileName);
-    cJSON_AddStringToObject(j_stream, "udpRecvMissingPktsFileName", sp->udpRecvMissingPktsFileName);
+    cJSON_AddStringToObject(j_stream, "udp_outoforderpkt_diagnostic_fname", sp->udp_outoforderpkt_diagnostic_fname);
+    cJSON_AddStringToObject(j_stream, "udp_lostpkt_diagnostic_fname", sp->udp_lostpkt_diagnostic_fname);
 
     int max_seqmsgcount_to_send = 500;
 
@@ -5087,7 +5073,7 @@ send_diagnostic_results(struct iperf_stream* sp, cJSON* j_stream)
 
     {
         sprintf(strbuf, "Out of Order Packet Count: %d\n%s\n", sp->outoforder_packets, sp->connectionstring);
-        FILE* pIn = fopen(sp->udpRecvOOOPktsFileName, "r");
+        FILE* pIn = fopen(sp->udp_outoforderpkt_diagnostic_fname, "r");
         int lineCount = sp->outoforder_packets > max_seqmsgcount_to_send ? max_seqmsgcount_to_send : sp->outoforder_packets;
         int c = strlen(strbuf);
 
@@ -5100,13 +5086,13 @@ send_diagnostic_results(struct iperf_stream* sp, cJSON* j_stream)
         }
 
         strbuf[c] = '\0';
-        cJSON_AddStringToObject(j_stream, "udpRecvOOOPktsSeq", strbuf);
+        cJSON_AddStringToObject(j_stream, "jstream_udp_outoforderpkt_seq_diagnostic", strbuf);
         fclose(pIn);
     }
 
     {
         sprintf(strbuf, "Lost Packet Count: %d\n%s\n", sp->cnt_error, sp->connectionstring);
-        FILE* pIn = fopen(sp->udpRecvMissingPktsFileName, "r");
+        FILE* pIn = fopen(sp->udp_lostpkt_diagnostic_fname, "r");
         int lineCount = sp->cnt_error > max_seqmsgcount_to_send ? max_seqmsgcount_to_send : sp->cnt_error;
         int c = strlen(strbuf);
 
@@ -5119,7 +5105,7 @@ send_diagnostic_results(struct iperf_stream* sp, cJSON* j_stream)
         }
 
         strbuf[c] = '\0';
-        cJSON_AddStringToObject(j_stream, "udpRecvMissingPktsSeq", strbuf);
+        cJSON_AddStringToObject(j_stream, "jstream_udp_lostpkt_seq_diagnostic", strbuf);
         fclose(pIn);
     }
 
@@ -5128,23 +5114,23 @@ send_diagnostic_results(struct iperf_stream* sp, cJSON* j_stream)
 }
 
 void
-get_diagnostic_results(struct iperf_stream* sp, cJSON* j_stream, FILE * serverOOOPktsFileList, FILE * serverMissingPktsFileList, int reverse)
+get_diagnostic_results(struct iperf_stream* sp, cJSON* j_stream, FILE * remote_udp_outoforderpkt_diagnostic_filelist_fp, FILE * remote_udp_lostpkt_diagnostic_filelist_fp, int reverse)
 {
-    cJSON *j_outoforder = cJSON_GetObjectItem(j_stream, "udpRecvOOOPktsFileName");
-    cJSON *j_lost = cJSON_GetObjectItem(j_stream, "udpRecvMissingPktsFileName");
+    cJSON *j_outoforder = cJSON_GetObjectItem(j_stream, "udp_outoforderpkt_diagnostic_fname");
+    cJSON *j_lost = cJSON_GetObjectItem(j_stream, "udp_lostpkt_diagnostic_fname");
 
-    sp->serverUdpRecvOOOPktsFileName = strdup(j_outoforder->valuestring);
-    sp->serverUdpRecvMissingPktsFileName = strdup(j_lost->valuestring);
+    sp->udp_outoforderpkt_diagnostic_fname_remote = strdup(j_outoforder->valuestring);
+    sp->udp_lostpkt_diagnostic_fname_remote = strdup(j_lost->valuestring);
 
     {
-        cJSON* j_OOOPkts = cJSON_GetObjectItem(j_stream, "udpRecvOOOPktsSeq");
+        cJSON* j_OOOPkts = cJSON_GetObjectItem(j_stream, "jstream_udp_outoforderpkt_seq_diagnostic");
         char* out = strdup(j_OOOPkts->valuestring);
-        FILE* pOut = fopen(sp->serverUdpRecvOOOPktsFileName, "w+");
+        FILE* pOut = fopen(sp->udp_outoforderpkt_diagnostic_fname_remote, "w+");
         fprintf(pOut, "%s", out);
-        fprintf(serverOOOPktsFileList, "%s\n", sp->serverUdpRecvOOOPktsFileName);
+        fprintf(remote_udp_outoforderpkt_diagnostic_filelist_fp, "%s\n", sp->udp_outoforderpkt_diagnostic_fname_remote);
 
         if (reverse == 1) {
-            FILE* pIn = fopen(sp->udpRecvOOOPktsFileName, "r");
+            FILE* pIn = fopen(sp->udp_outoforderpkt_diagnostic_fname, "r");
             char c = fgetc(pIn);;
             while (c > 0) {
                 fputc(c, pOut);
@@ -5153,19 +5139,19 @@ get_diagnostic_results(struct iperf_stream* sp, cJSON* j_stream, FILE * serverOO
             fclose(pIn);
         }
 
-        remove(sp->udpRecvOOOPktsFileName);
+        remove(sp->udp_outoforderpkt_diagnostic_fname);
         fclose(pOut);
     }
 
     {
-        cJSON* j_MissingPkts = cJSON_GetObjectItem(j_stream, "udpRecvMissingPktsSeq");
+        cJSON* j_MissingPkts = cJSON_GetObjectItem(j_stream, "jstream_udp_lostpkt_seq_diagnostic");
         char* out = strdup(j_MissingPkts->valuestring);
-        FILE* pOut = fopen(sp->serverUdpRecvMissingPktsFileName, "w+");
+        FILE* pOut = fopen(sp->udp_lostpkt_diagnostic_fname_remote, "w+");
         fprintf(pOut, "%s", out);
-        fprintf(serverMissingPktsFileList, "%s\n", sp->serverUdpRecvMissingPktsFileName);
+        fprintf(remote_udp_lostpkt_diagnostic_filelist_fp, "%s\n", sp->udp_lostpkt_diagnostic_fname_remote);
 
         if (reverse == 1) {
-            FILE* pIn = fopen(sp->udpRecvMissingPktsFileName, "r");
+            FILE* pIn = fopen(sp->udp_lostpkt_diagnostic_fname, "r");
             char c = fgetc(pIn);;
             while (c > 0) {
                 fputc(c, pOut);
@@ -5174,16 +5160,22 @@ get_diagnostic_results(struct iperf_stream* sp, cJSON* j_stream, FILE * serverOO
             fclose(pIn);
         }
 
-        remove(sp->udpRecvMissingPktsFileName);
+        remove(sp->udp_lostpkt_diagnostic_fname);
         fclose(pOut);
     }
+
+    free(sp->udp_outoforderpkt_diagnostic_fname_remote);
+    free(sp->udp_lostpkt_diagnostic_fname_remote);
+
+    sp->udp_outoforderpkt_diagnostic_fname_remote = NULL;
+    sp->udp_lostpkt_diagnostic_fname_remote = NULL;
 }
 
 void
-close_diagnostic_file_list(FILE *serverOOOPktsFileList, FILE *serverMissingPktsFileList)
+close_diagnostic_file_list(FILE *remote_udp_outoforderpkt_diagnostic_filelist_fp, FILE *remote_udp_lostpkt_diagnostic_filelist_fp)
 {
-    fclose(serverOOOPktsFileList);
-    fclose(serverMissingPktsFileList);
+    fclose(remote_udp_outoforderpkt_diagnostic_filelist_fp);
+    fclose(remote_udp_lostpkt_diagnostic_filelist_fp);
 }
 
 void
@@ -5196,13 +5188,13 @@ delete_diagnostic_file_list()
     }
 
     char absoluteDirOOO[1000];
-    char absoluteDirMissing[1000];
+    char absoluteDirLost[1000];
 
-    sprintf(absoluteDirOOO, "%s/%s", cwd, "serverOOOPktsFileList.txt");
-    sprintf(absoluteDirMissing, "%s/%s", cwd, "serverMissingPktsFileList.txt");
+    sprintf(absoluteDirOOO, "%s/%s", cwd, "remote_udp_outoforderpkt_diagnostic_filelist.txt");
+    sprintf(absoluteDirLost, "%s/%s", cwd, "remote_udp_lostpkt_diagnostic_filelist.txt");
 
     remove(absoluteDirOOO);
-    remove(absoluteDirMissing);
+    remove(absoluteDirLost);
 }
 
 void delete_diagnostic_files(struct iperf_stream* sp)
@@ -5214,12 +5206,12 @@ void delete_diagnostic_files(struct iperf_stream* sp)
     }
 
     char absoluteDirOOO[1000];
-    char absoluteDirMissing[1000];
+    char absoluteDirLost[1000];
 
-    sprintf(absoluteDirOOO, "%s/%s", cwd, sp->udpRecvOOOPktsFileName);
-    sprintf(absoluteDirMissing, "%s/%s", cwd, sp->udpRecvMissingPktsFileName);
+    sprintf(absoluteDirOOO, "%s/%s", cwd, sp->udp_outoforderpkt_diagnostic_fname);
+    sprintf(absoluteDirLost, "%s/%s", cwd, sp->udp_lostpkt_diagnostic_fname);
 
     remove(absoluteDirOOO);
-    remove(absoluteDirMissing);
+    remove(absoluteDirLost);
 }
 

@@ -1055,6 +1055,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif /* HAVE_SO_BINDTODEVICE */
         {"cport", required_argument, NULL, OPT_CLIENT_PORT},
         {"set-mss", required_argument, NULL, 'M'},
+        {"e2e-diagnostic", no_argument, NULL, 'q'},        
         {"no-delay", no_argument, NULL, 'N'},
         {"version4", no_argument, NULL, '4'},
         {"version6", no_argument, NULL, '6'},
@@ -1128,7 +1129,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     char *client_username = NULL, *client_rsa_public_key = NULL, *server_rsa_private_key = NULL;
 #endif /* HAVE_SSL */
 
-    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:q:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
 		portno = atoi(optarg);
@@ -1360,6 +1361,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 }
 		client_flag = 1;
                 break;
+            case 'q':
+                test->end_to_end_diagnostic = 1;
+		        break;
             case 'N':
                 test->no_delay = 1;
 		client_flag = 1;
@@ -2575,7 +2579,12 @@ get_results(struct iperf_test *test)
                 }
                 else {                    
                     if (test->role == 'c') {
-                        get_diagnostic_results(sp, j_stream, remote_udp_outoforderpkt_diagnostic_filelist_fp, remote_udp_lostpkt_diagnostic_filelist_fp, test->reverse);
+                        if (test->end_to_end_diagnostic == 1) {
+                            get_diagnostic_results(sp, j_stream, remote_udp_outoforderpkt_diagnostic_filelist_fp, remote_udp_lostpkt_diagnostic_filelist_fp, test->reverse);
+                        } else {
+                            delete_file_from_current_dir("remote_udp_outoforderpkt_diagnostic_filelist.txt");
+                            delete_file_from_current_dir("remote_udp_lostpkt_diagnostic_filelist.txt");
+                        }
                     }                      
 
                     if (sp->sender) {
@@ -3180,6 +3189,7 @@ iperf_reset_test(struct iperf_test *test)
     test->reverse = 0;
     test->bidirectional = 0;
     test->no_delay = 0;
+    test->end_to_end_diagnostic = 0;
 
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);
@@ -4966,7 +4976,7 @@ iflush(struct iperf_test *test)
 }
 
 void 
-begin_diagnostic(struct iperf_stream* sp)
+begin_diagnostic(struct iperf_stream *sp)
 {
     /* File to store all packet seq# gap and OutOrderPackets */
     sp->udp_outoforderpkt_diagnostic_fname = (char*)malloc(200);
@@ -4991,7 +5001,7 @@ begin_diagnostic(struct iperf_stream* sp)
 }
 
 void 
-stop_diagnostic(struct iperf_stream* sp)
+stop_diagnostic(struct iperf_stream *sp)
 {
     fclose(sp->udp_outoforderpkt_diagnostic_fp);
     fclose(sp->udp_lostpkt_diagnostic_fp);
@@ -5062,7 +5072,7 @@ stop_diagnostic(struct iperf_stream* sp)
 }
 
 void
-send_diagnostic_results(struct iperf_stream* sp, cJSON* j_stream)
+send_diagnostic_results(struct iperf_stream *sp, cJSON *j_stream)
 {
     cJSON_AddStringToObject(j_stream, "udp_outoforderpkt_diagnostic_fname", sp->udp_outoforderpkt_diagnostic_fname);
     cJSON_AddStringToObject(j_stream, "udp_lostpkt_diagnostic_fname", sp->udp_lostpkt_diagnostic_fname);
@@ -5114,7 +5124,7 @@ send_diagnostic_results(struct iperf_stream* sp, cJSON* j_stream)
 }
 
 void
-get_diagnostic_results(struct iperf_stream* sp, cJSON* j_stream, FILE * remote_udp_outoforderpkt_diagnostic_filelist_fp, FILE * remote_udp_lostpkt_diagnostic_filelist_fp, int reverse)
+get_diagnostic_results(struct iperf_stream *sp, cJSON *j_stream, FILE *remote_udp_outoforderpkt_diagnostic_filelist_fp, FILE *remote_udp_lostpkt_diagnostic_filelist_fp, int reverse)
 {
     cJSON *j_outoforder = cJSON_GetObjectItem(j_stream, "udp_outoforderpkt_diagnostic_fname");
     cJSON *j_lost = cJSON_GetObjectItem(j_stream, "udp_lostpkt_diagnostic_fname");
@@ -5181,37 +5191,25 @@ close_diagnostic_file_list(FILE *remote_udp_outoforderpkt_diagnostic_filelist_fp
 void
 delete_diagnostic_file_list()
 {
-    char cwd[500];
-
-    if (getcwd(cwd, sizeof(cwd)) == NULL) {
-        printf("getcwd has been failed\n");
-    }
-
-    char absoluteDirOOO[1000];
-    char absoluteDirLost[1000];
-
-    sprintf(absoluteDirOOO, "%s/%s", cwd, "remote_udp_outoforderpkt_diagnostic_filelist.txt");
-    sprintf(absoluteDirLost, "%s/%s", cwd, "remote_udp_lostpkt_diagnostic_filelist.txt");
-
-    remove(absoluteDirOOO);
-    remove(absoluteDirLost);
+    delete_file_from_current_dir("remote_udp_outoforderpkt_diagnostic_filelist.txt");
+    delete_file_from_current_dir("remote_udp_lostpkt_diagnostic_filelist.txt");
 }
 
-void delete_diagnostic_files(struct iperf_stream* sp)
+void delete_diagnostic_files(struct iperf_stream *sp)
 {
-    char cwd[500];
-
-    if (getcwd(cwd, sizeof(cwd)) == NULL) {
-        printf("getcwd has been failed\n");
-    }
-
-    char absoluteDirOOO[1000];
-    char absoluteDirLost[1000];
-
-    sprintf(absoluteDirOOO, "%s/%s", cwd, sp->udp_outoforderpkt_diagnostic_fname);
-    sprintf(absoluteDirLost, "%s/%s", cwd, sp->udp_lostpkt_diagnostic_fname);
-
-    remove(absoluteDirOOO);
-    remove(absoluteDirLost);
+    delete_file_from_current_dir(sp->udp_outoforderpkt_diagnostic_fname);
+    delete_file_from_current_dir(sp->udp_lostpkt_diagnostic_fname);
 }
 
+void delete_file_from_current_dir(char *filename)
+{
+    char dir[500];
+
+    if (getcwd(dir, sizeof(dir)) == NULL) {
+        printf("getcwd has been failed\n");
+    }
+    
+    char strBuf[2000];
+    sprintf(strBuf, "%s/%s", dir, filename);
+    remove(strBuf);
+}

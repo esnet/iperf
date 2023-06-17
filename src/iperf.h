@@ -219,7 +219,7 @@ struct iperf_stream
     FILE     *udp_outoforderpkt_diagnostic_fp;
     FILE     *udp_lostpkt_diagnostic_fp;    
     char     *connectionstring;
-
+    
     struct sockaddr_storage local_addr;
     struct sockaddr_storage remote_addr;
 
@@ -321,6 +321,7 @@ struct iperf_test
 
     /* boolean variables for Options */
     int       daemon;                           /* -D option */
+    int       end_to_end_diagnostic;            /* -E option */
     int       one_off;                          /* -1 option */
     int       no_delay;                         /* -N option */
     int       reverse;                          /* -R option */

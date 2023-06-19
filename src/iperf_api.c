@@ -1362,7 +1362,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
             case 'q':
-                test->end_to_end_diagnostic = 1;
+                test->clientside_e2e_diagnostic = 1;
 		        break;
             case 'N':
                 test->no_delay = 1;
@@ -2579,7 +2579,7 @@ get_results(struct iperf_test *test)
                 }
                 else {                    
                     if (test->role == 'c') {
-                        if (test->end_to_end_diagnostic == 1) {
+                        if (test->clientside_e2e_diagnostic == 1) {
                             get_diagnostic_results(sp, j_stream, remote_udp_outoforderpkt_diagnostic_filelist_fp, remote_udp_lostpkt_diagnostic_filelist_fp, test->reverse);
                         } else {
                             delete_file_from_current_dir("remote_udp_outoforderpkt_diagnostic_filelist.txt");
@@ -3189,7 +3189,7 @@ iperf_reset_test(struct iperf_test *test)
     test->reverse = 0;
     test->bidirectional = 0;
     test->no_delay = 0;
-    test->end_to_end_diagnostic = 0;
+    test->clientside_e2e_diagnostic = 0;
 
     FD_ZERO(&test->read_set);
     FD_ZERO(&test->write_set);

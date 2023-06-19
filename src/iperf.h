@@ -321,7 +321,7 @@ struct iperf_test
 
     /* boolean variables for Options */
     int       daemon;                           /* -D option */
-    int       end_to_end_diagnostic;            /* -E option */
+    int       clientside_e2e_diagnostic;            /* -E option */
     int       one_off;                          /* -1 option */
     int       no_delay;                         /* -N option */
     int       reverse;                          /* -R option */

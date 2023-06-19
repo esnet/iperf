@@ -143,10 +143,10 @@ iperf_udp_recv(struct iperf_stream *sp)
 
 	    /* Forward, but is there a gap in sequence numbers? */
 	    if (pcount > sp->packet_count + 1) {
-            /* There's a gap so count that as a loss. */
-            sp->cnt_error += (pcount - 1) - sp->packet_count;
+		/* There's a gap so count that as a loss. */
+		sp->cnt_error += (pcount - 1) - sp->packet_count;
 
-            record_diagnostic_lost_packetseqnum(sp, pcount);         
+		record_diagnostic_lost_packetseqnum(sp, pcount);         
 	    }
 	    /* Update the highest sequence number seen so far. */
 	    sp->packet_count = pcount;

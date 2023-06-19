@@ -2410,8 +2410,8 @@ send_results(struct iperf_test *test)
 	    cJSON_AddItemToObject(j, "streams", j_streams);
 	    SLIST_FOREACH(sp, &test->streams, streams) {
 		j_stream = cJSON_CreateObject();
-			if (j_stream == NULL) {
-		    i_errno = IEPACKAGERESULTS;
+		if (j_stream == NULL) {
+            i_errno = IEPACKAGERESULTS;
 		    r = -1;
             } else {
 			cJSON_AddItemToArray(j_streams, j_stream);

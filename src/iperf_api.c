@@ -2415,17 +2415,17 @@ send_results(struct iperf_test *test)
 			r = -1;
 		} else {
 		    cJSON_AddItemToArray(j_streams, j_stream);
-			bytes_transferred = sp->sender ? (sp->result->bytes_sent - sp->result->bytes_sent_omit) : sp->result->bytes_received;
-			retransmits = (sp->sender && test->sender_has_retransmits) ? sp->result->stream_retrans : -1;
-			cJSON_AddNumberToObject(j_stream, "id", sp->id);
-			cJSON_AddNumberToObject(j_stream, "bytes", bytes_transferred);
-			cJSON_AddNumberToObject(j_stream, "retransmits", retransmits);
-			cJSON_AddNumberToObject(j_stream, "jitter", sp->jitter);
-			cJSON_AddNumberToObject(j_stream, "errors", sp->cnt_error);
-			cJSON_AddNumberToObject(j_stream, "omitted_errors", sp->omitted_cnt_error);
-			cJSON_AddNumberToObject(j_stream, "outoforder", sp->outoforder_packets);
-			cJSON_AddNumberToObject(j_stream, "packets", sp->packet_count);
-			cJSON_AddNumberToObject(j_stream, "omitted_packets", sp->omitted_packet_count);            
+		    bytes_transferred = sp->sender ? (sp->result->bytes_sent - sp->result->bytes_sent_omit) : sp->result->bytes_received;
+		    retransmits = (sp->sender && test->sender_has_retransmits) ? sp->result->stream_retrans : -1;
+		    cJSON_AddNumberToObject(j_stream, "id", sp->id);
+		    cJSON_AddNumberToObject(j_stream, "bytes", bytes_transferred);
+		    cJSON_AddNumberToObject(j_stream, "retransmits", retransmits);
+		    cJSON_AddNumberToObject(j_stream, "jitter", sp->jitter);
+		    cJSON_AddNumberToObject(j_stream, "errors", sp->cnt_error);
+		    cJSON_AddNumberToObject(j_stream, "omitted_errors", sp->omitted_cnt_error);
+		    cJSON_AddNumberToObject(j_stream, "outoforder", sp->outoforder_packets);
+		    cJSON_AddNumberToObject(j_stream, "packets", sp->packet_count);
+		    cJSON_AddNumberToObject(j_stream, "omitted_packets", sp->omitted_packet_count);            
 
 			if (test->role == 's' || (test->role == 'c' && test->reverse == 1)) {      
 				stop_diagnostic (sp);              

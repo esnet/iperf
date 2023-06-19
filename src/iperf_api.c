@@ -2401,7 +2401,7 @@ send_results(struct iperf_test *test)
         free(output);
 	    }
 	}
-	
+
 	j_streams = cJSON_CreateArray();
 	if (j_streams == NULL) {
 	    i_errno = IEPACKAGERESULTS;
@@ -2409,39 +2409,38 @@ send_results(struct iperf_test *test)
 	} else {
 	    cJSON_AddItemToObject(j, "streams", j_streams);
 	    SLIST_FOREACH(sp, &test->streams, streams) {
-			j_stream = cJSON_CreateObject();
+		j_stream = cJSON_CreateObject();
 			if (j_stream == NULL) {
-				i_errno = IEPACKAGERESULTS;
-				r = -1;
-			} else {
-				cJSON_AddItemToArray(j_streams, j_stream);
-				bytes_transferred = sp->sender ? (sp->result->bytes_sent - sp->result->bytes_sent_omit) : sp->result->bytes_received;
-				retransmits = (sp->sender && test->sender_has_retransmits) ? sp->result->stream_retrans : -1;
-				cJSON_AddNumberToObject(j_stream, "id", sp->id);
-				cJSON_AddNumberToObject(j_stream, "bytes", bytes_transferred);
-				cJSON_AddNumberToObject(j_stream, "retransmits", retransmits);
-				cJSON_AddNumberToObject(j_stream, "jitter", sp->jitter);
-				cJSON_AddNumberToObject(j_stream, "errors", sp->cnt_error);
-				cJSON_AddNumberToObject(j_stream, "omitted_errors", sp->omitted_cnt_error);
-				cJSON_AddNumberToObject(j_stream, "outoforder", sp->outoforder_packets);
-				cJSON_AddNumberToObject(j_stream, "packets", sp->packet_count);
-				cJSON_AddNumberToObject(j_stream, "omitted_packets", sp->omitted_packet_count);            
+			i_errno = IEPACKAGERESULTS;
+			r = -1;
+		} else {
+			cJSON_AddItemToArray(j_streams, j_stream);
+			bytes_transferred = sp->sender ? (sp->result->bytes_sent - sp->result->bytes_sent_omit) : sp->result->bytes_received;
+			retransmits = (sp->sender && test->sender_has_retransmits) ? sp->result->stream_retrans : -1;
+			cJSON_AddNumberToObject(j_stream, "id", sp->id);
+			cJSON_AddNumberToObject(j_stream, "bytes", bytes_transferred);
+			cJSON_AddNumberToObject(j_stream, "retransmits", retransmits);
+			cJSON_AddNumberToObject(j_stream, "jitter", sp->jitter);
+			cJSON_AddNumberToObject(j_stream, "errors", sp->cnt_error);
+			cJSON_AddNumberToObject(j_stream, "omitted_errors", sp->omitted_cnt_error);
+			cJSON_AddNumberToObject(j_stream, "outoforder", sp->outoforder_packets);
+			cJSON_AddNumberToObject(j_stream, "packets", sp->packet_count);
+			cJSON_AddNumberToObject(j_stream, "omitted_packets", sp->omitted_packet_count);            
 
-				// Debugging Files for ExpressRoute
-				if (test->role == 's' || (test->role == 'c' && test->reverse == 1)) {      
-					stop_diagnostic (sp);              
-					if (sp->test->role == 's') {
-						send_diagnostic_results(sp, j_stream);
-						delete_diagnostic_files(sp);
-					}
-				}          
+			if (test->role == 's' || (test->role == 'c' && test->reverse == 1)) {      
+				stop_diagnostic (sp);              
+				if (sp->test->role == 's') {
+					send_diagnostic_results(sp, j_stream);
+					delete_diagnostic_files(sp);
+				}
+			}          
 
-				iperf_time_diff(&sp->result->start_time, &sp->result->start_time, &temp_time);
-				start_time = iperf_time_in_secs(&temp_time);
-				iperf_time_diff(&sp->result->start_time, &sp->result->end_time, &temp_time);
-				end_time = iperf_time_in_secs(&temp_time);
-				cJSON_AddNumberToObject(j_stream, "start_time", start_time);
-				cJSON_AddNumberToObject(j_stream, "end_time", end_time);
+			iperf_time_diff(&sp->result->start_time, &sp->result->start_time, &temp_time);
+			start_time = iperf_time_in_secs(&temp_time);
+			iperf_time_diff(&sp->result->start_time, &sp->result->end_time, &temp_time);
+			end_time = iperf_time_in_secs(&temp_time);
+			cJSON_AddNumberToObject(j_stream, "start_time", start_time);
+			cJSON_AddNumberToObject(j_stream, "end_time", end_time);
 
 			}
 	    }

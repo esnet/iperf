@@ -1055,7 +1055,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif /* HAVE_SO_BINDTODEVICE */
         {"cport", required_argument, NULL, OPT_CLIENT_PORT},
         {"set-mss", required_argument, NULL, 'M'},
-        {"e2e-diagnostic", no_argument, NULL, 'q'},        
+        {"clientside-diagnostic", no_argument, NULL, 'q'},        
         {"no-delay", no_argument, NULL, 'N'},
         {"version4", no_argument, NULL, '4'},
         {"version6", no_argument, NULL, '6'},
@@ -2401,49 +2401,49 @@ send_results(struct iperf_test *test)
         free(output);
 	    }
 	}
-
-    j_streams = cJSON_CreateArray();
+	
+	j_streams = cJSON_CreateArray();
 	if (j_streams == NULL) {
 	    i_errno = IEPACKAGERESULTS;
 	    r = -1;
 	} else {
 	    cJSON_AddItemToObject(j, "streams", j_streams);
 	    SLIST_FOREACH(sp, &test->streams, streams) {
-            j_stream = cJSON_CreateObject();
-		if (j_stream == NULL) {
-		    i_errno = IEPACKAGERESULTS;
-		    r = -1;
-		} else {
-		    cJSON_AddItemToArray(j_streams, j_stream);
-		    bytes_transferred = sp->sender ? (sp->result->bytes_sent - sp->result->bytes_sent_omit) : sp->result->bytes_received;
-		    retransmits = (sp->sender && test->sender_has_retransmits) ? sp->result->stream_retrans : -1;
-		    cJSON_AddNumberToObject(j_stream, "id", sp->id);
-		    cJSON_AddNumberToObject(j_stream, "bytes", bytes_transferred);
-		    cJSON_AddNumberToObject(j_stream, "retransmits", retransmits);
-		    cJSON_AddNumberToObject(j_stream, "jitter", sp->jitter);
-		    cJSON_AddNumberToObject(j_stream, "errors", sp->cnt_error);
-		    cJSON_AddNumberToObject(j_stream, "omitted_errors", sp->omitted_cnt_error);
-		    cJSON_AddNumberToObject(j_stream, "outoforder", sp->outoforder_packets);
-		    cJSON_AddNumberToObject(j_stream, "packets", sp->packet_count);
-		    cJSON_AddNumberToObject(j_stream, "omitted_packets", sp->omitted_packet_count);            
+			j_stream = cJSON_CreateObject();
+			if (j_stream == NULL) {
+				i_errno = IEPACKAGERESULTS;
+				r = -1;
+			} else {
+				cJSON_AddItemToArray(j_streams, j_stream);
+				bytes_transferred = sp->sender ? (sp->result->bytes_sent - sp->result->bytes_sent_omit) : sp->result->bytes_received;
+				retransmits = (sp->sender && test->sender_has_retransmits) ? sp->result->stream_retrans : -1;
+				cJSON_AddNumberToObject(j_stream, "id", sp->id);
+				cJSON_AddNumberToObject(j_stream, "bytes", bytes_transferred);
+				cJSON_AddNumberToObject(j_stream, "retransmits", retransmits);
+				cJSON_AddNumberToObject(j_stream, "jitter", sp->jitter);
+				cJSON_AddNumberToObject(j_stream, "errors", sp->cnt_error);
+				cJSON_AddNumberToObject(j_stream, "omitted_errors", sp->omitted_cnt_error);
+				cJSON_AddNumberToObject(j_stream, "outoforder", sp->outoforder_packets);
+				cJSON_AddNumberToObject(j_stream, "packets", sp->packet_count);
+				cJSON_AddNumberToObject(j_stream, "omitted_packets", sp->omitted_packet_count);            
 
-            // Debugging Files for ExpressRoute
-            if (test->role == 's' || (test->role == 'c' && test->reverse == 1)) {      
-                stop_diagnostic (sp);              
-                if (sp->test->role == 's') {
-                    send_diagnostic_results(sp, j_stream);
-                    delete_diagnostic_files(sp);
-                }
-            }          
+				// Debugging Files for ExpressRoute
+				if (test->role == 's' || (test->role == 'c' && test->reverse == 1)) {      
+					stop_diagnostic (sp);              
+					if (sp->test->role == 's') {
+						send_diagnostic_results(sp, j_stream);
+						delete_diagnostic_files(sp);
+					}
+				}          
 
-		    iperf_time_diff(&sp->result->start_time, &sp->result->start_time, &temp_time);
-		    start_time = iperf_time_in_secs(&temp_time);
-		    iperf_time_diff(&sp->result->start_time, &sp->result->end_time, &temp_time);
-		    end_time = iperf_time_in_secs(&temp_time);
-		    cJSON_AddNumberToObject(j_stream, "start_time", start_time);
-		    cJSON_AddNumberToObject(j_stream, "end_time", end_time);
+				iperf_time_diff(&sp->result->start_time, &sp->result->start_time, &temp_time);
+				start_time = iperf_time_in_secs(&temp_time);
+				iperf_time_diff(&sp->result->start_time, &sp->result->end_time, &temp_time);
+				end_time = iperf_time_in_secs(&temp_time);
+				cJSON_AddNumberToObject(j_stream, "start_time", start_time);
+				cJSON_AddNumberToObject(j_stream, "end_time", end_time);
 
-		}
+			}
 	    }
 	    if (r == 0 && test->debug) {
                 char *str = cJSON_Print(j);
@@ -2505,173 +2505,172 @@ get_results(struct iperf_test *test)
 	i_errno = IERECVRESULTS;
         r = -1;
     } else {
-	j_cpu_util_total = cJSON_GetObjectItem(j, "cpu_util_total");
-	j_cpu_util_user = cJSON_GetObjectItem(j, "cpu_util_user");
-	j_cpu_util_system = cJSON_GetObjectItem(j, "cpu_util_system");
-	j_sender_has_retransmits = cJSON_GetObjectItem(j, "sender_has_retransmits");
-	if (j_cpu_util_total == NULL || j_cpu_util_user == NULL || j_cpu_util_system == NULL || j_sender_has_retransmits == NULL) {
-	    i_errno = IERECVRESULTS;
-	    r = -1;
-	} else {
-	    if (test->debug) {
-                char *str = cJSON_Print(j);
-                printf("get_results\n%s\n", str);
-                cJSON_free(str);
-	    }
-
-	    test->remote_cpu_util[0] = j_cpu_util_total->valuedouble;
-	    test->remote_cpu_util[1] = j_cpu_util_user->valuedouble;
-	    test->remote_cpu_util[2] = j_cpu_util_system->valuedouble;
-	    result_has_retransmits = j_sender_has_retransmits->valueint;
-	    if ( test->mode == RECEIVER ) {
-	        test->sender_has_retransmits = result_has_retransmits;
-	        test->other_side_has_retransmits = 0;
-	    }
-	    else if ( test->mode == BIDIRECTIONAL )
-	        test->other_side_has_retransmits = result_has_retransmits;
-
-	    j_streams = cJSON_GetObjectItem(j, "streams");
-	    if (j_streams == NULL) {
-		i_errno = IERECVRESULTS;
-		r = -1;
-	    } else {
-	        n = cJSON_GetArraySize(j_streams);
-		for (i=0; i<n; ++i) {
-		    j_stream = cJSON_GetArrayItem(j_streams, i);
-		    if (j_stream == NULL) {
+		j_cpu_util_total = cJSON_GetObjectItem(j, "cpu_util_total");
+		j_cpu_util_user = cJSON_GetObjectItem(j, "cpu_util_user");
+		j_cpu_util_system = cJSON_GetObjectItem(j, "cpu_util_system");
+		j_sender_has_retransmits = cJSON_GetObjectItem(j, "sender_has_retransmits");
+		if (j_cpu_util_total == NULL || j_cpu_util_user == NULL || j_cpu_util_system == NULL || j_sender_has_retransmits == NULL) {
 			i_errno = IERECVRESULTS;
 			r = -1;
-		    } else {
-            j_id = cJSON_GetObjectItem(j_stream, "id");
-            j_bytes = cJSON_GetObjectItem(j_stream, "bytes");
-            j_retransmits = cJSON_GetObjectItem(j_stream, "retransmits");
-            j_jitter = cJSON_GetObjectItem(j_stream, "jitter");
-            j_errors = cJSON_GetObjectItem(j_stream, "errors");
-            j_omitted_errors = cJSON_GetObjectItem(j_stream, "omitted_errors");
-            j_packets = cJSON_GetObjectItem(j_stream, "packets");
-            j_omitted_packets = cJSON_GetObjectItem(j_stream, "omitted_packets");	
-            j_start_time = cJSON_GetObjectItem(j_stream, "start_time");
-            j_end_time = cJSON_GetObjectItem(j_stream, "end_time");
-            j_outoforder = cJSON_GetObjectItem(j_stream, "outoforder");                        
-			if (j_id == NULL || j_bytes == NULL || j_retransmits == NULL || j_jitter == NULL || j_errors == NULL || j_packets == NULL) {
-			    i_errno = IERECVRESULTS;
-			    r = -1;
-            } else if ((j_omitted_errors == NULL && j_omitted_packets != NULL) || (j_omitted_errors != NULL && j_omitted_packets == NULL)) {
-                /* For backward compatibility allow to not receive "omitted" statistcs */
-                i_errno = IERECVRESULTS;
-                r = -1;
+		} else {
+			if (test->debug) {
+					char *str = cJSON_Print(j);
+					printf("get_results\n%s\n", str);
+					cJSON_free(str);
+			}
+
+			test->remote_cpu_util[0] = j_cpu_util_total->valuedouble;
+			test->remote_cpu_util[1] = j_cpu_util_user->valuedouble;
+			test->remote_cpu_util[2] = j_cpu_util_system->valuedouble;
+			result_has_retransmits = j_sender_has_retransmits->valueint;
+			if ( test->mode == RECEIVER ) {
+				test->sender_has_retransmits = result_has_retransmits;
+				test->other_side_has_retransmits = 0;
+			}
+			else if ( test->mode == BIDIRECTIONAL )
+				test->other_side_has_retransmits = result_has_retransmits;
+
+			j_streams = cJSON_GetObjectItem(j, "streams");
+			if (j_streams == NULL) {
+				i_errno = IERECVRESULTS;
+				r = -1;
 			} else {
-                sid = j_id->valueint;
-                bytes_transferred = j_bytes->valueint;
-                retransmits = j_retransmits->valueint;
-                jitter = j_jitter->valuedouble;
-                cerror = j_errors->valueint;
-                pcount = j_packets->valueint;
-                if (j_omitted_packets != NULL) {
-                    omitted_cerror = j_omitted_errors->valueint;
-                    omitted_pcount = j_omitted_packets->valueint;
-                }
-                SLIST_FOREACH(sp, &test->streams, streams)
-				    if (sp->id == sid) break;	
-                if (sp == NULL) {
-                    i_errno = IESTREAMID;
-                    r = -1;
-                }
-                else {                    
-                    if (test->role == 'c') {
-                        if (test->clientside_e2e_diagnostic == 1) {
-                            get_diagnostic_results(sp, j_stream, remote_udp_outoforderpkt_diagnostic_filelist_fp, remote_udp_lostpkt_diagnostic_filelist_fp, test->reverse);
-                        } else {
-                            delete_file_from_current_dir("remote_udp_outoforderpkt_diagnostic_filelist.txt");
-                            delete_file_from_current_dir("remote_udp_lostpkt_diagnostic_filelist.txt");
-                        }
-                    }                      
+				n = cJSON_GetArraySize(j_streams);
+				for (i=0; i<n; ++i) {
+					j_stream = cJSON_GetArrayItem(j_streams, i);
+					if (j_stream == NULL) {
+					i_errno = IERECVRESULTS;
+					r = -1;
+					} else {
+						j_id = cJSON_GetObjectItem(j_stream, "id");
+						j_bytes = cJSON_GetObjectItem(j_stream, "bytes");
+						j_retransmits = cJSON_GetObjectItem(j_stream, "retransmits");
+						j_jitter = cJSON_GetObjectItem(j_stream, "jitter");
+						j_errors = cJSON_GetObjectItem(j_stream, "errors");
+						j_omitted_errors = cJSON_GetObjectItem(j_stream, "omitted_errors");
+						j_packets = cJSON_GetObjectItem(j_stream, "packets");
+						j_omitted_packets = cJSON_GetObjectItem(j_stream, "omitted_packets");	
+						j_start_time = cJSON_GetObjectItem(j_stream, "start_time");
+						j_end_time = cJSON_GetObjectItem(j_stream, "end_time");
+						j_outoforder = cJSON_GetObjectItem(j_stream, "outoforder");                        
+						if (j_id == NULL || j_bytes == NULL || j_retransmits == NULL || j_jitter == NULL || j_errors == NULL || j_packets == NULL) {
+							i_errno = IERECVRESULTS;
+							r = -1;
+						} else if ((j_omitted_errors == NULL && j_omitted_packets != NULL) || (j_omitted_errors != NULL && j_omitted_packets == NULL)) {
+							/* For backward compatibility allow to not receive "omitted" statistcs */
+							i_errno = IERECVRESULTS;
+							r = -1;
+						} else {
+							sid = j_id->valueint;
+							bytes_transferred = j_bytes->valueint;
+							retransmits = j_retransmits->valueint;
+							jitter = j_jitter->valuedouble;
+							cerror = j_errors->valueint;
+							pcount = j_packets->valueint;
+							if (j_omitted_packets != NULL) {
+								omitted_cerror = j_omitted_errors->valueint;
+								omitted_pcount = j_omitted_packets->valueint;
+							}
+							SLIST_FOREACH(sp, &test->streams, streams)
+								if (sp->id == sid) break;	
+							if (sp == NULL) {
+								i_errno = IESTREAMID;
+								r = -1;
+							}
+							else {                    
+								if (test->role == 'c') {
+									if (test->clientside_e2e_diagnostic == 1) {
+										get_diagnostic_results(sp, j_stream, remote_udp_outoforderpkt_diagnostic_filelist_fp, remote_udp_lostpkt_diagnostic_filelist_fp, test->reverse);
+									} else {
+										delete_file_from_current_dir("remote_udp_outoforderpkt_diagnostic_filelist.txt");
+										delete_file_from_current_dir("remote_udp_lostpkt_diagnostic_filelist.txt");
+									}
+								}                      
 
-                    if (sp->sender) {
-                        sp->jitter = jitter;
-                        sp->cnt_error = cerror;
-                        sp->peer_packet_count = pcount;
-                        sp->result->bytes_received = bytes_transferred;
-                        if (j_omitted_packets != NULL) {
-                            sp->omitted_cnt_error = omitted_cerror;
-                            sp->peer_omitted_packet_count = omitted_pcount;
-                        }
-                        else {
-                            sp->peer_omitted_packet_count = sp->omitted_packet_count;
-                            if (sp->peer_omitted_packet_count > 0) {
-                                /* -1 indicates unknown error count since it includes the omitted count */
-                                sp->omitted_cnt_error = (sp->cnt_error > 0) ? -1 : 0;
-                            }
-                            else {
-                                sp->omitted_cnt_error = sp->cnt_error;
-                            }
-                        }
-                        /*
-                         * We have to handle the possibility that
-                         * start_time and end_time might not be
-                         * available; this is the case for older (pre-3.2)
-                         * servers.
-                         *
-                         * We need to have result structure members to hold
-                         * the both sides' start_time and end_time.
-                         */
-                        if (j_start_time && j_end_time) {
-                            sp->result->receiver_time = j_end_time->valuedouble - j_start_time->valuedouble;
-                        }
-                        else {
-                            sp->result->receiver_time = 0.0;
-                        }
-                    }
-                    else {
-                        sp->peer_packet_count = pcount;
-                        sp->result->bytes_sent = bytes_transferred;
-                        sp->result->stream_retrans = retransmits;
-                        if (j_omitted_packets != NULL) {
-                            sp->peer_omitted_packet_count = omitted_pcount;
-                        }
-                        else {
-                            sp->peer_omitted_packet_count = sp->peer_packet_count;
-                        }
-                        if (j_start_time && j_end_time) {
-                            sp->result->sender_time = j_end_time->valuedouble - j_start_time->valuedouble;
-                        }
-                        else {
-                            sp->result->sender_time = 0.0;
-                        }
-                    }
-			    }
+								if (sp->sender) {
+									sp->jitter = jitter;
+									sp->cnt_error = cerror;
+									sp->peer_packet_count = pcount;
+									sp->result->bytes_received = bytes_transferred;
+									if (j_omitted_packets != NULL) {
+										sp->omitted_cnt_error = omitted_cerror;
+										sp->peer_omitted_packet_count = omitted_pcount;
+									}
+									else {
+										sp->peer_omitted_packet_count = sp->omitted_packet_count;
+										if (sp->peer_omitted_packet_count > 0) {
+											/* -1 indicates unknown error count since it includes the omitted count */
+											sp->omitted_cnt_error = (sp->cnt_error > 0) ? -1 : 0;
+										}
+										else {
+											sp->omitted_cnt_error = sp->cnt_error;
+										}
+									}
+									/*
+									 * We have to handle the possibility that
+									 * start_time and end_time might not be
+									 * available; this is the case for older (pre-3.2)
+									 * servers.
+									 *
+									 * We need to have result structure members to hold
+									 * the both sides' start_time and end_time.
+									 */
+									if (j_start_time && j_end_time) {
+										sp->result->receiver_time = j_end_time->valuedouble - j_start_time->valuedouble;
+									}
+									else {
+										sp->result->receiver_time = 0.0;
+									}
+								}
+								else {
+									sp->peer_packet_count = pcount;
+									sp->result->bytes_sent = bytes_transferred;
+									sp->result->stream_retrans = retransmits;
+									if (j_omitted_packets != NULL) {
+										sp->peer_omitted_packet_count = omitted_pcount;
+									}
+									else {
+										sp->peer_omitted_packet_count = sp->peer_packet_count;
+									}
+									if (j_start_time && j_end_time) {
+										sp->result->sender_time = j_end_time->valuedouble - j_start_time->valuedouble;
+									}
+									else {
+										sp->result->sender_time = 0.0;
+									}
+								}
+							}
+						}
+					}
+				}
+				/*
+				 * If we're the client and we're supposed to get remote results,
+				 * look them up and process accordingly.
+				 */
+				if (test->role == 'c' && iperf_get_test_get_server_output(test)) {
+					/* Look for JSON.  If we find it, grab the object so it doesn't get deleted. */
+					j_server_output = cJSON_DetachItemFromObject(j, "server_output_json");
+					if (j_server_output != NULL) {
+					test->json_server_output = j_server_output;
+					} else {
+						/* No JSON, look for textual output.  Make a copy of the text for later. */
+						j_server_output = cJSON_GetObjectItem(j, "server_output_text");
+						if (j_server_output != NULL) {
+							test->server_output_text = strdup(j_server_output->valuestring);
+						}
+					}
+				}
 			}
-		    }
 		}
-		/*
-		 * If we're the client and we're supposed to get remote results,
-		 * look them up and process accordingly.
-		 */
-		if (test->role == 'c' && iperf_get_test_get_server_output(test)) {
-		    /* Look for JSON.  If we find it, grab the object so it doesn't get deleted. */
-		    j_server_output = cJSON_DetachItemFromObject(j, "server_output_json");
-		    if (j_server_output != NULL) {
-			test->json_server_output = j_server_output;
-		    }
-		    else {
-			/* No JSON, look for textual output.  Make a copy of the text for later. */
-			j_server_output = cJSON_GetObjectItem(j, "server_output_text");
-			if (j_server_output != NULL) {
-			    test->server_output_text = strdup(j_server_output->valuestring);
-			}
-		    }
+
+		close_diagnostic_file_list(remote_udp_outoforderpkt_diagnostic_filelist_fp, remote_udp_lostpkt_diagnostic_filelist_fp);
+
+		j_remote_congestion_used = cJSON_GetObjectItem(j, "congestion_used");
+		if (j_remote_congestion_used != NULL) {
+			test->remote_congestion_used = strdup(j_remote_congestion_used->valuestring);
 		}
-	    }
-	}
 
-    close_diagnostic_file_list(remote_udp_outoforderpkt_diagnostic_filelist_fp, remote_udp_lostpkt_diagnostic_filelist_fp);
-
-	j_remote_congestion_used = cJSON_GetObjectItem(j, "congestion_used");
-	if (j_remote_congestion_used != NULL) {
-	    test->remote_congestion_used = strdup(j_remote_congestion_used->valuestring);
-	}
-
-	cJSON_Delete(j);
+		cJSON_Delete(j);
     }
     return r;
 }

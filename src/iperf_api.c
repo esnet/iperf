@@ -2411,8 +2411,8 @@ send_results(struct iperf_test *test)
 	    SLIST_FOREACH(sp, &test->streams, streams) {
 		j_stream = cJSON_CreateObject();
 		if (j_stream == NULL) {
-			i_errno = IEPACKAGERESULTS;
-			r = -1;
+		    i_errno = IEPACKAGERESULTS;
+		    r = -1;
 		} else {
 		    cJSON_AddItemToArray(j_streams, j_stream);
 		    bytes_transferred = sp->sender ? (sp->result->bytes_sent - sp->result->bytes_sent_omit) : sp->result->bytes_received;

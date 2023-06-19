@@ -170,8 +170,8 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    /* Log the out-of-order packet */
 	    if (sp->test->debug)
 		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count + 1, sp->socket);
-
-		record_diagnostic_outoforder_packetseqnum(sp, pcount);
+		
+	    record_diagnostic_outoforder_packetseqnum(sp, pcount);
 	}
 
 	/*

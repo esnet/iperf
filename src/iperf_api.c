@@ -2425,24 +2425,24 @@ send_results(struct iperf_test *test)
 		    cJSON_AddNumberToObject(j_stream, "omitted_errors", sp->omitted_cnt_error);
 		    cJSON_AddNumberToObject(j_stream, "outoforder", sp->outoforder_packets);
 		    cJSON_AddNumberToObject(j_stream, "packets", sp->packet_count);
-		    cJSON_AddNumberToObject(j_stream, "omitted_packets", sp->omitted_packet_count);            
+		    cJSON_AddNumberToObject(j_stream, "omitted_packets", sp->omitted_packet_count);
 
-			if (test->role == 's' || (test->role == 'c' && test->reverse == 1)) {      
-				stop_diagnostic (sp);              
-				if (sp->test->role == 's') {
-					send_diagnostic_results(sp, j_stream);
-					delete_diagnostic_files(sp);
-				}
-			}          
+		    if (test->role == 's' || (test->role == 'c' && test->reverse == 1)) {      
+			    stop_diagnostic (sp);              
+			    if (sp->test->role == 's') {
+				    send_diagnostic_results(sp, j_stream);
+				    delete_diagnostic_files(sp);
+			    }
+		    }          
 
-			iperf_time_diff(&sp->result->start_time, &sp->result->start_time, &temp_time);
-			start_time = iperf_time_in_secs(&temp_time);
-			iperf_time_diff(&sp->result->start_time, &sp->result->end_time, &temp_time);
-			end_time = iperf_time_in_secs(&temp_time);
-			cJSON_AddNumberToObject(j_stream, "start_time", start_time);
-			cJSON_AddNumberToObject(j_stream, "end_time", end_time);
+		    iperf_time_diff(&sp->result->start_time, &sp->result->start_time, &temp_time);
+		    start_time = iperf_time_in_secs(&temp_time);
+		    iperf_time_diff(&sp->result->start_time, &sp->result->end_time, &temp_time);
+		    end_time = iperf_time_in_secs(&temp_time);
+		    cJSON_AddNumberToObject(j_stream, "start_time", start_time);
+		    cJSON_AddNumberToObject(j_stream, "end_time", end_time);
 
-			}
+		}
 	    }
 	    if (r == 0 && test->debug) {
                 char *str = cJSON_Print(j);

@@ -85,13 +85,13 @@ struct iperf_interval_results
     float     interval_duration;
 
     /* for UDP */
-    int       interval_packet_count;
-    int       interval_outoforder_packets;
-    int       interval_cnt_error;
-    int       packet_count;
+    int64_t   interval_packet_count;
+    int64_t   interval_outoforder_packets;
+    int64_t   interval_cnt_error;
+    int64_t   packet_count;
     double    jitter;
-    int       outoforder_packets;
-    int       cnt_error;
+    int64_t   outoforder_packets;
+    int64_t   cnt_error;
 
     int omitted;
 #if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && \
@@ -199,16 +199,16 @@ struct iperf_stream
      * for udp measurements - This can be a structure outside stream, and
      * stream can have a pointer to this
      */
-    int       packet_count;
-    int	      peer_packet_count;
-    int	      peer_omitted_packet_count;
-    int       omitted_packet_count;
+    int64_t   packet_count;
+    int64_t   peer_packet_count;
+    int64_t   peer_omitted_packet_count;
+    int64_t   omitted_packet_count;
     double    jitter;
     double    prev_transit;
-    int       outoforder_packets;
-    int       omitted_outoforder_packets;
-    int       cnt_error;
-    int       omitted_cnt_error;
+    int64_t   outoforder_packets;
+    int64_t   omitted_outoforder_packets;
+    int64_t   cnt_error;
+    int64_t   omitted_cnt_error;
     uint64_t  target;
 
     struct sockaddr_storage local_addr;

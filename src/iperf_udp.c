@@ -124,7 +124,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	}
 
 	if (sp->test->debug_level >= DEBUG_LEVEL_DEBUG)
-	    fprintf(stderr, "pcount %" PRIu64 " packet_count %d\n", pcount, sp->packet_count);
+	    fprintf(stderr, "pcount %" PRIu64 " packet_count %" PRIu64 "\n", pcount, sp->packet_count);
 
 	/*
 	 * Try to handle out of order packets.  The way we do this
@@ -167,7 +167,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 
 	    /* Log the out-of-order packet */
 	    if (sp->test->debug)
-		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count + 1, sp->socket);
+		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %" PRIu64 " on stream %d", pcount, sp->packet_count + 1, sp->socket);
 	}
 
 	/*

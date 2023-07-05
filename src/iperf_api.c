@@ -4488,12 +4488,15 @@ iperf_add_stream(struct iperf_test *test, struct iperf_stream *sp)
         //       and changing it would break multi-stream tests between old
         //       and new iperf3 versions.
         i = 2;
+        prev = NULL;
         SLIST_FOREACH(n, &test->streams, streams) {
             prev = n;
             ++i;
         }
-        SLIST_INSERT_AFTER(prev, sp, streams);
-        sp->id = i;
+        if (prev) {
+            SLIST_INSERT_AFTER(prev, sp, streams);
+            sp->id = i;
+         }
     }
 }
 

@@ -134,7 +134,7 @@ CJSON_PUBLIC(double) cJSON_GetNumberValue(const cJSON * const item)
 {
     if (!cJSON_IsNumber(item))
     {
-        return (double) NAN;
+        return (double) NAN;    // cppcheck-suppress invalidFunctionArg
     }
 
     return item->valuedouble;

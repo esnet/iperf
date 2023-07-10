@@ -128,7 +128,7 @@ html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = "_esnet/static/ESnet_Final_Logos_All_Blue_Circle_Stamp_RGB.png"
+html_logo = "_static/esnet/ESnet_Final_Logos_All_Blue_Circle_Stamp_RGB.png"
 
 
 

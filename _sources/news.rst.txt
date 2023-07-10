@@ -1,6 +1,21 @@
 iperf3 Project News
 ===================
 
+2023-07-07:  iperf-3.14 released
+--------------------------------
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.14.tar.gz
+| SHA256:  ``723fcc430a027bc6952628fa2a3ac77584a1d0bd328275e573fc9b206c155004``
+
+iperf 3.14 fixes a memory allocation hazard that allowed a remote user
+to crash an iperf3 process (server or client).
+
+More information on this specific fix can be found at:
+
+https://downloads.es.net/pub/iperf/esnet-secadv-2023-0001.txt.asc
+
+This version of iperf3 also includes a number of minor bug fixes,
+which are summarized in the release notes.
+
 2023-02-16:  iperf-3.13 released
 ----------------------------------
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.13.tar.gz
@@ -332,7 +347,7 @@ This maintenance release includes the following bug fixes:
 * Some portability fixes for OpenBSD and Solaris have been merged from
   the mainline.
 
-As always, more details can be found in the ``RELEASE_NOTES`` file in
+As always, more details can be found in the ``RELNOTES.md`` file in
 the source distribution.
 
 2014-06-16:  Project documentation on GitHub Pages
@@ -363,7 +378,7 @@ enhancements and bug fixes.  Highlights:
 * A number of bugs with ``--json`` output have been fixed.
 
 A more extensive list of changes can always be found in the
-``RELEASE_NOTES`` file in the source distribution.
+``RELNOTES.md`` file in the source distribution.
 
 Note:  An iperf-3.0.4 release was planned and tagged, but not
 officially released.
@@ -395,7 +410,7 @@ This is the second maintenance release of iperf 3.0, containing a few bug fixes 
 * A possible buffer overflow related to error output has been fixed.
   (This is not believed to be exploitable.)
 
-More information on changes can be found in the ``RELEASE_NOTES``
+More information on changes can be found in the ``RELNOTES.md``
 file in the source distribution.
 
 2014-03-10:  iperf-3.0.2 released
@@ -418,7 +433,7 @@ GitHub.  Of particular interest:
 * libiperf is now built as both a shared and static library; by
   default, the iperf3 binary links to the shared library.
 
-More information on changes can be found in the ``RELEASE_NOTES``
+More information on changes can be found in the ``RELNOTES.md``
 file in the source distribution.
 
 2014-02-28:  iperf migrated to GitHub

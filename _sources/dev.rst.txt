@@ -130,7 +130,7 @@ The developers increment the:
 Release Engineering Checklist
 -----------------------------
 
-1. Update the ``README`` and ``RELEASE_NOTES`` files to be accurate. Make sure
+1. Update the ``README`` and ``RELNOTES.md`` files to be accurate. Make sure
    that the "Known Issues" section of the ``README`` file and in this document
    are up to date.
 
@@ -142,7 +142,7 @@ Release Engineering Checklist
    status`` emits no output), make the changes necessary to produce
    the new version, such as bumping version numbers::
 
-    vi RELEASE_NOTES   # update version number and release date
+    vi RELNOTES.md     # update version number and release date
     vi configure.ac    # update version parameter in AC_INIT
     vi src/iperf3.1    # update manpage revision date if needed
     vi src/libiperf.3  # update manpage revision date if needed

@@ -5026,8 +5026,9 @@ stop_diagnostic(struct iperf_stream *sp)
         stat(sp->udp_outoforderpkt_diagnostic_fname, &st);
         ooosize = st.st_size;
 
+        // prepare for comm 
         if (ooosize != 0) {
-            sprintf(cmd, "sort -n %s > %s", absoluteDirOOO, absoluteTemp);
+            sprintf(cmd, "sort %s > %s", absoluteDirOOO, absoluteTemp);
             if (system(cmd) != -1) {
                 remove(absoluteDirOOO);
                 rename(absoluteTemp, absoluteDirOOO);
@@ -5036,6 +5037,17 @@ stop_diagnostic(struct iperf_stream *sp)
                 printf("Failed to run %s\n", cmd);
             }
         }
+
+        if (missingsize != 0) {
+            sprintf(cmd, "sort %s > %s", absoluteDirLost, absoluteTemp);
+            if (system(cmd) != -1) {
+                remove(absoluteDirLost);
+                rename(absoluteTemp, absoluteDirLost);
+            }
+            else {
+                printf("Failed to run %s\n", cmd);
+            }
+        }        
 
         stat(sp->udp_lostpkt_diagnostic_fname, &st);
         missingsize = st.st_size;
@@ -5050,6 +5062,29 @@ stop_diagnostic(struct iperf_stream *sp)
                 printf("Failed to run %s\n", cmd);
             }
         }
+
+        // after comm is done, sort seq# in each list
+        if (ooosize != 0) {
+            sprintf(cmd, "sort -n %s > %s", absoluteDirOOO, absoluteTemp);
+            if (system(cmd) != -1) {
+                remove(absoluteDirOOO);
+                rename(absoluteTemp, absoluteDirOOO);
+            }
+            else {
+                printf("Failed to run %s\n", cmd);
+            }
+        }
+
+        if (missingsize != 0) {
+            sprintf(cmd, "sort -n %s > %s", absoluteDirLost, absoluteTemp);
+            if (system(cmd) != -1) {
+                remove(absoluteDirLost);
+                rename(absoluteTemp, absoluteDirLost);
+            }
+            else {
+                printf("Failed to run %s\n", cmd);
+            }
+        } 
     }
     else { // (test->role == 'c' && test->reverse == 0)
         char cwd[500];

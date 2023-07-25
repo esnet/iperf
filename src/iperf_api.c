@@ -5028,7 +5028,7 @@ stop_diagnostic(struct iperf_stream *sp)
 
         // prepare for comm 
         if (ooosize != 0) {
-            sprintf(cmd, "sort %s > %s", absoluteDirOOO, absoluteTemp);
+            sprintf(cmd, "sort %s | cat > %s", absoluteDirOOO, absoluteTemp);
             if (system(cmd) != -1) {
                 remove(absoluteDirOOO);
                 rename(absoluteTemp, absoluteDirOOO);
@@ -5039,7 +5039,7 @@ stop_diagnostic(struct iperf_stream *sp)
         }
 
         if (missingsize != 0) {
-            sprintf(cmd, "sort %s > %s", absoluteDirLost, absoluteTemp);
+            sprintf(cmd, "sort %s | cat > %s", absoluteDirLost, absoluteTemp);
             if (system(cmd) != -1) {
                 remove(absoluteDirLost);
                 rename(absoluteTemp, absoluteDirLost);
@@ -5065,7 +5065,7 @@ stop_diagnostic(struct iperf_stream *sp)
 
         // after comm is done, sort seq# in each list
         if (ooosize != 0) {
-            sprintf(cmd, "sort -n %s > %s", absoluteDirOOO, absoluteTemp);
+            sprintf(cmd, "sort -n %s | cat > %s", absoluteDirOOO, absoluteTemp);
             if (system(cmd) != -1) {
                 remove(absoluteDirOOO);
                 rename(absoluteTemp, absoluteDirOOO);
@@ -5076,7 +5076,7 @@ stop_diagnostic(struct iperf_stream *sp)
         }
 
         if (missingsize != 0) {
-            sprintf(cmd, "sort -n %s > %s", absoluteDirLost, absoluteTemp);
+            sprintf(cmd, "sort -n %s | cat > %s", absoluteDirLost, absoluteTemp);
             if (system(cmd) != -1) {
                 remove(absoluteDirLost);
                 rename(absoluteTemp, absoluteDirLost);

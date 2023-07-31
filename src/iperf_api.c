@@ -3816,7 +3816,7 @@ iperf_print_results(struct iperf_test *test)
                                 iperf_printf(test, report_sender_not_available_format, sp->socket);
                         }
                         else {
-                            iperf_printf(test, report_bw_udp_format, sp->socket, mbuf, start_time, sender_time, ubuf, nbuf, 0.0, 0, (sender_packet_count - sender_omitted_packet_count), (double) 0, report_sender);
+                            iperf_printf(test, report_bw_udp_format, sp->socket, mbuf, start_time, sender_time, ubuf, nbuf, 0.0, (int64_t) 0, (sender_packet_count - sender_omitted_packet_count), (double) 0, report_sender);
                         }
                         if ((sp->outoforder_packets - sp->omitted_outoforder_packets) > 0)
                           iperf_printf(test, report_sum_outoforder, mbuf, start_time, sender_time, (sp->outoforder_packets - sp->omitted_outoforder_packets));
@@ -4005,7 +4005,7 @@ iperf_print_results(struct iperf_test *test)
                      */
                     if (! (test->role == 's' && !stream_must_be_sender) ) {
                         unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
-                        iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, sender_time, ubuf, nbuf, 0.0, 0, sender_total_packets, 0.0, report_sender);
+                        iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, sender_time, ubuf, nbuf, 0.0, (int64_t) 0, sender_total_packets, 0.0, report_sender);
                     }
                     if (! (test->role == 's' && stream_must_be_sender) ) {
 

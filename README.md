@@ -78,8 +78,8 @@ These flags include:
     -Z, --zerocopy            use a 'zero copy' sendfile() method of sending data
     -A, --affinity n/n,m      set CPU affinity
 
-Bug Reports
------------
+Bug and Security Reports
+------------------------
 
 Before submitting a bug report, please make sure you're running the
 latest version of the code, and confirm that your issue has not
@@ -98,6 +98,11 @@ sensitive information.
 
 If you have a question about usage or about the code, please do *not*
 submit an issue.  Please use one of the mailing lists for that.
+
+If you suspect there is a potential security issue, please contact the
+developers at:
+
+iperf@es.net
 
 Relation to iperf 2.x
 ---------------------

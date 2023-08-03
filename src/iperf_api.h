@@ -200,6 +200,10 @@ void    iperf_set_dont_fragment( struct iperf_test* ipt, int dont_fragment );
 void    iperf_set_test_congestion_control(struct iperf_test* ipt, char* cc);
 void    iperf_set_test_mss(struct iperf_test* ipt, int mss);
 void    iperf_set_mapped_v4(struct iperf_test* ipt, const int val);
+void    iperf_set_on_new_stream_callback(struct iperf_test* ipt, void (*callback)());
+void    iperf_set_on_test_start_callback(struct iperf_test* ipt, void (*callback)());
+void    iperf_set_on_test_connect_callback(struct iperf_test* ipt, void (*callback)());
+void    iperf_set_on_test_finish_callback(struct iperf_test* ipt, void (*callback)());
 
 #if defined(HAVE_SSL)
 void    iperf_set_test_client_username(struct iperf_test *ipt, const char *client_username);

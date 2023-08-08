@@ -461,6 +461,9 @@ const char report_sender_not_available_summary_format[] = "[%3s] (sender statist
 const char report_receiver_not_available_format[] = "[%3d] (receiver statistics not available)\n";
 const char report_receiver_not_available_summary_format[] = "[%3s] (receiver statistics not available)\n";
 
+const char report_retry_after_connect_refused[] =
+"Retry connecting to the server forcing IPv%d addr type, after connection refused with addr type IPv%d\n";
+
 #if defined(linux)
 const char report_tcpInfo[] =
 "event=TCP_Info CWND=%u SND_SSTHRESH=%u RCV_SSTHRESH=%u UNACKED=%u SACK=%u LOST=%u RETRANS=%u FACK=%u RTT=%u REORDERING=%u\n";

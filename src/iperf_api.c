@@ -5061,6 +5061,10 @@ stop_diagnostic(struct iperf_stream *sp)
         int missingsize = 0;
 
         struct stat st;
+
+        stat(sp->udp_lostpkt_diagnostic_fname, &st);
+        missingsize = st.st_size;
+        
         stat(sp->udp_outoforderpkt_diagnostic_fname, &st);
         ooosize = st.st_size;
 
@@ -5086,9 +5090,6 @@ stop_diagnostic(struct iperf_stream *sp)
                 printf("Failed to run %s\n", cmd);
             }
         }        
-
-        stat(sp->udp_lostpkt_diagnostic_fname, &st);
-        missingsize = st.st_size;
 
         if (ooosize != 0 && missingsize != 0) {
             sprintf(cmd, "comm -23 %s %s > %s", absoluteDirLost, absoluteDirOOO, absoluteTemp);

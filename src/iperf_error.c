@@ -96,8 +96,10 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
 
     va_start(argp, format);
     vsnprintf(str, sizeof(str), format, argp);
-    if (test != NULL && test->json_output && test->json_top != NULL) {
-	cJSON_AddStringToObject(test->json_top, "error", str);
+    if (test != NULL && test->json_output) {
+        if (test->json_top != NULL) {
+	    cJSON_AddStringToObject(test->json_top, "error", str);
+        }
 	iperf_json_finish(test);
     } else
 	if (test && test->outfile && test->outfile != stdout) {

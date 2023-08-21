@@ -1,6 +1,41 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.14 2023-07-07
+---------------------
+
+* Notable user-visible changes
+
+  * A memory allocation hazard was fixed (Issue #1542/PR #1543). For
+    more information see:
+    https://downloads.es.net/pub/iperf/esnet-secadv-2023-0001.txt.asc
+
+  * JSON output was improved, such as print JSON numbers as signed (PR
+    #1539, Issue #1435), the exit code when doing JSON output was
+    fixed (PR #1523), and client_api was fixed so that it still
+    returns an error code when JSON is enabled (Issue #1405).  Also,
+    duplicate fields when using multiple streams was removed from the
+    JSON output (#1492).
+
+  * Prevent UDP packet count and operations overflow (PR #1536/Issue
+    #1534).
+
+  * Statistics are fixed when --omit is used (Issue #1489/PR #1498).
+
+* Developer-visible changes
+
+  * CI builds and tests using GitHub actions have been added (PR
+    #1519).
+
+  * A fix for Android "unable to create a new stream error" was added
+    (PR #1506).
+
+  * Support for Voice Admit DSCP code point from RFC 5865 was added
+    (PR #1490).
+
+  * A fix for preventing a crash when RSA public key path doesn't
+    exist was fixed (PR #1488/Issue #1471).
+
 iperf-3.13 2023-02-16
 ---------------------
 

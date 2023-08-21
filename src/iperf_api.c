@@ -2447,7 +2447,6 @@ send_results(struct iperf_test *test)
 		    cJSON_AddNumberToObject(j_stream, "jitter", sp->jitter);
 		    cJSON_AddNumberToObject(j_stream, "errors", sp->cnt_error);
 		    cJSON_AddNumberToObject(j_stream, "omitted_errors", sp->omitted_cnt_error);
-		    cJSON_AddNumberToObject(j_stream, "outoforder", sp->outoforder_packets);
 		    cJSON_AddNumberToObject(j_stream, "packets", sp->packet_count);
 		    cJSON_AddNumberToObject(j_stream, "omitted_packets", sp->omitted_packet_count);
 
@@ -2514,7 +2513,6 @@ get_results(struct iperf_test *test)
     int sid;
     int64_t cerror, pcount, omitted_cerror, omitted_pcount;
 
-    cJSON *j_outoforder;
     FILE* remote_udp_outoforderpkt_diagnostic_filelist_fp = fopen("remote_udp_outoforderpkt_diagnostic_filelist.txt", "w+");
     FILE* remote_udp_lostpkt_diagnostic_filelist_fp = fopen("remote_udp_lostpkt_diagnostic_filelist.txt", "w+");
 
@@ -2574,8 +2572,7 @@ get_results(struct iperf_test *test)
 						j_packets = cJSON_GetObjectItem(j_stream, "packets");
 						j_omitted_packets = cJSON_GetObjectItem(j_stream, "omitted_packets");	
 						j_start_time = cJSON_GetObjectItem(j_stream, "start_time");
-						j_end_time = cJSON_GetObjectItem(j_stream, "end_time");
-						j_outoforder = cJSON_GetObjectItem(j_stream, "outoforder");                        
+						j_end_time = cJSON_GetObjectItem(j_stream, "end_time");           
 						if (j_id == NULL || j_bytes == NULL || j_retransmits == NULL || j_jitter == NULL || j_errors == NULL || j_packets == NULL) {
 							i_errno = IERECVRESULTS;
 							r = -1;
@@ -5156,7 +5153,7 @@ send_diagnostic_results(struct iperf_stream *sp, cJSON *j_stream)
     char* strbuf = malloc((sizeof(uint64_t) + 2) * (max_seqmsgcount_to_send + 1));
 
     {
-        sprintf(strbuf, "Out of Order Packet Count: %d\n%s\n", sp->outoforder_packets, sp->connectionstring);
+        sprintf(strbuf, "Out of Order Packet Count: %ld\n%s\n", sp->outoforder_packets, sp->connectionstring);
         FILE* pIn = fopen(sp->udp_outoforderpkt_diagnostic_fname, "r");
         int lineCount = sp->outoforder_packets > max_seqmsgcount_to_send ? max_seqmsgcount_to_send : sp->outoforder_packets;
         int c = strlen(strbuf);
@@ -5175,7 +5172,7 @@ send_diagnostic_results(struct iperf_stream *sp, cJSON *j_stream)
     }
 
     {
-        sprintf(strbuf, "Lost Packet Count: %d\n%s\n", sp->cnt_error, sp->connectionstring);
+        sprintf(strbuf, "Lost Packet Count: %ld\n%s\n", sp->cnt_error, sp->connectionstring);
         FILE* pIn = fopen(sp->udp_lostpkt_diagnostic_fname, "r");
         int lineCount = sp->cnt_error > max_seqmsgcount_to_send ? max_seqmsgcount_to_send : sp->cnt_error;
         int c = strlen(strbuf);

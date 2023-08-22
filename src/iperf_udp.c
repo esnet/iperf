@@ -470,7 +470,7 @@ iperf_udp_accept(struct iperf_test *test)
     test->max_fd = (test->max_fd < test->prot_listener) ? test->prot_listener : test->max_fd;
 
     /* Let the client know we're ready "accept" another UDP "stream" */
-    buf = UDP_CONNECT_REPLY;
+    buf = htonl(UDP_CONNECT_REPLY);
     if (write(s, &buf, sizeof(buf)) < 0) {
         i_errno = IESTREAMWRITE;
         return -1;
@@ -587,7 +587,7 @@ iperf_udp_connect(struct iperf_test *test)
      * Write a datagram to the UDP stream to let the server know we're here.
      * The server learns our address by obtaining its peer's address.
      */
-    buf = UDP_CONNECT_MSG;
+    buf = htonl(UDP_CONNECT_MSG);
     if (test->debug) {
         printf("Sending Connect message to Socket %d\n", s);
     }
@@ -605,13 +605,16 @@ iperf_udp_connect(struct iperf_test *test)
     if (test->reverse) /* In reverse mode allow few packets to have the "accept" response - to handle out of order packets */
         max_len_wait_for_reply += MAX_REVERSE_OUT_OF_ORDER_PACKETS * test->settings->blksize;
     do {
+        unsigned int bufhost = 0;
         if ((sz = recv(s, &buf, sizeof(buf), 0)) < 0) {
             i_errno = IESTREAMREAD;
             return -1;
         }
+        bufhost = ntohl(buf);
         if (test->debug) {
-            printf("Connect received for Socket %d, sz=%d, buf=%x, i=%d, max_len_wait_for_reply=%d\n", s, sz, buf, i, max_len_wait_for_reply);
+            printf("Connect received for Socket %d, sz=%d, buf=%x, bufhost=%x, i=%d, max_len_wait_for_reply=%d\n", s, sz, buf, bufhost, i, max_len_wait_for_reply);
         }
+        buf = bufhost;
         i += sz;
     } while (buf != UDP_CONNECT_REPLY && buf != LEGACY_UDP_CONNECT_REPLY && i < max_len_wait_for_reply);
 

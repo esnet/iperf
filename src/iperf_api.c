@@ -2821,11 +2821,16 @@ connect_msg(struct iperf_stream *sp)
 	iperf_printf(sp->test, report_connected, sp->socket, ipl, lport, ipr, rport);
 
     char strbuf [50000];
-    sprintf(strbuf, "server socket no: %ld, server ip: %s  server port: %ld  client ip: %s  client port: %ld", (int64_t) sp->socket, ipl, (int64_t) lport, ipr, (int64_t) rport);
+
+    if (sp->test->reverse == 1) {
+        sprintf(strbuf, "Sender Ip: %s, Sender Port: %ld, Receiver Ip: %s, Receiver Port: %ld", ipl, (int64_t) lport, ipr, (int64_t) rport);
+    } else {
+        sprintf(strbuf, "Sender Ip: %s, Sender Port: %ld, Receiver Ip: %s, Receiver Port: %ld", ipr, (int64_t) rport, ipl, (int64_t) lport);
+    }   
+
     sp->connectionstring = malloc(strlen(strbuf) + 3);
     strcpy (sp->connectionstring, strbuf);
 }
-
 
 /**************************************************************************/
 
@@ -5154,7 +5159,12 @@ send_diagnostic_results(struct iperf_stream *sp, cJSON *j_stream)
     char* strbuf = malloc((sizeof(uint64_t) + 2) * (max_seqmsgcount_to_send + 1));
 
     {
-        sprintf(strbuf, "Out of Order Packet Count: %ld\n%s\n", sp->outoforder_packets, sp->connectionstring);
+        if (sp->test->reverse == 1) {
+            sprintf(strbuf, "Out of Order Packet Count: %ld, Total Packet Count: %ld\n%s\n", sp->outoforder_packets, sp->packet_count, sp->connectionstring);
+        } else {
+            sprintf(strbuf, "Out of Order Packet Count: %ld, Total Packet Count: %ld\n%s\n", sp->outoforder_packets, sp->peer_packet_count, sp->connectionstring);
+        }    
+        
         FILE* pIn = fopen(sp->udp_outoforderpkt_diagnostic_fname, "r");
         int lineCount = sp->outoforder_packets > max_seqmsgcount_to_send ? max_seqmsgcount_to_send : sp->outoforder_packets;
         int c = strlen(strbuf);
@@ -5173,7 +5183,14 @@ send_diagnostic_results(struct iperf_stream *sp, cJSON *j_stream)
     }
 
     {
-        sprintf(strbuf, "Lost Packet Count: %ld\n%s\n", sp->cnt_error, sp->connectionstring);
+        
+
+        if (sp->test->reverse == 1) {
+            sprintf(strbuf, "Lost Packet Count: %ld, Total Packet Count: %ld\n%s\n", sp->cnt_error, sp->packet_count, sp->connectionstring);
+        } else {
+            sprintf(strbuf, "Lost Packet Count: %ld, Total Packet Count: %ld\n%s\n", sp->cnt_error, sp->peer_packet_count, sp->connectionstring);
+        }    
+
         FILE* pIn = fopen(sp->udp_lostpkt_diagnostic_fname, "r");
         int lineCount = sp->cnt_error > max_seqmsgcount_to_send ? max_seqmsgcount_to_send : sp->cnt_error;
         int c = strlen(strbuf);

@@ -640,10 +640,15 @@ iperf_udp_init(struct iperf_test *test)
 
 void record_diagnostic_lost_packetseqnum(struct iperf_stream *sp, uint64_t pcount)
 {
-    // [sp->packet_count + 1, pcount) is missing 
     for (uint64_t i = sp->packet_count + 1; i < pcount; i++) {
-        fprintf(sp->udp_lostpkt_diagnostic_fp, "%"PRIu64"\n", i);
-    }        
+        if (sp->test->mode == RECEIVER) {
+            fprintf(sp->udp_lostpkt_diagnostic_fp, "%"PRIu64"\n", i);
+        } else if (sp->test->mode == BIDIRECTIONAL) { 
+            if (sp->sender == 0) {
+                fprintf(sp->udp_lostpkt_diagnostic_fp, "%"PRIu64"\n", i);                
+            }
+        }
+    }    
 }
 
 void record_diagnostic_outoforder_packetseqnum(struct iperf_stream *sp, uint64_t pcount)

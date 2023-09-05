@@ -4428,10 +4428,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         return NULL;
     }
     iperf_add_stream(test, sp);
-
-    printf ("test role: %c, sp->sender = %d\n", sp->test->role, sp->sender);
     begin_diagnostic(sp); 
-
     fflush(stdout);
 
     return sp;

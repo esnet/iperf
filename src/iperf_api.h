@@ -344,6 +344,7 @@ void send_diagnostic_results(struct iperf_stream *, cJSON *);
 void get_diagnostic_results(struct iperf_stream *, cJSON *);
 void delete_diagnostic_files(struct iperf_stream *);
 void delete_file_from_current_dir(char *);
+void clear_diagnostic_filelist ();
 
 /* Client routines. */
 int iperf_run_client(struct iperf_test *);

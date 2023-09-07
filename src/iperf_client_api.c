@@ -555,6 +555,8 @@ iperf_run_client(struct iperf_test * test)
     if (iperf_connect(test) < 0)
         goto cleanup_and_fail;
 
+    clear_diagnostic_filelist();
+
     /* Begin calculating CPU utilization */
     cpu_util(NULL);
     if (test->mode != SENDER)

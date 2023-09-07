@@ -485,6 +485,7 @@ iperf_run_server(struct iperf_test *test)
     }
 
     iperf_time_now(&last_receive_time); // Initialize last time something was received
+    clear_diagnostic_filelist();
 
     test->state = IPERF_START;
     send_streams_accepted = 0;

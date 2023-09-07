@@ -4997,6 +4997,12 @@ iflush(struct iperf_test *test)
     return fflush(test->outfile);
 }
 
+void clear_diagnostic_filelist ()
+{
+    delete_file_from_current_dir("udp_outoforderpkt_diagnostic_filelist.txt");
+    delete_file_from_current_dir("udp_lostpkt_diagnostic_filelist.txt");
+}
+
 void 
 begin_diagnostic(struct iperf_stream *sp)
 {

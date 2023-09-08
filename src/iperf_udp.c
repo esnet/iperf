@@ -48,6 +48,7 @@
 #include "net.h"
 #include "cjson.h"
 #include "portable_endian.h"
+#include "ring.h"
 
 #if defined(HAVE_INTTYPES_H)
 # include <inttypes.h>
@@ -122,6 +123,10 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    sent_time.secs = sec;
 	    sent_time.usecs = usec;
 	}
+
+    if (sp->test->integrity_check) {
+		enqueue_packet_ring(sp->buffer, r);
+    }
 
 	if (sp->test->debug_level >= DEBUG_LEVEL_DEBUG)
 	    fprintf(stderr, "pcount %" PRIu64 " packet_count %" PRIu64 "\n", pcount, sp->packet_count);

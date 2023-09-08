@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <unistd.h>
+#include <pthread.h>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
@@ -41,6 +42,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <fcntl.h>
+#include <sched.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -48,9 +51,11 @@
 #include "iperf_locale.h"
 #include "net.h"
 #include "units.h"
+#include "ring.h"
 
 
 static int run(struct iperf_test *test);
+static void* worker_main(void *arg);
 
 
 /**************************************************************************/
@@ -148,6 +153,28 @@ run(struct iperf_test *test)
 		i_errno = IEPIDFILE;
 		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 	    }
+
+	    if (test->integrity_check) {
+		    int ret;
+		    pthread_attr_t attr;
+		    init_packet_ring();
+
+		    ret = pthread_attr_init(&attr);
+		    if (ret != 0) {
+                iperf_errexit(test, "pthread_attr_init error - %d", ret);
+		    }
+
+		    ret = pthread_create(&test->worker_thread, &attr, worker_main, test);
+		    if (ret != 0) {
+                iperf_errexit(test, "pthread_create error - %d", ret);
+		    }
+
+		    ret = pthread_attr_destroy(&attr);
+		    if (ret != 0) {
+                iperf_errexit(test, "pthread_attr_destroy error - %d", ret);
+		    }
+	    }
+
             for (;;) {
 		int rc;
 		rc = iperf_run_server(test);
@@ -192,5 +219,24 @@ run(struct iperf_test *test)
     iperf_catch_sigend(SIG_DFL);
     signal(SIGPIPE, SIG_DFL);
 
+    if (test->worker_thread) {
+	    pthread_join(test->worker_thread, NULL);
+    }
+
+    if (test->corrupt_outfile != NULL) {
+        fclose(test->corrupt_outfile);
+        test->corrupt_outfile = NULL;
+    }
+
     return 0;
+}
+
+static void* worker_main(void *arg)
+{
+    for(;;) {
+        dequeue_packet_ring(arg, iperf_packet_integrity_check);
+        sched_yield();
+    }
+
+    return NULL;
 }

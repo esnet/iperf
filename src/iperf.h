@@ -328,6 +328,7 @@ struct iperf_test
     int	      multisend;
     int	      repeating_payload;                /* --repeating-payload */
     int       integrity_check;                  /* --integrity-check */
+    pthread_t worker_thread;                    /* worker thread for packet integrity check*/
     int       timestamps;			/* --timestamps */
     char     *timestamp_format;
 

@@ -15099,6 +15099,67 @@ then :
 fi
 
 
+# Check for phread support
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing pthread_create" >&5
+printf %s "checking for library containing pthread_create... " >&6; }
+if test ${ac_cv_search_pthread_create+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char pthread_create ();
+int
+main (void)
+{
+return pthread_create ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' pthread
+do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_search_pthread_create=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext
+  if test ${ac_cv_search_pthread_create+y}
+then :
+  break
+fi
+done
+if test ${ac_cv_search_pthread_create+y}
+then :
+
+else $as_nop
+  ac_cv_search_pthread_create=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_pthread_create" >&5
+printf "%s\n" "$ac_cv_search_pthread_create" >&6; }
+ac_res=$ac_cv_search_pthread_create
+if test "$ac_res" != no
+then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+
 ac_config_files="$ac_config_files Makefile src/Makefile src/version.h examples/Makefile iperf3.spec"
 
 cat >confcache <<\_ACEOF

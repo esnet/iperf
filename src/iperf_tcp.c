@@ -43,6 +43,7 @@
 #include "iperf_tcp.h"
 #include "net.h"
 #include "cjson.h"
+#include "ring.h"
 
 #if defined(HAVE_FLOWLABEL)
 #include "flowlabel.h"
@@ -66,6 +67,9 @@ iperf_tcp_recv(struct iperf_stream *sp)
     if (sp->test->state == TEST_RUNNING) {
 	sp->result->bytes_received += r;
 	sp->result->bytes_received_this_interval += r;
+        if (sp->test->integrity_check) {
+		    enqueue_packet_ring(sp->buffer, r);
+        }
     }
     else {
 	if (sp->test->debug)

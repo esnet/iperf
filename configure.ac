@@ -322,5 +322,8 @@ AC_CHECK_FUNCS([clock_gettime])
 # Check for shm_open support
 AC_SEARCH_LIBS(shm_open, [rt])
 
+# Check for phread support
+AC_SEARCH_LIBS(pthread_create, [pthread])
+
 AC_CONFIG_FILES([Makefile src/Makefile src/version.h examples/Makefile iperf3.spec])
 AC_OUTPUT

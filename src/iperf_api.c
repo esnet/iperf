@@ -3141,6 +3141,7 @@ iperf_reset_test(struct iperf_test *test)
 	test->reporter_timer = NULL;
     }
     test->done = 0;
+    test->corrupt_packets = 0;
 
     SLIST_INIT(&test->streams);
 

@@ -319,5 +319,8 @@ AC_SEARCH_LIBS(clock_gettime, [rt posix4])
 # Check for clock_gettime support
 AC_CHECK_FUNCS([clock_gettime])
 
+# Check for shm_open support
+AC_SEARCH_LIBS(shm_open, [rt])
+
 AC_CONFIG_FILES([Makefile src/Makefile src/version.h examples/Makefile iperf3.spec])
 AC_OUTPUT

@@ -338,6 +338,7 @@ struct iperf_test
 
     /* Interval related members */
     int       omitting;
+    int       corrupt_packets;
     double    stats_interval;
     double    reporter_interval;
     void      (*stats_callback) (struct iperf_test *);

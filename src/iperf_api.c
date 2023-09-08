@@ -2826,6 +2826,7 @@ iperf_new_test()
 
     /* By default all output goes to stdout */
     test->outfile = stdout;
+    test->corrupt_outfile = NULL;
 
     return test;
 }
@@ -4978,7 +4979,6 @@ iflush(struct iperf_test *test)
     return fflush(test->outfile);
 }
 
-
 inline int is_integrity_packet(uint8_t* payload, int len)
 {
     // We only check if this is the start of an integrity check packet if the remain length is at least the magic word.
@@ -5051,6 +5051,7 @@ int iperf_packet_integrity_check(struct iperf_test *test, uint8_t* payload, int 
             // failed at previouse payload checking and it is not caused by the start of another packet, this means that we have
             // encountered an packet corruption
             if (result == -1) {
+                iperf_corrupt_err(test, "Data Corruption Detected between [offset:%d - offset:%d]", x, x + MATCH_BUF_LEN);
                 break;
             // no previouse match failure and no packet starter found, this means we have not met our integrity packet yet, move to next block.
             } else if (!is_checking){
@@ -5060,4 +5061,33 @@ int iperf_packet_integrity_check(struct iperf_test *test, uint8_t* payload, int 
     }
 
     return result;
+}
+
+void iperf_dump_payload(struct iperf_test *test, uint8_t* payload, int len)
+{
+    int k = 0;
+    char tmp[256];
+    int index = 0;
+    memset(tmp, 0, sizeof(tmp));
+    for (int x = 0; x < len; x++) {
+        if (k == 0)
+            index += sprintf(tmp, "%05d:", x);
+
+        index += sprintf(tmp + index, "%02x", payload[x] & 0xFF);
+
+        if (k % 2)
+            index += sprintf(tmp + index, " ");
+
+        if (++k >= 16) {
+            iperf_corrupt_err(test, "%s", tmp);
+            memset(tmp, 0, sizeof(tmp));
+            k = 0;
+            index = 0;
+        }
+    }
+
+    if (index != 0) {
+        iperf_corrupt_err(test, "%s", tmp);
+    }
+    fflush(test->corrupt_outfile);
 }

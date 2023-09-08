@@ -479,6 +479,9 @@ extern uint8_t magic_word[4];
 
 /* Packet integrity check */
 int iperf_packet_integrity_check(struct iperf_test *test, uint8_t* payload, int len);
+void iperf_corrupt_err(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3)));
+void iperf_report_corrupt_stat(struct iperf_test *test, int corrupt_packets);
+void iperf_dump_payload(struct iperf_test *test, uint8_t* payload, int len);
 
 #ifdef __cplusplus
 } /* close extern "C" */

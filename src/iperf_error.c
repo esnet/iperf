@@ -30,6 +30,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "iperf.h"
 #include "iperf_api.h"
 
@@ -484,4 +488,94 @@ iperf_strerror(int int_errno)
     }
 
     return errstr;
+}
+
+void iperf_corrupt_err(struct iperf_test *test, const char *format, ...)
+{
+    va_list argp;
+    char str[1000];
+    time_t now;
+    struct tm *ltm = NULL;
+    char *ct = NULL;
+    char OUTPUT_FILE[56] = {0};
+
+    mkdir("corruption_dump", 0777);
+    sprintf(OUTPUT_FILE, "corruption_dump/%d_corrupt_output.txt", getpid());
+
+    if (test->corrupt_outfile == NULL) {
+        test->corrupt_outfile = fopen(OUTPUT_FILE, "a+");
+        if (test->corrupt_outfile == NULL) {
+            return;
+        }
+    }
+
+    /* Timestamp if requested */
+    if (test != NULL && test->timestamps) {
+	time(&now);
+	ltm = localtime(&now);
+	strftime(iperf_timestrerr, sizeof(iperf_timestrerr), test->timestamp_format, ltm);
+	ct = iperf_timestrerr;
+    }
+
+    va_start(argp, format);
+    vsnprintf(str, sizeof(str), format, argp);
+    if (ct) {
+       fprintf(test->corrupt_outfile, "%s", ct);
+    }
+    fprintf(test->corrupt_outfile, "iperf3: %s\n", str);
+    va_end(argp);
+}
+
+void iperf_report_corrupt_stat(struct iperf_test *test, int corrupt_packets)
+{
+    cJSON *json;
+    cJSON *jArray;
+    cJSON *jItem;
+    char *str;
+    char STAT_FILE[56] = {0};
+    char buf[1024] = {0};
+    int r = 0;
+    int fd = 0;
+
+    mkdir("corruption_stat", 0777);
+    sprintf(STAT_FILE, "corruption_stat/%d_corrupt_stat.json", getpid());
+    fd = open(STAT_FILE, O_RDWR | O_CREAT | O_APPEND, 0600);
+    if (fd == -1) {
+        return;
+    }
+
+    r = read(fd, buf, sizeof(buf));
+    json = cJSON_ParseWithLength(buf, r);
+    if (json == NULL) {
+       json = cJSON_CreateObject();
+    }
+
+    if (json == NULL) {
+        return;
+    }
+
+    if (!cJSON_HasObjectItem(json, "corrupt_packets")) {
+       cJSON_AddArrayToObject(json, "corrupt_packets");
+    }
+
+    jArray = cJSON_GetObjectItem(json, "corrupt_packets");
+    if (jArray == NULL) {
+        return;
+    }
+
+    jItem = cJSON_CreateNumber(corrupt_packets);
+    if (jItem == NULL || !cJSON_AddItemToArray(jArray, jItem)) {
+        return;
+    }
+
+    str = cJSON_Print(json);
+    if (str != NULL) {
+       ftruncate(fd, 0);
+       dprintf(fd, "%s", str);
+       fsync(fd);
+       cJSON_free(str);
+    }
+
+    cJSON_Delete(json);
+    close(fd);
 }

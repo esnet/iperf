@@ -327,6 +327,7 @@ struct iperf_test
     int       forceflush; /* --forceflush - flushing output at every interval */
     int	      multisend;
     int	      repeating_payload;                /* --repeating-payload */
+    int       integrity_check;                  /* --integrity-check */
     int       timestamps;			/* --timestamps */
     char     *timestamp_format;
 

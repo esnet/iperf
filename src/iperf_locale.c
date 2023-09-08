@@ -148,6 +148,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 			   "                            (optional slash and number of secs interval for averaging\n"
 			   "                            total data rate.  Default is 5 seconds)\n"
                            "  --idle-timeout #          restart idle server after # seconds in case it\n"
+                           "  --integrity-check         turn on packet integrity check, in order to do this,\n"
+                           "                            client needs to use repeating pattern \n"
                            "                            got stuck (default - no timeout)\n"
 #if defined(HAVE_SSL)
                            "  --rsa-private-key-path    path to the RSA private key used to decrypt\n"

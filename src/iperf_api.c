@@ -294,6 +294,12 @@ iperf_get_test_bind_port(struct iperf_test *ipt)
 }
 
 int
+iperf_get_test_integrity_check(struct iperf_test *ipt)
+{
+    return ipt->integrity_check;
+}
+
+int
 iperf_get_test_server_port(struct iperf_test *ipt)
 {
     return ipt->server_port;
@@ -576,6 +582,12 @@ void
 iperf_set_test_repeating_payload(struct iperf_test *ipt, int repeating_payload)
 {
     ipt->repeating_payload = repeating_payload;
+}
+
+void
+iperf_set_test_integrity_check(struct iperf_test *ipt, int integrity_check)
+{
+    ipt->integrity_check = integrity_check;
 }
 
 void
@@ -1095,6 +1107,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"omit", required_argument, NULL, 'O'},
         {"file", required_argument, NULL, 'F'},
         {"repeating-payload", no_argument, NULL, OPT_REPEATING_PAYLOAD},
+        {"integrity-check", no_argument, NULL, OPT_INTEGRITY_CHECK},
         {"timestamps", optional_argument, NULL, OPT_TIMESTAMPS},
 #if defined(HAVE_CPU_AFFINITY)
         {"affinity", required_argument, NULL, 'A'},
@@ -1458,6 +1471,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             case OPT_REPEATING_PAYLOAD:
                 test->repeating_payload = 1;
                 client_flag = 1;
+                break;
+            case OPT_INTEGRITY_CHECK:
+                test->integrity_check = 1;
+                server_flag = 1;
                 break;
             case OPT_TIMESTAMPS:
                 iperf_set_test_timestamps(test, 1);
@@ -2229,6 +2246,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "udp_counters_64bit", iperf_get_test_udp_counters_64bit(test));
 	if (test->repeating_payload)
 	    cJSON_AddNumberToObject(j, "repeating_payload", test->repeating_payload);
+	if (test->integrity_check)
+	    cJSON_AddNumberToObject(j, "integrity_check", test->integrity_check);
 	if (test->zerocopy)
 	    cJSON_AddNumberToObject(j, "zerocopy", test->zerocopy);
 #if defined(HAVE_DONT_FRAGMENT)
@@ -2345,6 +2364,8 @@ get_parameters(struct iperf_test *test)
 	    iperf_set_test_udp_counters_64bit(test, 1);
 	if ((j_p = cJSON_GetObjectItem(j, "repeating_payload")) != NULL)
 	    test->repeating_payload = 1;
+	if ((j_p = cJSON_GetObjectItem(j, "integrity_check")) != NULL)
+	    test->integrity_check = 1;
 	if ((j_p = cJSON_GetObjectItem(j, "zerocopy")) != NULL)
 	    test->zerocopy = j_p->valueint;
 #if defined(HAVE_DONT_FRAGMENT)

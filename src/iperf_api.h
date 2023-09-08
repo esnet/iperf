@@ -90,6 +90,7 @@ typedef uint64_t iperf_size_t;
 #define OPT_DONT_FRAGMENT 26
 #define OPT_RCV_TIMEOUT 27
 #define OPT_SND_TIMEOUT 28
+#define OPT_INTEGRITY_CHECK 29
 
 /* states */
 #define TEST_START 1
@@ -131,6 +132,7 @@ double	iperf_get_test_reporter_interval( struct iperf_test* ipt );
 double	iperf_get_test_stats_interval( struct iperf_test* ipt );
 int	iperf_get_test_num_streams( struct iperf_test* ipt );
 int	iperf_get_test_repeating_payload( struct iperf_test* ipt );
+int	iperf_get_test_integrity_check( struct iperf_test* ipt );
 int	iperf_get_test_timestamps( struct iperf_test* ipt );
 const char* iperf_get_test_timestamp_format( struct iperf_test* ipt );
 int	iperf_get_test_bind_port( struct iperf_test* ipt );
@@ -177,6 +179,7 @@ void	iperf_set_test_server_port( struct iperf_test* ipt, int server_port );
 void	iperf_set_test_socket_bufsize( struct iperf_test* ipt, int socket_bufsize );
 void	iperf_set_test_num_streams( struct iperf_test* ipt, int num_streams );
 void	iperf_set_test_repeating_payload( struct iperf_test* ipt, int repeating_payload );
+void	iperf_set_test_integrity_check( struct iperf_test* ipt, int integrity_check );
 void	iperf_set_test_timestamps( struct iperf_test* ipt, int timestamps );
 void	iperf_set_test_timestamp_format( struct iperf_test*, const char *tf );
 void	iperf_set_test_role( struct iperf_test* ipt, char role );

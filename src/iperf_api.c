@@ -4977,3 +4977,87 @@ iflush(struct iperf_test *test)
 {
     return fflush(test->outfile);
 }
+
+
+inline int is_integrity_packet(uint8_t* payload, int len)
+{
+    // We only check if this is the start of an integrity check packet if the remain length is at least the magic word.
+    if (len >= sizeof(magic_word)) {
+        return (payload[0] == magic_word[0] && payload[1] == magic_word[1] && payload[2] == magic_word[2] && payload[3] == magic_word[3]);
+    }
+
+    return 0;
+}
+
+#define BITS_PER_BYTE 8
+inline uint64_t get_matching_key(int is_big_endian, uint64_t flow, uint64_t data)
+{
+    if (is_big_endian)
+        return (uint64_t) (flow << 7 * BITS_PER_BYTE | flow << 5 * BITS_PER_BYTE | flow << 3 * BITS_PER_BYTE | flow << 1 * BITS_PER_BYTE
+            | (data + 1) << 6 * BITS_PER_BYTE | (data + 2) << 4 * BITS_PER_BYTE | (data + 3) << 2 * BITS_PER_BYTE | (data + 4));
+    else
+        return (uint64_t) ((data + 4) << 7 * BITS_PER_BYTE | (data + 3) << 5 * BITS_PER_BYTE | (data + 2) << 3 * BITS_PER_BYTE | (data + 1) << 1 * BITS_PER_BYTE
+            | flow << 6 * BITS_PER_BYTE | flow << 4 * BITS_PER_BYTE | flow << 2 * BITS_PER_BYTE | flow);
+}
+
+int is_big_endian()
+{
+    uint8_t val[2] = {0x01, 0x02};
+    return (*(uint16_t*)val) == ((0x01 << 8) | 0x02);
+}
+
+#define MATCH_BUF_LEN 8
+/* Packet integrity check */
+int iperf_packet_integrity_check(struct iperf_test *test, uint8_t* payload, int len)
+{
+    int result = 0;
+    int x = 0;
+    uint8_t flow_seq = 0;
+    uint8_t data_val = 0;
+    int is_checking = 0;
+    uint64_t match_key = 0;
+    int cmp_len = MATCH_BUF_LEN;
+    int b_big_endian = is_big_endian();
+
+    while (x < len) {
+        if (is_checking) {
+            match_key = get_matching_key(b_big_endian, flow_seq, data_val);
+            data_val = (data_val + MATCH_BUF_LEN / 2) % 256;
+            cmp_len = (len - x) >= MATCH_BUF_LEN ? MATCH_BUF_LEN : (len - x);
+            if (cmp_len >= MATCH_BUF_LEN) {
+                result = match_key == *(uint64_t*)(payload + x)? 0 : -1;
+            } else {
+                result = memcmp(payload + x, &match_key, cmp_len) == 0? 0: -1;
+            }
+
+            if (result == 0) {
+                x += cmp_len;
+            } else {
+               is_checking = 0;
+	    }
+        }
+
+        if (!is_checking) {
+            for (int i = 0; i < MATCH_BUF_LEN; i++) {
+                if (is_integrity_packet(payload + x + i, len - x - i)) {
+                    flow_seq = payload[x + i + INTEGRITY_PKT_FLOW_INDEX] & 0xFF;
+                    data_val = payload[x + i + INTEGRITY_PKT_DATA_INDEX] & 0xFF;
+                    x += i + INTEGRITY_PKT_MIN_LEN;
+                    result = 0;
+                    is_checking = 1;
+                    break;
+                }
+            }
+            // failed at previouse payload checking and it is not caused by the start of another packet, this means that we have
+            // encountered an packet corruption
+            if (result == -1) {
+                break;
+            // no previouse match failure and no packet starter found, this means we have not met our integrity packet yet, move to next block.
+            } else if (!is_checking){
+                 x += MATCH_BUF_LEN;
+            }
+	    }
+    }
+
+    return result;
+}

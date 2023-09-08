@@ -477,6 +477,9 @@ extern uint8_t magic_word[4];
 #define INTEGRITY_PKT_DATA_INDEX  5
 #define INTEGRITY_PKT_MIN_LEN     sizeof(magic_word) + 2
 
+/* Packet integrity check */
+int iperf_packet_integrity_check(struct iperf_test *test, uint8_t* payload, int len);
+
 #ifdef __cplusplus
 } /* close extern "C" */
 #endif

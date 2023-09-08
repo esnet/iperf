@@ -92,6 +92,9 @@
 #include "iperf_auth.h"
 #endif /* HAVE_SSL */
 
+#define UDP_HEADER_OFFSET 12
+#define UDP_HEADER_USING_64BIT_COUNTER_OFFSET 16
+
 /* Forwards. */
 static int send_parameters(struct iperf_test *test);
 static int get_parameters(struct iperf_test *test);
@@ -4288,7 +4291,7 @@ iperf_free_stream(struct iperf_stream *sp)
 
 /**************************************************************************/
 struct iperf_stream *
-iperf_new_stream(struct iperf_test *test, int s, int sender)
+iperf_new_stream(struct iperf_test *test, int s, int sender, int stream_index)
 {
     struct iperf_stream *sp;
     int ret = 0;
@@ -4388,8 +4391,15 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         sp->diskfile_fd = -1;
 
     /* Initialize stream */
-    if (test->repeating_payload)
-        fill_with_repeating_pattern(sp->buffer, test->settings->blksize);
+    if (test->repeating_payload) {
+        if (test->udp_counters_64bit) {
+            fill_with_repeating_pattern(sp->buffer, test->settings->blksize, stream_index, UDP_HEADER_USING_64BIT_COUNTER_OFFSET);
+	    } else if (test->protocol->id == Pudp) {
+            fill_with_repeating_pattern(sp->buffer, test->settings->blksize, stream_index, UDP_HEADER_OFFSET);
+	    } else {
+            fill_with_repeating_pattern(sp->buffer, test->settings->blksize, stream_index, 0);
+	    }
+    }
     else
         ret = readentropy(sp->buffer, test->settings->blksize);
 

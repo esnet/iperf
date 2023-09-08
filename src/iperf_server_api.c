@@ -703,7 +703,7 @@ iperf_run_server(struct iperf_test *test)
                         }
 
                         if (flag != -1) {
-                            sp = iperf_new_stream(test, s, flag);
+                            sp = iperf_new_stream(test, s, flag, send_streams_accepted);
                             if (!sp) {
                                 cleanup_server(test);
                                 return -1;

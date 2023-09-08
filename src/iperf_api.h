@@ -270,7 +270,7 @@ void      iperf_free_test(struct iperf_test * testp);
  * returns NULL on failure
  *
  */
-struct iperf_stream *iperf_new_stream(struct iperf_test *, int, int);
+struct iperf_stream *iperf_new_stream(struct iperf_test *, int, int, int);
 
 /**
  * iperf_add_stream -- add a stream to a test
@@ -471,6 +471,11 @@ enum {
     IEUPDATETIMER = 301,    // Unable to update timer (check perror)
 };
 
+extern uint8_t magic_word[4];
+// Magic word + the first 2 bytes
+#define INTEGRITY_PKT_FLOW_INDEX  4
+#define INTEGRITY_PKT_DATA_INDEX  5
+#define INTEGRITY_PKT_MIN_LEN     sizeof(magic_word) + 2
 
 #ifdef __cplusplus
 } /* close extern "C" */

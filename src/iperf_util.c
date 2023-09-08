@@ -78,21 +78,28 @@ int readentropy(void *out, size_t outsize)
     return 0;
 }
 
-
+uint8_t magic_word[4] = {0xde, 0xad, 0xbe, 0xef};
 /*
  * Fills buffer with repeating pattern (similar to pattern that used in iperf2)
  */
-void fill_with_repeating_pattern(void *out, size_t outsize)
+void fill_with_repeating_pattern(void *out, size_t outsize, int index, int offset)
 {
     size_t i;
     int counter = 0;
-    char *buf = (char *)out;
+    char *buf = (char *)out + offset;
+    int flow = (index + (int)getpid()) % 256;
 
-    if (!outsize) return;
+    if (outsize < INTEGRITY_PKT_MIN_LEN) return;
 
-    for (i = 0; i < outsize; i++) {
-        buf[i] = (char)('0' + counter);
-        if (counter >= 9)
+    memcpy(buf, magic_word, sizeof(magic_word));
+
+    for (i = sizeof(magic_word); i < outsize - offset; i = i + 2) {
+        buf[i] = (char)flow;
+        if (i < outsize - offset - 1) {
+            buf[i + 1] = (char)counter;
+        }
+
+        if (counter >= 255)
             counter = 0;
         else
             counter++;

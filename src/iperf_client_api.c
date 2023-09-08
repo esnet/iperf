@@ -121,7 +121,7 @@ iperf_create_streams(struct iperf_test *test, int sender)
 	    FD_SET(s, &test->read_set);
 	if (s > test->max_fd) test->max_fd = s;
 
-        sp = iperf_new_stream(test, s, sender);
+        sp = iperf_new_stream(test, s, sender, i);
         if (!sp)
             return -1;
 

@@ -422,6 +422,10 @@ or high-bitrate UDP tests.  Both client and server need to be running
 at least version 3.1 for this option to work.  It may become the
 default behavior at some point in the future.
 .TP
+.BR --imix
+Use internet mix traffic pattern instead of maximum possible payload size.
+This is useful for testing middleboxes.
+.TP
 .BR --repeating-payload
 Use repeating pattern in payload, instead of random bytes.
 The same payload is used in iperf2 (ASCII '0..9' repeating).

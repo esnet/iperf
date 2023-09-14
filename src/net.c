@@ -25,6 +25,7 @@
  * file for complete information.
  */
 #include "iperf_config.h"
+#include "iperf_api.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -414,6 +415,11 @@ Nread(int fd, char *buf, size_t count, int prot)
 
         nleft -= r;
         buf += r;
+
+        if (prot == Pudp) {
+            /* read() guarantees atomic datagram delivery for UDP */
+            break;
+        }
 
         /*
          * We need some more bytes but don't want to wait around

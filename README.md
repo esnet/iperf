@@ -32,6 +32,8 @@ Source code and issue tracker: https://github.com/esnet/iperf
 
 Discussion forums: https://github.com/esnet/iperf/discussions
 
+Reporting security vulnerabilities: iperf@es.net
+
 Obtaining iperf3
 ----------------
 

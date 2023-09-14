@@ -61,6 +61,9 @@
 # endif
 #endif
 
+/* 20B for ipv4 and 8B for udp */
+#define HEADER_OVERHEAD		(20 + 8)
+
 /* iperf_udp_recv
  *
  * receives the data for UDP
@@ -204,6 +207,32 @@ iperf_udp_recv(struct iperf_stream *sp)
     return r;
 }
 
+/* Determine send size for a single packet */
+static int iperf_udp_send_size(struct iperf_stream *sp)
+{
+    int class_sz;
+    int r;
+
+    if (!sp->settings->imix)
+        return sp->settings->blksize;
+
+    /* IMIX (according to wikipedia) says:
+     *   Packet size (incl. IP header) 	# Packets 	Distribution (in packets)
+     *                40 	            7 	              58.333333%
+     *                576 	            4 	              33.333333%
+     *                1500 	            1 	              8.333333%
+     */
+    r = random() % 1000;
+    if (r < 580)
+        class_sz = 40;
+    else if (r < 580 + 333)
+        class_sz = 576;
+    else
+        class_sz = 1500;
+
+    return class_sz - HEADER_OVERHEAD;
+}
+
 
 /* iperf_udp_send
  *
@@ -213,9 +242,10 @@ int
 iperf_udp_send(struct iperf_stream *sp)
 {
     int r;
-    int       size = sp->settings->blksize;
+    int size;
     struct iperf_time before;
 
+    size = iperf_udp_send_size(sp);
     iperf_time_now(&before);
 
     ++sp->packet_count;
@@ -264,7 +294,7 @@ iperf_udp_send(struct iperf_stream *sp)
     sp->result->bytes_sent_this_interval += r;
 
     if (sp->test->debug_level >=  DEBUG_LEVEL_DEBUG)
-	printf("sent %d bytes of %d, total %" PRIu64 "\n", r, sp->settings->blksize, sp->result->bytes_sent);
+	printf("sent %d bytes of %d, total %" PRIu64 "\n", r, size, sp->result->bytes_sent);
 
     return r;
 }
@@ -631,5 +661,6 @@ iperf_udp_connect(struct iperf_test *test)
 int
 iperf_udp_init(struct iperf_test *test)
 {
+    srandom(0xDEADF00D);
     return 0;
 }

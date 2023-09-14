@@ -1,6 +1,24 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.15 2023-09-14
+---------------------
+
+* Notable user-visible changes
+
+  * Several bugs that could allow the iperf3 server to hang waiting
+    for input on the control connection has been fixed. ESnet thanks
+    Jorge Sancho Larraz from Canonical for reporting this issue. For
+    more information, see:
+    https://downloads.es.net/pub/iperf/esnet-secadv-2023-0002.txt.asc
+
+  * A bug that caused garbled output with UDP tests on 32-bit hosts
+    has been fixed (PR #1554, PR #1556). This bug was introduced in
+    iperf-3.14.
+
+  * A bug in counting UDP messages has been fixed (PR #1367, PR
+    #1380).
+
 iperf-3.14 2023-07-07
 ---------------------
 

@@ -1,8 +1,8 @@
 iperf3 Release Notes
 ====================
 
-iperf-3.15-mt-beta1
--------------------
+iperf-3.15-mt-beta1 2023-09-29
+------------------------------
 Accumulated release notes from iperf-3.14 and earlier multithreaded
 beta releases:
 

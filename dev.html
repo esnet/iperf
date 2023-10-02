@@ -159,6 +159,8 @@ created in the future.</p>
 the code, and confirm that it’s not already fixed. Also see the <a class="reference internal" href="faq.html"><span class="doc">iperf3 FAQ</span></a>.
 Then submit to the iperf3 issue tracker on GitHub:</p>
 <p><a class="reference external" href="https://github.com/esnet/iperf/issues">https://github.com/esnet/iperf/issues</a></p>
+<p>For reporting potential security issues, please contact the developers at
+<a class="reference external" href="mailto:iperf&#37;&#52;&#48;es&#46;net">iperf<span>&#64;</span>es<span>&#46;</span>net</a>.</p>
 <p><strong>Note:</strong> Issues submitted to the old iperf3 issue tracker on Google
 Code (or comments to existing issues on the Google Code issue tracker)
 will be ignored.</p>
@@ -247,8 +249,8 @@ three parts:  <em>MAJOR.MINOR.PATCH</em></p>
 <section id="release-engineering-checklist">
 <h2>Release Engineering Checklist<a class="headerlink" href="#release-engineering-checklist" title="Link to this heading">¶</a></h2>
 <ol class="arabic">
-<li><p>Update the <code class="docutils literal notranslate"><span class="pre">README</span></code> and <code class="docutils literal notranslate"><span class="pre">RELNOTES.md</span></code> files to be accurate. Make sure
-that the “Known Issues” section of the <code class="docutils literal notranslate"><span class="pre">README</span></code> file and in this document
+<li><p>Update the <code class="docutils literal notranslate"><span class="pre">README.md</span></code> and <code class="docutils literal notranslate"><span class="pre">RELNOTES.md</span></code> files to be accurate. Make sure
+that the “Known Issues” section of the <code class="docutils literal notranslate"><span class="pre">README.md</span></code> file and in this document
 are up to date.</p></li>
 <li><p>Compose a release announcement.  Most of the release announcement
 can be written before tagging.  Usually the previous version’s
@@ -320,6 +322,7 @@ handle this situation correctly.  Testing the release announcement
 sending process by sending a copy to oneself first and attempting
 to verify the signature is highly encouraged.</p>
 </li>
+<li><p>Update GitHub Releases with the current release notes.</p></li>
 <li><p>Update the iperf3 Project News section of the documentation site
 to announce the new release (see <code class="docutils literal notranslate"><span class="pre">docs/news.rst</span></code> and
 <code class="docutils literal notranslate"><span class="pre">docs/conf.py</span></code> in the source tree) and deploy a new build of the

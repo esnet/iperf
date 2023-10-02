@@ -30,6 +30,9 @@ Then submit to the iperf3 issue tracker on GitHub:
 
 https://github.com/esnet/iperf/issues
 
+For reporting potential security issues, please contact the developers at
+iperf@es.net.
+
 **Note:** Issues submitted to the old iperf3 issue tracker on Google
 Code (or comments to existing issues on the Google Code issue tracker)
 will be ignored.
@@ -130,8 +133,8 @@ The developers increment the:
 Release Engineering Checklist
 -----------------------------
 
-1. Update the ``README`` and ``RELNOTES.md`` files to be accurate. Make sure
-   that the "Known Issues" section of the ``README`` file and in this document
+1. Update the ``README.md`` and ``RELNOTES.md`` files to be accurate. Make sure
+   that the "Known Issues" section of the ``README.md`` file and in this document
    are up to date.
 
 2. Compose a release announcement.  Most of the release announcement
@@ -214,12 +217,14 @@ Release Engineering Checklist
     sending process by sending a copy to oneself first and attempting
     to verify the signature is highly encouraged.
 
-12. Update the iperf3 Project News section of the documentation site
+12. Update GitHub Releases with the current release notes.
+
+13. Update the iperf3 Project News section of the documentation site
     to announce the new release (see ``docs/news.rst`` and
     ``docs/conf.py`` in the source tree) and deploy a new build of the
     documentation to GitHub Pages.
 
-13. If an update to the on-line manual page is needed, it can be
+14. If an update to the on-line manual page is needed, it can be
     generated with this sequence of commands (tested on CentOS 7) and
     import the result into ``invoking.rst``::
 

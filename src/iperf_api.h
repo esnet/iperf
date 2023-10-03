@@ -90,6 +90,7 @@ typedef uint64_t iperf_size_t;
 #define OPT_DONT_FRAGMENT 26
 #define OPT_RCV_TIMEOUT 27
 #define OPT_SND_TIMEOUT 28
+#define OPT_IMIX 29
 
 /* states */
 #define TEST_START 1
@@ -406,6 +407,9 @@ enum {
     IERVRSONLYRCVTIMEOUT = 32,  // Client receive timeout is valid only in reverse mode
     IESNDTIMEOUT = 33,      // Illegal message send timeout
     IEUDPFILETRANSFER = 34, // Cannot transfer file using UDP
+    IEUDPCOUNTERIMIX = 35,  // 64 bit counter too big for imix
+    IEUDPINET6IMIX = 36,    // IPv6 header too big for imix
+    IEIMIXNOTUDP = 37,      // IMIX mode cannot be used for non UDP
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

@@ -1065,6 +1065,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"bitrate", required_argument, NULL, 'b'},
         {"bandwidth", required_argument, NULL, 'b'},
 	{"server-bitrate-limit", required_argument, NULL, OPT_SERVER_BITRATE_LIMIT},
+        {"imix", no_argument, NULL, OPT_IMIX},
         {"time", required_argument, NULL, 't'},
         {"bytes", required_argument, NULL, 'n'},
         {"blockcount", required_argument, NULL, 'k'},
@@ -1618,6 +1619,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->settings->connect_timeout = unit_atoi(optarg);
 		client_flag = 1;
 		break;
+	    case OPT_IMIX:
+		test->settings->imix = 1;
+		break;
 	    case 'h':
 		usage_long(stdout);
 		exit(0);
@@ -1763,6 +1767,24 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         (duration_flag && test->settings->blocks != 0) ||
 	(test->settings->bytes != 0 && test->settings->blocks != 0)) {
         i_errno = IEENDCONDITIONS;
+        return -1;
+    }
+
+    /* Using 64-bit counters goes over 40 byte (incl. ip and udp hdr) pkt size class */
+    if (test->udp_counters_64bit && test->settings->imix) {
+        i_errno = IEUDPCOUNTERIMIX;
+        return -1;
+    }
+
+    /* IPv6 header is too big to fit into smallest pkt size class */
+    if (test->settings->imix && test->settings->domain != AF_INET) {
+        i_errno = IEUDPINET6IMIX;
+        return -1;
+    }
+
+    /* Cannot easily control packet size on the wire unless it's UDP */
+    if (test->settings->imix && test->protocol->id != Pudp) {
+        i_errno = IEIMIXNOTUDP;
         return -1;
     }
 

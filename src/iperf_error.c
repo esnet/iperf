@@ -355,6 +355,15 @@ iperf_strerror(int int_errno)
         case IEUDPFILETRANSFER:
             snprintf(errstr, len, "cannot transfer file using UDP");
             break;
+        case IEUDPCOUNTERIMIX:
+            snprintf(errstr, len, "64 bit counter makes small imix packet too large");
+            break;
+        case IEUDPINET6IMIX:
+            snprintf(errstr, len, "ipv6 header makes small imix packet too large");
+            break;
+        case IEIMIXNOTUDP:
+            snprintf(errstr, len, "imix can only be used for udp");
+            break;
         case IERVRSONLYRCVTIMEOUT:
             snprintf(errstr, len, "client receive timeout is valid only in receiving mode");
             perr = 1;

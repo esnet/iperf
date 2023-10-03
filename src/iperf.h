@@ -167,6 +167,7 @@ struct iperf_settings
     int       idle_timeout;         /* server idle time timeout */
     unsigned int snd_timeout; /* Timeout for sending tcp messages in active mode, in us */
     struct iperf_time rcv_timeout;  /* Timeout for receiving messages in active mode, in us */
+    int       imix;                 /* Whether to send internet mix traffic */
 };
 
 struct iperf_test;

@@ -2806,11 +2806,16 @@ connect_msg(struct iperf_stream *sp)
 	iperf_printf(sp->test, report_connected, sp->socket, ipl, lport, ipr, rport);
 
     char strbuf [50000];
-    if (sp->test->reverse == 1) {
-        sprintf(strbuf, "Sender Ip: %s, Sender Port: %ld, Receiver Ip: %s, Receiver Port: %ld", ipl, (int64_t) lport, ipr, (int64_t) rport);
+
+    if (sp->test->bidirectional == 1) {
+        if (sp->test->reverse == 1) {
+            sprintf(strbuf, "Sender Ip: %s, Sender Port: %ld, Receiver Ip: %s, Receiver Port: %ld", ipl, (int64_t) lport, ipr, (int64_t) rport);
+        } else {
+            sprintf(strbuf, "Sender Ip: %s, Sender Port: %ld, Receiver Ip: %s, Receiver Port: %ld", ipr, (int64_t) rport, ipl, (int64_t) lport);
+        }   
     } else {
         sprintf(strbuf, "Sender Ip: %s, Sender Port: %ld, Receiver Ip: %s, Receiver Port: %ld", ipr, (int64_t) rport, ipl, (int64_t) lport);
-    }   
+    }
     sp->connectionstring = malloc(strlen(strbuf) + 3);
     strcpy (sp->connectionstring, strbuf);
 }

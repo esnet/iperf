@@ -32,6 +32,8 @@ Source code and issue tracker: https://github.com/esnet/iperf
 
 Discussion forums: https://github.com/esnet/iperf/discussions
 
+Reporting security vulnerabilities: iperf@es.net
+
 Obtaining iperf3
 ----------------
 
@@ -78,8 +80,8 @@ These flags include:
     -Z, --zerocopy            use a 'zero copy' sendfile() method of sending data
     -A, --affinity n/n,m      set CPU affinity
 
-Bug Reports
------------
+Bug and Security Reports
+------------------------
 
 Before submitting a bug report, please make sure you're running the
 latest version of the code, and confirm that your issue has not
@@ -98,6 +100,11 @@ sensitive information.
 
 If you have a question about usage or about the code, please do *not*
 submit an issue.  Please use one of the mailing lists for that.
+
+If you suspect there is a potential security issue, please contact the
+developers at:
+
+iperf@es.net
 
 Relation to iperf 2.x
 ---------------------
@@ -150,7 +157,7 @@ responsibility for the content of these pages.
 Copyright
 ---------
 
-iperf, Copyright (c) 2014-2022, The Regents of the University of
+iperf, Copyright (c) 2014-2023, The Regents of the University of
 California, through Lawrence Berkeley National Laboratory (subject
 to receipt of any required approvals from the U.S. Dept. of
 Energy).  All rights reserved.

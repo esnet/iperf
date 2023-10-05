@@ -101,7 +101,7 @@ main(int argc, char **argv)
     if (iperf_parse_arguments(test, argc, argv) < 0) {
         iperf_err(test, "parameter error - %s", iperf_strerror(i_errno));
         fprintf(stderr, "\n");
-        usage_long(stdout);
+        usage();
         exit(1);
     }
 
@@ -151,7 +151,7 @@ run(struct iperf_test *test)
             for (;;) {
 		int rc;
 		rc = iperf_run_server(test);
-                test->server_last_run_rc =rc;
+                test->server_last_run_rc = rc;
 		if (rc < 0) {
 		    iperf_err(test, "error - %s", iperf_strerror(i_errno));
                     if (test->json_output) {

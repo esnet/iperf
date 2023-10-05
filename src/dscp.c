@@ -90,6 +90,9 @@ const char * iptos2str(int iptos);
 #ifndef IPTOS_DSCP_EF
 # define	IPTOS_DSCP_EF		0xb8
 #endif /* IPTOS_DSCP_EF */
+#ifndef IPTOS_DSCP_VA
+# define	IPTOS_DSCP_VA		0xb0
+#endif /* IPTOS_DSCP_VA */
 
 static const struct {
 	const char *name;
@@ -116,6 +119,7 @@ static const struct {
 	{ "cs6", IPTOS_DSCP_CS6 },
 	{ "cs7", IPTOS_DSCP_CS7 },
 	{ "ef", IPTOS_DSCP_EF },
+	{ "va", IPTOS_DSCP_VA },
 	{ "lowdelay", IPTOS_LOWDELAY },
 	{ "throughput", IPTOS_THROUGHPUT },
 	{ "reliability", IPTOS_RELIABILITY },

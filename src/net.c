@@ -65,6 +65,9 @@
 #include "net.h"
 #include "timer.h"
 
+static int nread_read_timeout = 10;
+static int nread_overall_timeout = 30;
+
 /*
  * Declaration of gerror in iperf_error.c.  Most other files in iperf3 can get this
  * by including "iperf.h", but net.c lives "below" this layer.  Clearly the
@@ -372,6 +375,32 @@ Nread(int fd, char *buf, size_t count, int prot)
 {
     register ssize_t r;
     register size_t nleft = count;
+    struct iperf_time ftimeout = { 0, 0 };
+
+    fd_set rfdset;
+    struct timeval timeout = { nread_read_timeout, 0 };
+
+    /*
+     * fd might not be ready for reading on entry. Check for this
+     * (with timeout) first.
+     *
+     * This check could go inside the while() loop below, except we're
+     * currently considering whether it might make sense to support a
+     * codepath that bypassese this check, for situations where we
+     * already know that fd has data on it (for example if we'd gotten
+     * to here as the result of a select() call.
+     */
+    {
+        FD_ZERO(&rfdset);
+        FD_SET(fd, &rfdset);
+        r = select(fd + 1, &rfdset, NULL, NULL, &timeout);
+        if (r < 0) {
+            return NET_HARDERROR;
+        }
+        if (r == 0) {
+            return 0;
+        }
+    }
 
     while (nleft > 0) {
         r = read(fd, buf, nleft);
@@ -385,6 +414,39 @@ Nread(int fd, char *buf, size_t count, int prot)
 
         nleft -= r;
         buf += r;
+
+        /*
+         * We need some more bytes but don't want to wait around
+         * forever for them. In the case of partial results, we need
+         * to be able to read some bytes every nread_timeout seconds.
+         */
+        if (nleft > 0) {
+            struct iperf_time now;
+
+            /*
+             * Also, we have an approximate upper limit for the total time
+             * that a Nread call is supposed to take. We trade off accuracy
+             * of this timeout for a hopefully lower performance impact.
+             */
+            iperf_time_now(&now);
+            if (ftimeout.secs == 0) {
+                ftimeout = now;
+                iperf_time_add_usecs(&ftimeout, nread_overall_timeout * 1000000L);
+            }
+            if (iperf_time_compare(&ftimeout, &now) < 0) {
+                break;
+            }
+
+            FD_ZERO(&rfdset);
+            FD_SET(fd, &rfdset);
+            r = select(fd + 1, &rfdset, NULL, NULL, &timeout);
+            if (r < 0) {
+                return NET_HARDERROR;
+            }
+            if (r == 0) {
+                break;
+            }
+        }
     }
     return count - nleft;
 }

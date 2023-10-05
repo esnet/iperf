@@ -121,6 +121,7 @@ int	iperf_get_test_omit( struct iperf_test* ipt );
 int	iperf_get_test_duration( struct iperf_test* ipt );
 char	iperf_get_test_role( struct iperf_test* ipt );
 int	iperf_get_test_reverse( struct iperf_test* ipt );
+int	iperf_get_test_bidirectional( struct iperf_test* ipt );
 int	iperf_get_test_blksize( struct iperf_test* ipt );
 FILE*	iperf_get_test_outfile( struct iperf_test* ipt );
 uint64_t iperf_get_test_rate( struct iperf_test* ipt );
@@ -146,6 +147,7 @@ int	iperf_get_test_zerocopy( struct iperf_test* ipt );
 int	iperf_get_test_get_server_output( struct iperf_test* ipt );
 char	iperf_get_test_unit_format(struct iperf_test *ipt);
 char*	iperf_get_test_bind_address ( struct iperf_test* ipt );
+char*   iperf_get_test_bind_dev(struct iperf_test *ipt);
 int	iperf_get_test_udp_counters_64bit( struct iperf_test* ipt );
 int	iperf_get_test_one_off( struct iperf_test* ipt );
 int iperf_get_test_tos( struct iperf_test* ipt );
@@ -156,6 +158,7 @@ int	iperf_get_test_connect_timeout( struct iperf_test* ipt );
 int	iperf_get_dont_fragment( struct iperf_test* ipt );
 char*   iperf_get_test_congestion_control(struct iperf_test* ipt);
 int iperf_get_test_mss(struct iperf_test* ipt);
+int     iperf_get_mapped_v4(struct iperf_test* ipt);
 
 /* Setter routines for some fields inside iperf_test. */
 void	iperf_set_verbose( struct iperf_test* ipt, int verbose );
@@ -189,6 +192,7 @@ void	iperf_set_test_zerocopy( struct iperf_test* ipt, int zerocopy );
 void	iperf_set_test_get_server_output( struct iperf_test* ipt, int get_server_output );
 void	iperf_set_test_unit_format(struct iperf_test *ipt, char unit_format);
 void	iperf_set_test_bind_address( struct iperf_test* ipt, const char *bind_address );
+void    iperf_set_test_bind_dev(struct iperf_test *ipt, const char *bnd_dev);
 void	iperf_set_test_udp_counters_64bit( struct iperf_test* ipt, int udp_counters_64bit );
 void	iperf_set_test_one_off( struct iperf_test* ipt, int one_off );
 void    iperf_set_test_tos( struct iperf_test* ipt, int tos );
@@ -198,6 +202,11 @@ void    iperf_set_test_no_delay( struct iperf_test* ipt, int no_delay);
 void    iperf_set_dont_fragment( struct iperf_test* ipt, int dont_fragment );
 void    iperf_set_test_congestion_control(struct iperf_test* ipt, char* cc);
 void    iperf_set_test_mss(struct iperf_test* ipt, int mss);
+void    iperf_set_mapped_v4(struct iperf_test* ipt, const int val);
+void    iperf_set_on_new_stream_callback(struct iperf_test* ipt, void (*callback)());
+void    iperf_set_on_test_start_callback(struct iperf_test* ipt, void (*callback)());
+void    iperf_set_on_test_connect_callback(struct iperf_test* ipt, void (*callback)());
+void    iperf_set_on_test_finish_callback(struct iperf_test* ipt, void (*callback)());
 
 #if defined(HAVE_SSL)
 void    iperf_set_test_client_username(struct iperf_test *ipt, const char *client_username);
@@ -283,6 +292,12 @@ int       iperf_init_stream(struct iperf_stream *, struct iperf_test *);
  *
  */
 void      iperf_free_stream(struct iperf_stream * sp);
+
+/**
+ * iperf_common_sockopts -- init stream socket with common socket options
+ *
+ */
+int       iperf_common_sockopts(struct iperf_test *, int s);
 
 int has_tcpinfo(void);
 int has_tcpinfo_retransmits(void);
@@ -393,7 +408,8 @@ enum {
     IERCVTIMEOUT = 31,      // Illegal message receive timeout
     IERVRSONLYRCVTIMEOUT = 32,  // Client receive timeout is valid only in reverse mode
     IESNDTIMEOUT = 33,      // Illegal message send timeout
-    IEUDPCONNECT = 34,      // illegal optional arguments for udp-retry option
+    IEUDPFILETRANSFER = 34, // Cannot transfer file using UDP
+    IEUDPCONNECT = 35,      // illegal optional arguments for udp-retry option
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

@@ -1,6 +1,98 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.15 2023-09-14
+---------------------
+
+* Notable user-visible changes
+
+  * Several bugs that could allow the iperf3 server to hang waiting
+    for input on the control connection has been fixed. ESnet thanks
+    Jorge Sancho Larraz from Canonical for reporting this issue. For
+    more information, see:
+    https://downloads.es.net/pub/iperf/esnet-secadv-2023-0002.txt.asc
+
+  * A bug that caused garbled output with UDP tests on 32-bit hosts
+    has been fixed (PR #1554, PR #1556). This bug was introduced in
+    iperf-3.14.
+
+  * A bug in counting UDP messages has been fixed (PR #1367, PR
+    #1380).
+
+iperf-3.14 2023-07-07
+---------------------
+
+* Notable user-visible changes
+
+  * A memory allocation hazard was fixed (Issue #1542/PR #1543). For
+    more information see:
+    https://downloads.es.net/pub/iperf/esnet-secadv-2023-0001.txt.asc
+
+  * JSON output was improved, such as print JSON numbers as signed (PR
+    #1539, Issue #1435), the exit code when doing JSON output was
+    fixed (PR #1523), and client_api was fixed so that it still
+    returns an error code when JSON is enabled (Issue #1405).  Also,
+    duplicate fields when using multiple streams was removed from the
+    JSON output (#1492).
+
+  * Prevent UDP packet count and operations overflow (PR #1536/Issue
+    #1534).
+
+  * Statistics are fixed when --omit is used (Issue #1489/PR #1498).
+
+* Developer-visible changes
+
+  * CI builds and tests using GitHub actions have been added (PR
+    #1519).
+
+  * A fix for Android "unable to create a new stream error" was added
+    (PR #1506).
+
+  * Support for Voice Admit DSCP code point from RFC 5865 was added
+    (PR #1490).
+
+  * A fix for preventing a crash when RSA public key path doesn't
+    exist was fixed (PR #1488/Issue #1471).
+
+iperf-3.13 2023-02-16
+---------------------
+
+* Notable user-visible changes
+
+  * fq-rate (PR #1461, Issue #1366), and bidirectional flag (Issue #1428,
+    PR #1429) were added to the JSON output.
+
+  * Added support for OpenBSD including cleaning up endian handling (PR #1396)
+    and support for TCP_INFO on systems where it was implemented (PR #1397).
+
+  * Fixed bug in how TOS is set in mapped v4 (PR #1427).
+
+  * Corrected documentation, such as updating binary download links and text
+    (Issue #1459), updating version on iperf3 websites, and fixing an
+    incorrect error message (Issue #1441).
+
+  * Fixed crash on rcv-timeout with JSON logfile (#1463, #1460, issue #1360,
+    PR #1369).
+
+  * Fixed a bug that prevented TOS/DSCP from getting set correctly for reverse
+    tests (PR #1427, Issue #638).
+
+* Developer-visible changes
+
+  * Getter and setter are now available for bind_dev (PR #1419).
+
+  * Added missing getter for bidirectional tests (PR #1453).
+
+  * Added minor changes to clean up .gitignore and error messages (#1408).
+
+  * Made sure configure scripts are runnable with /bin/sh (PR #1398).
+
+  * Cleaned up RPM spec, such as adding missing RPM build dependencies, dropping
+    EL5 and removing outdated %changelog (PR #1401) to make.
+
+  * Added a fix for a resource leak bug in function iperf_create_pidfile(#1443).
+
+
 iperf-3.12 2022-09-30
 ---------------------
 

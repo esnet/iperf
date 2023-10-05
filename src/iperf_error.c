@@ -96,8 +96,10 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
 
     va_start(argp, format);
     vsnprintf(str, sizeof(str), format, argp);
-    if (test != NULL && test->json_output && test->json_top != NULL) {
-	cJSON_AddStringToObject(test->json_top, "error", str);
+    if (test != NULL && test->json_output) {
+        if (test->json_top != NULL) {
+	    cJSON_AddStringToObject(test->json_top, "error", str);
+        }
 	iperf_json_finish(test);
     } else
 	if (test && test->outfile && test->outfile != stdout) {
@@ -228,7 +230,7 @@ iperf_strerror(int int_errno)
             perr = 1;
             break;
         case IECONNECT:
-            snprintf(errstr, len, "unable to connect to server");
+            snprintf(errstr, len, "unable to connect to server - server may have stopped running or use a different port, firewall issue, etc.");
             perr = 1;
 	    herr = 1;
             break;
@@ -257,14 +259,14 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "control socket has closed unexpectedly");
             break;
         case IEMESSAGE:
-            snprintf(errstr, len, "received an unknown control message");
+            snprintf(errstr, len, "received an unknown control message (ensure other side is iperf3 and not iperf)");
             break;
         case IESENDMESSAGE:
-            snprintf(errstr, len, "unable to send control message");
+            snprintf(errstr, len, "unable to send control message - port may not be available, the other side may have stopped running, etc.");
             perr = 1;
             break;
         case IERECVMESSAGE:
-            snprintf(errstr, len, "unable to receive control message");
+            snprintf(errstr, len, "unable to receive control message - port may not be available, the other side may have stopped running, etc.");
             perr = 1;
             break;
         case IESENDPARAMS:
@@ -349,6 +351,9 @@ iperf_strerror(int int_errno)
         case IESNDTIMEOUT:
             snprintf(errstr, len, "send timeout value is incorrect or not in range");
             perr = 1;
+            break;
+        case IEUDPFILETRANSFER:
+            snprintf(errstr, len, "cannot transfer file using UDP");
             break;
         case IEUDPCONNECT:
             snprintf(errstr, len, "illegal optional arguments for udp-retry option");
@@ -472,7 +477,7 @@ iperf_strerror(int int_errno)
 	    snprintf(errstr, len, "unable to set IP Do-Not-Fragment flag");
             break;
         case IESETUSERTIMEOUT:
-            snprintf(errstr, len, "unable to set TCP/SCTP MSS");
+            snprintf(errstr, len, "unable to set TCP USER_TIMEOUT");
             perr = 1;
             break;
 	default:

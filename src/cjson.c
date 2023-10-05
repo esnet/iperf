@@ -99,6 +99,13 @@
 #  else
 #   define PRIu64		"llu"
 #  endif
+# ifndef PRId64
+#  if sizeof(long) == 8
+#   define PRId64		"ld"
+#  else
+#   define PRId64		"lld"
+#  endif
+# endif
 # endif
 #endif
 
@@ -134,7 +141,7 @@ CJSON_PUBLIC(double) cJSON_GetNumberValue(const cJSON * const item)
 {
     if (!cJSON_IsNumber(item))
     {
-        return (double) NAN;
+        return (double) NAN;    // cppcheck-suppress invalidFunctionArg
     }
 
     return item->valuedouble;
@@ -588,7 +595,7 @@ static cJSON_bool print_number(const cJSON * const item, printbuffer * const out
     }
     else if(d == (double)item->valueint)
     {
-        length = sprintf((char*)number_buffer, "%" PRIu64, item->valueint);
+        length = sprintf((char*)number_buffer, "%" PRId64, item->valueint);
     }
     else
     {

@@ -165,6 +165,8 @@ struct iperf_settings
 #endif // HAVE_SSL
     int	      connect_timeout;	    /* socket connection timeout, in ms */
     int       idle_timeout;         /* server idle time timeout */
+    unsigned int udp_connect_retries; /* Number of UDP connection retries */
+    unsigned int udp_connect_retry_timeout; /* UDP connection retries timeout in secs */
     unsigned int snd_timeout; /* Timeout for sending tcp messages in active mode, in us */
     struct iperf_time rcv_timeout;  /* Timeout for receiving messages in active mode, in us */
 };
@@ -435,6 +437,8 @@ extern int gerror; /* error value from getaddrinfo(3), for use in internal error
 #define UDP_CONNECT_MSG 0x36373839          // "6789" - legacy value was 123456789
 #define UDP_CONNECT_REPLY 0x39383736        // "9876" - legacy value was 987654321
 #define LEGACY_UDP_CONNECT_REPLY 987654321  // Old servers may still reply with the legacy value
+#define UDP_ALL_STREAMS_CONNECTED_MSG 0x32333435  // "2345"
+#define UDP_ALL_STREAMS_CONNECTED_REPLY 0x35343332  // "5432"
 
 /* In Reverse mode, maximum number of packets to wait for "accept" response - to handle out of order packets */
 #define MAX_REVERSE_OUT_OF_ORDER_PACKETS 2

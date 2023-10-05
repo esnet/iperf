@@ -167,7 +167,9 @@ iperf_udp_recv(struct iperf_stream *sp)
 
 	    /* Log the out-of-order packet */
 	    if (sp->test->debug)
+
 		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %" PRIu64 " on stream %d", pcount, sp->packet_count + 1, sp->socket);
+
 	}
 
 	/*
@@ -198,7 +200,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     }
     else {
 	if (sp->test->debug)
-	    printf("Late receive, state = %d\n", sp->test->state);
+	    iperf_printf(sp->test, "Late receive, state = %d\n", sp->test->state);
     }
 
     return r;
@@ -374,63 +376,45 @@ iperf_udp_buffercheck(struct iperf_test *test, int s)
     return rc;
 }
 
+
+
 /*
- * iperf_udp_accept
+ * iperf_udp_bind_to_accepted
  *
- * Accepts a new UDP "connection"
+ * Bind tockt to address from accepted message
  */
 int
-iperf_udp_accept(struct iperf_test *test)
+iperf_udp_bind_to_accepted(struct iperf_test *test, int s, struct sockaddr_storage *sa_peer, socklen_t sa_peer_len)
 {
-    struct sockaddr_storage sa_peer;
-    unsigned int buf;
-    socklen_t len;
-    int       sz, s;
-    int	      rc;
 
-    /*
-     * Get the current outstanding socket.  This socket will be used to handle
-     * data transfers and a new "listening" socket will be created.
-     */
-    s = test->prot_listener;
-
-    /*
-     * Grab the UDP packet sent by the client.  From that we can extract the
-     * client's address, and then use that information to bind the remote side
-     * of the socket to the client.
-     */
-    len = sizeof(sa_peer);
-    if ((sz = recvfrom(test->prot_listener, &buf, sizeof(buf), 0, (struct sockaddr *) &sa_peer, &len)) < 0) {
-        i_errno = IESTREAMACCEPT;
-        return -1;
+    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+        iperf_printf(test, "Binding socket %d to remote address in a received packet.\n", s);
     }
 
-    if (connect(s, (struct sockaddr *) &sa_peer, len) < 0) {
+    /* Use the address from the received packet to bind the remote side of the socket. */
+    if (connect(s, (struct sockaddr *) sa_peer, sa_peer_len) < 0) {
         i_errno = IESTREAMACCEPT;
         return -1;
     }
 
     /* Check and set socket buffer sizes */
-    rc = iperf_udp_buffercheck(test, s);
-    if (rc < 0)
-	/* error */
-	return rc;
+    if (iperf_udp_buffercheck(test, s) < 0) {
+	return -1;
+    }
+
     /*
      * If the socket buffer was too small, but it was the default
      * size, then try explicitly setting it to something larger.
      */
-    if (rc > 0) {
-	if (test->settings->socket_bufsize == 0) {
-            char str[WARN_STR_LEN];
-	    int bufsize = test->settings->blksize + UDP_BUFFER_EXTRA;
-	    snprintf(str, sizeof(str), "Increasing socket buffer size to %d",
-	             bufsize);
-	    warning(str);
-	    test->settings->socket_bufsize = bufsize;
-	    rc = iperf_udp_buffercheck(test, s);
-	    if (rc < 0)
-		return rc;
-	}
+    if (test->settings->socket_bufsize == 0) {
+        char str[WARN_STR_LEN];
+        int bufsize = test->settings->blksize + UDP_BUFFER_EXTRA;
+        snprintf(str, sizeof(str), "Increasing socket buffer size to %d", bufsize);
+        warning(str);
+        test->settings->socket_bufsize = bufsize;
+        if (iperf_udp_buffercheck(test, s) < 0) {
+            return -1;
+        }
     }
 
 #if defined(HAVE_SO_MAX_PACING_RATE)
@@ -457,6 +441,49 @@ iperf_udp_accept(struct iperf_test *test)
 	}
     }
 
+    return 0;
+} /* iperf_udp_bind_to_accepted */
+
+
+/*
+ * iperf_udp_accept
+ *
+ * Accepts a new UDP "connection"
+ */
+int
+iperf_udp_accept(struct iperf_test *test)
+{
+    struct sockaddr_storage sa_peer;
+    unsigned int buf;
+    socklen_t len;
+    int       sz, s;
+
+    /*
+     * Get the current outstanding socket.  This socket will be used to handle
+     * data transfers and a new "listening" socket will be created.
+     */
+    s = test->prot_listener;
+
+    /*
+     * Grab the UDP packet sent by the client.  From that we can extract the
+     * client's address, and then use that information to bind the remote side
+     * of the socket to the client.
+     */
+    len = sizeof(sa_peer);
+    if ((sz = recvfrom(test->prot_listener, &buf, sizeof(buf), 0, (struct sockaddr *) &sa_peer, &len)) < 0) {
+        i_errno = IESTREAMACCEPT;
+        return -1;
+    }
+
+    if (test->debug) {
+        iperf_printf(test, "Accepted Connect message of size %d (of %ld) with msg_id=x%x\n", sz, sizeof(buf), buf);
+    }
+
+    /* bind the remote side of the socket to the client */
+    if (iperf_udp_bind_to_accepted(test, s, &sa_peer, len) < 0) {
+        return -1;
+    }
+
     /*
      * Create a new "listening" socket to replace the one we were using before.
      */
@@ -469,14 +496,155 @@ iperf_udp_accept(struct iperf_test *test)
     FD_SET(test->prot_listener, &test->read_set);
     test->max_fd = (test->max_fd < test->prot_listener) ? test->prot_listener : test->max_fd;
 
-    /* Let the client know we're ready "accept" another UDP "stream" */
-    buf = UDP_CONNECT_REPLY;
-    if (write(s, &buf, sizeof(buf)) < 0) {
-        i_errno = IESTREAMWRITE;
+    /* Let the client know we're ready to "accept" another UDP "stream" */
+    if (iperf_udp_send_connect_msg(test, s, UDP_CONNECT_REPLY, 0) < 0) {
         return -1;
     }
 
     return s;
+} /* iperf_udp_accept */
+
+
+
+
+/*
+ * iperf_udp_send_connect_msg
+ *
+ * Send UDP connect related messages with repeats
+ */
+int
+iperf_udp_send_connect_msg(struct iperf_test *test, int s, int msg_type, int repeat_flag)
+{
+    unsigned int buf;
+    int repeats_num;
+
+    repeats_num = (repeat_flag) ? test->settings->udp_connect_retries : 1;
+    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+        iperf_printf(test, "Sending %d UDP connection messages of type=x%x to Socket %d\n", repeats_num, msg_type, s);
+    }
+
+    buf = msg_type;
+
+    /* Check only first `write` status, as socket may be closed by the receiver
+       after the first message was received. */
+    if (write(s, &buf, sizeof(buf)) < 0) {
+        i_errno = IESTREAMCNCTSEND;
+        return -1;
+    }
+    if (repeat_flag) {       
+        while (--repeats_num > 0) {
+            if (write(s, &buf, sizeof(buf)) < 0) {
+                // do nothing on failure here
+            }
+        }
+    }
+
+    return 0;
+}
+
+
+/*
+ * iperf_udp_acceppt_all_streams_connected_msgs
+ *
+ * Accepts the "all UDP streams connected" msgs/replies. 
+ * Return value: >0 sucess, 0 - no msg received.
+ * 
+ * Until the all msgs are received, accept input from all streams to
+ * discard connection retries messages - making sure connect retries will not be read
+ * later as test data sent from the client.  Receive from `control_socket` only when no
+ * stream msgs are available (assuming the connection retries and the acks are received
+ * in sending order).
+ */
+unsigned int
+iperf_udp_acceppt_all_streams_connected_msgs(struct iperf_test *test, int msg_type, int control_socket, struct sockaddr_storage *out_sa_peer, socklen_t *out_sa_peer_len)
+{
+    struct sockaddr_storage sa_peer;
+    socklen_t sa_peer_len;
+    unsigned int all_connected_count;
+    int sz, result;
+    unsigned int buf;
+    struct timeval timeout;
+    fd_set read_set, init_read_set;
+    struct iperf_stream *sp;
+    int max_fd;
+    int reply_to_discarded_connect_msg;
+
+    /* this function is not applicable for the legacy UDP streams connect protocol */
+    if (test->settings->udp_connect_retries < 2) {
+        return 1; // functiona is NA so return success
+    }
+
+    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+        iperf_printf(test, "Receiving all streams connected msgs/replies from socket %d\n", control_socket);
+    }
+
+    /* receive only from test streams and not from other sockets */
+    FD_ZERO(&init_read_set);
+    FD_SET(control_socket, &init_read_set);
+    max_fd = control_socket;
+    SLIST_FOREACH(sp, &test->streams, streams) {
+        /* `control_socket` may or may not in the streams list, so don't add it again */
+        if (sp->socket != control_socket) {
+            FD_SET(sp->socket, &init_read_set);
+            if (sp->socket > max_fd)
+                max_fd = sp->socket;
+        }
+    }
+
+    /* Loop until receiving all streams connected msgs or until receive times out */
+    all_connected_count = 0;
+    do {
+        do {
+            memcpy(&read_set, &init_read_set, sizeof(fd_set));
+            timeout.tv_sec = test->settings->udp_connect_retry_timeout;
+            timeout.tv_usec = 0;
+            result = select(max_fd + 1, &read_set, NULL, NULL, &timeout);
+        } while (result < 0 && errno == EINTR);
+
+        if (result < 0) {
+            i_errno = IESELECT;
+            return -1;
+        }
+        /* if recive timed out assume no more acks from the client */
+        if (result == 0) {
+            if (test->debug) {
+                iperf_printf(test, "Receiving all streams connected msg timed out\n");
+            }
+            break; /* from waiting to all connected loop */
+        }
+
+        /* discard old connect replies */
+        reply_to_discarded_connect_msg = (out_sa_peer == NULL) ? 0 : 1;
+        if (iperf_udp_discard_old_connect_messages(test, &read_set, reply_to_discarded_connect_msg) > 0) { 
+            continue; /* try to make sure all other messages are discurded before handling all connected msgs */
+        }
+
+        if (FD_ISSET(control_socket, &read_set)) { /* desired reply is available */ 
+            sa_peer_len = sizeof(sa_peer);
+            if ((sz = recvfrom(control_socket, &buf, sizeof(buf), 0, (struct sockaddr *) &sa_peer, &sa_peer_len)) < 0) {
+                i_errno = IESTREAMACCEPT;
+                return -1;
+            }
+
+            /* Ensure this is all connections available ack */
+            if (buf == msg_type) {
+                all_connected_count++;
+                /* save mes information of first connect msg */
+                if (all_connected_count == 1 && out_sa_peer != NULL) {
+                    memcpy(out_sa_peer, &sa_peer, sa_peer_len);
+                    *out_sa_peer_len = sa_peer_len;
+                }
+            } else if (test->debug_level >= DEBUG_LEVEL_ERROR) {
+                iperf_printf(test, "Expected stream connected msg/reply of type x%x but received a message type x%x\n", msg_type, buf);
+            }
+        }
+    } while (all_connected_count < test->settings->udp_connect_retries);
+
+    if (test->debug) {
+        iperf_printf(test, "Received %d (out of %d) all streams connected msgs/replies\n", all_connected_count, test->settings->udp_connect_retries);
+    }
+
+    return all_connected_count;
 }
 
 
@@ -505,20 +673,18 @@ iperf_udp_listen(struct iperf_test *test)
 
 
 /*
- * iperf_udp_connect
+ * iperf_udp_create_socket
  *
- * "Connect" to a UDP stream listener.
+ * Create and bind local socket for UDP stream listener.
  */
 int
-iperf_udp_connect(struct iperf_test *test)
+iperf_udp_create_socket(struct iperf_test *test)
 {
-    int s, sz;
-    unsigned int buf;
+    int s;
 #ifdef SO_RCVTIMEO
     struct timeval tv;
 #endif
     int rc;
-    int i, max_len_wait_for_reply;
 
     /* Create and bind our local socket. */
     if ((s = netdial(test->settings->domain, Pudp, test->bind_address, test->bind_dev, test->bind_port, test->server_hostname, test->server_port, -1)) < 0) {
@@ -583,44 +749,205 @@ iperf_udp_connect(struct iperf_test *test)
     setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *)&tv, sizeof(struct timeval));
 #endif
 
+    return s;
+}
+
+
+/*
+ * iperf_udp_discard_old_connect_messages
+ *
+ * Read left over connect requests or replies of  streams and throw them away.
+ */
+int
+iperf_udp_discard_old_connect_messages(struct iperf_test *test, fd_set *read_set, int send_connect_reply_flag) {
+    int s;
+    struct iperf_stream *sp;
+    unsigned int buf;
+    int discarded_count = 0;
+
+    if (test->protocol->id == Pudp &&  test->settings->udp_connect_retries > 1) {
+        SLIST_FOREACH(sp, &test->streams, streams) {
+            s = sp->socket;
+            if (FD_ISSET(s, read_set)) {
+                discarded_count++;
+                recv(s, &buf, sizeof(buf), 0);
+                if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                    iperf_printf(test, "Discarded connect message from socket=%d - message_id=x%x,send_connect_reply_flag=%d\n", s, buf, send_connect_reply_flag);
+                }
+
+                /* Send reply to the repeated request as previous reply may not have been received */
+                if (send_connect_reply_flag && buf == UDP_CONNECT_MSG) {
+                    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                        iperf_printf(test, "Send reply to the discarded late arrived connect msg from socket=%d - message_id=x%x\n", s, buf);
+                    }
+
+                    if (iperf_udp_send_connect_msg(test, s, UDP_CONNECT_REPLY, 0) < 0) {
+                        return -1;
+                    }
+                }
+
+                FD_CLR(s, read_set);
+            }
+        }
+    }
+
+    return discarded_count;
+}
+
+
+/*
+ * iperf_udp_connect
+ *
+ * "Connect" to a UDP stream listener.
+ */
+int
+iperf_udp_connect(struct iperf_test *test)
+{
+    int s, sz, total_sz, result, ret;
+    int i, max_len_wait_for_reply;
+    unsigned int buf;
+    fd_set read_set, init_read_set;
+    struct timeval timeout;
+    struct iperf_stream *sp;
+    int max_fd;
+
+    if ((s = iperf_udp_create_socket(test)) < 0) {
+        return s;
+    }
+
+    ret = -1; /* default return - failure */
+
+    if (test->settings->udp_connect_retries < 2) {
+        max_fd = 0;
+    } else {
+        /* receive only from test streams and not from other sockets */
+        FD_ZERO(&init_read_set);
+        FD_SET(s, &init_read_set);
+        max_fd = s;
+        SLIST_FOREACH(sp, &test->streams, streams) {
+            FD_SET(sp->socket, &init_read_set);
+            if (sp->socket > max_fd)
+                max_fd = sp->socket;
+        }
+    }
+
     /*
      * Write a datagram to the UDP stream to let the server know we're here.
      * The server learns our address by obtaining its peer's address.
      */
-    buf = UDP_CONNECT_MSG;
-    if (test->debug) {
-        printf("Sending Connect message to Socket %d\n", s);
-    }
-    if (write(s, &buf, sizeof(buf)) < 0) {
-        // XXX: Should this be changed to IESTREAMCONNECT?
-        i_errno = IESTREAMWRITE;
-        return -1;
-    }
+    for (i=0; i < test->settings->udp_connect_retries  && ret < 0; i++) {
+        if (test->debug_level >= DEBUG_LEVEL_INFO) {
+            iperf_printf(test, "Sending Connect message x%x to Socket %d - retry number %d\n", UDP_CONNECT_MSG, s, i);
+        }
 
-    /*
-     * Wait until the server replies back to us with the "accept" response.
-     */
-    i = 0;
-    max_len_wait_for_reply = sizeof(buf);
-    if (test->reverse) /* In reverse mode allow few packets to have the "accept" response - to handle out of order packets */
-        max_len_wait_for_reply += MAX_REVERSE_OUT_OF_ORDER_PACKETS * test->settings->blksize;
-    do {
-        if ((sz = recv(s, &buf, sizeof(buf), 0)) < 0) {
+        iperf_udp_send_connect_msg(test, s, UDP_CONNECT_MSG, 0);
+
+        /*
+        * Wait until the server replies back to us with the "accept" response, or timeout.
+        */
+
+        /* this functionality is applicable only when the server handles retries */
+        if (test->settings->udp_connect_retries > 1) {
+            do { /* get reply for this connection request */
+                do {
+                    memcpy(&read_set, &init_read_set, sizeof(fd_set));
+                    timeout.tv_sec = test->settings->udp_connect_retry_timeout; /* Wait for server's ack with time out */
+                    timeout.tv_usec = 0;
+                    result = select(max_fd + 1, &read_set, NULL, NULL, &timeout);
+                } while (result < 0 && errno == EINTR);
+
+                if (result < 0) {
+                    i_errno = IESELECT;
+                    return -1;
+                } else if (result > 0) { /* some input received */
+                    iperf_udp_discard_old_connect_messages(test, &read_set, 0); /* discurd prev streams connect responses */
+                    if (FD_ISSET(s, &read_set)) { /* reply is available for the connection request */ 
+                        break; /* from waiting for this connect reply */
+                    }
+                } else { /* result == 0 - select timed out*/
+                    if (test->debug) {
+                        iperf_printf(test, "Receiving server's connection ack for socket %d timed out after connect retry %d, errno=%s\n", s, i + 1, strerror(errno));
+                    }    
+                }
+            } while(result > 0);
+
+            if (result == 0) { /* on timed out select() - next connnect retry */
+                continue; /* connect retry for loop */
+            }
+        }
+
+        /* get the connect reply from the server */
+        total_sz = 0;
+        max_len_wait_for_reply = sizeof(buf);
+        if (test->reverse && test->settings->udp_connect_retries < 2) {
+            /* In reverse mode allow few packets to have the "accept" response - to handle out of order packets */
+            max_len_wait_for_reply += MAX_REVERSE_OUT_OF_ORDER_PACKETS * test->settings->blksize;
+        }
+
+        do { 
+            if ((sz = recv(s, &buf, sizeof(buf), 0)) < 0) {
+                i_errno = IESTREAMREAD;
+                return -1;
+            }
+            if (test->debug) {
+                iperf_printf(test, "Connect reply received for Socket %d, sz=%d, msg_id=x%x, total_sz=%d, max_len_wait_for_reply=%d\n", s, sz, buf, total_sz, max_len_wait_for_reply);
+            }
+            total_sz += sz;
+        } while (buf != UDP_CONNECT_REPLY && buf != LEGACY_UDP_CONNECT_REPLY && total_sz < max_len_wait_for_reply);
+
+        /* Only receiving connect reply is allowed in this state */
+        if (buf != UDP_CONNECT_REPLY && buf != LEGACY_UDP_CONNECT_REPLY) {
             i_errno = IESTREAMREAD;
             return -1;
         }
-        if (test->debug) {
-            printf("Connect received for Socket %d, sz=%d, buf=%x, i=%d, max_len_wait_for_reply=%d\n", s, sz, buf, i, max_len_wait_for_reply);
-        }
-        i += sz;
-    } while (buf != UDP_CONNECT_REPLY && buf != LEGACY_UDP_CONNECT_REPLY && i < max_len_wait_for_reply);
 
-    if (buf != UDP_CONNECT_REPLY  && buf != LEGACY_UDP_CONNECT_REPLY) {
+        ret = s; // Connection is successful
+
+    } /* connect retry loop */
+
+    if (ret < 0) {
         i_errno = IESTREAMREAD;
-        return -1;
     }
 
-    return s;
+    return ret;
+}
+
+
+/* iperf_udp_send_all_streams_connected_msgs
+ *
+ * Send to the server that all streams connected and serevrs' replies accepted by the client
+ */
+int
+iperf_udp_send_all_streams_connected_msgs(struct iperf_test *test)
+{
+    int s;
+    unsigned int rc;
+
+    rc = 0;
+    if (test->settings->udp_connect_retries > 1) {
+        if ((s = iperf_udp_create_socket(test)) < 0) {
+            return s;
+        }
+
+        if (test->debug_level >= DEBUG_LEVEL_INFO) {
+            iperf_printf(test, "Sending all stream connected messages to socket %d\n", s);
+        }
+
+        /* send all streams connected message */
+        rc = iperf_udp_send_connect_msg(test, s, UDP_ALL_STREAMS_CONNECTED_MSG, 1);
+
+        /* receive all replies to the stream connected message */
+        if (rc == 0) {
+            if (iperf_udp_acceppt_all_streams_connected_msgs(test, UDP_ALL_STREAMS_CONNECTED_REPLY, s, NULL, NULL) == 0) {
+                i_errno = IESTREAMCNCTEDREPLY;
+                rc = -1;
+            }
+        }
+
+        close(s);
+    }
+
+    return rc;
 }
 
 

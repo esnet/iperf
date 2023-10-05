@@ -355,6 +355,10 @@ iperf_strerror(int int_errno)
         case IEUDPFILETRANSFER:
             snprintf(errstr, len, "cannot transfer file using UDP");
             break;
+        case IEUDPCONNECT:
+            snprintf(errstr, len, "illegal optional arguments for udp-retry option");
+            perr = 1;
+            break;
         case IERVRSONLYRCVTIMEOUT:
             snprintf(errstr, len, "client receive timeout is valid only in receiving mode");
             perr = 1;
@@ -400,6 +404,15 @@ iperf_strerror(int int_errno)
             break;
         case IESTREAMID:
             snprintf(errstr, len, "stream has an invalid id");
+            break;
+        case IESTREAMCNCTSEND:
+            snprintf(errstr, len, "failed to send stream connection mesage/reply");
+            break;
+        case IESTREAMCNCTED:
+            snprintf(errstr, len, "server did not receive a response that all streams are connected");
+            break;
+        case IESTREAMCNCTEDREPLY:
+            snprintf(errstr, len, "Client did not receive ack reply that the server received the response that all streams are connected");
             break;
         case IENEWTIMER:
             snprintf(errstr, len, "unable to create new timer");

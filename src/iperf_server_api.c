@@ -456,6 +456,8 @@ iperf_run_server(struct iperf_test *test)
     int64_t t_usecs;
     int64_t timeout_us;
     int64_t rcv_timeout_us;
+    struct sockaddr_storage sa_peer;
+    socklen_t sa_peer_len;
 
     if (test->logfile)
         if (iperf_open_logfile(test) < 0)
@@ -607,6 +609,8 @@ iperf_run_server(struct iperf_test *test)
             }
 
             if (test->state == CREATE_STREAMS) {
+                iperf_udp_discard_old_connect_messages(test, &read_set, 1); /* discard old connect requests but reply to them */
+
                 if (FD_ISSET(test->prot_listener, &read_set)) {
 
                     if ((s = test->protocol->accept(test)) < 0) {
@@ -737,12 +741,39 @@ iperf_run_server(struct iperf_test *test)
 
                             flag = -1;
                         }
-                    }
+                    } /* if !is_closed(s) */
                     FD_CLR(test->prot_listener, &read_set);
-                }
+                } /* input received in prot_listener */
 
 
+                /* check if all streams connections accepted */
                 if (rec_streams_accepted == streams_to_rec && send_streams_accepted == streams_to_send) {
+                    /* receive cleint's ACK that last connection ack was received */
+                    if (test->protocol->id == Pudp) {
+                        if (iperf_udp_acceppt_all_streams_connected_msgs(test, UDP_ALL_STREAMS_CONNECTED_MSG , test->prot_listener, &sa_peer, &sa_peer_len) == 0) {
+                            cleanup_server(test);
+                            i_errno = IESTREAMCNCTED;
+                            return -1;
+                        }
+
+                        /* send acks that all connected msg received -
+                           check status only for first message, as client may close socket before all messages are sent */
+                        if (test->settings->udp_connect_retries > 1) {
+                            if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                                iperf_printf(test, "Sending %d replies to ack that all streams connected message was received (on Socket %d)\n", test->settings->udp_connect_retries, test->prot_listener);
+                            }
+                            /* bind the remote side of the socket to the client */
+                            if (iperf_udp_bind_to_accepted(test, test->prot_listener, &sa_peer, sa_peer_len) < 0) {
+                                return -1;
+                            }
+
+                            if (iperf_udp_send_connect_msg(test, test->prot_listener, UDP_ALL_STREAMS_CONNECTED_REPLY, 1) < 0) {
+                                cleanup_server(test);
+                                return -1;
+                            }
+                        }
+                    }
+
                     if (test->protocol->id != Ptcp) {
                         FD_CLR(test->prot_listener, &test->read_set);
                         close(test->prot_listener);
@@ -804,7 +835,7 @@ iperf_run_server(struct iperf_test *test)
                         return -1;
 		    }
                 }
-            }
+            } /* if CREATE_STREAMS */
 
             if (test->state == TEST_RUNNING) {
                 if (test->mode == BIDIRECTIONAL) {
@@ -830,7 +861,7 @@ iperf_run_server(struct iperf_test *test)
 		    }
                 }
 	    }
-        }
+        } /* if result > 0 */
 
 	if (result == 0 ||
 	    (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0)) {
@@ -838,7 +869,7 @@ iperf_run_server(struct iperf_test *test)
 	    iperf_time_now(&now);
 	    tmr_run(&now);
 	}
-    }
+    } /* while not IPERF_DONE */
 
 
     if (test->json_output) {

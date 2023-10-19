@@ -245,6 +245,9 @@ int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned ch
     ctx = EVP_PKEY_CTX_new_from_pkey(NULL, public_key, "");
     /* See evp_pkey_rsa(7) and provider-keymgmt(7) */
     rc = EVP_PKEY_get_int_param(public_key, OSSL_PKEY_PARAM_MAX_SIZE, &keysize); /* XXX not really keysize */
+    if (!rc) {
+        goto errreturn;
+    }
 #else
     rsa = EVP_PKEY_get1_RSA(public_key);
     keysize = RSA_size(rsa);
@@ -267,11 +270,14 @@ int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned ch
     BIO_free(bioBuff);
 
     if (encryptedtext_len <= 0) {
-      /* We probably shouldn't be printing stuff like this */
-      fprintf(stderr, "%s\n", ERR_error_string(ERR_get_error(), NULL));
+        goto errreturn;
     }
 
     return encryptedtext_len;
+
+  errreturn:
+    fprintf(stderr, "%s\n", ERR_error_string(ERR_get_error(), NULL));
+    return 0;
 }
 
 int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedtext_len, EVP_PKEY *private_key, unsigned char **plaintext) {
@@ -289,6 +295,9 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
     ctx = EVP_PKEY_CTX_new_from_pkey(NULL, private_key, "");
     /* See evp_pkey_rsa(7) and provider-keymgmt(7) */
     rc = EVP_PKEY_get_int_param(private_key, OSSL_PKEY_PARAM_MAX_SIZE, &keysize); /* XXX not really keysize */
+    if (!rc) {
+        goto errreturn;
+    }
 #else
     rsa = EVP_PKEY_get1_RSA(private_key);
     keysize = RSA_size(rsa);
@@ -312,11 +321,14 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
     BIO_free(bioBuff);
 
     if (plaintext_len <= 0) {
-      /* We probably shouldn't be printing stuff like this */
-      fprintf(stderr, "%s\n", ERR_error_string(ERR_get_error(), NULL));
+        goto errreturn;
     }
 
     return plaintext_len;
+
+  errreturn:
+    fprintf(stderr, "%s\n", ERR_error_string(ERR_get_error(), NULL));
+    return 0;
 }
 
 int encode_auth_setting(const char *username, const char *password, EVP_PKEY *public_key, char **authtoken){

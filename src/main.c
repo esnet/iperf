@@ -59,6 +59,15 @@ main(int argc, char **argv)
 {
     struct iperf_test *test;
 
+#ifdef OPENBSD_SANDBOX
+    int needfs = 0;
+
+    if (pledge("stdio tmppath rpath cpath wpath inet dns unveil", NULL) == -1) {
+	fprintf(stderr, "pledge: %s\n", strerror(errno));
+	exit(1);
+    }
+#endif
+
     // XXX: Setting the process affinity requires root on most systems.
     //      Is this a feature we really need?
 #ifdef TEST_PROC_AFFINITY
@@ -104,6 +113,45 @@ main(int argc, char **argv)
         usage();
         exit(1);
     }
+
+#ifdef OPENBSD_SANDBOX
+    /* Check for options which require filesystem access */
+    if (test->diskfile_name) {
+	if (unveil(test->diskfile_name, "crw") == -1) {
+	    /* XXX read for client, write for server */
+	    fprintf(stderr, "unveil diskfile: %s\n", strerror(errno));
+	    exit(1);
+	}
+	needfs = 1;
+    }
+
+    if (test->pidfile) {
+	if (unveil(test->pidfile, "cw") == -1) {
+	    fprintf(stderr, "unveil pidfile: %s\n", strerror(errno));
+	    exit(1);
+	}
+	needfs = 1;
+    }
+
+    if (test->logfile) {
+	if (unveil(test->logfile, "cwr") == -1) {
+	    fprintf(stderr, "unveil logfile: %s\n", strerror(errno));
+	    exit(1);
+	}
+	needfs = 1;
+    }
+
+    /* Drop filesystem access if we can, otherwise lock unveil */
+    if (needfs == 0) {
+	if (pledge("stdio tmppath inet dns", NULL) == -1) {
+	    fprintf(stderr, "pledge !needfs: %s\n", strerror(errno));
+	    exit(1);
+	}
+    } else if (pledge("stdio tmppath rpath cpath wpath inet dns", NULL) == -1) {
+	fprintf(stderr, "pledge needfs: %s\n", strerror(errno));
+	exit(1);
+    }
+#endif
 
     if (run(test) < 0)
         iperf_errexit(test, "error - %s", iperf_strerror(i_errno));

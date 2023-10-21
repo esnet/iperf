@@ -319,5 +319,11 @@ AC_SEARCH_LIBS(clock_gettime, [rt posix4])
 # Check for clock_gettime support
 AC_CHECK_FUNCS([clock_gettime])
 
+AC_ARG_ENABLE([openbsd-sandbox],
+    AS_HELP_STRING([--enable-openbsd-sandox], [Enable pledge and unveil support]))
+if test "x$enable_openbsd_sandbox" = "xyes"; then
+    AC_DEFINE(OPENBSD_SANDBOX, 1, [Define if openbsd sandboxing is enabled])
+fi
+
 AC_CONFIG_FILES([Makefile src/Makefile src/version.h examples/Makefile iperf3.spec])
 AC_OUTPUT

@@ -57,6 +57,9 @@
  */
 int readentropy(void *out, size_t outsize)
 {
+#ifdef OPENBSD_SANDBOX
+    arc4random_buf(out, outsize);
+#else
     static FILE *frandom;
     static const char rndfile[] = "/dev/urandom";
 
@@ -75,6 +78,7 @@ int readentropy(void *out, size_t outsize)
                       rndfile,
                       feof(frandom) ? "EOF" : strerror(errno));
     }
+#endif
     return 0;
 }
 

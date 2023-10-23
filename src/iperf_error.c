@@ -178,6 +178,9 @@ iperf_strerror(int int_errno)
         case IESETSERVERAUTH:
              snprintf(errstr, len, "you must specify a path to a valid RSA private key and a user credential file");
             break;
+        case IESERVERAUTHUSERS:
+             snprintf(errstr, len, "cannot access authorized users file");
+            break;
 	case IEBADFORMAT:
 	    snprintf(errstr, len, "bad format specifier (valid formats are in the set [kmgtKMGT])");
 	    break;

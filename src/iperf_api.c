@@ -1150,6 +1150,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     server_flag = client_flag = rate_flag = duration_flag = rcv_timeout_flag = snd_timeout_flag =0;
 #if defined(HAVE_SSL)
     char *client_username = NULL, *client_rsa_public_key = NULL, *server_rsa_private_key = NULL;
+    FILE *ptr_file;
 #endif /* HAVE_SSL */
 
     while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
@@ -1684,7 +1685,18 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         !(server_rsa_private_key && test->server_authorized_users)) {
          i_errno = IESETSERVERAUTH;
         return -1;
-    } else if (test->role == 's' && server_rsa_private_key) {
+    }
+
+    if (test->role == 's' && test->server_authorized_users) {
+        ptr_file =fopen(test->server_authorized_users, "r");
+        if (!ptr_file) {
+            i_errno = IESERVERAUTHUSERS;
+            return -1;
+        }
+        fclose(ptr_file);
+    }
+
+    if (test->role == 's' && server_rsa_private_key) {
         test->server_rsa_private_key = load_privkey_from_file(server_rsa_private_key);
         if (test->server_rsa_private_key == NULL){
             iperf_err(test, "%s\n", ERR_error_string(ERR_get_error(), NULL));

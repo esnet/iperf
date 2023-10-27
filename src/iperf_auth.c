@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2020, The Regents of the University of
+ * iperf, Copyright (c) 2014-2023, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -46,16 +46,18 @@
 #include <openssl/sha.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
+#if OPENSSL_VERSION_MAJOR >= 3
+#include <openssl/evp.h>
+#include <openssl/core_names.h>
+#endif
 
 const char *auth_text_format = "user: %s\npwd:  %s\nts:   %"PRId64;
 
 void sha256(const char *string, char outputBuffer[65])
 {
     unsigned char hash[SHA256_DIGEST_LENGTH];
-    SHA256_CTX sha256;
-    SHA256_Init(&sha256);
-    SHA256_Update(&sha256, string, strlen(string));
-    SHA256_Final(hash, &sha256);
+
+    SHA256((const unsigned char *) string, strlen(string), hash);
     int i = 0;
     for(i = 0; i < SHA256_DIGEST_LENGTH; i++)
     {
@@ -229,57 +231,104 @@ int test_load_private_key_from_file(const char *file){
 }
 
 int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned char **encryptedtext) {
+#if OPENSSL_VERSION_MAJOR >= 3
+    EVP_PKEY_CTX *ctx;
+#else
     RSA *rsa = NULL;
-    unsigned char *rsa_buffer = NULL, pad = RSA_PKCS1_PADDING;
-    int keysize, encryptedtext_len, rsa_buffer_len;
+#endif
+    unsigned char *rsa_buffer = NULL;
+    size_t encryptedtext_len = 0;
+    int rsa_buffer_len, keysize;
 
+#if OPENSSL_VERSION_MAJOR >= 3
+    int rc;
+    ctx = EVP_PKEY_CTX_new_from_pkey(NULL, public_key, "");
+    /* See evp_pkey_rsa(7) and provider-keymgmt(7) */
+    rc = EVP_PKEY_get_int_param(public_key, OSSL_PKEY_PARAM_MAX_SIZE, &keysize); /* XXX not really keysize */
+    if (!rc) {
+        goto errreturn;
+    }
+#else
     rsa = EVP_PKEY_get1_RSA(public_key);
     keysize = RSA_size(rsa);
-
+#endif
     rsa_buffer  = OPENSSL_malloc(keysize * 2);
     *encryptedtext = (unsigned char*)OPENSSL_malloc(keysize);
 
     BIO *bioBuff   = BIO_new_mem_buf((void*)plaintext, (int)strlen(plaintext));
     rsa_buffer_len = BIO_read(bioBuff, rsa_buffer, keysize * 2);
-    encryptedtext_len = RSA_public_encrypt(rsa_buffer_len, rsa_buffer, *encryptedtext, rsa, pad);
-
+#if OPENSSL_VERSION_MAJOR >= 3
+    EVP_PKEY_encrypt_init(ctx);
+    EVP_PKEY_encrypt(ctx, *encryptedtext, &encryptedtext_len, rsa_buffer, rsa_buffer_len);
+    EVP_PKEY_CTX_free(ctx);
+#else
+    encryptedtext_len = RSA_public_encrypt(rsa_buffer_len, rsa_buffer, *encryptedtext, rsa, RSA_PKCS1_PADDING);
     RSA_free(rsa);
+#endif
+
     OPENSSL_free(rsa_buffer);
     BIO_free(bioBuff);
 
-    if (encryptedtext_len < 0) {
-      /* We probably shouldn't be printing stuff like this */
-      fprintf(stderr, "%s\n", ERR_error_string(ERR_get_error(), NULL));
+    if (encryptedtext_len <= 0) {
+        goto errreturn;
     }
 
     return encryptedtext_len;
+
+  errreturn:
+    fprintf(stderr, "%s\n", ERR_error_string(ERR_get_error(), NULL));
+    return 0;
 }
 
 int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedtext_len, EVP_PKEY *private_key, unsigned char **plaintext) {
+#if OPENSSL_VERSION_MAJOR >= 3
+    EVP_PKEY_CTX *ctx;
+#else
     RSA *rsa = NULL;
-    unsigned char *rsa_buffer = NULL, pad = RSA_PKCS1_PADDING;
-    int plaintext_len, rsa_buffer_len, keysize;
+#endif
+    unsigned char *rsa_buffer = NULL;
+    size_t plaintext_len = 0;
+    int rsa_buffer_len, keysize;
 
+#if OPENSSL_VERSION_MAJOR >= 3
+    int rc;
+    ctx = EVP_PKEY_CTX_new_from_pkey(NULL, private_key, "");
+    /* See evp_pkey_rsa(7) and provider-keymgmt(7) */
+    rc = EVP_PKEY_get_int_param(private_key, OSSL_PKEY_PARAM_MAX_SIZE, &keysize); /* XXX not really keysize */
+    if (!rc) {
+        goto errreturn;
+    }
+#else
     rsa = EVP_PKEY_get1_RSA(private_key);
-
     keysize = RSA_size(rsa);
+#endif
     rsa_buffer  = OPENSSL_malloc(keysize * 2);
     *plaintext = (unsigned char*)OPENSSL_malloc(keysize);
 
     BIO *bioBuff   = BIO_new_mem_buf((void*)encryptedtext, encryptedtext_len);
     rsa_buffer_len = BIO_read(bioBuff, rsa_buffer, keysize * 2);
-    plaintext_len = RSA_private_decrypt(rsa_buffer_len, rsa_buffer, *plaintext, rsa, pad);
-
+#if OPENSSL_VERSION_MAJOR >= 3
+    plaintext_len = keysize;
+    EVP_PKEY_decrypt_init(ctx);
+    EVP_PKEY_decrypt(ctx, *plaintext, &plaintext_len, rsa_buffer, rsa_buffer_len);
+    EVP_PKEY_CTX_free(ctx);
+#else
+    plaintext_len = RSA_private_decrypt(rsa_buffer_len, rsa_buffer, *plaintext, rsa, RSA_PKCS1_PADDING);
     RSA_free(rsa);
+#endif
+
     OPENSSL_free(rsa_buffer);
     BIO_free(bioBuff);
 
-    if (plaintext_len < 0) {
-      /* We probably shouldn't be printing stuff like this */
-      fprintf(stderr, "%s\n", ERR_error_string(ERR_get_error(), NULL));
+    if (plaintext_len <= 0) {
+        goto errreturn;
     }
 
     return plaintext_len;
+
+  errreturn:
+    fprintf(stderr, "%s\n", ERR_error_string(ERR_get_error(), NULL));
+    return 0;
 }
 
 int encode_auth_setting(const char *username, const char *password, EVP_PKEY *public_key, char **authtoken){

@@ -1,6 +1,38 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.15-mt-beta1 2023-09-29
+------------------------------
+Accumulated release notes from iperf-3.14 and earlier multithreaded
+beta releases:
+
+* Notable user-visible changes
+
+  * Multiple test streams started with -P/--parallel will now be
+    serviced by different threads. This allows iperf3 to take
+    advantage of multiple CPU cores on modern processors.
+
+  * Remove some busy-waiting left over from the original
+    single-threaded implementation, which caused the multi-threaded
+    iperf3 to consume CPU resources for no particular reason, and
+    possible subsequent packet loss.
+
+  * CentOS 7's default compiler is a version of GCC that is too old to
+    compile code using C11 atomic variables. A workaround has been
+    devised for 64-bit CentOS 7 systems, it is not clear whether this
+    approach will work on 32-bit CentOS 7 hosts, or other
+    similarly-vintage build environment.
+
+  * Fix a bug related to idle timeouts, so that the --rcv-timeout
+    option works correctly.
+
+  * Make shutdown of threads more tolerant in the face of various
+    orders of operations at the end of tests.
+
+* Developer-visible changes
+
+  * iperf3 requires pthreads and C atomic variables to compile and run.
+
 iperf-3.15 2023-09-14
 ---------------------
 

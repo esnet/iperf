@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2022, The Regents of the University of
+ * iperf, Copyright (c) 2014-2023, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -38,6 +38,16 @@
 extern "C" { /* open extern "C" */
 #endif
 
+/*
+ * Atomic types highly desired, but if not, we approximate what we need
+ * with normal integers and warn.
+ */
+#ifdef HAVE_STDATOMIC_H
+#include <stdatomic.h>
+#else
+#warning "No <stdatomic.h> available"
+typedef u_int64_t atomic_uint_fast64_t;
+#endif // HAVE_STDATOMIC_H
 
 struct iperf_test;
 struct iperf_stream_result;
@@ -46,7 +56,8 @@ struct iperf_stream;
 struct iperf_time;
 
 #if !defined(__IPERF_H)
-typedef uint64_t iperf_size_t;
+typedef uint_fast64_t iperf_size_t;
+typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #endif // __IPERF_H
 
 /* default settings */
@@ -310,8 +321,8 @@ void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 
 int iperf_set_send_state(struct iperf_test *test, signed char state);
 void iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP);
-int iperf_send(struct iperf_test *, fd_set *) /* __attribute__((hot)) */;
-int iperf_recv(struct iperf_test *, fd_set *);
+int iperf_send_mt(struct iperf_stream *) /* __attribute__((hot)) */;
+int iperf_recv_mt(struct iperf_stream *);
 void iperf_catch_sigend(void (*handler)(int));
 void iperf_got_sigend(struct iperf_test *test) __attribute__ ((noreturn));
 void usage(void);
@@ -457,6 +468,11 @@ enum {
     IEBINDDEVNOSUPPORT = 146,  // `ip%%dev` is not supported as system does not support bind to device
     IEHOSTDEV = 147,        // host device name (ip%%<dev>) is supported (and required) only for IPv6 link-local address
     IESETUSERTIMEOUT = 148, // Unable to set TCP USER_TIMEOUT (check perror)
+    IEPTHREADCREATE=150,	// Unable to create thread (check perror)
+    IEPTHREADCANCEL=151,        // Unable to cancel thread (check perror)
+    IEPTHREADJOIN=152,		// Unable to join thread (check perror)
+    IEPTHREADATTRINIT=153,      // Unable to initialize thread attribute (check perror)
+    IEPTHREADATTRDESTROY=154,      // Unable to destroy thread attribute (check perror)
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2020, The Regents of the University of
+ * iperf, Copyright (c) 2014-2020, 2023, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -73,13 +73,29 @@
 #include <openssl/evp.h>
 #endif // HAVE_SSL
 
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#endif // HAVE_PTHREAD
+
+/*
+ * Atomic types highly desired, but if not, we approximate what we need
+ * with normal integers and warn.
+ */
+#ifdef HAVE_STDATOMIC_H
+#include <stdatomic.h>
+#else
+#warning "No <stdatomic.h> available."
+typedef uint64_t atomic_uint_fast64_t;
+#endif // HAVE_STDATOMIC_H
+
 #if !defined(__IPERF_API_H)
-typedef uint64_t iperf_size_t;
+typedef uint_fast64_t iperf_size_t;
+typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #endif // __IPERF_API_H
 
 struct iperf_interval_results
 {
-    iperf_size_t bytes_transferred; /* bytes transferred in this interval */
+    atomic_iperf_size_t bytes_transferred; /* bytes transferred in this interval */
     struct iperf_time interval_start_time;
     struct iperf_time interval_end_time;
     float     interval_duration;
@@ -113,11 +129,11 @@ struct iperf_interval_results
 
 struct iperf_stream_result
 {
-    iperf_size_t bytes_received;
-    iperf_size_t bytes_sent;
-    iperf_size_t bytes_received_this_interval;
-    iperf_size_t bytes_sent_this_interval;
-    iperf_size_t bytes_sent_omit;
+    atomic_iperf_size_t bytes_received;
+    atomic_iperf_size_t bytes_sent;
+    atomic_iperf_size_t bytes_received_this_interval;
+    atomic_iperf_size_t bytes_sent_this_interval;
+    atomic_iperf_size_t bytes_sent_omit;
     long stream_prev_total_retrans;
     long stream_retrans;
     long stream_max_rtt;
@@ -174,6 +190,9 @@ struct iperf_test;
 struct iperf_stream
 {
     struct iperf_test* test;
+
+    pthread_t thr;
+    int       done;
 
     /* configurable members */
     int       local_port;
@@ -267,6 +286,8 @@ enum debug_level {
 
 struct iperf_test
 {
+    pthread_mutex_t print_mutex;
+
     char      role;                             /* 'c' lient or 's' erver */
     enum iperf_mode mode;
     int       sender_has_retransmits;
@@ -352,11 +373,11 @@ struct iperf_test
 
     int       num_streams;                      /* total streams in the test (-P) */
 
-    iperf_size_t bytes_sent;
-    iperf_size_t blocks_sent;
+    atomic_iperf_size_t bytes_sent;
+    atomic_iperf_size_t blocks_sent;
 
-    iperf_size_t bytes_received;
-    iperf_size_t blocks_received;
+    atomic_iperf_size_t bytes_received;
+    atomic_iperf_size_t blocks_received;
 
     iperf_size_t bitrate_limit_stats_count;               /* Number of stats periods accumulated for server's total bitrate average */
     iperf_size_t *bitrate_limit_intervals_traffic_bytes;  /* Pointer to a cyclic array that includes the last interval's bytes transferred */

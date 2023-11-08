@@ -1,37 +1,30 @@
 iperf3 Release Notes
 ====================
 
-iperf-3.15-mt-beta1 2023-09-29
-------------------------------
-Accumulated release notes from iperf-3.14 and earlier multithreaded
-beta releases:
+iperf-3.16-beta1 2023-XX-XX
+---------------------------
 
 * Notable user-visible changes
 
   * Multiple test streams started with -P/--parallel will now be
     serviced by different threads. This allows iperf3 to take
-    advantage of multiple CPU cores on modern processors.
+    advantage of multiple CPU cores on modern processors, and will
+    generally result in significant throughput increases (PR #1591).
 
-  * Remove some busy-waiting left over from the original
-    single-threaded implementation, which caused the multi-threaded
-    iperf3 to consume CPU resources for no particular reason, and
-    possible subsequent packet loss.
-
-  * CentOS 7's default compiler is a version of GCC that is too old to
-    compile code using C11 atomic variables. A workaround has been
-    devised for 64-bit CentOS 7 systems, it is not clear whether this
-    approach will work on 32-bit CentOS 7 hosts, or other
-    similarly-vintage build environment.
-
-  * Fix a bug related to idle timeouts, so that the --rcv-timeout
-    option works correctly.
-
-  * Make shutdown of threads more tolerant in the face of various
-    orders of operations at the end of tests.
+  * OpenSSL 3 is now detected at build time. If OpenSSL 3 is found,
+    various older, deprecated, APIs will not be used. iperf3 will
+    continue to work with OpenSSL 1.1.1. OpenSSL is used for as a part
+    of the iperf3 authentication functionality (Issue #1300, PR #1589).
+    
+  * The authorized users file used by the authentication functionality
+    is now checked for accessibility much earlier during the program
+    startup, as opposed to being checked near the start of a
+    test (Issue #1583, PR # 1585).
 
 * Developer-visible changes
 
-  * iperf3 requires pthreads and C atomic variables to compile and run.
+  * BREAKING CHANGE: iperf3 now requires pthreads and C atomic variables
+    to compile and run.
 
 iperf-3.15 2023-09-14
 ---------------------

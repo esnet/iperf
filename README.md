@@ -115,26 +115,6 @@ The projects (as of mid-2021) are in active, but separate, development.
 The continuing iperf2 development
 project can be found at https://sourceforge.net/projects/iperf2/.
 
-iperf3 contains a number of options and functions not present in
-iperf2.  In addition, some flags are changed from their iperf2
-counterparts:
-
-    -C, --linux-congestion    set congestion control algorithm (Linux only)
-                              (-Z in iperf2)
-    --bidir                   bidirectional testing mode
-                              (-d in iperf2)
-
-Some iperf2 options are not available in iperf3:
-
-    -r, --tradeoff           Do a bidirectional test individually
-    -T, --ttl                time-to-live, for multicast (default 1)
-    -x, --reportexclude [CDMSV]   exclude C(connection) D(data) M(multicast)
-                                  S(settings) V(server) reports
-    -y, --reportstyle C      report as a Comma-Separated Values
-
-Also removed is the ability to set the options via environment
-variables.
-
 Known Issues
 ------------
 

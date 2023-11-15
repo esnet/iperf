@@ -614,7 +614,19 @@ iperf_run_client(struct iperf_test * test)
             timeout = &used_timeout;
         }
 
+#if (defined(__vxworks)) || (defined(__VXWORKS__))
+    if (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0) {
+        taskDelay (1);
+	}
+
+    result = select(test->max_fd + 1,
+                    &read_set,
+                    (test->state == TEST_RUNNING && !test->reverse) ? &write_set : NULL,
+                    NULL,
+                    timeout);
+#else
 	result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
+#endif // __vxworks or __VXWORKS__
 	if (result < 0 && errno != EINTR) {
   	    i_errno = IESELECT;
 	    goto cleanup_and_fail;

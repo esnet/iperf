@@ -4710,7 +4710,15 @@ iperf_create_pidfile(struct iperf_test *test)
 		if (pid > 0) {
 
 		    /* See if the process exists. */
+#if (defined(__vxworks)) || (defined(__VXWORKS__))
+#if (defined(_WRS_KERNEL)) && (defined(_WRS_CONFIG_LP64))
+			if (kill((_Vx_TASK_ID)pid, 0) == 0) {
+#else
+			if (kill(pid, 0) == 0) {
+#endif // _WRS_KERNEL and _WRS_CONFIG_LP64
+#else
 		    if (kill(pid, 0) == 0) {
+#endif // __vxworks or __VXWORKS__
 			/*
 			 * Make sure not to try to delete existing PID file by
 			 * scribbling over the pathname we'd use to refer to it.

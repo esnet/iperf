@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2022, The Regents of the University of
+ * iperf, Copyright (c) 2014-2023, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -1135,7 +1135,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     int flag;
     int portno;
     int blksize;
-    int server_flag, client_flag, rate_flag, duration_flag, rcv_timeout_flag, snd_timeout_flag;
+    int server_flag, client_flag, rate_flag, fq_rate_flag, duration_flag, rcv_timeout_flag, snd_timeout_flag;
     char *endptr;
 #if defined(HAVE_CPU_AFFINITY)
     char* comma;
@@ -1147,7 +1147,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     int rcv_timeout_in = 0;
 
     blksize = 0;
-    server_flag = client_flag = rate_flag = duration_flag = rcv_timeout_flag = snd_timeout_flag =0;
+    server_flag = client_flag = rate_flag = fq_rate_flag = duration_flag = rcv_timeout_flag = snd_timeout_flag = 0;
 #if defined(HAVE_SSL)
     char *client_username = NULL, *client_rsa_public_key = NULL, *server_rsa_private_key = NULL;
     FILE *ptr_file;
@@ -1578,6 +1578,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	    case OPT_FQ_RATE:
 #if defined(HAVE_SO_MAX_PACING_RATE)
 		test->settings->fqrate = unit_atof_rate(optarg);
+                fq_rate_flag = 1;
 		client_flag = 1;
 #else /* HAVE_SO_MAX_PACING_RATE */
 		i_errno = IEUNIMP;
@@ -1717,6 +1718,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     // File cannot be transferred using UDP because of the UDP packets header (packet number, etc.)
     if(test->role == 'c' && test->diskfile_name != (char*) 0 && test->protocol->id == Pudp) {
         i_errno = IEUDPFILETRANSFER;
+        return -1;
+    }
+
+    /* We can't do both --bandwidth and --fq-rate at the same time */
+    if (rate_flag && fq_rate_flag) {
+        i_errno = IERATEFQRATE;
         return -1;
     }
 

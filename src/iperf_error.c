@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2022, The Regents of the University of
+ * iperf, Copyright (c) 2014-2023, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -197,6 +197,9 @@ iperf_strerror(int int_errno)
             break;
         case IESERVERAUTHUSERS:
              snprintf(errstr, len, "cannot access authorized users file");
+            break;
+        case IERATEFQRATE:
+             snprintf(errstr, len, "-b and --fq-rate cannot be specified together");
             break;
 	case IEBADFORMAT:
 	    snprintf(errstr, len, "bad format specifier (valid formats are in the set [kmgtKMGT])");

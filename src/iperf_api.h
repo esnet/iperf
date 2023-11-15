@@ -418,6 +418,7 @@ enum {
     IESNDTIMEOUT = 33,      // Illegal message send timeout
     IEUDPFILETRANSFER = 34, // Cannot transfer file using UDP
     IESERVERAUTHUSERS = 35,   // Cannot access authorized users file
+    IERATEFQRATE = 36,      // Cannot specify both -b and --fq-rate
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

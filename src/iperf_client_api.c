@@ -24,6 +24,7 @@
  * This code is distributed under a BSD style license, see the LICENSE
  * file for complete information.
  */
+#define _GNU_SOURCE
 #include <errno.h>
 #include <setjmp.h>
 #include <stdio.h>
@@ -36,6 +37,8 @@
 #include <sys/select.h>
 #include <sys/uio.h>
 #include <arpa/inet.h>
+#include <sched.h>
+#include <pthread.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -93,7 +96,12 @@ iperf_create_streams(struct iperf_test *test, int sender)
     struct iperf_stream *sp;
 
     int orig_bind_port = test->bind_port;
+    cpu_set_t t_mask;
+    int cpu_num = sysconf( _SC_NPROCESSORS_CONF );
     for (i = 0; i < test->num_streams; ++i) {
+        CPU_ZERO(&t_mask);
+        CPU_SET(i % cpu_num,&t_mask);
+        sched_setaffinity(0,sizeof(cpu_set_t),&t_mask);
 
         test->bind_port = orig_bind_port;
 	if (orig_bind_port) {
@@ -150,6 +158,13 @@ iperf_create_streams(struct iperf_test *test, int sender)
         if (test->on_new_stream)
             test->on_new_stream(sp);
     }
+
+    // Reset cpu affinity to all cores
+    CPU_ZERO(&t_mask);
+    for (int i=0;i<cpu_num;i++){
+        CPU_SET(i,&t_mask);
+    }
+    sched_setaffinity(0,sizeof(cpu_set_t),&t_mask);
 
     return 0;
 }

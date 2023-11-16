@@ -412,7 +412,7 @@ const char report_sum_bw_retrans_format[] =
 "[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %3d             %s\n";
 
 const char report_sum_bw_udp_format[] =
-"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %" PRIu64 "/%" PRIu64 " (%.2g%%)  %s\n";
+"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %" PRIu64 "/%" PRIu64 " (%.2g%%) %" PRIu64 " pps  %s\n";
 
 const char report_sum_bw_udp_sender_format[] =
 "[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %" PRIu64 "  %s\n";

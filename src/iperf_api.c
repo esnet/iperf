@@ -3594,7 +3594,7 @@ iperf_print_intermediate(struct iperf_test *test)
                         if (test->json_output)
                             cJSON_AddItemToObject(json_interval, sum_name, iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f  omitted: %b sender: %b", (double) start_time, (double) end_time, (double) irp->interval_duration, (int64_t) bytes, bandwidth * 8, (double) avg_jitter * 1000.0, (int64_t) lost_packets, (int64_t) total_packets, (double) lost_percent, test->omitting, stream_must_be_sender));
                         else
-                            iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, end_time, ubuf, nbuf, avg_jitter * 1000.0, lost_packets, total_packets, lost_percent, test->omitting?report_omitted:"");
+                            iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, end_time, ubuf, nbuf, avg_jitter * 1000.0, lost_packets, total_packets, lost_percent, (int)((total_packets - lost_packets) / (end_time - start_time)), test->omitting?report_omitted:"");
                     }
                 }
             }
@@ -4053,7 +4053,7 @@ iperf_print_results(struct iperf_test *test)
                      */
                     if (! (test->role == 's' && !stream_must_be_sender) ) {
                         unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
-                        iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, sender_time, ubuf, nbuf, 0.0, (int64_t) 0, sender_total_packets, 0.0, report_sender);
+                        iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, sender_time, ubuf, nbuf, 0.0, (int64_t) 0, sender_total_packets, 0.0, (int)(sender_total_packets / (sender_time - start_time)), report_sender);
                     }
                     if (! (test->role == 's' && stream_must_be_sender) ) {
 
@@ -4066,7 +4066,7 @@ iperf_print_results(struct iperf_test *test)
                             bandwidth = 0.0;
                         }
                         unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
-                        iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, receiver_time, ubuf, nbuf, avg_jitter * 1000.0, lost_packets, receiver_total_packets, lost_percent, report_receiver);
+                        iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, receiver_time, ubuf, nbuf, avg_jitter * 1000.0, lost_packets, receiver_total_packets, lost_percent, (int)((receiver_total_packets - lost_packets) / (receiver_time - start_time)), report_receiver);
                     }
                 }
             }

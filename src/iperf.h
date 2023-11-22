@@ -339,6 +339,7 @@ struct iperf_test
     int       bidirectional;                    /* --bidirectional */
     int	      verbose;                          /* -V option - verbose mode */
     int	      json_output;                      /* -J option - JSON output */
+    int       json_immediate;                   /* --json-immediate - output JSON every interval */
     int	      zerocopy;                         /* -Z option - use sendfile */
     int       debug;				/* -d option - enable debug */
     enum      debug_level debug_level;          /* -d option option - level of debug messages to show */

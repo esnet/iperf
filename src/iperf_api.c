@@ -593,25 +593,25 @@ iperf_set_mapped_v4(struct iperf_test *ipt, const int val)
     ipt->mapped_v4 = val;
 }
 
-void 
+void
 iperf_set_on_new_stream_callback(struct iperf_test* ipt, void (*callback)())
 {
         ipt->on_new_stream = callback;
 }
 
-void 
+void
 iperf_set_on_test_start_callback(struct iperf_test* ipt, void (*callback)())
 {
         ipt->on_test_start = callback;
 }
 
-void 
+void
 iperf_set_on_test_connect_callback(struct iperf_test* ipt, void (*callback)())
 {
         ipt->on_connect = callback;
 }
 
-void 
+void
 iperf_set_on_test_finish_callback(struct iperf_test* ipt, void (*callback)())
 {
         ipt->on_test_finish = callback;
@@ -1058,6 +1058,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"one-off", no_argument, NULL, '1'},
         {"verbose", no_argument, NULL, 'V'},
         {"json", no_argument, NULL, 'J'},
+        {"json-immediate", no_argument, NULL, OPT_JSON_IMMEDIATE},
         {"version", no_argument, NULL, 'v'},
         {"server", no_argument, NULL, 's'},
         {"client", required_argument, NULL, 'c'},
@@ -1619,6 +1620,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->settings->connect_timeout = unit_atoi(optarg);
 		client_flag = 1;
 		break;
+            case OPT_JSON_IMMEDIATE:
+                test->json_output = 1;
+                test->json_immediate = 1;
+                break;
 	    case 'h':
 		usage_long(stdout);
 		exit(0);
@@ -3449,7 +3454,7 @@ iperf_print_intermediate(struct iperf_test *test)
         json_interval = cJSON_CreateObject();
 	if (json_interval == NULL)
 	    return;
-	cJSON_AddItemToArray(test->json_intervals, json_interval);
+        cJSON_AddItemToArray(test->json_intervals, json_interval);
         json_interval_streams = cJSON_CreateArray();
 	if (json_interval_streams == NULL)
 	    return;
@@ -3599,6 +3604,13 @@ iperf_print_intermediate(struct iperf_test *test)
                 }
             }
         }
+    }
+
+    if (test->json_immediate) {
+        char *json_output_string = cJSON_PrintUnformatted(json_interval);
+        fprintf(test->outfile, "%s\n", json_output_string);
+        iflush(test);
+        cJSON_free(json_output_string);
     }
 }
 
@@ -4801,7 +4813,7 @@ iperf_json_finish(struct iperf_test *test)
         // Get ASCII rendering of JSON structure.  Then make our
         // own copy of it and return the storage that cJSON allocated
         // on our behalf.  We keep our own copy around.
-        char *str = cJSON_Print(test->json_top);
+        char *str =  test->json_immediate ? cJSON_PrintUnformatted(test->json_top) : cJSON_Print(test->json_top);
         if (str == NULL) {
             return -1;
         }

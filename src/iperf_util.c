@@ -57,24 +57,25 @@
  */
 int readentropy(void *out, size_t outsize)
 {
-    static FILE *frandom;
+    FILE *frandom;
     static const char rndfile[] = "/dev/urandom";
 
     if (!outsize) return 0;
 
+    frandom = fopen(rndfile, "rb");
     if (frandom == NULL) {
-        frandom = fopen(rndfile, "rb");
-        if (frandom == NULL) {
-            iperf_errexit(NULL, "error - failed to open %s: %s\n",
-                          rndfile, strerror(errno));
-        }
-        setbuf(frandom, NULL);
+        iperf_errexit(NULL, "error - failed to open %s: %s\n",
+                      rndfile, strerror(errno));
     }
+    setbuf(frandom, NULL);
+
     if (fread(out, 1, outsize, frandom) != outsize) {
         iperf_errexit(NULL, "error - failed to read %s: %s\n",
                       rndfile,
                       feof(frandom) ? "EOF" : strerror(errno));
     }
+    fclose(frandom);
+
     return 0;
 }
 

@@ -1,8 +1,8 @@
 iperf3 Release Notes
 ====================
 
-iperf-3.16-beta1 2023-11-15
----------------------------
+iperf-3.16 2023-11-30
+---------------------
 
 * Notable user-visible changes
 
@@ -13,7 +13,7 @@ iperf-3.16-beta1 2023-11-15
 
   * OpenSSL 3 is now detected at build time. If OpenSSL 3 is found,
     various older, deprecated, APIs will not be used. iperf3 will
-    continue to work with OpenSSL 1.1.1. OpenSSL is used for as a part
+    continue to work with OpenSSL 1.1.1. OpenSSL is used as a part
     of the iperf3 authentication functionality (Issue #1300, PR
     #1589).
     

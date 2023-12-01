@@ -1,3 +1,4 @@
+#include "main.h"
 /*
  * iperf, Copyright (c) 2014-2022, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
@@ -593,6 +594,30 @@ iperf_set_mapped_v4(struct iperf_test *ipt, const int val)
     ipt->mapped_v4 = val;
 }
 
+void 
+iperf_set_on_new_stream_callback(struct iperf_test* ipt, void (*callback)())
+{
+        ipt->on_new_stream = callback;
+}
+
+void 
+iperf_set_on_test_start_callback(struct iperf_test* ipt, void (*callback)())
+{
+        ipt->on_test_start = callback;
+}
+
+void 
+iperf_set_on_test_connect_callback(struct iperf_test* ipt, void (*callback)())
+{
+        ipt->on_connect = callback;
+}
+
+void 
+iperf_set_on_test_finish_callback(struct iperf_test* ipt, void (*callback)())
+{
+        ipt->on_test_finish = callback;
+}
+
 static void
 check_sender_has_retransmits(struct iperf_test *ipt)
 {
@@ -1184,8 +1209,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'v':
                 printf("%s (cJSON %s)\n%s\n%s\n", version, cJSON_Version(), get_system_info(),
-		       get_optional_features());
-                exit(0);
+		        get_optional_features());
+                longjmp(jmp_bf, 0);
             case 's':
                 if (test->role == 'c') {
                     i_errno = IESERVCLIENT;
@@ -1596,11 +1621,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		break;
 	    case 'h':
 		usage_long(stdout);
-		exit(0);
+        longjmp(jmp_bf, 0);
             default:
                 fprintf(stderr, "\n");
                 usage();
-                exit(1);
+                longjmp(jmp_bf, 1);
         }
     }
 
@@ -3816,7 +3841,7 @@ iperf_print_results(struct iperf_test *test)
                                 iperf_printf(test, report_sender_not_available_format, sp->socket);
                         }
                         else {
-                            iperf_printf(test, report_bw_udp_format, sp->socket, mbuf, start_time, sender_time, ubuf, nbuf, 0.0, 0, (sender_packet_count - sender_omitted_packet_count), (double) 0, report_sender);
+                            iperf_printf(test, report_bw_udp_format, sp->socket, mbuf, start_time, sender_time, ubuf, nbuf, 0.0, (int64_t) 0, (sender_packet_count - sender_omitted_packet_count), (double) 0, report_sender);
                         }
                         if ((sp->outoforder_packets - sp->omitted_outoforder_packets) > 0)
                           iperf_printf(test, report_sum_outoforder, mbuf, start_time, sender_time, (sp->outoforder_packets - sp->omitted_outoforder_packets));
@@ -4005,7 +4030,7 @@ iperf_print_results(struct iperf_test *test)
                      */
                     if (! (test->role == 's' && !stream_must_be_sender) ) {
                         unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
-                        iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, sender_time, ubuf, nbuf, 0.0, 0, sender_total_packets, 0.0, report_sender);
+                        iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, sender_time, ubuf, nbuf, 0.0, (int64_t) 0, sender_total_packets, 0.0, report_sender);
                     }
                     if (! (test->role == 's' && stream_must_be_sender) ) {
 

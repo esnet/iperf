@@ -1,0 +1,50 @@
+name: Docker Build and Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9].[0-9][0-9]'
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: docker build -t iperf3-builder-image .
+
+      - name: Run Docker container
+        run: docker run --name iperf3container iperf3-builder-image
+
+      - name: Copy files from Docker container
+        run: | 
+          docker cp iperf3container:/tmp/iperf/jniLibs ./jniLibs
+          zip -r jniLibs.zip ./jniLibs
+
+      - name: Save state
+        id: set_tag
+        run: |
+          echo "tag=$GITHUB_REF_NAME" >> $GITHUB_OUTPUT
+          echo "tag=$GITHUB_REF_NAME"
+
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{steps.set_tag.outputs.tag}}
+          release_name: Release iPerf ${{steps.set_tag.outputs.tag}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload release assets
+        id: upload-release-assets
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{steps.create_release.outputs.upload_url}}
+          asset_path: ./jniLibs.zip
+          asset_name: jniLibs
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

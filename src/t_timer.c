@@ -1,3 +1,4 @@
+#include "main.h"
 /*
  * iperf, Copyright (c) 2014, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
@@ -58,7 +59,7 @@ main(int argc, char **argv)
     if (!tp)
     {
 	printf("failed to create timer\n");
-	exit(-1);
+    longjmp(jmp_bf, -1);
     }
 
     sleep(2);
@@ -67,7 +68,7 @@ main(int argc, char **argv)
     if (flag)
     {
 	printf("timer should not have expired\n");
-	exit(-1);
+    longjmp(jmp_bf, -1);
     }
     sleep(1);
 
@@ -75,9 +76,9 @@ main(int argc, char **argv)
     if (!flag)
     {
 	printf("timer should have expired\n");
-	exit(-2);
+    longjmp(jmp_bf, -2);
     }
 
     tmr_destroy();
-    exit(0);
+    longjmp(jmp_bf, 0);
 }

@@ -1,3 +1,4 @@
+#include "main.h"
 /*
  * iperf, Copyright (c) 2014, 2016, 2017, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
@@ -466,7 +467,7 @@ int daemon(int nochdir, int noclose)
     }
     if (pid > 0) {
 	/* Use _exit() to avoid doing atexit() stuff. */
-	_exit(0);
+    longjmp(jmp_bf, 0);
     }
 
     sid = setsid();
@@ -484,7 +485,7 @@ int daemon(int nochdir, int noclose)
     if (pid == -1) {
 	return -1;
     } else if (pid != 0) {
-	_exit(0);
+    longjmp(jmp_bf, 0);
     }
 
     if (!nochdir) {

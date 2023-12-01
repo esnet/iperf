@@ -24,6 +24,7 @@
  * This code is distributed under a BSD style license, see the LICENSE
  * file for complete information.
  */
+#include "main.h"
 #include <stdio.h>
 #include <errno.h>
 #include <netdb.h>
@@ -117,7 +118,7 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
     va_end(argp);
     if (test)
         iperf_delete_pidfile(test);
-    exit(1);
+    longjmp(jmp_bf, 1);
 }
 
 int i_errno;

@@ -1,3 +1,4 @@
+#include "main.h"
 /*
  * iperf, Copyright (c) 2014, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
@@ -39,8 +40,8 @@ main(int argc, char **argv)
     printf("cookie: '%s'\n", cookie);
     if (strlen(cookie) != 36)
     {
-	printf("Not 36 characters long!\n");
-	exit(-1);
+	    printf("Not 36 characters long!\n");
+        longjmp(jmp_bf, -1);
     }
-    exit(0);
+    longjmp(jmp_bf, 0);
 }

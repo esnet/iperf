@@ -1,3 +1,4 @@
+#include "main.h"
 /*
  * iperf, Copyright (c) 2014-2022 The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
@@ -140,7 +141,12 @@ iperf_accept(struct iperf_test *test)
         }
 #endif /* HAVE_TCP_USER_TIMEOUT */
 
-        if (Nread(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) < 0) {
+        if (Nread(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) != COOKIE_SIZE) {
+            /*
+             * Note this error covers both the case of a system error
+             * or the inability to read the correct amount of data
+             * (i.e. timed out).
+             */
             i_errno = IERECVCOOKIE;
             return -1;
         }
@@ -551,7 +557,7 @@ iperf_run_server(struct iperf_test *test)
 			  if (test->debug)
                             printf("No connection request was received for %d sec in one-off mode; exiting.\n",
 				   test->settings->idle_timeout);
-			  exit(0);
+                longjmp(jmp_bf, 0);
 			}
 
                         return 2;

@@ -1,6 +1,21 @@
 iperf3 Project News
 ===================
 
+2023-07-07:  iperf-3.14 released
+--------------------------------
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.14.tar.gz
+| SHA256:  ``723fcc430a027bc6952628fa2a3ac77584a1d0bd328275e573fc9b206c155004``
+
+iperf 3.14 fixes a memory allocation hazard that allowed a remote user
+to crash an iperf3 process (server or client).
+
+More information on this specific fix can be found at:
+
+https://downloads.es.net/pub/iperf/esnet-secadv-2023-0001.txt.asc
+
+This version of iperf3 also includes a number of minor bug fixes,
+which are summarized in the release notes.
+
 2023-02-16:  iperf-3.13 released
 ----------------------------------
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.13.tar.gz

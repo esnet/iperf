@@ -1126,6 +1126,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"pacing-timer", required_argument, NULL, OPT_PACING_TIMER},
 	{"connect-timeout", required_argument, NULL, OPT_CONNECT_TIMEOUT},
         {"idle-timeout", required_argument, NULL, OPT_IDLE_TIMEOUT},
+#if defined(HAVE_IPPROTO_MPTCP)
+        {"multipath", no_argument, NULL, 'm'},
+#endif /* HAVE_IPPROTO_MPTCP */
         {"rcv-timeout", required_argument, NULL, OPT_RCV_TIMEOUT},
         {"snd-timeout", required_argument, NULL, OPT_SND_TIMEOUT},
         {"debug", optional_argument, NULL, 'd'},
@@ -1163,6 +1166,15 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		}
 		test->server_port = portno;
                 break;
+            case 'm':
+#if defined(HAVE_IPPROTO_MPTCP)
+                set_protocol(test, Ptcp);
+                test->multipath = 1;
+                break;
+#else /* HAVE_IPPROTO_MPTCP */
+                i_errno = IEUNIMP;
+                return -1;
+#endif /* HAVE_IPPROTO_MPTCP */
             case 'f':
 		if (!optarg) {
 		    i_errno = IEBADFORMAT;
@@ -2196,6 +2208,10 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddTrueToObject(j, "reverse");
 	if (test->bidirectional)
 	            cJSON_AddTrueToObject(j, "bidirectional");
+#if defined(HAVE_IPPROTO_MPTCP) 
+	if (test->multipath)
+	    cJSON_AddTrueToObject(j, "multipath");
+#endif // HAVE_IPPROTO_MPTCP
 	if (test->settings->socket_bufsize)
 	    cJSON_AddNumberToObject(j, "window", test->settings->socket_bufsize);
 	if (test->settings->blksize)
@@ -2312,6 +2328,10 @@ get_parameters(struct iperf_test *test)
 	    iperf_set_test_reverse(test, 1);
         if ((j_p = cJSON_GetObjectItem(j, "bidirectional")) != NULL)
             iperf_set_test_bidirectional(test, 1);
+#if defined(HAVE_IPPROTO_MPTCP)
+	if ((j_p = cJSON_GetObjectItem(j, "multipath")) != NULL)
+	    test->multipath = 1;
+#endif // HAVE_IPPROTO_MPTCP
 	if ((j_p = cJSON_GetObjectItem(j, "window")) != NULL)
 	    test->settings->socket_bufsize = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "len")) != NULL)

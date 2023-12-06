@@ -44,6 +44,10 @@
 #include "net.h"
 #include "cjson.h"
 
+#ifndef IPPROTO_MPTCP
+#define IPPROTO_MPTCP 262
+#endif
+
 #if defined(HAVE_FLOWLABEL)
 #include "flowlabel.h"
 #endif /* HAVE_FLOWLABEL */
@@ -154,6 +158,7 @@ iperf_tcp_listen(struct iperf_test *test)
     socklen_t optlen;
     int saved_errno;
     int rcvbuf_actual, sndbuf_actual;
+    int protocol = 0;
 
     s = test->listener;
 
@@ -166,7 +171,11 @@ iperf_tcp_listen(struct iperf_test *test)
      *
      * It's not clear whether this is a requirement or a convenience.
      */
+#if defined(HAVE_IPPROTO_MPTCP)
+    if (test->multipath || test->no_delay || test->settings->mss || test->settings->socket_bufsize) {
+#else /* HAVE_IPPROTO_MPTCP */
     if (test->no_delay || test->settings->mss || test->settings->socket_bufsize) {
+#endif // HAVE_IPPROTO_MPTCP
 	struct addrinfo hints, *res;
 	char portstr[6];
 
@@ -194,7 +203,12 @@ iperf_tcp_listen(struct iperf_test *test)
             return -1;
         }
 
-        if ((s = socket(res->ai_family, SOCK_STREAM, 0)) < 0) {
+#if defined(HAVE_IPPROTO_MPTCP)
+        if (test->multipath)
+            protocol = IPPROTO_MPTCP;
+#endif // HAVE_IPPROTO_MPTCP
+
+        if ((s = socket(res->ai_family, SOCK_STREAM, protocol)) < 0) {
 	    freeaddrinfo(res);
             i_errno = IESTREAMLISTEN;
             return -1;
@@ -374,8 +388,14 @@ iperf_tcp_connect(struct iperf_test *test)
     socklen_t optlen;
     int saved_errno;
     int rcvbuf_actual, sndbuf_actual;
+    int protocol = 0;
 
-    s = create_socket(test->settings->domain, SOCK_STREAM, test->bind_address, test->bind_dev, test->bind_port, test->server_hostname, test->server_port, &server_res);
+#if defined(HAVE_IPPROTO_MPTCP)
+        if (test->multipath)
+            protocol = IPPROTO_MPTCP;
+#endif // HAVE_IPPROTO_MPTCP
+
+    s = create_socket(test->settings->domain, SOCK_STREAM, test->bind_address, test->bind_dev, test->bind_port, test->server_hostname, test->server_port, &server_res, protocol);
     if (s < 0) {
 	i_errno = IESTREAMCONNECT;
 	return -1;

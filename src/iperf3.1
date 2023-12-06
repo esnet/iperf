@@ -249,6 +249,10 @@ If an optional interface is specified, it is treated as a shortcut
 for \fB--bind-dev \fIdev\fR.
 Note that a percent sign and interface device name are required for IPv6 link-local address literals.
 .TP
+.BR -m ", " --multipath " "
+use multipath variant for the current protocol. This only applies to
+TCP and enables MPTCP usage.
+.TP
 .BR --sctp
 use SCTP rather than TCP (FreeBSD and Linux)
 .TP

@@ -57,5 +57,6 @@ For a working example have a look [here]()
 ## Acknowledgments
 
 - android-iperf - [Github](https://github.com/KnightWhoSayNi/android-iperf)
-- iPerf - [iperf.fr](https://github.com/esnet/iperf)
+- iPerf - [Github](https://github.com/esnet/iperf)
+- integrating iPerf - [matt9j.net](https://matt9j.net/posts/integrating-iperf/)
 

@@ -191,6 +191,15 @@ struct iperf_settings
     int       cntl_ka_keepidle;     /* Control TCP connection Keepalive idle time (TCP_KEEPIDLE) */
     int       cntl_ka_interval;     /* Control TCP connection Keepalive interval between retries (TCP_KEEPINTV) */
     int       cntl_ka_count;        /* Control TCP connection Keepalive number of retries (TCP_KEEPCNT) */
+#ifdef HAVE_UDP_SEGMENT
+    int       gso;
+    int       gso_dg_size;
+    int       gso_bf_size;
+#endif
+#ifdef HAVE_UDP_GRO
+    int       gro;
+    int       gro_bf_size;
+#endif
 };
 
 struct iperf_test;
@@ -485,5 +494,8 @@ extern int gerror; /* error value from getaddrinfo(3), for use in internal error
 
 /* In Reverse mode, maximum number of packets to wait for "accept" response - to handle out of order packets */
 #define MAX_REVERSE_OUT_OF_ORDER_PACKETS 2
+
+#define GSO_BF_MAX_SIZE MAX_UDP_BLOCKSIZE
+#define GRO_BF_MAX_SIZE MAX_UDP_BLOCKSIZE
 
 #endif /* !__IPERF_H */

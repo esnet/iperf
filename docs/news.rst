@@ -1,6 +1,16 @@
 iperf3 Project News
 ===================
 
+2023-12-01:  iperf-3.16 released
+--------------------------------
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.16.tar.gz
+| SHA256:
+``cc740c6bbea104398cc3e466befc515a25896ec85e44a662d5f4a767b9cf713e``
+
+iperf 3.16 uses multiple threads to serve parallel tests for improved
+throughput on high-speed links. It also includes support for
+OpenSSL 3. More details are provided in the release notes.
+
 2023-09-14:  iperf-3.15 released
 --------------------------------
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.15.tar.gz

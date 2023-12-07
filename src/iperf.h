@@ -458,6 +458,7 @@ struct iperf_test
 extern int gerror; /* error value from getaddrinfo(3), for use in internal error handling */
 
 /* UDP "connect" message and reply (textual value for Wireshark, etc. readability - legacy was numeric) */
+
 #if BYTE_ORDER == BIG_ENDIAN
 #define UDP_CONNECT_MSG 0x39383736
 #define UDP_CONNECT_REPLY 0x36373839

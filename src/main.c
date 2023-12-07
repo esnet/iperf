@@ -116,8 +116,9 @@ main(int argc, char **argv)
             break;
     }
 
-    if (run(test) < 0)
-        iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
+	if (result_test < 0)
+		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
+
 
     iperf_free_test(test);
 

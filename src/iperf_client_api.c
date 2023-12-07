@@ -467,29 +467,36 @@ iperf_connect(struct iperf_test *test)
      * the user always has the option to override.
      */
     if (test->protocol->id == Pudp) {
-	if (test->settings->blksize == 0) {
-	    if (test->ctrl_sck_mss) {
-		test->settings->blksize = test->ctrl_sck_mss;
-	    }
-	    else {
-		test->settings->blksize = DEFAULT_UDP_BLKSIZE;
-	    }
-	    if (test->verbose) {
-		printf("Setting UDP block size to %d\n", test->settings->blksize);
-	    }
-	}
+    if (test->settings->blksize == 0) {
+        if (test->ctrl_sck_mss) {
+        test->settings->blksize = test->ctrl_sck_mss;
+        }
+        else {
+        test->settings->blksize = DEFAULT_UDP_BLKSIZE;
+        }
+        if (test->verbose) {
+        printf("Setting UDP block size to %d\n", test->settings->blksize);
+        }
+    }
+#ifdef HAVE_UDP_SEGMENT
+    if (test->settings->gso) {
+        test->settings->gso_dg_size = test->settings->blksize;
+        /* use the multiple of datagram size for the best efficiency. */
+        test->settings->gso_bf_size = (test->settings->gso_bf_size / test->settings->gso_dg_size) * test->settings->gso_dg_size;
+    }
+#endif
 
-	/*
-	 * Regardless of whether explicitly or implicitly set, if the
-	 * block size is larger than the MSS, print a warning.
-	 */
-	if (test->ctrl_sck_mss > 0 &&
-	    test->settings->blksize > test->ctrl_sck_mss) {
-	    char str[WARN_STR_LEN];
-	    snprintf(str, sizeof(str),
-		     "UDP block size %d exceeds TCP MSS %d, may result in fragmentation / drops", test->settings->blksize, test->ctrl_sck_mss);
-	    warning(str);
-	}
+    /*
+    * Regardless of whether explicitly or implicitly set, if the
+    * block size is larger than the MSS, print a warning.
+    */
+    if (test->ctrl_sck_mss > 0 &&
+        test->settings->blksize > test->ctrl_sck_mss) {
+        char str[WARN_STR_LEN];
+        snprintf(str, sizeof(str),
+            "UDP block size %d exceeds TCP MSS %d, may result in fragmentation / drops", test->settings->blksize, test->ctrl_sck_mss);
+        warning(str);
+    }
     }
 
     return 0;

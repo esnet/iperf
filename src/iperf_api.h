@@ -101,6 +101,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define OPT_DONT_FRAGMENT 26
 #define OPT_RCV_TIMEOUT 27
 #define OPT_SND_TIMEOUT 28
+#define OPT_GSRO 29
 
 /* states */
 #define TEST_START 1

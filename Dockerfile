@@ -48,5 +48,5 @@ ENV NDK_PROJECT_PATH=/tmp
 COPY . /tmp/iperf
 RUN cd /tmp/iperf && ./configure
 
-RUN mkdir /tmp/iperf/jniLibs
+RUN mkdir -p /tmp/iperf/jniLibs
 RUN ndk-build APP_BUILD_SCRIPT=/tmp/iperf/jni/Android.mk NDK_LIBS_OUT=/tmp/iperf/jniLibs

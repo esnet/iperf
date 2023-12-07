@@ -1189,6 +1189,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_IPPROTO_MPTCP)
         {"mptcp", no_argument, NULL, 'm'},
 #endif
+#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)
+        {"no-gsro", no_argument, NULL, OPT_NO_GSRO},
+#endif
         {"debug", optional_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -1790,6 +1793,17 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->mptcp = 1;
 		break;
 #endif
+#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)
+            case OPT_NO_GSRO:
+		/* Disable GSO/GRO which would otherwise be enabled by default */
+#ifdef HAVE_UDP_SEGMENT
+		test->settings->gso = 0;
+#endif
+#ifdef HAVE_UDP_GRO
+		test->settings->gro = 0;
+#endif
+                break;
+#endif
 	    case 'h':
 		usage_long(stdout);
 		exit(0);
@@ -1809,6 +1823,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         i_errno = IECLIENTONLY;
         return -1;
     }
+
+/* GSO/GRO are enabled by default when available, disabled only via --no-gsro */
 
 #if defined(HAVE_SSL)
 
@@ -1914,6 +1930,20 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	i_errno = IEUDPBLOCKSIZE;
 	return -1;
     }
+
+#ifdef HAVE_UDP_SEGMENT
+    if (test->protocol->id == Pudp && test->settings->gso) {
+        test->settings->gso_dg_size = blksize;
+        /* use the multiple of datagram size for the best efficiency. */
+        if (test->settings->gso_dg_size > 0) {
+            test->settings->gso_bf_size = (test->settings->gso_bf_size / test->settings->gso_dg_size) * test->settings->gso_dg_size;
+        } else {
+            /* If gso_dg_size is 0 (unlimited bandwidth), use default UDP datagram size */
+            test->settings->gso_dg_size = 1472; /* Standard UDP payload size for Ethernet MTU */
+        }
+    }
+#endif
+
     test->settings->blksize = blksize;
 
     if (!rate_flag)
@@ -2580,6 +2610,18 @@ get_parameters(struct iperf_test *test)
 	    test->settings->socket_bufsize = j_p->valueint;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "len", cJSON_Number)) != NULL)
 	    test->settings->blksize = j_p->valueint;
+#ifdef HAVE_UDP_SEGMENT
+	if (test->protocol->id == Pudp && test->settings->gso == 1) {
+	    test->settings->gso_dg_size = test->settings->blksize;
+	    /* use the multiple of datagram size for the best efficiency. */
+	    if (test->settings->gso_dg_size > 0) {
+	        test->settings->gso_bf_size = (test->settings->gso_bf_size / test->settings->gso_dg_size) * test->settings->gso_dg_size;
+	    } else {
+	        /* If gso_dg_size is 0 (unlimited bandwidth), use default UDP datagram size */
+	        test->settings->gso_dg_size = 1472; /* Standard UDP payload size for Ethernet MTU */
+	    }
+	}
+#endif
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "bandwidth", cJSON_Number)) != NULL)
 	    test->settings->rate = j_p->valueint;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "fqrate", cJSON_Number)) != NULL)
@@ -3239,6 +3281,15 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->fqrate = 0;
     testp->settings->pacing_timer = DEFAULT_PACING_TIMER;
     testp->settings->burst = 0;
+#ifdef HAVE_UDP_SEGMENT
+    testp->settings->gso = 1;  /* Enable GSO by default */
+    testp->settings->gso_dg_size = 0;
+    testp->settings->gso_bf_size = GSO_BF_MAX_SIZE;
+#endif
+#ifdef HAVE_UDP_GRO
+    testp->settings->gro = 1;  /* Enable GRO by default */
+    testp->settings->gro_bf_size = GRO_BF_MAX_SIZE;
+#endif
     testp->settings->mss = 0;
     testp->settings->bytes = 0;
     testp->settings->blocks = 0;
@@ -3552,6 +3603,13 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->burst = 0;
     test->settings->mss = 0;
     test->settings->tos = 0;
+#ifdef HAVE_UDP_SEGMENT
+    test->settings->gso_dg_size = 0;
+    test->settings->gso_bf_size = GSO_BF_MAX_SIZE;
+#endif
+#ifdef HAVE_UDP_GRO
+    test->settings->gro_bf_size = GRO_BF_MAX_SIZE;
+#endif
     test->settings->dont_fragment = 0;
     test->zerocopy = 0;
     test->settings->skip_rx_copy = 0;
@@ -4716,6 +4774,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 {
     struct iperf_stream *sp;
     int ret = 0;
+    int size;
 
     char template[1024];
     if (test->tmp_template) {
@@ -4774,13 +4833,24 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         free(sp);
         return NULL;
     }
-    if (ftruncate(sp->buffer_fd, test->settings->blksize) < 0) {
+    size = test->settings->blksize;
+#ifdef HAVE_UDP_SEGMENT
+    if (test->protocol->id == Pudp && test->settings->gso && (size < test->settings->gso_bf_size))
+        size = test->settings->gso_bf_size;
+#endif
+#ifdef HAVE_UDP_GRO
+    if (test->protocol->id == Pudp && test->settings->gro && (size < test->settings->gro_bf_size))
+        size = test->settings->gro_bf_size;
+#endif
+    if (sp->test->debug)
+        printf("Buffer %d bytes\n", size);
+    if (ftruncate(sp->buffer_fd, size) < 0) {
         i_errno = IECREATESTREAM;
         free(sp->result);
         free(sp);
         return NULL;
     }
-    sp->buffer = (char *) mmap(NULL, test->settings->blksize, PROT_READ|PROT_WRITE, MAP_SHARED, sp->buffer_fd, 0);
+    sp->buffer = (char *) mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
     if (sp->buffer == MAP_FAILED) {
         i_errno = IECREATESTREAM;
         free(sp->result);

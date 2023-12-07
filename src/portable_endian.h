@@ -131,7 +131,9 @@
 // the truth because we use the homebrew htonll, et al. implementations
 // that were originally the sole implementation of this functionality
 // in iperf 3.0.
+#if (!defined(__vxworks)) && (!defined(__VXWORKS__))
 #	warning platform not supported
+#endif
 #	include <endian.h>
 #if BYTE_ORDER == BIG_ENDIAN
 #define HTONLL(n) (n)

@@ -94,6 +94,10 @@ typedef uint_fast64_t iperf_size_t;
 typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #endif // __IPERF_API_H
 
+#if (defined(__vxworks)) || (defined(__VXWORKS__))
+typedef unsigned int uint
+#endif // __vxworks or __VXWORKS__
+
 struct iperf_interval_results
 {
     atomic_iperf_size_t bytes_transferred; /* bytes transferred in this interval */

@@ -99,7 +99,7 @@ main(int argc, char **argv)
     if (iperf_parse_arguments(test, argc, argv) < 0) {
         iperf_err(test, "parameter error - %s", iperf_strerror(i_errno));
         fprintf(stderr, "\n");
-        usage_long(stdout);
+    	usage();
         return 1;
     }
     int result_test = 0;

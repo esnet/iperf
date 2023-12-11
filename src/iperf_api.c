@@ -101,7 +101,7 @@ static int diskfile_send(struct iperf_stream *sp);
 static int diskfile_recv(struct iperf_stream *sp);
 static int JSON_write(int fd, cJSON *json);
 static void print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *json_interval_streams);
-static cJSON *JSON_read(int fd);
+static cJSON *JSON_read(int fd, struct iperf_test *test);
 
 
 /*************************** Print usage functions ****************************/
@@ -2272,7 +2272,7 @@ get_parameters(struct iperf_test *test)
     cJSON *j;
     cJSON *j_p;
 
-    j = JSON_read(test->ctrl_sck);
+    j = JSON_read(test->ctrl_sck, test);
     if (j == NULL) {
 	i_errno = IERECVPARAMS;
         r = -1;
@@ -2503,7 +2503,7 @@ get_results(struct iperf_test *test)
     int retransmits;
     struct iperf_stream *sp;
 
-    j = JSON_read(test->ctrl_sck);
+    j = JSON_read(test->ctrl_sck, test);
     if (j == NULL) {
 	i_errno = IERECVRESULTS;
         r = -1;
@@ -2691,13 +2691,25 @@ JSON_write(int fd, cJSON *json)
 /*************************************************************/
 
 static cJSON *
-JSON_read(int fd)
+JSON_read(int fd, struct iperf_test *test)
 {
     uint32_t hsize, nsize;
     size_t strsize;
     char *str;
     cJSON *json = NULL;
     int rc;
+
+    /*
+    * Wait until test->ctrl_sck is ready to read
+    */
+    while (1)
+    {   
+        select(test->max_fd + 1, &test->read_set,  NULL, NULL, NULL);
+        if (FD_ISSET(fd, &test->read_set))
+            break;
+        else
+            FD_SET(test->ctrl_sck, &test->read_set);
+    }
 
     /*
      * Read a four-byte integer, which is the length of the JSON to follow.
@@ -2711,6 +2723,17 @@ JSON_read(int fd)
 	if (strsize) {
 	str = (char *) calloc(sizeof(char), strsize);
 	if (str != NULL) {
+        /*
+        * Wait until test->ctrl_sck is ready to read
+        */
+        while (1)
+        {   
+            select(test->max_fd + 1, &test->read_set,  NULL, NULL, NULL);
+            if (FD_ISSET(fd, &test->read_set))
+                break;
+            else
+                FD_SET(test->ctrl_sck, &test->read_set);
+        }
 	    rc = Nread(fd, str, hsize, Ptcp);
 	    if (rc >= 0) {
 		/*

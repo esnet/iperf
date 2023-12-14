@@ -1,5 +1,5 @@
-/*--------------------------------------------------------------- 
- * iperf, Copyright (c) 2014-2021, The Regents of the University of
+/*---------------------------------------------------------------
+ * iperf, Copyright (c) 2014-2022, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -27,49 +27,49 @@
  * Based on code that is:
  *
  * Copyright (c) 1999,2000,2001,2002,2003
- * The Board of Trustees of the University of Illinois            
- * All Rights Reserved.                                           
- *--------------------------------------------------------------- 
- * Permission is hereby granted, free of charge, to any person    
- * obtaining a copy of this software (Iperf) and associated       
- * documentation files (the "Software"), to deal in the Software  
- * without restriction, including without limitation the          
- * rights to use, copy, modify, merge, publish, distribute,        
- * sublicense, and/or sell copies of the Software, and to permit     
+ * The Board of Trustees of the University of Illinois
+ * All Rights Reserved.
+ *---------------------------------------------------------------
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software (Iperf) and associated
+ * documentation files (the "Software"), to deal in the Software
+ * without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute,
+ * sublicense, and/or sell copies of the Software, and to permit
  * persons to whom the Software is furnished to do
- * so, subject to the following conditions: 
+ * so, subject to the following conditions:
  *
- *     
- * Redistributions of source code must retain the above 
- * copyright notice, this list of conditions and 
- * the following disclaimers. 
  *
- *     
- * Redistributions in binary form must reproduce the above 
- * copyright notice, this list of conditions and the following 
- * disclaimers in the documentation and/or other materials 
- * provided with the distribution. 
- * 
- *     
- * Neither the names of the University of Illinois, NCSA, 
- * nor the names of its contributors may be used to endorse 
+ * Redistributions of source code must retain the above
+ * copyright notice, this list of conditions and
+ * the following disclaimers.
+ *
+ *
+ * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following
+ * disclaimers in the documentation and/or other materials
+ * provided with the distribution.
+ *
+ *
+ * Neither the names of the University of Illinois, NCSA,
+ * nor the names of its contributors may be used to endorse
  * or promote products derived from this Software without
- * specific prior written permission. 
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
- * NONINFRINGEMENT. IN NO EVENT SHALL THE CONTIBUTORS OR COPYRIGHT 
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, 
+ * specific prior written permission.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE CONTIBUTORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. 
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * ________________________________________________________________
- * National Laboratory for Applied Network Research 
- * National Center for Supercomputing Applications 
- * University of Illinois at Urbana-Champaign 
+ * National Laboratory for Applied Network Research
+ * National Center for Supercomputing Applications
+ * University of Illinois at Urbana-Champaign
  * http://www.ncsa.uiuc.edu
- * ________________________________________________________________ 
+ * ________________________________________________________________
  *
  * Locale.c
  * by Ajay Tirumala <tirumala@ncsa.uiuc.edu>
@@ -80,6 +80,18 @@
 #include "iperf_config.h"
 
 #include "version.h"
+
+#if defined(HAVE_INTTYPES_H)
+# include <inttypes.h>
+#else
+# ifndef PRIu64
+#  if sizeof(long) == 8
+#   define PRIu64		"lu"
+#  else
+#   define PRIu64		"llu"
+#  endif
+# endif
+#endif
 
 #ifdef __cplusplus
 extern    "C"
@@ -105,9 +117,12 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 #if defined(HAVE_CPU_AFFINITY)
                            "  -A, --affinity n/n,m      set CPU affinity\n"
 #endif /* HAVE_CPU_AFFINITY */
-                           "  -B, --bind      <host>    bind to the interface associated with the address <host>\n"
 #if defined(HAVE_SO_BINDTODEVICE)
-                           "  --bind-dev      <dev>     bind to the network interface with SO_BINDTODEVICE\n"
+                           "  -B, --bind <host>[%%<dev>] bind to the interface associated with the address <host>\n"
+                           "                            (optional <dev> equivalent to `--bind-dev <dev>`)\n"
+                           "  --bind-dev <dev>          bind to the network interface with SO_BINDTODEVICE\n"
+#else /* HAVE_SO_BINDTODEVICE */
+                           "  -B, --bind      <host>    bind to the interface associated with the address <host>\n"
 #endif /* HAVE_SO_BINDTODEVICE */
                            "  -V, --verbose             more detailed output\n"
                            "  -J, --json                output in JSON format\n"
@@ -116,10 +131,14 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  --forceflush              force flushing output at every interval\n"
                            "  --timestamps<=format>     emit a timestamp at the start of each output line\n"
                            "                            (optional \"=\" and format string as per strftime(3))\n"
-    
-                           "  --rcv-timeout #           idle timeout for receiving data\n"
-                           "                            (default %d ms)\n"
-                           "  -d, --debug               emit debugging output\n"
+
+                           "  --rcv-timeout #           idle timeout for receiving data (default %d ms)\n"
+#if defined(HAVE_TCP_USER_TIMEOUT)
+                           "  --snd-timeout #           timeout for unacknowledged TCP data\n"
+                           "                            (in ms, default is system settings)\n"
+#endif /* HAVE_TCP_USER_TIMEOUT */
+                           "  -d, --debug[=#]           emit debugging output\n"
+                           "                            (optional optional \"=\" and debug level: 1-4. Default is 4 - all messages)\n"
                            "  -v, --version             show version information and quit\n"
                            "  -h, --help                show this message and quit\n"
                            "Server specific:\n"
@@ -140,7 +159,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "                            and client during the authentication process\n"
 #endif //HAVE_SSL
                            "Client specific:\n"
-                           "  -c, --client    <host>    run in client mode, connecting to <host>\n"
+                           "  -c, --client <host>[%%<dev>] run in client mode, connecting to <host>\n"
+                           "                              (option <dev> equivalent to `--bind-dev <dev>`)\n"
 #if defined(HAVE_SCTP_H)
                            "  --sctp                    use SCTP rather than TCP\n"
                            "  -X, --xbind <name>        bind SCTP association to links\n"
@@ -166,7 +186,9 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -R, --reverse             run in reverse mode (server sends, client receives)\n"
                            "  --bidir                   run in bidirectional mode.\n"
                            "                            Client and server send and receive data.\n"
-                           "  -w, --window    #[KMG]    set window size / socket buffer size\n"
+                           "  -w, --window    #[KMG]    set send/receive socket buffer sizes\n"
+                           "                            (indirectly sets TCP window size)\n"
+
 #if defined(HAVE_TCP_CONGESTION)
                            "  -C, --congestion <algo>   set TCP congestion control algorithm (Linux and FreeBSD only)\n"
 #endif /* HAVE_TCP_CONGESTION */
@@ -185,7 +207,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -L, --flowlabel N         set the IPv6 flow label (only supported on Linux)\n"
 #endif /* HAVE_FLOWLABEL */
                            "  -Z, --zerocopy            use a 'zero copy' method of sending data\n"
-                           "  -O, --omit N              omit the first n seconds\n"
+                           "  -O, --omit N              perform pre-test for N seconds and omit the pre-test statistics\n"
                            "  -T, --title str           prefix every output line with this string\n"
                            "  --extra-data str          data string to include in client and server JSON\n"
                            "  --get-server-output       get results from server\n"
@@ -200,7 +222,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  --rsa-public-key-path     path to the RSA public key used to encrypt\n"
                            "                            authentication credentials\n"
 #endif //HAVESSL
-    
+
 #ifdef NOT_YET_SUPPORTED /* still working on these */
 #endif
 
@@ -217,7 +239,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 
 #ifdef OBSOLETE /* from old iperf: no longer supported. Add some of these back someday */
   "-d, --dualtest           Do a bidirectional test simultaneously\n"
-  "-L, --listenport #       port to recieve bidirectional tests back on\n"
+  "-L, --listenport #       port to receive bidirectional tests back on\n"
   "-I, --stdin              input the data to be transmitted from stdin\n"
   "-F, --fileinput <name>   input the data to be transmitted from a file\n"
   "-r, --tradeoff           Do a bidirectional test individually\n"
@@ -298,7 +320,7 @@ const char report_authentication_succeeded[] =
 "Authentication succeeded for user '%s' ts %ld\n";
 
 const char report_authentication_failed[] =
-"Authentication failed for user '%s' ts %ld\n";
+"Authentication failed with return code %d for user '%s' ts %ld\n";
 
 const char report_reverse[] =
 "Reverse mode, remote host %s is sending\n";
@@ -373,10 +395,13 @@ const char report_bw_retrans_cwnd_format[] =
 "[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %3u   %ss       %s\n";
 
 const char report_bw_udp_format[] =
-"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)  %s\n";
+"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %" PRIu64 "/%" PRIu64 " (%.2g%%)  %s\n";
+
+const char report_bw_udp_format_no_omitted_error[] =
+"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  Unknown/%" PRIu64 "  %s\n";
 
 const char report_bw_udp_sender_format[] =
-"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %d  %s\n";
+"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %" PRIu64 "  %s\n";
 
 const char report_summary[] =
 "Test Complete. Summary Results:\n";
@@ -388,10 +413,10 @@ const char report_sum_bw_retrans_format[] =
 "[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %3d             %s\n";
 
 const char report_sum_bw_udp_format[] =
-"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)  %s\n";
+"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %" PRIu64 "/%" PRIu64 " (%.2g%%)  %s\n";
 
 const char report_sum_bw_udp_sender_format[] =
-"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %d  %s\n";
+"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %" PRIu64 "  %s\n";
 
 const char report_omitted[] = "(omitted)";
 
@@ -441,11 +466,7 @@ const char report_receiver_not_available_summary_format[] = "[%3s] (receiver sta
 const char report_tcpInfo[] =
 "event=TCP_Info CWND=%u SND_SSTHRESH=%u RCV_SSTHRESH=%u UNACKED=%u SACK=%u LOST=%u RETRANS=%u FACK=%u RTT=%u REORDERING=%u\n";
 #endif
-#if defined(__FreeBSD__)
-const char report_tcpInfo[] =
-"event=TCP_Info CWND=%u RCV_WIND=%u SND_SSTHRESH=%u RTT=%u\n";
-#endif
-#if defined(__NetBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 const char report_tcpInfo[] =
 "event=TCP_Info CWND=%u RCV_WIND=%u SND_SSTHRESH=%u RTT=%u\n";
 #endif

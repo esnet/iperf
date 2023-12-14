@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2021, The Regents of the University of
+ * iperf, Copyright (c) 2014-2022, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -47,6 +47,10 @@ iperf_err(struct iperf_test *test, const char *format, ...)
     struct tm *ltm = NULL;
     char *ct = NULL;
 
+    if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
+        perror("iperf_err: pthread_mutex_lock");
+    }
+
     /* Timestamp if requested */
     if (test != NULL && test->timestamps) {
 	time(&now);
@@ -59,7 +63,7 @@ iperf_err(struct iperf_test *test, const char *format, ...)
     vsnprintf(str, sizeof(str), format, argp);
     if (test != NULL && test->json_output && test->json_top != NULL)
 	cJSON_AddStringToObject(test->json_top, "error", str);
-    else
+    else {
 	if (test && test->outfile && test->outfile != stdout) {
 	    if (ct) {
 		fprintf(test->outfile, "%s", ct);
@@ -72,7 +76,12 @@ iperf_err(struct iperf_test *test, const char *format, ...)
 	    }
 	    fprintf(stderr, "iperf3: %s\n", str);
 	}
+    }
     va_end(argp);
+
+    if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
+        perror("iperf_err: pthread_mutex_unlock");
+    }
 }
 
 /* Do a printf to stderr or log file as appropriate, then exit. */
@@ -85,6 +94,10 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
     struct tm *ltm = NULL;
     char *ct = NULL;
 
+    if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
+        perror("iperf_errexit: pthread_mutex_lock");
+    }
+
     /* Timestamp if requested */
     if (test != NULL && test->timestamps) {
 	time(&now);
@@ -95,8 +108,10 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
 
     va_start(argp, format);
     vsnprintf(str, sizeof(str), format, argp);
-    if (test != NULL && test->json_output && test->json_top != NULL) {
-	cJSON_AddStringToObject(test->json_top, "error", str);
+    if (test != NULL && test->json_output) {
+        if (test->json_top != NULL) {
+	    cJSON_AddStringToObject(test->json_top, "error", str);
+        }
 	iperf_json_finish(test);
     } else
 	if (test && test->outfile && test->outfile != stdout) {
@@ -111,6 +126,11 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
 	    }
 	    fprintf(stderr, "iperf3: %s\n", str);
 	}
+
+    if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
+        perror("iperf_errexit: pthread_mutex_unlock");
+    }
+
     va_end(argp);
     if (test)
         iperf_delete_pidfile(test);
@@ -175,6 +195,9 @@ iperf_strerror(int int_errno)
         case IESETSERVERAUTH:
              snprintf(errstr, len, "you must specify a path to a valid RSA private key and a user credential file");
             break;
+        case IESERVERAUTHUSERS:
+             snprintf(errstr, len, "cannot access authorized users file");
+            break;
 	case IEBADFORMAT:
 	    snprintf(errstr, len, "bad format specifier (valid formats are in the set [kmgtKMGT])");
 	    break;
@@ -227,7 +250,7 @@ iperf_strerror(int int_errno)
             perr = 1;
             break;
         case IECONNECT:
-            snprintf(errstr, len, "unable to connect to server");
+            snprintf(errstr, len, "unable to connect to server - server may have stopped running or use a different port, firewall issue, etc.");
             perr = 1;
 	    herr = 1;
             break;
@@ -256,14 +279,14 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "control socket has closed unexpectedly");
             break;
         case IEMESSAGE:
-            snprintf(errstr, len, "received an unknown control message");
+            snprintf(errstr, len, "received an unknown control message (ensure other side is iperf3 and not iperf)");
             break;
         case IESENDMESSAGE:
-            snprintf(errstr, len, "unable to send control message");
+            snprintf(errstr, len, "unable to send control message - port may not be available, the other side may have stopped running, etc.");
             perr = 1;
             break;
         case IERECVMESSAGE:
-            snprintf(errstr, len, "unable to receive control message");
+            snprintf(errstr, len, "unable to receive control message - port may not be available, the other side may have stopped running, etc.");
             perr = 1;
             break;
         case IESENDPARAMS:
@@ -345,6 +368,13 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "receive timeout value is incorrect or not in range");
             perr = 1;
             break;
+        case IESNDTIMEOUT:
+            snprintf(errstr, len, "send timeout value is incorrect or not in range");
+            perr = 1;
+            break;
+        case IEUDPFILETRANSFER:
+            snprintf(errstr, len, "cannot transfer file using UDP");
+            break;
         case IERVRSONLYRCVTIMEOUT:
             snprintf(errstr, len, "client receive timeout is valid only in receiving mode");
             perr = 1;
@@ -400,7 +430,7 @@ iperf_strerror(int int_errno)
             perr = 1;
             break;
         case IESETCONGESTION:
-            snprintf(errstr, len, "unable to set TCP_CONGESTION: " 
+            snprintf(errstr, len, "unable to set TCP_CONGESTION: "
                                   "Supplied congestion control algorithm not supported on this host");
             break;
 	case IEPIDFILE:
@@ -436,13 +466,46 @@ iperf_strerror(int int_errno)
 	    snprintf(errstr, len, "skew threshold must be a positive number");
             break;
 	case IEIDLETIMEOUT:
-	    snprintf(errstr, len, "idle timeout parameter is not positive or larget then allowed limit");
+	    snprintf(errstr, len, "idle timeout parameter is not positive or larger than allowed limit");
             break;
+	case IEBINDDEV:
+	    snprintf(errstr, len, "Unable to bind-to-device (check perror, maybe permissions?)");
+            break;
+    case IEBINDDEVNOSUPPORT:
+	    snprintf(errstr, len, "`<ip>%%<dev>` is not supported as system does not support bind to device");
+            break;
+    case IEHOSTDEV:
+	    snprintf(errstr, len, "host device name (ip%%<dev>) is supported (and required) only for IPv6 link-local address");
+            break;        
 	case IENOMSG:
 	    snprintf(errstr, len, "idle timeout for receiving data");
             break;
     case IESETDONTFRAGMENT:
 	    snprintf(errstr, len, "unable to set IP Do-Not-Fragment flag");
+            break;
+        case IESETUSERTIMEOUT:
+            snprintf(errstr, len, "unable to set TCP USER_TIMEOUT");
+            perr = 1;
+            break;
+	case IEPTHREADCREATE:
+            snprintf(errstr, len, "unable to create thread");
+            perr = 1;
+            break;
+	case IEPTHREADCANCEL:
+            snprintf(errstr, len, "unable to cancel thread");
+            perr = 1;
+            break;
+	case IEPTHREADJOIN:
+            snprintf(errstr, len, "unable to join thread");
+            perr = 1;
+            break;
+	case IEPTHREADATTRINIT:
+            snprintf(errstr, len, "unable to create thread attributes");
+            perr = 1;
+            break;
+	case IEPTHREADATTRDESTROY:
+            snprintf(errstr, len, "unable to destroy thread attributes");
+            perr = 1;
             break;
 	default:
 	    snprintf(errstr, len, "int_errno=%d", int_errno);

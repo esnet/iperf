@@ -10,25 +10,25 @@ tag=`awk '/IPERF_VERSION / {
   print $3 }' src/version.h`
 fi
 
-dirname=`echo $tag $proj | awk '{
+dirname=`echo "$tag $proj" | awk '{
   gsub(/-ALPHA/, "a", $1);
   gsub(/-BETA/, "b", $1);
   gsub(/-RELEASE/, "", $1);
   print $2"-"$1 }'`
 
-# echo tag $tag
-# echo dirname $dirname
+echo tag $tag
+echo dirname $dirname
 
 do_tag ()
 {
-    git tag -s -m "tagging $tag" $tag
+    git tag -s -m "tagging $tag" "$tag"
 }
 
 do_tar ()
 {
     tarball=${dirname}.tar.gz
-    rm -f ${tarball}
-    git archive --format=tar --prefix ${dirname}/ ${tag} | gzip -9 > ${tarball}
+    rm -f "${tarball}"
+    git archive --format=tar --prefix "${dirname}/" "${tag}" | gzip -9 > "${tarball}"
 
     # Compute SHA256 hash
     case `uname -s` in
@@ -37,7 +37,7 @@ do_tar ()
 	Darwin) sha="shasum -a 256" ;;
 	*) sha=echo ;;
     esac
-    ${sha} ${tarball} | tee ${tarball}.sha256
+    ${sha} "${tarball}" | tee "${tarball}.sha256"
 }
 
 usage ()

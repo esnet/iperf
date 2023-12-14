@@ -13,27 +13,27 @@ What is the history of iperf3, and what is the difference between iperf2 and ipe
   threaded, and not worry about backwards compatibility with
   iperf2. Many of the feature requests for iperf3 came from the
   perfSONAR project (http://www.perfsonar.net).
- 
+
   Then in 2014, Bob (Robert) McMahon from Broadcom restarted
   development of iperf2 (See
   https://sourceforge.net/projects/iperf2/). He fixed many of the
   problems with iperf2, and added a number of new features similar to
-  iperf3. iperf2.0.8, released in 2015, made iperf2 a useful tool. iperf2's 
+  iperf3. iperf2.0.8, released in 2015, made iperf2 a useful tool. iperf2's
   current development is focused is on using UDP for latency testing, as well
   as broad platform support.
- 
+
   As of this writing (2017), both iperf2 and iperf3 are being actively
   (although independently) developed.  We recommend being familiar with
   both tools, and use whichever tool’s features best match your needs.
- 
+
   A feature comparison of iperf2, iperf3, and nuttcp is available at:
   https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/throughput-tool-comparision/
- 
+
 iperf3 parallel stream performance is much less than iperf2. Why?
   iperf3 is single threaded, and iperf2 is multi-threaded. We
   recommend using iperf2 for parallel streams.
   If you want to use multiple iperf3 streams use the method described `here <https://fasterdata.es.net/performance-testing/network-troubleshooting-tools/iperf/multi-stream-iperf3/>`_.
- 
+
 I’m trying to use iperf3 on Windows, but having trouble. What should I do?
   iperf3 is not officially supported on Windows, but iperf2 is. We
   recommend you use iperf2.
@@ -41,7 +41,7 @@ I’m trying to use iperf3 on Windows, but having trouble. What should I do?
   Some people are using Cygwin to run iperf3 in Windows, but not all
   options will work.  Some community-provided binaries of iperf3 for
   Windows exist.
- 
+
 How can I build a statically-linked executable of iperf3?
   There are a number of reasons for building an iperf3 executable with
   no dependencies on any shared libraries.  Unfortunately this isn't
@@ -116,17 +116,17 @@ How can I build on a system that doesn't support profiled executables?
 
      And then run ``./bootstrap.sh``, that will regenerate the project
      Makefiles to make the exclusion of the profiled iperf3 executable
-     permanant (within that source tree).
+     permanent (within that source tree).
 
 I'm seeing quite a bit of unexpected UDP loss. Why?
   First, confirm you are using iperf 3.1.5 or higher. There was an
   issue with the default UDP send size that was fixed in
   3.1.5. Second, try adding the flag ``-w2M`` to increase the socket
   buffer sizes. That seems to make a big difference on some hosts.
- 
+
 iperf3 UDP does not seem to work at bandwidths less than 100Kbps. Why?
   You'll need to reduce the default packet length to get UDP rates of less that 100Kbps. Try ``-l100``.
- 
+
 TCP throughput drops to (almost) zero during a test, what's going on?
   A drop in throughput to almost zero, except maybe for the first
   reported interval(s), may be related to problems in NIC TCP Offload,
@@ -184,13 +184,13 @@ What congestion control algorithms are supported?
   On Linux, run this command to see the available congestion control
   algorithms (note that some algorithms are packaged as kernel
   modules, which must be loaded before they can be used)::
-    
+
     /sbin/sysctl net.ipv4.tcp_available_congestion_control
 
   On FreeBSD, the equivalent command is::
 
     /sbin/sysctl net.inet.tcp.cc.available
- 
+
 I’m using the ``--logfile`` option. How do I see file output in real time?
   Use the ``--forceflush`` flag.
 
@@ -252,5 +252,3 @@ I have a question regarding iperf3...what's the best way to get help?
   We discourage the use of the iperf3 issue tracker on GitHub for
   support questions.  Actual bug reports, enhancement requests, or
   pull requests are encouraged, however.
-
-

@@ -1,4 +1,4 @@
-.TH IPERF3 1 "February 2021" ESnet "User Manuals"
+.TH IPERF3 1 "November 2023" ESnet "User Manuals"
 .SH NAME
 iperf3 \- perform network throughput tests
 .SH SYNOPSIS
@@ -6,7 +6,7 @@ iperf3 \- perform network throughput tests
 .I options
 .B ]
 .br
-.B iperf3 -c 
+.B iperf3 -c
 .I server
 .B [
 .I options
@@ -139,18 +139,22 @@ In addition, on the client side you can override the server's
 affinity for just that one test, using the \fIn,m\fR form of
 argument.
 Note that when using this feature, a process will only be bound
-to a single CPU (as opposed to a set containing potentialy multiple
+to a single CPU (as opposed to a set containing potentially multiple
 CPUs).
 .TP
-.BR -B ", " --bind " \fIhost\fR"
+.BR -B ", " --bind " \fIhost\fR[\fB%\fIdev\fR]"
 bind to the specific interface associated with address \fIhost\fR.
-.BR --bind-dev " \fIdev\R"
+If an optional interface is specified, it is treated as a shortcut
+for \fB--bind-dev \fIdev\fR.
+Note that a percent sign and interface device name are required for IPv6 link-local address literals.
+.TP
+.BR --bind-dev " \fIdev\fR"
 bind to the specified network interface.
 This option uses SO_BINDTODEVICE, and may require root permissions.
 (Available on Linux and possibly other systems.)
 .TP
 .BR -V ", " --verbose " "
-give more detailed output 
+give more detailed output
 .TP
 .BR -J ", " --json " "
 output in JSON format
@@ -181,6 +185,14 @@ set idle timeout for receiving data during active tests. The receiver
 will halt a test if no data is received from the sender for this
 number of ms (default to 12000 ms, or 2 minutes).
 .TP
+.BR --snd-timeout " \fI#\fR"
+set timeout for unacknowledged TCP data (on both test and control
+connections) This option can be used to force a faster test timeout
+in case of a network partition during a test. The required
+parameter is specified in ms, and defaults to the system settings.
+This functionality depends on the TCP_USER_TIMEOUT socket option, and
+will not work on systems that do not support it.
+.TP
 .BR -d ", " --debug " "
 emit debugging output.
 Primarily (perhaps exclusively) of use to developers.
@@ -200,7 +212,13 @@ run in server mode
 run the server in background as a daemon
 .TP
 .BR -1 ", " --one-off
-handle one client connection, then exit.
+handle one client connection, then exit.  If an idle time is set, the
+server will exit after that amount of time with no connection.
+.TP
+.BR --idle-timeout " \fIn\fR"
+restart the server after \fIn\fR seconds in case it gets stuck.  In
+one-off mode, this is the number of seconds the server will wait
+before exiting.
 .TP
 .BR --server-bitrate-limit " \fIn\fR[KMGT]"
 set a limit on the server side, which will cause a test to abort if
@@ -212,12 +230,12 @@ the data rate is 5 seconds by default, but can be specified by adding
 a '/' and a number to the bitrate specifier.
 .TP
 .BR --rsa-private-key-path " \fIfile\fR"
-path to the RSA private key (not password-protected) used to decrypt 
+path to the RSA private key (not password-protected) used to decrypt
 authentication credentials from the client (if built with OpenSSL
 support).
-.TP          
+.TP
 .BR --authorized-users-path " \fIfile\fR"
-path to the configuration file containing authorized users credentials to run 
+path to the configuration file containing authorized users credentials to run
 iperf tests (if built with OpenSSL support).
 The file is a comma separated list of usernames and password hashes;
 more information on the structure of the file can be found in the
@@ -228,10 +246,13 @@ time skew threshold (in seconds) between the server and client
 during the authentication process.
 .SH "CLIENT SPECIFIC OPTIONS"
 .TP
-.BR -c ", " --client " \fIhost\fR"
+.BR -c ", " --client " \fIhost\fR[\fB%\fIdev\fR]"
 run in client mode, connecting to the specified server.
 By default, a test consists of sending data from the client to the
 server, unless the \-R flag is specified.
+If an optional interface is specified, it is treated as a shortcut
+for \fB--bind-dev \fIdev\fR.
+Note that a percent sign and interface device name are required for IPv6 link-local address literals.
 .TP
 .BR --sctp
 use SCTP rather than TCP (FreeBSD and Linux)
@@ -310,7 +331,9 @@ bind data streams to a specific client port (for TCP and UDP only,
 default is to use an ephemeral port)
 .TP
 .BR -P ", " --parallel " \fIn\fR"
-number of parallel client streams to run. Note that iperf3 is single threaded, so if you are CPU bound, this will not yield higher throughput.
+number of parallel client streams to run. iperf3 will spawn off a
+separate thread for each test stream. Using multiple streams may
+result in higher throughput than a single stream.
 .TP
 .BR -R ", " --reverse
 reverse the direction of a test, so that the server sends data to the
@@ -321,7 +344,13 @@ test in both directions (normal and reverse), with both the client and
 server sending and receiving data simultaneously
 .TP
 .BR -w ", " --window " \fIn\fR[KMGT]"
-window size / socket buffer size (this gets sent to the server and used on that side too)
+set socket buffer size / window size.
+This value gets sent to the server and used on that side too; on both
+sides this option sets both the sending and receiving socket buffer sizes.
+This option can be used to set (indirectly) the maximum TCP window size.
+Note that on Linux systems, the effective maximum window size is approximately
+double what is specified by this option (this behavior is not a bug in iperf3
+but a "feature" of the Linux kernel, as documented by tcp(7) and socket(7)).
 .TP
 .BR -M ", " --set-mss " \fIn\fR"
 set TCP/SCTP maximum segment size (MTU - 40 bytes)
@@ -369,7 +398,7 @@ Use a "zero copy" method of sending data, such as sendfile(2),
 instead of the usual write(2).
 .TP
 .BR -O ", " --omit " \fIn\fR"
-Omit the first n seconds of the test, to skip past the TCP slow-start
+Perform pre-test for N seconds and omit the pre-test statistics, to skip past the TCP slow-start
 period.
 .TP
 .BR -T ", " --title " \fIstr\fR"
@@ -411,41 +440,41 @@ perform differently, just based on payload entropy.
 Set the IPv4 Don't Fragment (DF) bit on outgoing packets.
 Only applicable to tests doing UDP over IPv4.
 .TP
-.BR --username " \fIusername\fR" 
+.BR --username " \fIusername\fR"
 username to use for authentication to the iperf server (if built with
 OpenSSL support).
 The password will be prompted for interactively when the test is run.  Note,
 the password to use can also be specified via the IPERF3_PASSWORD environment
 variable. If this variable is present, the password prompt will be skipped.
 .TP
-.BR --rsa-public-key-path " \fIfile\fR" 
+.BR --rsa-public-key-path " \fIfile\fR"
 path to the RSA public key used to encrypt authentication credentials
 (if built with OpenSSL support)
 
 .SH EXAMPLES
 .SS "Authentication - RSA Keypair"
 The authentication feature of iperf3 requires an RSA public keypair.
-The public key is used to encrypt the authentication token containing the 
+The public key is used to encrypt the authentication token containing the
 user credentials, while the private key is used to decrypt the authentication token.
 The private key must be in PEM format and additionally must not have a
 password set.
 The public key must be in PEM format and use SubjectPrefixKeyInfo encoding.
 An example of a set of UNIX/Linux commands using OpenSSL
 to generate a correctly-formed keypair follows:
-.sp 1 
+.sp 1
 .in +.5i
 > openssl genrsa -des3 -out private.pem 2048
 .sp 0
 > openssl rsa -in private.pem -outform PEM -pubout -out public.pem
 .sp 0
-> openssl rsa -in private.pem -out private_not_protected.pem -outform PEM  
+> openssl rsa -in private.pem -out private_not_protected.pem -outform PEM
 .in -.5i
 .sp 1
 After these commands, the public key will be contained in the file
 public.pem and the private key will be contained in the file
 private_not_protected.pem.
 .SS "Authentication - Authorized users configuration file"
-A simple plaintext file must be provided to the iperf3 server in order to specify 
+A simple plaintext file must be provided to the iperf3 server in order to specify
 the authorized user credentials.
 The file is a simple list of comma-separated pairs of a username and a
 corresponding password hash.
@@ -454,7 +483,7 @@ The file can also contain commented lines (starting with the \fC#\fR
 character).
 An example of commands to generate the password hash on a UNIX/Linux system
 is given below:
-.sp 1 
+.sp 1
 .in +.5i
 > S_USER=mario S_PASSWD=rossi
 .sp 0

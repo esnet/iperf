@@ -9,24 +9,30 @@ Binary Distributions
 Note that ESnet does not distribute binary packages of iperf3.  All of
 the packages listed in this section are provided by third parties, who
 are solely responsible for their contents.  This is an incomplete list
-of binary packages:
+of binary packages for various operating systems and distributions:
 
-* FreeBSD:  `benchmarks/iperf3
-  <http://freshports.org/benchmarks/iperf3>`_ in the FreeBSD Ports Collection
-* Fedora / CentOS: `iperf3
-  <https://apps.fedoraproject.org/packages/iperf3/>`_ and
+* FreeBSD: via the FreeBSD Ports Collection with ``sudo pkg install
+  benchmarks/iperf3``.
+* Fedora / RedHat Linux / CentOS / Rocky: `iperf3
+  <https://packages.fedoraproject.org/pkgs/iperf3/iperf3/>`_ and
   `iperf3-devel
-  <https://apps.fedoraproject.org/packages/iperf3-devel>`_ in Fedora
+  <https://packages.fedoraproject.org/pkgs/iperf3/iperf3-devel/>`_ in Fedora
   19 and 20 and in Fedora EPEL 5, 6, and 7.  iperf3 is included as a
   part of RedHat Enterprise Linux 7.4 and later (as well as CentOS 7.4
-  and later).
+  and later, and all versions of Rocky Linux), and can generally be
+  installed with ``yum install iperf3``.
 * Ubuntu:  `iperf3 <https://launchpad.net/ubuntu/+source/iperf3>`_,
   is available in Trusty (backports), and as a part of the main
-  release in Vivid and newer.
-* macOS:  via HomeBrew.
-* Windows:  `iperf3 binaries for Windows
-  <https://iperf.fr/iperf-download.php#windows>`_ are available from
-  iperf.fr (and other sources).
+  release in Vivid and newer. It can generally be installed with
+  ``sudo apt-get install iperf3``.
+* macOS:  via HomeBrew with ``brew install iperf3`` or MacPorts with
+  ``sudo port install iperf3``.
+* Windows:  iperf3 binaries for Windows (built with `Cygwin <https://www.cygwin.com/>`_) can be found in a variety of
+  locations, including `<https://files.budman.pw/>`_
+  (`discussion thread
+  <https://www.neowin.net/forum/topic/1234695-iperf/>`_).
+* Android:  iperf3 binaries for Android can be found in several
+  locations, including `<https://github.com/davidBar-On/android-iperf3/>`_.
 
 Source Distributions
 --------------------

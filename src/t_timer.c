@@ -48,7 +48,7 @@ timer_proc( TimerClientData client_data, struct iperf_time* nowP )
 }
 
 
-int 
+int
 main(int argc, char **argv)
 {
     Timer *tp;

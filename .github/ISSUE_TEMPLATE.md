@@ -1,9 +1,10 @@
 _NOTE: The iperf3 issue tracker is for registering bugs, enhancement
 requests, or submissions of code.  It is not a means for asking
 questions about building or using iperf3.  Those are best directed
-towards the iperf3 mailing list at iperf-dev@googlegroups.com or
-question sites such as Stack Overflow
-(http://www.stackoverflow.com/).  A list of frequently-asked questions
+towards the Discussions section for this project at
+https://github.com/esnet/iperf/discussions
+or to the iperf3 mailing list at iperf-dev@googlegroups.com.
+A list of frequently-asked questions
 regarding iperf3 can be found at http://software.es.net/iperf/faq.html._
 
 # Context
@@ -23,7 +24,9 @@ iperf3 on Windows, iOS, or Android._
   libraries, cross-compiling, etc.):
 
 _Please fill out one of the "Bug Report" or "Enhancement Request"
-sections, as appropriate._
+sections, as appropriate. Note that submissions of bug fixes, new
+features, etc. should be done as a pull request at
+https://github.com/esnet/iperf/pulls_
 
 # Bug Report
 
@@ -35,8 +38,6 @@ sections, as appropriate._
 
 * Possible Solution
 
-_Please submit patches or code changes as a pull request._
-
 # Enhancement Request
 
 * Current behavior
@@ -45,5 +46,3 @@ _Please submit patches or code changes as a pull request._
 
 * Implementation notes
 
-_If submitting a proposed implementation of an enhancement request,
-please use the pull request mechanism._

@@ -7,6 +7,6 @@ AC_ARG_ENABLE([static-bin],
     [:])
 AM_CONDITIONAL([ENABLE_STATIC_BIN], [test x$enable_static_bin = xno])
 
-AS_IF([test "x$enable_static_bin" == xyes],
+AS_IF([test "x$enable_static_bin" = xyes],
  [LDFLAGS="$LDFLAGS --static"]
  [])

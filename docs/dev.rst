@@ -25,10 +25,13 @@ Bug Reports
 -----------
 
 Before submitting a bug report, try checking out the latest version of
-the code, and confirm that it's not already fixed. Also see the :doc:`faq`. 
+the code, and confirm that it's not already fixed. Also see the :doc:`faq`.
 Then submit to the iperf3 issue tracker on GitHub:
 
 https://github.com/esnet/iperf/issues
+
+For reporting potential security issues, please contact the developers at
+iperf@es.net.
 
 **Note:** Issues submitted to the old iperf3 issue tracker on Google
 Code (or comments to existing issues on the Google Code issue tracker)
@@ -47,7 +50,7 @@ for a complete list of iperf3 options)::
     -T, --title str           prefix every output line with this string
     -F, --file name           xmit/recv the specified file
     -A, --affinity n/n,m      set CPU affinity (Linux and FreeBSD only)
-    -k, --blockcount #[KMG]   number of blocks (packets) to transmit (instead 
+    -k, --blockcount #[KMG]   number of blocks (packets) to transmit (instead
                               of -t or -n)
     -L, --flowlabel           set IPv6 flow label (Linux only)
 
@@ -62,7 +65,7 @@ Deprecated flags (currently no plans to support)::
     -d, --dualtest           Do a bidirectional test simultaneously
     -r, --tradeoff           Do a bidirectional test individually
     -T, --ttl                time-to-live, for multicast (default 1)
-    -x, --reportexclude [CDMSV]   exclude C(connection) D(data) M(multicast) 
+    -x, --reportexclude [CDMSV]   exclude C(connection) D(data) M(multicast)
                                   S(settings) V(server) reports
     -y, --reportstyle C      report as a Comma-Separated Values
 
@@ -130,8 +133,8 @@ The developers increment the:
 Release Engineering Checklist
 -----------------------------
 
-1. Update the ``README`` and ``RELEASE_NOTES`` files to be accurate. Make sure
-   that the "Known Issues" section of the ``README`` file and in this document
+1. Update the ``README.md`` and ``RELNOTES.md`` files to be accurate. Make sure
+   that the "Known Issues" section of the ``README.md`` file and in this document
    are up to date.
 
 2. Compose a release announcement.  Most of the release announcement
@@ -142,7 +145,7 @@ Release Engineering Checklist
    status`` emits no output), make the changes necessary to produce
    the new version, such as bumping version numbers::
 
-    vi RELEASE_NOTES   # update version number and release date
+    vi RELNOTES.md     # update version number and release date
     vi configure.ac    # update version parameter in AC_INIT
     vi src/iperf3.1    # update manpage revision date if needed
     vi src/libiperf.3  # update manpage revision date if needed
@@ -176,7 +179,7 @@ Release Engineering Checklist
 7. For extra points, actually try downloading, compiling, and
    smoke-testing the results of the tarball on all supported
    platforms.
-   
+
 8. Plug the SHA256 checksum into the release announcement.
 
 9. PGP-sign the release announcement text using ``gpg --clearsign``.
@@ -214,12 +217,14 @@ Release Engineering Checklist
     sending process by sending a copy to oneself first and attempting
     to verify the signature is highly encouraged.
 
-12. Update the iperf3 Project News section of the documentation site
+12. Update GitHub Releases with the current release notes.
+
+13. Update the iperf3 Project News section of the documentation site
     to announce the new release (see ``docs/news.rst`` and
     ``docs/conf.py`` in the source tree) and deploy a new build of the
     documentation to GitHub Pages.
 
-13. If an update to the on-line manual page is needed, it can be
+14. If an update to the on-line manual page is needed, it can be
     generated with this sequence of commands (tested on CentOS 7) and
     import the result into ``invoking.rst``::
 
@@ -233,7 +238,7 @@ Code Authors
 The main authors of iperf3 are (in alphabetical order):  Jon Dugan,
 Seth Elliott, Bruce A. Mah, Jeff Poskanzer, Kaustubh Prabhu.
 Additional code contributions have come from (also in alphabetical
-order):  Mark Ashley, Aaron Brown, Aeneas Jaißle, Susant Sahani, 
+order):  Mark Ashley, Aaron Brown, Aeneas Jaißle, Susant Sahani,
 Bruce Simpson, Brian Tierney.
 
 iperf3 contains some original code from iperf2.  The authors of iperf2

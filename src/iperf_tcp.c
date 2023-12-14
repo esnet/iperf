@@ -129,6 +129,7 @@ iperf_tcp_accept(struct iperf_test * test)
 
     if (Nread(s, cookie, COOKIE_SIZE, Ptcp) < 0) {
         i_errno = IERECVCOOKIE;
+        close(s);
         return -1;
     }
 

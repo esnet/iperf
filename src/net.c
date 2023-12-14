@@ -145,6 +145,7 @@ create_socket(int domain, int proto, const char *local, const char *bind_dev, in
     if ((gerror = getaddrinfo(server, portstr, &hints, &server_res)) != 0) {
 	if (local)
 	    freeaddrinfo(local_res);
+        freeaddrinfo(server_res);
         return -1;
     }
 

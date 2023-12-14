@@ -92,7 +92,19 @@ CXX="$PTHREAD_CXX"
 ])
 
 # Atomics
-AC_CHECK_HEADERS([stdatomic.h])
+AC_CHECK_HEADERS([stdatomic.h],
+    [AC_MSG_CHECKING([whether libatomic is required])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdatomic.h>]], [[atomic_uint_fast64_t i; i++;]])],
+        [AC_MSG_RESULT([no])],
+        [save_LIBS="$LIBS"
+        LIBS="$LIBS -latomic"
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdatomic.h>]], [[atomic_uint_fast64_t i; i++;]])],
+            [AC_MSG_RESULT([yes])],
+            [AC_MSG_ERROR([failed to find working configuration with atomics])]
+        )]
+    )],
+    []
+)
 
 # Check for poll.h (it's in POSIX so everyone should have it?)
 AC_CHECK_HEADERS([poll.h])

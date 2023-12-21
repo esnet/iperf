@@ -84,11 +84,11 @@
 #if defined(HAVE_INTTYPES_H)
 # include <inttypes.h>
 #else
-# ifndef PRIu64
+# ifndef PRId64
 #  if sizeof(long) == 8
-#   define PRIu64		"lu"
+#   define PRId64		"ld"
 #  else
-#   define PRIu64		"llu"
+#   define PRId64		"lld"
 #  endif
 # endif
 #endif
@@ -395,13 +395,13 @@ const char report_bw_retrans_cwnd_format[] =
 "[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %3u   %ss       %s\n";
 
 const char report_bw_udp_format[] =
-"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %" PRIu64 "/%" PRIu64 " (%.2g%%)  %s\n";
+"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %" PRId64 "/%" PRId64 " (%.2g%%)  %s\n";
 
 const char report_bw_udp_format_no_omitted_error[] =
-"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  Unknown/%" PRIu64 "  %s\n";
+"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  Unknown/%" PRId64 "  %s\n";
 
 const char report_bw_udp_sender_format[] =
-"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %" PRIu64 "  %s\n";
+"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %" PRId64 "  %s\n";
 
 const char report_summary[] =
 "Test Complete. Summary Results:\n";
@@ -413,10 +413,10 @@ const char report_sum_bw_retrans_format[] =
 "[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %3d             %s\n";
 
 const char report_sum_bw_udp_format[] =
-"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %" PRIu64 "/%" PRIu64 " (%.2g%%)  %s\n";
+"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %" PRId64 "/%" PRId64 " (%.2g%%)  %s\n";
 
 const char report_sum_bw_udp_sender_format[] =
-"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %" PRIu64 "  %s\n";
+"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %" PRId64 "  %s\n";
 
 const char report_omitted[] = "(omitted)";
 

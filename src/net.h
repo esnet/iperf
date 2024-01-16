@@ -27,6 +27,14 @@
 #ifndef __NET_H
 #define __NET_H
 
+#ifdef __CYGWIN__
+int iperf_getaddrinfo(const char *restrict node,
+                       const char *restrict service,
+                       const struct addrinfo *restrict hints,
+                       struct addrinfo **restrict res);
+#else
+#define iperf_getaddrinfo getaddrinfo
+#endif
 int timeout_connect(int s, const struct sockaddr *name, socklen_t namelen, int timeout);
 int create_socket(int domain, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, struct addrinfo **server_res_out);
 int netdial(int domain, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, int timeout);

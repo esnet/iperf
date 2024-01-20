@@ -180,6 +180,16 @@ else
     fi
 fi
 
+# Get the size of long int
+AC_CACHE_CHECK([Size of long int],
+[iperf3_cv_sizeof_long],
+AC_RUN_IFELSE(
+  [AC_LANG_PROGRAM([[#include <stdio.h>]],
+                   [[fprintf(stderr, "%d", sizeof(long)); return(0)]])],
+  [iperf3_cv_sizeof_long=`./conftest$EXEEXT 2>&1`],
+  [AC_MSG_ERROR(Failed to compile and run size of long test)]))
+AC_DEFINE_UNQUOTED([SIZE_OF_LONG_INT], $iperf3_cv_sizeof_long, [Size of long int.])
+
 # Check for TCP_CONGESTION sockopt (believed to be Linux and FreeBSD only)
 AC_CACHE_CHECK([TCP_CONGESTION socket option],
 [iperf3_cv_header_tcp_congestion],

@@ -94,13 +94,13 @@
 # include <inttypes.h>
 #else
 # ifndef PRIu64
-#  if sizeof(long) == 8
+#  if SIZE_OF_LONG_INT == 8
 #   define PRIu64		"lu"
 #  else
 #   define PRIu64		"llu"
 #  endif
 # ifndef PRId64
-#  if sizeof(long) == 8
+#  if SIZE_OF_LONG_INT == 8
 #   define PRId64		"ld"
 #  else
 #   define PRId64		"lld"

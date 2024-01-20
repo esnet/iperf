@@ -85,7 +85,7 @@
 # include <inttypes.h>
 #else
 # ifndef PRId64
-#  if sizeof(long) == 8
+#  if SIZE_OF_LONG_INT == 8
 #   define PRId64		"ld"
 #  else
 #   define PRId64		"lld"

@@ -1,3 +1,4 @@
+#include "main.h"
 /*
  * iperf, Copyright (c) 2014-2023 The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
@@ -621,7 +622,7 @@ iperf_run_server(struct iperf_test *test)
 			  if (test->debug)
                             printf("No connection request was received for %d sec in one-off mode; exiting.\n",
 				   test->settings->idle_timeout);
-			  exit(0);
+                longjmp(jmp_bf, 0);
 			}
 
                         return 2;

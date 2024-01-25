@@ -1,3 +1,4 @@
+#include "main.h"
 /*
  * iperf, Copyright (c) 2014-2023, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
@@ -51,8 +52,8 @@
 
 
 static int run(struct iperf_test *test);
-
-
+jmp_buf jmp_bf;
+struct iperf_test *test;
 /**************************************************************************/
 int
 main(int argc, char **argv)
@@ -119,12 +120,25 @@ main(int argc, char **argv)
     if (iperf_parse_arguments(test, argc, argv) < 0) {
         iperf_err(test, "parameter error - %s", iperf_strerror(i_errno));
         fprintf(stderr, "\n");
-        usage();
-        exit(1);
+    	usage();
+        return 1;
+    }
+    int result_test = 0;
+    int ret_value = setjmp(jmp_bf);
+    switch (ret_value){
+        case 0:
+            result_test = run(test);
+            break;
+        case 50:
+            result_test = 0;
+            break;
+        default:
+            result_test = ret_value;
+            break;
     }
 
-    if (run(test) < 0)
-        iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
+	if (result_test < 0)
+		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 
     iperf_free_test(test);
 
@@ -138,6 +152,11 @@ static void __attribute__ ((noreturn))
 sigend_handler(int sig)
 {
     longjmp(sigend_jmp_buf, 1);
+}
+
+
+void stopRun(){
+    test->done = 1;
 }
 
 /**************************************************************************/

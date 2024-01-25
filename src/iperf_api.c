@@ -1,3 +1,4 @@
+#include "main.h"
 /*
  * iperf, Copyright (c) 2014-2022, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
@@ -1209,8 +1210,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'v':
                 printf("%s (cJSON %s)\n%s\n%s\n", version, cJSON_Version(), get_system_info(),
-		       get_optional_features());
-                exit(0);
+		        get_optional_features());
+                longjmp(jmp_bf, 0);
             case 's':
                 if (test->role == 'c') {
                     i_errno = IESERVCLIENT;
@@ -1621,11 +1622,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		break;
 	    case 'h':
 		usage_long(stdout);
-		exit(0);
+        longjmp(jmp_bf, 0);
             default:
                 fprintf(stderr, "\n");
                 usage();
-                exit(1);
+                longjmp(jmp_bf, 1);
         }
     }
 

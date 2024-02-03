@@ -51,12 +51,15 @@
 #include "iperf_api.h"
 
 /*
- * Read entropy from /dev/urandom
+ * Read entropy using arc4random_buf() if exists, otherwise from /dev/urandom
  * Errors are fatal.
  * Returns 0 on success.
  */
 int readentropy(void *out, size_t outsize)
 {
+#ifdef HAVE_ARC4RANDOM_BUF
+    arc4random_buf(out, outsize);
+#else
     static FILE *frandom;
     static const char rndfile[] = "/dev/urandom";
 
@@ -75,6 +78,7 @@ int readentropy(void *out, size_t outsize)
                       rndfile,
                       feof(frandom) ? "EOF" : strerror(errno));
     }
+#endif
     return 0;
 }
 

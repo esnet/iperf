@@ -241,6 +241,9 @@ AC_CHECK_FUNCS([sendfile])
 # connections.
 AC_CHECK_FUNCS([getline])
 
+# Check for arc4random_buf().
+AC_CHECK_FUNCS([arc4random_buf])
+
 # Check for packet pacing socket option (Linux only for now).
 AC_CACHE_CHECK([SO_MAX_PACING_RATE socket option],
 [iperf3_cv_header_so_max_pacing_rate],

@@ -194,7 +194,7 @@ the executable.
           --rcv-timeout #
                  set idle timeout for receiving data  during  active  tests.  The
                  receiver will halt a test if no data is received from the sender
-                 for this number of ms (default to 12000 ms, or 2 minutes).
+                 for this number of ms (default to 120000 ms, or 2 minutes).
    
           --snd-timeout #
                  set timeout for unacknowledged TCP data (on both test  and  con-

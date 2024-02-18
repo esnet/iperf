@@ -61,9 +61,7 @@
 #include <openssl/evp.h>
 #endif // HAVE_SSL
 
-#ifdef HAVE_PTHREAD
-#include <pthread.h>
-#endif // HAVE_PTHREAD
+#include "iperf_pthread.h"
 
 /*
  * Atomic types highly desired, but if not, we approximate what we need

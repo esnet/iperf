@@ -29,6 +29,8 @@ Setting test parameters:
     void iperf_set_test_server_hostname( struct iperf_test *t, char *server_host );
     void iperf_set_test_server_port( struct iperf_test *t, int server_port );
     void iperf_set_test_duration( struct iperf_test *t, int duration );
+    void iperf_set_test_reporter_interval(struct iperf_test *t, double reporter_interval);
+    void iperf_set_test_stats_interval(struct iperf_test t*, double stats_interval);
     void iperf_set_test_blksize( struct iperf_test *t, int blksize );
     void iperf_set_test_num_streams( struct iperf_test *t, int num_streams );
     void iperf_set_test_json_output( struct iperf_test *t, int json_output );

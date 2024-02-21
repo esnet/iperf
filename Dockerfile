@@ -4,14 +4,14 @@ LABEL maintainer="johann.hackler@fokus.fraunhofer.de"
 # Update and install dependencies
 RUN apt-get -y update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    tzdata make bash git unzip wget curl openjdk-8-jdk build-essential autoconf nano tree python3 && \
+    tzdata make bash git unzip wget curl openjdk-8-jdk build-essential autoconf nano tree python3 libpthread-stubs0-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 ARG API_VERSION=31
 ARG SDK_VERSION=4333796
 ARG NDK_VERSION=r26b
-ARG IPERF_VERSION=iperf-3.15
+ARG IPERF_VERSION=iperf-3.16
 
 ENV ANDROID_SDK_VERSION=${SDK_VERSION}
 ENV ANDROID_SDK_HOME=/opt/android-sdk

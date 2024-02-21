@@ -1,10 +1,11 @@
 LOCAL_PATH := /tmp/iperf
 
 include $(CLEAR_VARS)
+include $(BUILD_HOST_SHARED_LIBRARY)
 
-LOCAL_MODULE := iperf3.15
+LOCAL_MODULE := iperf3.16
 LOCAL_MODULE_TAGS := dev
-LOCAL_CFLAGS := -DHAVE_CONFIG_H -UAF_INET6 -w -Wno-error=format-security -funwind-tables
+LOCAL_CFLAGS := -DHAVE_CONFIG_H -UAF_INET6 -w -Wno-error=format-security -funwind-tables -D_GNU_SOURCE
 LOCAL_LDLIBS := -llog
 LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
 
@@ -22,6 +23,7 @@ LOCAL_SRC_FILES := \
     src/iperf_server_api.c \
     src/iperf_tcp.c \
     src/iperf_time.c \
+    src/iperf_pthread.c \
     src/iperf_udp.c \
     src/iperf_util.c \
     src/net.c \

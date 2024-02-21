@@ -69,5 +69,7 @@ JNIEXPORT jint JNICALL Java_de_fraunhofer_fokus_OpenMobileNetworkToolkit_Iperf3_
 JNIEXPORT jint JNICALL Java_de_fraunhofer_fokus_OpenMobileNetworkToolkit_Iperf3_Iperf3Worker_iperf3Stop(JNIEnv *env, jobject obj) {
     LOGD("stop function called!\n");
     stopRun();
-    return 0; // You should return an appropriate value here, depending on your needs.
+    LOGD("exiting....!\n");
+    return 0;
 }
+

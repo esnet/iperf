@@ -26,6 +26,7 @@
  * file for complete information.
  */
 #include "iperf_config.h"
+#include <android/log.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,7 +50,10 @@
 #include "iperf_locale.h"
 #include "net.h"
 #include "units.h"
+#define  LOG_TAG    "main"
 
+#define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+#define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
 static int run(struct iperf_test *test);
 jmp_buf jmp_bf;
@@ -58,7 +62,6 @@ struct iperf_test *test;
 int
 main(int argc, char **argv)
 {
-    struct iperf_test *test;
 
     /*
      * Atomics check. We prefer to have atomic types (which is
@@ -142,7 +145,7 @@ main(int argc, char **argv)
 
     iperf_free_test(test);
 
-    return 0;
+    return result_test;
 }
 
 
@@ -156,7 +159,8 @@ sigend_handler(int sig)
 
 
 void stopRun(){
-    test->done = 1;
+	LOGD("stopRun() called!\n");
+	test->done = 1;
 }
 
 /**************************************************************************/
@@ -215,10 +219,10 @@ run(struct iperf_test *test)
 	case 'c':
 	    if (iperf_create_pidfile(test) < 0) {
 		i_errno = IEPIDFILE;
-		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
+			iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 	    }
 	    if (iperf_run_client(test) < 0)
-		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
+			iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 	    iperf_delete_pidfile(test);
             break;
         default:

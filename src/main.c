@@ -33,9 +33,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <unistd.h>
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>

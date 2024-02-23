@@ -81,17 +81,7 @@
 
 #include "version.h"
 
-#if defined(HAVE_INTTYPES_H)
-# include <inttypes.h>
-#else
-# ifndef PRId64
-#  if sizeof(long) == 8
-#   define PRId64		"ld"
-#  else
-#   define PRId64		"lld"
-#  endif
-# endif
-#endif
+#include <inttypes.h>
 
 #ifdef __cplusplus
 extern    "C"

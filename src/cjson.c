@@ -45,9 +45,8 @@
 #include <limits.h>
 #include <ctype.h>
 #include <float.h>
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
+#include <inttypes.h>
 #include <sys/types.h>
 
 #ifdef ENABLE_LOCALES
@@ -88,25 +87,6 @@
 #else
 #define NAN 0.0/0.0
 #endif
-#endif
-
-#if defined(HAVE_INTTYPES_H)
-# include <inttypes.h>
-#else
-# ifndef PRIu64
-#  if sizeof(long) == 8
-#   define PRIu64		"lu"
-#  else
-#   define PRIu64		"llu"
-#  endif
-# ifndef PRId64
-#  if sizeof(long) == 8
-#   define PRId64		"ld"
-#  else
-#   define PRId64		"lld"
-#  endif
-# endif
-# endif
 #endif
 
 typedef struct {

@@ -4,9 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
 
 #include <iperf_api.h>
 

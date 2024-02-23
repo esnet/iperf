@@ -31,9 +31,7 @@
 #include <sys/time.h>
 #include <setjmp.h>
 #include <stdio.h>
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
 #ifdef __cplusplus
 extern "C" { /* open extern "C" */
 #endif

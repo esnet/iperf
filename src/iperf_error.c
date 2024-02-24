@@ -507,6 +507,10 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "unable to destroy thread attributes");
             perr = 1;
             break;
+	case IEPTHREADNOTRUNNING:
+            snprintf(errstr, len, "a thread stopped running unexpectedly");
+            perr = 1;
+            break;
 	default:
 	    snprintf(errstr, len, "int_errno=%d", int_errno);
 	    perr = 1;

@@ -385,6 +385,7 @@ iperf_connect(struct iperf_test *test)
 {
     int opt;
     socklen_t len;
+    int i;
 
     if (NULL == test)
     {
@@ -397,12 +398,32 @@ iperf_connect(struct iperf_test *test)
     make_cookie(test->cookie);
 
     /* Create and connect the control channel */
-    if (test->ctrl_sck < 0)
+    if (test->ctrl_sck < 0) {
 	// Create the control channel using an ephemeral port
 	test->ctrl_sck = netdial(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, 0, test->server_hostname, test->server_port, test->settings->connect_timeout);
+    }
     if (test->ctrl_sck < 0) {
-        i_errno = IECONNECT;
-        return -1;
+        if (errno == ECONNREFUSED && test->settings->domain == AF_UNSPEC) {
+            // Retry connection using the other IPv6/IPv4 addr type if hostname is not specific IP address
+            if (iperf_hostname_type(test, test->server_hostname) == 0 &&
+               (test->ctrl_sck == -4 || test->ctrl_sck == -6))
+            {
+                if (test->verbose) {
+                    i = (test->ctrl_sck == -4) ? 6 : 4;
+                    iperf_printf(test, report_retry_after_connect_refused, i, -test->ctrl_sck);
+                }
+ 
+                if (test->ctrl_sck == -4)
+                    test->settings->domain = AF_INET6;
+                else
+                    test->settings->domain = AF_INET;
+                test->ctrl_sck = netdial(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, 0, test->server_hostname, test->server_port, test->settings->connect_timeout);
+            }
+        }
+        if (test->ctrl_sck < 0) {
+            i_errno = IECONNECT;
+            return -1;
+        }
     }
 
     // set TCP_NODELAY for lower latency on control messages

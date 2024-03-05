@@ -1010,6 +1010,41 @@ iperf_on_test_finish(struct iperf_test *test)
 {
 }
 
+/*
+ * iperf_hostname_type  indicate whether a string formatted as "<addr>[%<device>]" is an
+ * IPv4 address, IPv6 address or other.  Return value:
+ *   4/6: hostname is IPv4/IPv6 addr.
+ *   0: other address type (probably FQDN)
+ *  -1: error
+ */
+int
+iperf_hostname_type(struct iperf_test *test, char *hostname) {
+    struct in6_addr ipv6_addr;
+    struct in_addr ipv4_addr;
+    char *phost = hostname;
+    int ret = 0;
+
+    // Format is <addr>[%<device>]
+    if ((phost = strdup(hostname)) == NULL) {
+        ret = -1;
+    } else {
+        strtok(phost, "%"); // remove "%" postfix part
+
+        // Determine address type
+        if (inet_pton(AF_INET6, phost, &ipv6_addr) == 1) {
+            ret = 6; // IPv6 address
+        } else if (inet_pton(AF_INET, phost, &ipv4_addr) == 1) {
+            ret = 4; // IPv4 address
+        }
+        
+        free(phost);
+    }
+
+    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+        iperf_printf(test, "Hostname address type=%d\n", ret);
+    }
+    return ret;
+}
 
 /******************************************************************************/
 

@@ -202,6 +202,10 @@ iperf-3.17, OAEP padding is used, however this is a breaking change
 that is not compatible with older iperf3 versions.  Use this option to
 preserve the less secure, but more compatible, behavior.
 .TP
+.BR -m ", " --mptcp " "
+use mptcp variant for the current protocol. This only applies to
+TCP and enables MPTCP usage.
+.TP
 .BR -d ", " --debug " "
 emit debugging output.
 Primarily (perhaps exclusively) of use to developers.

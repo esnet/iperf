@@ -362,6 +362,17 @@ AC_COMPILE_IFELSE(
 if test "x$iperf3_cv_header_msg_trunc" = "xyes"; then
     AC_DEFINE([HAVE_MSG_TRUNC], [1], [Have MSG_TRUNC recv option.])
 fi
+# Check for IPPROTO_MPTCP (Linux)
+AC_CACHE_CHECK([MPTCP protocol],
+[iperf3_cv_header_ipproto_mptcp],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <netinet/in.h>]],
+		   [[int foo = IPPROTO_MPTCP;]])],
+  iperf3_cv_header_ipproto_mptcp=yes,
+  iperf3_cv_header_ipproto_mptcp=no))
+if test "x$iperf3_cv_header_ipproto_mptcp" = "xyes"; then
+    AC_DEFINE([HAVE_IPPROTO_MPTCP], [1], [Have MPTCP protocol.])
+fi
 
 # Check if we need -lrt for clock_gettime
 AC_SEARCH_LIBS(clock_gettime, [rt posix4])

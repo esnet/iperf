@@ -1155,6 +1155,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_TCP_KEEPALIVE)
         {"cntl-ka", optional_argument, NULL, OPT_CNTL_KA},
 #endif /* HAVE_TCP_KEEPALIVE */
+#if defined(HAVE_IPPROTO_MPTCP)
+        {"mptcp", no_argument, NULL, 'm'},
+#endif
         {"debug", optional_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -1183,7 +1186,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     FILE *ptr_file;
 #endif /* HAVE_SSL */
 
-    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:mhX:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
 		portno = atoi(optarg);
@@ -1695,6 +1698,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->settings->connect_timeout = unit_atoi(optarg);
 		client_flag = 1;
 		break;
+#if defined(HAVE_IPPROTO_MPTCP)
+	    case 'm':
+		set_protocol(test, Ptcp);
+		test->mptcp = 1;
+		break;
+#endif
 	    case 'h':
 		usage_long(stdout);
 		exit(0);
@@ -2307,6 +2316,10 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddTrueToObject(j, "reverse");
 	if (test->bidirectional)
 	            cJSON_AddTrueToObject(j, "bidirectional");
+#if defined(HAVE_IPPROTO_MPTCP)
+	if (test->mptcp)
+	    cJSON_AddTrueToObject(j, "mptcp");
+#endif
 	if (test->settings->socket_bufsize)
 	    cJSON_AddNumberToObject(j, "window", test->settings->socket_bufsize);
 	if (test->settings->blksize)
@@ -2425,6 +2438,10 @@ get_parameters(struct iperf_test *test)
 	    iperf_set_test_reverse(test, 1);
         if ((j_p = iperf_cJSON_GetObjectItemType(j, "bidirectional", cJSON_True)) != NULL)
             iperf_set_test_bidirectional(test, 1);
+#if defined(HAVE_IPPROTO_MPTCP)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "mptcp", cJSON_True)) != NULL)
+	    test->mptcp = 1;
+#endif
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "window", cJSON_Number)) != NULL)
 	    test->settings->socket_bufsize = j_p->valueint;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "len", cJSON_Number)) != NULL)

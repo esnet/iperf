@@ -64,6 +64,10 @@
 #endif /* TCP_CA_NAME_MAX */
 #endif /* HAVE_TCP_CONGESTION */
 
+// variable for number of active threads count
+static volatile int running_threads = 0;
+static pthread_mutex_t running_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 void *
 iperf_server_worker_run(void *s) {
     struct iperf_stream *sp = (struct iperf_stream *) s;
@@ -88,6 +92,12 @@ iperf_server_worker_run(void *s) {
     return NULL;
 
   cleanup_and_fail:
+    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+        iperf_printf(sp->test, "Thread number %d FD %d terminated unexpectedly\n", sp->thread_number, sp->socket);
+    }
+    pthread_mutex_lock(&running_mutex);
+    running_threads--;  // Indicate that the thread failed
+    pthread_mutex_unlock(&running_mutex);
     return NULL;
 }
 
@@ -422,16 +432,16 @@ cleanup_server(struct iperf_test *test)
         if (rc != 0 && rc != ESRCH) {
             i_errno = IEPTHREADCANCEL;
             errno = rc;
-            iperf_err(test, "cleanup_server in pthread_cancel - %s", iperf_strerror(i_errno));
+            iperf_err(test, "cleanup_server in pthread_cancel of thread %d - %s", sp->thread_number, iperf_strerror(i_errno));
         }
         rc = pthread_join(sp->thr, NULL);
         if (rc != 0 && rc != ESRCH) {
             i_errno = IEPTHREADJOIN;
             errno = rc;
-            iperf_err(test, "cleanup_server in pthread_join - %s", iperf_strerror(i_errno));
+            iperf_err(test, "cleanup_server in pthread_join of thread %d - %s", sp->thread_number, iperf_strerror(i_errno));
         }
         if (test->debug_level >= DEBUG_LEVEL_INFO) {
-            iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
+            iperf_printf(test, "Thread number %d FD %d stopped\n", sp->thread_number, sp->socket);
         }
     }
     i_errno = i_errno_save;
@@ -509,6 +519,7 @@ iperf_run_server(struct iperf_test *test)
     int64_t t_usecs;
     int64_t timeout_us;
     int64_t rcv_timeout_us;
+    int total_num_streams = 0;
 
     if (test->logfile)
         if (iperf_open_logfile(test) < 0)
@@ -870,14 +881,24 @@ iperf_run_server(struct iperf_test *test)
                         cleanup_server(test);
                     };
 
+                    pthread_mutex_lock(&running_mutex);
+                    running_threads = 0;
+                    total_num_streams = 0;
+                    pthread_mutex_unlock(&running_mutex);
                     SLIST_FOREACH(sp, &test->streams, streams) {
+                        pthread_mutex_lock(&running_mutex);
+                        running_threads++; // Count running threads
+                        sp->thread_number = running_threads;
+                        pthread_mutex_unlock(&running_mutex);
+                        total_num_streams++;
+
                         if (pthread_create(&(sp->thr), &attr, &iperf_server_worker_run, sp) != 0) {
                             i_errno = IEPTHREADCREATE;
                             cleanup_server(test);
                             return -1;
                         }
                         if (test->debug_level >= DEBUG_LEVEL_INFO) {
-                            iperf_printf(test, "Thread FD %d created\n", sp->socket);
+                            iperf_printf(test, "Thread number %d FD %d created\n", sp->thread_number, sp->socket);
                         }
                     }
                     if (test->debug_level >= DEBUG_LEVEL_INFO) {
@@ -888,6 +909,15 @@ iperf_run_server(struct iperf_test *test)
                         cleanup_server(test);
                     };
                 }
+            }
+        }
+
+        /* Terminate if any thread failed */
+        if (test->state == TEST_RUNNING) {
+            if (running_threads != total_num_streams) {
+                i_errno = IEPTHREADNOTRUNNING;
+                iperf_err(test, "Number of running threads is %d but expected %d", running_threads, test->num_streams);
+                cleanup_server(test);
             }
         }
 

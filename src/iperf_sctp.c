@@ -689,6 +689,7 @@ iperf_sctp_bindx(struct iperf_test *test, int s, int is_server)
     xaddrs = (struct sockaddr *)malloc(xaddrlen);
     if (!xaddrs) {
             i_errno = IESETSCTPBINDX;
+            printf("WARNING:  Memory allocation failed for xaddrs buffer\n");
             retval = -1;
             goto out;
     }

@@ -1137,6 +1137,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     {"rsa-private-key-path", required_argument, NULL, OPT_SERVER_RSA_PRIVATE_KEY},
     {"authorized-users-path", required_argument, NULL, OPT_SERVER_AUTHORIZED_USERS},
     {"time-skew-threshold", required_argument, NULL, OPT_SERVER_SKEW_THRESHOLD},
+    {"use-pkcs1-padding", no_argument, NULL, OPT_USE_PKCS1_PADDING},
 #endif /* HAVE_SSL */
 	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
 	{"pacing-timer", required_argument, NULL, OPT_PACING_TIMER},
@@ -1630,6 +1631,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 return -1;
             }
             break;
+	case OPT_USE_PKCS1_PADDING:
+	    test->use_pkcs1_padding = 1;
+	    break;
 #endif /* HAVE_SSL */
 	    case OPT_PACING_TIMER:
 		test->settings->pacing_timer = unit_atoi(optarg);
@@ -2070,7 +2074,7 @@ int test_is_authorized(struct iperf_test *test){
     if (test->settings->authtoken){
         char *username = NULL, *password = NULL;
         time_t ts;
-        int rc = decode_auth_setting(test->debug, test->settings->authtoken, test->server_rsa_private_key, &username, &password, &ts);
+        int rc = decode_auth_setting(test->debug, test->settings->authtoken, test->server_rsa_private_key, &username, &password, &ts, test->use_pkcs1_padding);
 	if (rc) {
 	    return -1;
 	}
@@ -2255,7 +2259,7 @@ send_parameters(struct iperf_test *test)
 #if defined(HAVE_SSL)
 	/* Send authentication parameters */
 	if (test->settings->client_username && test->settings->client_password && test->settings->client_rsa_pubkey){
-	    int rc = encode_auth_setting(test->settings->client_username, test->settings->client_password, test->settings->client_rsa_pubkey, &test->settings->authtoken);
+	    int rc = encode_auth_setting(test->settings->client_username, test->settings->client_password, test->settings->client_rsa_pubkey, &test->settings->authtoken, test->use_pkcs1_padding);
 
 	    if (rc) {
 		cJSON_Delete(j);

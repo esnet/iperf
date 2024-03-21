@@ -337,6 +337,18 @@ if test "x$iperf3_cv_header_tcp_info_snd_wnd" = "xyes"; then
   AC_DEFINE([HAVE_TCP_INFO_SND_WND], [1], [Have tcpi_snd_wnd field in tcp_info.])
 fi
 
+# Check for IPPROTO_MPTCP support
+AC_CACHE_CHECK([IPPROTO_MPTCP support],
+[iperf3_cv_header_ipproto_mptcp],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <linux/in.h>]],
+                   [[int foo = IPPROTO_MPTCP;]])],
+  iperf3_cv_header_ipproto_mptcp=yes,
+  iperf3_cv_header_ipproto_mptcp=no))
+if test "x$iperf3_cv_header_ipproto_mptcp" = "xyes"; then
+    AC_DEFINE([HAVE_IPPROTO_MPTCP], [1], [Have IPPROTO_MPTCP support.])
+fi
+
 # Check if we need -lrt for clock_gettime
 AC_SEARCH_LIBS(clock_gettime, [rt posix4])
 # Check for clock_gettime support

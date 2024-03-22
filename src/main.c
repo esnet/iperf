@@ -154,7 +154,7 @@ run(struct iperf_test *test)
         case 's':
 	    if (test->daemon) {
 		int rc;
-		rc = daemon(0, 0);
+		rc = daemon(1, 0);
 		if (rc < 0) {
 		    i_errno = IEDAEMON;
 		    iperf_errexit(test, "error - %s", iperf_strerror(i_errno));

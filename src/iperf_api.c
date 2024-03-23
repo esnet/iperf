@@ -1313,7 +1313,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	        break;
             case 't':
                 test->duration = atoi(optarg);
-                if (test->duration > MAX_TIME) {
+                if (test->duration > MAX_TIME || test->duration < 0) {
                     i_errno = IEDURATION;
                     return -1;
                 }

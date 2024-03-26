@@ -4427,12 +4427,6 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         free(sp);
         return NULL;
     }
-    if (unlink(template) < 0) {
-        i_errno = IECREATESTREAM;
-        free(sp->result);
-        free(sp);
-        return NULL;
-    }
     if (ftruncate(sp->buffer_fd, test->settings->blksize) < 0) {
         i_errno = IECREATESTREAM;
         free(sp->result);
@@ -4447,6 +4441,13 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         return NULL;
     }
     sp->pending_size = 0;
+
+    if (unlink(template) < 0) {
+        i_errno = IECREATESTREAM;
+        free(sp->result);
+        free(sp);
+        return NULL;
+    }
 
     /* Set socket */
     sp->socket = s;

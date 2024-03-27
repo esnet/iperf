@@ -4889,16 +4889,7 @@ iperf_json_finish(struct iperf_test *test)
         cJSON_Delete(test->json_top);
         test->json_top = NULL;
     }
-    // Get ASCII rendering of JSON structure.  Then make our
-    // own copy of it and return the storage that cJSON allocated
-    // on our behalf.  We keep our own copy around.
-    char *str = cJSON_Print(test->json_top);
-    if (str == NULL)
-	return -1;
-    test->json_output_string = strdup(str);
-    cJSON_free(str);
-    if (test->json_output_string == NULL)
-        return -1;
+
     if (test->json_stream) {
         cJSON *error = cJSON_GetObjectItem(test->json_top, "error");
         if (error) {

@@ -392,7 +392,6 @@ iperf_connect(struct iperf_test *test)
         return -1;
     }
     FD_ZERO(&test->read_set);
-    FD_ZERO(&test->write_set);
 
     make_cookie(test->cookie);
 
@@ -499,6 +498,9 @@ iperf_connect(struct iperf_test *test)
 int
 iperf_client_end(struct iperf_test *test)
 {
+    if (test->debug_level >= DEBUG_LEVEL_INFO)
+	fprintf(stderr, "Ending client test.\n");
+
     if (NULL == test)
     {
         iperf_err(NULL, "No test\n");
@@ -533,7 +535,7 @@ iperf_run_client(struct iperf_test * test)
 {
     int startup;
     int result = 0;
-    fd_set read_set, write_set;
+    fd_set read_set;
     struct iperf_time now;
     struct timeval* timeout = NULL;
     struct iperf_stream *sp;
@@ -544,6 +546,7 @@ iperf_run_client(struct iperf_test * test)
     int64_t t_usecs;
     int64_t timeout_us;
     int64_t rcv_timeout_us;
+    int64_t rcv_timeout_value_in_us;
     int i_errno_save;
 
     if (NULL == test)
@@ -580,8 +583,9 @@ iperf_run_client(struct iperf_test * test)
 
     /* Begin calculating CPU utilization */
     cpu_util(NULL);
+    rcv_timeout_value_in_us = (test->settings->rcv_timeout.secs * SEC_TO_US) + test->settings->rcv_timeout.usecs;
     if (test->mode != SENDER)
-        rcv_timeout_us = (test->settings->rcv_timeout.secs * SEC_TO_US) + test->settings->rcv_timeout.usecs;
+        rcv_timeout_us = rcv_timeout_value_in_us;
     else
         rcv_timeout_us = 0;
 
@@ -591,12 +595,17 @@ iperf_run_client(struct iperf_test * test)
     startup = 1;
     while (test->state != IPERF_DONE) {
 	memcpy(&read_set, &test->read_set, sizeof(fd_set));
-	memcpy(&write_set, &test->write_set, sizeof(fd_set));
 	iperf_time_now(&now);
 	timeout = tmr_timeout(&now);
 
-        // In reverse active mode client ensures data is received
-        if (test->state == TEST_RUNNING && rcv_timeout_us > 0) {
+        // In reverse/bidir active mode client ensures data is received.
+        // Same for receiving control messages at the end of the test. 
+        if ( (rcv_timeout_us > 0 && test->state == TEST_RUNNING)
+             || (rcv_timeout_value_in_us > 0
+                 && (test->state == TEST_END
+                     || test->state == EXCHANGE_RESULTS
+                     || test->state == DISPLAY_RESULTS)) )
+        {
             timeout_us = -1;
             if (timeout != NULL) {
                 used_timeout.tv_sec = timeout->tv_sec;
@@ -621,16 +630,22 @@ iperf_run_client(struct iperf_test * test)
 
     result = select(test->max_fd + 1,
                     &read_set,
-                    (test->state == TEST_RUNNING && !test->reverse) ? &write_set : NULL,
+                    NULL,
                     NULL,
                     timeout);
 #else
-	result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
+	result = select(test->max_fd + 1, &read_set, NULL, NULL, timeout);
 #endif // __vxworks or __VXWORKS__
 	if (result < 0 && errno != EINTR) {
   	    i_errno = IESELECT;
 	    goto cleanup_and_fail;
-        } else if (result == 0 && test->state == TEST_RUNNING && rcv_timeout_us > 0) {
+        } else if ( result == 0 &&
+                    ((rcv_timeout_us > 0 && test->state == TEST_RUNNING)
+                     || (rcv_timeout_value_in_us > 0
+                         && (test->state == TEST_END
+                         || test->state == EXCHANGE_RESULTS
+                         || test->state == DISPLAY_RESULTS))) )
+        {
             /*
              * If nothing was received in non-reverse running state
              * then probably something got stuck - either client,
@@ -748,6 +763,8 @@ iperf_run_client(struct iperf_test * test)
 		test->done = 1;
 		cpu_util(test->cpu_util);
 		test->stats_callback(test);
+                 // Timers not needed at test end and may interrupt with select() receive timeout
+                iperf_cancel_test_timers(test);
 		if (iperf_set_send_state(test, TEST_END) != 0)
                     goto cleanup_and_fail;
 	    }

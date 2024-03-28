@@ -135,6 +135,7 @@ int
 iperf_accept(struct iperf_test *test)
 {
     int s;
+    int ret = -1;
     signed char rbuf = ACCESS_DENIED;
     socklen_t len;
     struct sockaddr_storage addr;
@@ -142,7 +143,7 @@ iperf_accept(struct iperf_test *test)
     len = sizeof(addr);
     if ((s = accept(test->listener, (struct sockaddr *) &addr, &len)) < 0) {
         i_errno = IEACCEPT;
-        return -1;
+        return ret;
     }
 
     if (test->ctrl_sck == -1) {
@@ -152,7 +153,7 @@ iperf_accept(struct iperf_test *test)
         int flag = 1;
         if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int))) {
             i_errno = IESETNODELAY;
-            return -1;
+            goto error_handling;
         }
 
 #if defined(HAVE_TCP_USER_TIMEOUT)
@@ -160,7 +161,7 @@ iperf_accept(struct iperf_test *test)
         if ((opt = test->settings->snd_timeout)) {
             if (setsockopt(s, IPPROTO_TCP, TCP_USER_TIMEOUT, &opt, sizeof(opt)) < 0) {
                 i_errno = IESETUSERTIMEOUT;
-                return -1;
+                goto error_handling;
             }
         }
 #endif /* HAVE_TCP_USER_TIMEOUT */
@@ -172,18 +173,18 @@ iperf_accept(struct iperf_test *test)
              * (i.e. timed out).
              */
             i_errno = IERECVCOOKIE;
-            return -1;
+            goto error_handling;
         }
-	FD_SET(test->ctrl_sck, &test->read_set);
-	if (test->ctrl_sck > test->max_fd) test->max_fd = test->ctrl_sck;
+    FD_SET(test->ctrl_sck, &test->read_set);
+    if (test->ctrl_sck > test->max_fd) test->max_fd = test->ctrl_sck;
 
-	if (iperf_set_send_state(test, PARAM_EXCHANGE) != 0)
-            return -1;
-        if (iperf_exchange_parameters(test) < 0)
-            return -1;
-	if (test->server_affinity != -1)
-	    if (iperf_setaffinity(test, test->server_affinity) != 0)
-		return -1;
+    if (iperf_set_send_state(test, PARAM_EXCHANGE) != 0)
+        goto error_handling;
+    if (iperf_exchange_parameters(test) < 0)
+        goto error_handling;
+    if (test->server_affinity != -1)
+        if (iperf_setaffinity(test, test->server_affinity) != 0)
+            goto error_handling;
         if (test->on_connect)
             test->on_connect(test);
     } else {
@@ -202,8 +203,10 @@ iperf_accept(struct iperf_test *test)
         }
         close(s);
     }
-
     return 0;
+    error_handling:
+        close(s);
+        return ret;
 }
 
 

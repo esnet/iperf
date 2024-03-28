@@ -385,6 +385,8 @@ iperf_connect(struct iperf_test *test)
 {
     int opt;
     socklen_t len;
+    const char *connect_server;
+    int connect_port;
 
     if (NULL == test)
     {
@@ -397,12 +399,20 @@ iperf_connect(struct iperf_test *test)
     make_cookie(test->cookie);
 
     /* Create and connect the control channel */
-    if (test->ctrl_sck < 0)
-	// Create the control channel using an ephemeral port
-	test->ctrl_sck = netdial(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, 0, test->server_hostname, test->server_port, test->settings->connect_timeout);
     if (test->ctrl_sck < 0) {
-        i_errno = IECONNECT;
-        return -1;
+        if (test->socks5_host) {
+            connect_server = test->socks5_host;
+            connect_port = test->socks5_port;
+        } else {
+            connect_server = test->server_hostname;
+            connect_port = test->server_port;
+        }
+	// Create the control channel using an ephemeral port
+	test->ctrl_sck = netdial(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, 0, connect_server, connect_port, test->settings->connect_timeout);
+        if (test->ctrl_sck < 0) {
+            i_errno = IECONNECT;
+            return -1;
+        }
     }
 
     // set TCP_NODELAY for lower latency on control messages
@@ -420,6 +430,13 @@ iperf_connect(struct iperf_test *test)
         }
     }
 #endif /* HAVE_TCP_USER_TIMEOUT */
+
+    /* socks5 proxy handshake  */
+    if (test->socks5_host) {
+        if (0 != iperf_socks5_handshake(test, test->ctrl_sck)) {
+            return -1;
+        }
+    }
 
     if (Nwrite(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) < 0) {
         i_errno = IESENDCOOKIE;

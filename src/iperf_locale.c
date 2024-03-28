@@ -194,6 +194,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  --dscp N or --dscp val    set the IP dscp value, either 0-63 or symbolic.\n"
                            "                            Numeric values can be specified in decimal,\n"
                            "                            octal and hex (see --tos above).\n"
+                           "  --socks5 [user:password@]<proxy-host>[:port] use SOCKS5 Proxy for TCP connections,\n"
+                           "                            using no auth or user:password. Default Proxy port is %d \n"
 #if defined(HAVE_FLOWLABEL)
                            "  -L, --flowlabel N         set the IPv6 flow label (only supported on Linux)\n"
 #endif /* HAVE_FLOWLABEL */

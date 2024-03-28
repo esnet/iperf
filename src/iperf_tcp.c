@@ -379,8 +379,18 @@ iperf_tcp_connect(struct iperf_test *test)
     socklen_t optlen;
     int saved_errno;
     int rcvbuf_actual, sndbuf_actual;
+    const char *connect_server;
+    int connect_port;
 
-    s = create_socket(test->settings->domain, SOCK_STREAM, test->bind_address, test->bind_dev, test->bind_port, test->server_hostname, test->server_port, &server_res);
+    if (test->socks5_host) {
+        connect_server = test->socks5_host;
+        connect_port = test->socks5_port;
+    } else {
+        connect_server = test->server_hostname;
+        connect_port = test->server_port;
+    }
+
+    s = create_socket(test->settings->domain, SOCK_STREAM, test->bind_address, test->bind_dev, test->bind_port, connect_server, connect_port, &server_res);
     if (s < 0) {
 	i_errno = IESTREAMCONNECT;
 	return -1;
@@ -574,6 +584,16 @@ iperf_tcp_connect(struct iperf_test *test)
     }
 
     freeaddrinfo(server_res);
+
+    /* socks5 proxy handshake  */
+    if (test->socks5_host) {
+        if (0 != iperf_socks5_handshake(test, s)) {
+            saved_errno = errno;
+            close(s);
+            errno = saved_errno;
+            return -1;
+        }
+    }
 
     /* Send cookie for verification */
     if (Nwrite(s, test->cookie, COOKIE_SIZE, Ptcp) < 0) {

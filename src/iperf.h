@@ -341,6 +341,14 @@ struct iperf_test
     int       timestamps;			/* --timestamps */
     char     *timestamp_format;
 
+    char     *socks5_host;                      /* --socks5 option */
+    uint16_t  socks5_port;                      /* --socks5 option optional value */
+    char     *socks5_username;                  /* --socks5 option optional value */
+    char     *socks5_password;                  /* --socks5 option optional value */
+    char      socks5_bind_atyp;                 /* from socks5 CONNECT response ATYP */
+    char     *socks5_bind_host;                 /* from socks5 CONNECT response BIND.ADDR*/
+    uint16_t  socks5_bind_port;                 /* from socks5 CONNECT response BIND.PORT */
+
     char     *json_output_string; /* rendered JSON output if json_output is set */
     /* Select related parameters */
     int       max_fd;

@@ -193,6 +193,10 @@ parameter is specified in ms, and defaults to the system settings.
 This functionality depends on the TCP_USER_TIMEOUT socket option, and
 will not work on systems that do not support it.
 .TP
+.BR -m ", " --mptcp " "
+use mptcp variant for the current protocol. This only applies to
+TCP and enables MPTCP usage.
+.TP
 .BR -d ", " --debug " "
 emit debugging output.
 Primarily (perhaps exclusively) of use to developers.

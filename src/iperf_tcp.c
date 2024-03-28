@@ -44,6 +44,10 @@
 #include "net.h"
 #include "cjson.h"
 
+#ifndef IPPROTO_MPTCP
+#define IPPROTO_MPTCP 262
+#endif
+
 #if defined(HAVE_FLOWLABEL)
 #include "flowlabel.h"
 #endif /* HAVE_FLOWLABEL */
@@ -183,9 +187,10 @@ iperf_tcp_listen(struct iperf_test *test)
      *
      * It's not clear whether this is a requirement or a convenience.
      */
-    if (test->no_delay || test->settings->mss || test->settings->socket_bufsize) {
+    if (test->no_delay || test->mptcp || test->settings->mss || test->settings->socket_bufsize) {
 	struct addrinfo hints, *res;
 	char portstr[6];
+	int proto = 0;
 
         FD_CLR(s, &test->read_set);
         close(s);
@@ -211,7 +216,12 @@ iperf_tcp_listen(struct iperf_test *test)
             return -1;
         }
 
-        if ((s = socket(res->ai_family, SOCK_STREAM, 0)) < 0) {
+#if defined(linux)
+        if (test->mptcp)
+	    proto = IPPROTO_MPTCP;
+#endif
+
+        if ((s = socket(res->ai_family, SOCK_STREAM, proto)) < 0) {
 	    freeaddrinfo(res);
             i_errno = IESTREAMLISTEN;
             return -1;
@@ -379,8 +389,14 @@ iperf_tcp_connect(struct iperf_test *test)
     socklen_t optlen;
     int saved_errno;
     int rcvbuf_actual, sndbuf_actual;
+    int proto = 0;
 
-    s = create_socket(test->settings->domain, SOCK_STREAM, test->bind_address, test->bind_dev, test->bind_port, test->server_hostname, test->server_port, &server_res);
+#if defined(linux)
+    if (test->mptcp)
+        proto = IPPROTO_MPTCP;
+#endif
+
+    s = create_socket(test->settings->domain, SOCK_STREAM, proto, test->bind_address, test->bind_dev, test->bind_port, test->server_hostname, test->server_port, &server_res);
     if (s < 0) {
 	i_errno = IESTREAMCONNECT;
 	return -1;

@@ -336,8 +336,9 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
     OPENSSL_free(rsa_buffer);
     BIO_free(bioBuff);
 
-    if (plaintext_len <= 0) {
-        goto errreturn;
+    /* Treat a decryption error as an empty string. */
+    if (plaintext_len < 0) {
+        plaintext_len = 0;
     }
 
     return plaintext_len;

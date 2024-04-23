@@ -10,7 +10,7 @@
  */
 
 #define PTHREAD_CANCEL_ASYNCHRONOUS 0
-#define PTHREAD_CANCEL_ENABLE NULL
+#define PTHREAD_CANCEL_ENABLE 0
 
 int pthread_setcanceltype(int type, int *oldtype);
 int pthread_setcancelstate(int state, int *oldstate);

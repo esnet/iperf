@@ -110,8 +110,8 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
         }
 	iperf_json_finish(test);
     } else {
-        if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
-            perror("iperf_errexit: pthread_mutex_unlock");
+        if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
+            perror("iperf_errexit: pthread_mutex_lock");
         }
 
 	if (test && test->outfile && test->outfile != stdout) {
@@ -127,8 +127,8 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
 	    fprintf(stderr, "iperf3: %s\n", str);
 	}
 
-        if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
-            perror("iperf_errexit: pthread_mutex_lock");
+        if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
+            perror("iperf_errexit: pthread_mutex_unlock");
         }
     }
 

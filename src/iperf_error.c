@@ -94,10 +94,6 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
     struct tm *ltm = NULL;
     char *ct = NULL;
 
-    if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
-        perror("iperf_errexit: pthread_mutex_lock");
-    }
-
     /* Timestamp if requested */
     if (test != NULL && test->timestamps) {
 	time(&now);
@@ -113,7 +109,11 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
 	    cJSON_AddStringToObject(test->json_top, "error", str);
         }
 	iperf_json_finish(test);
-    } else
+    } else {
+        if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
+            perror("iperf_errexit: pthread_mutex_lock");
+        }
+
 	if (test && test->outfile && test->outfile != stdout) {
 	    if (ct) {
 		fprintf(test->outfile, "%s", ct);
@@ -127,8 +127,9 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
 	    fprintf(stderr, "iperf3: %s\n", str);
 	}
 
-    if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
-        perror("iperf_errexit: pthread_mutex_unlock");
+        if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
+            perror("iperf_errexit: pthread_mutex_unlock");
+        }
     }
 
     va_end(argp);

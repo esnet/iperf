@@ -2766,13 +2766,19 @@ JSONStream_Output(struct iperf_test * test, const char * event_name, cJSON * obj
 {
     cJSON *event = cJSON_CreateObject();
     if (!event)
-    return -1;
+        return -1;
     cJSON_AddStringToObject(event, "event", event_name);
     cJSON_AddItemReferenceToObject(event, "data", obj);
     char *str = cJSON_PrintUnformatted(event);
     if (str == NULL)
-    return -1;
+        return -1;
+    if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
+        perror("iperf_json_finish: pthread_mutex_lock");
+    }
     fprintf(test->outfile, "%s\n", str);
+    if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
+        perror("iperf_json_finish: pthread_mutex_unlock");
+    }
     iflush(test);
     cJSON_free(str);
     cJSON_Delete(event);
@@ -4865,49 +4871,50 @@ iperf_json_finish(struct iperf_test *test)
         if (test->server_output_text) {
             cJSON_AddStringToObject(test->json_top, "server_output_text", test->server_output_text);
         }
-        // Get ASCII rendering of JSON structure.  Then make our
-        // own copy of it and return the storage that cJSON allocated
-        // on our behalf.  We keep our own copy around.
-        char *str = cJSON_Print(test->json_top);
-        if (str == NULL) {
-            return -1;
-        }
-        test->json_output_string = strdup(str);
-        cJSON_free(str);
-        if (test->json_output_string == NULL) {
-            return -1;
-        }
 
-        if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
-            perror("iperf_json_finish: pthread_mutex_lock");
+        /* --json-stream, so we print various individual objects */
+        if (test->json_stream) {
+            cJSON *error = cJSON_GetObjectItem(test->json_top, "error");
+            if (error) {
+                JSONStream_Output(test, "error", error);
+            }
+            if (test->json_server_output) {
+                JSONStream_Output(test, "server_output_json", test->json_server_output);
+            }
+            if (test->server_output_text) {
+                JSONStream_Output(test, "server_output_text", cJSON_CreateString(test->server_output_text));
+            }
+            JSONStream_Output(test, "end", test->json_end);
         }
-        fprintf(test->outfile, "%s\n", test->json_output_string);
-        if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
-            perror("iperf_json_finish: pthread_mutex_unlock");
+        /* Original --json output, single monolithic object */
+        else {
+            /*
+             * Get ASCII rendering of JSON structure.  Then make our
+             * own copy of it and return the storage that cJSON
+             * allocated on our behalf.  We keep our own copy
+             * around.
+             */
+            char *str = cJSON_Print(test->json_top);
+            if (str == NULL) {
+                return -1;
+            }
+            test->json_output_string = strdup(str);
+            cJSON_free(str);
+            if (test->json_output_string == NULL) {
+                return -1;
+            }
+            if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
+                perror("iperf_json_finish: pthread_mutex_lock");
+            }
+            fprintf(test->outfile, "%s\n", test->json_output_string);
+            if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
+                perror("iperf_json_finish: pthread_mutex_unlock");
+            }
+            iflush(test);
         }
-        iflush(test);
         cJSON_Delete(test->json_top);
-        test->json_top = NULL;
     }
 
-    if (test->json_stream) {
-        cJSON *error = cJSON_GetObjectItem(test->json_top, "error");
-        if (error) {
-            JSONStream_Output(test, "error", error);
-        }
-        if (test->json_server_output) {
-            JSONStream_Output(test, "server_output_json", test->json_server_output);
-        }
-        if (test->server_output_text) {
-            JSONStream_Output(test, "server_output_text", cJSON_CreateString(test->server_output_text));
-        }
-        JSONStream_Output(test, "end", test->json_end);
-    }
-    else {
-        fprintf(test->outfile, "%s\n", test->json_output_string);
-        iflush(test);
-    }
-    cJSON_Delete(test->json_top);
     test->json_top = test->json_start = test->json_connected = test->json_intervals = test->json_server_output = test->json_end = NULL;
     return 0;
 }

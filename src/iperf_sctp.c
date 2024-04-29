@@ -60,7 +60,7 @@ iperf_sctp_recv(struct iperf_stream *sp)
 #if defined(HAVE_SCTP_H)
     int r;
 
-    r = Nread(sp->socket, sp->buffer, sp->settings->blksize, Psctp);
+    r = Nread(sp->socket, sp->buffer, sp->blksize, Psctp);
     if (r < 0)
         return r;
 
@@ -92,7 +92,7 @@ iperf_sctp_send(struct iperf_stream *sp)
 #if defined(HAVE_SCTP_H)
     int r;
 
-    r = Nwrite(sp->socket, sp->buffer, sp->settings->blksize, Psctp);
+    r = Nwrite(sp->socket, sp->buffer, sp->blksize, Psctp);
     if (r < 0)
         return r;
 

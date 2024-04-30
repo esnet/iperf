@@ -218,6 +218,9 @@ iperf_strerror(int int_errno)
         case IEUNIMP:
             snprintf(errstr, len, "an option you are trying to set is not implemented yet");
             break;
+        case IESOCKS5HOST:
+            snprintf(errstr, len, "ilegal SOCKS5 host / creadentials");
+            break;
         case IEFILE:
             snprintf(errstr, len, "unable to open -F file");
             perr = 1;
@@ -377,6 +380,9 @@ iperf_strerror(int int_errno)
         case IEUDPFILETRANSFER:
             snprintf(errstr, len, "cannot transfer file using UDP");
             break;
+        case IESOCKS5RTCPONLY:
+            snprintf(errstr, len, "SOCKS5 Proxy is supported only for TCP");
+            break;
         case IERVRSONLYRCVTIMEOUT:
             snprintf(errstr, len, "client receive timeout is valid only in receiving mode");
             perr = 1;
@@ -507,6 +513,10 @@ iperf_strerror(int int_errno)
             break;
 	case IEPTHREADATTRDESTROY:
             snprintf(errstr, len, "unable to destroy thread attributes");
+            perr = 1;
+            break;
+	case IESOCKS5HANDSHAKE:
+            snprintf(errstr, len, "socks5 Handshake with the server failed");
             perr = 1;
             break;
 	default:

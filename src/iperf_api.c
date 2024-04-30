@@ -115,7 +115,7 @@ usage()
 void
 usage_long(FILE *f)
 {
-    fprintf(f, usage_longstr, DEFAULT_NO_MSG_RCVD_TIMEOUT, UDP_RATE / (1024*1024), DEFAULT_PACING_TIMER, DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE);
+    fprintf(f, usage_longstr, DEFAULT_NO_MSG_RCVD_TIMEOUT, UDP_RATE / (1024*1024), DEFAULT_PACING_TIMER, DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE, SOCKS5_DEFAULT_PORT);
 }
 
 
@@ -1100,6 +1100,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"version6", no_argument, NULL, '6'},
         {"tos", required_argument, NULL, 'S'},
         {"dscp", required_argument, NULL, OPT_DSCP},
+        {"socks5", required_argument, NULL, OPT_SOCKS5},
 	{"extra-data", required_argument, NULL, OPT_EXTRA_DATA},
 #if defined(HAVE_FLOWLABEL)
         {"flowlabel", required_argument, NULL, 'L'},
@@ -1157,7 +1158,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     char* comma;
 #endif /* HAVE_CPU_AFFINITY */
     char* slash;
-    char *p, *p1;
+    char *p, *p1, *p2;
     struct xbind_entry *xbe;
     double farg;
     int rcv_timeout_in = 0;
@@ -1431,6 +1432,47 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 			i_errno = IEBADTOS;
 			return -1;
 		}
+		client_flag = 1;
+                break;
+	    case OPT_SOCKS5: // Format: "[username:password@]<host addr/fqdn>[:port]"
+                if (strlen(optarg) <= 0) {
+                    i_errno = IESOCKS5HOST;
+                    return -1;
+                }
+                p1 = strtok(optarg, "@"); // p1 -> user:password
+                if (p1 == NULL) {
+                    i_errno = IESOCKS5HOST;
+                    return -1;
+                }
+                p = strtok(NULL, "@"); // p -> host[:port]
+                if (p == NULL) {
+                    p = p1;
+                    p1 = NULL;
+                }
+                p2 = strtok(p, ":"); // parse host[:port]
+                if (strlen(p2) <= 0) {
+                    i_errno = IESOCKS5HOST;
+                    return -1;
+                }
+                test->socks5_host = strdup(p2);
+                p2 = strtok(NULL, ":");
+                if (p2 && strlen(p2) > 0) {
+                    test->socks5_port = atoi(p2);
+                }
+                if (p1) { // parse user:password
+                    p2 = strtok(p1, ":");
+                    if (strlen(p2) <= 0 || strlen(p2) > 255) {
+                        i_errno = IESOCKS5HOST;
+                        return -1;
+                    }
+                    test->socks5_username = strdup(p2);
+                    p2 = strtok(NULL, ":");
+                    if (!p2 || strlen(p2) <= 0 || strlen(p2) > 255) {
+                        i_errno = IESOCKS5HOST;
+                        return -1;
+                    }
+                    test->socks5_password = strdup(p2);
+                }
 		client_flag = 1;
                 break;
 	    case OPT_EXTRA_DATA:
@@ -1737,6 +1779,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     // File cannot be transferred using UDP because of the UDP packets header (packet number, etc.)
     if(test->role == 'c' && test->diskfile_name != (char*) 0 && test->protocol->id == Pudp) {
         i_errno = IEUDPFILETRANSFER;
+        return -1;
+    }
+
+    // SOCKS5 Proxy is supported only for TCP
+    if(test->role == 'c' && test->socks5_host && test->protocol->id != Ptcp) {
+        i_errno = IESOCKS5RTCPONLY;
         return -1;
     }
 
@@ -2949,6 +2997,12 @@ iperf_defaults(struct iperf_test *testp)
     testp->stats_interval = testp->reporter_interval = 1;
     testp->num_streams = 1;
 
+    testp->socks5_host = NULL;
+    testp->socks5_port = SOCKS5_DEFAULT_PORT;
+    testp->socks5_username = NULL;
+    testp->socks5_password = NULL;
+    testp->socks5_bind_host = NULL;
+
     testp->settings->domain = AF_UNSPEC;
     testp->settings->unit_format = 'a';
     testp->settings->socket_bufsize = 0;    /* use autotuning */
@@ -3106,6 +3160,14 @@ iperf_free_test(struct iperf_test *test)
 	free(test->remote_congestion_used);
     if (test->timestamp_format)
 	free(test->timestamp_format);
+    if (test->socks5_host)
+	free(test->socks5_host);
+    if (test->socks5_username)
+	free(test->socks5_username);
+    if (test->socks5_password)
+	free(test->socks5_password);
+    if (test->socks5_bind_host)
+	free(test->socks5_bind_host);
     if (test->omit_timer != NULL)
 	tmr_cancel(test->omit_timer);
     if (test->timer != NULL)
@@ -3294,6 +3356,23 @@ iperf_reset_test(struct iperf_test *test)
     if (test->extra_data) {
 	free(test->extra_data);
 	test->extra_data = NULL;
+    }
+    if (test->socks5_host) {
+	free(test->socks5_host);
+	test->socks5_host = NULL;
+    }
+    test->socks5_port = SOCKS5_DEFAULT_PORT;
+    if (test->socks5_username) {
+	free(test->socks5_username);
+	test->socks5_username = NULL;
+    }
+    if (test->socks5_password) {
+	free(test->socks5_password);
+	test->socks5_password = NULL;
+    }
+    if (test->socks5_bind_host) {
+	free(test->socks5_bind_host);
+	test->socks5_bind_host = NULL;
     }
 
     /* Free output line buffers, if any (on the server only) */
@@ -4619,6 +4698,173 @@ iperf_add_stream(struct iperf_test *test, struct iperf_stream *sp)
          }
     }
 }
+
+/**************************************************************************/
+
+/* iperf_socks5_handshake
+ *
+ * Handshake with a SOCKS5 Proxy per RFC1928, RFC1929
+ */
+int
+iperf_socks5_handshake(struct iperf_test *test, int s) {
+    char req[1024];
+    char res[1024];
+    char selected_mthod;
+    char *p, *p1;
+    size_t len;
+    int ret;
+    uint16_t net_order_short;
+
+    // Send method selection request [RFC1928]
+    p = req;
+    *p++ = 5; // VERSION
+    if (test->socks5_username) // Number of METHODs supported
+        *p++ = 2;
+    else
+        *p++ = 1;
+    *p++ = 0; // NO AUTHENTICATION REQUIRED
+    if (test->socks5_username) *p++ = 2; // USERNAME/PASSWORD
+    if (Nwrite(s, req, p - req, Ptcp) < 0) {
+        i_errno = IESOCKS5HANDSHAKE;
+        iperf_err(test, "Writing SOCKS5 auth methods message failed\n");
+        return -1;
+    }
+
+    // Receive selected method
+    if (Nread(s, res, 2, Ptcp) != 2) {
+        i_errno = IESOCKS5HANDSHAKE;
+        iperf_err(test, "Reading selected SOCKS5 method message failed\n");
+        return -1;
+    }
+
+    selected_mthod = res[1];
+    if (res[0] != 5 || (selected_mthod != 0 && selected_mthod != 2)) {
+        i_errno = IESOCKS5HANDSHAKE;
+        iperf_err(test, "Ilegal SOCKS5 method selection response: version=%d, auth method=%d\n", res[0], selected_mthod);
+        return -1;
+    }
+    if (test->debug) {
+        iperf_printf(test, "SOCKS5 server selected authentication method %d\n", selected_mthod);
+    }
+
+    // Send Username/Password request and receive the auth response [RFC1929]
+    if (selected_mthod == 2) {
+        p = req;
+        *p++ = 1; // VERSION
+        len = strlen(test->socks5_username);
+        *p++ = len;
+        memcpy(p, test->socks5_username, len); // USERNAME
+        p += len;
+        len = strlen(test->socks5_password);
+        *p++ = len;
+        memcpy(p, test->socks5_password, len); // PASSWORD
+        p += len;
+
+        if (Nwrite(s, req, p - req, Ptcp) < 0) {
+            i_errno = IESOCKS5HANDSHAKE;
+            iperf_err(test, "Writing SOCKS5 Username/Password request message failed\n");
+            return -1;
+        }
+
+        if ((ret = Nread(s, res, 2, Ptcp)) != 2) {
+            i_errno = IESOCKS5HANDSHAKE;
+            iperf_err(test, "Reading SOCKS5 Username/Password response failed;  Returned %d\n", ret);
+            return -1;
+        }
+        if (res[1] != 0) {
+            i_errno = IESOCKS5HANDSHAKE;
+            iperf_err(test, "SOCKS5 Username/Password failed with error %d\n", res[1]);
+            return -1;
+        }
+    }
+
+    // Send CONNECT request [RFC1928]
+    p = req;
+    *p++ = 5; // VERSION
+    *p++ = 1; // CMD = CONNECT
+    *p++ = 0; // RESERVED
+    *p++ = 3; // ATYPE = DOMAINNAME:
+    len = strlen(test->server_hostname);
+    if (len > 255) {
+        i_errno = IESOCKS5HANDSHAKE;
+        iperf_err(test, "iperf3 host option length is limited to 255 chars when SOCKS5 is used\n");
+        return -1;
+    }
+    *p++ = len;
+    memcpy(p, test->server_hostname, len); // ADDR
+    p += len;
+    net_order_short = htons(test->server_port);
+    p1 = (char *)&net_order_short;
+    *p++ = *p1++; // PORT
+    *p++ = *p1;
+    if (Nwrite(s, req, p - req, Ptcp) < 0) {
+        i_errno = IESOCKS5HANDSHAKE;
+        iperf_err(test, "Writing SOCKS5 CONNECT message failed\n");
+        return -1;
+    }
+
+    //  Read CONNECT response [RFC1928]
+    if ((ret = Nread(s, res, 4, Ptcp)) != 4) {
+        i_errno = IESOCKS5HANDSHAKE;
+        iperf_err(test, "Reading SOCKS5 CONNECT response failed;  Returned %d\n", ret);
+        return -1;
+    }
+
+    if (res[0] != 5 || res[1] != 0 || res[2] != 0) {
+        i_errno = IESOCKS5HANDSHAKE;
+        iperf_err(test, "SOCKS5 CONNECT failed with error %d\n", res[1]);
+        return -1;
+    }
+  
+    // Get BND.ADDR length
+    test->socks5_bind_atyp = res[3]; // ATYP
+    switch (test->socks5_bind_atyp) {
+        case 1: // IP V4 address
+            len = 4;
+            break;
+        case 3: // DOMAINNAME:
+            if ((ret = read(s, res, 1)) != 1) {
+                i_errno = IESOCKS5HANDSHAKE;
+                iperf_err(test, "Failed to read SOCKS5 CONNECT response BND.ADDR length;  Returned %d\n", ret);
+                return -1;
+            }
+            len = (unsigned char)res[0];
+            break;
+        case 4: // IP V6 address
+            len = 16;
+            break;
+        default:
+            i_errno = IESOCKS5HANDSHAKE;
+            iperf_err(test, "Illegal SOCKS5 CONNECT response ATYP %d\n", res[3]);
+            return -1;
+    }
+    // Read BND.ADDR
+    if ((ret = Nread(s, res, len, Ptcp)) != len) {
+        i_errno = IESOCKS5HANDSHAKE;
+        iperf_err(test, "Failed to read SOCKS5 detailes BND.ADDR;  Returned %d\n", ret);
+        return -1;
+    }
+    res[len] = '\0';
+    test->socks5_bind_host = strdup(res);
+    // Read BND.PORT
+    if ((ret = Nread(s, res, 2, Ptcp)) != 2) {
+        i_errno = IESOCKS5HANDSHAKE;
+        iperf_err(test, "Failed to read SOCKS5 detailes BND.PORT;  Returned %d\n", ret);
+        return -1;
+    }
+    p1 = (char *)&net_order_short;
+    *p1++ = res[0];
+    *p1 = res[1];
+    test->socks5_bind_port = ntohs(net_order_short);
+    if (test->debug) {
+        iperf_printf(test, "SOCKS5 server BIND ADDR type=%d, PORT=%d\n", test->socks5_bind_atyp, test->socks5_bind_port);
+    }
+
+    return 0;
+}
+
+/**************************************************************************/
+
 
 /* This pair of routines gets inserted into the snd/rcv function pointers
 ** when there's a -F flag. They handle the file stuff and call the real

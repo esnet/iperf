@@ -68,6 +68,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define DEFAULT_PACING_TIMER 1000
 #define DEFAULT_NO_MSG_RCVD_TIMEOUT 120000
 #define MIN_NO_MSG_RCVD_TIMEOUT 100
+#define SOCKS5_DEFAULT_PORT 1080
 
 #define WARN_STR_LEN 128
 
@@ -100,6 +101,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define OPT_RCV_TIMEOUT 27
 #define OPT_JSON_STREAM 28
 #define OPT_SND_TIMEOUT 29
+#define OPT_SOCKS5 30
 
 /* states */
 #define TEST_START 1
@@ -308,6 +310,12 @@ void      iperf_free_stream(struct iperf_stream * sp);
  */
 int       iperf_common_sockopts(struct iperf_test *, int s);
 
+/**
+ * iperf_socks5_handshake - handshake with a SOCKS5 Proxy per RFC1928, RFC1929
+ * 
+ */
+int iperf_socks5_handshake(struct iperf_test *test, int s);
+
 int has_tcpinfo(void);
 int has_tcpinfo_retransmits(void);
 void save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp);
@@ -419,6 +427,8 @@ enum {
     IESNDTIMEOUT = 33,      // Illegal message send timeout
     IEUDPFILETRANSFER = 34, // Cannot transfer file using UDP
     IESERVERAUTHUSERS = 35,   // Cannot access authorized users file
+    IESOCKS5HOST = 36,      // Illegal SOCKS5 host / creadentials
+    IESOCKS5RTCPONLY = 37,   // SOCKS5 Proxy is supported only for TCP
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)
@@ -473,7 +483,8 @@ enum {
     IEPTHREADCANCEL=151,        // Unable to cancel thread (check perror)
     IEPTHREADJOIN=152,		// Unable to join thread (check perror)
     IEPTHREADATTRINIT=153,      // Unable to initialize thread attribute (check perror)
-    IEPTHREADATTRDESTROY=154,      // Unable to destroy thread attribute (check perror)
+    IEPTHREADATTRDESTROY=154,   // Unable to destroy thread attribute (check perror)
+    IESOCKS5HANDSHAKE = 155,    // SOCKS5 Handshake with the server failed
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

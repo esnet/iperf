@@ -4412,9 +4412,11 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         return NULL;
     }
 
-    /* Set stream block size;TCP receives messages in multiple of burst size */
+    /* Set stream block size; TCP receives messages in multiple of burst size */
     sp->blksize = sp->settings->blksize;
-    if (test->protocol->id == Ptcp && !sender) {
+    if (test->protocol->id == Ptcp && !sender &&
+        sp->settings->bytes == 0 && sp->settings->blocks == 0 && sp->test->diskfile_name == (char*) 0)
+    {
         multisend = iperf_calc_burst_size(test);
         i = MAX_BLOCKSIZE / sp->blksize;
         if (multisend > i)

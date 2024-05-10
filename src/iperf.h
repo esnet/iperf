@@ -319,6 +319,7 @@ struct iperf_test
     char      *server_authorized_users;
     EVP_PKEY  *server_rsa_private_key;
     int       server_skew_threshold;
+    int       use_pkcs1_padding;
 #endif // HAVE_SSL
 
     /* boolean variables for Options */

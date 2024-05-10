@@ -193,6 +193,15 @@ parameter is specified in ms, and defaults to the system settings.
 This functionality depends on the TCP_USER_TIMEOUT socket option, and
 will not work on systems that do not support it.
 .TP
+.BR --use-pkcs1-padding
+This option is only meaningful when using iperf3's authentication
+features. Versions of iperf3 prior to 3.17 used PCKS1 padding in the
+RSA-encrypted credentials, which was vulnerable to a side-channel
+attack that could reveal a server's private key.  Beginning with
+iperf-3.17, OAEP padding is used, however this is a breaking change
+that is not compatible with older iperf3 versions.  Use this option to
+preserve the less secure, but more compatible, behavior.
+.TP
 .BR -d ", " --debug " "
 emit debugging output.
 Primarily (perhaps exclusively) of use to developers.

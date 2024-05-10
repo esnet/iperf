@@ -1,6 +1,51 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.17 2024-05-10
+---------------------
+
+* Notable user-visible changes
+
+  * BREAKING CHANGE: iperf3's authentication features, when used with
+    OpenSSL prior to 3.2.0, contain a vulnerability to a side-channel
+    timing attack. To address this flaw, a change has been made to the
+    padding applied to encrypted strings. This change is not backwards
+    compatible with older versions of iperf3 (before 3.17). To restore
+    the older (vulnerable) behavior, and hence
+    backwards-compatibility, use the --use-pkcs1-padding flag. The
+    iperf3 team thanks Hubert Kario from RedHat for reporting this
+    issue and providing feedback on the fix. (CVE-2024-26306)(PR#1695)
+
+  * iperf3 no longer changes its current working directory in --daemon
+    mode. This results in more predictable behavior with relative
+    paths, in particular finding key and credential files for
+    authentication. (PR#1672)
+
+  * A new --json-stream option has been added to enable a streaming
+    output format, consisting of a series of JSON objects (for the
+    start of the test, each measurement interval, and the end of the
+    test) separated by newlines (#444, #923, #1098).
+
+  * UDP tests now work correctly between different endian hosts
+    (#1415).
+
+  * The --fq-rate parameter now works for --reverse tests (#1632, PR#1667).
+
+  * The statistics reporting interval is now available in the --json
+    start test object (#1663).
+
+  * A negative time test duration is now properly flagged as an error
+    (IS#1662 / PR#1666).
+
+* Notable developer-visible changes
+
+  * Fixes have been made to better (unofficially) support builds on
+    Android (#1641 / #1651) and VxWorks (#1595).
+
+  * iperf3 now builds correctly on architectures without native
+    support for 64-bit atomic types, by linking with the libatomic
+    library (#1611).
+
 iperf-3.16 2023-11-30
 ---------------------
 

@@ -480,7 +480,7 @@ iperf_run_server(struct iperf_test *test)
 #if defined(HAVE_TCP_CONGESTION)
     int saved_errno;
 #endif /* HAVE_TCP_CONGESTION */
-    fd_set read_set, write_set;
+    fd_set read_set;
     struct iperf_stream *sp;
     struct iperf_time now;
     struct iperf_time last_receive_time;
@@ -576,7 +576,7 @@ iperf_run_server(struct iperf_test *test)
             timeout = &used_timeout;
         }
 
-        result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
+        result = select(test->max_fd + 1, &read_set, NULL, NULL, timeout);
         if (result < 0 && errno != EINTR) {
             cleanup_server(test);
             i_errno = IESELECT;

@@ -117,7 +117,7 @@ iperf_tcp_accept(struct iperf_test * test)
 {
     int     s;
     signed char rbuf = ACCESS_DENIED;
-    char    cookie[COOKIE_SIZE];
+    char    cookie[COOKIE_SIZE] = {0};
     socklen_t len;
     struct sockaddr_storage addr;
 
@@ -149,7 +149,7 @@ iperf_tcp_accept(struct iperf_test * test)
         return -1;
     }
 
-    if (strcmp(test->cookie, cookie) != 0) {
+    if (strncmp(test->cookie, cookie, COOKIE_SIZE) != 0) {
         if (Nwrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp) < 0) {
             iperf_err(test, "failed to send access denied from busy server to new connecting client, errno = %d\n", errno);
         }

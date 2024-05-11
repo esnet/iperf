@@ -781,7 +781,7 @@ iperf_run_client(struct iperf_test * test)
                     if (sp->sender) {
                         int rc;
                         sp->done = 1;
-                        if (sp->thread_created == 1) {
+                        if (sp->thread_number > 0) { // if thread was created
                             rc = pthread_cancel(sp->thr);
                             if (rc != 0 && rc != ESRCH) {
                                 i_errno = IEPTHREADCANCEL;
@@ -799,7 +799,10 @@ iperf_run_client(struct iperf_test * test)
                             if (test->debug_level >= DEBUG_LEVEL_INFO) {
                                 iperf_printf(test, "Thread number %d FD %d stopped\n", sp->thread_number, sp->socket);
                             }
-                            sp->thread_created = 0;
+                            sp->thread_number = 0;
+                        } else {
+                            if (test->debug_level >= DEBUG_LEVEL_INFO)
+                                iperf_printf(test, "Not stopping thread for FD %d as it was not created\n", sp->socket);
                         }
                     }
                 }
@@ -830,7 +833,7 @@ iperf_run_client(struct iperf_test * test)
         if (!sp->sender) {
             int rc;
             sp->done = 1;
-            if (sp->thread_created == 1) {
+            if (sp->thread_number > 0) { // if thread was created
                 rc = pthread_cancel(sp->thr);
                 if (rc != 0 && rc != ESRCH) {
                     i_errno = IEPTHREADCANCEL;
@@ -848,7 +851,10 @@ iperf_run_client(struct iperf_test * test)
                 if (test->debug_level >= DEBUG_LEVEL_INFO) {
                     iperf_printf(test, "Thread number %d FD %d stopped\n", sp->thread_number, sp->socket);
                 }
-                sp->thread_created = 0;
+                sp->thread_number = 0;
+            } else {
+                if (test->debug_level >= DEBUG_LEVEL_INFO)
+                    iperf_printf(test, "Not stopping thread for FD %d as it was not created\n", sp->socket);
             }
         }
     }
@@ -877,7 +883,7 @@ iperf_run_client(struct iperf_test * test)
         }
         sp->done = 1;
         int rc;
-        if (sp->thread_created == 1) {
+        if (sp->thread_number > 0) { // if thread was created
             rc = pthread_cancel(sp->thr);
             if (rc != 0 && rc != ESRCH) {
                 i_errno = IEPTHREADCANCEL;
@@ -893,7 +899,10 @@ iperf_run_client(struct iperf_test * test)
             if (test->debug_level >= DEBUG_LEVEL_INFO) {
                 iperf_printf(test, "Thread number %d FD %d stopped\n", sp->thread_number, sp->socket);
             }
-            sp->thread_created = 0;
+            sp->thread_number = 0;
+        } else {
+            if (test->debug_level >= DEBUG_LEVEL_INFO)
+                iperf_printf(test, "Not stopping thread for FD %d as it was not created\n", sp->socket);
         }
     }
     if (test->debug_level >= DEBUG_LEVEL_INFO) {

@@ -464,7 +464,7 @@ cleanup_server(struct iperf_test *test)
     SLIST_FOREACH(sp, &test->streams, streams) {
         int rc;
         sp->done = 1;
-        if (sp->thread_created == 1) {
+        if (sp->thread_number > 0) { // if thread was created
             rc = pthread_cancel(sp->thr);
             if (rc != 0 && rc != ESRCH) {
                 i_errno = IEPTHREADCANCEL;
@@ -480,7 +480,10 @@ cleanup_server(struct iperf_test *test)
             if (test->debug_level >= DEBUG_LEVEL_INFO) {
                 iperf_printf(test, "Thread number %d FD %d stopped\n", sp->thread_number, sp->socket);
             }
-            sp->thread_created = 0;         
+            sp->thread_number = 0;
+        } else {
+            if (test->debug_level >= DEBUG_LEVEL_INFO)
+                iperf_printf(test, "Not stopping thread for FD %d as it was not created\n", sp->socket);
         }
     }
     i_errno = i_errno_save;

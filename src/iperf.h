@@ -208,7 +208,6 @@ struct iperf_stream
     struct iperf_test* test;
 
     pthread_t thr;
-    int thread_created;
     int       done;
 
     /* configurable members */

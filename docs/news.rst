@@ -1,11 +1,25 @@
 iperf3 Project News
 ===================
 
+2024-05-10:  iperf-3.17 released
+--------------------------------
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.17.tar.gz
+| SHA256: ``077ede831b11b733ecf8b273abd97f9630fd7448d3ec1eaa789f396d82c8c943``
+
+iperf 3.17 contains a fix for a minor security vulnerability related
+to iperf3's authentication feature and its use of RSA-encrypted
+credentials. The release notes contain more
+details on this breaking change, and how to revert to older, less
+secure behavior if needed for backward compatibility with older
+versions of iperf3.
+
+This version also contains a new streaming JSON output format (enabled
+with the --json-stream) option, and a number of other bug fixes.
+
 2023-12-01:  iperf-3.16 released
 --------------------------------
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.16.tar.gz
-| SHA256:
-``cc740c6bbea104398cc3e466befc515a25896ec85e44a662d5f4a767b9cf713e``
+| SHA256: ``cc740c6bbea104398cc3e466befc515a25896ec85e44a662d5f4a767b9cf713e``
 
 iperf 3.16 uses multiple threads to serve parallel tests for improved
 throughput on high-speed links. It also includes support for

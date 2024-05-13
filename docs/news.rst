@@ -1,6 +1,16 @@
 iperf3 Project News
 ===================
 
+2024-05-13:  ipef-3.17.1 released
+---------------------------------
+
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.17.1.tar.gz
+| SHA256: ``84404ca8431b595e86c473d8f23d8bb102810001f15feaf610effd3b318788aa``
+
+iperf-3.17.1 fixes some issues with version numbers in various
+places. It is otherwise identical to iperf-3.17.
+
+
 2024-05-10:  iperf-3.17 released
 --------------------------------
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.17.tar.gz

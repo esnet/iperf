@@ -5,13 +5,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>iperf3 Development &#8212; iperf3 3.17 documentation</title>
+    <title>iperf3 Development &#8212; iperf3 3.17.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="_static/bootstrap-sphinx.css?v=4468db6d" />
     <link rel="stylesheet" href="_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/esnet/esnet.css" type="text/css" />
-    <script src="_static/documentation_options.js?v=50d747ad"></script>
+    <script src="_static/documentation_options.js?v=d2f3eb7b"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/jquery-1.11.0.min.js"></script>
@@ -249,22 +249,29 @@ three parts:  <em>MAJOR.MINOR.PATCH</em></p>
 <section id="release-engineering-checklist">
 <h2>Release Engineering Checklist<a class="headerlink" href="#release-engineering-checklist" title="Link to this heading">¶</a></h2>
 <ol class="arabic">
+<li><p>Start from a clean source tree (be sure that <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">status</span></code> emits
+no output). Also ensure up-to-date installs of <code class="docutils literal notranslate"><span class="pre">autoconf</span></code> and
+<code class="docutils literal notranslate"><span class="pre">automake</span></code>.</p></li>
+<li><p>Ensure that <code class="docutils literal notranslate"><span class="pre">README.md</span></code> and <code class="docutils literal notranslate"><span class="pre">LICENSE</span></code> have correct copyright
+dates.</p></li>
 <li><p>Update the <code class="docutils literal notranslate"><span class="pre">README.md</span></code> and <code class="docutils literal notranslate"><span class="pre">RELNOTES.md</span></code> files to be accurate. Make sure
 that the “Known Issues” section of the <code class="docutils literal notranslate"><span class="pre">README.md</span></code> file and in this document
 are up to date.</p></li>
 <li><p>Compose a release announcement.  Most of the release announcement
 can be written before tagging.  Usually the previous version’s
 announcement can be used as a starting point.</p></li>
-<li><p>Preferably starting from a clean source tree (be sure that <code class="docutils literal notranslate"><span class="pre">git</span>
-<span class="pre">status</span></code> emits no output), make the changes necessary to produce
+<li><p>Make the changes necessary to produce
 the new version, such as bumping version numbers:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>vi RELNOTES.md     # update version number and release date
 vi configure.ac    # update version parameter in AC_INIT
-vi src/iperf3.1    # update manpage revision date if needed
-vi src/libiperf.3  # update manpage revision date if needed
+                   # (there should not be any &quot;+&quot; in artifacts)
+vi src/iperf3.1    # update manpage revision date (only if needed)
+vi src/libiperf.3  # update manpage revision date (only if needed)
 git commit -a      # commit changes to the local repository only
+                   # (commit log should mention version number)
 ./bootstrap.sh     # regenerate configure script, etc.
 git commit -a      # commit changes to the local repository only
+                   # (commit can be simply &quot;Regen.&quot;)
 
 # Assuming that $VERSION is the version number to be released...
 ./make_release tag $VERSION # this creates a tag in the local repo
@@ -273,28 +280,38 @@ git commit -a      # commit changes to the local repository only
 </div>
 <p>These steps should be done on a platform with a relatively recent
 version of autotools / libtools.  Examples are MacOS / MacPorts or
-FreeBSD.  The versions of these tools in CentOS 6 are somewhat
+FreeBSD.  The versions of these tools in CentOS and similar
+distributions are somewhat
 older and probably should be avoided.</p>
-<p>The result will be a release artifact that should be used for
-pre-testing.</p>
+<p>The result will be release artifacts that should be used for
+pre-testing. One will be a compressed tarball
+(e.g. <code class="docutils literal notranslate"><span class="pre">iperf-3.17.1.tar.gz</span></code>) and the other will contain SHA256
+checksum (e.g. <code class="docutils literal notranslate"><span class="pre">iperf-3.17.1.tar.gz.sha256</span></code>)</p>
 </li>
 <li><p>Stage the tarball (and a file containing the SHA256 hash) to the
-download site.  Currently this is located on <code class="docutils literal notranslate"><span class="pre">downloads.es.net</span></code>.</p></li>
+download site.  Currently this is located on <code class="docutils literal notranslate"><span class="pre">downloads.es.net</span></code>
+in the directory <code class="docutils literal notranslate"><span class="pre">/var/www/html/pub/iperf/</span></code>.</p></li>
 <li><p>From another host, test the link in the release announcement by
 downloading a fresh copy of the file and verifying the SHA256
 checksum.  Checking all other links in the release announcement is
-strongly recommended as well.</p></li>
+strongly recommended as well.</p>
+<p>The link to the tarball will be something of the form
+<code class="docutils literal notranslate"><span class="pre">https://downloads.es.net/pub/iperf/iperf-3.17.1.tar.gz</span></code>. If
+composing a release announcement using a HTML-aware editor, verify
+the link targets point to the correct artifacts.</p>
+</li>
 <li><p>Also verify (with file(1)) that the tarball is actually a gzipped
 tarball.</p></li>
-<li><p>For extra points, actually try downloading, compiling, and
-smoke-testing the results of the tarball on all supported
-platforms.</p></li>
+<li><p>Try downloading, compiling, and smoke-testing the results of the
+tarball on all supported platforms.</p></li>
+<li><p>Verify that the version string in <code class="docutils literal notranslate"><span class="pre">iperf3</span> <span class="pre">--version</span></code> matches the
+version number of the artifacts.</p></li>
 <li><p>Plug the SHA256 checksum into the release announcement.</p></li>
-<li><p>PGP-sign the release announcement text using <code class="docutils literal notranslate"><span class="pre">gpg</span> <span class="pre">--clearsign</span></code>.
-The signed announcement will be sent out in a subsequent emails,
-but could also be archived.  Decoupling the signing from emailing
-allows a signed release announcement to be resent via email or sent
-by other, non-email means.</p></li>
+<li><p>(optional) PGP-sign the release announcement text using <code class="docutils literal notranslate"><span class="pre">gpg</span>
+<span class="pre">--clearsign</span></code>.  The signed announcement will be sent out in a
+subsequent emails, but could also be archived.  Decoupling the
+signing from emailing allows a signed release announcement to be
+resent via email or sent by other, non-email means.</p></li>
 <li><p>At this point, the release can and should be considered
 finalized.  To commit the release-engineering-related changes to
 GitHub and make them public, push them out thusly:</p>
@@ -303,7 +320,12 @@ GitHub and make them public, push them out thusly:</p>
 </pre></div>
 </div>
 </li>
-<li><p>Send the PGP-signed release announcement to the following
+<li><p>Update GitHub Releases with the current release notes. Start from:
+<code class="docutils literal notranslate"><span class="pre">https://github.com/esnet/iperf/releases/new</span></code>. Remember to
+properly select the tag from the dropdown menu and drop
+the artifacts into the GitHub Release. Check “Set as the latest
+release” and (optionally) “Create a discussion for this release”.</p></li>
+<li><p>Send the release announcement to the following
 addresses.  Remember to turn off signing in the MUA, if
 applicable.  Remember to check the source address when posting to
 lists, as “closed” list will reject posting from all from
@@ -322,11 +344,12 @@ handle this situation correctly.  Testing the release announcement
 sending process by sending a copy to oneself first and attempting
 to verify the signature is highly encouraged.</p>
 </li>
-<li><p>Update GitHub Releases with the current release notes.</p></li>
+<li><p>Announce the new release in the #iperf3 channel in ESnet Slack.</p></li>
 <li><p>Update the iperf3 Project News section of the documentation site
 to announce the new release (see <code class="docutils literal notranslate"><span class="pre">docs/news.rst</span></code> and
 <code class="docutils literal notranslate"><span class="pre">docs/conf.py</span></code> in the source tree) and deploy a new build of the
-documentation to GitHub Pages.</p></li>
+documentation to GitHub Pages. Be sure to double-check version
+numbers and copyright dates.</p></li>
 <li><p>If an update to the on-line manual page is needed, it can be
 generated with this sequence of commands (tested on CentOS 7) and
 import the result into <code class="docutils literal notranslate"><span class="pre">invoking.rst</span></code>:</p>
@@ -336,6 +359,8 @@ import the result into <code class="docutils literal notranslate"><span class="p
 </pre></div>
 </div>
 </li>
+<li><p>Update the version number in <code class="docutils literal notranslate"><span class="pre">configure.ac</span></code> to some
+post-release number (with a “+”) and regenerate.</p></li>
 </ol>
 </section>
 <section id="code-authors">

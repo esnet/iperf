@@ -1,6 +1,17 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.17.1 2024-05-13
+-----------------------
+
+* Notable user-visible changes
+
+  * Version number has been corrected. (#1699)
+
+* Notable developer-visible changes
+
+  * No longer signing tags
+
 iperf-3.17 2024-05-10
 ---------------------
 

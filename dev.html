@@ -360,7 +360,19 @@ import the result into <code class="docutils literal notranslate"><span class="p
 </div>
 </li>
 <li><p>Update the version number in <code class="docutils literal notranslate"><span class="pre">configure.ac</span></code> to some
-post-release number (with a “+”) and regenerate.</p></li>
+post-release number (with a “+”) and regenerate:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">vi</span> <span class="n">configure</span><span class="o">.</span><span class="n">ac</span>         <span class="c1"># update version in AC_INIT, add &quot;+&quot;</span>
+<span class="n">git</span> <span class="n">commit</span> <span class="n">configure</span><span class="o">.</span><span class="n">ac</span> <span class="c1"># commit changes to local repository</span>
+                        <span class="c1"># commit log should mention</span>
+                        <span class="c1"># &quot;post-release version bump&quot;</span>
+<span class="o">./</span><span class="n">bootstrap</span><span class="o">.</span><span class="n">sh</span>          <span class="c1"># regenerate configure script, etc.</span>
+<span class="n">git</span> <span class="n">commit</span> <span class="o">-</span><span class="n">a</span>           <span class="c1"># commit changes to local repository</span>
+                        <span class="c1"># (commit can be simply &quot;Regen.&quot;)</span>
+<span class="c1"># test</span>
+<span class="n">git</span> <span class="n">push</span>
+</pre></div>
+</div>
+</li>
 </ol>
 </section>
 <section id="code-authors">

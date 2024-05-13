@@ -260,7 +260,17 @@ Release Engineering Checklist
      nroff -Tascii -c -man src/iperf3.1 | ul | sed 's/^/   /' > iperf3.txt
 
 19. Update the version number in ``configure.ac`` to some
-    post-release number (with a "+") and regenerate.
+    post-release number (with a "+") and regenerate::
+
+      vi configure.ac         # update version in AC_INIT, add "+"
+      git commit configure.ac # commit changes to local repository
+                              # commit log should mention
+                              # "post-release version bump"
+      ./bootstrap.sh          # regenerate configure script, etc.
+      git commit -a           # commit changes to local repository
+                              # (commit can be simply "Regen.")
+      # test
+      git push
 
 Code Authors
 ------------

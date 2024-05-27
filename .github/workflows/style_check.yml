@@ -1,0 +1,18 @@
+name: code style check
+on: [pull_request]
+jobs:
+  code-style-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: install dependencies
+        run: |
+          sudo apt-get -y update && sudo apt-get install -y clang-format
+      - name: check code style
+        run: |
+          workspace_path=$(echo "${{github.workspace}}" | sed 's/\//\\\//g')
+          impacted_files=$(git diff --name-only -r HEAD^1 HEAD | grep 'src\/' | grep -E '\.(cc|h)$' | sed "s/^/${workspace_path}\//" | tr '\n' ' ')
+          if [ ! -z "$impacted_files" ]
+          then
+            python3 tools/code_formatting.py --format-style=.clang-format --mode=0 ${impacted_files}
+          fi

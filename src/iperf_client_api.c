@@ -76,6 +76,33 @@ cleanup_and_fail:
   return NULL;
 }
 
+int iperf_create_workers(struct iperf_test *test) {
+  /* Create and spin up threads */
+  struct iperf_stream *sp;
+  pthread_attr_t attr;
+  if (pthread_attr_init(&attr) != 0) {
+    i_errno = IEPTHREADATTRINIT;
+    return -1;
+  }
+  SLIST_FOREACH(sp, &test->streams, streams) {
+    if (pthread_create(&(sp->thr), &attr, &iperf_client_worker_run, sp) != 0) {
+      i_errno = IEPTHREADCREATE;
+      return -1;
+    }
+    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+      iperf_printf(test, "Thread FD %d created\n", sp->socket);
+    }
+  }
+  if (test->debug_level >= DEBUG_LEVEL_INFO) {
+    iperf_printf(test, "All threads created\n");
+  }
+  if (pthread_attr_destroy(&attr) != 0) {
+    i_errno = IEPTHREADATTRDESTROY;
+    return -1;
+  }
+  return 0;
+}
+
 int iperf_create_streams(struct iperf_test *test, int sender) {
   if (NULL == test) {
     iperf_err(NULL, "No test\n");
@@ -126,7 +153,8 @@ int iperf_create_streams(struct iperf_test *test, int sender) {
           i_errno = IESETCONGESTION;
           return -1;
         }
-        // Set actual used congestion alg, or set to unknown if could not get it
+        // Set actual used congestion alg, or set to unknown if could not get
+        // it
         if (rc < 0)
           test->congestion_used = strdup("unknown");
         else
@@ -302,6 +330,10 @@ int iperf_handle_message_client(struct iperf_test *test) {
         return -1;
     } else if (iperf_create_streams(test, test->mode) < 0)
       return -1;
+    // worker threads for sending/receiving data
+    if (iperf_create_workers(test) < 0) {
+      return -1;
+    }
     break;
   case TEST_START:
     if (iperf_init_test(test) < 0)
@@ -507,7 +539,6 @@ int iperf_client_end(struct iperf_test *test) {
 }
 
 int iperf_run_client(struct iperf_test *test) {
-  int startup;
   int result = 0;
   fd_set read_set, write_set;
   struct iperf_time now;
@@ -567,7 +598,6 @@ int iperf_run_client(struct iperf_test *test) {
       &last_receive_time); // Initialize last time something was received
   last_receive_blocks = 0;
 
-  startup = 1;
   while (test->state != IPERF_DONE) {
     memcpy(&read_set, &test->read_set, sizeof(fd_set));
     memcpy(&write_set, &test->write_set, sizeof(fd_set));
@@ -644,37 +674,6 @@ int iperf_run_client(struct iperf_test *test) {
     }
 
     if (test->state == TEST_RUNNING) {
-
-      /* Is this our first time really running? */
-      if (startup) {
-        startup = 0;
-
-        /* Create and spin up threads */
-        pthread_attr_t attr;
-        if (pthread_attr_init(&attr) != 0) {
-          i_errno = IEPTHREADATTRINIT;
-          goto cleanup_and_fail;
-        }
-
-        SLIST_FOREACH(sp, &test->streams, streams) {
-          if (pthread_create(&(sp->thr), &attr, &iperf_client_worker_run, sp) !=
-              0) {
-            i_errno = IEPTHREADCREATE;
-            goto cleanup_and_fail;
-          }
-          if (test->debug_level >= DEBUG_LEVEL_INFO) {
-            iperf_printf(test, "Thread FD %d created\n", sp->socket);
-          }
-        }
-        if (test->debug_level >= DEBUG_LEVEL_INFO) {
-          iperf_printf(test, "All threads created\n");
-        }
-        if (pthread_attr_destroy(&attr) != 0) {
-          i_errno = IEPTHREADATTRDESTROY;
-          goto cleanup_and_fail;
-        }
-      }
-
       /* Run the timers. */
       iperf_time_now(&now);
       tmr_run(&now);

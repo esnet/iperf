@@ -2859,7 +2859,7 @@ JSON_read(int fd)
      */
     rc = Nread(fd, (char*) &nsize, sizeof(nsize), Ptcp);
     hsize = ntohl(nsize);
-    if (rc == sizeof(nsize) && hsize <= MAX_PARAMS_JSON_STRING) {
+    if (rc == sizeof(nsize) && hsize > 0 && hsize <= MAX_PARAMS_JSON_STRING) {
 	/* Allocate a buffer to hold the JSON */
 	strsize = hsize + 1;              /* +1 for trailing NULL */
 	if (strsize) {

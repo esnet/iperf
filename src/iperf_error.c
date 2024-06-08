@@ -99,7 +99,7 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
     if (test != NULL && test->timestamps) {
 	time(&now);
 	ltm = localtime(&now);
-	strftime(iperf_timestrerr, sizeof(iperf_timestrerr), "%c ", ltm);
+	strftime(iperf_timestrerr, sizeof(iperf_timestrerr), "%Y-%m-%d %H:%M:%S", ltm);
 	ct = iperf_timestrerr;
     }
 

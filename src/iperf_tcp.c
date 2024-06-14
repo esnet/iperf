@@ -56,8 +56,15 @@ int
 iperf_tcp_recv(struct iperf_stream *sp)
 {
     int r;
+    int sock_opt;
 
-    r = Nread(sp->socket, sp->buffer, sp->settings->blksize, Ptcp);
+#if defined(HAVE_MSG_TRUNC)
+    sock_opt = sp->test->settings->skip_rx_copy ? MSG_TRUNC : 0;
+#else
+    sock_opt = 0;
+#endif /* HAVE_MSG_TRUNC */
+
+    r = Nrecv(sp->socket, sp->buffer, sp->settings->blksize, Ptcp, sock_opt);
 
     if (r < 0)
         return r;
@@ -88,6 +95,11 @@ iperf_tcp_send(struct iperf_stream *sp)
     if (!sp->pending_size)
 	sp->pending_size = sp->settings->blksize;
 
+#if defined(HAVE_MSG_ZEROCOPY)
+    if (sp->test->zerocopy == ZEROCOPY_TCP_MSG_ZEROCOPY)
+        r = Nsend(sp->socket, sp->buffer, sp->pending_size, Ptcp, MSG_ZEROCOPY);
+    else
+#endif /* HAVE_MSG_ZEROCOPY */
     if (sp->test->zerocopy)
 	r = Nsendfile(sp->buffer_fd, sp->socket, sp->buffer, sp->pending_size);
     else
@@ -380,7 +392,7 @@ iperf_tcp_connect(struct iperf_test *test)
     int saved_errno;
     int rcvbuf_actual, sndbuf_actual;
 
-    s = create_socket(test->settings->domain, SOCK_STREAM, test->bind_address, test->bind_dev, test->bind_port, test->server_hostname, test->server_port, &server_res);
+    s = create_socket(test->settings->domain, SOCK_STREAM, test->bind_address, test->bind_dev, test->bind_port, test->server_hostname, test->server_port, &server_res, test->zerocopy);
     if (s < 0) {
 	i_errno = IESTREAMCONNECT;
 	return -1;

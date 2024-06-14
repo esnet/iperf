@@ -702,7 +702,7 @@ iperf_has_zerocopy( void )
 void
 iperf_set_test_zerocopy(struct iperf_test *ipt, int zerocopy)
 {
-    ipt->zerocopy = (zerocopy && has_sendfile());
+    ipt->zerocopy = (zerocopy && (ipt->protocol->id == Pudp ? 1 : has_sendfile()));
 }
 
 void
@@ -1104,7 +1104,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_FLOWLABEL)
         {"flowlabel", required_argument, NULL, 'L'},
 #endif /* HAVE_FLOWLABEL */
+#if defined(HAVE_MSG_ZEROCOPY)
+        {"zerocopy", optional_argument, NULL, 'Z'},
+#else
         {"zerocopy", no_argument, NULL, 'Z'},
+#endif /* HAVE_MSG_ZEROCOPY */
         {"omit", required_argument, NULL, 'O'},
         {"file", required_argument, NULL, 'F'},
         {"repeating-payload", no_argument, NULL, OPT_REPEATING_PAYLOAD},
@@ -1131,6 +1135,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_DONT_FRAGMENT)
 	{"dont-fragment", no_argument, NULL, OPT_DONT_FRAGMENT},
 #endif /* HAVE_DONT_FRAGMENT */
+#if defined(HAVE_MSG_TRUNC)
+	{"skip-rx-copy", no_argument, NULL, OPT_SKIP_RX_COPY},
+#endif /* HAVE_MSG_TRUNC */
 #if defined(HAVE_SSL)
     {"username", required_argument, NULL, OPT_CLIENT_USERNAME},
     {"rsa-public-key-path", required_argument, NULL, OPT_CLIENT_RSA_PUBLIC_KEY},
@@ -1467,11 +1474,24 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		TAILQ_INSERT_TAIL(&test->xbind_addrs, xbe, link);
                 break;
             case 'Z':
+#if defined(HAVE_MSG_ZEROCOPY)
+                if (optarg && strcmp(optarg, "")) {
+                    if (!strcmp(optarg, "z"))
+                        test->zerocopy = ZEROCOPY_TCP_MSG_ZEROCOPY;
+                    else {
+                        i_errno = IENOSENDFILE;
+                        return -1;
+                    }
+                } else {
+                    test->zerocopy = ZEROCOPY_TCP_SENDFILE;
+                }
+#else
                 if (!has_sendfile()) {
                     i_errno = IENOSENDFILE;
                     return -1;
                 }
-                test->zerocopy = 1;
+                test->zerocopy = ZEROCOPY_TCP_SENDFILE;
+#endif /* HAVE_MSG_ZEROCOPY */
 		client_flag = 1;
                 break;
             case OPT_REPEATING_PAYLOAD:
@@ -1635,6 +1655,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	    test->use_pkcs1_padding = 1;
 	    break;
 #endif /* HAVE_SSL */
+#if defined(HAVE_MSG_TRUNC)
+            case OPT_SKIP_RX_COPY:
+                test->settings->skip_rx_copy = 1;
+                client_flag = 1;
+                break;
+#endif /* HAVE_MSG_TRUNC */
 	    case OPT_PACING_TIMER:
 		test->settings->pacing_timer = unit_atoi(optarg);
 		client_flag = 1;
@@ -1743,6 +1769,28 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         i_errno = IEUDPFILETRANSFER;
         return -1;
     }
+
+#if defined(HAVE_MSG_ZEROCOPY)
+    // UDP supports "zero copy" only using MSG_ZEROCOPY
+    if (test->protocol->id == Pudp && test->zerocopy)
+        test->zerocopy = ZEROCOPY_TCP_MSG_ZEROCOPY;
+    // Zero copy for TCP use sendfile()
+    if (test->zerocopy && test->protocol->id != Pudp && !has_sendfile()) {
+        i_errno = IENOSENDFILE;
+        return -1;
+    }
+    // Using MSG_ZEROCOPY is not supported when disk file is used
+    if (test->diskfile_name != (char*) 0 && test->zerocopy == ZEROCOPY_TCP_MSG_ZEROCOPY) {
+        i_errno = IEDISKFILEZEROCOPY;
+        return -1;
+    }
+#else
+    // Zero copy is supported only by TCP
+    if (test->zerocopy && test->protocol->id != Ptcp) {
+        i_errno = IENOSENDFILE;
+        return -1;
+    }
+#endif /* HAVE_MSG_ZEROCOPY */
 
     if (blksize == 0) {
 	if (test->protocol->id == Pudp)
@@ -2270,6 +2318,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddStringToObject(j, "authtoken", test->settings->authtoken);
 	}
 #endif // HAVE_SSL
+	if (test->settings->skip_rx_copy)
+	    cJSON_AddNumberToObject(j, "skip_rx_copy", test->settings->skip_rx_copy);
 	cJSON_AddStringToObject(j, "client_version", IPERF_VERSION);
 
 	if (test->debug) {
@@ -2376,6 +2426,8 @@ get_parameters(struct iperf_test *test)
 	if ((j_p = cJSON_GetObjectItem(j, "authtoken")) != NULL)
         test->settings->authtoken = strdup(j_p->valuestring);
 #endif //HAVE_SSL
+	if ((j_p = cJSON_GetObjectItem(j, "skip_rx_copy")) != NULL)
+	    test->settings->skip_rx_copy = j_p->valueint;
 	if (test->mode && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    test->sender_has_retransmits = 1;
 	if (test->settings->rate)
@@ -2971,6 +3023,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->rcv_timeout.secs = DEFAULT_NO_MSG_RCVD_TIMEOUT / SEC_TO_mS;
     testp->settings->rcv_timeout.usecs = (DEFAULT_NO_MSG_RCVD_TIMEOUT % SEC_TO_mS) * mS_TO_US;
     testp->zerocopy = 0;
+    testp->settings->skip_rx_copy = 0;
 
     memset(testp->cookie, 0, COOKIE_SIZE);
 
@@ -3268,6 +3321,7 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->tos = 0;
     test->settings->dont_fragment = 0;
     test->zerocopy = 0;
+    test->settings->skip_rx_copy = 0;
 
 #if defined(HAVE_SSL)
     if (test->settings->authtoken) {

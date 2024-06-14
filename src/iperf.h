@@ -169,6 +169,7 @@ struct iperf_settings
     char      *client_password;
     EVP_PKEY  *client_rsa_pubkey;
 #endif // HAVE_SSL
+    int       skip_rx_copy;         /* Whether to ignore received messages data, using MSG_TRUNC option */
     int	      connect_timeout;	    /* socket connection timeout, in ms */
     int       idle_timeout;         /* server idle time timeout */
     unsigned int snd_timeout; /* Timeout for sending tcp messages in active mode, in us */
@@ -331,7 +332,7 @@ struct iperf_test
     int	      verbose;                          /* -V option - verbose mode */
     int	      json_output;                      /* -J option - JSON output */
     int	      json_stream;                      /* --json-stream */
-    int	      zerocopy;                         /* -Z option - use sendfile */
+    int	      zerocopy;                         /* -Z option - use sendfile for TCP */
     int       debug;				/* -d option - enable debug */
     enum      debug_level debug_level;          /* -d option option - level of debug messages to show */
     int	      get_server_output;		/* --get-server-output */
@@ -458,5 +459,9 @@ extern int gerror; /* error value from getaddrinfo(3), for use in internal error
 
 /* In Reverse mode, maximum number of packets to wait for "accept" response - to handle out of order packets */
 #define MAX_REVERSE_OUT_OF_ORDER_PACKETS 2
+
+/* Zerocopy - when using sendfile() of MSG_ZEROCOPY for TCP (for UDP any not 0 value is using MSG_ZEROCOPY) */
+#define ZEROCOPY_TCP_SENDFILE 1
+#define ZEROCOPY_TCP_MSG_ZEROCOPY 2
 
 #endif /* !__IPERF_H */

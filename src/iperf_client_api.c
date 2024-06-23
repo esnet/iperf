@@ -399,7 +399,7 @@ iperf_connect(struct iperf_test *test)
     /* Create and connect the control channel */
     if (test->ctrl_sck < 0)
 	// Create the control channel using an ephemeral port
-	test->ctrl_sck = netdial(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, 0, test->server_hostname, test->server_port, test->settings->connect_timeout);
+	test->ctrl_sck = netdial(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, 0, test->server_hostname, test->server_port, test->settings->connect_timeout, 0);
     if (test->ctrl_sck < 0) {
         i_errno = IECONNECT;
         return -1;
@@ -720,6 +720,11 @@ iperf_run_client(struct iperf_test * test)
                 SLIST_FOREACH(sp, &test->streams, streams) {
                     if (sp->sender) {
                         int rc;
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+                        if (sp->test->zerocopy == ZEROCOPY_MSG_ZEROCOPY) {
+                            wait_zerocopy_buffer_available(sp); /* Wait until last message is sent */
+                        }
+#endif /* SUPPORTED_MSG_ZEROCOPY */
                         sp->done = 1;
                         rc = pthread_cancel(sp->thr);
                         if (rc != 0 && rc != ESRCH) {

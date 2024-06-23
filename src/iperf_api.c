@@ -69,8 +69,8 @@
 #include <Windows.h>
 #endif /* HAVE_SETPROCESSAFFINITYMASK */
 
-#include "net.h"
 #include "iperf.h"
+#include "net.h"
 #include "iperf_api.h"
 #include "iperf_udp.h"
 #include "iperf_tcp.h"
@@ -702,7 +702,7 @@ iperf_has_zerocopy( void )
 void
 iperf_set_test_zerocopy(struct iperf_test *ipt, int zerocopy)
 {
-    ipt->zerocopy = (zerocopy && has_sendfile());
+    ipt->zerocopy = (zerocopy && (ipt->protocol->id == Pudp ? 1 : has_sendfile()));
 }
 
 void
@@ -1104,7 +1104,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_FLOWLABEL)
         {"flowlabel", required_argument, NULL, 'L'},
 #endif /* HAVE_FLOWLABEL */
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+        {"zerocopy", optional_argument, NULL, 'Z'},
+#else
         {"zerocopy", no_argument, NULL, 'Z'},
+#endif /* SUPPORTED_MSG_ZEROCOPY */
         {"omit", required_argument, NULL, 'O'},
         {"file", required_argument, NULL, 'F'},
         {"repeating-payload", no_argument, NULL, OPT_REPEATING_PAYLOAD},
@@ -1467,11 +1471,22 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		TAILQ_INSERT_TAIL(&test->xbind_addrs, xbe, link);
                 break;
             case 'Z':
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+                if (optarg && strcmp(optarg, "")) {
+                    if (!strcmp(optarg, "z"))
+                        test->zerocopy = ZEROCOPY_MSG_ZEROCOPY;
+                    else {
+                        i_errno = IENOSENDFILE;
+                        return -1;
+                    }
+                } else
+#endif /* SUPPORTED_MSG_ZEROCOPY */
                 if (!has_sendfile()) {
                     i_errno = IENOSENDFILE;
                     return -1;
+                } else {
+                    test->zerocopy = ZEROCOPY_SENDFILE;
                 }
-                test->zerocopy = 1;
 		client_flag = 1;
                 break;
             case OPT_REPEATING_PAYLOAD:
@@ -1743,6 +1758,28 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         i_errno = IEUDPFILETRANSFER;
         return -1;
     }
+
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+    // UDP supports "zero copy" only using MSG_ZEROCOPY
+    if (test->protocol->id == Pudp && test->zerocopy)
+        test->zerocopy = ZEROCOPY_MSG_ZEROCOPY;
+    // Zero copy for TCP use sendfile()
+    if (test->zerocopy && test->protocol->id != Pudp && !has_sendfile()) {
+        i_errno = IENOSENDFILE;
+        return -1;
+    }
+    // Using MSG_ZEROCOPY is not supported when disk file is used
+    if (test->diskfile_name != (char*) 0 && test->zerocopy == ZEROCOPY_MSG_ZEROCOPY) {
+        i_errno = IEDISKFILEZEROCOPY;
+        return -1;
+    }
+#else
+    // Zero copy is supported only by TCP
+    if (test->zerocopy && test->protocol->id != Ptcp) {
+        i_errno = IENOSENDFILE;
+        return -1;
+    }
+#endif /* SUPPORTED_MSG_ZEROCOPY */
 
     if (blksize == 0) {
 	if (test->protocol->id == Pudp)
@@ -4463,6 +4500,12 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 
     sp->snd = test->protocol->send;
     sp->rcv = test->protocol->recv;
+
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+    // Note: sp->next_completion is not initialized to 1, since the first
+    //       SO_EE_ORIGIN_ZEROCOPY messge value is zero (and not 1 as expected).
+    sp->zerocopied = -1;
+#endif /* SUPPORTED_MSG_ZEROCOPY */
 
     if (test->diskfile_name != (char*) 0) {
 	sp->diskfile_fd = open(test->diskfile_name, sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC), S_IRUSR|S_IWUSR);

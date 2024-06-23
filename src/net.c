@@ -38,6 +38,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <error.h>
 
 #ifdef HAVE_SENDFILE
 #ifdef linux
@@ -124,11 +125,14 @@ timeout_connect(int s, const struct sockaddr *name, socklen_t namelen,
 
 /* create a socket */
 int
-create_socket(int domain, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, struct addrinfo **server_res_out)
+create_socket(int domain, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, struct addrinfo **server_res_out, int zerocopy)
 {
     struct addrinfo hints, *local_res = NULL, *server_res = NULL;
     int s, saved_errno;
     char portstr[6];
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+    int opt;
+#endif /* SUPPORTED_MSG_ZEROCOPY */
 
     if (local) {
         memset(&hints, 0, sizeof(hints));
@@ -156,6 +160,22 @@ create_socket(int domain, int proto, const char *local, const char *bind_dev, in
 	freeaddrinfo(server_res);
         return -1;
     }
+
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+    /* Setting should be done before the socket is conected */
+    if (zerocopy == ZEROCOPY_MSG_ZEROCOPY) {
+        opt = 1;
+
+        if (setsockopt(s, SOL_SOCKET, SO_ZEROCOPY, &opt, sizeof(opt)) < 0) {
+            saved_errno = errno;
+            close(s);
+            freeaddrinfo(local_res);
+            freeaddrinfo(server_res);
+            errno = saved_errno;
+            return -1;
+        }
+    }
+#endif /* SUPPORTED_MSG_ZEROCOPY */
 
     if (bind_dev) {
 #if defined(HAVE_SO_BINDTODEVICE)
@@ -234,12 +254,12 @@ create_socket(int domain, int proto, const char *local, const char *bind_dev, in
 
 /* make connection to server */
 int
-netdial(int domain, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, int timeout)
+netdial(int domain, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, int timeout, int zerocopy)
 {
     struct addrinfo *server_res = NULL;
     int s, saved_errno;
 
-    s = create_socket(domain, proto, local, bind_dev, local_port, server, port, &server_res);
+    s = create_socket(domain, proto, local, bind_dev, local_port, server, port, &server_res, zerocopy);
     if (s < 0) {
       return -1;
     }
@@ -454,18 +474,230 @@ Nread(int fd, char *buf, size_t count, int prot)
 }
 
 
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+
+#define ZC_MAX_ZEROCOPY_POLL_TIMEOUT 60000 // ms
+#define ZC_MIN_ZEROCOPY_POLL_TIMEOUT 500 // ms
+#define ZC_CFG_WAITTIME_US 500000 // us
+
+static int do_recv_completion(struct iperf_stream *sp)
+{
+	struct sock_extended_err *serr;
+	struct msghdr msg = {};
+	struct cmsghdr *cm;
+	uint32_t hi, lo, range;
+	int ret, zerocopy;
+	char control[128];
+
+	msg.msg_control = control;
+	msg.msg_controllen = sizeof(control);
+	ret = recvmsg(sp->socket, &msg, MSG_ERRQUEUE);
+        if (ret == -1) {
+            if (errno == EAGAIN) {
+                if (sp->test->debug_level >= DEBUG_LEVEL_DEBUG)
+                    printf("notification recvmsg() failed with EAGAIN, completions=%lu, socket=%d, errno=%s;\n", sp->completions, sp->socket, strerror(errno));
+		return 0;
+            } else {
+                // error(1, errno, "recvmsg notification");
+                error(0, errno, "notification recvmsg() error, completions=%lu, socket=%d", sp->completions, sp->socket);
+                return -1;
+            }
+        }
+	if (msg.msg_flags & MSG_CTRUNC) {
+	    //error(1, errno, "recvmsg notification: truncated");
+            error(0, errno, "notification recvmsg() truncated, completions=%lu, socket=%d", sp->completions, sp->socket);
+            return -1;
+        }
+
+	cm = CMSG_FIRSTHDR(&msg);
+	if (!cm) {
+            // error(1, 0, "cmsg: no cmsg");
+            error(0, errno, "notification cmsg: no cmsg, completions=%lu, socket=%d", sp->completions, sp->socket);
+            return -1;
+        }
+
+	if (!((cm->cmsg_level == SOL_IP && cm->cmsg_type == IP_RECVERR) ||
+	      (cm->cmsg_level == SOL_IPV6 && cm->cmsg_type == IPV6_RECVERR) ))
+              // || (cm->cmsg_level == SOL_PACKET && cm->cmsg_type == PACKET_TX_TIMESTAMP)))
+        {
+	    // error(1, 0, "serr: wrong type: %d.%d", cm->cmsg_level, cm->cmsg_type);
+            error(0, errno, "notification serr: wrong type: %d.%d, completions=%lu, socket=%d", cm->cmsg_level, cm->cmsg_type, sp->completions, sp->socket);
+            return -1;
+        }
+
+	serr = (void *) CMSG_DATA(cm);
+
+	if (serr->ee_origin != SO_EE_ORIGIN_ZEROCOPY) {
+            // error(1, 0, "serr: wrong origin: %u", serr->ee_origin);
+            error(0, errno, "notification serr: wrong origin: %u, completions=%lu, socket=%d", serr->ee_origin, sp->completions, sp->socket);
+	    return -1;
+        }
+	if (serr->ee_errno != 0) {
+            // error(1, 0, "serr: wrong error code: %u", serr->ee_errno);
+            error(0, errno, "notification serr: wrong error code: %u, completions=%lu, socket=%d", serr->ee_errno, sp->completions, sp->socket);
+	    return -1;
+        }
+
+	hi = serr->ee_data;
+	lo = serr->ee_info;
+	range = hi - lo + 1;
+        if (sp->test->debug_level >= DEBUG_LEVEL_DEBUG)
+            printf("notification lo=%u, hi=%u, range=%u, completions=%lu, socket=%d;\n", lo, hi, range, sp->completions, sp->socket);
+
+	/* Detect notification gaps. These should not happen often, if at all.
+	 * Gaps can occur due to drops, reordering and retransmissions.
+	 */
+	//if (lo != next_completion) fprintf(stderr, "gap: %u..%u does not append to %u\n", lo, hi, next_completion);
+        if (lo != sp->next_completion && sp->test->debug_level >= DEBUG_LEVEL_WARN)
+            printf("notification gap: %u..%u does not append to %u, completions=%lu, socket=%d;\n", lo, hi, sp->next_completion, sp->completions, sp->socket);
+	sp->next_completion = hi + 1;
+
+	zerocopy = !(serr->ee_code & SO_EE_CODE_ZEROCOPY_COPIED);
+	if (sp->zerocopied == -1)
+	    sp->zerocopied = zerocopy;
+	else if (sp->zerocopied != zerocopy) {
+	    //fprintf(stderr, "serr: inconsistent\n");
+            if (sp->test->debug_level >= DEBUG_LEVEL_WARN)
+                printf("notification serr: inconsistent, completions=%lu, socket=%d;\n", sp->completions, sp->socket);
+	    sp->zerocopied = zerocopy;
+	}
+
+	sp->completions += range;
+	return 1;
+}
+
+/* Read all outstanding messages on the errqueue */
+static void do_recv_completions(struct iperf_stream *sp)
+{
+    while (do_recv_completion(sp) > 0 && sp->completions < sp->expected_completions) {}
+}
+
+
+static int do_poll(struct iperf_stream *sp, int events, int timeout)
+{
+	struct pollfd pfd;
+	int ret;
+
+	pfd.events = events;
+	pfd.revents = 0;
+	pfd.fd = sp->socket;
+
+	ret = poll(&pfd, 1, timeout);
+	if (ret == -1) {
+            // error(1, errno, "poll");
+            error(0, errno, "polling notifications failed: pfd.revents=%x, events=%x, completions=%lu, socket=%d", pfd.revents, events, sp->completions, sp->socket);
+	    ret = -1;
+        } else if (pfd.revents & POLLNVAL) {
+            ret = -1;
+            if (sp->test->debug_level >= DEBUG_LEVEL_INFO)
+                printf("poll notification returned POLLNVAL, socket=%d;\n", sp->socket);
+        } else {
+            ret = ret && (pfd.revents & events);
+        }
+
+	return ret;
+}
+
+
+/* Wait for all remaining completions on the errqueue */
+static void do_recv_remaining_completions(struct iperf_stream *sp)
+{
+	int64_t tstop;
+        int ret;
+
+        if (sp->completions < sp->expected_completions) {
+            tstop = iperf_time_now_in_usecs() + ZC_CFG_WAITTIME_US;
+            do {
+
+                ret = do_poll(sp, POLLERR, ZC_MIN_ZEROCOPY_POLL_TIMEOUT);
+                if (ret == -1) {
+                    if (sp->test->debug_level >= DEBUG_LEVEL_ERROR)
+                        printf("poll notification failed, socket=%d, errno=%s;\n", sp->socket, strerror(errno));
+                } else if (ret != 0) {
+                    do_recv_completions(sp);
+                }
+            } while (ret != -1 && sp->completions < sp->expected_completions && iperf_time_now_in_usecs() < tstop);
+        }
+
+	if (sp->completions != sp->expected_completions) {
+            if (sp->test->debug_level >= DEBUG_LEVEL_ERROR)
+                printf("failed waiting for missing notifications: %lu < %lu, making expected and current counters equal, socket=%d;\n", sp->completions, sp->expected_completions, sp->socket);
+            sp->completions = sp->expected_completions;
+        }
+}
+
+
+/** Wait until it is safe to rewite the sending buffer.
+ *  Returns -1 on timeout or failure.
+ */
+int wait_zerocopy_buffer_available(struct iperf_stream *sp) {
+    int total_timeout = 0;
+    int ret = 1;
+
+    if (sp->completions < sp->expected_completions) {
+        do {
+            ret = do_poll(sp, POLLOUT, ZC_MIN_ZEROCOPY_POLL_TIMEOUT);
+            if (ret == -1) {
+                if (sp->test->debug_level >= DEBUG_LEVEL_ERROR)
+                    printf("poll notification failed, socket=%d, errno=%s;\n", sp->socket, strerror(errno));
+            } else if (ret != 0) {
+                do_recv_completions(sp);
+            }
+        } while (ret == 0 && (total_timeout += ZC_MIN_ZEROCOPY_POLL_TIMEOUT) < ZC_MAX_ZEROCOPY_POLL_TIMEOUT);
+
+        
+        if (ret == 0) {
+            if (sp->test->debug_level >= DEBUG_LEVEL_INFO)
+                printf("waiting for POLLOUT notification timed-out, socket=%d, errno=%s;\n", sp->socket, strerror(errno));
+        } else if (ret != -1) {
+            do_recv_remaining_completions(sp);
+        }
+    }
+
+    return ret;
+}
+
+/*
+ *                      N S E N D to SP
+ */
+int
+Nsend_sp(struct iperf_stream *sp, const char *buf, size_t count, int prot, int sock_opt)
+{
+    int ret;
+
+    ret = Nsend(sp->socket, buf, count, prot, sock_opt);
+    if (sock_opt & MSG_ZEROCOPY)
+	sp->expected_completions++;
+
+    return ret;
+}
+
+#endif /* SUPPORTED_MSG_ZEROCOPY */
+
+
 /*
  *                      N W R I T E
  */
-
 int
 Nwrite(int fd, const char *buf, size_t count, int prot)
+{
+    return Nsend(fd, buf, count, prot, 0);
+}
+
+/*
+ *                      N S E N D
+ */
+int
+Nsend(int fd, const char *buf, size_t count, int prot, int sock_opt)
 {
     register ssize_t r;
     register size_t nleft = count;
 
     while (nleft > 0) {
-	r = write(fd, buf, nleft);
+        if (sock_opt)
+            r = send(fd, buf, nleft, sock_opt);
+        else
+	    r = write(fd, buf, nleft);
 	if (r < 0) {
 	    switch (errno) {
 		case EINTR:

@@ -28,16 +28,22 @@
 #define __NET_H
 
 int timeout_connect(int s, const struct sockaddr *name, socklen_t namelen, int timeout);
-int create_socket(int domain, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, struct addrinfo **server_res_out);
-int netdial(int domain, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, int timeout);
+int create_socket(int domain, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, struct addrinfo **server_res_out, int zerocopy);
+int netdial(int domain, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, int timeout, int zerocopy);
 int netannounce(int domain, int proto, const char *local, const char *bind_dev, int port);
 int Nread(int fd, char *buf, size_t count, int prot);
 int Nwrite(int fd, const char *buf, size_t count, int prot) /* __attribute__((hot)) */;
+int Nsend(int fd, const char *buf, size_t count, int prot, int sock_opt) /* __attribute__((hot)) */;
 int has_sendfile(void);
 int Nsendfile(int fromfd, int tofd, const char *buf, size_t count) /* __attribute__((hot)) */;
 int setnonblocking(int fd, int nonblocking);
 int getsockdomain(int sock);
 int parse_qos(const char *tos);
+
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+int Nsend_sp(struct iperf_stream *sp, const char *buf, size_t count, int prot, int sock_opt);
+int wait_zerocopy_buffer_available(struct iperf_stream *sp);
+#endif /* SUPPORTED_MSG_ZEROCOPY */
 
 #define NET_SOFTERROR -1
 #define NET_HARDERROR -2

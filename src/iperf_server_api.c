@@ -420,6 +420,11 @@ cleanup_server(struct iperf_test *test)
     int i_errno_save = i_errno;
     SLIST_FOREACH(sp, &test->streams, streams) {
         int rc;
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+        if (sp->sender && sp->test->zerocopy == ZEROCOPY_MSG_ZEROCOPY) {
+            wait_zerocopy_buffer_available(sp); /* Wait until last message is sent */
+        }
+#endif /* SUPPORTED_MSG_ZEROCOPY */
         sp->done = 1;
         rc = pthread_cancel(sp->thr);
         if (rc != 0 && rc != ESRCH) {

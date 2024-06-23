@@ -210,7 +210,14 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "TCP MSS too large (maximum = %d bytes)", MAX_MSS);
             break;
         case IENOSENDFILE:
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+            snprintf(errstr, len, "invalid zerocopy option value or this OS does not support sendfile");
+#else
             snprintf(errstr, len, "this OS does not support sendfile");
+#endif /* SUPPORTED_MSG_ZEROCOPY */
+            break;
+        case IEDISKFILEZEROCOPY:
+            snprintf(errstr, len, "Sending disk file using MSG_ZEROCOPY is not supported");
             break;
         case IEOMIT:
             snprintf(errstr, len, "bogus value for --omit");

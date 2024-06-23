@@ -83,6 +83,37 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 typedef unsigned int uint
 #endif // __vxworks or __VXWORKS__
 
+#if defined(HAVE_MSG_ZEROCOPY) && defined(HAVE_POLL_H)
+#define SUPPORTED_MSG_ZEROCOPY 1
+
+#ifndef SO_ZEROCOPY
+#define SO_ZEROCOPY	60
+#endif
+
+// FIXME: supposed to be in <errqueue.h>?
+
+#ifndef SO_EE_ORIGIN_ZEROCOPY
+#define SO_EE_ORIGIN_ZEROCOPY		5
+#endif
+
+#ifndef SO_EE_CODE_ZEROCOPY_COPIED
+#define SO_EE_CODE_ZEROCOPY_COPIED	1
+#endif
+
+struct sock_extended_err
+{
+    uint32_t ee_errno;   /* error number */
+    uint8_t  ee_origin;  /* where the error originated */
+    uint8_t  ee_type;    /* type */
+    uint8_t  ee_code;    /* code */
+    uint8_t  ee_pad;     /* padding */
+    uint32_t ee_info;    /* additional information */
+    uint32_t ee_data;    /* other data */
+    /* More data may follow */
+};
+
+#endif /* HAVE_MSG_ZEROCOPY && HAVE_POLL_H */
+
 struct iperf_interval_results
 {
     atomic_iperf_size_t bytes_transferred; /* bytes transferred in this interval */
@@ -230,6 +261,14 @@ struct iperf_stream
     int       (*rcv2) (struct iperf_stream * stream);
     int       (*snd2) (struct iperf_stream * stream);
 
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+    /* used when sending using MSG_ZEROCOPY */
+    long completions;
+    long expected_completions;
+    int  zerocopied;
+    uint32_t next_completion;
+#endif /* SUPPORTED_MSG_ZEROCOPY */
+
 //    struct iperf_stream *next;
     SLIST_ENTRY(iperf_stream) streams;
 
@@ -331,7 +370,7 @@ struct iperf_test
     int	      verbose;                          /* -V option - verbose mode */
     int	      json_output;                      /* -J option - JSON output */
     int	      json_stream;                      /* --json-stream */
-    int	      zerocopy;                         /* -Z option - use sendfile */
+    int	      zerocopy;                         /* -Z option - use sendfile or MSG_ZEROCOPY for TCP, MSG_ZEROCOPY for UDP */
     int       debug;				/* -d option - enable debug */
     enum      debug_level debug_level;          /* -d option option - level of debug messages to show */
     int	      get_server_output;		/* --get-server-output */
@@ -458,5 +497,9 @@ extern int gerror; /* error value from getaddrinfo(3), for use in internal error
 
 /* In Reverse mode, maximum number of packets to wait for "accept" response - to handle out of order packets */
 #define MAX_REVERSE_OUT_OF_ORDER_PACKETS 2
+
+/* Zerocopy methood use - sendfile() or MSG_ZEROCOPY (for UDP only MSG_ZEROCOPY is supported) */
+#define ZEROCOPY_SENDFILE 1
+#define ZEROCOPY_MSG_ZEROCOPY 2
 
 #endif /* !__IPERF_H */

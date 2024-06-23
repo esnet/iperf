@@ -86,6 +86,16 @@ iperf_time_in_usecs(struct iperf_time *time)
     return time->secs * 1000000LL + time->usecs;
 }
 
+uint64_t
+iperf_time_now_in_usecs()
+{
+    struct iperf_time time;
+
+    iperf_time_now(&time);
+    return iperf_time_in_usecs(&time);
+}
+
+
 double
 iperf_time_in_secs(struct iperf_time *time)
 {

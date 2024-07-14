@@ -83,7 +83,6 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 typedef unsigned int uint
 #endif // __vxworks or __VXWORKS__
 
-#if defined(HAVE_SCTP_H)
 struct iperf_sctp_info
 {
     long rtt;
@@ -91,7 +90,6 @@ struct iperf_sctp_info
     uint32_t wnd;
     uint32_t cwnd;
 };
-#endif /* HAVE_SCTP_H */
 
 struct iperf_interval_results
 {

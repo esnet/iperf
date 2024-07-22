@@ -278,6 +278,12 @@ int      iperf_defaults(struct iperf_test * testp);
 void      iperf_free_test(struct iperf_test * testp);
 
 /**
+ * iperf_cancel_test_timers -- cancel test timers
+ *
+ */
+void      iperf_cancel_test_timers(struct iperf_test * testp);
+
+/**
  * iperf_new_stream -- return a net iperf_stream with default values
  *
  * returns NULL on failure
@@ -416,7 +422,7 @@ enum {
     IESKEWTHRESHOLD = 29,   // Invalid value specified as skew threshold
     IEIDLETIMEOUT = 30,     // Invalid value specified as idle state timeout
     IERCVTIMEOUT = 31,      // Illegal message receive timeout
-    IERVRSONLYRCVTIMEOUT = 32,  // Client receive timeout is valid only in reverse mode
+    // [DELETED] IERVRSONLYRCVTIMEOUT = 32,  // Client receive timeout is valid only in reverse mode
     IESNDTIMEOUT = 33,      // Illegal message send timeout
     IEUDPFILETRANSFER = 34, // Cannot transfer file using UDP
     IESERVERAUTHUSERS = 35,   // Cannot access authorized users file

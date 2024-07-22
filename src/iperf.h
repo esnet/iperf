@@ -346,7 +346,6 @@ struct iperf_test
     /* Select related parameters */
     int       max_fd;
     fd_set    read_set;                         /* set of read sockets */
-    fd_set    write_set;                        /* set of write sockets */
 
     /* Interval related members */
     int       omitting;

@@ -124,7 +124,6 @@ iperf_server_listen(struct iperf_test *test)
     }
 
     FD_ZERO(&test->read_set);
-    FD_ZERO(&test->write_set);
     FD_SET(test->listener, &test->read_set);
     if (test->listener > test->max_fd) test->max_fd = test->listener;
 
@@ -240,7 +239,6 @@ iperf_handle_message_server(struct iperf_test *test)
             test->stats_callback(test);
             SLIST_FOREACH(sp, &test->streams, streams) {
                 FD_CLR(sp->socket, &test->read_set);
-                FD_CLR(sp->socket, &test->write_set);
                 close(sp->socket);
             }
             test->reporter_callback(test);
@@ -270,8 +268,8 @@ iperf_handle_message_server(struct iperf_test *test)
 	    iperf_err(test, "the client has terminated");
             SLIST_FOREACH(sp, &test->streams, streams) {
                 FD_CLR(sp->socket, &test->read_set);
-                FD_CLR(sp->socket, &test->write_set);
                 close(sp->socket);
+                sp->socket = -1;
             }
             test->state = IPERF_DONE;
             break;
@@ -298,6 +296,7 @@ server_timer_proc(TimerClientData client_data, struct iperf_time *nowP)
         sp = SLIST_FIRST(&test->streams);
         SLIST_REMOVE_HEAD(&test->streams, streams);
         close(sp->socket);
+        sp->socket = -1;
         iperf_free_stream(sp);
     }
     close(test->ctrl_sck);
@@ -448,7 +447,6 @@ cleanup_server(struct iperf_test *test)
     SLIST_FOREACH(sp, &test->streams, streams) {
 	if (sp->socket > -1) {
             FD_CLR(sp->socket, &test->read_set);
-            FD_CLR(sp->socket, &test->write_set);
             close(sp->socket);
             sp->socket = -1;
 	}
@@ -467,27 +465,12 @@ cleanup_server(struct iperf_test *test)
 	close(test->prot_listener);
         test->prot_listener = -1;
     }
-
-    /* Cancel any remaining timers. */
-    if (test->stats_timer != NULL) {
-	tmr_cancel(test->stats_timer);
-	test->stats_timer = NULL;
-    }
-    if (test->reporter_timer != NULL) {
-	tmr_cancel(test->reporter_timer);
-	test->reporter_timer = NULL;
-    }
-    if (test->omit_timer != NULL) {
-	tmr_cancel(test->omit_timer);
-	test->omit_timer = NULL;
-    }
+    
+    iperf_cancel_test_timers(test);     /* Cancel any remaining timers. */
+    
     if (test->congestion_used != NULL) {
         free(test->congestion_used);
 	test->congestion_used = NULL;
-    }
-    if (test->timer != NULL) {
-        tmr_cancel(test->timer);
-        test->timer = NULL;
     }
 }
 
@@ -501,7 +484,7 @@ iperf_run_server(struct iperf_test *test)
 #if defined(HAVE_TCP_CONGESTION)
     int saved_errno;
 #endif /* HAVE_TCP_CONGESTION */
-    fd_set read_set, write_set;
+    fd_set read_set;
     struct iperf_stream *sp;
     struct iperf_time now;
     struct iperf_time last_receive_time;
@@ -567,7 +550,6 @@ iperf_run_server(struct iperf_test *test)
 	}
 
         memcpy(&read_set, &test->read_set, sizeof(fd_set));
-        memcpy(&write_set, &test->write_set, sizeof(fd_set));
 
 	iperf_time_now(&now);
 	timeout = tmr_timeout(&now);
@@ -579,7 +561,11 @@ iperf_run_server(struct iperf_test *test)
                 used_timeout.tv_usec = 0;
                 timeout = &used_timeout;
             }
-        } else if (test->mode != SENDER) {     // In non-reverse active mode server ensures data is received
+        } else if (test->mode != SENDER        // In non-reverse active mode server ensures data is received.
+                   || test->state == TEST_END  // Same for receiving control messages at the end of the test.
+                   || test->state == EXCHANGE_RESULTS
+                   || test->state == DISPLAY_RESULTS)
+        {
             timeout_us = -1;
             if (timeout != NULL) {
                 used_timeout.tv_sec = timeout->tv_sec;
@@ -597,7 +583,7 @@ iperf_run_server(struct iperf_test *test)
             timeout = &used_timeout;
         }
 
-        result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
+        result = select(test->max_fd + 1, &read_set, NULL, NULL, timeout);
         if (result < 0 && errno != EINTR) {
             cleanup_server(test);
             i_errno = IESELECT;

@@ -1702,9 +1702,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     } else if (test->role == 'c' && (test->server_skew_threshold != 0)){
         i_errno = IESERVERONLY;
         return -1;
-    } else if (test->role == 'c' && rcv_timeout_flag && test->mode == SENDER){
-        i_errno = IERVRSONLYRCVTIMEOUT;
-        return -1;
     } else if (test->role == 's' && (server_rsa_private_key || test->server_authorized_users) &&
         !(server_rsa_private_key && test->server_authorized_users)) {
          i_errno = IESETSERVERAUTH;
@@ -1861,13 +1858,28 @@ void iperf_close_logfile(struct iperf_test *test)
 int
 iperf_set_send_state(struct iperf_test *test, signed char state)
 {
+    int l;
+    const char c = 0;
+
+    if (test->debug_level >= DEBUG_LEVEL_INFO)
+	fprintf(stderr, "Setting and sending new test state %d (changed from %d).\n", state, test->state);
+
     if (test->ctrl_sck >= 0) {
         test->state = state;
         if (Nwrite(test->ctrl_sck, (char*) &state, sizeof(state), Ptcp) < 0) {
 	    i_errno = IESENDMESSAGE;
 	    return -1;
         }
+
+        if (state == IPERF_DONE || state == CLIENT_TERMINATE) {
+            // Send additional bytes to complete the sent size to JSON length prefix,
+            // in case the other size is waiting for JSON.
+            l = sizeof(uint32_t) - sizeof(state);
+            while (l-- > 0)
+                Nwrite(test->ctrl_sck, &c, 1, Ptcp);
+        }
     }
+
     return 0;
 }
 
@@ -2390,6 +2402,9 @@ get_parameters(struct iperf_test *test)
 static int
 send_results(struct iperf_test *test)
 {
+    if (test->debug_level >= DEBUG_LEVEL_INFO)
+	fprintf(stderr, "Sending results.\n");
+
     int r = 0;
     cJSON *j;
     cJSON *j_streams;
@@ -2491,6 +2506,7 @@ send_results(struct iperf_test *test)
 	}
 	cJSON_Delete(j);
     }
+
     return r;
 }
 
@@ -2499,6 +2515,9 @@ send_results(struct iperf_test *test)
 static int
 get_results(struct iperf_test *test)
 {
+    if (test->debug_level >= DEBUG_LEVEL_INFO)
+	fprintf(stderr, "Getting results.\n");
+
     int r = 0;
     cJSON *j;
     cJSON *j_cpu_util_total;
@@ -3110,14 +3129,7 @@ iperf_free_test(struct iperf_test *test)
 	free(test->remote_congestion_used);
     if (test->timestamp_format)
 	free(test->timestamp_format);
-    if (test->omit_timer != NULL)
-	tmr_cancel(test->omit_timer);
-    if (test->timer != NULL)
-	tmr_cancel(test->timer);
-    if (test->stats_timer != NULL)
-	tmr_cancel(test->stats_timer);
-    if (test->reporter_timer != NULL)
-	tmr_cancel(test->reporter_timer);
+    iperf_cancel_test_timers(test);
 
     /* Free protocol list */
     while (!SLIST_EMPTY(&test->protocols)) {
@@ -3197,22 +3209,9 @@ iperf_reset_test(struct iperf_test *test)
         SLIST_REMOVE_HEAD(&test->streams, streams);
         iperf_free_stream(sp);
     }
-    if (test->omit_timer != NULL) {
-	tmr_cancel(test->omit_timer);
-	test->omit_timer = NULL;
-    }
-    if (test->timer != NULL) {
-	tmr_cancel(test->timer);
-	test->timer = NULL;
-    }
-    if (test->stats_timer != NULL) {
-	tmr_cancel(test->stats_timer);
-	test->stats_timer = NULL;
-    }
-    if (test->reporter_timer != NULL) {
-	tmr_cancel(test->reporter_timer);
-	test->reporter_timer = NULL;
-    }
+
+    iperf_cancel_test_timers(test);
+    
     test->done = 0;
 
     SLIST_INIT(&test->streams);
@@ -3256,7 +3255,6 @@ iperf_reset_test(struct iperf_test *test)
     test->no_delay = 0;
 
     FD_ZERO(&test->read_set);
-    FD_ZERO(&test->write_set);
 
     test->num_streams = 1;
     test->settings->socket_bufsize = 0;
@@ -3343,6 +3341,26 @@ iperf_reset_stats(struct iperf_test *test)
     }
 }
 
+void
+iperf_cancel_test_timers(struct iperf_test *test)
+{
+    if (test->stats_timer != NULL) {
+	tmr_cancel(test->stats_timer);
+	test->stats_timer = NULL;
+    }
+    if (test->reporter_timer != NULL) {
+	tmr_cancel(test->reporter_timer);
+	test->reporter_timer = NULL;
+    }
+    if (test->omit_timer != NULL) {
+	tmr_cancel(test->omit_timer);
+	test->omit_timer = NULL;
+    }
+    if (test->timer != NULL) {
+        tmr_cancel(test->timer);
+        test->timer = NULL;
+    }
+}
 
 /**************************************************************************/
 

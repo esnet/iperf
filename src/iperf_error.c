@@ -377,10 +377,6 @@ iperf_strerror(int int_errno)
         case IEUDPFILETRANSFER:
             snprintf(errstr, len, "cannot transfer file using UDP");
             break;
-        case IERVRSONLYRCVTIMEOUT:
-            snprintf(errstr, len, "client receive timeout is valid only in receiving mode");
-            perr = 1;
-            break;
 	case IEDAEMON:
 	    snprintf(errstr, len, "unable to become a daemon");
 	    perr = 1;

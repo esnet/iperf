@@ -175,25 +175,26 @@ iperf_accept(struct iperf_test *test)
             i_errno = IERECVCOOKIE;
             goto error_handling;
         }
-    FD_SET(test->ctrl_sck, &test->read_set);
-    if (test->ctrl_sck > test->max_fd) test->max_fd = test->ctrl_sck;
+        FD_SET(test->ctrl_sck, &test->read_set);
+        if (test->ctrl_sck > test->max_fd) test->max_fd = test->ctrl_sck;
 
-    if (iperf_set_send_state(test, PARAM_EXCHANGE) != 0)
-        goto error_handling;
-    if (iperf_exchange_parameters(test) < 0)
-        goto error_handling;
-    if (test->server_affinity != -1)
-        if (iperf_setaffinity(test, test->server_affinity) != 0)
+        if (iperf_set_send_state(test, PARAM_EXCHANGE) != 0)
             goto error_handling;
+        if (iperf_exchange_parameters(test) < 0)
+            goto error_handling;
+        if (test->server_affinity != -1) {
+            if (iperf_setaffinity(test, test->server_affinity) != 0)
+                goto error_handling;
+        }
         if (test->on_connect)
             test->on_connect(test);
     } else {
-	/*
-	 * Don't try to read from the socket.  It could block an ongoing test.
-	 * Just send ACCESS_DENIED.
+        /*
+         * Don't try to read from the socket.  It could block an ongoing test.
+         * Just send ACCESS_DENIED.
          * Also, if sending failed, don't return an error, as the request is not related
          * to the ongoing test, and returning an error will terminate the test.
-	 */
+         */
         if (Nwrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp) < 0) {
             if (test->debug)
                 printf("failed to send ACCESS_DENIED to an unsolicited connection request during active test\n");
@@ -220,7 +221,7 @@ iperf_handle_message_server(struct iperf_test *test)
     // XXX: Need to rethink how this behaves to fit API
     if ((rval = Nread(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp)) <= 0) {
         if (rval == 0) {
-	    iperf_err(test, "the client has unexpectedly closed the connection");
+            iperf_err(test, "the client has unexpectedly closed the connection");
             i_errno = IECTRLCLOSE;
             test->state = IPERF_DONE;
             return 0;
@@ -234,7 +235,7 @@ iperf_handle_message_server(struct iperf_test *test)
         case TEST_START:
             break;
         case TEST_END:
-	    test->done = 1;
+            test->done = 1;
             cpu_util(test->cpu_util);
             test->stats_callback(test);
             SLIST_FOREACH(sp, &test->streams, streams) {
@@ -243,11 +244,11 @@ iperf_handle_message_server(struct iperf_test *test)
                 close(sp->socket);
             }
             test->reporter_callback(test);
-	    if (iperf_set_send_state(test, EXCHANGE_RESULTS) != 0)
+            if (iperf_set_send_state(test, EXCHANGE_RESULTS) != 0)
                 return -1;
             if (iperf_exchange_results(test) < 0)
                 return -1;
-	    if (iperf_set_send_state(test, DISPLAY_RESULTS) != 0)
+            if (iperf_set_send_state(test, DISPLAY_RESULTS) != 0)
                 return -1;
             if (test->on_test_finish)
                 test->on_test_finish(test);
@@ -513,21 +514,24 @@ iperf_run_server(struct iperf_test *test)
     int64_t timeout_us;
     int64_t rcv_timeout_us;
 
-    if (test->logfile)
+    if (test->logfile) {
         if (iperf_open_logfile(test) < 0)
             return -2;
+    }
 
-    if (test->affinity != -1)
+    if (test->affinity != -1) {
 	if (iperf_setaffinity(test, test->affinity) != 0) {
             cleanup_server(test);
 	    return -2;
         }
+    }
 
-    if (test->json_output)
+    if (test->json_output) {
 	if (iperf_json_start(test) < 0) {
             cleanup_server(test);
 	    return -2;
         }
+    }
 
     if (test->json_output) {
 	cJSON_AddItemToObject(test->json_start, "version", cJSON_CreateString(version));

@@ -41,6 +41,7 @@
 #include "iperf.h"
 #include "iperf_api.h"
 #include "iperf_tcp.h"
+#include "iperf_util.h"
 #include "net.h"
 #include "cjson.h"
 
@@ -69,7 +70,7 @@ iperf_tcp_recv(struct iperf_stream *sp)
     }
     else {
 	if (sp->test->debug)
-	    printf("Late receive, state = %d\n", sp->test->state);
+	    printf("Late receive, state = %d-%s\n", sp->test->state, state_to_text(sp->test->state));
     }
 
     return r;

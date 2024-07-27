@@ -64,4 +64,6 @@ extern int daemon(int nochdir, int noclose);
 ssize_t getline(char **buf, size_t *bufsiz, FILE *fp);
 #endif /* HAVE_GETLINE */
 
+char * state_to_text(signed char state);
+
 #endif

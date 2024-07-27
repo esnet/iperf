@@ -288,6 +288,11 @@ iperf_handle_message_client(struct iperf_test *test)
 	i_errno = IEINITTEST;
         return -1;
     }
+
+    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+        iperf_printf(test, "Reading new State from the Server - current state is %d-%s\n", test->state, state_to_text(test->state));
+    }
+
     /*!!! Why is this read() and not Nread()? */
     if ((rval = read(test->ctrl_sck, (char*) &test->state, sizeof(signed char))) <= 0) {
         if (rval == 0) {
@@ -297,6 +302,10 @@ iperf_handle_message_client(struct iperf_test *test)
             i_errno = IERECVMESSAGE;
             return -1;
         }
+    }
+
+    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+        iperf_printf(test, "State change: client received and changed State to %d-%s\n", test->state, state_to_text(test->state));
     }
 
     switch (test->state) {

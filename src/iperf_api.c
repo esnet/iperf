@@ -481,6 +481,10 @@ iperf_set_test_stats_interval(struct iperf_test *ipt, double stats_interval)
 void
 iperf_set_test_state(struct iperf_test *ipt, signed char state)
 {
+    if (ipt->debug_level >= DEBUG_LEVEL_INFO) {
+        iperf_printf(ipt, "State change: State set to %d-%s (from %d-%s)\n",
+                     state, state_to_text(state), ipt->state, state_to_text(ipt->state));
+    }
     ipt->state = state;
 }
 
@@ -1862,7 +1866,7 @@ int
 iperf_set_send_state(struct iperf_test *test, signed char state)
 {
     if (test->ctrl_sck >= 0) {
-        test->state = state;
+        iperf_set_test_state(test, state);
         if (Nwrite(test->ctrl_sck, (char*) &state, sizeof(state), Ptcp) < 0) {
 	    i_errno = IESENDMESSAGE;
 	    return -1;
@@ -4746,14 +4750,14 @@ iperf_got_sigend(struct iperf_test *test)
 	test->done = 1;
 	cpu_util(test->cpu_util);
 	test->stats_callback(test);
-	test->state = DISPLAY_RESULTS; /* change local state only */
+	iperf_set_test_state(test, DISPLAY_RESULTS); /* change local state only */
 	if (test->on_test_finish)
 	    test->on_test_finish(test);
 	test->reporter_callback(test);
     }
 
     if (test->ctrl_sck >= 0) {
-	test->state = (test->role == 'c') ? CLIENT_TERMINATE : SERVER_TERMINATE;
+	iperf_set_test_state(test, (test->role == 'c') ? CLIENT_TERMINATE : SERVER_TERMINATE);
 	(void) Nwrite(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp);
     }
     i_errno = (test->role == 'c') ? IECLIENTTERM : IESERVERTERM;

@@ -130,6 +130,11 @@ iperf_create_streams(struct iperf_test *test, int sender)
 		    i_errno = IESETCONGESTION;
 		    return -1;
 		}
+	        if (test->congestion_used) {
+	          if (test->debug)
+	            printf("Overriding existing congestion algorithm: %s\n", test->congestion_used);
+	          free(test->congestion_used);
+	        }
                 // Set actual used congestion alg, or set to unknown if could not get it
                 if (rc < 0)
                     test->congestion_used = strdup("unknown");

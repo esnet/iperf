@@ -582,7 +582,7 @@ iperf_run_server(struct iperf_test *test)
 
         // Ensure select() will timeout to allow handling error cases that require server restart
         if (test->state == IPERF_START) {       // In idle mode server may need to restart
-            if (timeout == NULL && test->settings->idle_timeout > 0) {
+            if (timeout == NULL && test->settings->idle_timeout >= 0) {
                 used_timeout.tv_sec = test->settings->idle_timeout;
                 used_timeout.tv_usec = 0;
                 timeout = &used_timeout;

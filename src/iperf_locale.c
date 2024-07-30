@@ -123,7 +123,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  --timestamps<=format>     emit a timestamp at the start of each output line\n"
                            "                            (optional \"=\" and format string as per strftime(3))\n"
 
-                           "  --rcv-timeout #           idle timeout for receiving data (default %d ms)\n"
+                           "  --rcv-timeout #           idle timeout for receiving data or control messages (default %d ms)\n"
 #if defined(HAVE_TCP_USER_TIMEOUT)
                            "  --snd-timeout #           timeout for unacknowledged TCP data\n"
                            "                            (in ms, default is system settings)\n"

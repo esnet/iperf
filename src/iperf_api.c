@@ -1460,6 +1460,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		xbe = (struct xbind_entry *)malloc(sizeof(struct xbind_entry));
                 if (!xbe) {
 		    i_errno = IESETSCTPBINDX;
+            printf("WARNING:  Memory allocation failed for xbe buffer\n");
                     return -1;
                 }
 	        memset(xbe, 0, sizeof(*xbe));
@@ -2440,6 +2441,10 @@ send_results(struct iperf_test *test)
 
 		/* Allocate and build it up from the component lines */
 		char *output = calloc(buflen + 1, 1);
+        if (output == NULL) {
+            printf("WARNING:  Memory allocation failed for output buffer\n");
+            return -1;
+        }
 		TAILQ_FOREACH(t, &(test->server_output_list), textlineentries) {
 		    strncat(output, t->line, buflen);
 		    buflen -= strlen(t->line);
@@ -2758,7 +2763,7 @@ JSON_read(int fd)
 	free(str);
 	}
 	else {
-	    printf("WARNING:  Data length overflow\n");
+	    printf("WARNING:  Memory Allocation failed for data length buffer\n");
 	}
     }
     return json;
@@ -2804,8 +2809,13 @@ add_to_interval_list(struct iperf_stream_result * rp, struct iperf_interval_resu
     struct iperf_interval_results *irp;
 
     irp = (struct iperf_interval_results *) malloc(sizeof(struct iperf_interval_results));
-    memcpy(irp, new, sizeof(struct iperf_interval_results));
-    TAILQ_INSERT_TAIL(&rp->interval_results, irp, irlistentries);
+    if (irp == NULL) {
+        printf("WARNING:  Memory allocation failed for irp buffer\n");
+    }
+    else {
+        memcpy(irp, new, sizeof(struct iperf_interval_results));
+        TAILQ_INSERT_TAIL(&rp->interval_results, irp, irlistentries);
+    }
 }
 
 
@@ -2857,6 +2867,7 @@ iperf_new_test()
     test = (struct iperf_test *) malloc(sizeof(struct iperf_test));
     if (!test) {
         i_errno = IENEWTEST;
+        printf("WARNING:  Memory allocation failed for test buffer\n");
         return NULL;
     }
     /* initialize everything to zero */
@@ -2881,6 +2892,7 @@ iperf_new_test()
     if (!test->settings) {
         free(test);
 	i_errno = IENEWTEST;
+    printf("WARNING:  Memory allocation failed for test->settings buffer\n");
 	return NULL;
     }
     memset(test->settings, 0, sizeof(struct iperf_settings));
@@ -2890,6 +2902,7 @@ iperf_new_test()
         free(test->settings);
         free(test);
 	i_errno = IENEWTEST;
+    printf("WARNING:  Memory allocation failed for test->bitrate_limit_intervals_traffic_bytes buffer\n");
 	return NULL;
     }
     memset(test->bitrate_limit_intervals_traffic_bytes, 0, sizeof(iperf_size_t) * MAX_INTERVAL);
@@ -2909,6 +2922,7 @@ protocol_new(void)
 
     proto = malloc(sizeof(struct protocol));
     if(!proto) {
+        printf("WARNING:  Memory allocation failed for proto buffer\n");
         return NULL;
     }
     memset(proto, 0, sizeof(struct protocol));
@@ -4415,6 +4429,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     sp = (struct iperf_stream *) malloc(sizeof(struct iperf_stream));
     if (!sp) {
         i_errno = IECREATESTREAM;
+        printf("WARNING:  Memory allocation failed for sp buffer\n");
         return NULL;
     }
 
@@ -4427,6 +4442,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     if (!sp->result) {
         free(sp);
         i_errno = IECREATESTREAM;
+        printf("WARNING:  Memory allocation failed for sp->result buffer\n");
         return NULL;
     }
 
@@ -5101,6 +5117,10 @@ iperf_printf(struct iperf_test *test, const char* format, ...)
 
 	if (test->role == 's' && iperf_get_test_get_server_output(test)) {
 	    struct iperf_textline *l = (struct iperf_textline *) malloc(sizeof(struct iperf_textline));
+        if (l == NULL) {
+            printf("WARNING:  Memory allocation failed for l buffer\n");
+            return -1;
+        }
 	    l->line = strdup(linebuffer);
 	    TAILQ_INSERT_TAIL(&(test->server_output_list), l, textlineentries);
 	}

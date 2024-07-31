@@ -144,6 +144,10 @@ int Base64Decode(const char* b64message, unsigned char** buffer, size_t* length)
 
     int decodeLen = calcDecodeLength(b64message);
     *buffer = (unsigned char*)malloc(decodeLen + 1);
+    if (buffer == NULL) {
+        printf("WARNING:  Memory allocation failed for buffer\n");
+        return -1;
+    }
     (*buffer)[decodeLen] = '\0';
 
     bio = BIO_new_mem_buf(b64message, -1);
@@ -359,7 +363,8 @@ int encode_auth_setting(const char *username, const char *password, EVP_PKEY *pu
     const int text_len = strlen(auth_text_format) + strlen(username) + strlen(password) + 32;
     char *text = (char *) calloc(text_len, sizeof(char));
     if (text == NULL) {
-	return -1;
+        printf("WARNING:  Memory allocation failed for authentication text buffer.\n");
+	    return -1;
     }
     snprintf(text, text_len, auth_text_format, username, password, (int64_t)utc_seconds);
 
@@ -394,19 +399,22 @@ int decode_auth_setting(int enable_debug, const char *authtoken, EVP_PKEY *priva
     char *s_username, *s_password;
     s_username = (char *) calloc(plaintext_len, sizeof(char));
     if (s_username == NULL) {
-	return -1;
+        printf("WARNING:  Memory allocation failed for username buffer\n");
+	    return -1;
     }
     s_password = (char *) calloc(plaintext_len, sizeof(char));
     if (s_password == NULL) {
-	free(s_username);
-	return -1;
+	    free(s_username);
+        printf("WARNING:  Memory allocation failed for password buffer\n");
+	    return -1;
     }
 
     int rc = sscanf((char *) plaintext, auth_text_format, s_username, s_password, &utc_seconds);
     if (rc != 3) {
-	free(s_password);
-	free(s_username);
-	return -1;
+	    free(s_password);
+	    free(s_username);
+        printf("WARNING:  Parsing failed for authentication token\n");
+	    return -1;
     }
 
     if (enable_debug) {

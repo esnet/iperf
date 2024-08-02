@@ -27,6 +27,10 @@
 #ifndef        IPERF_SCTP_H
 #define        IPERF_SCTP_H
 
+#ifdef HAVE_NETINET_SCTP_H
+#include <netinet/sctp.h>
+#endif /* HAVE_NETINET_SCTP_H */
+
 /**
  * iperf_sctp_accept -- accepts a new SCTP connection
  * on sctp_listener_socket for SCTP data and param/result
@@ -64,5 +68,7 @@ int iperf_sctp_init(struct iperf_test *test);
 #define IPERF_SCTP_SERVER 1
 
 int iperf_sctp_bindx(struct iperf_test *test, int s, int is_server);
+
+int iperf_sctp_get_info(struct iperf_stream *sp, struct iperf_sctp_info *sctp_info);
 
 #endif

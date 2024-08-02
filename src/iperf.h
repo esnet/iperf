@@ -83,6 +83,14 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 typedef unsigned int uint
 #endif // __vxworks or __VXWORKS__
 
+struct iperf_sctp_info
+{
+    long rtt;
+    long pmtu;
+    uint32_t wnd;
+    uint32_t cwnd;
+};
+
 struct iperf_interval_results
 {
     atomic_iperf_size_t bytes_transferred; /* bytes transferred in this interval */
@@ -107,6 +115,9 @@ struct iperf_interval_results
     /* Just placeholders, never accessed. */
     char *tcpInfo;
 #endif
+#if defined(HAVE_SCTP_H)
+    struct iperf_sctp_info sctp_info;
+#endif /* HAVE_SCTP_H */
     long interval_retrans;
     long snd_cwnd;
     long snd_wnd;

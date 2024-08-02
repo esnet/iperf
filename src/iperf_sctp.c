@@ -39,10 +39,6 @@
 #include <sys/select.h>
 #include <limits.h>
 
-#ifdef HAVE_NETINET_SCTP_H
-#include <netinet/sctp.h>
-#endif /* HAVE_NETINET_SCTP_H */
-
 #include "iperf.h"
 #include "iperf_api.h"
 #include "iperf_sctp.h"
@@ -731,6 +727,52 @@ out:
     return retval;
 #else
     i_errno = IENOSCTP;
+    return -1;
+#endif /* HAVE_SCTP_H */
+}
+
+
+/* iperf_sctp_get_rtt
+ *
+ * Get SCTP stream RTT.
+ * Assuming that iperf3 supports only one-toone SCTP associassion, and not one-to-many associassion.
+ * 
+ * Main resouses used are RFC-6458, man pages for SCTP,
+ * https://docs.oracle.com/cd/E19253-01/817-4415/sockets-199/index.html.
+ * 
+ */
+int
+iperf_sctp_get_info(struct iperf_stream *sp, struct iperf_sctp_info *sctp_info)
+{
+#if defined(HAVE_SCTP_H)
+    struct sctp_status status;
+    socklen_t len;
+    sctp_assoc_t assoc_id;
+    int rc = 0;
+
+    if (sp->test->protocol->id != Psctp) {
+        rc = -1;
+    } else {
+#ifdef SCTP_FUTURE_ASSOC
+        assoc_id = SCTP_FUTURE_ASSOC;
+#else
+	assoc_id = 0;
+#endif
+        len = sizeof(status);
+        rc = sctp_opt_info(sp->socket, assoc_id, SCTP_STATUS, &status, &len);
+        if (rc < 0) {
+            if (sp->test->debug_level >= DEBUG_LEVEL_ERROR)
+                iperf_err(sp->test, "sctp_opt_info get SCTP_STATUS for socket %d failed with errno %d - %s", sp->socket, errno, strerror(errno));
+        } else {
+            sctp_info->wnd = status.sstat_rwnd;
+            sctp_info->rtt = status.sstat_primary.spinfo_srtt;
+            sctp_info->pmtu = status.sstat_primary.spinfo_mtu;
+            sctp_info->cwnd = status.sstat_primary.spinfo_cwnd;
+        }
+    }
+
+    return rc;
+#else
     return -1;
 #endif /* HAVE_SCTP_H */
 }

@@ -2732,8 +2732,9 @@ JSON_read(int fd)
      * Then read the JSON into a buffer and parse it.  Return a parsed JSON
      * structure, NULL if there was an error.
      */
-    if (Nread(fd, (char*) &nsize, sizeof(nsize), Ptcp) >= 0) {
-	hsize = ntohl(nsize);
+    rc = Nread(fd, (char*) &nsize, sizeof(nsize), Ptcp);
+    hsize = ntohl(nsize);
+    if (rc == sizeof(nsize) && hsize > 0 && hsize <= MAX_PARAMS_JSON_STRING) {
 	/* Allocate a buffer to hold the JSON */
 	strsize = hsize + 1;              /* +1 for trailing NULL */
 	if (strsize) {

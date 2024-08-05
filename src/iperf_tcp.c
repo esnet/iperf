@@ -132,10 +132,10 @@ iperf_tcp_accept(struct iperf_test * test)
 
     if (test->settings->fqrate) {
 	/* Convert bits per second to bytes per second */
-	unsigned int fqrate = test->settings->fqrate / 8;
+	uint64_t fqrate = test->settings->fqrate / 8;
 	if (fqrate > 0) {
 	    if (test->debug) {
-		printf("Setting fair-queue socket pacing to %u\n", fqrate);
+		printf("Setting fair-queue socket pacing to %"PRIu64"\n", fqrate);
 	    }
 	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &fqrate, sizeof(fqrate)) < 0) {
 		warning("Unable to set socket pacing");
@@ -542,10 +542,10 @@ iperf_tcp_connect(struct iperf_test *test)
     /* If socket pacing is specified try to enable it. */
     if (test->settings->fqrate) {
 	/* Convert bits per second to bytes per second */
-	unsigned int fqrate = test->settings->fqrate / 8;
+	uint64_t fqrate = test->settings->fqrate / 8;
 	if (fqrate > 0) {
 	    if (test->debug) {
-		printf("Setting fair-queue socket pacing to %u\n", fqrate);
+		printf("Setting fair-queue socket pacing to %"PRIu64"\n", fqrate);
 	    }
 	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &fqrate, sizeof(fqrate)) < 0) {
 		warning("Unable to set socket pacing");

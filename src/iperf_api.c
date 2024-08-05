@@ -2085,14 +2085,14 @@ int test_is_authorized(struct iperf_test *test){
         int ret = check_authentication(username, password, ts, test->server_authorized_users, test->server_skew_threshold);
         if (ret == 0){
             if (test->debug) {
-              iperf_printf(test, report_authentication_succeeded, username, ts);
+              iperf_printf(test, report_authentication_succeeded, username, (uint64_t)ts);
             }
             free(username);
             free(password);
             return 0;
         } else {
             if (test->debug) {
-                iperf_printf(test, report_authentication_failed, ret, username, ts);
+                iperf_printf(test, report_authentication_failed, ret, username, (uint64_t)ts);
             }
             free(username);
             free(password);
@@ -3594,7 +3594,7 @@ iperf_print_intermediate(struct iperf_test *test)
 
         iperf_size_t bytes = 0;
         double bandwidth;
-        int retransmits = 0;
+        int64_t retransmits = 0;
         double start_time, end_time;
 
         int64_t total_packets = 0, lost_packets = 0;
@@ -3670,7 +3670,7 @@ iperf_print_intermediate(struct iperf_test *test)
                     if (test->sender_has_retransmits == 1 && stream_must_be_sender) {
                         /* Interval sum, TCP with retransmits. */
                         if (test->json_output)
-                            cJSON_AddItemToObject(json_interval, sum_name, iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d  omitted: %b sender: %b", (double) start_time, (double) end_time, (double) irp->interval_duration, (int64_t) bytes, bandwidth * 8, (int64_t) retransmits, irp->omitted, stream_must_be_sender)); /* XXX irp->omitted or test->omitting? */
+                            cJSON_AddItemToObject(json_interval, sum_name, iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  retransmits: %d  omitted: %b sender: %b", (double) start_time, (double) end_time, (double) irp->interval_duration, (int64_t) bytes, bandwidth * 8, retransmits, irp->omitted, stream_must_be_sender)); /* XXX irp->omitted or test->omitting? */
                         else
                             iperf_printf(test, report_sum_bw_retrans_format, mbuf, start_time, end_time, ubuf, nbuf, retransmits, irp->omitted?report_omitted:""); /* XXX irp->omitted or test->omitting? */
                     } else {

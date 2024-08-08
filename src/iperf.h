@@ -157,7 +157,7 @@ struct iperf_settings
 {
     int       domain;               /* AF_INET or AF_INET6 */
     int       socket_bufsize;       /* window size for TCP */
-    int       blksize;              /* size of read/writes (-l) */
+    int       blksize;              /* size of read/writes (-l); specific stream read size may be different */
     iperf_size_t  rate;                 /* target data rate for application pacing*/
     iperf_size_t  bitrate_limit;   /* server's maximum allowed total data rate for all streams*/
     double        bitrate_limit_interval;  /* interval for averaging total data rate */
@@ -201,6 +201,7 @@ struct iperf_stream
     int       socket;
     int       id;
     int       sender;
+    int       blksize;         /* Same as Test blksize, except for send TCP read size may be extended by burst */
 	/* XXX: is settings just a pointer to the same struct in iperf_test? if not,
 		should it be? */
     struct iperf_settings *settings;	/* pointer to structure settings */

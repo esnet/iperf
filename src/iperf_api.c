@@ -1943,12 +1943,7 @@ iperf_send_mt(struct iperf_stream *sp)
     int no_throttle_check;
 
     /* Can we do multisend mode? */
-    if (test->settings->burst != 0)
-        multisend = test->settings->burst;
-    else if (test->settings->rate == 0)
-        multisend = test->multisend;
-    else
-        multisend = 1;	/* nope */
+    multisend = iperf_calc_burst_size(test);
 
     /* Should bitrate throttle be checked for every send */
     no_throttle_check = test->settings->rate != 0 && test->settings->burst == 0;
@@ -4405,7 +4400,7 @@ iperf_free_stream(struct iperf_stream *sp)
     struct iperf_interval_results *irp, *nirp;
 
     /* XXX: need to free interval list too! */
-    munmap(sp->buffer, sp->test->settings->blksize);
+    munmap(sp->buffer, sp->blksize);
     close(sp->buffer_fd);
     if (sp->diskfile_fd >= 0)
 	close(sp->diskfile_fd);
@@ -4425,6 +4420,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 {
     struct iperf_stream *sp;
     int ret = 0;
+    int multisend, i;
 
     char template[1024];
     if (test->tmp_template) {
@@ -4466,6 +4462,22 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         return NULL;
     }
 
+    /* Set stream block size; TCP receives messages in multiple of burst size */
+    sp->blksize = sp->settings->blksize;
+    if (test->protocol->id == Ptcp && !sender &&
+        sp->settings->bytes == 0 && sp->settings->blocks == 0 && sp->test->diskfile_name == (char*) 0)
+    {
+        multisend = iperf_calc_burst_size(test);
+        i = MAX_BLOCKSIZE / sp->blksize;
+        if (multisend > i)
+            multisend = i;
+        if (multisend > 1)
+            sp->blksize *= multisend;
+        if (test->debug) {
+            iperf_printf(test, "Stream %d TCP receive buffer size set to %d bytes (%d times of message length)\n", s, sp->blksize, multisend);
+        }
+    }
+
     memset(sp->result, 0, sizeof(struct iperf_stream_result));
     TAILQ_INIT(&sp->result->interval_results);
 
@@ -4483,13 +4495,13 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         free(sp);
         return NULL;
     }
-    if (ftruncate(sp->buffer_fd, test->settings->blksize) < 0) {
+    if (ftruncate(sp->buffer_fd, sp->blksize) < 0) {
         i_errno = IECREATESTREAM;
         free(sp->result);
         free(sp);
         return NULL;
     }
-    sp->buffer = (char *) mmap(NULL, test->settings->blksize, PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
+    sp->buffer = (char *) mmap(NULL, sp->blksize, PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
     if (sp->buffer == MAP_FAILED) {
         i_errno = IECREATESTREAM;
         free(sp->result);
@@ -4508,7 +4520,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 	sp->diskfile_fd = open(test->diskfile_name, sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC), S_IRUSR|S_IWUSR);
 	if (sp->diskfile_fd == -1) {
 	    i_errno = IEFILE;
-            munmap(sp->buffer, sp->test->settings->blksize);
+            munmap(sp->buffer, sp->blksize);
             free(sp->result);
             free(sp);
 	    return NULL;
@@ -4522,13 +4534,13 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 
     /* Initialize stream */
     if (test->repeating_payload)
-        fill_with_repeating_pattern(sp->buffer, test->settings->blksize);
+        fill_with_repeating_pattern(sp->buffer, sp->blksize);
     else
-        ret = readentropy(sp->buffer, test->settings->blksize);
+        ret = readentropy(sp->buffer, sp->blksize);
 
     if ((ret < 0) || (iperf_init_stream(sp, test) < 0)) {
         close(sp->buffer_fd);
-        munmap(sp->buffer, sp->test->settings->blksize);
+        munmap(sp->buffer, sp->blksize);
         free(sp->result);
         free(sp);
         return NULL;
@@ -4680,8 +4692,8 @@ diskfile_send(struct iperf_stream *sp)
     static int rtot;
 
     /* if needed, read enough data from the disk to fill up the buffer */
-    if (sp->diskfile_left < sp->test->settings->blksize && !sp->test->done) {
-    	r = read(sp->diskfile_fd, sp->buffer, sp->test->settings->blksize -
+    if (sp->diskfile_left < sp->blksize && !sp->test->done) {
+    	r = read(sp->diskfile_fd, sp->buffer, sp->blksize -
     		 sp->diskfile_left);
         buffer_left += r;
     	rtot += r;
@@ -4691,7 +4703,7 @@ diskfile_send(struct iperf_stream *sp)
 
         // If the buffer doesn't contain a full buffer at this point,
         // adjust the size of the data to send.
-        if (buffer_left != sp->test->settings->blksize) {
+        if (buffer_left != sp->blksize) {
             if (sp->test->debug)
                 printf("possible eof\n");
             // setting data size to be sent,
@@ -4729,12 +4741,12 @@ diskfile_send(struct iperf_stream *sp)
      * pass.
      */
     sp->diskfile_left = buffer_left - r;
-    if (sp->diskfile_left && sp->diskfile_left < sp->test->settings->blksize) {
+    if (sp->diskfile_left && sp->diskfile_left < sp->blksize) {
 	memcpy(sp->buffer,
-	       sp->buffer + (sp->test->settings->blksize - sp->diskfile_left),
+	       sp->buffer + (sp->blksize - sp->diskfile_left),
 	       sp->diskfile_left);
 	if (sp->test->debug)
-	    printf("Shifting %d bytes by %d\n", sp->diskfile_left, (sp->test->settings->blksize - sp->diskfile_left));
+	    printf("Shifting %d bytes by %d\n", sp->diskfile_left, (sp->blksize - sp->diskfile_left));
     }
     return r;
 }
@@ -5171,4 +5183,21 @@ iflush(struct iperf_test *test)
     }
 
     return rc2;
+}
+
+// Calculates the sending busrt size for the test
+int
+iperf_calc_burst_size(struct iperf_test *test)
+{
+    register int multisend;
+
+    /* Can we do multisend mode? */
+    if (test->settings->burst != 0)
+        multisend = test->settings->burst;
+    else if (test->settings->rate == 0)
+        multisend = test->multisend;
+    else
+        multisend = 1;	/* nope */
+
+    return multisend;
 }

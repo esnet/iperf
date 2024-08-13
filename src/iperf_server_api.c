@@ -748,7 +748,7 @@ iperf_run_server(struct iperf_test *test)
 
                 /* check if all streams connections accepted */
                 if (rec_streams_accepted == streams_to_rec && send_streams_accepted == streams_to_send) {
-                    /* receive cleint's ACK that last connection ack was received */
+                    /* receive client's ACK that last connection ack was received */
                     if (test->protocol->id == Pudp) {
                         if (iperf_udp_acceppt_all_streams_connected_msgs(test, UDP_ALL_STREAMS_CONNECTED_MSG , test->prot_listener, &sa_peer, &sa_peer_len) == 0) {
                             cleanup_server(test);

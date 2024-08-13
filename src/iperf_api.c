@@ -1267,7 +1267,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                         if (test->settings->udp_connect_retries < 1 ||
                             (udp_retries_timeout_specified && test->settings->udp_connect_retries == 1)) {
                             i_errno = IEUDPCONNECT;
-                            return -1;                        
+                            return -1;
                         }
                     }
                 }

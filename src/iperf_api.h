@@ -470,7 +470,7 @@ enum {
     IESTREAMREAD = 206,     // Unable to read from stream (check perror)
     IESTREAMCLOSE = 207,    // Stream has closed unexpectedly
     IESTREAMID = 208,       // Stream has invalid ID
-    IESTREAMCNCTSEND = 209, // Failed to send stream connection mesage/reply (UDP) 
+    IESTREAMCNCTSEND = 209, // Failed to send stream connection mesage/reply (UDP)
     IESTREAMCNCTED = 210,   // Server did not receive a response that all streams are connected (UDP)
     IESTREAMCNCTEDREPLY = 211, // Client did not receive ack reply that the server received the response that all streams are connected (UDP)
     /* Timer errors */

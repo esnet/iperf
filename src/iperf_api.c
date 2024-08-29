@@ -1149,6 +1149,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"idle-timeout", required_argument, NULL, OPT_IDLE_TIMEOUT},
         {"rcv-timeout", required_argument, NULL, OPT_RCV_TIMEOUT},
         {"snd-timeout", required_argument, NULL, OPT_SND_TIMEOUT},
+#if defined(HAVE_TCP_KEEPALIVE)
+        {"cntl-ka", optional_argument, NULL, OPT_CNTL_KA},
+#endif /* HAVE_TCP_KEEPALIVE */
         {"debug", optional_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -1162,6 +1165,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     char* comma;
 #endif /* HAVE_CPU_AFFINITY */
     char* slash;
+#if defined(HAVE_TCP_KEEPALIVE)
+    char* slash2;
+#endif /* HAVE_TCP_KEEPALIVE */
     char *p, *p1;
     struct xbind_entry *xbe;
     double farg;
@@ -1530,6 +1536,39 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 snd_timeout_flag = 1;
 	        break;
 #endif /* HAVE_TCP_USER_TIMEOUT */
+#if defined (HAVE_TCP_KEEPALIVE)
+            case OPT_CNTL_KA:
+                test->settings->cntl_ka = 1;
+                if (optarg) {
+                    slash = strchr(optarg, '/');
+		    if (slash) {
+		        *slash = '\0';
+		        ++slash;
+                        slash2 = strchr(slash, '/');
+                        if (slash2) {
+                            *slash2 = '\0';
+		            ++slash2;
+                            if (strlen(slash2) > 0) {
+                                test->settings->cntl_ka_count = atoi(slash2);
+                            }
+                        }
+                        if (strlen(slash) > 0) {
+                            test->settings->cntl_ka_interval = atoi(slash);
+                        }
+                    }
+                    if (strlen(optarg) > 0) {
+                        test->settings->cntl_ka_keepidle = atoi(optarg);
+                    }
+                }
+                // Seems that at least in Windows WSL2, TCP keepalive retries full inteval must be
+                // smaller than the idle interval. Otherwise, the keepalive message is sent only once.
+                if (test->settings->cntl_ka_keepidle &&
+                    test->settings->cntl_ka_keepidle <= (test->settings->cntl_ka_count * test->settings->cntl_ka_interval)) {
+                        i_errno = IECNTLKA;
+                        return -1;
+                }
+                break;
+#endif /* HAVE_TCP_KEEPALIVE */
             case 'A':
 #if defined(HAVE_CPU_AFFINITY)
                 test->affinity = strtol(optarg, &endptr, 0);
@@ -2975,6 +3014,10 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->rcv_timeout.secs = DEFAULT_NO_MSG_RCVD_TIMEOUT / SEC_TO_mS;
     testp->settings->rcv_timeout.usecs = (DEFAULT_NO_MSG_RCVD_TIMEOUT % SEC_TO_mS) * mS_TO_US;
     testp->zerocopy = 0;
+    testp->settings->cntl_ka = 0;
+    testp->settings->cntl_ka_keepidle = 0;
+    testp->settings->cntl_ka_interval = 0;
+    testp->settings->cntl_ka_count = 0;
 
     memset(testp->cookie, 0, COOKIE_SIZE);
 
@@ -5172,3 +5215,82 @@ iflush(struct iperf_test *test)
 
     return rc2;
 }
+
+#if defined (HAVE_TCP_KEEPALIVE)
+// Set Control Connection TCP Keepalive (especially useful for long UDP test sessions)
+int
+iperf_set_control_keepalive(struct iperf_test *test)
+{
+    int opt, kaidle, kainterval, kacount;
+    socklen_t len;
+
+    if (test->settings->cntl_ka) {
+        // Set keepalive using system defaults
+        opt = 1;
+        if (setsockopt(test->ctrl_sck, SOL_SOCKET, SO_KEEPALIVE, (char *) &opt, sizeof(opt))) {
+            i_errno = IESETCNTLKA;
+            return -1;
+        }
+
+        // Get default values when not specified
+        if ((kaidle = test->settings->cntl_ka_keepidle) == 0) {
+            len = sizeof(kaidle);
+            if (getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_KEEPIDLE, (char *) &kaidle, &len)) {
+                i_errno = IESETCNTLKAINTERVAL;
+                return -1;
+            }
+        }
+        if ((kainterval = test->settings->cntl_ka_interval) == 0) {
+            len = sizeof(kainterval);
+            if (getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_KEEPINTVL, (char *) &kainterval, &len)) {
+                i_errno = IESETCNTLKAINTERVAL;
+                return -1;
+            }
+        }
+        if ((kacount = test->settings->cntl_ka_count) == 0) {
+            len = sizeof(kacount);
+            if (getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_KEEPCNT, (char *) &kacount, &len)) {
+                i_errno = IESETCNTLKACOUNT;
+                return -1;
+            }
+        }
+   
+        // Seems that at least in Windows WSL2, TCP keepalive retries full inteval must be
+        // smaller than the idle interval. Otherwise, the keepalive message is sent only once.
+        if (test->settings->cntl_ka_keepidle) {
+            if (test->settings->cntl_ka_keepidle <= (kainterval * kacount)) {
+                iperf_err(test, "Keepalive Idle time (%d) should be greater than Retries-interval (%d) times Retries-count (%d)", kaidle, kainterval, kacount);
+                i_errno = IECNTLKA;
+                return -1;
+            }
+        }
+
+        // Set keep alive values when specified
+        if ((opt = test->settings->cntl_ka_keepidle)) {
+            if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_KEEPIDLE, (char *) &opt, sizeof(opt))) {
+                i_errno = IESETCNTLKAKEEPIDLE;
+                return -1;
+            }
+        }
+        if ((opt = test->settings->cntl_ka_interval)) {
+            if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_KEEPINTVL, (char *) &opt, sizeof(opt))) {
+                i_errno = IESETCNTLKAINTERVAL;
+                return -1;
+            }
+        }
+        if ((opt = test->settings->cntl_ka_count)) {
+            if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_KEEPCNT, (char *) &opt, sizeof(opt))) {
+                i_errno = IESETCNTLKACOUNT;
+                return -1;
+            }
+        }
+
+        if (test->verbose) {
+            printf("Control connection TCP Keepalive TCP_KEEPIDLE/TCP_KEEPINTVL/TCP_KEEPCNT are set to %d/%d/%d\n",
+                   kaidle, kainterval, kacount);
+        }
+    }
+
+    return 0;
+}
+#endif //HAVE_TCP_KEEPALIVE

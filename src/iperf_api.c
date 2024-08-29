@@ -1687,12 +1687,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 client_flag = 1;
                 break;
 #endif /* HAVE_MSG_TRUNC */
-#if !defined(HAVE_CLOCK_NANOSLEEP) && !defined(HAVE_NANOSLEEP)
 	    case OPT_PACING_TIMER:
 		test->settings->pacing_timer = unit_atoi(optarg);
 		client_flag = 1;
 		break;
-#endif /* !HAVE_CLOCK_NANOSLEEP && !HAVE_NANOSLEEP */
 	    case OPT_CONNECT_TIMEOUT:
 		test->settings->connect_timeout = unit_atoi(optarg);
 		client_flag = 1;
@@ -1936,7 +1934,7 @@ iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP)
     
 #if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
     struct timespec nanosleep_time;
-    int64_t time_to_green_ligh, delta_bits;
+    int64_t time_to_green_light, delta_bits;
     int ret;
 #endif /* HAVE_CLOCK_NANOSLEEP || HAVE_NANOSLEEP) */
 #if defined(HAVE_CLOCK_NANOSLEEP)
@@ -1962,13 +1960,13 @@ iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP)
     if (missing_rate < 0) {
         delta_bits = bits_sent - (seconds * sp->test->settings->rate);
         // Calclate time until next data send is required
-        time_to_green_ligh = (SEC_TO_NS * delta_bits / sp->test->settings->rate);
+        time_to_green_light = (SEC_TO_NS * delta_bits / sp->test->settings->rate);
         // Whether shouuld wait before next send
-        if (time_to_green_ligh >= 0) {
+        if (time_to_green_light >= 0) {
 #if defined(HAVE_CLOCK_NANOSLEEP)
             if (clock_gettime(CLOCK_MONOTONIC, &nanosleep_time) == 0) {
                 // Calculate absolute end of sleep time
-                ns = nanosleep_time.tv_nsec + time_to_green_ligh;
+                ns = nanosleep_time.tv_nsec + time_to_green_light;
                 if (ns < SEC_TO_NS) {
                     nanosleep_time.tv_nsec = ns;
                 } else {
@@ -1987,10 +1985,10 @@ iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP)
             // Sleep until average baud rate reaches the target value or intrupt / error
             do {
                 // nansleep() time should be less than 1 sec
-                nanosleep_time.tv_nsec = (time_to_green_ligh >= SEC_TO_NS) ? SEC_TO_NS - 1 : time_to_green_ligh;
-                time_to_green_ligh -= nanosleep_time.tv_nsec;
+                nanosleep_time.tv_nsec = (time_to_green_light >= SEC_TO_NS) ? SEC_TO_NS - 1 : time_to_green_light;
+                time_to_green_light -= nanosleep_time.tv_nsec;
                 ret = nanosleep(&nanosleep_time, NULL);
-            } while (ret == 0 && time_to_green_ligh > 0);
+            } while (ret == 0 && time_to_green_light > 0);
             if (ret == 0) {
                 sp->green_light = 1;
             }

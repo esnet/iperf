@@ -131,6 +131,10 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 #if defined(HAVE_IPPROTO_MPTCP)
                            "  -m, --mptcp               use MPTCP rather than plain TCP\n"
 #endif
+#if defined(HAVE_TCP_KEEPALIVE)
+                           "  --cntl-ka[=#/#/#]         use control connection TCP keepalive - KEEPIDLE/KEEPINTV/KEEPCNT\n"
+                           "                            each value is optional with system settings default\n"
+#endif //HAVE_TCP_KEEPALIVE
                            "  -d, --debug[=#]           emit debugging output\n"
                            "                            (optional optional \"=\" and debug level: 1-4. Default is 4 - all messages)\n"
                            "  -v, --version             show version information and quit\n"

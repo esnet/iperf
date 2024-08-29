@@ -444,11 +444,17 @@ iperf_connect(struct iperf_test *test)
         return -1;
     }
 
+#if defined (HAVE_TCP_KEEPALIVE)
+        // Set Control Connection TCP Keepalive (especially useful for long UDP test sessions)
+        if (iperf_set_control_keepalive(test) < 0)
+            return -1;
+#endif //HAVE_TCP_KEEPALIVE
+
 #if defined(HAVE_TCP_USER_TIMEOUT)
     if ((opt = test->settings->snd_timeout)) {
         if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_USER_TIMEOUT, &opt, sizeof(opt)) < 0) {
-        i_errno = IESETUSERTIMEOUT;
-        return -1;
+            i_errno = IESETUSERTIMEOUT;
+            return -1;
         }
     }
 #endif /* HAVE_TCP_USER_TIMEOUT */

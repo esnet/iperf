@@ -342,5 +342,14 @@ AC_SEARCH_LIBS(clock_gettime, [rt posix4])
 # Check for clock_gettime support
 AC_CHECK_FUNCS([clock_gettime])
 
+# Check if we need -lrt for nanosleep
+AC_SEARCH_LIBS(nanosleep, [rt posix4])
+# Check for nanosleep support
+AC_CHECK_FUNCS([nanosleep])
+# Check if we need -lrt for clock_nanosleep
+AC_SEARCH_LIBS(clock_nanosleep, [rt posix4])
+# Check for clock_nanosleep support
+AC_CHECK_FUNCS([clock_nanosleep])
+
 AC_CONFIG_FILES([Makefile src/Makefile src/version.h examples/Makefile iperf3.spec])
 AC_OUTPUT

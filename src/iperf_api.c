@@ -2858,34 +2858,39 @@ JSON_read(int fd)
      * structure, NULL if there was an error.
      */
     rc = Nread(fd, (char*) &nsize, sizeof(nsize), Ptcp);
-    hsize = ntohl(nsize);
-    if (rc == sizeof(nsize) && hsize > 0 && hsize <= MAX_PARAMS_JSON_STRING) {
-	/* Allocate a buffer to hold the JSON */
-	strsize = hsize + 1;              /* +1 for trailing NULL */
-	if (strsize) {
-	str = (char *) calloc(sizeof(char), strsize);
-	if (str != NULL) {
-	    rc = Nread(fd, str, hsize, Ptcp);
-	    if (rc >= 0) {
-		/*
-		 * We should be reading in the number of bytes corresponding to the
-		 * length in that 4-byte integer.  If we don't the socket might have
-		 * prematurely closed.  Only do the JSON parsing if we got the
-		 * correct number of bytes.
-		 */
-		if (rc == hsize) {
-		    json = cJSON_Parse(str);
-		}
-		else {
-		    printf("WARNING:  Size of data read does not correspond to offered length\n");
-		}
-	    }
-	}
-	free(str);
+    if (rc == sizeof(nsize)) {
+        hsize = ntohl(nsize);
+        if (hsize > 0 && hsize <= MAX_PARAMS_JSON_STRING) {
+	    /* Allocate a buffer to hold the JSON */
+	    strsize = hsize + 1;              /* +1 for trailing NULL */
+	    if (strsize) {
+	        str = (char *) calloc(sizeof(char), strsize);
+	        if (str != NULL) {
+	            rc = Nread(fd, str, hsize, Ptcp);
+	            if (rc >= 0) {
+                        /*
+                        * We should be reading in the number of bytes corresponding to the
+                        * length in that 4-byte integer.  If we don't the socket might have
+                        * prematurely closed.  Only do the JSON parsing if we got the
+                        * correct number of bytes.
+                        */
+                        if (rc == hsize) {
+                            json = cJSON_Parse(str);
+                        }
+                        else {
+                            printf("WARNING:  JSON size of data read does not correspond to offered length\n");
+                        }
+	            }
+	            free(str);
+                }
+            }
 	}
 	else {
-	    printf("WARNING:  Data length overflow\n");
+	    printf("WARNING:  JSON data length overflow\n");
 	}
+    }
+    else {
+        printf("WARNING:  Failed to read JSN data size\n");
     }
     return json;
 }

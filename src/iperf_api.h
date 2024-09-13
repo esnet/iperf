@@ -474,8 +474,8 @@ enum {
     IEPTHREADCANCEL=151,        // Unable to cancel thread (check perror)
     IEPTHREADJOIN=152,		// Unable to join thread (check perror)
     IEPTHREADATTRINIT=153,      // Unable to initialize thread attribute (check perror)
-    IEPTHREADSIGMASK=154,      // Unable to initialize sub thread signal mask (check perror)
-    IEPTHREADATTRDESTROY=155,      // Unable to destroy thread attribute (check perror)
+    IEPTHREADATTRDESTROY=154,      // Unable to destroy thread attribute (check perror)
+    IEPTHREADSIGMASK=155,      // Unable to initialize sub thread signal mask (check perror)
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

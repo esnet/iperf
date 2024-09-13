@@ -505,6 +505,9 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "unable to create thread attributes");
             perr = 1;
             break;
+	case IEPTHREADSIGMASK:
+	    snprintf(errstr, len, "unable to change mask of blocked signals");
+	    break;
 	case IEPTHREADATTRDESTROY:
             snprintf(errstr, len, "unable to destroy thread attributes");
             perr = 1;

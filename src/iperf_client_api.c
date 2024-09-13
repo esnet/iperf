@@ -36,6 +36,7 @@
 #include <sys/select.h>
 #include <sys/uio.h>
 #include <arpa/inet.h>
+#include <signal.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -55,6 +56,23 @@ void *
 iperf_client_worker_run(void *s) {
     struct iperf_stream *sp = (struct iperf_stream *) s;
     struct iperf_test *test = sp->test;
+
+    /* Blocking signal to make sure that signal will be handled by main thread */
+    sigset_t set;
+    sigemptyset(&set);
+#ifdef SIGTERM
+    sigaddset(&set, SIGTERM);
+#endif
+#ifdef SIGHUP
+    sigaddset(&set, SIGHUP);
+#endif
+#ifdef SIGINT
+    sigaddset(&set, SIGINT);
+#endif
+    if (pthread_sigmask(SIG_BLOCK, &set, NULL) != 0) {
+	    i_errno = IEPTHREADSIGMASK;
+	    goto cleanup_and_fail;
+    }
 
     /* Allow this thread to be cancelled even if it's in a syscall */
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);

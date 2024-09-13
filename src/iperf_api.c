@@ -2060,8 +2060,14 @@ iperf_recv_mt(struct iperf_stream *sp)
 		i_errno = IESTREAMREAD;
 		return r;
 	    }
-	    test->bytes_received += r;
-	    ++test->blocks_received;
+            
+            /* Collect statistics only if receive did not timeout (e.g. `Nread()` may timeout).
+             * This is also important for `--rcv-timeout` to work properly.
+             */
+            if (r > 0) {
+	        test->bytes_received += r;
+	        ++test->blocks_received;
+            }
 
     return 0;
 }

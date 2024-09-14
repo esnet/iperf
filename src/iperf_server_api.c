@@ -235,16 +235,24 @@ iperf_handle_message_server(struct iperf_test *test)
 {
     int rval;
     struct iperf_stream *sp;
+    signed char old_state = test->state;
 
     if (test->debug_level >= DEBUG_LEVEL_INFO) {
-        iperf_printf(test, "Reading new State from the Client - current state is %d-%s\n", test->state, state_to_text(test->state));
+        iperf_printf(test, "Reading new State from the Client - current state is %d-%s\n", old_state, state_to_text(old_state));
     }
 
     // XXX: Need to rethink how this behaves to fit API
     if ((rval = Nread(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp)) <= 0) {
         if (rval == 0) {
-            iperf_err(test, "the client has unexpectedly closed the connection");
-            i_errno = IECTRLCLOSE;
+            /* If control socket was closed when IPERF_DONE is expected, assume that because of race condition
+             * the client closed the connection before the server received the IPERF_DONE.
+            */
+            if (old_state != DISPLAY_RESULTS) {
+                iperf_err(test, "the client has unexpectedly closed the connection");
+                i_errno = IECTRLCLOSE;
+            } else {
+                printf("WARNING:  client connection was closed when waiting for IPERF_DONE\n");
+            }
             iperf_set_test_state(test, IPERF_DONE);
             return 0;
         } else {

@@ -251,7 +251,7 @@ iperf_handle_message_server(struct iperf_test *test)
                 iperf_err(test, "the client has unexpectedly closed the connection");
                 i_errno = IECTRLCLOSE;
             } else {
-                printf("WARNING:  client connection was closed when waiting for IPERF_DONE\n");
+                warning("client connection was closed when waiting for IPERF_DONE");
             }
             iperf_set_test_state(test, IPERF_DONE);
             return 0;

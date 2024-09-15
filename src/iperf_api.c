@@ -2820,7 +2820,7 @@ JSON_read(int fd)
                             json = cJSON_Parse(str);
                         }
                         else {
-                            printf("WARNING:  JSON size of data read does not correspond to offered length\n");
+                            warning("JSON size of data read does not correspond to offered length");
                         }
 	            }
 	            free(str);
@@ -2828,11 +2828,11 @@ JSON_read(int fd)
             }
 	}
 	else {
-	    printf("WARNING:  JSON data length overflow\n");
+	    warning("JSON data length overflow");
 	}
     }
     else {
-        printf("WARNING:  Failed to read JSN data size\n");
+        warning("Failed to read JSON data size");
     }
     return json;
 }

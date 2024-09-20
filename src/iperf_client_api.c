@@ -825,6 +825,9 @@ iperf_run_client(struct iperf_test * test)
     /* Cancel all outstanding threads */
     i_errno_save = i_errno;
     SLIST_FOREACH(sp, &test->streams, streams) {
+        if (sp->done) {
+            continue;
+        }
         sp->done = 1;
         int rc;
         rc = pthread_cancel(sp->thr);

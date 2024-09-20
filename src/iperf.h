@@ -436,6 +436,8 @@ struct iperf_test
 
 #define UDP_BUFFER_EXTRA 1024
 
+#define MAX_PARAMS_JSON_STRING 8 * 1024
+
 /* constants for command line arg sanity checks */
 #define MB (1024 * 1024)
 #define MAX_TCP_BUFFER (512 * MB)

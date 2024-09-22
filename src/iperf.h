@@ -288,6 +288,7 @@ enum debug_level {
 struct iperf_test
 {
     pthread_mutex_t print_mutex;
+    pthread_mutex_t pipe_mutex;
 
     char      role;                             /* 'c' lient or 's' erver */
     enum iperf_mode mode;
@@ -325,6 +326,9 @@ struct iperf_test
     int       prot_listener;
 
     int	      ctrl_sck_mss;			/* MSS for the control channel */
+
+    int       pipe_end_of_test_fds[2];          /* fot select() terminating when -n/-k flags are set */
+    int       pipe_end_of_test_created;
 
 #if defined(HAVE_SSL)
     char      *server_authorized_users;

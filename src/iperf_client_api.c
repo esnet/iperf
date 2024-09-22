@@ -572,6 +572,7 @@ iperf_run_client(struct iperf_test * test)
     int64_t timeout_us;
     int64_t rcv_timeout_us;
     int i_errno_save;
+    char chr;
 
     if (NULL == test)
     {
@@ -684,12 +685,25 @@ iperf_run_client(struct iperf_test * test)
         }
 
 	if (result > 0) {
-	    if (FD_ISSET(test->ctrl_sck, &read_set)) {
+	    if (FD_ISSET(test->ctrl_sck, &read_set)) { /* Control message */
  	        if (iperf_handle_message_client(test) < 0) {
 		    goto cleanup_and_fail;
 		}
 		FD_CLR(test->ctrl_sck, &read_set);
 	    }
+
+            /* Wakedup by sent all of data */
+            if (test->pipe_end_of_test_created && FD_ISSET(test->pipe_end_of_test_fds[0], &read_set)) {
+                if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                    iperf_printf(test, "Main thread woke up by pipe input that all blocks or bytes already sent/received.\n");
+                }
+                for (;;) { /* Consume bytes from pipe */
+                    if (read(test->pipe_end_of_test_fds[0], &chr, 1) <= 0) {
+                        break;
+                    }
+                }
+                FD_CLR(test->pipe_end_of_test_fds[0], &read_set);
+            }
 	}
 
 	if (test->state == TEST_RUNNING) {
@@ -697,6 +711,19 @@ iperf_run_client(struct iperf_test * test)
 	    /* Is this our first time really running? */
 	    if (startup) {
 	        startup = 0;
+
+                /* Create self pipe to allow select() end when number of bytes/block were sent */
+                if (test->settings->bytes > 0 || test->settings->blocks > 0) {
+                    iperf_open_pipe_end_of_test(test);
+                    if (test->pipe_end_of_test_created == 0) {
+                        warning("Failed to create pipe to end test immediatelly when sending bytes/blocks in completed");
+                    } else { /* pipe was created */
+                        /* Add the pipe to the select() read fds */
+                        FD_SET(test->pipe_end_of_test_fds[0], &test->read_set);
+                        test->max_fd = (test->pipe_end_of_test_fds[0] > test->max_fd) ?
+                                       test->pipe_end_of_test_fds[0] : test->max_fd;
+                    } 
+                }
 
                 /* Create and spin up threads */
                 pthread_attr_t attr;

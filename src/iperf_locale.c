@@ -105,8 +105,14 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -I, --pidfile file        write PID file\n"
                            "  -F, --file name           xmit/recv the specified file\n"
 #if defined(HAVE_CPU_AFFINITY)
+#if defined(HAVE_SCHED_SETAFFINITY)
+                           "  -A, --affinity list[,server-list] set the CPU affinity cores that the process will use\n"
+                           "                            to the cores list in the format #/#/...\n"
+                           "                            (optional Client only server-list - Server's core numbers for this test)\n"
+#else /* HAVE_SCHED_SETAFFINITY */
                            "  -A, --affinity n[,m]      set CPU affinity core number to n (the core the process will use)\n"
-                          "                             (optional Client only m - the Server's core number for this test)\n"
+                           "                            (optional Client only m - the Server's core number for this test)\n"
+#endif /* HAVE_SCHED_SETAFFINITY */
 #endif /* HAVE_CPU_AFFINITY */
 #if defined(HAVE_SO_BINDTODEVICE)
                            "  -B, --bind <host>[%%<dev>] bind to the interface associated with the address <host>\n"

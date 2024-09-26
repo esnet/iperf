@@ -305,7 +305,12 @@ struct iperf_test
     int       omit;                             /* duration of omit period (-O flag) */
     int       duration;                         /* total duration of test (-t flag) */
     char     *diskfile_name;			/* -F option */
-    int       affinity, server_affinity;	/* -A option */
+#if defined(HAVE_SCHED_SETAFFINITY)
+    cpu_set_t cpu_set, server_cpu_set;          /* -A option */
+#else
+    int       affinity;	                        /* -A option */
+#endif /* HAVE_SCHED_SETAFFINITY */
+    int       server_affinity;	                /* -A option */
 #if defined(HAVE_CPUSET_SETAFFINITY)
     cpuset_t cpumask;
 #endif /* HAVE_CPUSET_SETAFFINITY */

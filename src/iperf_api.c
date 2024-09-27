@@ -99,7 +99,7 @@ static int diskfile_send(struct iperf_stream *sp);
 static int diskfile_recv(struct iperf_stream *sp);
 static int JSON_write(int fd, cJSON *json);
 static void print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *json_interval_streams);
-static cJSON *JSON_read(int fd);
+static cJSON *JSON_read(int fd, int max_size);
 static int JSONStream_Output(struct iperf_test *test, const char* event_name, cJSON* obj);
 
 
@@ -2373,7 +2373,7 @@ get_parameters(struct iperf_test *test)
     cJSON *j;
     cJSON *j_p;
 
-    j = JSON_read(test->ctrl_sck);
+    j = JSON_read(test->ctrl_sck, MAX_PARAMS_JSON_STRING);
     if (j == NULL) {
 	i_errno = IERECVPARAMS;
         r = -1;
@@ -2604,7 +2604,7 @@ get_results(struct iperf_test *test)
     int retransmits;
     struct iperf_stream *sp;
 
-    j = JSON_read(test->ctrl_sck);
+    j = JSON_read(test->ctrl_sck, 0);
     if (j == NULL) {
 	i_errno = IERECVRESULTS;
         r = -1;
@@ -2792,7 +2792,7 @@ JSON_write(int fd, cJSON *json)
 /*************************************************************/
 
 static cJSON *
-JSON_read(int fd)
+JSON_read(int fd, int max_size)
 {
     uint32_t hsize, nsize;
     size_t strsize;
@@ -2808,7 +2808,7 @@ JSON_read(int fd)
     rc = Nread(fd, (char*) &nsize, sizeof(nsize), Ptcp);
     if (rc == sizeof(nsize)) {
         hsize = ntohl(nsize);
-        if (hsize > 0 && hsize <= MAX_PARAMS_JSON_STRING) {
+        if (hsize > 0 && (max_size == 0 || hsize <= max_size)) {
 	    /* Allocate a buffer to hold the JSON */
 	    strsize = hsize + 1;              /* +1 for trailing NULL */
 	    if (strsize) {

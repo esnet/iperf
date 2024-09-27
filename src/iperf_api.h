@@ -336,6 +336,8 @@ int iperf_create_send_timers(struct iperf_test *);
 int iperf_parse_arguments(struct iperf_test *, int, char **);
 int iperf_open_logfile(struct iperf_test *);
 void iperf_close_logfile(struct iperf_test *);
+void iperf_open_pipe_end_of_test(struct iperf_test *);
+void iperf_close_pipe_end_of_test(struct iperf_test *);
 void iperf_reset_test(struct iperf_test *);
 void iperf_reset_stats(struct iperf_test * test);
 

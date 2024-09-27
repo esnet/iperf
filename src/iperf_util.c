@@ -105,7 +105,7 @@ void fill_with_repeating_pattern(void *out, size_t outsize)
  * Generate and return a cookie string
  *
  * Iperf uses this function to create test "cookies" which
- * server as unique test identifiers. These cookies are also
+ * serve as unique test identifiers. These cookies are also
  * used for the authentication of stream connections.
  * Assumes cookie has size (COOKIE_SIZE + 1) char's.
  */

@@ -377,6 +377,9 @@ int iperf_clearaffinity(struct iperf_test *);
 int iperf_printf(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3)));
 int iflush(struct iperf_test *test);
 
+/* Calculates the sending busrt size for the test */
+int iperf_calc_burst_size(struct iperf_test *test);
+
 /* Error routines. */
 void iperf_err(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3)));
 void iperf_errexit(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3),noreturn));

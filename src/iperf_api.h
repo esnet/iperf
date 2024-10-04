@@ -345,6 +345,7 @@ int set_protocol(struct iperf_test *, int);
 void iperf_on_new_stream(struct iperf_stream *);
 void iperf_on_test_start(struct iperf_test *);
 void iperf_on_connect(struct iperf_test *);
+int iperf_hostname_type(struct iperf_test *test, char *hostname);
 void iperf_on_test_finish(struct iperf_test *);
 
 extern jmp_buf env;

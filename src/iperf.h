@@ -62,6 +62,7 @@
 #endif // HAVE_SSL
 
 #include "iperf_pthread.h"
+#include <semaphore.h>
 
 /*
  * Atomic types highly desired, but if not, we approximate what we need
@@ -126,6 +127,13 @@ struct iperf_interval_results
     long rtt;
     long rttvar;
     long pmtu;
+
+    /* for Bounceback */
+    atomic_iperf_size_t bounceback_roundtrip_sum_this_interval;
+    atomic_iperf_size_t bounceback_roundtrip_sqrt_sum_this_interval;
+    long bounceback_count_this_interval;
+    long bounceback_min_this_interval;
+    long bounceback_max_this_interval;
 };
 
 struct iperf_stream_result
@@ -135,6 +143,18 @@ struct iperf_stream_result
     atomic_iperf_size_t bytes_received_this_interval;
     atomic_iperf_size_t bytes_sent_this_interval;
     atomic_iperf_size_t bytes_sent_omit;
+
+    double bounceback_roundtrip_sum;
+    double bounceback_roundtrip_sum_this_interval;
+    double bounceback_roundtrip_sqrt_sum;
+    double bounceback_roundtrip_sqrt_sum_this_interval;
+    long bounceback_count;
+    long bounceback_count_this_interval;
+    long bounceback_min;
+    long bounceback_min_this_interval;
+    long bounceback_max;
+    long bounceback_max_this_interval;
+
     long stream_prev_total_retrans;
     long stream_retrans;
     long stream_max_rtt;
@@ -184,6 +204,12 @@ struct iperf_settings
     int       idle_timeout;         /* server idle time timeout */
     unsigned int snd_timeout; /* Timeout for sending tcp messages in active mode, in us */
     struct iperf_time rcv_timeout;  /* Timeout for receiving messages in active mode, in us */
+    int       bounceback;               /* whether to run bounceback test */
+    int       bounceback_burst;         /* number of messages in bounceback burst */
+    int       bounceback_inum;          /* number of bounceback bursts in report interval */
+    double    bounceback_period;        /* number of seconds between baounceback bursts (calculated from inum) */
+    int       bounceback_size;          /* baounceback message size */
+    int       bounceback_response_size; /* baounceback response message size */
 };
 
 struct iperf_test;
@@ -376,6 +402,8 @@ struct iperf_test
 
     int       num_streams;                      /* total streams in the test (-P) */
 
+    sem_t bounceback_sem;
+
     atomic_iperf_size_t bytes_sent;
     atomic_iperf_size_t blocks_sent;
 
@@ -421,10 +449,34 @@ struct iperf_test
 
 };
 
+/* Bounceback structures */
+struct bounceback_report        // bounceback report about one message and its bounceback
+{
+    uint64_t bb_burst_id;
+    uint32_t bb_index_in_burst;
+    struct iperf_time bb_client_tx_ts;
+    struct iperf_time bb_server_rx_ts;
+    struct iperf_time bb_server_tx_ts;
+    struct iperf_time bb_client_rx_ts;
+    uint64_t time_uplink; // us
+    uint64_t time_downlink; // us
+    uint64_t time_roundtrip; // us
+};
+
+struct bounceback_header        // Header of bounceback message (both directions)
+{
+    uint32_t bb_burst_id;
+    uint32_t bb_index_in_burst;
+    struct iperf_time bb_client_tx_ts;
+    struct iperf_time bb_server_rx_ts;
+    struct iperf_time bb_server_tx_ts;
+};
+
 /* default settings */
 #define PORT 5201  /* default port to listen on (don't use the same port as iperf2) */
 #define uS_TO_NS 1000
 #define mS_TO_US 1000
+#define mS_TO_NS 1000000
 #define SEC_TO_mS 1000
 #define SEC_TO_US 1000000LL
 #define UDP_RATE (1024 * 1024) /* 1 Mbps */

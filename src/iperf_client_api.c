@@ -37,6 +37,7 @@
 #include <sys/uio.h>
 #include <arpa/inet.h>
 #include <signal.h>
+#include <time.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -96,6 +97,206 @@ iperf_client_worker_run(void *s) {
     return NULL;
 }
 
+void *
+iperf_client_bounceback_worker_run(void *s)
+{
+    static uint64_t burst_id = 0;
+
+    struct iperf_stream *sp = (struct iperf_stream *) s;
+    struct iperf_test *test = sp->test;
+    struct iperf_stream_result *rp;
+    int r, in_burst_cnt, inum_cnt;
+    struct iperf_time now;
+    struct bounceback_header *phdr;
+    struct bounceback_report bb_report;
+#if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
+    uint64_t ns_period = test->settings->bounceback_period * SEC_TO_NS;
+    int64_t ns;
+    struct timespec nanosleep_time;
+#endif /* HAVE_CLOCK_NANOSLEEP || HAVE_NANOSLEEP) */
+#if defined(HAVE_CLOCK_NANOSLEEP)
+    int ret;
+#elif defined(HAVE_NANOSLEEP)
+    struct iperf_time burst_time_start, burst_time_end;
+#endif /* HAVE_CLOCK_NANOSLEEP || HAVE_NANOSLEEP*/
+
+    /* Blocking signal to make sure that signal will be handled by main thread */
+    sigset_t set;
+    sigemptyset(&set);
+#ifdef SIGTERM
+    sigaddset(&set, SIGTERM);
+#endif
+#ifdef SIGHUP
+    sigaddset(&set, SIGHUP);
+#endif
+#ifdef SIGINT
+    sigaddset(&set, SIGINT);
+#endif
+    if (pthread_sigmask(SIG_BLOCK, &set, NULL) != 0) {
+	i_errno = IEPTHREADSIGMASK;
+	goto cleanup_and_fail;
+    }
+
+    /* Allow this thread to be cancelled even if it's in a syscall */
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+
+    rp = sp->result;
+    phdr = (struct bounceback_header *)sp->buffer;
+
+    /* loop of wrining bounceback message and reading its reply */
+    while (! (test->done) && ! (sp->done)) {
+        /* wait until the next report interval starts */
+        if (sem_wait(&test->bounceback_sem) < 0) {
+            perror("iperf_client_bounceback_worker_run: sem_wait");
+            continue;
+        }
+        /* No need for queued semaphores */
+        while (sem_trywait(&test->bounceback_sem) == 0);
+
+        /* Loop of bounceback bursts during an interval */
+        for (inum_cnt = test->settings->bounceback_inum; inum_cnt > 0; --inum_cnt) {
+            /* Set time for next burst */
+    #if defined(HAVE_CLOCK_NANOSLEEP)
+            if (clock_gettime(CLOCK_MONOTONIC, &nanosleep_time) != 0)
+                perror("iperf_client_bounceback_worker_run: clock_gettime");
+    #elif defined(HAVE_NANOSLEEP)
+            iperf_time_now(&burst_time_start);
+    #endif /* HAVE_CLOCK_NANOSLEEP || HAVE_NANOSLEEP */
+
+            burst_id++;
+
+            /* burst loop */
+            for (in_burst_cnt = 1; in_burst_cnt <= test->settings->bounceback_burst; in_burst_cnt++) {
+                /* writing bounceback message */
+                phdr->bb_burst_id = htonl(burst_id);
+                phdr->bb_index_in_burst = htonl(in_burst_cnt);
+                iperf_time_now(&now);
+                phdr->bb_client_tx_ts.secs = htonl(now.secs);
+                phdr->bb_client_tx_ts.usecs = htonl(now.usecs);
+                phdr->bb_server_rx_ts.secs = -1;
+                phdr->bb_server_rx_ts.usecs = -1;
+                phdr->bb_server_tx_ts.secs = -1;
+                phdr->bb_server_tx_ts.usecs = -1;
+
+                r = Nwrite(sp->socket, sp->buffer, test->settings->bounceback_size, test->protocol->id);
+                if (r < 0) {
+                    if (r == NET_SOFTERROR) {
+                        if (sp->test->debug_level >= DEBUG_LEVEL_INFO)
+                                printf("Bounceback send failed on NET_SOFTERROR. errno=%s\n", strerror(errno));
+                        continue;
+                    } else {
+                        iperf_err(test, "Bounceback send failed. errno=%s", strerror(errno));
+                        goto cleanup_and_fail;
+                    }
+                }
+
+                if (r != test->settings->bounceback_size) {
+                    if (sp->test->debug_level >= DEBUG_LEVEL_INFO)
+                        printf("Bounceback send wrote only %d bytes instead of %d bytes\n", r, test->settings->bounceback_size);
+                    continue;
+                }
+
+                r = Nread(sp->socket, sp->buffer, test->settings->bounceback_response_size, test->protocol->id);
+                if (r < 0) {
+                    if (r == NET_SOFTERROR) {
+                        if (sp->test->debug_level >= DEBUG_LEVEL_INFO)
+                            printf("Bounceback receive failed on NET_SOFTERROR. errno=%s\n", strerror(errno));
+                        continue;
+                    } else {
+                        iperf_err(test, "Bounceback receive failed. errno=%s", strerror(errno));
+                        goto cleanup_and_fail;
+                    }
+                }
+                if (r != test->settings->bounceback_response_size) {
+                    if (sp->test->debug_level >= DEBUG_LEVEL_INFO)
+                        printf("Bounceback receive read only %d bytes instead of %d bytes\n", r, test->settings->bounceback_response_size);
+                    continue;
+                }
+
+                /* Get bounceback input data */
+                iperf_time_now(&bb_report.bb_client_rx_ts);
+                bb_report.bb_burst_id = ntohl(phdr->bb_burst_id);
+                bb_report.bb_index_in_burst = ntohl(phdr->bb_index_in_burst);
+                bb_report.bb_client_tx_ts.secs = ntohl(phdr->bb_client_tx_ts.secs);
+                bb_report.bb_client_tx_ts.usecs = ntohl(phdr->bb_client_tx_ts.usecs);
+                bb_report.bb_server_rx_ts.secs = ntohl(phdr->bb_server_rx_ts.secs);
+                bb_report.bb_server_rx_ts.usecs = ntohl(phdr->bb_server_rx_ts.usecs);
+                bb_report.bb_server_tx_ts.secs = ntohl(phdr->bb_server_tx_ts.secs);
+                bb_report.bb_server_tx_ts.usecs = ntohl(phdr->bb_server_tx_ts.usecs);
+
+                /* Calculate statistics */
+                bb_report.time_uplink = iperf_time_in_usecs(&bb_report.bb_server_rx_ts) -
+                                        iperf_time_in_usecs(&bb_report.bb_client_tx_ts);
+                bb_report.time_downlink = iperf_time_in_usecs(&bb_report.bb_client_rx_ts) -
+                                        iperf_time_in_usecs(&bb_report.bb_server_tx_ts);
+                bb_report.time_roundtrip = iperf_time_in_usecs(&bb_report.bb_client_rx_ts) -
+                                        iperf_time_in_usecs(&bb_report.bb_client_tx_ts) -
+                                        iperf_time_in_usecs(&bb_report.bb_server_tx_ts) +
+                                        iperf_time_in_usecs(&bb_report.bb_server_rx_ts);
+                if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                    iperf_printf(test, "iperf_client_bounceback_worker_run: busrt=%ld, index=%d - BB message statistics in us: Uplink=%ld, Downlink=%ld, Rounttrip=%ld\n", burst_id, in_burst_cnt, bb_report.time_uplink, bb_report.time_downlink, bb_report.time_roundtrip);
+                }
+
+                /* Add burst data to the statistics data */
+                rp->bounceback_count++;
+                rp->bounceback_count_this_interval++;
+                rp->bounceback_roundtrip_sum += bb_report.time_roundtrip;
+                rp->bounceback_roundtrip_sum_this_interval += bb_report.time_roundtrip;
+                rp->bounceback_roundtrip_sqrt_sum += bb_report.time_roundtrip * bb_report.time_roundtrip;
+                rp->bounceback_roundtrip_sqrt_sum_this_interval += bb_report.time_roundtrip * bb_report.time_roundtrip;
+                if (rp->bounceback_min == 0 || rp->bounceback_min > bb_report.time_roundtrip)
+                    rp->bounceback_min = bb_report.time_roundtrip;
+                if (rp->bounceback_max < bb_report.time_roundtrip)
+                    rp->bounceback_max = bb_report.time_roundtrip;
+                if (rp->bounceback_min_this_interval == 0 || rp->bounceback_min_this_interval > bb_report.time_roundtrip)
+                    rp->bounceback_min_this_interval = bb_report.time_roundtrip;
+                if (rp->bounceback_max_this_interval < bb_report.time_roundtrip)
+                    rp->bounceback_max_this_interval = bb_report.time_roundtrip;
+
+            } /* burst loop*/
+
+            /* sleep between bursts (but not after the last burst in the interval) */
+            if (inum_cnt > 1) {
+#if defined(HAVE_CLOCK_NANOSLEEP)
+                // Calculate absolute end of sleep time
+                ns = nanosleep_time.tv_nsec + ns_period;
+                if (ns < SEC_TO_NS) {
+                    nanosleep_time.tv_nsec = ns;
+                } else {
+                    nanosleep_time.tv_sec += ns / SEC_TO_NS;
+                    nanosleep_time.tv_nsec = ns % SEC_TO_NS;
+                }
+                // Sleep
+                while((ret = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &nanosleep_time, NULL)) == EINTR);
+#elif defined(HAVE_NANOSLEEP)
+                iperf_time_now(&burst_time_end);
+                ns = ns_period - ((iperf_time_in_usecs(&burst_time_end) - iperf_time_in_usecs(&burst_time_start)) * uS_TO_NS);
+                if (ns > 0) {
+                    nanosleep_time.tv_sec = 0;
+                    do {
+                        // nansleep() time should be less than 1 sec
+                        nanosleep_time.tv_nsec = (ns >= SEC_TO_NS) ? SEC_TO_NS - 1 : ns;
+                        ns -= nanosleep_time.tv_nsec;
+                        nanosleep(&nanosleep_time, NULL);
+                    } while (ns > 0);
+                }
+#endif /* HAVE_CLOCK_NANOSLEEP || HAVE_NANOSLEEP */
+            } /* if to sleep */
+
+        } /* all bursts loop*/
+
+    } /* main while */
+
+    return NULL;
+
+  cleanup_and_fail:
+    return NULL;
+}
+
+/* Create Client's Stream:
+   sender: 0 - Rx, 1 - Tx, 2 - for Bounceback.
+*/
 int
 iperf_create_streams(struct iperf_test *test, int sender)
 {
@@ -104,26 +305,42 @@ iperf_create_streams(struct iperf_test *test, int sender)
         iperf_err(NULL, "No test\n");
         return -1;
     }
+
     int i, s;
 #if defined(HAVE_TCP_CONGESTION)
     int saved_errno;
 #endif /* HAVE_TCP_CONGESTION */
     struct iperf_stream *sp;
+    int num_streams;
+    int flag;
+
+    num_streams = (sender == 2) ? 1 : test->num_streams;
 
     int orig_bind_port = test->bind_port;
-    for (i = 0; i < test->num_streams; ++i) {
+    for (i = 0; i < num_streams; ++i) {
 
         test->bind_port = orig_bind_port;
 	if (orig_bind_port) {
 	    test->bind_port += i;
             // If Bidir make sure send and receive ports are different
-            if (!sender && test->mode == BIDIRECTIONAL)
+            if ((!sender && test->mode == BIDIRECTIONAL))
                 test->bind_port += test->num_streams;
+            else if (sender == 2) {
+                test->bind_port += test->num_streams + (test->mode == BIDIRECTIONAL)? test->num_streams : 0;
+            }
         }
         s = test->protocol->connect(test);
         test->bind_port = orig_bind_port;
         if (s < 0)
             return -1;
+
+        /* Set TCP_NODELAY to the Bouncenack stream */
+        if (i + 1 == num_streams && test->protocol->id == Ptcp && test->settings->bounceback) {
+            if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(flag))) {
+                i_errno = IESETNODELAY;
+                return -1;
+            }
+        }
 
 #if defined(HAVE_TCP_CONGESTION)
 	if (test->protocol->id == Ptcp) {
@@ -201,6 +418,13 @@ client_reporter_timer_proc(TimerClientData client_data, struct iperf_time *nowP)
         return;
     if (test->reporter_callback)
 	test->reporter_callback(test);
+
+    /* Send semaphore to start new interval bounceback tests */
+    if (test->settings->bounceback) {
+        if (sem_post(&test->bounceback_sem) != 0) {
+            perror("client_reporter_timer_proc: sem_post");
+        }
+    }
 }
 
 static int
@@ -341,8 +565,13 @@ iperf_handle_message_client(struct iperf_test *test)
                 if (iperf_create_streams(test, 0) < 0)
                     return -1;
             }
-            else if (iperf_create_streams(test, test->mode) < 0)
+            else if (iperf_create_streams(test, test->mode) < 0) {
                 return -1;
+            }
+            if (test->settings->bounceback) {
+                if (iperf_create_streams(test, 2) < 0)
+                    return -1;
+            }
             break;
         case TEST_START:
             if (iperf_init_test(test) < 0)
@@ -572,6 +801,7 @@ iperf_run_client(struct iperf_test * test)
     int64_t timeout_us;
     int64_t rcv_timeout_us;
     int i_errno_save;
+    void *worker;
 
     if (NULL == test)
     {
@@ -706,12 +936,19 @@ iperf_run_client(struct iperf_test * test)
                 }
 
                 SLIST_FOREACH(sp, &test->streams, streams) {
-                    if (pthread_create(&(sp->thr), &attr, &iperf_client_worker_run, sp) != 0) {
+                    if (sp->sender == 2) { // Bounceback
+                        worker = &iperf_client_bounceback_worker_run;
+                    } else { // Sender (1) or Receiver (0)
+                        worker = &iperf_client_worker_run;
+                    }
+
+                    if (pthread_create(&(sp->thr), &attr, worker, sp) != 0) {
                         i_errno = IEPTHREADCREATE;
                         goto cleanup_and_fail;
                     }
                     if (test->debug_level >= DEBUG_LEVEL_INFO) {
-                        iperf_printf(test, "Thread FD %d created\n", sp->socket);
+                        iperf_printf(test, "Thread FD %d created; Stream id %d with sender type %d\n",
+                                     sp->socket, sp->id, sp->sender);
                     }
                 }
                 if (test->debug_level >= DEBUG_LEVEL_INFO) {

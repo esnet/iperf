@@ -200,6 +200,9 @@ iperf_strerror(int int_errno)
         case IESERVERAUTHUSERS:
              snprintf(errstr, len, "cannot access authorized users file");
             break;
+        case IEBOUNCEBACK:
+             snprintf(errstr, len, "invalid value specified in bounceback");
+            break;
 	case IEBADFORMAT:
 	    snprintf(errstr, len, "bad format specifier (valid formats are in the set [kmgtKMGT])");
 	    break;

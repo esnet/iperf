@@ -109,6 +109,91 @@ iperf_server_worker_run(void *s) {
     return NULL;
 }
 
+void *
+iperf_server_bounceback_worker_run(void *s)
+{
+    struct iperf_stream *sp = (struct iperf_stream *) s;
+    struct iperf_test *test = sp->test;
+    int r;
+    struct iperf_time now;
+    struct bounceback_header *phdr;
+
+    /* Blocking signal to make sure that signal will be handled by main thread */
+    sigset_t set;
+    sigemptyset(&set);
+#ifdef SIGTERM
+    sigaddset(&set, SIGTERM);
+#endif
+#ifdef SIGHUP
+    sigaddset(&set, SIGHUP);
+#endif
+#ifdef SIGINT
+    sigaddset(&set, SIGINT);
+#endif
+    if (pthread_sigmask(SIG_BLOCK, &set, NULL) != 0) {
+	    i_errno = IEPTHREADSIGMASK;
+	    goto cleanup_and_fail;
+    }
+
+    /* Allow this thread to be cancelled even if it's in a syscall */
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+
+    phdr = (struct bounceback_header *)sp->buffer;
+
+    /* loop of reading bounceback message and writing its reply */
+    while (! (test->done) && ! (sp->done)) {       
+
+            /* reading bounceback reply */
+            r = Nread(sp->socket, sp->buffer, test->settings->bounceback_size, test->protocol->id);
+            if (r < 0) {
+                if (r == NET_SOFTERROR) {
+                    if (sp->test->debug_level >= DEBUG_LEVEL_INFO)
+                        printf("Bounceback receive failed on NET_SOFTERROR. errno=%s\n", strerror(errno));
+                    continue;
+                }
+            }
+            if (r != test->settings->bounceback_size) {
+                if (sp->test->debug_level >= DEBUG_LEVEL_INFO)
+                    printf("Bounceback receive read only %d bytes\n", r);
+                continue;
+            }
+            if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                iperf_printf(test, "iperf_server_bounceback_worker_run: received message burst=%d, index=%d\n",
+                             ntohl(phdr->bb_burst_id), ntohl(phdr->bb_index_in_burst));
+            }
+
+            /* Add server's data */
+            iperf_time_now(&now); // Receive time
+            phdr->bb_server_rx_ts.secs = htonl(now.secs);
+            phdr->bb_server_rx_ts.usecs = htonl(now.usecs);
+            iperf_time_now(&now); // Sent time
+            phdr->bb_server_tx_ts.secs = htonl(now.secs);
+            phdr->bb_server_tx_ts.usecs = htonl(now.usecs);
+
+            /* writing bounceback response message */
+            r = Nwrite(sp->socket, sp->buffer, test->settings->bounceback_response_size, test->protocol->id);
+            if (r < 0) {
+                if (r == NET_SOFTERROR) {
+                    if (sp->test->debug_level >= DEBUG_LEVEL_INFO)
+                        printf("Bounceback send failed on NET_SOFTERROR. errno=%s\n", strerror(errno));
+                    continue;
+                }
+            }
+            if (r != test->settings->bounceback_response_size) {
+                if (sp->test->debug_level >= DEBUG_LEVEL_INFO)
+                    printf("Bounceback send wrote only %d bytes\n", r);
+                continue;
+            }
+
+    } /* main while */
+
+    return NULL;
+
+  cleanup_and_fail:
+    return NULL;
+}
+
 int
 iperf_server_listen(struct iperf_test *test)
 {
@@ -522,8 +607,8 @@ int
 iperf_run_server(struct iperf_test *test)
 {
     int result, s;
-    int send_streams_accepted, rec_streams_accepted;
-    int streams_to_send = 0, streams_to_rec = 0;
+    int send_streams_accepted, rec_streams_accepted, bounceback_streams_accepted;
+    int streams_to_send = 0, streams_to_rec = 0, streams_bounceback = 0;
 #if defined(HAVE_TCP_CONGESTION)
     int saved_errno;
 #endif /* HAVE_TCP_CONGESTION */
@@ -539,6 +624,7 @@ iperf_run_server(struct iperf_test *test)
     int64_t t_usecs;
     int64_t timeout_us;
     int64_t rcv_timeout_us;
+    void *worker;
 
     if (test->logfile) {
         if (iperf_open_logfile(test) < 0)
@@ -581,6 +667,7 @@ iperf_run_server(struct iperf_test *test)
     iperf_set_test_state(test, IPERF_START);
     send_streams_accepted = 0;
     rec_streams_accepted = 0;
+    bounceback_streams_accepted = 0;
     rcv_timeout_us = (test->settings->rcv_timeout.secs * SEC_TO_US) + test->settings->rcv_timeout.usecs;
 
     while (test->state != IPERF_DONE) {
@@ -704,6 +791,9 @@ iperf_run_server(struct iperf_test *test)
                         streams_to_send = test->num_streams;
                         streams_to_rec = 0;
                     }
+                    if (test->settings->bounceback) {
+                        streams_bounceback = 1;
+                    }
                 }
             }
             if (FD_ISSET(test->ctrl_sck, &read_set)) {
@@ -813,6 +903,9 @@ iperf_run_server(struct iperf_test *test)
                         } else if (send_streams_accepted != streams_to_send) {
                             flag = 1;
                             ++send_streams_accepted;
+                        } else if (streams_bounceback > 0) { // Bounceback stream (last stream)
+                            flag = 2;
+                            ++bounceback_streams_accepted;
                         }
 
                         if (flag != -1) {
@@ -834,7 +927,9 @@ iperf_run_server(struct iperf_test *test)
                 }
 
 
-                if (rec_streams_accepted == streams_to_rec && send_streams_accepted == streams_to_send) {
+                if (rec_streams_accepted == streams_to_rec && send_streams_accepted == streams_to_send &&
+                    bounceback_streams_accepted == streams_bounceback)
+                {
                     if (test->protocol->id != Ptcp) {
                         FD_CLR(test->prot_listener, &test->read_set);
                         close(test->prot_listener);
@@ -904,13 +999,18 @@ iperf_run_server(struct iperf_test *test)
                     };
 
                     SLIST_FOREACH(sp, &test->streams, streams) {
-                        if (pthread_create(&(sp->thr), &attr, &iperf_server_worker_run, sp) != 0) {
+                        if (sp->sender == 2) { // Bounceback
+                            worker = &iperf_server_bounceback_worker_run;
+                        } else { // Sender (1) or Receiver (0)
+                            worker = &iperf_server_worker_run;
+                        }
+                        if (pthread_create(&(sp->thr), &attr, worker, sp) != 0) {
                             i_errno = IEPTHREADCREATE;
                             cleanup_server(test);
                             return -1;
                         }
                         if (test->debug_level >= DEBUG_LEVEL_INFO) {
-                            iperf_printf(test, "Thread FD %d created\n", sp->socket);
+                            iperf_printf(test, "Thread FD %d created; Stream id %d with sender type %d\n", sp->socket, sp->id, sp->sender);
                         }
                     }
                     if (test->debug_level >= DEBUG_LEVEL_INFO) {

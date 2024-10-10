@@ -48,6 +48,7 @@ extern const char wait_server_threads[] ;
 extern const char test_start_time[];
 extern const char test_start_bytes[];
 extern const char test_start_blocks[];
+extern const char test_start_bounceback[];
 
 extern const char report_time[] ;
 extern const char report_connecting[] ;
@@ -80,6 +81,7 @@ extern const char report_bw_retrans_cwnd_format[] ;
 extern const char report_bw_udp_format[] ;
 extern const char report_bw_udp_format_no_omitted_error[] ;
 extern const char report_bw_udp_sender_format[] ;
+extern const char report_bounceback_format[] ;
 extern const char report_summary[] ;
 extern const char report_sum_bw_format[] ;
 extern const char report_sum_bw_retrans_format[] ;

@@ -55,6 +55,7 @@
 #include <setjmp.h>
 #include <stdarg.h>
 #include <math.h>
+#include <semaphore.h>
 
 #if defined(HAVE_CPUSET_SETAFFINITY)
 #include <sys/param.h>
@@ -115,7 +116,7 @@ usage()
 void
 usage_long(FILE *f)
 {
-    fprintf(f, usage_longstr, DEFAULT_NO_MSG_RCVD_TIMEOUT, UDP_RATE / (1024*1024), DEFAULT_PACING_TIMER, DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE);
+    fprintf(f, usage_longstr, DEFAULT_NO_MSG_RCVD_TIMEOUT, UDP_RATE / (1024*1024), DEFAULT_PACING_TIMER, DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE, DEFAULT_BOUNCEBACK_INUM, DEFAULT_BOUNCEBACK_BURST, DEFAULT_BOUNCEBACK_MSG_SIZE);
 }
 
 
@@ -440,6 +441,36 @@ iperf_get_mapped_v4(struct iperf_test* ipt)
     return ipt->mapped_v4;
 }
 
+int
+iperf_get_test_bounceback(struct iperf_test *ipt)
+{
+    return ipt->settings->bounceback;
+}
+
+int
+iperf_get_test_bounceback_inum(struct iperf_test *ipt)
+{
+    return ipt->settings->bounceback_inum;
+}
+
+int
+iperf_get_test_bounceback_burst(struct iperf_test *ipt)
+{
+    return ipt->settings->bounceback_burst;
+}
+
+int
+iperf_get_test_bounceback_size(struct iperf_test *ipt)
+{
+    return ipt->settings->bounceback_size;
+}
+
+int
+iperf_get_test_bounceback_response_size(struct iperf_test *ipt)
+{
+    return ipt->settings->bounceback_response_size;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -721,6 +752,36 @@ iperf_set_test_unit_format(struct iperf_test *ipt, char unit_format)
     ipt->settings->unit_format = unit_format;
 }
 
+void
+iperf_set_test_bounceback(struct iperf_test *ipt, int onoff)
+{
+    ipt->settings->bounceback = onoff;
+}
+
+void
+iperf_set_test_bounceback_inum(struct iperf_test *ipt, double inum)
+{
+    ipt->settings->bounceback_period = inum;
+}
+
+void
+iperf_set_test_bounceback_burst(struct iperf_test *ipt, int burst)
+{
+    ipt->settings->bounceback_burst = burst;
+}
+
+void
+iperf_set_test_bounceback_size(struct iperf_test *ipt, int size)
+{
+    ipt->settings->bounceback_size = size;
+}
+
+void
+iperf_set_test_bounceback_response_size(struct iperf_test *ipt, int size)
+{
+    ipt->settings->bounceback_response_size = size;
+}
+
 #if defined(HAVE_SSL)
 void
 iperf_set_test_client_username(struct iperf_test *ipt, const char *client_username)
@@ -896,7 +957,7 @@ void
 iperf_on_test_start(struct iperf_test *test)
 {
     if (test->json_output) {
-	cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d  omit: %d  duration: %d  bytes: %d  blocks: %d  reverse: %d  tos: %d  target_bitrate: %d bidir: %d fqrate: %d interval: %f", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->omit, (int64_t) test->duration, (int64_t) test->settings->bytes, (int64_t) test->settings->blocks, test->reverse?(int64_t)1:(int64_t)0, (int64_t) test->settings->tos, (int64_t) test->settings->rate, (int64_t) test->bidirectional, (uint64_t) test->settings->fqrate, test->stats_interval));
+	cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d  omit: %d  duration: %d  bytes: %d  blocks: %d  reverse: %d  tos: %d  target_bitrate: %d bidir: %d fqrate: %d interval: %f bounceback: %d", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->omit, (int64_t) test->duration, (int64_t) test->settings->bytes, (int64_t) test->settings->blocks, test->reverse?(int64_t)1:(int64_t)0, (int64_t) test->settings->tos, (int64_t) test->settings->rate, (int64_t) test->bidirectional, (uint64_t) test->settings->fqrate, test->stats_interval, test->settings->bounceback));
     } else {
 	if (test->verbose) {
 	    if (test->settings->bytes)
@@ -905,6 +966,8 @@ iperf_on_test_start(struct iperf_test *test)
 		iperf_printf(test, test_start_blocks, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->settings->blocks, test->settings->tos);
 	    else
 		iperf_printf(test, test_start_time, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->duration, test->settings->tos);
+            if (test->settings->bounceback)
+                iperf_printf(test, test_start_bounceback, test->settings->bounceback_burst, test->settings->bounceback_inum, test->settings->bounceback_size, test->settings->bounceback_response_size);
 	}
     }
     if (test->json_stream) {
@@ -1149,6 +1212,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"idle-timeout", required_argument, NULL, OPT_IDLE_TIMEOUT},
         {"rcv-timeout", required_argument, NULL, OPT_RCV_TIMEOUT},
         {"snd-timeout", required_argument, NULL, OPT_SND_TIMEOUT},
+        {"bounceback", optional_argument, NULL, OPT_BOUNCEBACK},
         {"debug", optional_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -1161,7 +1225,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_CPU_AFFINITY)
     char* comma;
 #endif /* HAVE_CPU_AFFINITY */
-    char* slash;
+    char *slash, *slash1, *slash2;
     char *p, *p1;
     struct xbind_entry *xbe;
     double farg;
@@ -1565,6 +1629,68 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		return -1;
 #endif /* HAVE_TCP_CONGESTION */
 		break;
+            case OPT_BOUNCEBACK:
+                if (optarg) {
+                    slash = strchr(optarg, '/');
+                    if (slash) {
+                        *slash = '\0';
+                        ++slash;
+                        slash1 = strchr(slash, '/');
+                        if (slash1) {
+                            *slash1 = '\0';
+                            ++slash1;
+                            slash2 = strchr(slash1, '/');
+                            if (slash2) {
+                                *slash2 = '\0';
+                                ++slash2;
+                                if (strlen(slash2) > 0) {
+                                    test->settings->bounceback_response_size = atoi(slash2);
+                                    if (test->settings->bounceback_response_size < sizeof(struct bounceback_header) ||
+                                        test->settings->bounceback_response_size > MAX_BLOCKSIZE) {
+                                        i_errno = IEBOUNCEBACK;
+                                        return -1;
+                                    }
+                                }
+                            }
+                            if (strlen(slash1) > 0) {
+                                test->settings->bounceback_size = atoi(slash1);
+                                if (test->settings->bounceback_size < sizeof(struct bounceback_header) ||
+                                    test->settings->bounceback_size > MAX_BLOCKSIZE) {
+                                    i_errno = IEBOUNCEBACK;
+                                    return -1;
+                                }
+                            }
+                        }
+                        if (strlen(slash) > 0) {
+                            test->settings->bounceback_inum = atoi(slash);
+                            if (test->settings->bounceback_inum < 1) {
+                                i_errno = IEBOUNCEBACK;
+                                return -1;
+                            }
+#if !defined(HAVE_CLOCK_NANOSLEEP) && !defined(HAVE_NANOSLEEP)
+                            /* If nanosleep is not supported, support only one bounceback burst per interval */
+                            if (test->settings->bounceback_inum > 1) {
+                                test->settings->bounceback_inum = 1;
+                                warning("Number of bursts per interval (inum in --bounceback) set to 1 as nanosleep is not supported");
+                            }
+#endif /* !defined(HAVE_CLOCK_NANOSLEEP) && !defined(HAVE_CLOCK_NANOSLEEP) */
+                        }
+                    }
+                    if (strlen(optarg) > 0) {
+                        test->settings->bounceback_burst = atoi(optarg);
+                        if (test->settings->bounceback_burst < 1 ||
+                            test->settings->bounceback_burst > MAX_BURST) {
+                            i_errno = IEBOUNCEBACK;
+                            return -1;
+                        }
+                    }
+                } /* if optarg */
+                if (test->settings->bounceback_response_size == 0) {
+                    test->settings->bounceback_response_size = test->settings->bounceback_size;
+                }
+                test->settings->bounceback = 1; /* indicates that bounceback test is requested */
+		client_flag = 1;
+                break;
 	    case 'd':
 		test->debug = 1;
                 test->debug_level = DEBUG_LEVEL_MAX;
@@ -1804,6 +1930,28 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	(test->settings->bytes != 0 && test->settings->blocks != 0)) {
         i_errno = IEENDCONDITIONS;
         return -1;
+    }
+
+    if (test->settings->bounceback) {
+        /* No meaning for bounceback test with unlimited test time and no reporting interval */
+        if (test->duration == 0 && test->stats_interval == 0) {
+            i_errno = IEBOUNCEBACK;
+            return -1;
+        }
+        /* Set the period between bounceback bursts */
+        test->settings->bounceback_period =
+            (double)((test->stats_interval > 0) ? test->stats_interval : test->duration) /
+            test->settings->bounceback_inum;
+        /* Do not allow less then 10us between bounceback tests */
+        if (test->settings->bounceback_period < 1e-5) {
+            i_errno = IEBOUNCEBACK;
+            return -1;
+        }
+
+        /* Initializa a semaphre to allow the main thread to initiate bounceback at each interval */
+        if (sem_init(&test->bounceback_sem, 0 ,1) != 0) {
+            perror("iperf_parse_arguments: sem_init");
+        }
     }
 
     /* For subsequent calls to getopt */
@@ -2333,6 +2481,11 @@ send_parameters(struct iperf_test *test)
 	if (test->settings->dont_fragment)
 	    cJSON_AddNumberToObject(j, "dont_fragment", test->settings->dont_fragment);
 #endif /* HAVE_DONT_FRAGMENT */
+	if (test->settings->bounceback) {
+	    cJSON_AddNumberToObject(j, "bounceback", test->settings->bounceback);
+            cJSON_AddNumberToObject(j, "bounceback_size", test->settings->bounceback_size);
+            cJSON_AddNumberToObject(j, "bounceback_response_size", test->settings->bounceback_response_size);
+        }
 #if defined(HAVE_SSL)
 	/* Send authentication parameters */
 	if (test->settings->client_username && test->settings->client_password && test->settings->client_rsa_pubkey){
@@ -2449,6 +2602,12 @@ get_parameters(struct iperf_test *test)
 	if ((j_p = cJSON_GetObjectItem(j, "dont_fragment")) != NULL)
 	    test->settings->dont_fragment = j_p->valueint;
 #endif /* HAVE_DONT_FRAGMENT */
+	if ((j_p = cJSON_GetObjectItem(j, "bounceback")) != NULL)
+	    test->settings->bounceback = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "bounceback_size")) != NULL)
+	    test->settings->bounceback_size = j_p->valueint;
+	if ((j_p = cJSON_GetObjectItem(j, "bounceback_response_size")) != NULL)
+	    test->settings->bounceback_response_size = j_p->valueint;
 #if defined(HAVE_SSL)
 	if ((j_p = cJSON_GetObjectItem(j, "authtoken")) != NULL)
         test->settings->authtoken = strdup(j_p->valuestring);
@@ -3053,6 +3212,12 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->connect_timeout = -1;
     testp->settings->rcv_timeout.secs = DEFAULT_NO_MSG_RCVD_TIMEOUT / SEC_TO_mS;
     testp->settings->rcv_timeout.usecs = (DEFAULT_NO_MSG_RCVD_TIMEOUT % SEC_TO_mS) * mS_TO_US;
+    testp->settings->bounceback = 0;
+    testp->settings->bounceback_burst = DEFAULT_BOUNCEBACK_BURST;
+    testp->settings->bounceback_inum = DEFAULT_BOUNCEBACK_INUM;
+    testp->settings->bounceback_period = 1 / DEFAULT_BOUNCEBACK_INUM;
+    testp->settings->bounceback_size = DEFAULT_BOUNCEBACK_MSG_SIZE;
+    testp->settings->bounceback_response_size = 0;
     testp->zerocopy = 0;
 
     memset(testp->cookie, 0, COOKIE_SIZE);
@@ -3209,12 +3374,9 @@ iperf_free_test(struct iperf_test *test)
         free(prot);
     }
 
-    /* Destroy print mutex. iperf_printf() doesn't work after this point */
-    int rc;
-    rc = pthread_mutex_destroy(&(test->print_mutex));
-    if (rc != 0) {
-        errno = rc;
-        perror("iperf_free_test: pthread_mutex_destroy");
+    /* Destroy bounceback semaphore */
+    if (test->settings->bounceback) {
+        sem_destroy(&test->bounceback_sem);
     }
 
     if (test->logfile) {
@@ -3350,6 +3512,12 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->mss = 0;
     test->settings->tos = 0;
     test->settings->dont_fragment = 0;
+    test->settings->bounceback = 0;
+    test->settings->bounceback_burst = DEFAULT_BOUNCEBACK_BURST;
+    test->settings->bounceback_inum = DEFAULT_BOUNCEBACK_INUM;
+    test->settings->bounceback_period = 1 / DEFAULT_BOUNCEBACK_INUM;
+    test->settings->bounceback_size = DEFAULT_BOUNCEBACK_MSG_SIZE;
+    test->settings->bounceback_response_size = 0;
     test->zerocopy = 0;
 
 #if defined(HAVE_SSL)
@@ -3416,6 +3584,10 @@ iperf_reset_stats(struct iperf_test *test)
         rp->bytes_sent_omit = rp->bytes_sent;
         rp->bytes_received = 0;
         rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;
+        rp->bounceback_roundtrip_sum = rp->bounceback_roundtrip_sqrt_sum = 0;
+        rp->bounceback_count = rp->bounceback_min = rp->bounceback_max = 0;
+        rp->bounceback_roundtrip_sum_this_interval = rp->bounceback_roundtrip_sqrt_sum_this_interval = 0;
+        rp->bounceback_count_this_interval = rp->bounceback_min_this_interval = rp->bounceback_max_this_interval = 0;
 	if (test->sender_has_retransmits == 1) {
 	    struct iperf_interval_results ir; /* temporary results structure */
 	    save_tcpinfo(sp, &ir);
@@ -3546,8 +3718,17 @@ iperf_stats_callback(struct iperf_test *test)
         }
 #endif /* HAVE_SCTP_H */
 
+        /* Add Bounceback Statistics */
+        temp.bounceback_roundtrip_sum_this_interval = rp->bounceback_roundtrip_sum_this_interval;
+        temp.bounceback_roundtrip_sqrt_sum_this_interval = rp->bounceback_roundtrip_sqrt_sum_this_interval;
+        temp.bounceback_count_this_interval = rp->bounceback_count_this_interval;
+        temp.bounceback_min_this_interval = rp->bounceback_min_this_interval;
+        temp.bounceback_max_this_interval = rp->bounceback_max_this_interval;
+
         add_to_interval_list(rp, &temp);
         rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;
+        rp->bounceback_roundtrip_sum_this_interval = rp->bounceback_roundtrip_sqrt_sum_this_interval = 0;
+        rp->bounceback_count_this_interval = rp->bounceback_min_this_interval = rp->bounceback_max_this_interval = 0;
     }
 
     /* Verify that total server's throughput is not above specified limit */
@@ -3566,6 +3747,7 @@ static void
 iperf_print_intermediate(struct iperf_test *test)
 {
     struct iperf_stream *sp = NULL;
+    struct iperf_stream *bb_sp = NULL;
     struct iperf_interval_results *irp;
     struct iperf_time temp_time;
     cJSON *json_interval;
@@ -3680,6 +3862,9 @@ iperf_print_intermediate(struct iperf_test *test)
         double avg_jitter = 0.0, lost_percent;
         int stream_must_be_sender = current_mode * current_mode;
 
+        double bb_average, bb_stdev, bb_min, bb_max;
+        struct iperf_interval_results *bb_irp = NULL;
+
         char *sum_name;
 
         /*  Print stream role just for bidirectional mode. */
@@ -3692,7 +3877,17 @@ iperf_print_intermediate(struct iperf_test *test)
         }
 
         SLIST_FOREACH(sp, &test->streams, streams) {
-            if (sp->sender == stream_must_be_sender) {
+            if (sp->sender == 2) {
+                if (test->role == 'c' && current_mode == upper_mode) {
+                    bb_sp = sp;
+                    bb_irp = TAILQ_LAST(&sp->result->interval_results, irlisthead);
+                    if (bb_irp == NULL) {
+                        iperf_err(test,
+                                "iperf_print_intermediate error: bounceback interval_results is NULL");
+                        return;
+                    }
+                }
+            } else if (sp->sender == stream_must_be_sender) {
                 print_interval_results(test, sp, json_interval_streams);
                 /* sum up all streams */
                 irp = TAILQ_LAST(&sp->result->interval_results, irlisthead);
@@ -3780,6 +3975,26 @@ iperf_print_intermediate(struct iperf_test *test)
                             iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, end_time, ubuf, nbuf, avg_jitter * 1000.0, lost_packets, total_packets, lost_percent, test->omitting?report_omitted:"");
                     }
                 }
+            }
+        }
+
+        /* Print Bounceback statistics for the interval */
+        if (bb_irp) {
+            iperf_time_diff(&bb_sp->result->start_time, &bb_irp->interval_start_time, &temp_time);
+	    start_time = iperf_time_in_secs(&temp_time);
+	    iperf_time_diff(&bb_sp->result->start_time, &bb_irp->interval_end_time, &temp_time);
+	    end_time = iperf_time_in_secs(&temp_time);
+
+            /* Reporting values are in ms while stored values are in us */
+            bb_average = (double)bb_irp->bounceback_roundtrip_sum_this_interval / bb_irp->bounceback_count_this_interval / 1000;
+            bb_stdev = sqrt(((double)bb_irp->bounceback_roundtrip_sqrt_sum_this_interval / bb_irp->bounceback_count_this_interval) -
+                       (bb_average * bb_average)) / 1000;
+            bb_min = (double)bb_irp->bounceback_min_this_interval / 1000;
+            bb_max = (double)bb_irp->bounceback_max_this_interval / 1000;
+            if (test->json_output) {
+                cJSON_AddItemToObject(json_interval, "Bounceback", iperf_json_printf("start: %f  end: %f  count: %d  avarage: %f  min: %f  max: %f  stdev: %f", start_time, end_time, bb_irp->bounceback_count_this_interval, bb_average, bb_min, bb_max, bb_stdev));
+            } else {
+                iperf_printf(test, report_bounceback_format, (test->mode == BIDIRECTIONAL) ? "      " : "", start_time, end_time, bb_irp->bounceback_count_this_interval, bb_average, bb_min, bb_max, bb_stdev);
             }
         }
     }
@@ -3880,6 +4095,9 @@ iperf_print_results(struct iperf_test *test)
         struct iperf_time temp_time;
         double bandwidth;
 
+        double bb_average, bb_stdev, bb_min, bb_max;
+        struct iperf_stream *bb_sp = NULL;
+
         char mbuf[UNIT_LEN];
         int stream_must_be_sender = current_mode * current_mode;
 
@@ -3932,7 +4150,12 @@ iperf_print_results(struct iperf_test *test)
         sender_time = sp->result->sender_time;
         receiver_time = sp->result->receiver_time;
         SLIST_FOREACH(sp, &test->streams, streams) {
-            if (sp->sender == stream_must_be_sender) {
+
+            if (sp->sender == 2) { // Save Bounceback stream
+                if (test->role == 'c' && current_mode == upper_mode) {
+                    bb_sp = sp;
+                }
+            } else if (sp->sender == stream_must_be_sender) {
                 if (test->json_output) {
                     json_summary_stream = cJSON_CreateObject();
                     if (json_summary_stream == NULL)
@@ -4257,6 +4480,21 @@ iperf_print_results(struct iperf_test *test)
                         iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, receiver_time, ubuf, nbuf, avg_jitter * 1000.0, lost_packets, receiver_total_packets, lost_percent, report_receiver);
                     }
                 }
+            }
+        }
+
+        /* Print Bounceback statistics for the interval */
+        if (bb_sp) {
+            /* Report values are in ms while stored values are in us */
+            bb_average = (double)bb_sp->result->bounceback_roundtrip_sum / bb_sp->result->bounceback_count / 1000;
+            bb_stdev = sqrt(((double)bb_sp->result->bounceback_roundtrip_sqrt_sum / bb_sp->result->bounceback_count) -
+                    (bb_average * bb_average)) / 1000;
+            bb_min = (double)bb_sp->result->bounceback_min / 1000;
+            bb_max = (double)bb_sp->result->bounceback_max / 1000;
+            if (test->json_output) {
+                cJSON_AddItemToObject(test->json_end, "Bounceback", iperf_json_printf("start: %f  end: %f  count: %d  avarage: %f  min: %f  max: %f  stdev: %f", start_time, sender_time, bb_sp->result->bounceback_count, bb_average, bb_min, bb_max, bb_stdev));
+            } else {
+                iperf_printf(test, report_bounceback_format, (test->mode == BIDIRECTIONAL) ? "      " : "", start_time, sender_time, bb_sp->result->bounceback_count, bb_average, bb_min, bb_max, bb_stdev);
             }
         }
 
@@ -4613,6 +4851,10 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         return NULL;
     }
     iperf_add_stream(test, sp);
+
+    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+        iperf_printf(test, "New socket %d created; Stream id %d with sender type %d\n", sp->socket, sp->id, sp->sender);
+    }
 
     return sp;
 }

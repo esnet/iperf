@@ -71,7 +71,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     }
 #endif /* HAVE_MSG_TRUNC */
 
-    r = Nrecv(sp->socket, sp->buffer, size, Pudp, sock_opt);
+    r = Nrecv_no_select(sp->socket, sp->buffer, size, Pudp, sock_opt);
 
     /*
      * If we got an error in the read, or if we didn't read anything

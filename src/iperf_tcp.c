@@ -65,7 +65,7 @@ iperf_tcp_recv(struct iperf_stream *sp)
     sock_opt = 0;
 #endif /* HAVE_MSG_TRUNC */
 
-    r = Nrecv(sp->socket, sp->buffer, sp->settings->blksize, Ptcp, sock_opt);
+    r = Nrecv_no_select(sp->socket, sp->buffer, sp->settings->blksize, Ptcp, sock_opt);
 
     if (r < 0)
         return r;

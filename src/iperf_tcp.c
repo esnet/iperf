@@ -57,8 +57,15 @@ int
 iperf_tcp_recv(struct iperf_stream *sp)
 {
     int r;
+    int sock_opt;
 
-    r = Nread(sp->socket, sp->buffer, sp->settings->blksize, Ptcp);
+#if defined(HAVE_MSG_TRUNC)
+    sock_opt = sp->test->settings->skip_rx_copy ? MSG_TRUNC : 0;
+#else
+    sock_opt = 0;
+#endif /* HAVE_MSG_TRUNC */
+
+    r = Nrecv(sp->socket, sp->buffer, sp->settings->blksize, Ptcp, sock_opt);
 
     if (r < 0)
         return r;

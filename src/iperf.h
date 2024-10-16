@@ -180,6 +180,7 @@ struct iperf_settings
     char      *client_password;
     EVP_PKEY  *client_rsa_pubkey;
 #endif // HAVE_SSL
+    int       skip_rx_copy;         /* Whether to ignore received messages data, using MSG_TRUNC option */
     int	      connect_timeout;	    /* socket connection timeout, in ms */
     int       idle_timeout;         /* server idle time timeout */
     unsigned int snd_timeout; /* Timeout for sending tcp messages in active mode, in us */

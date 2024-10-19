@@ -56,7 +56,7 @@ iperf_sctp_recv(struct iperf_stream *sp)
 #if defined(HAVE_SCTP_H)
     int r;
 
-    r = Nread(sp->socket, sp->buffer, sp->settings->blksize, Psctp);
+    r = Nread_no_select(sp->socket, sp->buffer, sp->settings->blksize, Psctp);
     if (r < 0)
         return r;
 

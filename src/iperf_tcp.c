@@ -58,7 +58,7 @@ iperf_tcp_recv(struct iperf_stream *sp)
 {
     int r;
 
-    r = Nread(sp->socket, sp->buffer, sp->settings->blksize, Ptcp);
+    r = Nread_no_select(sp->socket, sp->buffer, sp->settings->blksize, Ptcp);
 
     if (r < 0)
         return r;

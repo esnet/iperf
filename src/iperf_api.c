@@ -295,6 +295,12 @@ iperf_get_test_server_port(struct iperf_test *ipt)
     return ipt->server_port;
 }
 
+int
+iperf_get_test_data_port(struct iperf_test *ipt)
+{
+    return ipt->data_port;
+}
+
 char*
 iperf_get_test_server_hostname(struct iperf_test *ipt)
 {
@@ -564,6 +570,12 @@ void
 iperf_set_test_server_port(struct iperf_test *ipt, int srv_port)
 {
     ipt->server_port = srv_port;
+}
+
+void
+iperf_set_test_data_port(struct iperf_test *ipt, int srv_data_port)
+{
+    ipt->data_port = srv_data_port;
 }
 
 void
@@ -962,10 +974,10 @@ iperf_on_connect(struct iperf_test *test)
 	iperf_printf(test, report_time, now_str);
 
     if (test->role == 'c') {
-	if (test->json_output)
-	    cJSON_AddItemToObject(test->json_start, "connecting_to", iperf_json_printf("host: %s  port: %d", test->server_hostname, (int64_t) test->server_port));
-	else {
-	    iperf_printf(test, report_connecting, test->server_hostname, test->server_port);
+	if (test->json_output) {
+	    cJSON_AddItemToObject(test->json_start, "connecting_to", iperf_json_printf("host: %s  port: %d  data-port: %d", test->server_hostname, (int64_t) test->server_port, (int64_t) test->data_port));
+	} else {
+	    iperf_printf(test, report_connecting, test->server_hostname, test->server_port, test->data_port);
 	    if (test->reverse)
 		iperf_printf(test, report_reverse, test->server_hostname);
 	}
@@ -1192,12 +1204,27 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:mhX:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
-		portno = atoi(optarg);
-		if (portno < 1 || portno > 65535) {
-		    i_errno = IEBADPORT;
-		    return -1;
+
+                slash = strchr(optarg, '/');
+		if (slash) { // Get Data port
+		    *slash = '\0';
+		    ++slash;
+                    portno = atoi(slash);
+		    if (portno < 1 || portno > 65535) {
+		        i_errno = IEBADPORT;
+		        return -1;
+		    }
+                    test->data_port = portno;
+                    client_flag = 1;
 		}
-		test->server_port = portno;
+                if (strlen(optarg) > 0) { // Get control (and data) port
+                    portno = atoi(optarg);
+                    if (portno < 1 || portno > 65535) {
+                        i_errno = IEBADPORT;
+                        return -1;
+                    }
+                    test->server_port = portno;
+                }
                 break;
             case 'f':
 		if (!optarg) {
@@ -1826,6 +1853,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     if (!rate_flag)
 	test->settings->rate = test->protocol->id == Pudp ? UDP_RATE : 0;
 
+    if (test->data_port != test->server_port && test->protocol->id != Pudp) {
+	i_errno = IEDATAPORT;
+	return -1;
+    }
+
     /* if no bytes or blocks specified, nor a duration_flag, and we have -F,
     ** get the file-size as the bytes count to be transferred
     */
@@ -2321,6 +2353,8 @@ send_parameters(struct iperf_test *test)
 	cJSON_AddNumberToObject(j, "time", test->duration);
         cJSON_AddNumberToObject(j, "num", test->settings->bytes);
         cJSON_AddNumberToObject(j, "blockcount", test->settings->blocks);
+        if (test->protocol->id == Pudp)
+            cJSON_AddNumberToObject(j, "data_port", test->data_port);
 	if (test->settings->mss)
 	    cJSON_AddNumberToObject(j, "MSS", test->settings->mss);
 	if (test->no_delay)
@@ -2440,7 +2474,9 @@ get_parameters(struct iperf_test *test)
         test->settings->blocks = 0;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "blockcount", cJSON_Number)) != NULL)
 	    test->settings->blocks = j_p->valueint;
-	if ((j_p = iperf_cJSON_GetObjectItemType(j, "MSS", cJSON_Number)) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "data_port", cJSON_Number)) != NULL)
+	    test->data_port = j_p->valueint;
+    if ((j_p = iperf_cJSON_GetObjectItemType(j, "MSS", cJSON_Number)) != NULL)
 	    test->settings->mss = j_p->valueint;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "nodelay", cJSON_True)) != NULL)
 	    test->no_delay = 1;
@@ -3079,6 +3115,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->congestion_used = NULL;
     testp->remote_congestion_used = NULL;
     testp->server_port = PORT;
+    testp->data_port = testp->server_port;
     testp->ctrl_sck = -1;
     testp->listener = -1;
     testp->prot_listener = -1;

@@ -4319,6 +4319,7 @@ iperf_print_results(struct iperf_test *test)
                 }
                 if (test->server_output_text) {
                     iperf_printf(test, "\nServer output:\n%s\n", test->server_output_text);
+	            free(test->server_output_text);
                     test->server_output_text = NULL;
                 }
             }

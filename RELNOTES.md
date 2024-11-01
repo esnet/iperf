@@ -1,6 +1,106 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.17.1 2024-05-13
+-----------------------
+
+* Notable user-visible changes
+
+  * Version number has been corrected. (#1699)
+
+* Notable developer-visible changes
+
+  * No longer signing tags
+
+iperf-3.17 2024-05-10
+---------------------
+
+* Notable user-visible changes
+
+  * BREAKING CHANGE: iperf3's authentication features, when used with
+    OpenSSL prior to 3.2.0, contain a vulnerability to a side-channel
+    timing attack. To address this flaw, a change has been made to the
+    padding applied to encrypted strings. This change is not backwards
+    compatible with older versions of iperf3 (before 3.17). To restore
+    the older (vulnerable) behavior, and hence
+    backwards-compatibility, use the --use-pkcs1-padding flag. The
+    iperf3 team thanks Hubert Kario from RedHat for reporting this
+    issue and providing feedback on the fix. (CVE-2024-26306)(PR#1695)
+
+  * iperf3 no longer changes its current working directory in --daemon
+    mode. This results in more predictable behavior with relative
+    paths, in particular finding key and credential files for
+    authentication. (PR#1672)
+
+  * A new --json-stream option has been added to enable a streaming
+    output format, consisting of a series of JSON objects (for the
+    start of the test, each measurement interval, and the end of the
+    test) separated by newlines (#444, #923, #1098).
+
+  * UDP tests now work correctly between different endian hosts
+    (#1415).
+
+  * The --fq-rate parameter now works for --reverse tests (#1632, PR#1667).
+
+  * The statistics reporting interval is now available in the --json
+    start test object (#1663).
+
+  * A negative time test duration is now properly flagged as an error
+    (IS#1662 / PR#1666).
+
+* Notable developer-visible changes
+
+  * Fixes have been made to better (unofficially) support builds on
+    Android (#1641 / #1651) and VxWorks (#1595).
+
+  * iperf3 now builds correctly on architectures without native
+    support for 64-bit atomic types, by linking with the libatomic
+    library (#1611).
+
+iperf-3.16 2023-11-30
+---------------------
+
+* Notable user-visible changes
+
+  * Multiple test streams started with -P/--parallel will now be
+    serviced by different threads. This allows iperf3 to take
+    advantage of multiple CPU cores on modern processors, and will
+    generally result in significant throughput increases (PR #1591).
+
+  * OpenSSL 3 is now detected at build time. If OpenSSL 3 is found,
+    various older, deprecated, APIs will not be used. iperf3 will
+    continue to work with OpenSSL 1.1.1. OpenSSL is used as a part
+    of the iperf3 authentication functionality (Issue #1300, PR
+    #1589).
+    
+  * The authorized users file used by the authentication functionality
+    is now checked for accessibility much earlier during the program
+    startup, as opposed to being checked near the start of a
+    test (Issue #1583, PR #1585).
+
+* Developer-visible changes
+
+  * BREAKING CHANGE: iperf3 now requires pthreads and C atomic
+    variables to compile and run.
+
+iperf-3.15 2023-09-14
+---------------------
+
+* Notable user-visible changes
+
+  * Several bugs that could allow the iperf3 server to hang waiting
+    for input on the control connection has been fixed. ESnet thanks
+    Jorge Sancho Larraz from Canonical for reporting this issue. For
+    more information, see:
+    https://downloads.es.net/pub/iperf/esnet-secadv-2023-0002.txt.asc
+
+  * A bug that caused garbled output with UDP tests on 32-bit hosts
+    has been fixed (PR #1554, PR #1556). This bug was introduced in
+    iperf-3.14.
+
+  * A bug in counting UDP messages has been fixed (PR #1367, PR
+    #1380).
+
 iperf-3.14 2023-07-07
 ---------------------
 

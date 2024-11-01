@@ -41,6 +41,7 @@
 #include "iperf.h"
 #include "iperf_api.h"
 #include "iperf_tcp.h"
+#include "iperf_util.h"
 #include "net.h"
 #include "cjson.h"
 
@@ -57,7 +58,7 @@ iperf_tcp_recv(struct iperf_stream *sp)
 {
     int r;
 
-    r = Nread(sp->socket, sp->buffer, sp->settings->blksize, Ptcp);
+    r = Nread_no_select(sp->socket, sp->buffer, sp->settings->blksize, Ptcp);
 
     if (r < 0)
         return r;
@@ -69,7 +70,7 @@ iperf_tcp_recv(struct iperf_stream *sp)
     }
     else {
 	if (sp->test->debug)
-	    printf("Late receive, state = %d\n", sp->test->state);
+	    printf("Late receive, state = %d-%s\n", sp->test->state, state_to_text(sp->test->state));
     }
 
     return r;
@@ -117,7 +118,7 @@ iperf_tcp_accept(struct iperf_test * test)
 {
     int     s;
     signed char rbuf = ACCESS_DENIED;
-    char    cookie[COOKIE_SIZE];
+    char    cookie[COOKIE_SIZE] = {0};
     socklen_t len;
     struct sockaddr_storage addr;
 
@@ -126,13 +127,30 @@ iperf_tcp_accept(struct iperf_test * test)
         i_errno = IESTREAMCONNECT;
         return -1;
     }
+#if defined(HAVE_SO_MAX_PACING_RATE)
+    /* If fq socket pacing is specified, enable it. */
+
+    if (test->settings->fqrate) {
+	/* Convert bits per second to bytes per second */
+	uint64_t fqrate = test->settings->fqrate / 8;
+	if (fqrate > 0) {
+	    if (test->debug) {
+		printf("Setting fair-queue socket pacing to %"PRIu64"\n", fqrate);
+	    }
+	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &fqrate, sizeof(fqrate)) < 0) {
+		warning("Unable to set socket pacing");
+	    }
+	}
+    }
+#endif /* HAVE_SO_MAX_PACING_RATE */
 
     if (Nread(s, cookie, COOKIE_SIZE, Ptcp) < 0) {
         i_errno = IERECVCOOKIE;
+        close(s);
         return -1;
     }
 
-    if (strcmp(test->cookie, cookie) != 0) {
+    if (strncmp(test->cookie, cookie, COOKIE_SIZE) != 0) {
         if (Nwrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp) < 0) {
             iperf_err(test, "failed to send access denied from busy server to new connecting client, errno = %d\n", errno);
         }
@@ -240,21 +258,6 @@ iperf_tcp_listen(struct iperf_test *test)
                 return -1;
             }
         }
-#if defined(HAVE_SO_MAX_PACING_RATE)
-    /* If fq socket pacing is specified, enable it. */
-    if (test->settings->fqrate) {
-	/* Convert bits per second to bytes per second */
-	unsigned int fqrate = test->settings->fqrate / 8;
-	if (fqrate > 0) {
-	    if (test->debug) {
-		printf("Setting fair-queue socket pacing to %u\n", fqrate);
-	    }
-	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &fqrate, sizeof(fqrate)) < 0) {
-		warning("Unable to set socket pacing");
-	    }
-	}
-    }
-#endif /* HAVE_SO_MAX_PACING_RATE */
     {
 	unsigned int rate = test->settings->rate / 8;
 	if (rate > 0) {
@@ -309,6 +312,7 @@ iperf_tcp_listen(struct iperf_test *test)
 
         if (listen(s, INT_MAX) < 0) {
             i_errno = IESTREAMLISTEN;
+            close(s);
             return -1;
         }
 
@@ -329,6 +333,7 @@ iperf_tcp_listen(struct iperf_test *test)
     }
     if (test->settings->socket_bufsize && test->settings->socket_bufsize > sndbuf_actual) {
 	i_errno = IESETBUF2;
+    close(s);
 	return -1;
     }
 
@@ -346,6 +351,7 @@ iperf_tcp_listen(struct iperf_test *test)
     }
     if (test->settings->socket_bufsize && test->settings->socket_bufsize > rcvbuf_actual) {
 	i_errno = IESETBUF2;
+    close(s);
 	return -1;
     }
 
@@ -536,10 +542,10 @@ iperf_tcp_connect(struct iperf_test *test)
     /* If socket pacing is specified try to enable it. */
     if (test->settings->fqrate) {
 	/* Convert bits per second to bytes per second */
-	unsigned int fqrate = test->settings->fqrate / 8;
+	uint64_t fqrate = test->settings->fqrate / 8;
 	if (fqrate > 0) {
 	    if (test->debug) {
-		printf("Setting fair-queue socket pacing to %u\n", fqrate);
+		printf("Setting fair-queue socket pacing to %"PRIu64"\n", fqrate);
 	    }
 	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &fqrate, sizeof(fqrate)) < 0) {
 		warning("Unable to set socket pacing");

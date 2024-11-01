@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2022, The Regents of the University of
+ * iperf, Copyright (c) 2014-2023, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -31,13 +31,21 @@
 #include <sys/time.h>
 #include <setjmp.h>
 #include <stdio.h>
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
 #ifdef __cplusplus
 extern "C" { /* open extern "C" */
 #endif
 
+/*
+ * Atomic types highly desired, but if not, we approximate what we need
+ * with normal integers and warn.
+ */
+#ifdef HAVE_STDATOMIC_H
+#include <stdatomic.h>
+#else
+#warning "No <stdatomic.h> available"
+typedef u_int64_t atomic_uint_fast64_t;
+#endif // HAVE_STDATOMIC_H
 
 struct iperf_test;
 struct iperf_stream_result;
@@ -46,7 +54,8 @@ struct iperf_stream;
 struct iperf_time;
 
 #if !defined(__IPERF_H)
-typedef uint64_t iperf_size_t;
+typedef uint_fast64_t iperf_size_t;
+typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #endif // __IPERF_H
 
 /* default settings */
@@ -89,7 +98,9 @@ typedef uint64_t iperf_size_t;
 #define OPT_IDLE_TIMEOUT 25
 #define OPT_DONT_FRAGMENT 26
 #define OPT_RCV_TIMEOUT 27
-#define OPT_SND_TIMEOUT 28
+#define OPT_JSON_STREAM 28
+#define OPT_SND_TIMEOUT 29
+#define OPT_USE_PKCS1_PADDING 30
 
 /* states */
 #define TEST_START 1
@@ -140,6 +151,7 @@ char*	iperf_get_test_template( struct iperf_test* ipt );
 int	iperf_get_test_protocol_id( struct iperf_test* ipt );
 int	iperf_get_test_json_output( struct iperf_test* ipt );
 char*	iperf_get_test_json_output_string ( struct iperf_test* ipt );
+int	iperf_get_test_json_stream( struct iperf_test* ipt );
 int	iperf_get_test_zerocopy( struct iperf_test* ipt );
 int	iperf_get_test_get_server_output( struct iperf_test* ipt );
 char	iperf_get_test_unit_format(struct iperf_test *ipt);
@@ -184,6 +196,7 @@ void	iperf_set_test_server_hostname( struct iperf_test* ipt, const char* server_
 void    iperf_set_test_template( struct iperf_test *ipt, const char *tmp_template );
 void	iperf_set_test_reverse( struct iperf_test* ipt, int reverse );
 void	iperf_set_test_json_output( struct iperf_test* ipt, int json_output );
+void	iperf_set_test_json_stream( struct iperf_test* ipt, int json_stream );
 int	iperf_has_zerocopy( void );
 void	iperf_set_test_zerocopy( struct iperf_test* ipt, int zerocopy );
 void	iperf_set_test_get_server_output( struct iperf_test* ipt, int get_server_output );
@@ -200,6 +213,10 @@ void    iperf_set_dont_fragment( struct iperf_test* ipt, int dont_fragment );
 void    iperf_set_test_congestion_control(struct iperf_test* ipt, char* cc);
 void    iperf_set_test_mss(struct iperf_test* ipt, int mss);
 void    iperf_set_mapped_v4(struct iperf_test* ipt, const int val);
+void    iperf_set_on_new_stream_callback(struct iperf_test* ipt, void (*callback)());
+void    iperf_set_on_test_start_callback(struct iperf_test* ipt, void (*callback)());
+void    iperf_set_on_test_connect_callback(struct iperf_test* ipt, void (*callback)());
+void    iperf_set_on_test_finish_callback(struct iperf_test* ipt, void (*callback)());
 
 #if defined(HAVE_SSL)
 void    iperf_set_test_client_username(struct iperf_test *ipt, const char *client_username);
@@ -306,8 +323,8 @@ void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 
 int iperf_set_send_state(struct iperf_test *test, signed char state);
 void iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP);
-int iperf_send(struct iperf_test *, fd_set *) /* __attribute__((hot)) */;
-int iperf_recv(struct iperf_test *, fd_set *);
+int iperf_send_mt(struct iperf_stream *) /* __attribute__((hot)) */;
+int iperf_recv_mt(struct iperf_stream *);
 void iperf_catch_sigend(void (*handler)(int));
 void iperf_got_sigend(struct iperf_test *test) __attribute__ ((noreturn));
 void usage(void);
@@ -402,6 +419,7 @@ enum {
     IERVRSONLYRCVTIMEOUT = 32,  // Client receive timeout is valid only in reverse mode
     IESNDTIMEOUT = 33,      // Illegal message send timeout
     IEUDPFILETRANSFER = 34, // Cannot transfer file using UDP
+    IESERVERAUTHUSERS = 35,   // Cannot access authorized users file
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)
@@ -452,6 +470,12 @@ enum {
     IEBINDDEVNOSUPPORT = 146,  // `ip%%dev` is not supported as system does not support bind to device
     IEHOSTDEV = 147,        // host device name (ip%%<dev>) is supported (and required) only for IPv6 link-local address
     IESETUSERTIMEOUT = 148, // Unable to set TCP USER_TIMEOUT (check perror)
+    IEPTHREADCREATE=150,	// Unable to create thread (check perror)
+    IEPTHREADCANCEL=151,        // Unable to cancel thread (check perror)
+    IEPTHREADJOIN=152,		// Unable to join thread (check perror)
+    IEPTHREADATTRINIT=153,      // Unable to initialize thread attribute (check perror)
+    IEPTHREADATTRDESTROY=154,      // Unable to destroy thread attribute (check perror)
+    IEPTHREADSIGMASK=155,      // Unable to initialize sub thread signal mask (check perror)
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

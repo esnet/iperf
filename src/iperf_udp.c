@@ -34,9 +34,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
+#include <inttypes.h>
 #include <sys/time.h>
 #include <sys/select.h>
 
@@ -47,19 +46,6 @@
 #include "timer.h"
 #include "net.h"
 #include "cjson.h"
-#include "portable_endian.h"
-
-#if defined(HAVE_INTTYPES_H)
-# include <inttypes.h>
-#else
-# ifndef PRIu64
-#  if sizeof(long) == 8
-#   define PRIu64		"lu"
-#  else
-#   define PRIu64		"llu"
-#  endif
-# endif
-#endif
 
 /* iperf_udp_recv
  *
@@ -76,7 +62,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     double    transit = 0, d = 0;
     struct iperf_time sent_time, arrival_time, temp_time;
 
-    r = Nread(sp->socket, sp->buffer, size, Pudp);
+    r = Nread_no_select(sp->socket, sp->buffer, size, Pudp);
 
     /*
      * If we got an error in the read, or if we didn't read anything
@@ -437,10 +423,10 @@ iperf_udp_accept(struct iperf_test *test)
     /* If socket pacing is specified, try it. */
     if (test->settings->fqrate) {
 	/* Convert bits per second to bytes per second */
-	unsigned int fqrate = test->settings->fqrate / 8;
+	uint64_t fqrate = test->settings->fqrate / 8;
 	if (fqrate > 0) {
 	    if (test->debug) {
-		printf("Setting fair-queue socket pacing to %u\n", fqrate);
+		printf("Setting fair-queue socket pacing to %"PRIu64"\n", fqrate);
 	    }
 	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &fqrate, sizeof(fqrate)) < 0) {
 		warning("Unable to set socket pacing");
@@ -460,6 +446,7 @@ iperf_udp_accept(struct iperf_test *test)
     /*
      * Create a new "listening" socket to replace the one we were using before.
      */
+    FD_CLR(test->prot_listener, &test->read_set); // No control messages from old listener
     test->prot_listener = netannounce(test->settings->domain, Pudp, test->bind_address, test->bind_dev, test->server_port);
     if (test->prot_listener < 0) {
         i_errno = IESTREAMLISTEN;
@@ -553,10 +540,10 @@ iperf_udp_connect(struct iperf_test *test)
     /* If socket pacing is available and not disabled, try it. */
     if (test->settings->fqrate) {
 	/* Convert bits per second to bytes per second */
-	unsigned int fqrate = test->settings->fqrate / 8;
+	uint64_t fqrate = test->settings->fqrate / 8;
 	if (fqrate > 0) {
 	    if (test->debug) {
-		printf("Setting fair-queue socket pacing to %u\n", fqrate);
+		printf("Setting fair-queue socket pacing to %"PRIu64"\n", fqrate);
 	    }
 	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &fqrate, sizeof(fqrate)) < 0) {
 		warning("Unable to set socket pacing");

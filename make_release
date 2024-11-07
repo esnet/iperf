@@ -21,7 +21,7 @@ echo dirname $dirname
 
 do_tag ()
 {
-    git tag -s -m "tagging $tag" "$tag"
+    git tag -m "tagging $tag" "$tag"
 }
 
 do_tar ()

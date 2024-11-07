@@ -81,6 +81,8 @@
 
 #include "version.h"
 
+#include <inttypes.h>
+
 #ifdef __cplusplus
 extern    "C"
 {
@@ -103,7 +105,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -I, --pidfile file        write PID file\n"
                            "  -F, --file name           xmit/recv the specified file\n"
 #if defined(HAVE_CPU_AFFINITY)
-                           "  -A, --affinity n/n,m      set CPU affinity\n"
+                           "  -A, --affinity n[,m]      set CPU affinity core number to n (the core the process will use)\n"
+                          "                             (optional Client only m - the Server's core number for this test)\n"
 #endif /* HAVE_CPU_AFFINITY */
 #if defined(HAVE_SO_BINDTODEVICE)
                            "  -B, --bind <host>[%%<dev>] bind to the interface associated with the address <host>\n"
@@ -114,6 +117,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 #endif /* HAVE_SO_BINDTODEVICE */
                            "  -V, --verbose             more detailed output\n"
                            "  -J, --json                output in JSON format\n"
+                           "  --json-stream             output in line-delimited JSON format\n"
                            "  --logfile f               send output to a log file\n"
                            "  --forceflush              force flushing output at every interval\n"
                            "  --timestamps<=format>     emit a timestamp at the start of each output line\n"
@@ -144,6 +148,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "                            credentials\n"
                            "  --time-skew-threshold     time skew threshold (in seconds) between the server\n"
                            "                            and client during the authentication process\n"
+                           "  --use-pkcs1-padding       use pkcs1 padding at your own risk\n"
 #endif //HAVE_SSL
                            "Client specific:\n"
                            "  -c, --client <host>[%%<dev>] run in client mode, connecting to <host>\n"
@@ -158,7 +163,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -b, --bitrate #[KMG][/#]  target bitrate in bits/sec (0 for unlimited)\n"
                            "                            (default %d Mbit/sec for UDP, unlimited for TCP)\n"
                            "                            (optional slash and packet count for burst mode)\n"
-			   "  --pacing-timer #[KMG]     set the timing for pacing, in microseconds (default %d)\n"
+			   "  --pacing-timer #[KMG]     set the Server timing for pacing, in microseconds (default %d)\n"
+                           "                            (deprecated - for servers using older versions ackward compatibility)\n"
 #if defined(HAVE_SO_MAX_PACING_RATE)
                            "  --fq-rate #[KMG]          enable fair-queuing based socket pacing in\n"
 			   "                            bits/sec (Linux only)\n"
@@ -287,10 +293,10 @@ const char test_start_time[] =
 "Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %d second test, tos %d\n";
 
 const char test_start_bytes[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %llu bytes to send, tos %d\n";
+"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %"PRIuFAST64" bytes to send, tos %d\n";
 
 const char test_start_blocks[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %d blocks to send, tos %d\n";
+"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %"PRIuFAST64" bytes to send, tos %d\n";
 
 
 /* -------------------------------------------------------------------
@@ -304,10 +310,10 @@ const char report_connecting[] =
 "Connecting to host %s, port %d\n";
 
 const char report_authentication_succeeded[] =
-"Authentication succeeded for user '%s' ts %ld\n";
+"Authentication succeeded for user '%s' ts %" PRIu64 "\n";
 
 const char report_authentication_failed[] =
-"Authentication failed for user '%s' ts %ld\n";
+"Authentication failed with return code %d for user '%s' ts %" PRIu64 "\n";
 
 const char report_reverse[] =
 "Reverse mode, remote host %s is sending\n";
@@ -376,16 +382,19 @@ const char report_bw_format[] =
 "[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec                  %s\n";
 
 const char report_bw_retrans_format[] =
-"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %3u             %s\n";
+"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %3ld            %s\n";
 
 const char report_bw_retrans_cwnd_format[] =
-"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %3u   %ss       %s\n";
+"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %3ld   %ss       %s\n";
 
 const char report_bw_udp_format[] =
-"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)  %s\n";
+"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %" PRId64 "/%" PRId64 " (%.2g%%)  %s\n";
+
+const char report_bw_udp_format_no_omitted_error[] =
+"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  Unknown/%" PRId64 "  %s\n";
 
 const char report_bw_udp_sender_format[] =
-"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %d  %s\n";
+"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %" PRId64 "  %s\n";
 
 const char report_summary[] =
 "Test Complete. Summary Results:\n";
@@ -394,13 +403,13 @@ const char report_sum_bw_format[] =
 "[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec                  %s\n";
 
 const char report_sum_bw_retrans_format[] =
-"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %3d             %s\n";
+"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %3"PRId64"             %s\n";
 
 const char report_sum_bw_udp_format[] =
-"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %d/%d (%.2g%%)  %s\n";
+"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %" PRId64 "/%" PRId64 " (%.2g%%)  %s\n";
 
 const char report_sum_bw_udp_sender_format[] =
-"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %d  %s\n";
+"[SUM]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %" PRId64 "  %s\n";
 
 const char report_omitted[] = "(omitted)";
 
@@ -411,7 +420,7 @@ const char report_outoforder[] =
 "[%3d]%s %4.1f-%4.1f sec  %d datagrams received out-of-order\n";
 
 const char report_sum_outoforder[] =
-"[SUM]%s %4.1f-%4.1f sec  %d datagrams received out-of-order\n";
+"[SUM]%s %4.1f-%4.1f sec  %"PRIu64" datagrams received out-of-order\n";
 
 const char report_peer[] =
 "[%3d] local %s port %u connected with %s port %u\n";
@@ -450,11 +459,7 @@ const char report_receiver_not_available_summary_format[] = "[%3s] (receiver sta
 const char report_tcpInfo[] =
 "event=TCP_Info CWND=%u SND_SSTHRESH=%u RCV_SSTHRESH=%u UNACKED=%u SACK=%u LOST=%u RETRANS=%u FACK=%u RTT=%u REORDERING=%u\n";
 #endif
-#if defined(__FreeBSD__)
-const char report_tcpInfo[] =
-"event=TCP_Info CWND=%u RCV_WIND=%u SND_SSTHRESH=%u RTT=%u\n";
-#endif
-#if defined(__NetBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 const char report_tcpInfo[] =
 "event=TCP_Info CWND=%u RCV_WIND=%u SND_SSTHRESH=%u RTT=%u\n";
 #endif

@@ -60,6 +60,10 @@ iperf_err(struct iperf_test *test, const char *format, ...)
     if (test != NULL && test->json_output && test->json_top != NULL)
 	cJSON_AddStringToObject(test->json_top, "error", str);
     else {
+        if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
+            perror("iperf_err: pthread_mutex_lock");
+        }
+
 	if (test && test->outfile && test->outfile != stdout) {
 	    if (ct) {
 		fprintf(test->outfile, "%s", ct);
@@ -72,6 +76,11 @@ iperf_err(struct iperf_test *test, const char *format, ...)
 	    }
 	    fprintf(stderr, "iperf3: %s\n", str);
 	}
+
+        if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
+            perror("iperf_err: pthread_mutex_unlock");
+        }
+
     }
     va_end(argp);
 }
@@ -90,16 +99,22 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
     if (test != NULL && test->timestamps) {
 	time(&now);
 	ltm = localtime(&now);
-	strftime(iperf_timestrerr, sizeof(iperf_timestrerr), "%c ", ltm);
+	strftime(iperf_timestrerr, sizeof(iperf_timestrerr), iperf_get_test_timestamp_format(test), ltm);
 	ct = iperf_timestrerr;
     }
 
     va_start(argp, format);
     vsnprintf(str, sizeof(str), format, argp);
-    if (test != NULL && test->json_output && test->json_top != NULL) {
-	cJSON_AddStringToObject(test->json_top, "error", str);
+    if (test != NULL && test->json_output) {
+        if (test->json_top != NULL) {
+	    cJSON_AddStringToObject(test->json_top, "error", str);
+        }
 	iperf_json_finish(test);
-    } else
+    } else {
+        if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
+            perror("iperf_errexit: pthread_mutex_lock");
+        }
+
 	if (test && test->outfile && test->outfile != stdout) {
 	    if (ct) {
 		fprintf(test->outfile, "%s", ct);
@@ -112,6 +127,12 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
 	    }
 	    fprintf(stderr, "iperf3: %s\n", str);
 	}
+
+        if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
+            perror("iperf_errexit: pthread_mutex_unlock");
+        }
+    }
+
     va_end(argp);
     if (test)
         iperf_delete_pidfile(test);
@@ -147,7 +168,7 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "some option you are trying to set is client only");
             break;
         case IEDURATION:
-            snprintf(errstr, len, "test duration too long (maximum = %d seconds)", MAX_TIME);
+            snprintf(errstr, len, "test duration valid values are 0 to %d seconds", MAX_TIME);
             break;
         case IENUMSTREAMS:
             snprintf(errstr, len, "number of parallel streams too large (maximum = %d)", MAX_STREAMS);
@@ -175,6 +196,9 @@ iperf_strerror(int int_errno)
             break;
         case IESETSERVERAUTH:
              snprintf(errstr, len, "you must specify a path to a valid RSA private key and a user credential file");
+            break;
+        case IESERVERAUTHUSERS:
+             snprintf(errstr, len, "cannot access authorized users file");
             break;
 	case IEBADFORMAT:
 	    snprintf(errstr, len, "bad format specifier (valid formats are in the set [kmgtKMGT])");
@@ -228,7 +252,7 @@ iperf_strerror(int int_errno)
             perr = 1;
             break;
         case IECONNECT:
-            snprintf(errstr, len, "unable to connect to server");
+            snprintf(errstr, len, "unable to connect to server - server may have stopped running or use a different port, firewall issue, etc.");
             perr = 1;
 	    herr = 1;
             break;
@@ -257,14 +281,14 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "control socket has closed unexpectedly");
             break;
         case IEMESSAGE:
-            snprintf(errstr, len, "received an unknown control message");
+            snprintf(errstr, len, "received an unknown control message (ensure other side is iperf3 and not iperf)");
             break;
         case IESENDMESSAGE:
-            snprintf(errstr, len, "unable to send control message");
+            snprintf(errstr, len, "unable to send control message - port may not be available, the other side may have stopped running, etc.");
             perr = 1;
             break;
         case IERECVMESSAGE:
-            snprintf(errstr, len, "unable to receive control message");
+            snprintf(errstr, len, "unable to receive control message - port may not be available, the other side may have stopped running, etc.");
             perr = 1;
             break;
         case IESENDPARAMS:
@@ -349,6 +373,9 @@ iperf_strerror(int int_errno)
         case IESNDTIMEOUT:
             snprintf(errstr, len, "send timeout value is incorrect or not in range");
             perr = 1;
+            break;
+        case IEUDPFILETRANSFER:
+            snprintf(errstr, len, "cannot transfer file using UDP");
             break;
         case IERVRSONLYRCVTIMEOUT:
             snprintf(errstr, len, "client receive timeout is valid only in receiving mode");
@@ -459,7 +486,30 @@ iperf_strerror(int int_errno)
 	    snprintf(errstr, len, "unable to set IP Do-Not-Fragment flag");
             break;
         case IESETUSERTIMEOUT:
-            snprintf(errstr, len, "unable to set TCP/SCTP MSS");
+            snprintf(errstr, len, "unable to set TCP USER_TIMEOUT");
+            perr = 1;
+            break;
+	case IEPTHREADCREATE:
+            snprintf(errstr, len, "unable to create thread");
+            perr = 1;
+            break;
+	case IEPTHREADCANCEL:
+            snprintf(errstr, len, "unable to cancel thread");
+            perr = 1;
+            break;
+	case IEPTHREADJOIN:
+            snprintf(errstr, len, "unable to join thread");
+            perr = 1;
+            break;
+	case IEPTHREADATTRINIT:
+            snprintf(errstr, len, "unable to create thread attributes");
+            perr = 1;
+            break;
+	case IEPTHREADSIGMASK:
+	    snprintf(errstr, len, "unable to change mask of blocked signals");
+	    break;
+	case IEPTHREADATTRDESTROY:
+            snprintf(errstr, len, "unable to destroy thread attributes");
             perr = 1;
             break;
 	default:

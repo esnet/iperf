@@ -1,8 +1,238 @@
 iperf3 Release Notes
 ====================
 
-iperf-3.11 2022-01-31
+iperf-3.17.1 2024-05-13
 -----------------------
+
+* Notable user-visible changes
+
+  * Version number has been corrected. (#1699)
+
+* Notable developer-visible changes
+
+  * No longer signing tags
+
+iperf-3.17 2024-05-10
+---------------------
+
+* Notable user-visible changes
+
+  * BREAKING CHANGE: iperf3's authentication features, when used with
+    OpenSSL prior to 3.2.0, contain a vulnerability to a side-channel
+    timing attack. To address this flaw, a change has been made to the
+    padding applied to encrypted strings. This change is not backwards
+    compatible with older versions of iperf3 (before 3.17). To restore
+    the older (vulnerable) behavior, and hence
+    backwards-compatibility, use the --use-pkcs1-padding flag. The
+    iperf3 team thanks Hubert Kario from RedHat for reporting this
+    issue and providing feedback on the fix. (CVE-2024-26306)(PR#1695)
+
+  * iperf3 no longer changes its current working directory in --daemon
+    mode. This results in more predictable behavior with relative
+    paths, in particular finding key and credential files for
+    authentication. (PR#1672)
+
+  * A new --json-stream option has been added to enable a streaming
+    output format, consisting of a series of JSON objects (for the
+    start of the test, each measurement interval, and the end of the
+    test) separated by newlines (#444, #923, #1098).
+
+  * UDP tests now work correctly between different endian hosts
+    (#1415).
+
+  * The --fq-rate parameter now works for --reverse tests (#1632, PR#1667).
+
+  * The statistics reporting interval is now available in the --json
+    start test object (#1663).
+
+  * A negative time test duration is now properly flagged as an error
+    (IS#1662 / PR#1666).
+
+* Notable developer-visible changes
+
+  * Fixes have been made to better (unofficially) support builds on
+    Android (#1641 / #1651) and VxWorks (#1595).
+
+  * iperf3 now builds correctly on architectures without native
+    support for 64-bit atomic types, by linking with the libatomic
+    library (#1611).
+
+iperf-3.16 2023-11-30
+---------------------
+
+* Notable user-visible changes
+
+  * Multiple test streams started with -P/--parallel will now be
+    serviced by different threads. This allows iperf3 to take
+    advantage of multiple CPU cores on modern processors, and will
+    generally result in significant throughput increases (PR #1591).
+
+  * OpenSSL 3 is now detected at build time. If OpenSSL 3 is found,
+    various older, deprecated, APIs will not be used. iperf3 will
+    continue to work with OpenSSL 1.1.1. OpenSSL is used as a part
+    of the iperf3 authentication functionality (Issue #1300, PR
+    #1589).
+    
+  * The authorized users file used by the authentication functionality
+    is now checked for accessibility much earlier during the program
+    startup, as opposed to being checked near the start of a
+    test (Issue #1583, PR #1585).
+
+* Developer-visible changes
+
+  * BREAKING CHANGE: iperf3 now requires pthreads and C atomic
+    variables to compile and run.
+
+iperf-3.15 2023-09-14
+---------------------
+
+* Notable user-visible changes
+
+  * Several bugs that could allow the iperf3 server to hang waiting
+    for input on the control connection has been fixed. ESnet thanks
+    Jorge Sancho Larraz from Canonical for reporting this issue. For
+    more information, see:
+    https://downloads.es.net/pub/iperf/esnet-secadv-2023-0002.txt.asc
+
+  * A bug that caused garbled output with UDP tests on 32-bit hosts
+    has been fixed (PR #1554, PR #1556). This bug was introduced in
+    iperf-3.14.
+
+  * A bug in counting UDP messages has been fixed (PR #1367, PR
+    #1380).
+
+iperf-3.14 2023-07-07
+---------------------
+
+* Notable user-visible changes
+
+  * A memory allocation hazard was fixed (Issue #1542/PR #1543). For
+    more information see:
+    https://downloads.es.net/pub/iperf/esnet-secadv-2023-0001.txt.asc
+
+  * JSON output was improved, such as print JSON numbers as signed (PR
+    #1539, Issue #1435), the exit code when doing JSON output was
+    fixed (PR #1523), and client_api was fixed so that it still
+    returns an error code when JSON is enabled (Issue #1405).  Also,
+    duplicate fields when using multiple streams was removed from the
+    JSON output (#1492).
+
+  * Prevent UDP packet count and operations overflow (PR #1536/Issue
+    #1534).
+
+  * Statistics are fixed when --omit is used (Issue #1489/PR #1498).
+
+* Developer-visible changes
+
+  * CI builds and tests using GitHub actions have been added (PR
+    #1519).
+
+  * A fix for Android "unable to create a new stream error" was added
+    (PR #1506).
+
+  * Support for Voice Admit DSCP code point from RFC 5865 was added
+    (PR #1490).
+
+  * A fix for preventing a crash when RSA public key path doesn't
+    exist was fixed (PR #1488/Issue #1471).
+
+iperf-3.13 2023-02-16
+---------------------
+
+* Notable user-visible changes
+
+  * fq-rate (PR #1461, Issue #1366), and bidirectional flag (Issue #1428,
+    PR #1429) were added to the JSON output.
+
+  * Added support for OpenBSD including cleaning up endian handling (PR #1396)
+    and support for TCP_INFO on systems where it was implemented (PR #1397).
+
+  * Fixed bug in how TOS is set in mapped v4 (PR #1427).
+
+  * Corrected documentation, such as updating binary download links and text
+    (Issue #1459), updating version on iperf3 websites, and fixing an
+    incorrect error message (Issue #1441).
+
+  * Fixed crash on rcv-timeout with JSON logfile (#1463, #1460, issue #1360,
+    PR #1369).
+
+  * Fixed a bug that prevented TOS/DSCP from getting set correctly for reverse
+    tests (PR #1427, Issue #638).
+
+* Developer-visible changes
+
+  * Getter and setter are now available for bind_dev (PR #1419).
+
+  * Added missing getter for bidirectional tests (PR #1453).
+
+  * Added minor changes to clean up .gitignore and error messages (#1408).
+
+  * Made sure configure scripts are runnable with /bin/sh (PR #1398).
+
+  * Cleaned up RPM spec, such as adding missing RPM build dependencies, dropping
+    EL5 and removing outdated %changelog (PR #1401) to make.
+
+  * Added a fix for a resource leak bug in function iperf_create_pidfile(#1443).
+
+
+iperf-3.12 2022-09-30
+---------------------
+
+* Notable user-visible changes
+
+  * cJSON has been updated to version 1.7.15 (#1383).
+
+  * The --bind <host>%<dev> option syntax now works properly (#1360 /
+    #1371).
+
+  * A server-side file descriptor leak with the --logfile option has
+    been fixed (#1369 / #1360 / #1369 / #1389 / #1393).
+
+  * A bug that caused some large values from TCP_INFO to be misprinted
+    as negative numbers has been fixed (#1372).
+
+  * Using the -k or -n flags with --reverse no longer leak into future
+    tests (#1363 / #1364).
+
+  * There are now various debug level options available with the
+    --debug option. These can be used to adjust the amount of
+    debugging output (#1327).
+
+  * A new --snd-timeout option has been added to set a termination
+    timeout for idle TCP connections (#1215 / #1282).
+
+  * iperf3 is slightly more robust to out-of-order packets during UDP
+    connection setup in --reverse mode (#914 / #1123 / #1182 / #1212 /
+    #1260).
+
+  * iperf3 will now use different ports for each direction when the
+    --cport and --bdir options are set (#1249 / #1259).
+
+  * The iperf3 server will now exit if it can't open its log file
+    (#1225 / #1251).
+
+  * Various help message and output fixes have been made (#1299 /
+    #1330 / #1345 / #1350).
+
+  * Various compiler warnings have been fixed (#1211 / #1316).
+
+* Developer-visible changes
+
+  * Operation of bootstrap.sh has been fixed and simplified (#1335 /
+    #1325).
+    
+  * Flow label support / compatibility under Linux has been improved
+    (#1310).
+    
+  * Various minor memory leaks have been fixed (#1332 / #1333).
+
+  * A getter/setter has been added for the bind_port parameter
+    (--cport option). (#1303, #1305)
+
+  * Various internal documentation improvements (#1265 / #1285 / #1304).
+
+iperf-3.11 2022-01-31
+---------------------
 
 * Notable user-visible changes
 

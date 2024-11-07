@@ -20,18 +20,7 @@
 #elif defined(HAVE_SYS_ENDIAN_H)
 #	include <sys/endian.h>
 
-#	if defined(__OpenBSD__)
-
-#		define be16toh(x) betoh16(x)
-#		define le16toh(x) letoh16(x)
-
-#		define be32toh(x) betoh32(x)
-#		define le32toh(x) letoh32(x)
-
-#		define be64toh(x) betoh64(x)
-#		define le64toh(x) letoh64(x)
-
-#	elif defined(__sgi)
+#	if defined(__sgi)
 
 #		include <netinet/in.h>
 #		include <inttypes.h>
@@ -142,7 +131,9 @@
 // the truth because we use the homebrew htonll, et al. implementations
 // that were originally the sole implementation of this functionality
 // in iperf 3.0.
+#if (!defined(__vxworks)) && (!defined(__VXWORKS__))
 #	warning platform not supported
+#endif
 #	include <endian.h>
 #if BYTE_ORDER == BIG_ENDIAN
 #define HTONLL(n) (n)

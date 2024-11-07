@@ -1,15 +1,18 @@
 /* src/iperf_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Define to 1 if you have the `clock_gettime' function. */
+/* Define to 1 if you have the 'clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
-/* Define to 1 if you have the `cpuset_setaffinity' function. */
+/* Define to 1 if you have the 'clock_nanosleep' function. */
+#undef HAVE_CLOCK_NANOSLEEP
+
+/* Define to 1 if you have the 'cpuset_setaffinity' function. */
 #undef HAVE_CPUSET_SETAFFINITY
 
 /* Have CPU affinity support. */
 #undef HAVE_CPU_AFFINITY
 
-/* Define to 1 if you have the `daemon' function. */
+/* Define to 1 if you have the 'daemon' function. */
 #undef HAVE_DAEMON
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
@@ -24,7 +27,7 @@
 /* Have IPv6 flowlabel support. */
 #undef HAVE_FLOWLABEL
 
-/* Define to 1 if you have the `getline' function. */
+/* Define to 1 if you have the 'getline' function. */
 #undef HAVE_GETLINE
 
 /* Define to 1 if you have the <inttypes.h> header file. */
@@ -42,22 +45,31 @@
 /* Define to 1 if you have the <linux/tcp.h> header file. */
 #undef HAVE_LINUX_TCP_H
 
+/* Define to 1 if you have the 'nanosleep' function. */
+#undef HAVE_NANOSLEEP
+
 /* Define to 1 if you have the <netinet/sctp.h> header file. */
 #undef HAVE_NETINET_SCTP_H
 
 /* Define to 1 if you have the <poll.h> header file. */
 #undef HAVE_POLL_H
 
-/* Define to 1 if you have the `sched_setaffinity' function. */
+/* Define if you have POSIX threads libraries and header files. */
+#undef HAVE_PTHREAD
+
+/* Have PTHREAD_PRIO_INHERIT. */
+#undef HAVE_PTHREAD_PRIO_INHERIT
+
+/* Define to 1 if you have the 'sched_setaffinity' function. */
 #undef HAVE_SCHED_SETAFFINITY
 
 /* Have SCTP support. */
 #undef HAVE_SCTP_H
 
-/* Define to 1 if you have the `sendfile' function. */
+/* Define to 1 if you have the 'sendfile' function. */
 #undef HAVE_SENDFILE
 
-/* Define to 1 if you have the `SetProcessAffinityMask' function. */
+/* Define to 1 if you have the 'SetProcessAffinityMask' function. */
 #undef HAVE_SETPROCESSAFFINITYMASK
 
 /* Have SO_BINDTODEVICE sockopt. */
@@ -68,6 +80,9 @@
 
 /* OpenSSL Is Available */
 #undef HAVE_SSL
+
+/* Define to 1 if you have the <stdatomic.h> header file. */
+#undef HAVE_STDATOMIC_H
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -84,7 +99,7 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
-/* Define to 1 if the system has the type `struct sctp_assoc_value'. */
+/* Define to 1 if the system has the type 'struct sctp_assoc_value'. */
 #undef HAVE_STRUCT_SCTP_ASSOC_VALUE
 
 /* Define to 1 if you have the <sys/endian.h> header file. */
@@ -135,7 +150,11 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* Define to 1 if all of the C90 standard headers exist (not just the ones
+/* Define to necessary symbol if this constant uses a non-standard name on
+   your system. */
+#undef PTHREAD_CREATE_JOINABLE
+
+/* Define to 1 if all of the C89 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
@@ -143,5 +162,5 @@
 /* Version number of package */
 #undef VERSION
 
-/* Define to empty if `const' does not conform to ANSI C. */
+/* Define to empty if 'const' does not conform to ANSI C. */
 #undef const

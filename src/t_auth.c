@@ -27,9 +27,7 @@
 #include "iperf_config.h"
 
 #include <assert.h>
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
 #include <stdio.h>
 #include <string.h>
 
@@ -103,8 +101,9 @@ test_authtoken(const char *authUser, const char *authPassword, EVP_PKEY *pubkey,
     char *decodePassword;
     time_t decodeTime;
 
-    assert(encode_auth_setting(authUser, authPassword, pubkey, &authToken) == 0);
-    assert(decode_auth_setting(0, authToken, privkey, &decodeUser, &decodePassword, &decodeTime) == 0);
+    int use_pkcs1_padding = 1;
+    assert(encode_auth_setting(authUser, authPassword, pubkey, &authToken, use_pkcs1_padding) == 0);
+    assert(decode_auth_setting(0, authToken, privkey, &decodeUser, &decodePassword, &decodeTime, use_pkcs1_padding) == 0);
 
     assert(strcmp(decodeUser, authUser) == 0);
     assert(strcmp(decodePassword, authPassword) == 0);

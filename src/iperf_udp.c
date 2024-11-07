@@ -34,9 +34,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
+#include <inttypes.h>
 #include <sys/time.h>
 #include <sys/select.h>
 
@@ -47,19 +46,6 @@
 #include "timer.h"
 #include "net.h"
 #include "cjson.h"
-#include "portable_endian.h"
-
-#if defined(HAVE_INTTYPES_H)
-# include <inttypes.h>
-#else
-# ifndef PRIu64
-#  if sizeof(long) == 8
-#   define PRIu64		"lu"
-#  else
-#   define PRIu64		"llu"
-#  endif
-# endif
-#endif
 
 /* iperf_udp_recv
  *
@@ -76,7 +62,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     double    transit = 0, d = 0;
     struct iperf_time sent_time, arrival_time, temp_time;
 
-    r = Nread(sp->socket, sp->buffer, size, Pudp);
+    r = Nread_no_select(sp->socket, sp->buffer, size, Pudp);
 
     /*
      * If we got an error in the read, or if we didn't read anything
@@ -124,7 +110,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	}
 
 	if (sp->test->debug_level >= DEBUG_LEVEL_DEBUG)
-	    fprintf(stderr, "pcount %" PRIu64 " packet_count %d\n", pcount, sp->packet_count);
+	    fprintf(stderr, "pcount %" PRIu64 " packet_count %" PRIu64 "\n", pcount, sp->packet_count);
 
 	/*
 	 * Try to handle out of order packets.  The way we do this
@@ -167,7 +153,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 
 	    /* Log the out-of-order packet */
 	    if (sp->test->debug)
-		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %d on stream %d", pcount, sp->packet_count + 1, sp->socket);
+		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %" PRIu64 " on stream %d", pcount, sp->packet_count + 1, sp->socket);
 	}
 
 	/*
@@ -250,10 +236,14 @@ iperf_udp_send(struct iperf_stream *sp)
 
     r = Nwrite(sp->socket, sp->buffer, size, Pudp);
 
-    if (r < 0) {
-        if (r == NET_SOFTERROR && sp->test->debug_level >= DEBUG_LEVEL_INFO)
-            printf("UDP send failed on NET_SOFTERROR. errno=%s\n", strerror(errno));
-        return r;
+    if (r <= 0) {
+        --sp->packet_count;     /* Don't count messages that no data was sent from them.
+                                 * Allows "resending" a massage with the same numbering */
+        if (r < 0) {
+            if (r == NET_SOFTERROR && sp->test->debug_level >= DEBUG_LEVEL_INFO)
+                printf("UDP send failed on NET_SOFTERROR. errno=%s\n", strerror(errno));
+            return r;
+        }
     }
 
     sp->result->bytes_sent += r;
@@ -351,9 +341,20 @@ iperf_udp_buffercheck(struct iperf_test *test, int s)
     }
 
     if (test->json_output) {
-	cJSON_AddNumberToObject(test->json_start, "sock_bufsize", test->settings->socket_bufsize);
+    cJSON *sock_bufsize_item = cJSON_GetObjectItem(test->json_start, "sock_bufsize");
+    if (sock_bufsize_item == NULL) {
+    cJSON_AddNumberToObject(test->json_start, "sock_bufsize", test->settings->socket_bufsize);
+    }
+
+    cJSON *sndbuf_actual_item = cJSON_GetObjectItem(test->json_start, "sndbuf_actual");
+    if (sndbuf_actual_item == NULL) {
 	cJSON_AddNumberToObject(test->json_start, "sndbuf_actual", sndbuf_actual);
+    }
+        
+    cJSON *rcvbuf_actual_item = cJSON_GetObjectItem(test->json_start, "rcvbuf_actual");
+    if (rcvbuf_actual_item == NULL) {
 	cJSON_AddNumberToObject(test->json_start, "rcvbuf_actual", rcvbuf_actual);
+    }
     }
 
     return rc;
@@ -422,10 +423,10 @@ iperf_udp_accept(struct iperf_test *test)
     /* If socket pacing is specified, try it. */
     if (test->settings->fqrate) {
 	/* Convert bits per second to bytes per second */
-	unsigned int fqrate = test->settings->fqrate / 8;
+	uint64_t fqrate = test->settings->fqrate / 8;
 	if (fqrate > 0) {
 	    if (test->debug) {
-		printf("Setting fair-queue socket pacing to %u\n", fqrate);
+		printf("Setting fair-queue socket pacing to %"PRIu64"\n", fqrate);
 	    }
 	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &fqrate, sizeof(fqrate)) < 0) {
 		warning("Unable to set socket pacing");
@@ -445,6 +446,7 @@ iperf_udp_accept(struct iperf_test *test)
     /*
      * Create a new "listening" socket to replace the one we were using before.
      */
+    FD_CLR(test->prot_listener, &test->read_set); // No control messages from old listener
     test->prot_listener = netannounce(test->settings->domain, Pudp, test->bind_address, test->bind_dev, test->server_port);
     if (test->prot_listener < 0) {
         i_errno = IESTREAMLISTEN;
@@ -538,10 +540,10 @@ iperf_udp_connect(struct iperf_test *test)
     /* If socket pacing is available and not disabled, try it. */
     if (test->settings->fqrate) {
 	/* Convert bits per second to bytes per second */
-	unsigned int fqrate = test->settings->fqrate / 8;
+	uint64_t fqrate = test->settings->fqrate / 8;
 	if (fqrate > 0) {
 	    if (test->debug) {
-		printf("Setting fair-queue socket pacing to %u\n", fqrate);
+		printf("Setting fair-queue socket pacing to %"PRIu64"\n", fqrate);
 	    }
 	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &fqrate, sizeof(fqrate)) < 0) {
 		warning("Unable to set socket pacing");
@@ -557,6 +559,9 @@ iperf_udp_connect(struct iperf_test *test)
 	    }
 	}
     }
+
+    /* Set common socket options */
+    iperf_common_sockopts(test, s);
 
 #ifdef SO_RCVTIMEO
     /* 30 sec timeout for a case when there is a network problem. */

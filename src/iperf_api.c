@@ -99,7 +99,7 @@ static int diskfile_send(struct iperf_stream *sp);
 static int diskfile_recv(struct iperf_stream *sp);
 static int JSON_write(int fd, cJSON *json);
 static void print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *json_interval_streams);
-static cJSON *JSON_read(int fd);
+static cJSON *JSON_read(int fd, int max_size);
 static int JSONStream_Output(struct iperf_test *test, const char* event_name, cJSON* obj);
 
 
@@ -1920,17 +1920,73 @@ iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP)
     struct iperf_time temp_time;
     double seconds;
     uint64_t bits_per_second;
+    int64_t missing_rate;
+    uint64_t bits_sent;
+    
+#if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
+    struct timespec nanosleep_time;
+    int64_t time_to_green_light, delta_bits;
+    int ret;
+#endif /* HAVE_CLOCK_NANOSLEEP || HAVE_NANOSLEEP) */
+#if defined(HAVE_CLOCK_NANOSLEEP)
+    int64_t ns;
+#endif /* HAVE_CLOCK_NANOSLEEP */
 
     if (sp->test->done || sp->test->settings->rate == 0)
         return;
     iperf_time_diff(&sp->result->start_time_fixed, nowP, &temp_time);
     seconds = iperf_time_in_secs(&temp_time);
-    bits_per_second = sp->result->bytes_sent * 8 / seconds;
-    if (bits_per_second < sp->test->settings->rate) {
+    bits_sent = sp->result->bytes_sent * 8;
+    bits_per_second = bits_sent / seconds;
+    missing_rate = sp->test->settings->rate - bits_per_second;
+
+    if (missing_rate > 0) {
         sp->green_light = 1;
     } else {
         sp->green_light = 0;
     }
+
+#if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
+    // If estimated time to next send is large enough, sleep instead of just CPU looping until green light is set
+    if (missing_rate < 0) {
+        delta_bits = bits_sent - (seconds * sp->test->settings->rate);
+        // Calclate time until next data send is required
+        time_to_green_light = (SEC_TO_NS * delta_bits / sp->test->settings->rate);
+        // Whether shouuld wait before next send
+        if (time_to_green_light >= 0) {
+#if defined(HAVE_CLOCK_NANOSLEEP)
+            if (clock_gettime(CLOCK_MONOTONIC, &nanosleep_time) == 0) {
+                // Calculate absolute end of sleep time
+                ns = nanosleep_time.tv_nsec + time_to_green_light;
+                if (ns < SEC_TO_NS) {
+                    nanosleep_time.tv_nsec = ns;
+                } else {
+                    nanosleep_time.tv_sec += ns / SEC_TO_NS;
+                    nanosleep_time.tv_nsec = ns % SEC_TO_NS;
+                }
+                // Sleep until average baud rate reaches the target value
+                while((ret = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &nanosleep_time, NULL)) == EINTR);
+                if (ret == 0) {
+                    sp->green_light = 1;
+                }
+            }
+
+#else /* HAVE_NANOSLEEP */
+            nanosleep_time.tv_sec = 0;
+            // Sleep until average baud rate reaches the target value or intrupt / error
+            do {
+                // nansleep() time should be less than 1 sec
+                nanosleep_time.tv_nsec = (time_to_green_light >= SEC_TO_NS) ? SEC_TO_NS - 1 : time_to_green_light;
+                time_to_green_light -= nanosleep_time.tv_nsec;
+                ret = nanosleep(&nanosleep_time, NULL);
+            } while (ret == 0 && time_to_green_light > 0);
+            if (ret == 0) {
+                sp->green_light = 1;
+            }
+#endif /* HAVE_CLOCK_NANOSLEEP else HAVE_NANOSLEEP */
+        }
+    }
+#endif /* HAVE_CLOCK_NANOSLEEP || HAVE_NANOSLEEP */
 }
 
 /* Verify that average traffic is not greater than the specified limit */
@@ -1976,10 +2032,10 @@ iperf_check_total_rate(struct iperf_test *test, iperf_size_t last_interval_bytes
 int
 iperf_send_mt(struct iperf_stream *sp)
 {
-    register int multisend, r, streams_active;
+    register int multisend, r, message_sent;
     register struct iperf_test *test = sp->test;
     struct iperf_time now;
-    int no_throttle_check;
+    int throttle_check_per_message;
 
     /* Can we do multisend mode? */
     if (test->settings->burst != 0)
@@ -1990,41 +2046,38 @@ iperf_send_mt(struct iperf_stream *sp)
         multisend = 1;	/* nope */
 
     /* Should bitrate throttle be checked for every send */
-    no_throttle_check = test->settings->rate != 0 && test->settings->burst == 0;
+    throttle_check_per_message = test->settings->rate != 0 && test->settings->burst == 0;
 
-    for (; multisend > 0; --multisend) {
-	if (no_throttle_check)
-	    iperf_time_now(&now);
-	streams_active = 0;
-	{
-	    if (sp->green_light && sp->sender) {
-                // XXX If we hit one of these ending conditions maybe
-                // want to stop even trying to send something?
-                if (multisend > 1 && test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes)
-                    break;
-                if (multisend > 1 && test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks)
-                    break;
-		if ((r = sp->snd(sp)) < 0) {
-		    if (r == NET_SOFTERROR)
-			break;
-		    i_errno = IESTREAMWRITE;
-		    return r;
-		}
-		streams_active = 1;
-		test->bytes_sent += r;
-		if (!sp->pending_size)
-		    ++test->blocks_sent;
-                if (no_throttle_check)
-		    iperf_check_throttle(sp, &now);
-	    }
-	}
-	if (!streams_active)
-	    break;
-    }
-    if (!no_throttle_check) {   /* Throttle check if was not checked for each send */
-	iperf_time_now(&now);
-        if (sp->sender)
+    for (message_sent = 0; sp->green_light && multisend > 0; --multisend) {
+        // XXX If we hit one of these ending conditions maybe
+        // want to stop even trying to send something?
+        if (multisend > 1 && test->settings->bytes != 0 && test->bytes_sent >= test->settings->bytes)
+            break;
+        if (multisend > 1 && test->settings->blocks != 0 && test->blocks_sent >= test->settings->blocks)
+            break;
+        if ((r = sp->snd(sp)) < 0) {
+            if (r == NET_SOFTERROR)
+                break;
+            i_errno = IESTREAMWRITE;
+            return r;
+        }
+        test->bytes_sent += r;
+        if (!sp->pending_size)
+            ++test->blocks_sent;
+        if (throttle_check_per_message) {
+            if (message_sent == 0)
+                iperf_time_now(&now);
             iperf_check_throttle(sp, &now);
+        }
+        message_sent = 1;
+    }
+#if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
+    if (!sp->green_light) { /* Should check if green ligh can be set, as pacing timer is not supported in this case */
+#else /* !HAVE_CLOCK_NANOSLEEP && !HAVE_NANOSLEEP */
+    if (!throttle_check_per_message || message_sent == 0) {   /* Throttle check if was not checked for each send */
+#endif /* HAVE_CLOCK_NANOSLEEP, HAVE_NANOSLEEP */
+	iperf_time_now(&now);
+        iperf_check_throttle(sp, &now);
     }
     return 0;
 }
@@ -2039,8 +2092,14 @@ iperf_recv_mt(struct iperf_stream *sp)
 		i_errno = IESTREAMREAD;
 		return r;
 	    }
-	    test->bytes_received += r;
-	    ++test->blocks_received;
+            
+            /* Collect statistics only if receive did not timeout (e.g. `Nread()` may timeout).
+             * This is also important for `--rcv-timeout` to work properly.
+             */
+            if (r > 0) {
+	        test->bytes_received += r;
+	        ++test->blocks_received;
+            }
 
     return 0;
 }
@@ -2071,39 +2130,15 @@ iperf_init_test(struct iperf_test *test)
     return 0;
 }
 
-static void
-send_timer_proc(TimerClientData client_data, struct iperf_time *nowP)
-{
-    struct iperf_stream *sp = client_data.p;
-
-    /* All we do here is set or clear the flag saying that this stream may
-    ** be sent to.  The actual sending gets done in the send proc, after
-    ** checking the flag.
-    */
-    iperf_check_throttle(sp, nowP);
-}
 
 int
 iperf_create_send_timers(struct iperf_test * test)
 {
-    struct iperf_time now;
+    // Note: No times for the multi-thread versions
     struct iperf_stream *sp;
-    TimerClientData cd;
 
-    if (iperf_time_now(&now) < 0) {
-	i_errno = IEINITTEST;
-	return -1;
-    }
     SLIST_FOREACH(sp, &test->streams, streams) {
         sp->green_light = 1;
-	if (test->settings->rate != 0 && sp->sender) {
-	    cd.p = sp;
-	    sp->send_timer = tmr_create(NULL, send_timer_proc, cd, test->settings->pacing_timer, 1);
-	    if (sp->send_timer == NULL) {
-		i_errno = IEINITTEST;
-		return -1;
-	    }
-	}
     }
     return 0;
 }
@@ -2339,7 +2374,7 @@ get_parameters(struct iperf_test *test)
     cJSON *j;
     cJSON *j_p;
 
-    j = JSON_read(test->ctrl_sck);
+    j = JSON_read(test->ctrl_sck, MAX_PARAMS_JSON_STRING);
     if (j == NULL) {
 	i_errno = IERECVPARAMS;
         r = -1;
@@ -2570,7 +2605,7 @@ get_results(struct iperf_test *test)
     int retransmits;
     struct iperf_stream *sp;
 
-    j = JSON_read(test->ctrl_sck);
+    j = JSON_read(test->ctrl_sck, 0);
     if (j == NULL) {
 	i_errno = IERECVRESULTS;
         r = -1;
@@ -2758,7 +2793,7 @@ JSON_write(int fd, cJSON *json)
 /*************************************************************/
 
 static cJSON *
-JSON_read(int fd)
+JSON_read(int fd, int max_size)
 {
     uint32_t hsize, nsize;
     size_t strsize;
@@ -2771,34 +2806,40 @@ JSON_read(int fd)
      * Then read the JSON into a buffer and parse it.  Return a parsed JSON
      * structure, NULL if there was an error.
      */
-    if (Nread(fd, (char*) &nsize, sizeof(nsize), Ptcp) >= 0) {
-	hsize = ntohl(nsize);
-	/* Allocate a buffer to hold the JSON */
-	strsize = hsize + 1;              /* +1 for trailing NULL */
-	if (strsize) {
-	str = (char *) calloc(sizeof(char), strsize);
-	if (str != NULL) {
-	    rc = Nread(fd, str, hsize, Ptcp);
-	    if (rc >= 0) {
-		/*
-		 * We should be reading in the number of bytes corresponding to the
-		 * length in that 4-byte integer.  If we don't the socket might have
-		 * prematurely closed.  Only do the JSON parsing if we got the
-		 * correct number of bytes.
-		 */
-		if (rc == hsize) {
-		    json = cJSON_Parse(str);
-		}
-		else {
-		    printf("WARNING:  Size of data read does not correspond to offered length\n");
-		}
-	    }
-	}
-	free(str);
+    rc = Nread(fd, (char*) &nsize, sizeof(nsize), Ptcp);
+    if (rc == sizeof(nsize)) {
+        hsize = ntohl(nsize);
+        if (hsize > 0 && (max_size == 0 || hsize <= max_size)) {
+	    /* Allocate a buffer to hold the JSON */
+	    strsize = hsize + 1;              /* +1 for trailing NULL */
+	    if (strsize) {
+	        str = (char *) calloc(sizeof(char), strsize);
+	        if (str != NULL) {
+	            rc = Nread(fd, str, hsize, Ptcp);
+	            if (rc >= 0) {
+                        /*
+                        * We should be reading in the number of bytes corresponding to the
+                        * length in that 4-byte integer.  If we don't the socket might have
+                        * prematurely closed.  Only do the JSON parsing if we got the
+                        * correct number of bytes.
+                        */
+                        if (rc == hsize) {
+                            json = cJSON_Parse(str);
+                        }
+                        else {
+                            warning("JSON size of data read does not correspond to offered length");
+                        }
+	            }
+	            free(str);
+                }
+            }
 	}
 	else {
-	    printf("WARNING:  Data length overflow\n");
+	    warning("JSON data length overflow");
 	}
+    }
+    else {
+        warning("Failed to read JSON data size");
     }
     return json;
 }
@@ -4283,6 +4324,7 @@ iperf_print_results(struct iperf_test *test)
                 }
                 if (test->server_output_text) {
                     iperf_printf(test, "\nServer output:\n%s\n", test->server_output_text);
+	            free(test->server_output_text);
                     test->server_output_text = NULL;
                 }
             }

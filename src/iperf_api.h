@@ -489,6 +489,7 @@ enum {
     IESETCNTLKAKEEPIDLE = 156, // Unable to set socket keepalive TCP period (TCP_KEEPIDLE) option
     IESETCNTLKAINTERVAL = 157, // Unable to set/get socket keepalive TCP retry interval (TCP_KEEPINTVL) option
     IESETCNTLKACOUNT = 158,    // Unable to set/get socket keepalive TCP number of retries (TCP_KEEPCNT) option
+    IEPTHREADSIGMASK=159,      // Unable to initialize sub thread signal mask (check perror)
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

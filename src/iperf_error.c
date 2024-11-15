@@ -60,11 +60,11 @@ iperf_err(struct iperf_test *test, const char *format, ...)
     if (test != NULL && test->json_output && test->json_top != NULL)
 	cJSON_AddStringToObject(test->json_top, "error", str);
     else {
-        if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
+        if (test != NULL && pthread_mutex_lock(&(test->print_mutex)) != 0) {
             perror("iperf_err: pthread_mutex_lock");
         }
 
-	if (test && test->outfile && test->outfile != stdout) {
+	if (test != NULL && test->outfile != NULL && test->outfile != stdout) {
 	    if (ct) {
 		fprintf(test->outfile, "%s", ct);
 	    }
@@ -77,7 +77,7 @@ iperf_err(struct iperf_test *test, const char *format, ...)
 	    fprintf(stderr, "iperf3: %s\n", str);
 	}
 
-        if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
+        if (test != NULL && pthread_mutex_unlock(&(test->print_mutex)) != 0) {
             perror("iperf_err: pthread_mutex_unlock");
         }
 

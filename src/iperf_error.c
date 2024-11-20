@@ -213,7 +213,7 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "this OS does not support sendfile");
             break;
         case IEOMIT:
-            snprintf(errstr, len, "bogus value for --omit");
+            snprintf(errstr, len, "bogus value for --omit (maximum = %d seconds)", MAX_OMIT_TIME);
             break;
         case IEUNIMP:
             snprintf(errstr, len, "an option you are trying to set is not implemented yet");

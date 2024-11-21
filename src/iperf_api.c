@@ -4498,6 +4498,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 
     memset(sp, 0, sizeof(struct iperf_stream));
 
+    sp->thread_created = 0;
     sp->sender = sender;
     sp->test = test;
     sp->settings = test->settings;

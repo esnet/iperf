@@ -24,6 +24,12 @@
  * This code is distributed under a BSD style license, see the LICENSE
  * file for complete information.
  */
+
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
+#define __USE_GNU
+
 #include <errno.h>
 #include <setjmp.h>
 #include <stdio.h>
@@ -37,6 +43,7 @@
 #include <sys/uio.h>
 #include <arpa/inet.h>
 #include <signal.h>
+#include <sched.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -588,9 +595,15 @@ iperf_run_client(struct iperf_test * test)
         if (iperf_open_logfile(test) < 0)
             return -1;
 
+#if defined(HAVE_SCHED_SETAFFINITY)
+    if (CPU_COUNT(&test->cpu_set) > 0)
+	if (iperf_setaffinityset(&test->cpu_set) != 0)
+	    return -1;
+#else /* HAVE_SCHED_SETAFFINITY */
     if (test->affinity != -1)
 	if (iperf_setaffinity(test, test->affinity) != 0)
 	    return -1;
+#endif /* HAVE_SCHED_SETAFFINITY */
 
     if (test->json_output)
 	if (iperf_json_start(test) < 0)

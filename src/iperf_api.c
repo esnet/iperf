@@ -1166,6 +1166,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     struct xbind_entry *xbe;
     double farg;
     int rcv_timeout_in = 0;
+    int i;
 
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = rcv_timeout_flag = snd_timeout_flag =0;
@@ -1532,21 +1533,46 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif /* HAVE_TCP_USER_TIMEOUT */
             case 'A':
 #if defined(HAVE_CPU_AFFINITY)
+#if defined(HAVE_SCHED_SETAFFINITY)
+                comma = strchr(optarg, ',');
+		if (comma && strlen(comma+1) > 0) { // Get Server's cpus list
+                    client_flag = 1;
+		    *comma = '\0';
+                    if (iperf_parseaffinity(comma+1, &test->server_cpu_set) < 0) {
+                        i_errno = IEAFFINITY;
+                        return -1;
+                    }
+                    if (CPU_COUNT(&test->server_cpu_set) == 1) { // for backward compatibility
+                        for (i = 0; i < CPU_SETSIZE && CPU_ISSET(i, &test->server_cpu_set); ++i);
+                        if (i >= CPU_SETSIZE) {
+                            iperf_errexit(test, "internal error while parsing server affinity option");
+                        }
+                        test->server_affinity = i;
+                    }
+		}
+                if (strlen(optarg) > 0) { // Get this process cpus list
+                    if (iperf_parseaffinity(optarg, &test->cpu_set) < 0) {
+                        i_errno = IEAFFINITY;
+                        return -1;
+                    }
+                }
+#else /* HAVE_SCHED_SETAFFINITY */
                 test->affinity = strtol(optarg, &endptr, 0);
                 if (endptr == optarg ||
-		    test->affinity < 0 || test->affinity > 1024) {
+		    test->affinity < 0 || test->affinity >= 1024) {
                     i_errno = IEAFFINITY;
                     return -1;
                 }
 		comma = strchr(optarg, ',');
 		if (comma != NULL) {
 		    test->server_affinity = atoi(comma+1);
-		    if (test->server_affinity < 0 || test->server_affinity > 1024) {
+		    if (test->server_affinity < 0 || test->server_affinity >= 1024) {
 			i_errno = IEAFFINITY;
 			return -1;
 		    }
 		    client_flag = 1;
 		}
+#endif /* HAVE_SCHED_SETAFFINITY */
 #else /* HAVE_CPU_AFFINITY */
                 i_errno = IEUNIMP;
                 return -1;
@@ -2231,6 +2257,9 @@ static int
 send_parameters(struct iperf_test *test)
 {
     int r = 0;
+    int i;
+    char *p;
+    char server_cpus[4500];  // enough space for all the possible 1024 cpus list
     cJSON *j;
 
     j = cJSON_CreateObject();
@@ -2245,6 +2274,21 @@ send_parameters(struct iperf_test *test)
         else if (test->protocol->id == Psctp)
             cJSON_AddTrueToObject(j, "sctp");
 	cJSON_AddNumberToObject(j, "omit", test->omit);
+#if defined(HAVE_SCHED_SETAFFINITY)
+        if (CPU_COUNT(&test->server_cpu_set) > 0) { // recreate the ';' separated servers cpus list
+            memset(server_cpus, 0, sizeof(server_cpus));
+            p = server_cpus;
+            for (i = 0; i < CPU_SETSIZE; ++i) {
+                if (CPU_ISSET(i, &test->server_cpu_set)) {
+                    if (p != server_cpus)
+                        *p++ = '/';
+                    sprintf(p, "%d", i);
+                    p += strlen(p);
+                }
+            }
+            cJSON_AddStringToObject(j, "server_cpu_set", server_cpus);
+        }
+#endif /* HAVE_SCHED_SETAFFINITY) */
 	if (test->server_affinity != -1)
 	    cJSON_AddNumberToObject(j, "server_affinity", test->server_affinity);
 	cJSON_AddNumberToObject(j, "time", test->duration);
@@ -2355,8 +2399,19 @@ get_parameters(struct iperf_test *test)
             set_protocol(test, Psctp);
 	if ((j_p = cJSON_GetObjectItem(j, "omit")) != NULL)
 	    test->omit = j_p->valueint;
+#if defined(HAVE_SCHED_SETAFFINITY)
+	if ((j_p = cJSON_GetObjectItem(j, "server_cpu_set")) != NULL) {
+            if (iperf_parseaffinity(j_p->valuestring, &test->server_cpu_set) < 0) {
+                i_errno = IEAFFINITY;
+                return -1;
+            }
+        } else if ((j_p = cJSON_GetObjectItem(j, "server_affinity")) != NULL) { // backward compatibility
+	    iperf_addaffinitycpu(&test->server_cpu_set, j_p->valueint);
+        }
+#else /* HAVE_SCHED_SETAFFINITY */
 	if ((j_p = cJSON_GetObjectItem(j, "server_affinity")) != NULL)
 	    test->server_affinity = j_p->valueint;
+#endif /* HAVE_SCHED_SETAFFINITY */
 	if ((j_p = cJSON_GetObjectItem(j, "time")) != NULL)
 	    test->duration = j_p->valueint;
         test->settings->bytes = 0;
@@ -2975,12 +3030,17 @@ iperf_defaults(struct iperf_test *testp)
     testp->omit = OMIT;
     testp->duration = DURATION;
     testp->diskfile_name = (char*) 0;
+#if defined(HAVE_SCHED_SETAFFINITY)
+    CPU_ZERO(&testp->cpu_set);
+    CPU_ZERO(&testp->server_cpu_set);
+#else
     testp->affinity = -1;
+#endif /* HAVE_SCHED_SETAFFINITY */
     testp->server_affinity = -1;
-    TAILQ_INIT(&testp->xbind_addrs);
 #if defined(HAVE_CPUSET_SETAFFINITY)
     CPU_ZERO(&testp->cpumask);
 #endif /* HAVE_CPUSET_SETAFFINITY */
+    TAILQ_INIT(&testp->xbind_addrs);
     testp->title = NULL;
     testp->extra_data = NULL;
     testp->congestion = NULL;
@@ -3271,6 +3331,9 @@ iperf_reset_test(struct iperf_test *test)
     set_protocol(test, Ptcp);
     test->omit = OMIT;
     test->duration = DURATION;
+#if defined(HAVE_SCHED_SETAFFINITY)
+    CPU_ZERO(&test->server_cpu_set);
+#endif /* HAVE_SCHED_SETAFFINITY */
     test->server_affinity = -1;
 #if defined(HAVE_CPUSET_SETAFFINITY)
     CPU_ZERO(&test->cpumask);
@@ -5009,19 +5072,30 @@ iperf_json_finish(struct iperf_test *test)
 /* CPU affinity stuff - Linux, FreeBSD, and Windows only. */
 
 int
-iperf_setaffinity(struct iperf_test *test, int affinity)
+iperf_addaffinitycpu(cpu_set_t *pcpu_set, int affinity)
 {
 #if defined(HAVE_SCHED_SETAFFINITY)
-    cpu_set_t cpu_set;
+    CPU_SET(affinity, pcpu_set);
+    return 0;
+#endif /* HAVE_SCHED_SETAFFINITY */
+}
 
-    CPU_ZERO(&cpu_set);
-    CPU_SET(affinity, &cpu_set);
-    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0) {
+int
+iperf_setaffinityset(cpu_set_t *pcpu_set)
+{
+#if defined(HAVE_SCHED_SETAFFINITY)
+    if (sched_setaffinity(0, sizeof(cpu_set_t), pcpu_set) != 0) {
 	i_errno = IEAFFINITY;
         return -1;
     }
     return 0;
-#elif defined(HAVE_CPUSET_SETAFFINITY)
+#endif /* HAVE_SCHED_SETAFFINITY */
+}
+
+int
+iperf_setaffinity(struct iperf_test *test, int affinity)
+{
+#if defined(HAVE_CPUSET_SETAFFINITY)
     cpuset_t cpumask;
 
     if(cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, -1,
@@ -5092,6 +5166,51 @@ iperf_clearaffinity(struct iperf_test *test)
     return -1;
 #endif /* neither HAVE_SCHED_SETAFFINITY nor HAVE_CPUSET_SETAFFINITY nor HAVE_SETPROCESSAFFINITYMASK */
 }
+
+#if defined(HAVE_SCHED_SETAFFINITY)
+/* Get cpus numbers from string format: cpu1/cpu3-cpu4/.... */
+int
+iperf_parseaffinity(char *s, cpu_set_t *pcpu_set) {
+    int i, from_cpu, to_cpu;
+    char *p1, *p2, *hyphen;
+
+    if (strlen(s) > 0) {
+        p1 = s;
+        while ((p2 = strtok(p1, "/"))) {
+            p1 = NULL;
+            hyphen = strchr(p2, '-');
+            if (!hyphen) { // cpu number
+                i = strtol(p2, NULL, 0);
+
+                if (i < 0 || i >= CPU_SETSIZE) {
+                    i_errno = IEAFFINITY;
+                    return -1;
+                }
+                iperf_addaffinitycpu(pcpu_set, i);
+            } else { // cpu numbers range
+                *hyphen++ = '\0';
+                from_cpu = strtol(p2, NULL, 0);
+                if (from_cpu < 0 || from_cpu >= CPU_SETSIZE) {
+                    i_errno = IEAFFINITY;
+                    return -1;
+                }
+                to_cpu = strtol(hyphen, NULL, 0);
+                if (strlen(hyphen) <= 0 || to_cpu < from_cpu || to_cpu >= CPU_SETSIZE) {
+                    i_errno = IEAFFINITY;
+                    return -1;
+                }
+                while (from_cpu <= to_cpu) {                               
+                    iperf_addaffinitycpu(pcpu_set, from_cpu);
+                    from_cpu++;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+#endif /* HAVE_SCHED_SETAFFINITY */
+
 
 static char iperf_timestr[100];
 static char linebuffer[1024];

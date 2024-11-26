@@ -71,6 +71,10 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 
 #define WARN_STR_LEN 128
 
+#define DEFAULT_BOUNCEBACK_MSG_SIZE 100 /* default Bounceback message size */
+#define DEFAULT_BOUNCEBACK_BURST    10  /* default burst size of baounceback messages */
+#define DEFAULT_BOUNCEBACK_INUM     1   /* default number of baounceback burst per report interval */
+
 /* short option equivalents, used to support options that only have long form */
 #define OPT_SCTP 1
 #define OPT_LOGFILE 2
@@ -101,6 +105,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define OPT_JSON_STREAM 28
 #define OPT_SND_TIMEOUT 29
 #define OPT_USE_PKCS1_PADDING 30
+#define OPT_BOUNCEBACK 31
 
 /* states */
 #define TEST_START 1
@@ -168,6 +173,10 @@ int	iperf_get_dont_fragment( struct iperf_test* ipt );
 char*   iperf_get_test_congestion_control(struct iperf_test* ipt);
 int iperf_get_test_mss(struct iperf_test* ipt);
 int     iperf_get_mapped_v4(struct iperf_test* ipt);
+int     iperf_get_test_bounceback_burst(struct iperf_test *ipt);
+double  iperf_get_test_bounceback_period(struct iperf_test *ipt);
+int     iperf_get_test_bounceback_size(struct iperf_test *ipt);
+int     iperf_get_test_bounceback_response_size(struct iperf_test *ipt);
 
 /* Setter routines for some fields inside iperf_test. */
 void	iperf_set_verbose( struct iperf_test* ipt, int verbose );
@@ -217,6 +226,10 @@ void    iperf_set_on_new_stream_callback(struct iperf_test* ipt, void (*callback
 void    iperf_set_on_test_start_callback(struct iperf_test* ipt, void (*callback)());
 void    iperf_set_on_test_connect_callback(struct iperf_test* ipt, void (*callback)());
 void    iperf_set_on_test_finish_callback(struct iperf_test* ipt, void (*callback)());
+void    iperf_set_test_bounceback_burst(struct iperf_test *ipt, int burst);
+void    iperf_set_test_bounceback_period(struct iperf_test *ipt, double period);
+void    iperf_set_test_bounceback_size(struct iperf_test *ipt, int size);
+void    iperf_set_test_bounceback_response_size(struct iperf_test *ipt, int size);
 
 #if defined(HAVE_SSL)
 void    iperf_set_test_client_username(struct iperf_test *ipt, const char *client_username);
@@ -420,6 +433,7 @@ enum {
     IESNDTIMEOUT = 33,      // Illegal message send timeout
     IEUDPFILETRANSFER = 34, // Cannot transfer file using UDP
     IESERVERAUTHUSERS = 35,   // Cannot access authorized users file
+    IEBOUNCEBACK = 36,      // Invalid value specified in bounceback
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

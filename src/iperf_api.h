@@ -318,6 +318,7 @@ long get_snd_wnd(struct iperf_interval_results *irp);
 long get_rtt(struct iperf_interval_results *irp);
 long get_rttvar(struct iperf_interval_results *irp);
 long get_pmtu(struct iperf_interval_results *irp);
+long get_reorder(struct iperf_interval_results *irp);
 void print_tcpinfo(struct iperf_test *test);
 void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 

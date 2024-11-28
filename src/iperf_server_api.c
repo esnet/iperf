@@ -272,6 +272,9 @@ iperf_handle_message_server(struct iperf_test *test)
             test->reporter_callback(test);
             if (iperf_set_send_state(test, EXCHANGE_RESULTS) != 0)
                 return -1;
+	    
+	    iperf_cancel_periodic_timers(test);
+
             if (iperf_exchange_results(test) < 0)
                 return -1;
             if (iperf_set_send_state(test, DISPLAY_RESULTS) != 0)
@@ -448,20 +451,23 @@ cleanup_server(struct iperf_test *test)
     SLIST_FOREACH(sp, &test->streams, streams) {
         int rc;
         sp->done = 1;
-        rc = pthread_cancel(sp->thr);
-        if (rc != 0 && rc != ESRCH) {
-            i_errno = IEPTHREADCANCEL;
-            errno = rc;
-            iperf_err(test, "cleanup_server in pthread_cancel - %s", iperf_strerror(i_errno));
-        }
-        rc = pthread_join(sp->thr, NULL);
-        if (rc != 0 && rc != ESRCH) {
-            i_errno = IEPTHREADJOIN;
-            errno = rc;
-            iperf_err(test, "cleanup_server in pthread_join - %s", iperf_strerror(i_errno));
-        }
-        if (test->debug_level >= DEBUG_LEVEL_INFO) {
-            iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
+        if (sp->thread_created == 1) {
+            rc = pthread_cancel(sp->thr);
+            if (rc != 0 && rc != ESRCH) {
+                i_errno = IEPTHREADCANCEL;
+                errno = rc;
+                iperf_err(test, "cleanup_server in pthread_cancel - %s", iperf_strerror(i_errno));
+            }
+            rc = pthread_join(sp->thr, NULL);
+            if (rc != 0 && rc != ESRCH) {
+                i_errno = IEPTHREADJOIN;
+                errno = rc;
+                iperf_err(test, "cleanup_server in pthread_join - %s", iperf_strerror(i_errno));
+            }
+            if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
+            }
+            sp->thread_created = 0;
         }
     }
     i_errno = i_errno_save;
@@ -605,15 +611,16 @@ iperf_run_server(struct iperf_test *test)
                 used_timeout.tv_usec = 0;
                 timeout = &used_timeout;
             }
-        } else if (test->mode != SENDER) {     // In non-reverse active mode server ensures data is received
+        } else if (test->mode != SENDER || test->state != TEST_RUNNING) {
+	    // In non-reverse active mode or not during active test, server ensures data םor control messages are received
             timeout_us = -1;
             if (timeout != NULL) {
                 used_timeout.tv_sec = timeout->tv_sec;
                 used_timeout.tv_usec = timeout->tv_usec;
                 timeout_us = (timeout->tv_sec * SEC_TO_US) + timeout->tv_usec;
             }
-            /* Cap the maximum select timeout at 1 second */
-            if (timeout_us > SEC_TO_US) {
+            /* Cap the maximum select timeout at 1 second during active test */
+            if (test->state == TEST_RUNNING && timeout_us > SEC_TO_US) {
                 timeout_us = SEC_TO_US;
             }
             if (timeout_us < 0 || timeout_us > rcv_timeout_us) {
@@ -660,10 +667,12 @@ iperf_run_server(struct iperf_test *test)
                 }
 
                 /*
-                 * Running a test. If we're receiving, be sure we're making
-                 * progress (sender hasn't died/crashed).
+                 * Receiver when running a test or after test ended.
+		 * Be sure we're making progress (sender hasn't died/crashed).
                  */
-                else if (test->mode != SENDER && t_usecs > rcv_timeout_us) {
+                else if ( t_usecs > rcv_timeout_us &&
+		          (test->mode != SENDER || test->state != TEST_RUNNING) )
+		{ 
                     /* Idle timeout if no new blocks received */
                     if (test->blocks_received == last_receive_blocks) {
                         test->server_forced_no_msg_restarts_count += 1;
@@ -909,6 +918,7 @@ iperf_run_server(struct iperf_test *test)
                             cleanup_server(test);
                             return -1;
                         }
+                        sp->thread_created = 1;
                         if (test->debug_level >= DEBUG_LEVEL_INFO) {
                             iperf_printf(test, "Thread FD %d created\n", sp->socket);
                         }

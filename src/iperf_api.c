@@ -1706,9 +1706,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     } else if (test->role == 'c' && (test->server_skew_threshold != 0)){
         i_errno = IESERVERONLY;
         return -1;
-    } else if (test->role == 'c' && rcv_timeout_flag && test->mode == SENDER){
-        i_errno = IERVRSONLYRCVTIMEOUT;
-        return -1;
     } else if (test->role == 's' && (server_rsa_private_key || test->server_authorized_users) &&
         !(server_rsa_private_key && test->server_authorized_users)) {
          i_errno = IESETSERVERAUTH;
@@ -2102,6 +2099,40 @@ iperf_create_send_timers(struct iperf_test * test)
         sp->green_light = 1;
     }
     return 0;
+}
+
+/* cancel send (pacing) timers */
+void
+iperf_cancel_send_timers(struct iperf_test * test)
+{
+    struct iperf_stream *sp;
+
+    SLIST_FOREACH(sp, &test->streams, streams) {
+        if (sp->send_timer != NULL) {
+	    tmr_cancel(sp->send_timer);
+            sp->send_timer = NULL;
+        }
+    }
+}
+
+/* cancel all periodic timers */
+void
+iperf_cancel_periodic_timers(struct iperf_test * test)
+{
+    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+        iperf_printf(test, "Canceling all periodic timers\n");
+    }
+
+    iperf_cancel_send_timers(test);
+
+    if (test->stats_timer != NULL) {
+	tmr_cancel(test->stats_timer);
+	test->stats_timer = NULL;
+    }
+    if (test->reporter_timer != NULL) {
+	tmr_cancel(test->reporter_timer);
+	test->reporter_timer = NULL;
+    }
 }
 
 #if defined(HAVE_SSL)

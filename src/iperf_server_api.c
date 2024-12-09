@@ -27,6 +27,11 @@
 /* iperf_server_api.c: Functions to be used by an iperf server
 */
 
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
+#define __USE_GNU
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -200,10 +205,16 @@ iperf_accept(struct iperf_test *test)
             goto error_handling;
         if (iperf_exchange_parameters(test) < 0)
             goto error_handling;
+#if defined(HAVE_SCHED_SETAFFINITY)
+        if (CPU_COUNT(&test->server_cpu_set) > 0)
+            if (iperf_setaffinityset(&test->server_cpu_set) != 0)
+                goto error_handling;
+#else /* HAVE_SCHED_SETAFFINITY */
         if (test->server_affinity != -1) {
             if (iperf_setaffinity(test, test->server_affinity) != 0)
                 goto error_handling;
         }
+#endif/* HAVE_SCHED_SETAFFINITY */
         if (test->on_connect)
             test->on_connect(test);
     } else {
@@ -548,12 +559,18 @@ iperf_run_server(struct iperf_test *test)
             return -2;
     }
 
+#if defined(HAVE_SCHED_SETAFFINITY)
+    if (CPU_COUNT(&test->cpu_set) > 0)
+	if (iperf_setaffinityset(&test->cpu_set) != 0)
+	    return -1;
+#else /* HAVE_SCHED_SETAFFINITY */
     if (test->affinity != -1) {
 	if (iperf_setaffinity(test, test->affinity) != 0) {
             cleanup_server(test);
 	    return -2;
         }
     }
+#endif /* HAVE_SCHED_SETAFFINITY */
 
     if (test->json_output) {
 	if (iperf_json_start(test) < 0) {

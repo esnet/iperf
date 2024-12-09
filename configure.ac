@@ -204,6 +204,18 @@ if test "x$iperf3_cv_header_tcp_user_timeout" = "xyes"; then
     AC_DEFINE([HAVE_TCP_USER_TIMEOUT], [1], [Have TCP_USER_TIMEOUT sockopt.])
 fi
 
+# Check for TCP_KEEPIDLE sockopt (not clear where supported)
+AC_CACHE_CHECK([TCP_KEEPIDLE socket option],
+[iperf3_cv_header_tcp_keepalive],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <netinet/tcp.h>]],
+                   [[int foo = TCP_KEEPIDLE;]])],
+  iperf3_cv_header_tcp_keepalive=yes,
+  iperf3_cv_header_tcp_keepalive=no))
+if test "x$iperf3_cv_header_tcp_keepalive" = "xyes"; then
+    AC_DEFINE([HAVE_TCP_KEEPALIVE], [1], [Have TCP_KEEPIDLE sockopt.])
+fi
+
 # Check for IPv6 flowlabel support (believed to be Linux only)
 # We check for IPV6_FLOWLABEL_MGR in <linux/in6.h> even though we
 # don't use that file directly (we have our own stripped-down

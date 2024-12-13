@@ -2347,72 +2347,72 @@ get_parameters(struct iperf_test *test)
             cJSON_free(str);
 	}
 
-	if ((j_p = cJSON_GetObjectItem(j, "tcp")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "tcp", cJSON_True)) != NULL)
 	    set_protocol(test, Ptcp);
-	if ((j_p = cJSON_GetObjectItem(j, "udp")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "udp", cJSON_True)) != NULL)
 	    set_protocol(test, Pudp);
-        if ((j_p = cJSON_GetObjectItem(j, "sctp")) != NULL)
+        if ((j_p = iperf_cJSON_GetObjectItemType(j, "sctp", cJSON_True)) != NULL)
             set_protocol(test, Psctp);
-	if ((j_p = cJSON_GetObjectItem(j, "omit")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "omit", cJSON_Number)) != NULL)
 	    test->omit = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "server_affinity")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "server_affinity", cJSON_Number)) != NULL)
 	    test->server_affinity = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "time")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "time", cJSON_Number)) != NULL)
 	    test->duration = j_p->valueint;
         test->settings->bytes = 0;
-	if ((j_p = cJSON_GetObjectItem(j, "num")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "num", cJSON_Number)) != NULL)
 	    test->settings->bytes = j_p->valueint;
         test->settings->blocks = 0;
-	if ((j_p = cJSON_GetObjectItem(j, "blockcount")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "blockcount", cJSON_Number)) != NULL)
 	    test->settings->blocks = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "MSS")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "MSS", cJSON_Number)) != NULL)
 	    test->settings->mss = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "nodelay")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "nodelay", cJSON_True)) != NULL)
 	    test->no_delay = 1;
-	if ((j_p = cJSON_GetObjectItem(j, "parallel")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "parallel", cJSON_Number)) != NULL)
 	    test->num_streams = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "reverse")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "reverse", cJSON_True)) != NULL)
 	    iperf_set_test_reverse(test, 1);
-        if ((j_p = cJSON_GetObjectItem(j, "bidirectional")) != NULL)
+        if ((j_p = iperf_cJSON_GetObjectItemType(j, "bidirectional", cJSON_True)) != NULL)
             iperf_set_test_bidirectional(test, 1);
-	if ((j_p = cJSON_GetObjectItem(j, "window")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "window", cJSON_Number)) != NULL)
 	    test->settings->socket_bufsize = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "len")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "len", cJSON_Number)) != NULL)
 	    test->settings->blksize = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "bandwidth")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "bandwidth", cJSON_Number)) != NULL)
 	    test->settings->rate = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "fqrate")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "fqrate", cJSON_Number)) != NULL)
 	    test->settings->fqrate = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "pacing_timer")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "pacing_timer", cJSON_Number)) != NULL)
 	    test->settings->pacing_timer = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "burst")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "burst", cJSON_Number)) != NULL)
 	    test->settings->burst = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "TOS")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "TOS", cJSON_Number)) != NULL)
 	    test->settings->tos = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "flowlabel")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "flowlabel", cJSON_Number)) != NULL)
 	    test->settings->flowlabel = j_p->valueint;
-	if ((j_p = cJSON_GetObjectItem(j, "title")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "title", cJSON_String)) != NULL)
 	    test->title = strdup(j_p->valuestring);
-	if ((j_p = cJSON_GetObjectItem(j, "extra_data")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "extra_data", cJSON_String)) != NULL)
 	    test->extra_data = strdup(j_p->valuestring);
-	if ((j_p = cJSON_GetObjectItem(j, "congestion")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "congestion", cJSON_String)) != NULL)
 	    test->congestion = strdup(j_p->valuestring);
-	if ((j_p = cJSON_GetObjectItem(j, "congestion_used")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "congestion_used", cJSON_String)) != NULL)
 	    test->congestion_used = strdup(j_p->valuestring);
-	if ((j_p = cJSON_GetObjectItem(j, "get_server_output")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "get_server_output", cJSON_Number)) != NULL)
 	    iperf_set_test_get_server_output(test, 1);
-	if ((j_p = cJSON_GetObjectItem(j, "udp_counters_64bit")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "udp_counters_64bit", cJSON_Number)) != NULL)
 	    iperf_set_test_udp_counters_64bit(test, 1);
-	if ((j_p = cJSON_GetObjectItem(j, "repeating_payload")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "repeating_payload", cJSON_Number)) != NULL)
 	    test->repeating_payload = 1;
-	if ((j_p = cJSON_GetObjectItem(j, "zerocopy")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "zerocopy", cJSON_Number)) != NULL)
 	    test->zerocopy = j_p->valueint;
 #if defined(HAVE_DONT_FRAGMENT)
-	if ((j_p = cJSON_GetObjectItem(j, "dont_fragment")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "dont_fragment", cJSON_Number)) != NULL)
 	    test->settings->dont_fragment = j_p->valueint;
 #endif /* HAVE_DONT_FRAGMENT */
 #if defined(HAVE_SSL)
-	if ((j_p = cJSON_GetObjectItem(j, "authtoken")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "authtoken", cJSON_String)) != NULL)
         test->settings->authtoken = strdup(j_p->valuestring);
 #endif //HAVE_SSL
 	if (test->mode && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
@@ -2571,10 +2571,10 @@ get_results(struct iperf_test *test)
 	i_errno = IERECVRESULTS;
         r = -1;
     } else {
-	j_cpu_util_total = cJSON_GetObjectItem(j, "cpu_util_total");
-	j_cpu_util_user = cJSON_GetObjectItem(j, "cpu_util_user");
-	j_cpu_util_system = cJSON_GetObjectItem(j, "cpu_util_system");
-	j_sender_has_retransmits = cJSON_GetObjectItem(j, "sender_has_retransmits");
+	j_cpu_util_total = iperf_cJSON_GetObjectItemType(j, "cpu_util_total", cJSON_Number);
+	j_cpu_util_user = iperf_cJSON_GetObjectItemType(j, "cpu_util_user", cJSON_Number);
+	j_cpu_util_system = iperf_cJSON_GetObjectItemType(j, "cpu_util_system", cJSON_Number);
+	j_sender_has_retransmits = iperf_cJSON_GetObjectItemType(j, "sender_has_retransmits", cJSON_Number);
 	if (j_cpu_util_total == NULL || j_cpu_util_user == NULL || j_cpu_util_system == NULL || j_sender_has_retransmits == NULL) {
 	    i_errno = IERECVRESULTS;
 	    r = -1;
@@ -2596,7 +2596,7 @@ get_results(struct iperf_test *test)
 	    else if ( test->mode == BIDIRECTIONAL )
 	        test->other_side_has_retransmits = result_has_retransmits;
 
-	    j_streams = cJSON_GetObjectItem(j, "streams");
+	    j_streams = iperf_cJSON_GetObjectItemType(j, "streams", cJSON_Array);
 	    if (j_streams == NULL) {
 		i_errno = IERECVRESULTS;
 		r = -1;
@@ -2608,16 +2608,16 @@ get_results(struct iperf_test *test)
 			i_errno = IERECVRESULTS;
 			r = -1;
 		    } else {
-			j_id = cJSON_GetObjectItem(j_stream, "id");
-			j_bytes = cJSON_GetObjectItem(j_stream, "bytes");
-			j_retransmits = cJSON_GetObjectItem(j_stream, "retransmits");
-			j_jitter = cJSON_GetObjectItem(j_stream, "jitter");
-			j_errors = cJSON_GetObjectItem(j_stream, "errors");
-                        j_omitted_errors = cJSON_GetObjectItem(j_stream, "omitted_errors");
-			j_packets = cJSON_GetObjectItem(j_stream, "packets");
-                        j_omitted_packets = cJSON_GetObjectItem(j_stream, "omitted_packets");
-			j_start_time = cJSON_GetObjectItem(j_stream, "start_time");
-			j_end_time = cJSON_GetObjectItem(j_stream, "end_time");
+			j_id = iperf_cJSON_GetObjectItemType(j_stream, "id", cJSON_Number);
+			j_bytes = iperf_cJSON_GetObjectItemType(j_stream, "bytes", cJSON_Number);
+			j_retransmits = iperf_cJSON_GetObjectItemType(j_stream, "retransmits", cJSON_Number);
+			j_jitter = iperf_cJSON_GetObjectItemType(j_stream, "jitter", cJSON_Number);
+			j_errors = iperf_cJSON_GetObjectItemType(j_stream, "errors", cJSON_Number);
+                        j_omitted_errors = iperf_cJSON_GetObjectItemType(j_stream, "omitted_errors", cJSON_Number);
+			j_packets = iperf_cJSON_GetObjectItemType(j_stream, "packets", cJSON_Number);
+                        j_omitted_packets = iperf_cJSON_GetObjectItemType(j_stream, "omitted_packets", cJSON_Number);
+			j_start_time = iperf_cJSON_GetObjectItemType(j_stream, "start_time", cJSON_Number);
+			j_end_time = iperf_cJSON_GetObjectItemType(j_stream, "end_time", cJSON_Number);
 			if (j_id == NULL || j_bytes == NULL || j_retransmits == NULL || j_jitter == NULL || j_errors == NULL || j_packets == NULL) {
 			    i_errno = IERECVRESULTS;
 			    r = -1;
@@ -2706,7 +2706,7 @@ get_results(struct iperf_test *test)
 		    }
 		    else {
 			/* No JSON, look for textual output.  Make a copy of the text for later. */
-			j_server_output = cJSON_GetObjectItem(j, "server_output_text");
+			j_server_output = iperf_cJSON_GetObjectItemType(j, "server_output_text", cJSON_String);
 			if (j_server_output != NULL) {
 			    test->server_output_text = strdup(j_server_output->valuestring);
 			}
@@ -2715,7 +2715,7 @@ get_results(struct iperf_test *test)
 	    }
 	}
 
-	j_remote_congestion_used = cJSON_GetObjectItem(j, "congestion_used");
+	j_remote_congestion_used = iperf_cJSON_GetObjectItemType(j, "congestion_used", cJSON_String);
 	if (j_remote_congestion_used != NULL) {
 	    test->remote_congestion_used = strdup(j_remote_congestion_used->valuestring);
 	}
@@ -4960,7 +4960,7 @@ iperf_json_finish(struct iperf_test *test)
 
         /* --json-stream, so we print various individual objects */
         if (test->json_stream) {
-            cJSON *error = cJSON_GetObjectItem(test->json_top, "error");
+            cJSON *error = iperf_cJSON_GetObjectItemType(test->json_top, "error", cJSON_String);
             if (error) {
                 JSONStream_Output(test, "error", error);
             }

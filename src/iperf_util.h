@@ -53,6 +53,7 @@ const char* get_system_info(void);
 const char* get_optional_features(void);
 
 cJSON* iperf_json_printf(const char *format, ...);
+cJSON * iperf_cJSON_GetObjectItemType(cJSON * j_p, char * item_string, int expected_type);
 
 void iperf_dump_fdset(FILE *fp, const char *str, int nfds, fd_set *fds);
 

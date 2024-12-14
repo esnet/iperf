@@ -351,5 +351,13 @@ AC_SEARCH_LIBS(clock_nanosleep, [rt posix4])
 # Check for clock_nanosleep support
 AC_CHECK_FUNCS([clock_nanosleep])
 
+#
+# Check for systemd to support socket-based activation
+#
+AC_CHECK_HEADERS([systemd/sd-daemon.h],
+		 AC_DEFINE([HAVE_SD_DAEMON_H], [1], [Have sd-daemon support.])
+		 AC_SEARCH_LIBS(sd_listen_fds, [systemd]))
+
+
 AC_CONFIG_FILES([Makefile src/Makefile src/version.h examples/Makefile iperf3.spec])
 AC_OUTPUT

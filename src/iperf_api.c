@@ -3262,6 +3262,9 @@ iperf_reset_test(struct iperf_test *test)
 
     SLIST_INIT(&test->streams);
 
+    if (test->congestion)
+        free(test->congestion);
+    test->congestion = NULL;
     if (test->remote_congestion_used)
         free(test->remote_congestion_used);
     test->remote_congestion_used = NULL;

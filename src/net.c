@@ -118,6 +118,28 @@ timeout_connect(int s, const struct sockaddr *name, socklen_t namelen,
 	return (ret);
 }
 
+#ifdef __CYGWIN__
+
+const unsigned int MAX_GETADDRINFO_RETRIES = 10;
+/* getaddrinfo may not be completely reliable on Windows hosts. Try more than once. */
+int iperf_getaddrinfo(const char *restrict node,
+                       const char *restrict service,
+                       const struct addrinfo *restrict hints,
+                       struct addrinfo **restrict res)
+{
+    int retvalue = -1;
+    int i = 0;
+    while (i++ < MAX_GETADDRINFO_RETRIES) {
+        retvalue = getaddrinfo(node, service, hints, res);
+        if (0 == retvalue) break;
+        sleep(1); /* yield thread */
+        fprintf(stderr, "getadddrinfo failed. If iperf still ran successfully, this may be a Windows bug. Please see https://github.com/esnet/iperf/issues/1314 . \n");
+    }
+    return retvalue;
+}
+
+#endif
+
 /* netdial and netannouce code comes from libtask: http://swtch.com/libtask/
  * Copyright: http://swtch.com/libtask/COPYRIGHT
 */
@@ -134,7 +156,7 @@ create_socket(int domain, int proto, const char *local, const char *bind_dev, in
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = domain;
         hints.ai_socktype = proto;
-        if ((gerror = getaddrinfo(local, NULL, &hints, &local_res)) != 0)
+        if ((gerror = iperf_getaddrinfo(local, NULL, &hints, &local_res)) != 0)
             return -1;
     }
 
@@ -142,7 +164,7 @@ create_socket(int domain, int proto, const char *local, const char *bind_dev, in
     hints.ai_family = domain;
     hints.ai_socktype = proto;
     snprintf(portstr, sizeof(portstr), "%d", port);
-    if ((gerror = getaddrinfo(server, portstr, &hints, &server_res)) != 0) {
+    if ((gerror = iperf_getaddrinfo(server, portstr, &hints, &server_res)) != 0) {
 	if (local)
 	    freeaddrinfo(local_res);
         return -1;
@@ -286,7 +308,7 @@ netannounce(int domain, int proto, const char *local, const char *bind_dev, int 
     }
     hints.ai_socktype = proto;
     hints.ai_flags = AI_PASSIVE;
-    if ((gerror = getaddrinfo(local, portstr, &hints, &res)) != 0)
+    if ((gerror = iperf_getaddrinfo(local, portstr, &hints, &res)) != 0)
         return -1;
 
     s = socket(res->ai_family, proto, 0);

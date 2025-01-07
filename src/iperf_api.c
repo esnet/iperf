@@ -2789,12 +2789,12 @@ JSON_read(int fd, int max_size)
                             json = cJSON_Parse(str);
                         }
                         else {
-                            sprintf(msg_buf, "JSON size of data read does not correspond to offered length - expected %d bytes but received %d; errno=%d", hsize, rc, errno);
+                            snprintf(msg_buf, sizeof(msg_buf), "JSON size of data read does not correspond to offered length - expected %d bytes but received %d; errno=%d", hsize, rc, errno);
                             warning(msg_buf);
                         }
 	            }
                     else {
-                        sprintf(msg_buf, "JSON data read failed; errno=%d", errno);
+                        snprintf(msg_buf, sizeof(msg_buf), "JSON data read failed; errno=%d", errno);
                         warning(msg_buf);
                     }
 	            free(str);
@@ -2802,13 +2802,13 @@ JSON_read(int fd, int max_size)
             }
 	}
 	else {
-            sprintf(msg_buf, "JSON data length overflow - %d bytes JSON size is not allowed", hsize);
+            snprintf(msg_buf, sizeof(msg_buf), "JSON data length overflow - %d bytes JSON size is not allowed", hsize);
 	    warning(msg_buf);
 	}
     }
     else {
         warning("Failed to read JSON data size");
-        sprintf(msg_buf, "Failed to read JSON data size - read returned %d; errno=%d", rc, errno);
+        snprintf(msg_buf, sizeof(msg_buf), "Failed to read JSON data size - read returned %d; errno=%d", rc, errno);
         warning(msg_buf);
     }
     return json;

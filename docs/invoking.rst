@@ -115,7 +115,7 @@ the executable.
 
           Either the client or the server can produce its output in a JSON struc-
           ture,  useful for integration with other programs, by passing it the -J
-          flag.  Normally the contents of the JSON structure are  only  competely
+          flag.  Normally the contents of the JSON structure are only  completely
           known after the test has finished, no JSON output will be emitted until
           the end of the test.  By enabling line-delimited JSON multiple  objects
           will be emitted to provide a real-time parsable JSON output.

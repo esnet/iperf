@@ -2807,7 +2807,7 @@ JSON_read(int fd, int max_size)
 
 /*************************************************************/
 /**
- * JSONStream_Output - outputs an obj as event without distrubing it
+ * JSONStream_Output - outputs an obj as event without disturbing it
  */
 
 static int

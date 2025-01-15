@@ -210,6 +210,13 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 #if defined(HAVE_DONT_FRAGMENT)
                            "  --dont-fragment           set IPv4 Don't Fragment flag\n"
 #endif /* HAVE_DONT_FRAGMENT */
+                           "  --bounceback[=[burst][/[inum][/[len][/replen]]]]  Bounceback - send `inum` (default %d)\n"
+                           "                            bursts of `burst` (default %d) messages of `len` (default %d)\n"
+                           "                            bytes per report interval. Server reply is `replen`\n"
+                           "                            (default `len`) bytes (TCP uses TCP_NODELAY).\n"
+#if !defined(HAVE_CLOCK_NANOSLEEP) && !defined(HAVE_NANOSLEEP)
+                           "                            (NOTE: `period` is rounded to nearest second, with minimum 1 sec.\n"
+#endif      /* !HAVE_CLOCK_NANOSLEEP and !HAVE_NANOSLEEP */
 #if defined(HAVE_SSL)
                            "  --username                username for authentication\n"
                            "  --rsa-public-key-path     path to the RSA public key used to encrypt\n"
@@ -297,6 +304,9 @@ const char test_start_bytes[] =
 
 const char test_start_blocks[] =
 "Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %"PRIuFAST64" bytes to send, tos %d\n";
+
+const char test_start_bounceback[] =
+"Bounceback Test: burst-size: %d, %d bursts-in-interval, %d byte send, %d byte response\n";
 
 
 /* -------------------------------------------------------------------
@@ -395,6 +405,9 @@ const char report_bw_udp_format_no_omitted_error[] =
 
 const char report_bw_udp_sender_format[] =
 "[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec %s %" PRId64 "  %s\n";
+
+const char report_bounceback_format[] =
+"[BBK]%s %6.2f-%-6.2f sec  count: %ld, avarage: %.3fms  min: %.3fms  max: %.3fms  stdev: %.3fms\n";
 
 const char report_summary[] =
 "Test Complete. Summary Results:\n";

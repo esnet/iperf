@@ -2053,7 +2053,10 @@ iperf_send_mt(struct iperf_stream *sp)
     register int multisend, r, message_sent;
     register struct iperf_test *test = sp->test;
     struct iperf_time now;
-    int throttle_check, throttle_check_per_message;
+    int throttle_check_per_message;
+#if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
+    int throttle_check;
+#endif /* HAVE_CLOCK_NANOSLEEP, HAVE_NANOSLEEP */
 
     /* Can we do multisend mode? */
     if (test->settings->burst != 0)
@@ -2064,6 +2067,7 @@ iperf_send_mt(struct iperf_stream *sp)
         multisend = 1;	/* nope */
 
     /* Should bitrate throttle be checked for every send */
+#if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
     if (test->settings->rate != 0) {
         throttle_check = 1;
         if (test->settings->burst == 0)
@@ -2074,6 +2078,9 @@ iperf_send_mt(struct iperf_stream *sp)
         throttle_check = 0;
         throttle_check_per_message = 0;
     }
+#else /* !HAVE_CLOCK_NANOSLEEP && !HAVE_NANOSLEEP */
+    throttle_check_per_message = test->settings->rate != 0 && test->settings->burst == 0;
+#endif /* HAVE_CLOCK_NANOSLEEP, HAVE_NANOSLEEP */
 
     for (message_sent = 0; sp->green_light && multisend > 0; --multisend) {
         // XXX If we hit one of these ending conditions maybe

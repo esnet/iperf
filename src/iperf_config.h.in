@@ -33,6 +33,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Have MPTCP protocol. */
+#undef HAVE_IPPROTO_MPTCP
+
 /* Have IP_DONTFRAG sockopt. */
 #undef HAVE_IP_DONTFRAG
 

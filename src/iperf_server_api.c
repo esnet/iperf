@@ -184,6 +184,12 @@ iperf_accept(struct iperf_test *test)
         }
 #endif /* HAVE_TCP_USER_TIMEOUT */
 
+#if defined (HAVE_TCP_KEEPALIVE)
+        // Set Control Connection TCP Keepalive (especially useful for long UDP test sessions)
+        if (iperf_set_control_keepalive(test) < 0)
+            return -1;
+#endif //HAVE_TCP_KEEPALIVE
+
         if (Nread(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) != COOKIE_SIZE) {
             /*
              * Note this error covers both the case of a system error

@@ -126,6 +126,7 @@ struct iperf_interval_results
     long rtt;
     long rttvar;
     long pmtu;
+    long reorder;
 };
 
 struct iperf_stream_result
@@ -137,6 +138,7 @@ struct iperf_stream_result
     atomic_iperf_size_t bytes_sent_omit;
     long stream_prev_total_retrans;
     long stream_retrans;
+    long stream_reorder;
     long stream_max_rtt;
     long stream_min_rtt;
     long stream_sum_rtt;

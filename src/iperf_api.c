@@ -4901,6 +4901,7 @@ iperf_create_pidfile(struct iperf_test *test)
 		    }
 		}
 	    }
+        (void)close(fd);
 	}
 
 	/*

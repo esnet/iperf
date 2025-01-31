@@ -4,7 +4,7 @@ iperf3 Project News
 2024-12-13:  iperf-3.18 released
 --------------------------------
 
-| URL:  https://downloads.es.net/pub/iperf/iperf-3.8.1.tar.gz
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.18.tar.gz
 | SHA256: ``c0618175514331e766522500e20c94bfb293b4424eb27d7207fb427b88d20bab``
 
 iperf-3.18 includes fixes for several bugs, including one that could

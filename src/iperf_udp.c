@@ -196,7 +196,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     }
     else {
 	if (test->debug_level >= DEBUG_LEVEL_INFO)
-	    printf("Late receive, state = %d\n", sp->test->state);
+	    printf("Late receive, state = %d\n", test->state);
     }
 
     return r;

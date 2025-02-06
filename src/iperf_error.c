@@ -85,11 +85,30 @@ iperf_err(struct iperf_test *test, const char *format, ...)
     va_end(argp);
 }
 
-/* Do a printf to stderr or log file as appropriate, then exit. */
+/* Do a printf to stderr or log file as appropriate, then exit(0). */
+void
+iperf_signormalexit(struct iperf_test *test, const char *format, ...)
+{
+    va_list argp;
+
+    va_start(argp, format);
+    iperf_exit(test, 0, format, argp);
+}
+
+/* Do a printf to stderr or log file as appropriate, then exit(1). */
 void
 iperf_errexit(struct iperf_test *test, const char *format, ...)
 {
     va_list argp;
+
+    va_start(argp, format);
+    iperf_exit(test, 1, format, argp);
+}
+
+/* Do a printf to stderr or log file as appropriate, then exit. */
+void
+iperf_exit(struct iperf_test *test, int exit_code, const char *format, va_list argp)
+{
     char str[1000];
     time_t now;
     struct tm *ltm = NULL;
@@ -103,7 +122,6 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
 	ct = iperf_timestrerr;
     }
 
-    va_start(argp, format);
     vsnprintf(str, sizeof(str), format, argp);
     if (test != NULL && test->json_output) {
         if (test->json_top != NULL) {
@@ -136,7 +154,7 @@ iperf_errexit(struct iperf_test *test, const char *format, ...)
     va_end(argp);
     if (test)
         iperf_delete_pidfile(test);
-    exit(1);
+    exit(exit_code);
 }
 
 int i_errno;

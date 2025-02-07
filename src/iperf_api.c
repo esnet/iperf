@@ -1922,7 +1922,7 @@ iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP)
         delta_bits = bits_sent - (seconds * sp->test->settings->rate);
         // Calclate time until next data send is required
         time_to_green_light = (SEC_TO_NS * delta_bits / sp->test->settings->rate);
-        // Whether shouuld wait before next send
+        // Whether should wait before next send
         if (time_to_green_light >= 0) {
 #if defined(HAVE_CLOCK_NANOSLEEP)
             if (clock_gettime(CLOCK_MONOTONIC, &nanosleep_time) == 0) {
@@ -2006,6 +2006,9 @@ iperf_send_mt(struct iperf_stream *sp)
     register struct iperf_test *test = sp->test;
     struct iperf_time now;
     int throttle_check_per_message;
+#if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
+    int throttle_check;
+#endif /* HAVE_CLOCK_NANOSLEEP, HAVE_NANOSLEEP */
 
     /* Can we do multisend mode? */
     if (test->settings->burst != 0)
@@ -2016,7 +2019,20 @@ iperf_send_mt(struct iperf_stream *sp)
         multisend = 1;	/* nope */
 
     /* Should bitrate throttle be checked for every send */
+#if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
+    if (test->settings->rate != 0) {
+        throttle_check = 1;
+        if (test->settings->burst == 0)
+            throttle_check_per_message = 1;
+        else
+            throttle_check_per_message = 0;
+    } else {
+        throttle_check = 0;
+        throttle_check_per_message = 0;
+    }
+#else /* !HAVE_CLOCK_NANOSLEEP && !HAVE_NANOSLEEP */
     throttle_check_per_message = test->settings->rate != 0 && test->settings->burst == 0;
+#endif /* HAVE_CLOCK_NANOSLEEP, HAVE_NANOSLEEP */
 
     for (message_sent = 0; sp->green_light && multisend > 0; --multisend) {
         // XXX If we hit one of these ending conditions maybe
@@ -2042,7 +2058,8 @@ iperf_send_mt(struct iperf_stream *sp)
         message_sent = 1;
     }
 #if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
-    if (!sp->green_light) { /* Should check if green ligh can be set, as pacing timer is not supported in this case */
+     /* Should check if green light can be set, as pacing timer is not supported in this case */
+    if (throttle_check && !throttle_check_per_message) {
 #else /* !HAVE_CLOCK_NANOSLEEP && !HAVE_NANOSLEEP */
     if (!throttle_check_per_message || message_sent == 0) {   /* Throttle check if was not checked for each send */
 #endif /* HAVE_CLOCK_NANOSLEEP, HAVE_NANOSLEEP */

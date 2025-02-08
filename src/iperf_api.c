@@ -4934,6 +4934,8 @@ iperf_catch_sigend(void (*handler)(int))
 void
 iperf_got_sigend(struct iperf_test *test, int sig)
 {
+    int exit_type;
+
     /*
      * If we're the client, or if we're a server and running a test,
      * then dump out the accumulated stats so far.
@@ -4955,7 +4957,18 @@ iperf_got_sigend(struct iperf_test *test, int sig)
 	(void) Nwrite(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp);
     }
     i_errno = (test->role == 'c') ? IECLIENTTERM : IESERVERTERM;
-    if (sig == SIGTERM) {
+
+    exit_type = 0;
+#ifdef SIGTERM
+    if (sig == SIGTERM)
+        exit_type = 1;
+    else
+#endif
+#ifdef SIGHUP
+    if (sig == SIGHUP)
+        exit_type = 1;
+#endif
+    if (exit_type == 1) {
         iperf_signormalexit(test, "interrupt - %s by signal %s(%d)", iperf_strerror(i_errno), strsignal(sig), sig);
     } else {
         iperf_errexit(test, "interrupt - %s by signal %s(%d)", iperf_strerror(i_errno), strsignal(sig), sig);

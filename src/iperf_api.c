@@ -698,7 +698,7 @@ iperf_set_test_json_stream(struct iperf_test *ipt, int json_stream)
 }
 
 void
-iperf_set_test_json_callback(struct iperf_test *ipt, void (*callback)())
+iperf_set_test_json_callback(struct iperf_test *ipt, void (*callback)(struct iperf_test *, char *))
 {
     ipt->json_callback = callback;
 }
@@ -2923,7 +2923,7 @@ JSONStream_Output(struct iperf_test * test, const char * event_name, cJSON * obj
     if (str == NULL)
         return -1;
     if (test->json_callback != NULL) {
-        (test->json_callback)(str);
+        (test->json_callback)(test, str);
     } else {
         if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
             perror("iperf_json_finish: pthread_mutex_lock");
@@ -5106,7 +5106,7 @@ iperf_json_finish(struct iperf_test *test)
                 return -1;
             }
             if (test->json_callback != NULL) {
-                (test->json_callback)(test->json_output_string);
+                (test->json_callback)(test, test->json_output_string);
             } else {
                 if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
                     perror("iperf_json_finish: pthread_mutex_lock");

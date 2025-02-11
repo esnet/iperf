@@ -4934,7 +4934,7 @@ iperf_catch_sigend(void (*handler)(int))
 void
 iperf_got_sigend(struct iperf_test *test, int sig)
 {
-    int exit_type;
+    int exit_normal;
 
     /*
      * If we're the client, or if we're a server and running a test,
@@ -4958,17 +4958,20 @@ iperf_got_sigend(struct iperf_test *test, int sig)
     }
     i_errno = (test->role == 'c') ? IECLIENTTERM : IESERVERTERM;
 
-    exit_type = 0;
+    exit_normal = 0;
 #ifdef SIGTERM
     if (sig == SIGTERM)
-        exit_type = 1;
-    else
+        exit_normal = 1;
+#endif
+#ifdef SIGINT
+    if (sig == SIGINT)
+        exit_normal = 1;
 #endif
 #ifdef SIGHUP
     if (sig == SIGHUP)
-        exit_type = 1;
+        exit_normal = 1;
 #endif
-    if (exit_type == 1) {
+    if (exit_normal) {
         iperf_signormalexit(test, "interrupt - %s by signal %s(%d)", iperf_strerror(i_errno), strsignal(sig), sig);
     } else {
         iperf_errexit(test, "interrupt - %s by signal %s(%d)", iperf_strerror(i_errno), strsignal(sig), sig);

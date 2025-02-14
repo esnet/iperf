@@ -4635,6 +4635,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 
     memset(sp, 0, sizeof(struct iperf_stream));
 
+    sp->affinity = -1;
     sp->sender = sender;
     sp->test = test;
     sp->settings = test->settings;
@@ -5169,6 +5170,85 @@ iperf_json_finish(struct iperf_test *test)
 
 
 /* CPU affinity stuff - Linux, FreeBSD, and Windows only. */
+/* init streams cpu map
+   If the number of CPUs >= streams (-P), map each stream to a specific CPU core.
+ */
+void
+iperf_affinity_streams_init(struct iperf_test *test)
+{
+#if defined(HAVE_SCHED_SETAFFINITY)
+    if (sched_getaffinity(0, sizeof(cpu_set_t), &test->cpumask) != 0) {
+        return;
+    }
+
+    /* Assign bindings according to main process affinity */
+    int available_cpu_num = CPU_COUNT(&test->cpumask);
+    int affinity_stream_cnt = 0;
+    if (available_cpu_num > 0) {
+        affinity_stream_cnt = (test->num_streams / available_cpu_num) * available_cpu_num;
+    }
+
+    for (int i = 0; i < test->num_streams; i++) {
+        if (affinity_stream_cnt > 0) {
+            int offset = i % available_cpu_num;
+            int j = 0;
+            for (; j < CPU_SETSIZE; j++) {
+                if (CPU_ISSET(j, &test->cpumask)) {
+                    if (offset == 0) {
+                        break;
+                    }
+                    offset--;
+                }
+            }
+            test->streams_affinity[i] = j;
+            affinity_stream_cnt--;
+        } else {
+            test->streams_affinity[i] = -1;
+        }
+    }
+#else
+    for (int i = 0; i < test->num_streams; i++) {
+        test->streams_affinity[i] = -1;
+    }
+#endif
+}
+
+void
+iperf_setaffinity_streams_raw(int affinity)
+{
+#if defined(HAVE_SCHED_SETAFFINITY)
+    cpu_set_t cpu_set;
+    CPU_ZERO(&cpu_set);
+    CPU_SET(affinity, &cpu_set);
+    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0) {
+        return;
+    }
+#endif
+}
+
+void
+iperf_setaffinity_streams(struct iperf_test *test, int index)
+{
+#if defined(HAVE_SCHED_SETAFFINITY)
+    iperf_setaffinity_streams_raw(test->streams_affinity[index]);
+#endif
+}
+
+void
+iperf_setaffinity_streams_post(struct iperf_test *test)
+{
+#if defined(HAVE_SCHED_SETAFFINITY)
+    if (sched_setaffinity(0, sizeof(cpu_set_t), &test->cpumask) != 0) {
+        return;
+    }
+
+    struct iperf_stream *sp;
+    int index = 0;
+    SLIST_FOREACH(sp, &test->streams, streams){
+        sp->affinity = test->streams_affinity[index++ % test->num_streams];
+    }
+#endif
+}
 
 int
 iperf_setaffinity(struct iperf_test *test, int affinity)

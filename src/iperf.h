@@ -202,6 +202,7 @@ struct iperf_stream
     pthread_t thr;
     int thread_created;
     int       done;
+    int       affinity;
 
     /* configurable members */
     int       local_port;
@@ -293,6 +294,7 @@ enum debug_level {
 };
 
 
+#define MAX_STREAMS 128
 struct iperf_test
 {
     pthread_mutex_t print_mutex;
@@ -314,6 +316,9 @@ struct iperf_test
     int       duration;                         /* total duration of test (-t flag) */
     char     *diskfile_name;			/* -F option */
     int       affinity, server_affinity;	/* -A option */
+#if defined(HAVE_SCHED_SETAFFINITY)
+    cpu_set_t cpumask;
+#endif /* HAVE_CPUSET_SETAFFINITY */
 #if defined(HAVE_CPUSET_SETAFFINITY)
     cpuset_t cpumask;
 #endif /* HAVE_CPUSET_SETAFFINITY */
@@ -385,7 +390,8 @@ struct iperf_test
     double cpu_util[3];                            /* cpu utilization of the test - total, user, system */
     double remote_cpu_util[3];                     /* cpu utilization for the remote host/client - total, user, system */
 
-    int       num_streams;                      /* total streams in the test (-P) */
+    int num_streams; /* total streams in the test (-P) */
+    int streams_affinity[MAX_STREAMS];
 
     atomic_iperf_size_t bytes_sent;
     atomic_iperf_size_t blocks_sent;
@@ -463,7 +469,6 @@ struct iperf_test
 #define MAX_OMIT_TIME 600
 #define MAX_BURST 1000
 #define MAX_MSS (9 * 1024)
-#define MAX_STREAMS 128
 
 #define TIMESTAMP_FORMAT "%c "
 

@@ -697,6 +697,12 @@ iperf_set_test_json_stream(struct iperf_test *ipt, int json_stream)
     ipt->json_stream = json_stream;
 }
 
+void
+iperf_set_test_json_callback(struct iperf_test *ipt, void (*callback)(struct iperf_test *, char *))
+{
+    ipt->json_callback = callback;
+}
+
 int
 iperf_has_zerocopy( void )
 {
@@ -2864,12 +2870,16 @@ JSONStream_Output(struct iperf_test * test, const char * event_name, cJSON * obj
     char *str = cJSON_PrintUnformatted(event);
     if (str == NULL)
         return -1;
-    if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
-        perror("iperf_json_finish: pthread_mutex_lock");
-    }
-    fprintf(test->outfile, "%s\n", str);
-    if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
-        perror("iperf_json_finish: pthread_mutex_unlock");
+    if (test->json_callback != NULL) {
+        (test->json_callback)(test, str);
+    } else {
+        if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
+            perror("iperf_json_finish: pthread_mutex_lock");
+        }
+        fprintf(test->outfile, "%s\n", str);
+        if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
+            perror("iperf_json_finish: pthread_mutex_unlock");
+        }
     }
     iflush(test);
     cJSON_free(str);
@@ -3059,6 +3069,8 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->rcv_timeout.secs = DEFAULT_NO_MSG_RCVD_TIMEOUT / SEC_TO_mS;
     testp->settings->rcv_timeout.usecs = (DEFAULT_NO_MSG_RCVD_TIMEOUT % SEC_TO_mS) * mS_TO_US;
     testp->zerocopy = 0;
+
+    testp->json_callback = NULL;
 
     memset(testp->cookie, 0, COOKIE_SIZE);
 
@@ -5035,14 +5047,18 @@ iperf_json_finish(struct iperf_test *test)
             if (test->json_output_string == NULL) {
                 return -1;
             }
-            if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
-                perror("iperf_json_finish: pthread_mutex_lock");
+            if (test->json_callback != NULL) {
+                (test->json_callback)(test, test->json_output_string);
+            } else {
+                if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
+                    perror("iperf_json_finish: pthread_mutex_lock");
+                }
+                fprintf(test->outfile, "%s\n", test->json_output_string);
+                if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
+                    perror("iperf_json_finish: pthread_mutex_unlock");
+                }
+                iflush(test);
             }
-            fprintf(test->outfile, "%s\n", test->json_output_string);
-            if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
-                perror("iperf_json_finish: pthread_mutex_unlock");
-            }
-            iflush(test);
         }
         cJSON_Delete(test->json_top);
     }

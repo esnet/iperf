@@ -70,6 +70,10 @@ iperf_server_worker_run(void *s) {
     struct iperf_stream *sp = (struct iperf_stream *) s;
     struct iperf_test *test = sp->test;
 
+    if (sp->affinity >= 0) {
+        iperf_setaffinity_streams_raw(sp->affinity);
+    }
+
     /* Blocking signal to make sure that signal will be handled by main thread */
     sigset_t set;
     sigemptyset(&set);
@@ -707,6 +711,7 @@ iperf_run_server(struct iperf_test *test)
                         streams_to_send = test->num_streams;
                         streams_to_rec = 0;
                     }
+                    iperf_affinity_streams_init(test);
                 }
             }
             if (FD_ISSET(test->ctrl_sck, &read_set)) {
@@ -719,7 +724,7 @@ iperf_run_server(struct iperf_test *test)
 
             if (test->state == CREATE_STREAMS) {
                 if (FD_ISSET(test->prot_listener, &read_set)) {
-
+                    iperf_setaffinity_streams(test,rec_streams_accepted);
                     if ((s = test->protocol->accept(test)) < 0) {
 			cleanup_server(test);
                         return -1;
@@ -838,6 +843,8 @@ iperf_run_server(struct iperf_test *test)
 
 
                 if (rec_streams_accepted == streams_to_rec && send_streams_accepted == streams_to_send) {
+                   iperf_setaffinity_streams_post(test);
+
                     if (test->protocol->id != Ptcp) {
                         FD_CLR(test->prot_listener, &test->read_set);
                         close(test->prot_listener);

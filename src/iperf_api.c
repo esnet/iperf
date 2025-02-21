@@ -4874,8 +4874,10 @@ iperf_catch_sigend(void (*handler)(int))
  * before cleaning up and exiting.
  */
 void
-iperf_got_sigend(struct iperf_test *test)
+iperf_got_sigend(struct iperf_test *test, int sig)
 {
+    int exit_normal;
+
     /*
      * If we're the client, or if we're a server and running a test,
      * then dump out the accumulated stats so far.
@@ -4897,7 +4899,25 @@ iperf_got_sigend(struct iperf_test *test)
 	(void) Nwrite(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp);
     }
     i_errno = (test->role == 'c') ? IECLIENTTERM : IESERVERTERM;
-    iperf_errexit(test, "interrupt - %s", iperf_strerror(i_errno));
+
+    exit_normal = 0;
+#ifdef SIGTERM
+    if (sig == SIGTERM)
+        exit_normal = 1;
+#endif
+#ifdef SIGINT
+    if (sig == SIGINT)
+        exit_normal = 1;
+#endif
+#ifdef SIGHUP
+    if (sig == SIGHUP)
+        exit_normal = 1;
+#endif
+    if (exit_normal) {
+        iperf_signormalexit(test, "interrupt - %s by signal %s(%d)", iperf_strerror(i_errno), strsignal(sig), sig);
+    } else {
+        iperf_errexit(test, "interrupt - %s by signal %s(%d)", iperf_strerror(i_errno), strsignal(sig), sig);
+    }
 }
 
 /* Try to write a PID file if requested, return -1 on an error. */

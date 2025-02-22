@@ -112,8 +112,10 @@ iperf_server_worker_run(void *s) {
 int
 iperf_server_listen(struct iperf_test *test)
 {
+    int proto = (test->udp_ctrl_sck) ? Pudp : Ptcp;
+
     retry:
-    if((test->listener = netannounce(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, test->server_port)) < 0) {
+    if((test->listener = netannounce(test->settings->domain, proto, test->bind_address, test->bind_dev, test->server_port)) < 0) {
 	if (errno == EAFNOSUPPORT && (test->settings->domain == AF_INET6 || test->settings->domain == AF_UNSPEC)) {
 	    /* If we get "Address family not supported by protocol", that
 	    ** probably means we were compiled with IPv6 but the running
@@ -157,32 +159,50 @@ iperf_accept(struct iperf_test *test)
     signed char rbuf = ACCESS_DENIED;
     socklen_t len;
     struct sockaddr_storage addr;
+    int rc;
 
-    len = sizeof(addr);
-    if ((s = accept(test->listener, (struct sockaddr *) &addr, &len)) < 0) {
-        i_errno = IEACCEPT;
-        return ret;
+    if (test->udp_ctrl_sck) { // UDP Control Socket
+        s = test->listener;
+    }
+    else { // TCP Control Socket
+        len = sizeof(addr);
+        if ((s = accept(test->listener, (struct sockaddr *) &addr, &len)) < 0) {
+            i_errno = IEACCEPT;
+            return ret;
+        }
+    }
+
+    /* UDP listener socket should be accepted to allow communication (including for sending Deny) */
+    if (test->udp_ctrl_sck) { // UDP Control Socket
+        if (test->debug_level >= DEBUG_LEVEL_INFO) {
+            printf("Accepting new Connection Request over UDP socket %d\n", s);
+        }
+        if ((rc = iperf_udp_accept_socket(test, s)) < 0) {
+            return rc;
+        }
     }
 
     if (test->ctrl_sck == -1) {
         /* Server free, accept new client */
         test->ctrl_sck = s;
-        // set TCP_NODELAY for lower latency on control messages
-        int flag = 1;
-        if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int))) {
-            i_errno = IESETNODELAY;
-            goto error_handling;
-        }
-
-#if defined(HAVE_TCP_USER_TIMEOUT)
-        int opt;
-        if ((opt = test->settings->snd_timeout)) {
-            if (setsockopt(s, IPPROTO_TCP, TCP_USER_TIMEOUT, &opt, sizeof(opt)) < 0) {
-                i_errno = IESETUSERTIMEOUT;
+        if (!test->udp_ctrl_sck) { // TCP Control Socket
+            // set TCP_NODELAY for lower latency on control messages
+            int flag = 1;
+            if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int))) {
+                i_errno = IESETNODELAY;
                 goto error_handling;
             }
-        }
+
+#if defined(HAVE_TCP_USER_TIMEOUT)
+            int opt;
+            if ((opt = test->settings->snd_timeout)) {
+                if (setsockopt(s, IPPROTO_TCP, TCP_USER_TIMEOUT, &opt, sizeof(opt)) < 0) {
+                    i_errno = IESETUSERTIMEOUT;
+                    goto error_handling;
+                }
+            }
 #endif /* HAVE_TCP_USER_TIMEOUT */
+        }
 
         if (Nread(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) != COOKIE_SIZE) {
             /*
@@ -220,6 +240,24 @@ iperf_accept(struct iperf_test *test)
             if (test->debug)
                 printf("successfully sent ACCESS_DENIED to an unsolicited connection request during active test\n");
         }
+
+        // Create new UDP listener socket.  Done before closing the previous listener socket to allow the
+        // ACCESS_DENIED message to be sent out of the server before the socket is closed.
+        if (test->udp_ctrl_sck) {
+            FD_CLR(s, &test->read_set);
+            if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                printf("Creating new UDP Listener socket\n");
+            }
+            if ((test->listener = iperf_udp_listen(test)) < 0) {
+                return -1;
+            }
+            if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                printf("Created new UDP Listener socket=%d\n", test->listener);
+            }
+            FD_SET(test->listener, &test->read_set);
+            test->max_fd = (test->max_fd < test->listener) ? test->listener : test->max_fd;
+        }
+
         close(s);
     }
     return 0;
@@ -839,9 +877,14 @@ iperf_run_server(struct iperf_test *test)
 
                 if (rec_streams_accepted == streams_to_rec && send_streams_accepted == streams_to_send) {
                     if (test->protocol->id != Ptcp) {
-                        FD_CLR(test->prot_listener, &test->read_set);
-                        close(test->prot_listener);
-                        test->prot_listener = -1;
+                        if (test->udp_ctrl_sck) {
+                            test->listener = test->prot_listener;
+                            test->prot_listener = -1;
+                        } else {
+                            FD_CLR(test->prot_listener, &test->read_set);
+                            close(test->prot_listener);
+                            test->prot_listener = -1;
+                        }
                     } else {
                         if (test->no_delay || test->settings->mss || test->settings->socket_bufsize) {
                             FD_CLR(test->listener, &test->read_set);

@@ -1158,6 +1158,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_IPPROTO_MPTCP)
         {"mptcp", no_argument, NULL, 'm'},
 #endif
+        {"udp-control", no_argument, NULL, OPT_UDP_CONTROL},
         {"debug", optional_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -1662,6 +1663,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->mptcp = 1;
 		break;
 #endif
+            case OPT_UDP_CONTROL:
+                test->udp_ctrl_sck = 1;
+                break;
 	    case 'h':
 		usage_long(stdout);
 		exit(0);
@@ -1783,6 +1787,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	return -1;
     }
     test->settings->blksize = blksize;
+
+    if (test->role == 'c' && test->udp_ctrl_sck && test->protocol->id != Pudp) {
+        i_errno = IEUDPCNTLONLYUDP;
+        return -1;
+    }
 
     if (!rate_flag)
 	test->settings->rate = test->protocol->id == Pudp ? UDP_RATE : 0;
@@ -3111,6 +3120,8 @@ iperf_defaults(struct iperf_test *testp)
     SLIST_INSERT_AFTER(tcp, udp, protocols);
 
     set_protocol(testp, Ptcp);
+
+    testp->udp_ctrl_sck = 0;
 
 #if defined(HAVE_SCTP_H)
     sctp = protocol_new();

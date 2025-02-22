@@ -295,6 +295,7 @@ struct iperf_test
     int       sender_has_retransmits;
     int       other_side_has_retransmits;       /* used if mode == BIDIRECTIONAL */
     struct protocol *protocol;
+    int      udp_ctrl_sck;                      /* --udp-cntl-sck - true if control socket is UDP */
     signed char state;
     char     *server_hostname;                  /* -c option */
     char     *tmp_template;

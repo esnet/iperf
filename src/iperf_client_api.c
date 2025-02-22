@@ -40,6 +40,7 @@
 
 #include "iperf.h"
 #include "iperf_api.h"
+#include "iperf_udp.h"
 #include "iperf_util.h"
 #include "iperf_locale.h"
 #include "iperf_time.h"
@@ -316,8 +317,7 @@ iperf_handle_message_client(struct iperf_test *test)
         iperf_printf(test, "Reading new State from the Server - current state is %d-%s\n", test->state, state_to_text(test->state));
     }
 
-    /*!!! Why is this read() and not Nread()? */
-    if ((rval = read(test->ctrl_sck, (char*) &test->state, sizeof(signed char))) <= 0) {
+    if ((rval = Nread(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp)) <= 0) {
         if (rval == 0) {
             i_errno = IECTRLCLOSE;
             return -1;
@@ -429,29 +429,36 @@ iperf_connect(struct iperf_test *test)
     make_cookie(test->cookie);
 
     /* Create and connect the control channel */
-    if (test->ctrl_sck < 0)
-	// Create the control channel using an ephemeral port
-	test->ctrl_sck = netdial(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, 0, test->server_hostname, test->server_port, test->settings->connect_timeout);
     if (test->ctrl_sck < 0) {
-        i_errno = IECONNECT;
-        return -1;
-    }
-
-    // set TCP_NODELAY for lower latency on control messages
-    int flag = 1;
-    if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int))) {
-        i_errno = IESETNODELAY;
-        return -1;
-    }
-
+	// Create the control channel using an ephemeral port
+        if (test->udp_ctrl_sck) { // UDP Control Socket
+            test->ctrl_sck = iperf_udp_connect(test);
+            if (test->ctrl_sck < 0) {
+                i_errno = IECONNECT;
+                return -1;
+            }
+        } else { // TCP Control Socket
+            test->ctrl_sck = netdial(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, 0, test->server_hostname, test->server_port, test->settings->connect_timeout);
+            if (test->ctrl_sck < 0) {
+                i_errno = IECONNECT;
+                return -1;
+            }
+            // set TCP_NODELAY for lower latency on control messages
+            int flag = 1;
+            if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int))) {
+                i_errno = IESETNODELAY;
+                return -1;
+            }
 #if defined(HAVE_TCP_USER_TIMEOUT)
-    if ((opt = test->settings->snd_timeout)) {
-        if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_USER_TIMEOUT, &opt, sizeof(opt)) < 0) {
-        i_errno = IESETUSERTIMEOUT;
-        return -1;
+            if ((opt = test->settings->snd_timeout)) {
+                if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_USER_TIMEOUT, &opt, sizeof(opt)) < 0) {
+                    i_errno = IESETUSERTIMEOUT;
+                    return -1;
+                }
+            }
+#endif /* HAVE_TCP_USER_TIMEOUT */
         }
     }
-#endif /* HAVE_TCP_USER_TIMEOUT */
 
     if (Nwrite(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) < 0) {
         i_errno = IESENDCOOKIE;
@@ -461,21 +468,22 @@ iperf_connect(struct iperf_test *test)
     FD_SET(test->ctrl_sck, &test->read_set);
     if (test->ctrl_sck > test->max_fd) test->max_fd = test->ctrl_sck;
 
-    len = sizeof(opt);
-    if (getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_MAXSEG, &opt, &len) < 0) {
-        test->ctrl_sck_mss = 0;
-    }
-    else {
-        if (opt > 0 && opt <= MAX_UDP_BLOCKSIZE) {
-            test->ctrl_sck_mss = opt;
+    if (!test->udp_ctrl_sck) { // TCP Control Socket
+        len = sizeof(opt);
+        if (getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_MAXSEG, &opt, &len) < 0) {
+            test->ctrl_sck_mss = 0;
         }
         else {
-            char str[WARN_STR_LEN];
-            snprintf(str, sizeof(str),
-                     "Ignoring nonsense TCP MSS %d", opt);
-            warning(str);
+            if (opt > 0 && opt <= MAX_UDP_BLOCKSIZE) {
+                test->ctrl_sck_mss = opt;
+            } else {
+                char str[WARN_STR_LEN];
+                snprintf(str, sizeof(str),
+                        "Ignoring nonsense TCP MSS %d", opt);
+                warning(str);
 
-            test->ctrl_sck_mss = 0;
+                test->ctrl_sck_mss = 0;
+            }
         }
     }
 

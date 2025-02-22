@@ -101,6 +101,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define OPT_JSON_STREAM 28
 #define OPT_SND_TIMEOUT 29
 #define OPT_USE_PKCS1_PADDING 30
+#define OPT_UDP_CONTROL 31
 
 /* states */
 #define TEST_START 1
@@ -423,6 +424,7 @@ enum {
     IESNDTIMEOUT = 33,      // Illegal message send timeout
     IEUDPFILETRANSFER = 34, // Cannot transfer file using UDP
     IESERVERAUTHUSERS = 35,  // Cannot access authorized users file
+    IEUDPCNTLONLYUDP = 36,  // UDP Control Socket is supported only in UDP test
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

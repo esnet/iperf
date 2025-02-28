@@ -2113,7 +2113,7 @@ iperf_send_mt(struct iperf_stream *sp)
     }
 #if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
      /* Should check if green light can be set, as pacing timer is not supported in this case */
-    if (throttle_check && !throttle_check_per_message) {
+    if (throttle_check && (!throttle_check_per_message || message_sent == 0)) {
 #else /* !HAVE_CLOCK_NANOSLEEP && !HAVE_NANOSLEEP */
     if (!throttle_check_per_message || message_sent == 0) {   /* Throttle check if was not checked for each send */
 #endif /* HAVE_CLOCK_NANOSLEEP, HAVE_NANOSLEEP */

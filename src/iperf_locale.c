@@ -131,6 +131,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 #if defined(HAVE_IPPROTO_MPTCP)
                            "  -m, --mptcp               use MPTCP rather than plain TCP\n"
 #endif
+                           "  --udp-control             use UDP for the control socket (instead of default TCP)\n"
                            "  -d, --debug[=#]           emit debugging output\n"
                            "                            (optional optional \"=\" and debug level: 1-4. Default is 4 - all messages)\n"
                            "  -v, --version             show version information and quit\n"

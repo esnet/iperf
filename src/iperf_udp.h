@@ -52,7 +52,7 @@ int iperf_udp_send(struct iperf_stream *) /* __attribute__((hot)) */;
  *
  */
 int iperf_udp_accept(struct iperf_test *);
-
+int iperf_udp_accept_socket(struct iperf_test *, int s);
 
 int iperf_udp_listen(struct iperf_test *);
 

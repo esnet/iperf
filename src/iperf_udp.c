@@ -371,10 +371,7 @@ iperf_udp_buffercheck(struct iperf_test *test, int s)
 int
 iperf_udp_accept(struct iperf_test *test)
 {
-    struct sockaddr_storage sa_peer;
-    unsigned int buf;
-    socklen_t len;
-    int       sz, s;
+    int       s;
     int	      rc;
 
     /*
@@ -382,6 +379,47 @@ iperf_udp_accept(struct iperf_test *test)
      * data transfers and a new "listening" socket will be created.
      */
     s = test->prot_listener;
+    rc = iperf_udp_accept_socket(test, s);
+    if (rc < 0) {
+        return rc;
+    }
+
+    FD_SET(test->prot_listener, &test->read_set);
+    test->max_fd = (test->max_fd < test->prot_listener) ? test->prot_listener : test->max_fd;
+
+    /*
+     * Create a new "listening" socket to replace the one we were using before.
+     */
+    FD_CLR(test->prot_listener, &test->read_set); // No control messages from old listener
+    test->prot_listener = netannounce(test->settings->domain, Pudp, test->bind_address, test->bind_dev, test->server_port);
+    if (test->prot_listener < 0) {
+        i_errno = IESTREAMLISTEN;
+        return -1;
+    }
+
+    FD_SET(test->prot_listener, &test->read_set);
+    test->max_fd = (test->max_fd < test->prot_listener) ? test->prot_listener : test->max_fd;
+
+    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+        printf("Accepted UDP socket=%d\n", s);
+    }
+
+    return s;
+}
+
+/*
+ * iperf_udp_accept_socket
+ *
+ * Accepts a new UDP "connection" using an existing socket.
+ */
+int
+iperf_udp_accept_socket(struct iperf_test *test, int s)
+{
+    struct sockaddr_storage sa_peer;
+    unsigned int buf;
+    socklen_t len;
+    int       sz;
+    int	      rc;
 
     /*
      * Grab the UDP packet sent by the client.  From that we can extract the
@@ -389,7 +427,7 @@ iperf_udp_accept(struct iperf_test *test)
      * of the socket to the client.
      */
     len = sizeof(sa_peer);
-    if ((sz = recvfrom(test->prot_listener, &buf, sizeof(buf), 0, (struct sockaddr *) &sa_peer, &len)) < 0) {
+    if ((sz = recvfrom(s, &buf, sizeof(buf), 0, (struct sockaddr *) &sa_peer, &len)) < 0) {
         i_errno = IESTREAMACCEPT;
         return -1;
     }
@@ -446,19 +484,6 @@ iperf_udp_accept(struct iperf_test *test)
 	}
     }
 
-    /*
-     * Create a new "listening" socket to replace the one we were using before.
-     */
-    FD_CLR(test->prot_listener, &test->read_set); // No control messages from old listener
-    test->prot_listener = netannounce(test->settings->domain, Pudp, test->bind_address, test->bind_dev, test->server_port);
-    if (test->prot_listener < 0) {
-        i_errno = IESTREAMLISTEN;
-        return -1;
-    }
-
-    FD_SET(test->prot_listener, &test->read_set);
-    test->max_fd = (test->max_fd < test->prot_listener) ? test->prot_listener : test->max_fd;
-
     /* Let the client know we're ready "accept" another UDP "stream" */
     buf = UDP_CONNECT_REPLY;
     if (write(s, &buf, sizeof(buf)) < 0) {
@@ -466,7 +491,7 @@ iperf_udp_accept(struct iperf_test *test)
         return -1;
     }
 
-    return s;
+    return 0;
 }
 
 

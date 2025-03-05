@@ -96,7 +96,7 @@ test by specifying the --get-server-output flag.
 Either the client or the server can produce its output in a JSON
 structure, useful for integration with other programs, by passing it
 the -J flag.
-Normally the contents of the JSON structure are only competely known
+Normally the contents of the JSON structure are only completely known
 after the test has finished, no JSON output will be emitted until the
 end of the test.
 By enabling line-delimited JSON multiple objects will be emitted to
@@ -201,6 +201,10 @@ attack that could reveal a server's private key.  Beginning with
 iperf-3.17, OAEP padding is used, however this is a breaking change
 that is not compatible with older iperf3 versions.  Use this option to
 preserve the less secure, but more compatible, behavior.
+.TP
+.BR -m ", " --mptcp " "
+use mptcp variant for the current protocol. This only applies to
+TCP and enables MPTCP usage.
 .TP
 .BR -d ", " --debug " "
 emit debugging output.

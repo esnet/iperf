@@ -25,7 +25,7 @@
 
 # Initialize the autoconf system for the specified tool, version and mailing list
 AC_PREREQ([2.71])
-AC_INIT([iperf],[3.17.1+],[https://github.com/esnet/iperf],[iperf],[https://software.es.net/iperf/])
+AC_INIT([iperf],[3.18+],[https://github.com/esnet/iperf],[iperf],[https://software.es.net/iperf/])
 m4_include([config/ax_check_openssl.m4])
 m4_include([config/ax_pthread.m4])
 m4_include([config/iperf_config_static_bin.m4])
@@ -347,6 +347,18 @@ AC_CHECK_MEMBER([struct tcp_info.tcpi_snd_wnd],
 
 if test "x$iperf3_cv_header_tcp_info_snd_wnd" = "xyes"; then
   AC_DEFINE([HAVE_TCP_INFO_SND_WND], [1], [Have tcpi_snd_wnd field in tcp_info.])
+fi
+
+# Check for IPPROTO_MPTCP (Linux)
+AC_CACHE_CHECK([MPTCP protocol],
+[iperf3_cv_header_ipproto_mptcp],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <netinet/in.h>]],
+		   [[int foo = IPPROTO_MPTCP;]])],
+  iperf3_cv_header_ipproto_mptcp=yes,
+  iperf3_cv_header_ipproto_mptcp=no))
+if test "x$iperf3_cv_header_ipproto_mptcp" = "xyes"; then
+    AC_DEFINE([HAVE_IPPROTO_MPTCP], [1], [Have MPTCP protocol.])
 fi
 
 # Check if we need -lrt for clock_gettime

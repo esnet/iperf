@@ -197,6 +197,7 @@ struct iperf_stream
     struct iperf_test* test;
 
     pthread_t thr;
+    int thread_created;
     int       done;
 
     /* configurable members */
@@ -346,6 +347,8 @@ struct iperf_test
     int	      verbose;                          /* -V option - verbose mode */
     int	      json_output;                      /* -J option - JSON output */
     int	      json_stream;                      /* --json-stream */
+    void      (*json_callback) (struct iperf_test *, char *); /* allow user apps to receive the
+                                                JSON strings,instead of writing them to the output file */
     int	      zerocopy;                         /* -Z option - use sendfile */
     int       debug;				/* -d option - enable debug */
     enum      debug_level debug_level;          /* -d option option - level of debug messages to show */
@@ -356,6 +359,7 @@ struct iperf_test
     int	      repeating_payload;                /* --repeating-payload */
     int       timestamps;			/* --timestamps */
     char     *timestamp_format;
+    int       mptcp;				/* -m, --mptcp */
 
     char     *json_output_string; /* rendered JSON output if json_output is set */
     /* Select related parameters */
@@ -453,6 +457,7 @@ struct iperf_test
 #define MIN_INTERVAL 0.1
 #define MAX_INTERVAL 60.0
 #define MAX_TIME 86400
+#define MAX_OMIT_TIME 600
 #define MAX_BURST 1000
 #define MAX_MSS (9 * 1024)
 #define MAX_STREAMS 128

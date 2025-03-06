@@ -200,7 +200,7 @@ iperf_strerror(int int_errno)
         case IEINTERVAL:
             snprintf(errstr, len, "invalid report interval (min = %g, max = %g seconds)", MIN_INTERVAL, MAX_INTERVAL);
             break;
-    case IEBIND: /* UNUSED */
+        case IEBIND: /* UNUSED */
             snprintf(errstr, len, "--bind must be specified to use --cport");
             break;
         case IEUDPBLOCKSIZE:
@@ -482,7 +482,7 @@ iperf_strerror(int int_errno)
 	case IETOTALRATE:
 	    snprintf(errstr, len, "total required bandwidth is larger than server limit");
             break;
-    case IESKEWTHRESHOLD:
+        case IESKEWTHRESHOLD:
 	    snprintf(errstr, len, "skew threshold must be a positive number");
             break;
 	case IEIDLETIMEOUT:
@@ -491,16 +491,16 @@ iperf_strerror(int int_errno)
 	case IEBINDDEV:
 	    snprintf(errstr, len, "Unable to bind-to-device (check perror, maybe permissions?)");
             break;
-    case IEBINDDEVNOSUPPORT:
+        case IEBINDDEVNOSUPPORT:
 	    snprintf(errstr, len, "`<ip>%%<dev>` is not supported as system does not support bind to device");
             break;
-    case IEHOSTDEV:
+        case IEHOSTDEV:
 	    snprintf(errstr, len, "host device name (ip%%<dev>) is supported (and required) only for IPv6 link-local address");
             break;        
 	case IENOMSG:
 	    snprintf(errstr, len, "idle timeout for receiving data");
             break;
-    case IESETDONTFRAGMENT:
+        case IESETDONTFRAGMENT:
 	    snprintf(errstr, len, "unable to set IP Do-Not-Fragment flag");
             break;
         case IESETUSERTIMEOUT:
@@ -528,6 +528,24 @@ iperf_strerror(int int_errno)
 	    break;
 	case IEPTHREADATTRDESTROY:
             snprintf(errstr, len, "unable to destroy thread attributes");
+        case IECNTLKA:
+            snprintf(errstr, len, "control connection Keepalive period should be larger than the full retry period (interval * count)");
+            perr = 1;
+            break;
+        case IESETCNTLKA:
+            snprintf(errstr, len, "unable to set socket keepalive (SO_KEEPALIVE) option");
+            perr = 1;
+            break;
+        case IESETCNTLKAKEEPIDLE:
+            snprintf(errstr, len, "unable to set socket keepalive TCP period (TCP_KEEPIDLE) option");
+            perr = 1;
+            break;
+        case IESETCNTLKAINTERVAL:
+            snprintf(errstr, len, "unable to set/get socket keepalive TCP retry interval (TCP_KEEPINTVL) option");
+            perr = 1;
+            break;
+        case IESETCNTLKACOUNT:
+            snprintf(errstr, len, "unable to set/get socket keepalive TCP number of retries (TCP_KEEPCNT) option");
             perr = 1;
             break;
 	default:

@@ -206,6 +206,9 @@ iperf_strerror(int int_errno)
         case IEUDPBLOCKSIZE:
             snprintf(errstr, len, "block size invalid (minimum = %d bytes, maximum = %d bytes)", MIN_UDP_BLOCKSIZE, MAX_UDP_BLOCKSIZE);
             break;
+        case IEUDPCNTLONLYUDP:
+            snprintf(errstr, len, "UDP Control Socket is supported only in UDP test");
+            break;
         case IEBADTOS:
             snprintf(errstr, len, "bad TOS value (must be between 0 and 255 inclusive)");
             break;

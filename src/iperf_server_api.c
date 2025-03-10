@@ -278,6 +278,9 @@ iperf_handle_message_server(struct iperf_test *test)
             test->reporter_callback(test);
             if (iperf_set_send_state(test, EXCHANGE_RESULTS) != 0)
                 return -1;
+	    
+	    iperf_cancel_periodic_timers(test);
+
             if (iperf_exchange_results(test) < 0)
                 return -1;
             if (iperf_set_send_state(test, DISPLAY_RESULTS) != 0)
@@ -614,15 +617,16 @@ iperf_run_server(struct iperf_test *test)
                 used_timeout.tv_usec = 0;
                 timeout = &used_timeout;
             }
-        } else if (test->mode != SENDER) {     // In non-reverse active mode server ensures data is received
+        } else if (test->mode != SENDER || test->state != TEST_RUNNING) {
+	    // In non-reverse active mode or not during active test, server ensures data םor control messages are received
             timeout_us = -1;
             if (timeout != NULL) {
                 used_timeout.tv_sec = timeout->tv_sec;
                 used_timeout.tv_usec = timeout->tv_usec;
                 timeout_us = (timeout->tv_sec * SEC_TO_US) + timeout->tv_usec;
             }
-            /* Cap the maximum select timeout at 1 second */
-            if (timeout_us > SEC_TO_US) {
+            /* Cap the maximum select timeout at 1 second during active test */
+            if (test->state == TEST_RUNNING && timeout_us > SEC_TO_US) {
                 timeout_us = SEC_TO_US;
             }
             if (timeout_us < 0 || timeout_us > rcv_timeout_us) {
@@ -669,10 +673,12 @@ iperf_run_server(struct iperf_test *test)
                 }
 
                 /*
-                 * Running a test. If we're receiving, be sure we're making
-                 * progress (sender hasn't died/crashed).
+                 * Receiver when running a test or after test ended.
+		 * Be sure we're making progress (sender hasn't died/crashed).
                  */
-                else if (test->mode != SENDER && t_usecs > rcv_timeout_us) {
+                else if ( t_usecs > rcv_timeout_us &&
+		          (test->mode != SENDER || test->state != TEST_RUNNING) )
+		{ 
                     /* Idle timeout if no new blocks received */
                     if (test->blocks_received == last_receive_blocks) {
                         test->server_forced_no_msg_restarts_count += 1;

@@ -123,6 +123,9 @@
 /* Have tcpi_snd_wnd field in tcp_info. */
 #undef HAVE_TCP_INFO_SND_WND
 
+/* Have TCP_KEEPIDLE sockopt. */
+#undef HAVE_TCP_KEEPALIVE
+
 /* Have TCP_USER_TIMEOUT sockopt. */
 #undef HAVE_TCP_USER_TIMEOUT
 

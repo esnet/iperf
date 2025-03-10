@@ -16826,6 +16826,42 @@ printf "%s\n" "#define HAVE_TCP_USER_TIMEOUT 1" >>confdefs.h
 
 fi
 
+# Check for TCP_KEEPIDLE sockopt (not clear where supported)
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking TCP_KEEPIDLE socket option" >&5
+printf %s "checking TCP_KEEPIDLE socket option... " >&6; }
+if test ${iperf3_cv_header_tcp_keepalive+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <netinet/tcp.h>
+int
+main (void)
+{
+int foo = TCP_KEEPIDLE;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  iperf3_cv_header_tcp_keepalive=yes
+else case e in #(
+  e) iperf3_cv_header_tcp_keepalive=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $iperf3_cv_header_tcp_keepalive" >&5
+printf "%s\n" "$iperf3_cv_header_tcp_keepalive" >&6; }
+if test "x$iperf3_cv_header_tcp_keepalive" = "xyes"; then
+
+printf "%s\n" "#define HAVE_TCP_KEEPALIVE 1" >>confdefs.h
+
+fi
+
 # Check for IPv6 flowlabel support (believed to be Linux only)
 # We check for IPV6_FLOWLABEL_MGR in <linux/in6.h> even though we
 # don't use that file directly (we have our own stripped-down

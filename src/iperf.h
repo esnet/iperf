@@ -350,6 +350,8 @@ struct iperf_test
     void      (*json_callback) (struct iperf_test *, char *); /* allow user apps to receive the
                                                 JSON strings,instead of writing them to the output file */
     int	      zerocopy;                         /* -Z option - use sendfile */
+    int	      udp_gso;                          /* -G option - use UDP_GSO feature */
+    uint16_t  udp_gso_size;
     int       debug;				/* -d option - enable debug */
     enum      debug_level debug_level;          /* -d option option - level of debug messages to show */
     int	      get_server_output;		/* --get-server-output */

@@ -1115,6 +1115,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"flowlabel", required_argument, NULL, 'L'},
 #endif /* HAVE_FLOWLABEL */
         {"zerocopy", no_argument, NULL, 'Z'},
+	{"udp_gso", no_argument, NULL, 'G'},
         {"omit", required_argument, NULL, 'O'},
         {"file", required_argument, NULL, 'F'},
         {"repeating-payload", no_argument, NULL, OPT_REPEATING_PAYLOAD},
@@ -1189,7 +1190,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     FILE *ptr_file;
 #endif /* HAVE_SSL */
 
-    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:mhX:", longopts, NULL)) != -1) {
+    while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZG:O:F:A:T:C:dI:hX:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
 		portno = atoi(optarg);
@@ -1493,6 +1494,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 test->zerocopy = 1;
 		client_flag = 1;
                 break;
+            case 'G':
+		test->udp_gso = 1;
+		test->udp_gso_size = strtoul(optarg, NULL, 0);
+		printf("UDP_GSO enabled for this run\n");
+		client_flag = 1;
+		break;
             case OPT_REPEATING_PAYLOAD:
                 test->repeating_payload = 1;
                 client_flag = 1;
@@ -4184,9 +4191,11 @@ iperf_print_results(struct iperf_test *test)
                                 iperf_printf(test, report_receiver_not_available_format, sp->socket);
                         }
                         else {
-                            if (sp->omitted_cnt_error > -1) {
+			if (test->udp_gso)
+				iperf_printf(test, report_bw_udp_hw_gso_format, sp->socket, mbuf, start_time, receiver_time, ubuf, nbuf, "--NA--", "  --NA--    ", report_receiver);
+			else if (sp->omitted_cnt_error > -1) {
                                 iperf_printf(test, report_bw_udp_format, sp->socket, mbuf, start_time, receiver_time, ubuf, nbuf, sp->jitter * 1000.0, (sp->cnt_error - sp->omitted_cnt_error), (receiver_packet_count - receiver_omitted_packet_count), lost_percent, report_receiver);
-                            } else {
+                      } else {
                                 iperf_printf(test, report_bw_udp_format_no_omitted_error, sp->socket, mbuf, start_time, receiver_time, ubuf, nbuf, sp->jitter * 1000.0, (receiver_packet_count - receiver_omitted_packet_count), report_receiver);
                             }
                         }

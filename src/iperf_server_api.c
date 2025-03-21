@@ -110,7 +110,7 @@ iperf_server_worker_run(void *s) {
     return NULL;
 
   cleanup_and_fail:
-    iperf_err(test, "Server Worker Thread %d FD %d failed - %s, with errno %s (%d)", sp->thread_number, sp->socket, iperf_strerror(i_errno), strerror(errno), errno);
+    iperf_err(test, "Server Worker Thread %d FD %d failed - %s", sp->thread_number, sp->socket, iperf_strerror(i_errno));
     pthread_mutex_lock(&running_mutex);
     running_threads--;  // Indicate that the thread failed
     pthread_mutex_unlock(&running_mutex);

@@ -110,9 +110,7 @@ iperf_server_worker_run(void *s) {
     return NULL;
 
   cleanup_and_fail:
-    if (test->debug_level >= DEBUG_LEVEL_INFO) {
-        iperf_printf(sp->test, "Thread number %d FD %d terminated unexpectedly\n", sp->thread_number, sp->socket);
-    }
+    iperf_err(test, "Server Worker Thread %d FD %d failed - %s, with errno %s (%d)", sp->thread_number, sp->socket, iperf_strerror(i_errno), strerror(errno), errno);
     pthread_mutex_lock(&running_mutex);
     running_threads--;  // Indicate that the thread failed
     pthread_mutex_unlock(&running_mutex);
@@ -942,7 +940,6 @@ iperf_run_server(struct iperf_test *test)
                             cleanup_server(test);
                             return -1;
                         }
-                        sp->thread_created = 1;
                         if (test->debug_level >= DEBUG_LEVEL_INFO) {
                             iperf_printf(test, "Thread number %d FD %d created\n", sp->thread_number, sp->socket);
                         }

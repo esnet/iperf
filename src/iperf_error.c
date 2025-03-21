@@ -548,6 +548,10 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "unable to set/get socket keepalive TCP number of retries (TCP_KEEPCNT) option");
             perr = 1;
             break;
+	case IEPTHREADNOTRUNNING:
+            snprintf(errstr, len, "a thread stopped running unexpectedly");
+            perr = 1;
+            break;
 	default:
 	    snprintf(errstr, len, "int_errno=%d", int_errno);
 	    perr = 1;

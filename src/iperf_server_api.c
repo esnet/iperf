@@ -106,6 +106,7 @@ iperf_server_worker_run(void *s) {
     return NULL;
 
   cleanup_and_fail:
+    iperf_err(test, "Server Worker Thread failed - %s, with errno %s (%d)", iperf_strerror(i_errno), strerror(errno), errno);
     return NULL;
 }
 

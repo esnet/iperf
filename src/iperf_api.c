@@ -2555,8 +2555,7 @@ send_results(struct iperf_test *test)
 		/* Allocate and build it up from the component lines */
 		char *output = calloc(buflen + 1, 1);
 		TAILQ_FOREACH(t, &(test->server_output_list), textlineentries) {
-		    strncat(output, t->line, buflen);
-		    buflen -= strlen(t->line);
+		    strlcat(output, t->line, buflen+1);		    
 		}
 
 		cJSON_AddStringToObject(j, "server_output_text", output);

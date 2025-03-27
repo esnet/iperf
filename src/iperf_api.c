@@ -1853,7 +1853,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     if (!rate_flag)
 	test->settings->rate = test->protocol->id == Pudp ? UDP_RATE : 0;
 
-    if (test->data_port != test->server_port && test->protocol->id != Pudp) {
+    if (test->role == 'c' && test->data_port != test->server_port && test->protocol->id != Pudp) {
 	i_errno = IEDATAPORT;
 	return -1;
     }

@@ -209,6 +209,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -L, --flowlabel N         set the IPv6 flow label (only supported on Linux)\n"
 #endif /* HAVE_FLOWLABEL */
                            "  -Z, --zerocopy            use a 'zero copy' method of sending data\n"
+			   "  -G, --use udp_gso         use 'udp_gso' feature for sending data\n"
                            "  -O, --omit N              perform pre-test for N seconds and omit the pre-test statistics\n"
                            "  -T, --title str           prefix every output line with this string\n"
                            "  --extra-data str          data string to include in client and server JSON\n"
@@ -398,6 +399,9 @@ const char report_bw_retrans_cwnd_format[] =
 
 const char report_bw_udp_format[] =
 "[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  %" PRId64 "/%" PRId64 " (%.2g%%)  %s\n";
+
+const char report_bw_udp_hw_gso_format[] =
+"[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %s  %s  %s\n";
 
 const char report_bw_udp_format_no_omitted_error[] =
 "[%3d]%s %6.2f-%-6.2f sec  %ss  %ss/sec  %5.3f ms  Unknown/%" PRId64 "  %s\n";

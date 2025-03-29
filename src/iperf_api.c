@@ -1178,7 +1178,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {NULL, 0, NULL, 0}
     };
     int flag;
-    int portno;
+    int portno, data_portno;
     int blksize;
     int server_flag, client_flag, rate_flag, duration_flag, rcv_timeout_flag, snd_timeout_flag;
     char *endptr;
@@ -1204,17 +1204,16 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:mhX:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
-
+                data_portno = -1;
                 slash = strchr(optarg, '/');
 		if (slash) { // Get Data port
 		    *slash = '\0';
 		    ++slash;
-                    portno = atoi(slash);
-		    if (portno < 1 || portno > 65535) {
+                    data_portno = atoi(slash);
+		    if (data_portno < 1 || data_portno > 65535) {
 		        i_errno = IEBADPORT;
 		        return -1;
 		    }
-                    test->data_port = portno;
                     client_flag = 1;
 		}
                 if (strlen(optarg) > 0) { // Get control (and data) port
@@ -1225,6 +1224,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     }
                     test->server_port = portno;
                 }
+                test->data_port = (data_portno == -1) ? test->server_port : data_portno;
                 break;
             case 'f':
 		if (!optarg) {

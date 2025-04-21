@@ -47,6 +47,57 @@
 #include "net.h"
 #include "cjson.h"
 
+#ifndef UDP_SEGMENT
+#define UDP_SEGMENT	103
+#endif
+
+#ifndef SOL_UDP
+#define SOL_UDP		17
+#endif
+
+/* iperf_udp_send_segment
+ *
+ * sends the UDP data segment
+ */
+static int iperf_udp_send_segment(struct iperf_stream *sp, char *buf)
+{
+	int ret = 0;
+	uint16_t *valp;
+	struct msghdr msg = {0};
+	struct iovec iov = {0};
+	struct cmsghdr *cmsg;
+	struct sockaddr_in addr4;
+	char control[CMSG_SPACE(sizeof(sp->test->udp_gso_size))] = {0};
+
+	iov.iov_base = buf;
+	iov.iov_len = sp->settings->blksize;
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_control = control;
+	msg.msg_controllen = sizeof(control);
+
+	/* Construct CMSG for UDP_GSO */
+	cmsg = CMSG_FIRSTHDR(&msg);
+	cmsg->cmsg_level = SOL_UDP;
+	cmsg->cmsg_type = UDP_SEGMENT;
+	cmsg->cmsg_len = CMSG_LEN(sizeof(sp->test->udp_gso_size));
+	valp = (void *)CMSG_DATA(cmsg);
+	*valp = sp->test->udp_gso_size;
+	msg.msg_controllen = CMSG_SPACE(sizeof(sp->test->udp_gso_size));
+
+	/*set up sock address */
+	addr4.sin_family = AF_INET;
+	addr4.sin_port = htons(sp->test->server_port);
+	if (inet_pton(AF_INET, sp->test->server_hostname, &(addr4.sin_addr)) != 1)
+		printf("ipv4 parse error: %s", sp->test->server_hostname);
+	msg.msg_name = (void *)&addr4;
+	msg.msg_namelen = sizeof(struct sockaddr_in);
+
+	ret = sendmsg(sp->socket, &msg, 0);
+
+	return ret;
+}
+
 /* iperf_udp_recv
  *
  * receives the data for UDP
@@ -237,7 +288,10 @@ iperf_udp_send(struct iperf_stream *sp)
 
     }
 
-    r = Nwrite(sp->socket, sp->buffer, size, Pudp);
+    if (!sp->test->udp_gso)
+        r = Nwrite(sp->socket, sp->buffer, size, Pudp);
+    else
+        r = iperf_udp_send_segment(sp, sp->buffer);
 
     if (r <= 0) {
         --sp->packet_count;     /* Don't count messages that no data was sent from them.

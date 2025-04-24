@@ -52,6 +52,10 @@
 #endif /* TCP_CA_NAME_MAX */
 #endif /* HAVE_TCP_CONGESTION */
 
+// variable for number of active threads count (for checking if any failed)
+static volatile int running_threads = 0;
+static pthread_mutex_t running_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 void *
 iperf_client_worker_run(void *s) {
     struct iperf_stream *sp = (struct iperf_stream *) s;
@@ -93,6 +97,10 @@ iperf_client_worker_run(void *s) {
     return NULL;
 
   cleanup_and_fail:
+    iperf_err(test, "Client Worker Thread %d FD %d failed - %s", sp->thread_number, sp->socket, iperf_strerror(i_errno));
+    pthread_mutex_lock(&running_mutex);
+    running_threads--;  // Indicate that the thread failed
+    pthread_mutex_unlock(&running_mutex);
     return NULL;
 }
 
@@ -583,6 +591,7 @@ iperf_run_client(struct iperf_test * test)
     int64_t timeout_us;
     int64_t rcv_timeout_us;
     int i_errno_save;
+    int total_num_streams = 0;
 
     if (NULL == test)
     {
@@ -716,14 +725,23 @@ iperf_run_client(struct iperf_test * test)
                     goto cleanup_and_fail;
                 }
 
+                pthread_mutex_lock(&running_mutex);
+                running_threads = 0;
+                total_num_streams = 0;
+                pthread_mutex_unlock(&running_mutex);
                 SLIST_FOREACH(sp, &test->streams, streams) {
+                    pthread_mutex_lock(&running_mutex);
+                    running_threads++; // Count running threads
+                    sp->thread_number = running_threads;
+                    pthread_mutex_unlock(&running_mutex);
+                    total_num_streams++;
+
                     if (pthread_create(&(sp->thr), &attr, &iperf_client_worker_run, sp) != 0) {
                         i_errno = IEPTHREADCREATE;
                         goto cleanup_and_fail;
                     }
-                    sp->thread_created = 1;
                     if (test->debug_level >= DEBUG_LEVEL_INFO) {
-                        iperf_printf(test, "Thread FD %d created\n", sp->socket);
+                        iperf_printf(test, "Thread number %d using FD %d created\n", sp->thread_number, sp->socket);
                     }
                 }
                 if (test->debug_level >= DEBUG_LEVEL_INFO) {
@@ -760,25 +778,28 @@ iperf_run_client(struct iperf_test * test)
                     if (sp->sender) {
                         int rc;
                         sp->done = 1;
-                        if (sp->thread_created == 1) {
+                        if (sp->thread_number > 0) { // if thread was created
                             rc = pthread_cancel(sp->thr);
                             if (rc != 0 && rc != ESRCH) {
                                 i_errno = IEPTHREADCANCEL;
                                 errno = rc;
-                                iperf_err(test, "sender cancel in pthread_cancel - %s", iperf_strerror(i_errno));
+                                iperf_err(test, "sender cancel in pthread_cancel of thread %d - %s", sp->thread_number, iperf_strerror(i_errno));
                                 goto cleanup_and_fail;
                             }
                             rc = pthread_join(sp->thr, NULL);
                             if (rc != 0 && rc != ESRCH) {
                                 i_errno = IEPTHREADJOIN;
                                 errno = rc;
-                                iperf_err(test, "sender cancel in pthread_join - %s", iperf_strerror(i_errno));
+                                iperf_err(test, "sender cancel in pthread_join of thread %d - %s", sp->thread_number, iperf_strerror(i_errno));
                                 goto cleanup_and_fail;
                             }
                             if (test->debug_level >= DEBUG_LEVEL_INFO) {
-                                iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
+                                iperf_printf(test, "Thread number %d FD %d stopped\n", sp->thread_number, sp->socket);
                             }
-                            sp->thread_created = 0;
+                            sp->thread_number = 0;
+                        } else {
+                            if (test->debug_level >= DEBUG_LEVEL_INFO)
+                                iperf_printf(test, "Not stopping thread for FD %d as it was not created\n", sp->socket);
                         }
                     }
                 }
@@ -793,6 +814,14 @@ iperf_run_client(struct iperf_test * test)
 		if (iperf_set_send_state(test, TEST_END) != 0)
                     goto cleanup_and_fail;
 	    }
+
+            /* Terminate if one of the threads failed */
+            if (running_threads != total_num_streams) {
+                i_errno = IEPTHREADNOTRUNNING;
+                iperf_err(test, "Number of running threads is %d but expected %d", running_threads, test->num_streams);
+                goto cleanup_and_fail;
+            }
+
 	}
     }
 
@@ -801,25 +830,28 @@ iperf_run_client(struct iperf_test * test)
         if (!sp->sender) {
             int rc;
             sp->done = 1;
-            if (sp->thread_created == 1) {
+            if (sp->thread_number > 0) { // if thread was created
                 rc = pthread_cancel(sp->thr);
                 if (rc != 0 && rc != ESRCH) {
                     i_errno = IEPTHREADCANCEL;
                     errno = rc;
-                    iperf_err(test, "receiver cancel in pthread_cancel - %s", iperf_strerror(i_errno));
+                    iperf_err(test, "receiver cancel in pthread_cancel of thread %d - %s", sp->thread_number, iperf_strerror(i_errno));
                     goto cleanup_and_fail;
                 }
                 rc = pthread_join(sp->thr, NULL);
                 if (rc != 0 && rc != ESRCH) {
                     i_errno = IEPTHREADJOIN;
                     errno = rc;
-                    iperf_err(test, "receiver cancel in pthread_join - %s", iperf_strerror(i_errno));
+                    iperf_err(test, "receiver cancel in pthread_join of thread %d - %s", sp->thread_number, iperf_strerror(i_errno));
                     goto cleanup_and_fail;
                 }
                 if (test->debug_level >= DEBUG_LEVEL_INFO) {
-                    iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
+                    iperf_printf(test, "Thread number %d FD %d stopped\n", sp->thread_number, sp->socket);
                 }
-                sp->thread_created = 0;
+                sp->thread_number = 0;
+            } else {
+                if (test->debug_level >= DEBUG_LEVEL_INFO)
+                    iperf_printf(test, "Not stopping thread for FD %d as it was not created\n", sp->socket);
             }
         }
     }
@@ -848,23 +880,26 @@ iperf_run_client(struct iperf_test * test)
         }
         sp->done = 1;
         int rc;
-        if (sp->thread_created == 1) {
+        if (sp->thread_number > 0) { // if thread was created
             rc = pthread_cancel(sp->thr);
             if (rc != 0 && rc != ESRCH) {
                 i_errno = IEPTHREADCANCEL;
                 errno = rc;
-                iperf_err(test, "cleanup_and_fail in pthread_cancel - %s", iperf_strerror(i_errno));
+                iperf_err(test, "cleanup_and_fail in pthread_cancel of thread %d - %s", sp->thread_number, iperf_strerror(i_errno));
             }
             rc = pthread_join(sp->thr, NULL); 
             if (rc != 0 && rc != ESRCH) {
                 i_errno = IEPTHREADJOIN;
                 errno = rc;
-                iperf_err(test, "cleanup_and_fail in pthread_join - %s", iperf_strerror(i_errno));
+                iperf_err(test, "cleanup_and_fail in pthread_join of thread %d - %s", sp->thread_number, iperf_strerror(i_errno));
             }
             if (test->debug_level >= DEBUG_LEVEL_INFO) {
-                iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
+                iperf_printf(test, "Thread number %d FD %d stopped\n", sp->thread_number, sp->socket);
             }
-            sp->thread_created = 0;
+            sp->thread_number = 0;
+        } else {
+            if (test->debug_level >= DEBUG_LEVEL_INFO)
+                iperf_printf(test, "Not stopping thread for FD %d as it was not created\n", sp->socket);
         }
     }
     if (test->debug_level >= DEBUG_LEVEL_INFO) {

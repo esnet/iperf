@@ -129,8 +129,7 @@ iperf_exit(struct iperf_test *test, int exit_code, const char *format, va_list a
         }
 	iperf_json_finish(test);
     } else {
-        if (test != NULL)
-        if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
+        if (test != NULL && pthread_mutex_lock(&(test->print_mutex)) != 0) {
             perror("iperf_errexit: pthread_mutex_lock");
         }
 
@@ -147,8 +146,7 @@ iperf_exit(struct iperf_test *test, int exit_code, const char *format, va_list a
 	    fprintf(stderr, "iperf3: %s\n", str);
 	}
 
-        if (test != NULL)
-        if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
+        if (test != NULL && pthread_mutex_unlock(&(test->print_mutex)) != 0) {
             perror("iperf_errexit: pthread_mutex_unlock");
         }
     }

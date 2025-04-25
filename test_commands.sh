@@ -67,7 +67,7 @@ host=$1
 ./src/iperf3 -c "$host" -A 2/2 -u -b1G
 # Burst mode
 ./src/iperf3 -c "$host" -u -b1G/100
-# change MSS
-./src/iperf3 -c "$host" -M 1000 -V
 # test congestion control option (linux only)
 ./src/iperf3 -c "$host" -C reno -V
+# change MSS
+./src/iperf3 -c "$host" -M 1000 -V

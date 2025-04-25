@@ -124,7 +124,7 @@ timeout_connect(int s, const struct sockaddr *name, socklen_t namelen,
 
 /* create a socket */
 int
-create_socket(int domain, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, struct addrinfo **server_res_out)
+create_socket(int domain, int type, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, struct addrinfo **server_res_out)
 {
     struct addrinfo hints, *local_res = NULL, *server_res = NULL;
     int s, saved_errno;
@@ -133,23 +133,22 @@ create_socket(int domain, int proto, const char *local, const char *bind_dev, in
     if (local) {
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = domain;
-        hints.ai_socktype = proto;
+        hints.ai_socktype = type;
         if ((gerror = getaddrinfo(local, NULL, &hints, &local_res)) != 0)
             return -1;
     }
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = domain;
-    hints.ai_socktype = proto;
+    hints.ai_socktype = type;
     snprintf(portstr, sizeof(portstr), "%d", port);
     if ((gerror = getaddrinfo(server, portstr, &hints, &server_res)) != 0) {
 	if (local)
 	    freeaddrinfo(local_res);
-        freeaddrinfo(server_res);
         return -1;
     }
 
-    s = socket(server_res->ai_family, proto, 0);
+    s = socket(server_res->ai_family, type, proto);
     if (s < 0) {
 	if (local)
 	    freeaddrinfo(local_res);
@@ -239,7 +238,7 @@ netdial(int domain, int proto, const char *local, const char *bind_dev, int loca
     struct addrinfo *server_res = NULL;
     int s, saved_errno;
 
-    s = create_socket(domain, proto, local, bind_dev, local_port, server, port, &server_res);
+    s = create_socket(domain, proto, 0, local, bind_dev, local_port, server, port, &server_res);
     if (s < 0) {
       return -1;
     }
@@ -469,6 +468,33 @@ Nrecv(int fd, char *buf, size_t count, int prot, int sock_opt)
     return total;
 }
 
+/********************************************************************/
+/* reads 'count' bytes from a socket - but without using select()   */
+/********************************************************************/
+int
+Nread_no_select(int fd, char *buf, size_t count, int prot)
+{
+    register ssize_t r;
+    register size_t nleft = count;
+
+    while (nleft > 0) {
+        r = read(fd, buf, nleft);
+        if (r < 0) {
+            /* XXX EWOULDBLOCK can't happen without non-blocking sockets */
+            if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
+                break;
+            else
+                return NET_HARDERROR;
+        } else if (r == 0)
+            break;
+
+        nleft -= r;
+        buf += r;
+
+    }
+    return count - nleft;
+}
+
 
 /*
  *                      N W R I T E
@@ -490,12 +516,14 @@ Nwrite(int fd, const char *buf, size_t count, int prot)
                     /* XXX EWOULDBLOCK can't happen without non-blocking sockets */
 		case EWOULDBLOCK:
 #endif
+		if (count == nleft)
+		    return NET_SOFTERROR;
 		return count - nleft;
 
-		case ENOBUFS:
-		return NET_SOFTERROR;
+                case ENOBUFS :
+                return NET_SOFTERROR;
 
-		default:
+                default:
 		return NET_HARDERROR;
 	    }
 	} else if (r == 0)

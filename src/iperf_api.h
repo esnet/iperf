@@ -101,7 +101,8 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define OPT_JSON_STREAM 28
 #define OPT_SND_TIMEOUT 29
 #define OPT_USE_PKCS1_PADDING 30
-#define OPT_SKIP_RX_COPY 31
+#define OPT_SKIP_RX_COPY 32
+#define OPT_CNTL_KA 31
 
 /* states */
 #define TEST_START 1
@@ -198,6 +199,7 @@ void    iperf_set_test_template( struct iperf_test *ipt, const char *tmp_templat
 void	iperf_set_test_reverse( struct iperf_test* ipt, int reverse );
 void	iperf_set_test_json_output( struct iperf_test* ipt, int json_output );
 void	iperf_set_test_json_stream( struct iperf_test* ipt, int json_stream );
+void    iperf_set_test_json_callback(struct iperf_test *ipt, void (*callback)(struct iperf_test *, char *));
 int	iperf_has_zerocopy( void );
 void	iperf_set_test_zerocopy( struct iperf_test* ipt, int zerocopy );
 void	iperf_set_test_get_server_output( struct iperf_test* ipt, int get_server_output );
@@ -310,6 +312,14 @@ void      iperf_free_stream(struct iperf_stream * sp);
  */
 int       iperf_common_sockopts(struct iperf_test *, int s);
 
+#if defined (HAVE_TCP_KEEPALIVE)
+/**
+ * iperf_set_control_keepalive -- set control connection TCP keepalive
+ *
+ */
+int       iperf_set_control_keepalive(struct iperf_test *test);
+#endif //HAVE_TCP_KEEPALIVE
+
 int has_tcpinfo(void);
 int has_tcpinfo_retransmits(void);
 void save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp);
@@ -327,7 +337,7 @@ void iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP);
 int iperf_send_mt(struct iperf_stream *) /* __attribute__((hot)) */;
 int iperf_recv_mt(struct iperf_stream *);
 void iperf_catch_sigend(void (*handler)(int));
-void iperf_got_sigend(struct iperf_test *test) __attribute__ ((noreturn));
+void iperf_got_sigend(struct iperf_test *test, int sig) __attribute__ ((noreturn));
 void usage(void);
 void usage_long(FILE * f);
 void warning(const char *);
@@ -381,6 +391,8 @@ int iflush(struct iperf_test *test);
 /* Error routines. */
 void iperf_err(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3)));
 void iperf_errexit(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3),noreturn));
+void iperf_signormalexit(struct iperf_test *test, const char *format, ...) __attribute__ ((format(printf,2,3),noreturn));
+void iperf_exit(struct iperf_test *test, int exit_code, const char *format, va_list argp) __attribute__ ((noreturn));
 char *iperf_strerror(int);
 extern int i_errno;
 enum {
@@ -420,7 +432,8 @@ enum {
     IERVRSONLYRCVTIMEOUT = 32,  // Client receive timeout is valid only in reverse mode
     IESNDTIMEOUT = 33,      // Illegal message send timeout
     IEUDPFILETRANSFER = 34, // Cannot transfer file using UDP
-    IESERVERAUTHUSERS = 35,   // Cannot access authorized users file
+    IESERVERAUTHUSERS = 35,  // Cannot access authorized users file
+    IECNTLKA = 36,          // Control connection Keepalive period should be larger than the full retry period (interval * count)
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)
@@ -476,6 +489,11 @@ enum {
     IEPTHREADJOIN=152,		// Unable to join thread (check perror)
     IEPTHREADATTRINIT=153,      // Unable to initialize thread attribute (check perror)
     IEPTHREADATTRDESTROY=154,      // Unable to destroy thread attribute (check perror)
+    IESETCNTLKA = 155,         // Unable to set socket keepalive (SO_KEEPALIVE) option
+    IESETCNTLKAKEEPIDLE = 156, // Unable to set socket keepalive TCP period (TCP_KEEPIDLE) option
+    IESETCNTLKAINTERVAL = 157, // Unable to set/get socket keepalive TCP retry interval (TCP_KEEPINTVL) option
+    IESETCNTLKACOUNT = 158,    // Unable to set/get socket keepalive TCP number of retries (TCP_KEEPCNT) option
+    IEPTHREADSIGMASK=159,      // Unable to initialize sub thread signal mask (check perror)
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

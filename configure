@@ -17189,6 +17189,44 @@ printf "%s\n" "#define HAVE_TCP_INFO_SND_WND 1" >>confdefs.h
 
 fi
 
+
+# Check for MSG_TRUNC (mostly on Linux)
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking MSG_TRUNC recv option" >&5
+printf %s "checking MSG_TRUNC recv option... " >&6; }
+if test ${iperf3_cv_header_msg_trunc+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/types.h>
+                     #include <sys/socket.h>
+                     #include <netinet/in.h>
+int
+main (void)
+{
+int foo = MSG_TRUNC;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  iperf3_cv_header_msg_trunc=yes
+else case e in #(
+  e) iperf3_cv_header_msg_trunc=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $iperf3_cv_header_msg_trunc" >&5
+printf "%s\n" "$iperf3_cv_header_msg_trunc" >&6; }
+if test "x$iperf3_cv_header_msg_trunc" = "xyes"; then
+
+printf "%s\n" "#define HAVE_MSG_TRUNC 1" >>confdefs.h
+
+fi
 # Check for IPPROTO_MPTCP (Linux)
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking MPTCP protocol" >&5
 printf %s "checking MPTCP protocol... " >&6; }

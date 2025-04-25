@@ -48,6 +48,9 @@
 /* Define to 1 if you have the <linux/tcp.h> header file. */
 #undef HAVE_LINUX_TCP_H
 
+/* Have MSG_TRUNC recv option. */
+#undef HAVE_MSG_TRUNC
+
 /* Define to 1 if you have the 'nanosleep' function. */
 #undef HAVE_NANOSLEEP
 

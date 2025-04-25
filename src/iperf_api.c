@@ -1141,6 +1141,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_DONT_FRAGMENT)
 	{"dont-fragment", no_argument, NULL, OPT_DONT_FRAGMENT},
 #endif /* HAVE_DONT_FRAGMENT */
+#if defined(HAVE_MSG_TRUNC)
+	{"skip-rx-copy", no_argument, NULL, OPT_SKIP_RX_COPY},
+#endif /* HAVE_MSG_TRUNC */
 #if defined(HAVE_SSL)
     {"username", required_argument, NULL, OPT_CLIENT_USERNAME},
     {"rsa-public-key-path", required_argument, NULL, OPT_CLIENT_RSA_PUBLIC_KEY},
@@ -1687,6 +1690,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	    test->use_pkcs1_padding = 1;
 	    break;
 #endif /* HAVE_SSL */
+#if defined(HAVE_MSG_TRUNC)
+            case OPT_SKIP_RX_COPY:
+                test->settings->skip_rx_copy = 1;
+                client_flag = 1;
+                break;
+#endif /* HAVE_MSG_TRUNC */
 	    case OPT_PACING_TIMER:
 		test->settings->pacing_timer = unit_atoi(optarg);
 		client_flag = 1;
@@ -2384,6 +2393,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddStringToObject(j, "authtoken", test->settings->authtoken);
 	}
 #endif // HAVE_SSL
+	if (test->settings->skip_rx_copy)
+	    cJSON_AddNumberToObject(j, "skip_rx_copy", test->settings->skip_rx_copy);
 	cJSON_AddStringToObject(j, "client_version", IPERF_VERSION);
 
 	if (test->debug) {
@@ -2494,6 +2505,8 @@ get_parameters(struct iperf_test *test)
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "authtoken", cJSON_String)) != NULL)
         test->settings->authtoken = strdup(j_p->valuestring);
 #endif //HAVE_SSL
+	if ((j_p = cJSON_GetObjectItem(j, "skip_rx_copy")) != NULL)
+	    test->settings->skip_rx_copy = j_p->valueint;
 	if (test->mode && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    test->sender_has_retransmits = 1;
 	if (test->settings->rate)
@@ -3108,12 +3121,14 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->rcv_timeout.secs = DEFAULT_NO_MSG_RCVD_TIMEOUT / SEC_TO_mS;
     testp->settings->rcv_timeout.usecs = (DEFAULT_NO_MSG_RCVD_TIMEOUT % SEC_TO_mS) * mS_TO_US;
     testp->zerocopy = 0;
+    testp->settings->skip_rx_copy = 0;
     testp->settings->cntl_ka = 0;
     testp->settings->cntl_ka_keepidle = 0;
     testp->settings->cntl_ka_interval = 0;
     testp->settings->cntl_ka_count = 0;
 
     testp->json_callback = NULL;
+
 
     memset(testp->cookie, 0, COOKIE_SIZE);
 
@@ -3414,6 +3429,7 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->tos = 0;
     test->settings->dont_fragment = 0;
     test->zerocopy = 0;
+    test->settings->skip_rx_copy = 0;
 
 #if defined(HAVE_SSL)
     if (test->settings->authtoken) {

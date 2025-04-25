@@ -365,16 +365,27 @@ netannounce(int domain, int proto, const char *local, const char *bind_dev, int 
     return s;
 }
 
-
 /*******************************************************************/
-/* reads 'count' bytes from a socket  */
+/* Nread - reads 'count' bytes from a socket  */
 /********************************************************************/
 
 int
 Nread(int fd, char *buf, size_t count, int prot)
 {
+    return Nrecv(fd, buf, count, prot, 0);
+}
+
+/*******************************************************************/
+/* Nrecv - reads 'count' bytes from a socket  */
+/********************************************************************/
+
+int
+Nrecv(int fd, char *buf, size_t count, int prot, int sock_opt)
+{
     register ssize_t r;
-    register size_t nleft = count;
+    // `nleft` must be signed as it may get negative value for SKIP-RX-COPY UDP (MSG_TRUNC in sock_opt).
+    register ssize_t nleft = count;
+    register size_t total = 0;
     struct iperf_time ftimeout = { 0, 0 };
 
     fd_set rfdset;
@@ -403,7 +414,11 @@ Nread(int fd, char *buf, size_t count, int prot)
     }
 
     while (nleft > 0) {
-        r = read(fd, buf, nleft);
+        if (sock_opt)
+            r = recv(fd, buf, nleft, sock_opt);
+        else
+            r = read(fd, buf, nleft);
+
         if (r < 0) {
             /* XXX EWOULDBLOCK can't happen without non-blocking sockets */
             if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
@@ -413,7 +428,8 @@ Nread(int fd, char *buf, size_t count, int prot)
         } else if (r == 0)
             break;
 
-        nleft -= r;
+        total += r;
+        nleft -= r; 
         buf += r;
 
         /*
@@ -449,20 +465,32 @@ Nread(int fd, char *buf, size_t count, int prot)
             }
         }
     }
-    return count - nleft;
+    return total;
 }
 
 /********************************************************************/
-/* reads 'count' bytes from a socket - but without using select()   */
+/* Nreads 'count' bytes from a socket - but without using select()   */
 /********************************************************************/
 int
 Nread_no_select(int fd, char *buf, size_t count, int prot)
+{
+    return Nrecv_no_select(fd, buf, count, prot, 0);
+}
+
+/********************************************************************/
+/* Nrecv reads 'count' bytes from a socket - but without using select()   */
+/********************************************************************/
+int
+Nrecv_no_select(int fd, char *buf, size_t count, int prot, int sock_opt)
 {
     register ssize_t r;
     register size_t nleft = count;
 
     while (nleft > 0) {
-        r = read(fd, buf, nleft);
+        if (sock_opt)
+            r = recv(fd, buf, nleft, sock_opt);
+        else
+            r = read(fd, buf, nleft);
         if (r < 0) {
             /* XXX EWOULDBLOCK can't happen without non-blocking sockets */
             if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)

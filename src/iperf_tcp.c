@@ -57,20 +57,28 @@ int
 iperf_tcp_recv(struct iperf_stream *sp)
 {
     int r;
+    int sock_opt;
 
-    r = Nread_no_select(sp->socket, sp->buffer, sp->settings->blksize, Ptcp);
+#if defined(HAVE_MSG_TRUNC)
+    sock_opt = sp->test->settings->skip_rx_copy ? MSG_TRUNC : 0;
+#else
+    sock_opt = 0;
+#endif /* HAVE_MSG_TRUNC */
+
+    r = Nrecv_no_select(sp->socket, sp->buffer, sp->settings->blksize, Ptcp, sock_opt);
+
 
     if (r < 0)
         return r;
 
     /* Only count bytes received while we're in the correct state. */
     if (sp->test->state == TEST_RUNNING) {
-	sp->result->bytes_received += r;
-	sp->result->bytes_received_this_interval += r;
+	      sp->result->bytes_received += r;
+	      sp->result->bytes_received_this_interval += r;
     }
     else {
-	if (sp->test->debug)
-	    printf("Late receive, state = %d-%s\n", sp->test->state, state_to_text(sp->test->state));
+	      if (sp->test->debug)
+	          printf("Late receive, state = %d-%s\n", sp->test->state, state_to_text(sp->test->state));
     }
 
     return r;
@@ -87,12 +95,12 @@ iperf_tcp_send(struct iperf_stream *sp)
     int r;
 
     if (!sp->pending_size)
-	sp->pending_size = sp->settings->blksize;
+	      sp->pending_size = sp->settings->blksize;
 
     if (sp->test->zerocopy)
-	r = Nsendfile(sp->buffer_fd, sp->socket, sp->buffer, sp->pending_size);
+	      r = Nsendfile(sp->buffer_fd, sp->socket, sp->buffer, sp->pending_size);
     else
-	r = Nwrite(sp->socket, sp->buffer, sp->pending_size, Ptcp);
+	      r = Nwrite(sp->socket, sp->buffer, sp->pending_size, Ptcp);
 
     if (r < 0)
         return r;
@@ -102,8 +110,8 @@ iperf_tcp_send(struct iperf_stream *sp)
     sp->result->bytes_sent_this_interval += r;
 
     if (sp->test->debug_level >=  DEBUG_LEVEL_DEBUG)
-	printf("sent %d bytes of %d, pending %d, total %" PRIu64 "\n",
-	    r, sp->settings->blksize, sp->pending_size, sp->result->bytes_sent);
+	      printf("sent %d bytes of %d, pending %d, total %" PRIu64 "\n",
+	          r, sp->settings->blksize, sp->pending_size, sp->result->bytes_sent);
 
     return r;
 }

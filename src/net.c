@@ -386,7 +386,7 @@ Nread(int fd, char *buf, size_t count, int prot)
      *
      * This check could go inside the while() loop below, except we're
      * currently considering whether it might make sense to support a
-     * codepath that bypass this check, for situations where we
+     * codepath that bypasses this check, for situations where we
      * already know that fd has data on it (for example if we'd gotten
      * to here as the result of a select() call.
      */

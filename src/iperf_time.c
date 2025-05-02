@@ -40,7 +40,7 @@ iperf_time_now(struct iperf_time *time1)
 {
     struct timespec ts;
     int result;
-    result = clock_gettime(CLOCK_MONOTONIC, &ts);
+    result = clock_gettime(CLOCK_REALTIME, &ts);
     if (result == 0) {
         time1->secs = (uint32_t) ts.tv_sec;
         time1->usecs = (uint32_t) ts.tv_nsec / 1000;

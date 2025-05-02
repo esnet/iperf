@@ -1,4 +1,4 @@
-.TH IPERF3 1 "May 2024" ESnet "User Manuals"
+.TH IPERF3 1 "May 2025" ESnet "User Manuals"
 .SH NAME
 iperf3 \- perform network throughput tests
 .SH SYNOPSIS
@@ -409,6 +409,10 @@ Set number of SCTP streams.
 .BR -Z ", " --zerocopy " "
 Use a "zero copy" method of sending data, such as sendfile(2),
 instead of the usual write(2).
+.TP
+.BR --skip-rx-copy
+Ignored received packet data, using the MSG_TRUNC flag to the
+recv(2) system call.
 .TP
 .BR -O ", " --omit " \fIn\fR"
 Perform pre-test for N seconds and omit the pre-test statistics, to skip past the TCP slow-start

@@ -2954,6 +2954,14 @@ add_to_interval_list(struct iperf_stream_result * rp, struct iperf_interval_resu
 {
     struct iperf_interval_results *irp;
 
+    /* Only the last interval result is needed, so removing last old entry to reduce memory consupmtion */
+    if (!TAILQ_EMPTY(&rp->interval_results) &&
+        (irp = TAILQ_LAST(&rp->interval_results, irlisthead)) != NULL
+    ) {
+        TAILQ_REMOVE(&rp->interval_results, irp, irlistentries);
+	free(irp);
+    }
+
     irp = (struct iperf_interval_results *) malloc(sizeof(struct iperf_interval_results));
     memcpy(irp, new, sizeof(struct iperf_interval_results));
     TAILQ_INSERT_TAIL(&rp->interval_results, irp, irlistentries);

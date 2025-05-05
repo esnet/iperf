@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2023, The Regents of the University of
+ * iperf, Copyright (c) 2014-2025, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -101,8 +101,8 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define OPT_JSON_STREAM 28
 #define OPT_SND_TIMEOUT 29
 #define OPT_USE_PKCS1_PADDING 30
-#define OPT_SKIP_RX_COPY 32
 #define OPT_CNTL_KA 31
+#define OPT_SKIP_RX_COPY 32
 
 /* states */
 #define TEST_START 1

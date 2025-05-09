@@ -474,6 +474,8 @@ iperf_tcp_connect(struct iperf_test *test)
 	printf("SNDBUF is %u, expecting %u\n", sndbuf_actual, test->settings->socket_bufsize);
     }
     if (test->settings->socket_bufsize && test->settings->socket_bufsize > sndbuf_actual) {
+        close(s);
+        freeaddrinfo(server_res);
 	i_errno = IESETBUF2;
 	return -1;
     }
@@ -492,6 +494,8 @@ iperf_tcp_connect(struct iperf_test *test)
 	printf("RCVBUF is %u, expecting %u\n", rcvbuf_actual, test->settings->socket_bufsize);
     }
     if (test->settings->socket_bufsize && test->settings->socket_bufsize > rcvbuf_actual) {
+        close(s);
+        freeaddrinfo(server_res);
 	i_errno = IESETBUF2;
 	return -1;
     }

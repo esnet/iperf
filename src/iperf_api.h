@@ -434,9 +434,8 @@ enum {
     IEUDPFILETRANSFER = 34, // Cannot transfer file using UDP
     IESERVERAUTHUSERS = 35,   // Cannot access authorized users file
     IEDISKFILEZEROCOPY = 36, // Sending disk file using MSG_ZEROCOPY is not supported 
-    IESERVERAUTHUSERS = 35,  // Cannot access authorized users file
     IECNTLKA = 36,          // Control connection Keepalive period should be larger than the full retry period (interval * count)
-    IEDISKFILEZEROCOPY = 37, // Sending disk file using MSG_ZEROCOPY is not supported 
+
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

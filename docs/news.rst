@@ -1,8 +1,20 @@
 iperf3 Project News
 ===================
 
-2024-05-13:  ipef-3.17.1 released
----------------------------------
+2024-12-13:  iperf-3.18 released
+--------------------------------
+
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.18.tar.gz
+| SHA256: ``c0618175514331e766522500e20c94bfb293b4424eb27d7207fb427b88d20bab``
+
+iperf-3.18 includes fixes for several bugs, including one that could
+cause an iperf3 server to crash if fed malformed data on the control
+connection. The release notes contain more information on the bug and
+the fix.
+
+
+2024-05-13:  iperf-3.17.1 released
+----------------------------------
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.17.1.tar.gz
 | SHA256: ``84404ca8431b595e86c473d8f23d8bb102810001f15feaf610effd3b318788aa``

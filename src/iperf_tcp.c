@@ -41,6 +41,7 @@
 #include "iperf.h"
 #include "iperf_api.h"
 #include "iperf_tcp.h"
+#include "iperf_util.h"
 #include "net.h"
 #include "cjson.h"
 
@@ -56,20 +57,28 @@ int
 iperf_tcp_recv(struct iperf_stream *sp)
 {
     int r;
+    int sock_opt;
 
-    r = Nread(sp->socket, sp->buffer, sp->settings->blksize, Ptcp);
+#if defined(HAVE_MSG_TRUNC)
+    sock_opt = sp->test->settings->skip_rx_copy ? MSG_TRUNC : 0;
+#else
+    sock_opt = 0;
+#endif /* HAVE_MSG_TRUNC */
+
+    r = Nrecv_no_select(sp->socket, sp->buffer, sp->settings->blksize, Ptcp, sock_opt);
+
 
     if (r < 0)
         return r;
 
     /* Only count bytes received while we're in the correct state. */
     if (sp->test->state == TEST_RUNNING) {
-	sp->result->bytes_received += r;
-	sp->result->bytes_received_this_interval += r;
+	      sp->result->bytes_received += r;
+	      sp->result->bytes_received_this_interval += r;
     }
     else {
-	if (sp->test->debug)
-	    printf("Late receive, state = %d\n", sp->test->state);
+	      if (sp->test->debug)
+	          printf("Late receive, state = %d-%s\n", sp->test->state, state_to_text(sp->test->state));
     }
 
     return r;
@@ -86,7 +95,7 @@ iperf_tcp_send(struct iperf_stream *sp)
     int r;
 
     if (!sp->pending_size)
-	sp->pending_size = sp->settings->blksize;
+	      sp->pending_size = sp->settings->blksize;
 
 #if defined(SUPPORTED_MSG_ZEROCOPY)
     if (sp->test->zerocopy == ZEROCOPY_MSG_ZEROCOPY) {
@@ -101,9 +110,9 @@ iperf_tcp_send(struct iperf_stream *sp)
     } else
 #endif /* SUPPORTED_MSG_ZEROCOPY */
     if (sp->test->zerocopy)
-	r = Nsendfile(sp->buffer_fd, sp->socket, sp->buffer, sp->pending_size);
+	      r = Nsendfile(sp->buffer_fd, sp->socket, sp->buffer, sp->pending_size);
     else
-	r = Nwrite(sp->socket, sp->buffer, sp->pending_size, Ptcp);
+	      r = Nwrite(sp->socket, sp->buffer, sp->pending_size, Ptcp);
 
     if (r < 0)
         return r;
@@ -113,8 +122,8 @@ iperf_tcp_send(struct iperf_stream *sp)
     sp->result->bytes_sent_this_interval += r;
 
     if (sp->test->debug_level >=  DEBUG_LEVEL_DEBUG)
-	printf("sent %d bytes of %d, pending %d, total %" PRIu64 "\n",
-	    r, sp->settings->blksize, sp->pending_size, sp->result->bytes_sent);
+	      printf("sent %d bytes of %d, pending %d, total %" PRIu64 "\n",
+	          r, sp->settings->blksize, sp->pending_size, sp->result->bytes_sent);
 
     return r;
 }
@@ -158,10 +167,10 @@ iperf_tcp_accept(struct iperf_test * test)
 
     if (test->settings->fqrate) {
 	/* Convert bits per second to bytes per second */
-	unsigned int fqrate = test->settings->fqrate / 8;
+	uint64_t fqrate = test->settings->fqrate / 8;
 	if (fqrate > 0) {
 	    if (test->debug) {
-		printf("Setting fair-queue socket pacing to %u\n", fqrate);
+		printf("Setting fair-queue socket pacing to %"PRIu64"\n", fqrate);
 	    }
 	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &fqrate, sizeof(fqrate)) < 0) {
 		warning("Unable to set socket pacing");
@@ -210,9 +219,10 @@ iperf_tcp_listen(struct iperf_test *test)
      *
      * It's not clear whether this is a requirement or a convenience.
      */
-    if (test->no_delay || test->settings->mss || test->settings->socket_bufsize) {
+    if (test->no_delay || test->mptcp || test->settings->mss || test->settings->socket_bufsize) {
 	struct addrinfo hints, *res;
 	char portstr[6];
+	int proto = 0;
 
         FD_CLR(s, &test->read_set);
         close(s);
@@ -238,7 +248,12 @@ iperf_tcp_listen(struct iperf_test *test)
             return -1;
         }
 
-        if ((s = socket(res->ai_family, SOCK_STREAM, 0)) < 0) {
+#if defined(HAVE_IPPROTO_MPTCP)
+        if (test->mptcp)
+	    proto = IPPROTO_MPTCP;
+#endif
+
+        if ((s = socket(res->ai_family, SOCK_STREAM, proto)) < 0) {
 	    freeaddrinfo(res);
             i_errno = IESTREAMLISTEN;
             return -1;
@@ -406,8 +421,15 @@ iperf_tcp_connect(struct iperf_test *test)
     socklen_t optlen;
     int saved_errno;
     int rcvbuf_actual, sndbuf_actual;
+    int proto = 0;
 
-    s = create_socket(test->settings->domain, SOCK_STREAM, test->bind_address, test->bind_dev, test->bind_port, test->server_hostname, test->server_port, &server_res, test->zerocopy);
+#if defined(HAVE_IPPROTO_MPTCP)
+    if (test->mptcp)
+        proto = IPPROTO_MPTCP;
+#endif
+
+    s = create_socket(test->settings->domain, SOCK_STREAM, proto, test->bind_address, test->bind_dev, test->bind_port, test->server_hostname, test->server_port, &server_res, test->zerocopy);
+
     if (s < 0) {
 	i_errno = IESTREAMCONNECT;
 	return -1;
@@ -568,10 +590,10 @@ iperf_tcp_connect(struct iperf_test *test)
     /* If socket pacing is specified try to enable it. */
     if (test->settings->fqrate) {
 	/* Convert bits per second to bytes per second */
-	unsigned int fqrate = test->settings->fqrate / 8;
+	uint64_t fqrate = test->settings->fqrate / 8;
 	if (fqrate > 0) {
 	    if (test->debug) {
-		printf("Setting fair-queue socket pacing to %u\n", fqrate);
+		printf("Setting fair-queue socket pacing to %"PRIu64"\n", fqrate);
 	    }
 	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &fqrate, sizeof(fqrate)) < 0) {
 		warning("Unable to set socket pacing");

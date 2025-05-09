@@ -45,6 +45,7 @@
 #include <sys/resource.h>
 #include <sched.h>
 #include <setjmp.h>
+#include <signal.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -68,6 +69,23 @@ void *
 iperf_server_worker_run(void *s) {
     struct iperf_stream *sp = (struct iperf_stream *) s;
     struct iperf_test *test = sp->test;
+
+    /* Blocking signal to make sure that signal will be handled by main thread */
+    sigset_t set;
+    sigemptyset(&set);
+#ifdef SIGTERM
+    sigaddset(&set, SIGTERM);
+#endif
+#ifdef SIGHUP
+    sigaddset(&set, SIGHUP);
+#endif
+#ifdef SIGINT
+    sigaddset(&set, SIGINT);
+#endif
+    if (pthread_sigmask(SIG_BLOCK, &set, NULL) != 0) {
+	    i_errno = IEPTHREADSIGMASK;
+	    goto cleanup_and_fail;
+    }
 
     /* Allow this thread to be cancelled even if it's in a syscall */
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
@@ -166,6 +184,12 @@ iperf_accept(struct iperf_test *test)
         }
 #endif /* HAVE_TCP_USER_TIMEOUT */
 
+#if defined (HAVE_TCP_KEEPALIVE)
+        // Set Control Connection TCP Keepalive (especially useful for long UDP test sessions)
+        if (iperf_set_control_keepalive(test) < 0)
+            return -1;
+#endif //HAVE_TCP_KEEPALIVE
+
         if (Nread(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) != COOKIE_SIZE) {
             /*
              * Note this error covers both the case of a system error
@@ -175,25 +199,26 @@ iperf_accept(struct iperf_test *test)
             i_errno = IERECVCOOKIE;
             goto error_handling;
         }
-    FD_SET(test->ctrl_sck, &test->read_set);
-    if (test->ctrl_sck > test->max_fd) test->max_fd = test->ctrl_sck;
+        FD_SET(test->ctrl_sck, &test->read_set);
+        if (test->ctrl_sck > test->max_fd) test->max_fd = test->ctrl_sck;
 
-    if (iperf_set_send_state(test, PARAM_EXCHANGE) != 0)
-        goto error_handling;
-    if (iperf_exchange_parameters(test) < 0)
-        goto error_handling;
-    if (test->server_affinity != -1)
-        if (iperf_setaffinity(test, test->server_affinity) != 0)
+        if (iperf_set_send_state(test, PARAM_EXCHANGE) != 0)
             goto error_handling;
+        if (iperf_exchange_parameters(test) < 0)
+            goto error_handling;
+        if (test->server_affinity != -1) {
+            if (iperf_setaffinity(test, test->server_affinity) != 0)
+                goto error_handling;
+        }
         if (test->on_connect)
             test->on_connect(test);
     } else {
-	/*
-	 * Don't try to read from the socket.  It could block an ongoing test.
-	 * Just send ACCESS_DENIED.
+        /*
+         * Don't try to read from the socket.  It could block an ongoing test.
+         * Just send ACCESS_DENIED.
          * Also, if sending failed, don't return an error, as the request is not related
          * to the ongoing test, and returning an error will terminate the test.
-	 */
+         */
         if (Nwrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp) < 0) {
             if (test->debug)
                 printf("failed to send ACCESS_DENIED to an unsolicited connection request during active test\n");
@@ -217,12 +242,16 @@ iperf_handle_message_server(struct iperf_test *test)
     int rval;
     struct iperf_stream *sp;
 
+    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+        iperf_printf(test, "Reading new State from the Client - current state is %d-%s\n", test->state, state_to_text(test->state));
+    }
+
     // XXX: Need to rethink how this behaves to fit API
     if ((rval = Nread(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp)) <= 0) {
         if (rval == 0) {
-	    iperf_err(test, "the client has unexpectedly closed the connection");
+            iperf_err(test, "the client has unexpectedly closed the connection");
             i_errno = IECTRLCLOSE;
-            test->state = IPERF_DONE;
+            iperf_set_test_state(test, IPERF_DONE);
             return 0;
         } else {
             i_errno = IERECVMESSAGE;
@@ -230,11 +259,15 @@ iperf_handle_message_server(struct iperf_test *test)
         }
     }
 
+    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+        iperf_printf(test, "State change: server received and changed State to %d-%s\n", test->state, state_to_text(test->state));
+    }
+
     switch(test->state) {
         case TEST_START:
             break;
         case TEST_END:
-	    test->done = 1;
+            test->done = 1;
             cpu_util(test->cpu_util);
             test->stats_callback(test);
             SLIST_FOREACH(sp, &test->streams, streams) {
@@ -243,11 +276,11 @@ iperf_handle_message_server(struct iperf_test *test)
                 close(sp->socket);
             }
             test->reporter_callback(test);
-	    if (iperf_set_send_state(test, EXCHANGE_RESULTS) != 0)
+            if (iperf_set_send_state(test, EXCHANGE_RESULTS) != 0)
                 return -1;
             if (iperf_exchange_results(test) < 0)
                 return -1;
-	    if (iperf_set_send_state(test, DISPLAY_RESULTS) != 0)
+            if (iperf_set_send_state(test, DISPLAY_RESULTS) != 0)
                 return -1;
             if (test->on_test_finish)
                 test->on_test_finish(test);
@@ -272,7 +305,7 @@ iperf_handle_message_server(struct iperf_test *test)
                 FD_CLR(sp->socket, &test->write_set);
                 close(sp->socket);
             }
-            test->state = IPERF_DONE;
+            iperf_set_test_state(test, IPERF_DONE);
             break;
         default:
             i_errno = IEMESSAGE;
@@ -426,20 +459,23 @@ cleanup_server(struct iperf_test *test)
         }
 #endif /* SUPPORTED_MSG_ZEROCOPY */
         sp->done = 1;
-        rc = pthread_cancel(sp->thr);
-        if (rc != 0 && rc != ESRCH) {
-            i_errno = IEPTHREADCANCEL;
-            errno = rc;
-            iperf_err(test, "cleanup_server in pthread_cancel - %s", iperf_strerror(i_errno));
-        }
-        rc = pthread_join(sp->thr, NULL);
-        if (rc != 0 && rc != ESRCH) {
-            i_errno = IEPTHREADJOIN;
-            errno = rc;
-            iperf_err(test, "cleanup_server in pthread_join - %s", iperf_strerror(i_errno));
-        }
-        if (test->debug_level >= DEBUG_LEVEL_INFO) {
-            iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
+        if (sp->thread_created == 1) {
+            rc = pthread_cancel(sp->thr);
+            if (rc != 0 && rc != ESRCH) {
+                i_errno = IEPTHREADCANCEL;
+                errno = rc;
+                iperf_err(test, "cleanup_server in pthread_cancel - %s", iperf_strerror(i_errno));
+            }
+            rc = pthread_join(sp->thr, NULL);
+            if (rc != 0 && rc != ESRCH) {
+                i_errno = IEPTHREADJOIN;
+                errno = rc;
+                iperf_err(test, "cleanup_server in pthread_join - %s", iperf_strerror(i_errno));
+            }
+            if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
+            }
+            sp->thread_created = 0;
         }
     }
     i_errno = i_errno_save;
@@ -518,21 +554,24 @@ iperf_run_server(struct iperf_test *test)
     int64_t timeout_us;
     int64_t rcv_timeout_us;
 
-    if (test->logfile)
+    if (test->logfile) {
         if (iperf_open_logfile(test) < 0)
             return -2;
+    }
 
-    if (test->affinity != -1)
+    if (test->affinity != -1) {
 	if (iperf_setaffinity(test, test->affinity) != 0) {
             cleanup_server(test);
 	    return -2;
         }
+    }
 
-    if (test->json_output)
+    if (test->json_output) {
 	if (iperf_json_start(test) < 0) {
             cleanup_server(test);
 	    return -2;
         }
+    }
 
     if (test->json_output) {
 	cJSON_AddItemToObject(test->json_start, "version", cJSON_CreateString(version));
@@ -553,7 +592,7 @@ iperf_run_server(struct iperf_test *test)
     iperf_time_now(&last_receive_time); // Initialize last time something was received
     last_receive_blocks = 0;
 
-    test->state = IPERF_START;
+    iperf_set_test_state(test, IPERF_START);
     send_streams_accepted = 0;
     rec_streams_accepted = 0;
     rcv_timeout_us = (test->settings->rcv_timeout.secs * SEC_TO_US) + test->settings->rcv_timeout.usecs;
@@ -884,6 +923,7 @@ iperf_run_server(struct iperf_test *test)
                             cleanup_server(test);
                             return -1;
                         }
+                        sp->thread_created = 1;
                         if (test->debug_level >= DEBUG_LEVEL_INFO) {
                             iperf_printf(test, "Thread FD %d created\n", sp->socket);
                         }

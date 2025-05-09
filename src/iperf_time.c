@@ -72,12 +72,11 @@ iperf_time_now(struct iperf_time *time1)
 void
 iperf_time_add_usecs(struct iperf_time *time1, uint64_t usecs)
 {
-    time1->secs += usecs / 1000000L;
-    time1->usecs += usecs % 1000000L;
-    if ( time1->usecs >= 1000000L ) {
-        time1->secs += time1->usecs / 1000000L;
-        time1->usecs %= 1000000L;
-    }
+    uint64_t total_usecs;
+
+    total_usecs = time1->usecs + usecs;
+    time1->secs += total_usecs / 1000000L;
+    time1->usecs = total_usecs % 1000000L;
 }
 
 uint64_t

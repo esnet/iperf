@@ -1,4 +1,4 @@
-# iperf, Copyright (c) 2014-2024, The Regents of the University of
+# iperf, Copyright (c) 2014-2025, The Regents of the University of
 # California, through Lawrence Berkeley National Laboratory (subject
 # to receipt of any required approvals from the U.S. Dept. of
 # Energy).  All rights reserved.
@@ -25,7 +25,7 @@
 
 # Initialize the autoconf system for the specified tool, version and mailing list
 AC_PREREQ([2.71])
-AC_INIT([iperf],[3.18+],[https://github.com/esnet/iperf],[iperf],[https://software.es.net/iperf/])
+AC_INIT([iperf],[3.19],[https://github.com/esnet/iperf],[iperf],[https://software.es.net/iperf/])
 m4_include([config/ax_check_openssl.m4])
 m4_include([config/ax_pthread.m4])
 m4_include([config/iperf_config_static_bin.m4])

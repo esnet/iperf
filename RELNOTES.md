@@ -1,6 +1,68 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.18 2024-12-13
+---------------------
+
+* Notable user-visible changes
+
+    * SECURITY NOTE: Thanks to Leonid Krolle Bi.Zone for discovering a
+                     JSON type security vulnerability that caused a
+                     segmentation fault in the
+                     server. (CVE-2024-53580) This has now been
+                     fixed. (PR#1810)
+
+    * UDP packets per second now reports the correct number of
+      packets, by reporting NET_SOFTERROR if there's a EAGAIN/EINTR
+      errno if no data was sent (#1367/PR#1379).
+
+    * Several segmentation faults related to threading were fixed. One
+      where `pthread_cancel` was called on an improperly initialized
+      thread (#1801), another where threads were being recycled
+      (#1760/PR#1761), and another where threads were improperly
+      handling signals (#1750/PR#1752).
+
+    * A segmentation fault from calling `freeaddrinfo` with `NULL` was
+      fixed (PR#1755).
+
+    * Some JSON options were fixed, including checking the size for
+      `json_read` (PR#1709), but the size limit was removed for
+      received server output (PR#1779).
+
+    * A rcv-timeout error has been fixed. The Nread timeout was
+      hardcoded and timed out before the `--rcv-timeout` option
+      (PR#1744).
+
+    * There is no longer a limit on the omit time period
+      (#1770/PR#1774).
+
+    * Fixed an output crash under 32-bit big-endian systems (PR#1713).
+
+    * An issue was fixed where CPU utilization was unexpectedly high
+      during limited baud rate tests. The `--pacing-timer` option was
+      removed, but it is still available in the library
+      (#1741/PR#1743).
+
+    * Add SCTP information to `--json` output and fixed compile error
+      when SCTP is not supported (#1731).
+
+    * `--fq-rate` was changed from a uint to a uint64 to allow pacing above
+      32G.  Not yet tested on big-endian systems (PR#1728).
+
+* Notable developer-visible changes
+
+    * Clang compilation failure on Android were fixed (PR#1687).
+
+    * `iperf_time_add()` was optimizated to improve performance
+      (PR#1742).
+
+    * Debug messages were added when the state changes (PR#1734).
+
+    * To increase performance, the old UDP `prot_listener` is cleared
+      and removed after each test (PR#1708).
+
+    * A file descriptor leak was closed (PR#1619).
+
 iperf-3.17.1 2024-05-13
 -----------------------
 

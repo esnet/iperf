@@ -61,8 +61,18 @@ iperf_udp_recv(struct iperf_stream *sp)
     int       first_packet = 0;
     double    transit = 0, d = 0;
     struct iperf_time sent_time, arrival_time, temp_time;
+    struct iperf_test *test = sp->test;	
+    int sock_opt = 0;
 
-    r = Nread(sp->socket, sp->buffer, size, Pudp);
+#if defined(HAVE_MSG_TRUNC)
+    // UDP recv() with MSG_TRUNC reads only the size bytes, but return the length of the full packet
+    if (sp->test->settings->skip_rx_copy) {
+        sock_opt = MSG_TRUNC;
+        size = sizeof(sec) + sizeof(usec) + sizeof(pcount);
+    }
+#endif /* HAVE_MSG_TRUNC */
+
+    r = Nrecv_no_select(sp->socket, sp->buffer, size, Pudp, sock_opt);
 
     /*
      * If we got an error in the read, or if we didn't read anything
@@ -73,7 +83,7 @@ iperf_udp_recv(struct iperf_stream *sp)
         return r;
 
     /* Only count bytes received while we're in the correct state. */
-    if (sp->test->state == TEST_RUNNING) {
+    if (test->state == TEST_RUNNING) {
 
 	/*
 	 * For jitter computation below, it's important to know if this
@@ -87,7 +97,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	sp->result->bytes_received_this_interval += r;
 
 	/* Dig the various counters out of the incoming UDP packet */
-	if (sp->test->udp_counters_64bit) {
+	if (test->udp_counters_64bit) {
 	    memcpy(&sec, sp->buffer, sizeof(sec));
 	    memcpy(&usec, sp->buffer+4, sizeof(usec));
 	    memcpy(&pcount, sp->buffer+8, sizeof(pcount));
@@ -109,7 +119,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    sent_time.usecs = usec;
 	}
 
-	if (sp->test->debug_level >= DEBUG_LEVEL_DEBUG)
+	if (test->debug_level >= DEBUG_LEVEL_DEBUG)
 	    fprintf(stderr, "pcount %" PRIu64 " packet_count %" PRIu64 "\n", pcount, sp->packet_count);
 
 	/*
@@ -131,6 +141,8 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    if (pcount > sp->packet_count + 1) {
 		/* There's a gap so count that as a loss. */
 		sp->cnt_error += (pcount - 1) - sp->packet_count;
+                if (test->debug_level >= DEBUG_LEVEL_INFO)
+		    fprintf(stderr, "LOST %" PRIu64 " PACKETS - received packet %" PRIu64 " but expected sequence %" PRIu64 " on stream %d\n", (pcount - sp->packet_count + 1), pcount, sp->packet_count + 1, sp->socket);
 	    }
 	    /* Update the highest sequence number seen so far. */
 	    sp->packet_count = pcount;
@@ -152,8 +164,8 @@ iperf_udp_recv(struct iperf_stream *sp)
 		sp->cnt_error--;
 
 	    /* Log the out-of-order packet */
-	    if (sp->test->debug)
-		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %" PRIu64 " on stream %d", pcount, sp->packet_count + 1, sp->socket);
+	    if (test->debug_level >= DEBUG_LEVEL_INFO)
+		fprintf(stderr, "OUT OF ORDER - received packet %" PRIu64 " but expected sequence %" PRIu64 " on stream %d\n", pcount, sp->packet_count + 1, sp->socket);
 	}
 
 	/*
@@ -183,8 +195,8 @@ iperf_udp_recv(struct iperf_stream *sp)
 	sp->jitter += (d - sp->jitter) / 16.0;
     }
     else {
-	if (sp->test->debug)
-	    printf("Late receive, state = %d\n", sp->test->state);
+	if (test->debug_level >= DEBUG_LEVEL_INFO)
+	    printf("Late receive, state = %d\n", test->state);
     }
 
     return r;
@@ -423,10 +435,10 @@ iperf_udp_accept(struct iperf_test *test)
     /* If socket pacing is specified, try it. */
     if (test->settings->fqrate) {
 	/* Convert bits per second to bytes per second */
-	unsigned int fqrate = test->settings->fqrate / 8;
+	uint64_t fqrate = test->settings->fqrate / 8;
 	if (fqrate > 0) {
 	    if (test->debug) {
-		printf("Setting fair-queue socket pacing to %u\n", fqrate);
+		printf("Setting fair-queue socket pacing to %"PRIu64"\n", fqrate);
 	    }
 	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &fqrate, sizeof(fqrate)) < 0) {
 		warning("Unable to set socket pacing");
@@ -446,6 +458,7 @@ iperf_udp_accept(struct iperf_test *test)
     /*
      * Create a new "listening" socket to replace the one we were using before.
      */
+    FD_CLR(test->prot_listener, &test->read_set); // No control messages from old listener
     test->prot_listener = netannounce(test->settings->domain, Pudp, test->bind_address, test->bind_dev, test->server_port);
     if (test->prot_listener < 0) {
         i_errno = IESTREAMLISTEN;
@@ -539,10 +552,10 @@ iperf_udp_connect(struct iperf_test *test)
     /* If socket pacing is available and not disabled, try it. */
     if (test->settings->fqrate) {
 	/* Convert bits per second to bytes per second */
-	unsigned int fqrate = test->settings->fqrate / 8;
+	uint64_t fqrate = test->settings->fqrate / 8;
 	if (fqrate > 0) {
 	    if (test->debug) {
-		printf("Setting fair-queue socket pacing to %u\n", fqrate);
+		printf("Setting fair-queue socket pacing to %"PRIu64"\n", fqrate);
 	    }
 	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &fqrate, sizeof(fqrate)) < 0) {
 		warning("Unable to set socket pacing");

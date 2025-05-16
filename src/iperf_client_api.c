@@ -55,6 +55,23 @@ void *iperf_client_worker_run(void *s) {
   struct iperf_stream *sp = (struct iperf_stream *)s;
   struct iperf_test *test = sp->test;
 
+  /* Blocking signal to make sure that signal will be handled by main thread */
+  sigset_t set;
+  sigemptyset(&set);
+#ifdef SIGTERM
+  sigaddset(&set, SIGTERM);
+#endif
+#ifdef SIGHUP
+  sigaddset(&set, SIGHUP);
+#endif
+#ifdef SIGINT
+  sigaddset(&set, SIGINT);
+#endif
+  if (pthread_sigmask(SIG_BLOCK, &set, NULL) != 0) {
+    i_errno = IEPTHREADSIGMASK;
+    goto cleanup_and_fail;
+  }
+
   /* Allow this thread to be cancelled even if it's in a syscall */
   pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
   pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
@@ -153,8 +170,13 @@ int iperf_create_streams(struct iperf_test *test, int sender) {
           i_errno = IESETCONGESTION;
           return -1;
         }
-        // Set actual used congestion alg, or set to unknown if could not get
-        // it
+        if (test->congestion_used) {
+          if (test->debug)
+            printf("Overriding existing congestion algorithm: %s\n",
+                   test->congestion_used);
+          free(test->congestion_used);
+        }
+        // Set actual used congestion alg, or set to unknown if could not get it
         if (rc < 0)
           test->congestion_used = strdup("unknown");
         else
@@ -303,6 +325,13 @@ int iperf_handle_message_client(struct iperf_test *test) {
     i_errno = IEINITTEST;
     return -1;
   }
+
+  if (test->debug_level >= DEBUG_LEVEL_INFO) {
+    iperf_printf(test,
+                 "Reading new State from the Server - current state is %d-%s\n",
+                 test->state, state_to_text(test->state));
+  }
+
   /*!!! Why is this read() and not Nread()? */
   if ((rval = read(test->ctrl_sck, (char *)&test->state,
                    sizeof(signed char))) <= 0) {
@@ -313,6 +342,12 @@ int iperf_handle_message_client(struct iperf_test *test) {
       i_errno = IERECVMESSAGE;
       return -1;
     }
+  }
+
+  if (test->debug_level >= DEBUG_LEVEL_INFO) {
+    iperf_printf(test,
+                 "State change: client received and changed State to %d-%s\n",
+                 test->state, state_to_text(test->state));
   }
 
   switch (test->state) {
@@ -429,6 +464,13 @@ int iperf_connect(struct iperf_test *test) {
     return -1;
   }
 
+#if defined(HAVE_TCP_KEEPALIVE)
+  // Set Control Connection TCP Keepalive (especially useful for long UDP test
+  // sessions)
+  if (iperf_set_control_keepalive(test) < 0)
+    return -1;
+#endif // HAVE_TCP_KEEPALIVE
+
 #if defined(HAVE_TCP_USER_TIMEOUT)
   if ((opt = test->settings->snd_timeout)) {
     if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_USER_TIMEOUT, &opt,
@@ -539,6 +581,7 @@ int iperf_client_end(struct iperf_test *test) {
 }
 
 int iperf_run_client(struct iperf_test *test) {
+  int startup;
   int result = 0;
   fd_set read_set, write_set;
   struct iperf_time now;
@@ -598,6 +641,7 @@ int iperf_run_client(struct iperf_test *test) {
       &last_receive_time); // Initialize last time something was received
   last_receive_blocks = 0;
 
+  startup = 1;
   while (test->state != IPERF_DONE) {
     memcpy(&read_set, &test->read_set, sizeof(fd_set));
     memcpy(&write_set, &test->write_set, sizeof(fd_set));
@@ -674,6 +718,38 @@ int iperf_run_client(struct iperf_test *test) {
     }
 
     if (test->state == TEST_RUNNING) {
+
+      /* Is this our first time really running? */
+      if (startup) {
+        startup = 0;
+
+        /* Create and spin up threads */
+        pthread_attr_t attr;
+        if (pthread_attr_init(&attr) != 0) {
+          i_errno = IEPTHREADATTRINIT;
+          goto cleanup_and_fail;
+        }
+
+        SLIST_FOREACH(sp, &test->streams, streams) {
+          if (pthread_create(&(sp->thr), &attr, &iperf_client_worker_run, sp) !=
+              0) {
+            i_errno = IEPTHREADCREATE;
+            goto cleanup_and_fail;
+          }
+          sp->thread_created = 1;
+          if (test->debug_level >= DEBUG_LEVEL_INFO) {
+            iperf_printf(test, "Thread FD %d created\n", sp->socket);
+          }
+        }
+        if (test->debug_level >= DEBUG_LEVEL_INFO) {
+          iperf_printf(test, "All threads created\n");
+        }
+        if (pthread_attr_destroy(&attr) != 0) {
+          i_errno = IEPTHREADATTRDESTROY;
+          goto cleanup_and_fail;
+        }
+      }
+
       /* Run the timers. */
       iperf_time_now(&now);
       tmr_run(&now);
@@ -700,24 +776,27 @@ int iperf_run_client(struct iperf_test *test) {
           if (sp->sender) {
             int rc;
             sp->done = 1;
-            rc = pthread_cancel(sp->thr);
-            if (rc != 0 && rc != ESRCH) {
-              i_errno = IEPTHREADCANCEL;
-              errno = rc;
-              iperf_err(test, "sender cancel in pthread_cancel - %s",
-                        iperf_strerror(i_errno));
-              goto cleanup_and_fail;
-            }
-            rc = pthread_join(sp->thr, NULL);
-            if (rc != 0 && rc != ESRCH) {
-              i_errno = IEPTHREADJOIN;
-              errno = rc;
-              iperf_err(test, "sender cancel in pthread_join - %s",
-                        iperf_strerror(i_errno));
-              goto cleanup_and_fail;
-            }
-            if (test->debug_level >= DEBUG_LEVEL_INFO) {
-              iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
+            if (sp->thread_created == 1) {
+              rc = pthread_cancel(sp->thr);
+              if (rc != 0 && rc != ESRCH) {
+                i_errno = IEPTHREADCANCEL;
+                errno = rc;
+                iperf_err(test, "sender cancel in pthread_cancel - %s",
+                          iperf_strerror(i_errno));
+                goto cleanup_and_fail;
+              }
+              rc = pthread_join(sp->thr, NULL);
+              if (rc != 0 && rc != ESRCH) {
+                i_errno = IEPTHREADJOIN;
+                errno = rc;
+                iperf_err(test, "sender cancel in pthread_join - %s",
+                          iperf_strerror(i_errno));
+                goto cleanup_and_fail;
+              }
+              if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
+              }
+              sp->thread_created = 0;
             }
           }
         }
@@ -740,24 +819,27 @@ int iperf_run_client(struct iperf_test *test) {
     if (!sp->sender) {
       int rc;
       sp->done = 1;
-      rc = pthread_cancel(sp->thr);
-      if (rc != 0 && rc != ESRCH) {
-        i_errno = IEPTHREADCANCEL;
-        errno = rc;
-        iperf_err(test, "receiver cancel in pthread_cancel - %s",
-                  iperf_strerror(i_errno));
-        goto cleanup_and_fail;
-      }
-      rc = pthread_join(sp->thr, NULL);
-      if (rc != 0 && rc != ESRCH) {
-        i_errno = IEPTHREADJOIN;
-        errno = rc;
-        iperf_err(test, "receiver cancel in pthread_join - %s",
-                  iperf_strerror(i_errno));
-        goto cleanup_and_fail;
-      }
-      if (test->debug_level >= DEBUG_LEVEL_INFO) {
-        iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
+      if (sp->thread_created == 1) {
+        rc = pthread_cancel(sp->thr);
+        if (rc != 0 && rc != ESRCH) {
+          i_errno = IEPTHREADCANCEL;
+          errno = rc;
+          iperf_err(test, "receiver cancel in pthread_cancel - %s",
+                    iperf_strerror(i_errno));
+          goto cleanup_and_fail;
+        }
+        rc = pthread_join(sp->thr, NULL);
+        if (rc != 0 && rc != ESRCH) {
+          i_errno = IEPTHREADJOIN;
+          errno = rc;
+          iperf_err(test, "receiver cancel in pthread_join - %s",
+                    iperf_strerror(i_errno));
+          goto cleanup_and_fail;
+        }
+        if (test->debug_level >= DEBUG_LEVEL_INFO) {
+          iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
+        }
+        sp->thread_created = 0;
       }
     }
   }
@@ -781,24 +863,30 @@ cleanup_and_fail:
   /* Cancel all outstanding threads */
   i_errno_save = i_errno;
   SLIST_FOREACH(sp, &test->streams, streams) {
+    if (sp->done) {
+      continue;
+    }
     sp->done = 1;
     int rc;
-    rc = pthread_cancel(sp->thr);
-    if (rc != 0 && rc != ESRCH) {
-      i_errno = IEPTHREADCANCEL;
-      errno = rc;
-      iperf_err(test, "cleanup_and_fail in pthread_cancel - %s",
-                iperf_strerror(i_errno));
-    }
-    rc = pthread_join(sp->thr, NULL);
-    if (rc != 0 && rc != ESRCH) {
-      i_errno = IEPTHREADJOIN;
-      errno = rc;
-      iperf_err(test, "cleanup_and_fail in pthread_join - %s",
-                iperf_strerror(i_errno));
-    }
-    if (test->debug_level >= DEBUG_LEVEL_INFO) {
-      iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
+    if (sp->thread_created == 1) {
+      rc = pthread_cancel(sp->thr);
+      if (rc != 0 && rc != ESRCH) {
+        i_errno = IEPTHREADCANCEL;
+        errno = rc;
+        iperf_err(test, "cleanup_and_fail in pthread_cancel - %s",
+                  iperf_strerror(i_errno));
+      }
+      rc = pthread_join(sp->thr, NULL);
+      if (rc != 0 && rc != ESRCH) {
+        i_errno = IEPTHREADJOIN;
+        errno = rc;
+        iperf_err(test, "cleanup_and_fail in pthread_join - %s",
+                  iperf_strerror(i_errno));
+      }
+      if (test->debug_level >= DEBUG_LEVEL_INFO) {
+        iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
+      }
+      sp->thread_created = 0;
     }
   }
   if (test->debug_level >= DEBUG_LEVEL_INFO) {

@@ -83,6 +83,14 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 typedef unsigned int uint
 #endif // __vxworks or __VXWORKS__
 
+struct iperf_sctp_info
+{
+    long rtt;
+    long pmtu;
+    uint32_t wnd;
+    uint32_t cwnd;
+};
+
 struct iperf_interval_results
 {
     atomic_iperf_size_t bytes_transferred; /* bytes transferred in this interval */
@@ -107,6 +115,9 @@ struct iperf_interval_results
     /* Just placeholders, never accessed. */
     char *tcpInfo;
 #endif
+#if defined(HAVE_SCTP_H)
+    struct iperf_sctp_info sctp_info;
+#endif /* HAVE_SCTP_H */
     long interval_retrans;
     long snd_cwnd;
     long snd_wnd;
@@ -169,10 +180,15 @@ struct iperf_settings
     char      *client_password;
     EVP_PKEY  *client_rsa_pubkey;
 #endif // HAVE_SSL
+    int       skip_rx_copy;         /* Whether to ignore received messages data, using MSG_TRUNC option */
     int	      connect_timeout;	    /* socket connection timeout, in ms */
     int       idle_timeout;         /* server idle time timeout */
     unsigned int snd_timeout; /* Timeout for sending tcp messages in active mode, in us */
     struct iperf_time rcv_timeout;  /* Timeout for receiving messages in active mode, in us */
+    int       cntl_ka;              /* Use Control TCP connection Keepalive */
+    int       cntl_ka_keepidle;     /* Control TCP connection Keepalive idle time (TCP_KEEPIDLE) */
+    int       cntl_ka_interval;     /* Control TCP connection Keepalive interval between retries (TCP_KEEPINTV) */
+    int       cntl_ka_count;        /* Control TCP connection Keepalive number of retries (TCP_KEEPCNT) */
 };
 
 struct iperf_test;
@@ -182,6 +198,7 @@ struct iperf_stream
     struct iperf_test* test;
 
     pthread_t thr;
+    int thread_created;
     int       done;
 
     /* configurable members */
@@ -331,6 +348,8 @@ struct iperf_test
     int	      verbose;                          /* -V option - verbose mode */
     int	      json_output;                      /* -J option - JSON output */
     int	      json_stream;                      /* --json-stream */
+    void      (*json_callback) (struct iperf_test *, char *); /* allow user apps to receive the
+                                                JSON strings,instead of writing them to the output file */
     int	      zerocopy;                         /* -Z option - use sendfile */
     int       debug;				/* -d option - enable debug */
     enum      debug_level debug_level;          /* -d option option - level of debug messages to show */
@@ -341,6 +360,7 @@ struct iperf_test
     int	      repeating_payload;                /* --repeating-payload */
     int       timestamps;			/* --timestamps */
     char     *timestamp_format;
+    int       mptcp;				/* -m, --mptcp */
 
     char     *json_output_string; /* rendered JSON output if json_output is set */
     /* Select related parameters */
@@ -425,6 +445,8 @@ struct iperf_test
 
 #define UDP_BUFFER_EXTRA 1024
 
+#define MAX_PARAMS_JSON_STRING 8 * 1024
+
 /* constants for command line arg sanity checks */
 #define MB (1024 * 1024)
 #define MAX_TCP_BUFFER (512 * MB)
@@ -436,6 +458,7 @@ struct iperf_test
 #define MIN_INTERVAL 0.1
 #define MAX_INTERVAL 60.0
 #define MAX_TIME 86400
+#define MAX_OMIT_TIME 600
 #define MAX_BURST 1000
 #define MAX_MSS (9 * 1024)
 #define MAX_STREAMS 128

@@ -3,6 +3,9 @@
 /* Define to 1 if you have the 'clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
+/* Define to 1 if you have the 'clock_nanosleep' function. */
+#undef HAVE_CLOCK_NANOSLEEP
+
 /* Define to 1 if you have the 'cpuset_setaffinity' function. */
 #undef HAVE_CPUSET_SETAFFINITY
 
@@ -30,6 +33,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Have MPTCP protocol. */
+#undef HAVE_IPPROTO_MPTCP
+
 /* Have IP_DONTFRAG sockopt. */
 #undef HAVE_IP_DONTFRAG
 
@@ -41,6 +47,12 @@
 
 /* Define to 1 if you have the <linux/tcp.h> header file. */
 #undef HAVE_LINUX_TCP_H
+
+/* Have MSG_TRUNC recv option. */
+#undef HAVE_MSG_TRUNC
+
+/* Define to 1 if you have the 'nanosleep' function. */
+#undef HAVE_NANOSLEEP
 
 /* Define to 1 if you have the <netinet/sctp.h> header file. */
 #undef HAVE_NETINET_SCTP_H
@@ -113,6 +125,9 @@
 
 /* Have tcpi_snd_wnd field in tcp_info. */
 #undef HAVE_TCP_INFO_SND_WND
+
+/* Have TCP_KEEPIDLE sockopt. */
+#undef HAVE_TCP_KEEPALIVE
 
 /* Have TCP_USER_TIMEOUT sockopt. */
 #undef HAVE_TCP_USER_TIMEOUT

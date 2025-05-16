@@ -1,6 +1,18 @@
 iperf3 Project News
 ===================
 
+2025-05-16:  iperf-3.19 released
+--------------------------------
+
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.19.tar.gz
+| SHA256: ``040161da1555ec7411a9d81191049830ef37717d429a94ee6cf0842618e0e29c``
+
+iperf-3.19 includes support for MP-TCPv1 under Linux, keepalives on
+the control connection, support for the MSG_TRUNC receive option, and
+a number of minor bug fixes. The release notes contain more
+information on the changes.
+
+
 2024-12-13:  iperf-3.18 released
 --------------------------------
 

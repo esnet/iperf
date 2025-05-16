@@ -926,8 +926,8 @@ iperf_on_test_start(struct iperf_test *test)
 **
 ** Returns 1 if the v6 address is v4-mapped, 0 otherwise.
 */
-static int
-mapped_v4_to_regular_v4(char *str)
+int
+iperf_mapped_v4_to_regular_v4(char *str)
 {
     char *prefix = "::ffff:";
     int prefix_len;
@@ -986,7 +986,7 @@ iperf_on_connect(struct iperf_test *test)
             inet_ntop(AF_INET6, &sa_in6P->sin6_addr, ipr, sizeof(ipr));
 	    port = ntohs(sa_in6P->sin6_port);
         }
-	if (mapped_v4_to_regular_v4(ipr)) {
+	if (iperf_mapped_v4_to_regular_v4(ipr)) {
 	    iperf_set_mapped_v4(test, 1);
 	}
 	if (test->json_output)
@@ -2430,9 +2430,18 @@ get_parameters(struct iperf_test *test)
     int r = 0;
     cJSON *j;
     cJSON *j_p;
+    int k;
 
     j = JSON_read(test->ctrl_sck, MAX_PARAMS_JSON_STRING);
     if (j == NULL) {
+        if (test->debug_level >= 3) {
+            iperf_printf(test, "Cookie received (only printable chars)=%s\n", test->cookie);
+            iperf_printf(test, "Cookie received (full in Hex)=");
+            for (k = 0; k < strlen(test->cookie); k++) {
+                iperf_printf(test, "%02x", test->cookie[k]);
+            }
+            iperf_printf(test, "\n");
+        }
 	i_errno = IERECVPARAMS;
         r = -1;
     } else {
@@ -2989,16 +2998,16 @@ connect_msg(struct iperf_stream *sp)
 
     if (getsockdomain(sp->socket) == AF_INET) {
         inet_ntop(AF_INET, (void *) &((struct sockaddr_in *) &sp->local_addr)->sin_addr, ipl, sizeof(ipl));
-	mapped_v4_to_regular_v4(ipl);
+	iperf_mapped_v4_to_regular_v4(ipl);
         inet_ntop(AF_INET, (void *) &((struct sockaddr_in *) &sp->remote_addr)->sin_addr, ipr, sizeof(ipr));
-	mapped_v4_to_regular_v4(ipr);
+	iperf_mapped_v4_to_regular_v4(ipr);
         lport = ntohs(((struct sockaddr_in *) &sp->local_addr)->sin_port);
         rport = ntohs(((struct sockaddr_in *) &sp->remote_addr)->sin_port);
     } else {
         inet_ntop(AF_INET6, (void *) &((struct sockaddr_in6 *) &sp->local_addr)->sin6_addr, ipl, sizeof(ipl));
-	mapped_v4_to_regular_v4(ipl);
+	iperf_mapped_v4_to_regular_v4(ipl);
         inet_ntop(AF_INET6, (void *) &((struct sockaddr_in6 *) &sp->remote_addr)->sin6_addr, ipr, sizeof(ipr));
-	mapped_v4_to_regular_v4(ipr);
+	iperf_mapped_v4_to_regular_v4(ipr);
         lport = ntohs(((struct sockaddr_in6 *) &sp->local_addr)->sin6_port);
         rport = ntohs(((struct sockaddr_in6 *) &sp->remote_addr)->sin6_port);
     }

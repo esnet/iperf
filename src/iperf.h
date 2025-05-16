@@ -63,6 +63,8 @@
 
 #include "iperf_pthread.h"
 
+#include "thirdparties/include/c/c_bats_types.h"
+#include "thirdparties/include/c/c_bats_api.h"
 /*
  * Atomic types highly desired, but if not, we approximate what we need
  * with normal integers and warn.
@@ -324,6 +326,10 @@ struct iperf_test
 
     char     *logfile;				/* --logfile option */
     FILE     *outfile;
+
+    bats_connection_t bats_ctrl_conn;    // control connection for bats mode
+    bats_connection_t bats_read_set[10];
+    bats_connection_t bats_write_set[10];
 
     int       ctrl_sck;
     int       mapped_v4;

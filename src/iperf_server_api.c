@@ -157,11 +157,33 @@ iperf_accept(struct iperf_test *test)
     signed char rbuf = ACCESS_DENIED;
     socklen_t len;
     struct sockaddr_storage addr;
+    int port;
+    char ipr[INET6_ADDRSTRLEN];
+    struct sockaddr_in *addr_inP;
+    struct sockaddr_in6 *addr_in6P;
+    int received_cookie_size, j;
 
     len = sizeof(addr);
     if ((s = accept(test->listener, (struct sockaddr *) &addr, &len)) < 0) {
         i_errno = IEACCEPT;
         return ret;
+    }
+
+    if (test->verbose) {
+        len = sizeof(addr);
+        if (getsockdomain(test->ctrl_sck) == AF_INET) {
+	    addr_inP = (struct sockaddr_in *) &addr;
+            inet_ntop(AF_INET, &addr_inP->sin_addr, ipr, sizeof(ipr));
+	    port = ntohs(addr_inP->sin_port);
+        } else {
+	    addr_in6P = (struct sockaddr_in6 *) &addr;
+            inet_ntop(AF_INET6, &addr_in6P->sin6_addr, ipr, sizeof(ipr));
+	    port = ntohs(addr_in6P->sin6_port);
+        }
+	if (iperf_mapped_v4_to_regular_v4(ipr)) {
+	    iperf_set_mapped_v4(test, 1);
+	}
+	iperf_printf(test, "New test connection accepted from %s, port %d\n", ipr, port);
     }
 
     if (test->ctrl_sck == -1) {
@@ -190,12 +212,23 @@ iperf_accept(struct iperf_test *test)
             return -1;
 #endif //HAVE_TCP_KEEPALIVE
 
-        if (Nread(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) != COOKIE_SIZE) {
+        if ((received_cookie_size = Nread(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp)) != COOKIE_SIZE) {
             /*
              * Note this error covers both the case of a system error
              * or the inability to read the correct amount of data
              * (i.e. timed out).
              */
+            if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                iperf_printf(test, "Cookie size received is too short - %d bytes instead of %d\n", received_cookie_size, COOKIE_SIZE);
+                if (received_cookie_size > 0) {
+                    iperf_printf(test, "Cookie received (only printable chars)=%.*s\n", received_cookie_size, test->cookie);
+                    iperf_printf(test, "Cookie received (full in Hex)=");
+                    for (j = 0; j < received_cookie_size; j++) {
+                        iperf_printf(test, "%02x", test->cookie[j]);
+                    }
+                    iperf_printf(test, "\n");
+                }
+            }
             i_errno = IERECVCOOKIE;
             goto error_handling;
         }

@@ -249,107 +249,86 @@ get_optional_features(void)
 
 #if defined(HAVE_CPU_AFFINITY)
     if (numfeatures > 0) {
-	strncat(features, ", ",
-		sizeof(features) - strlen(features) - 1);
+	strlcat(features, ", ", sizeof(features));
     }
-    strncat(features, "CPU affinity setting",
-	sizeof(features) - strlen(features) - 1);
+    strlcat(features, "CPU affinity setting", sizeof(features));
     numfeatures++;
 #endif /* HAVE_CPU_AFFINITY */
 
 #if defined(HAVE_FLOWLABEL)
     if (numfeatures > 0) {
-	strncat(features, ", ",
-		sizeof(features) - strlen(features) - 1);
+	strlcat(features, ", ", sizeof(features));
     }
-    strncat(features, "IPv6 flow label",
-	sizeof(features) - strlen(features) - 1);
+    strlcat(features, "IPv6 flow label", sizeof(features));
     numfeatures++;
 #endif /* HAVE_FLOWLABEL */
 
 #if defined(HAVE_SCTP_H)
     if (numfeatures > 0) {
-	strncat(features, ", ",
-		sizeof(features) - strlen(features) - 1);
+    strlcat(features, ", ", sizeof(features));
     }
-    strncat(features, "SCTP",
-	sizeof(features) - strlen(features) - 1);
+    strlcat(features, "SCTP", sizeof(features));	
     numfeatures++;
 #endif /* HAVE_SCTP_H */
 
 #if defined(HAVE_TCP_CONGESTION)
     if (numfeatures > 0) {
-	strncat(features, ", ",
-		sizeof(features) - strlen(features) - 1);
+    strlcat(features, ", ", sizeof(features));
     }
-    strncat(features, "TCP congestion algorithm setting",
-	sizeof(features) - strlen(features) - 1);
+    strlcat(features, "TCP congestion algorithm setting", sizeof(features));
     numfeatures++;
 #endif /* HAVE_TCP_CONGESTION */
 
 #if defined(HAVE_SENDFILE)
     if (numfeatures > 0) {
-	strncat(features, ", ",
-		sizeof(features) - strlen(features) - 1);
+    strlcat(features, ", ", sizeof(features));
     }
-    strncat(features, "sendfile / zerocopy",
-	sizeof(features) - strlen(features) - 1);
+    strlcat(features, "sendfile / zerocopy",  sizeof(features));	
     numfeatures++;
 #endif /* HAVE_SENDFILE */
 
 #if defined(HAVE_SO_MAX_PACING_RATE)
     if (numfeatures > 0) {
-	strncat(features, ", ",
-		sizeof(features) - strlen(features) - 1);
+    strlcat(features, ", ", sizeof(features));
     }
-    strncat(features, "socket pacing",
-	sizeof(features) - strlen(features) - 1);
+    strlcat(features, "socket pacing", sizeof(features));	
     numfeatures++;
 #endif /* HAVE_SO_MAX_PACING_RATE */
 
 #if defined(HAVE_SSL)
     if (numfeatures > 0) {
-	strncat(features, ", ",
-		sizeof(features) - strlen(features) - 1);
+    strlcat(features, ", ", sizeof(features));
     }
-    strncat(features, "authentication",
-	sizeof(features) - strlen(features) - 1);
+    strlcat(features, "authentication", sizeof(features));	
     numfeatures++;
 #endif /* HAVE_SSL */
 
 #if defined(HAVE_SO_BINDTODEVICE)
     if (numfeatures > 0) {
-	strncat(features, ", ",
-		sizeof(features) - strlen(features) - 1);
+    strlcat(features, ", ", sizeof(features));
     }
-    strncat(features, "bind to device",
-	sizeof(features) - strlen(features) - 1);
+    strlcat(features, "bind to device", sizeof(features));	
     numfeatures++;
 #endif /* HAVE_SO_BINDTODEVICE */
 
 #if defined(HAVE_DONT_FRAGMENT)
     if (numfeatures > 0) {
-	strncat(features, ", ",
-		sizeof(features) - strlen(features) - 1);
+    strlcat(features, ", ", sizeof(features));
     }
-    strncat(features, "support IPv4 don't fragment",
-	sizeof(features) - strlen(features) - 1);
+    strlcat(features, "support IPv4 don't fragment", sizeof(features));	
     numfeatures++;
 #endif /* HAVE_DONT_FRAGMENT */
 
 #if defined(HAVE_PTHREAD)
     if (numfeatures > 0) {
-	strncat(features, ", ",
-		sizeof(features) - strlen(features) - 1);
+    strlcat(features, ", ", sizeof(features));
     }
-    strncat(features, "POSIX threads",
-	sizeof(features) - strlen(features) - 1);
+    strlcat(features, "POSIX threads", sizeof(features));	
     numfeatures++;
 #endif /* HAVE_PTHREAD */
 
     if (numfeatures == 0) {
-	strncat(features, "None",
-		sizeof(features) - strlen(features) - 1);
+	strlcat(features, "None",  sizeof(features));		
     }
 
     return features;

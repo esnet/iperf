@@ -29,7 +29,7 @@ iperf-3.19 2025-05-16
 * Notable user-visible changes
 
     * iperf3 now supports the use of Multi-Path TCP (MPTCPv1) on Linux
-      with the use of the `--multipath` flag. (PR #1661)
+      with the use of the `-m` or `--mptcp` flag. (PR #1661)
 
     * iperf3 now supports a `--cntl-ka` option to enable TCP keepalives
       on the control connection. (#812, #835, PR #1423)

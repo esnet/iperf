@@ -30,6 +30,7 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <setjmp.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
 #ifdef __cplusplus

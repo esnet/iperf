@@ -36,6 +36,8 @@ struct iperf_time {
 
 int iperf_time_now(struct iperf_time *time1);
 
+uint64_t iperf_time_now_in_usecs();
+
 void iperf_time_add_usecs(struct iperf_time *time1, uint64_t usecs);
 
 int iperf_time_compare(struct iperf_time *time1, struct iperf_time *time2);

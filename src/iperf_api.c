@@ -72,8 +72,9 @@
 #include "net.h"
 #include "iperf.h"
 #include "iperf_api.h"
-#include "iperf_udp.h"
 #include "iperf_tcp.h"
+#include "iperf_time.h"
+#include "iperf_udp.h"
 #if defined(HAVE_SCTP_H)
 #include "iperf_sctp.h"
 #endif /* HAVE_SCTP_H */
@@ -944,7 +945,6 @@ mapped_v4_to_regular_v4(char *str)
 void
 iperf_on_connect(struct iperf_test *test)
 {
-    time_t now_secs;
     const char* rfc1123_fmt = "%a, %d %b %Y %H:%M:%S %Z";
     char now_str[100];
     char ipr[INET6_ADDRSTRLEN];
@@ -953,11 +953,17 @@ iperf_on_connect(struct iperf_test *test)
     struct sockaddr_in *sa_inP;
     struct sockaddr_in6 *sa_in6P;
     socklen_t len;
+    struct iperf_time now;
+    time_t now_secs;
+    unsigned long long now_millisecs;
 
-    now_secs = time((time_t*) 0);
+    iperf_time_now_wallclock(&now);
+    now_millisecs = (time_t) iperf_time_in_usecs(&now) / 1000;
+    now_secs = (time_t) (now_millisecs / 1000);
+
     (void) strftime(now_str, sizeof(now_str), rfc1123_fmt, gmtime(&now_secs));
     if (test->json_output)
-	cJSON_AddItemToObject(test->json_start, "timestamp", iperf_json_printf("time: %s  timesecs: %d", now_str, (int64_t) now_secs));
+	cJSON_AddItemToObject(test->json_start, "timestamp", iperf_json_printf("time: %s  timesecs: %d  timemillisecs: %d", now_str, (int64_t) now_secs, now_millisecs));
     else if (test->verbose)
 	iperf_printf(test, report_time, now_str);
 

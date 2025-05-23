@@ -2297,7 +2297,7 @@ iperf_exchange_parameters(struct iperf_test *test)
             return -1;
         }
 
-        if (test->max_server_duration > 0 && ((test->duration + test->omit) > test->max_server_duration) || test->duration == 0) {
+        if ((test->max_server_duration > 0) && (((test->duration + test->omit) > test->max_server_duration) || (test->duration == 0))) {
             if (iperf_set_send_state(test, SERVER_ERROR) != 0)
                 return -1;
 

@@ -53,7 +53,6 @@
 #include <sys/stat.h>
 #include <sched.h>
 #include <setjmp.h>
-#include <stdarg.h>
 #include <math.h>
 
 #if defined(HAVE_CPUSET_SETAFFINITY)

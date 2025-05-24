@@ -54,6 +54,7 @@
 #include <sched.h>
 #include <setjmp.h>
 #include <math.h>
+#include <ctype.h>
 
 #if defined(HAVE_CPUSET_SETAFFINITY)
 #include <sys/param.h>
@@ -2434,13 +2435,13 @@ get_parameters(struct iperf_test *test)
 
     j = JSON_read(test->ctrl_sck, MAX_PARAMS_JSON_STRING);
     if (j == NULL) {
-        if (test->debug_level >= 3) {
-            iperf_printf(test, "Cookie received (only printable chars)=%s\n", test->cookie);
-            iperf_printf(test, "Cookie received (full in Hex)=");
+        if (test->debug_level >= DEBUG_LEVEL_INFO) {
+            // Print the cookie contents as it may help to understand what is the bad message and why it was sent
+            printf("Cookie received=");
             for (k = 0; k < strlen(test->cookie); k++) {
-                iperf_printf(test, "%02x", test->cookie[k]);
+                isprint(test->cookie[k]) ? printf("%c", test->cookie[k]) : printf("\\x%02X", test->cookie[k]);
             }
-            iperf_printf(test, "\n");
+            printf("\n");
         }
 	i_errno = IERECVPARAMS;
         r = -1;

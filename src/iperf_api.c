@@ -2438,7 +2438,7 @@ get_parameters(struct iperf_test *test)
         if (test->debug_level >= DEBUG_LEVEL_INFO) {
             // Print the cookie contents as it may help to understand what is the bad message and why it was sent
             printf("Cookie received=");
-            for (k = 0; k < strlen(test->cookie); k++) {
+            for (k = 0; k < COOKIE_SIZE; k++) {
                 isprint(test->cookie[k]) ? printf("%c", test->cookie[k]) : printf("\\x%02X", test->cookie[k]);
             }
             printf("\n");

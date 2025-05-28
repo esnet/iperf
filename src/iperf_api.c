@@ -1645,6 +1645,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		break;
 	    case OPT_UDP_COUNTERS_64BIT:
 		test->udp_counters_64bit = 1;
+                client_flag = 1;
 		break;
 	    case OPT_NO_FQ_SOCKET_PACING:
 #if defined(HAVE_SO_MAX_PACING_RATE)
@@ -1674,12 +1675,15 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_SSL)
         case OPT_CLIENT_USERNAME:
             client_username = strdup(optarg);
+            client_flag = 1;
             break;
         case OPT_CLIENT_RSA_PUBLIC_KEY:
             client_rsa_public_key = strdup(optarg);
+            client_flag = 1;
             break;
         case OPT_SERVER_RSA_PRIVATE_KEY:
             server_rsa_private_key = strdup(optarg);
+            server_flag = 1;
             break;
         case OPT_SERVER_AUTHORIZED_USERS:
             test->server_authorized_users = strdup(optarg);
@@ -1690,9 +1694,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 i_errno = IESKEWTHRESHOLD;
                 return -1;
             }
+            server_flag = 1;
             break;
 	case OPT_USE_PKCS1_PADDING:
 	    test->use_pkcs1_padding = 1;
+            server_flag = 1;
 	    break;
 #endif /* HAVE_SSL */
 #if defined(HAVE_MSG_TRUNC)

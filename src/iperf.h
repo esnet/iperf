@@ -318,6 +318,7 @@ struct iperf_test
     char     *title;				/* -T option */
     char     *extra_data;			/* --extra-data */
     char     *congestion;			/* -C option */
+    char     *congestion_server;		/* -C option - used only in the client side to pass the `congestion` value to the server */
     char     *congestion_used;			/* what was actually used */
     char     *remote_congestion_used;		/* what the other side used */
     char     *pidfile;				/* -P option */

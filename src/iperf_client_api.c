@@ -363,6 +363,7 @@ iperf_handle_message_client(struct iperf_test *test)
         case TEST_RUNNING:
             break;
         case EXCHANGE_RESULTS:
+            iperf_cancel_periodic_timers(test);
             if (iperf_exchange_results(test) < 0)
                 return -1;
             break;
@@ -618,7 +619,7 @@ iperf_run_client(struct iperf_test * test)
 
     /* Begin calculating CPU utilization */
     cpu_util(NULL);
-    if (test->mode != SENDER)
+    if (test->mode != SENDER || test->state != TEST_RUNNING)
         rcv_timeout_us = (test->settings->rcv_timeout.secs * SEC_TO_US) + test->settings->rcv_timeout.usecs;
     else
         rcv_timeout_us = 0;
@@ -633,16 +634,16 @@ iperf_run_client(struct iperf_test * test)
 	iperf_time_now(&now);
 	timeout = tmr_timeout(&now);
 
-        // In reverse active mode client ensures data is received
-        if (test->state == TEST_RUNNING && rcv_timeout_us > 0) {
+	// In non-sending active mode or not during active test, client ensures data םor control messages are received
+        if (rcv_timeout_us > 0) {
             timeout_us = -1;
             if (timeout != NULL) {
                 used_timeout.tv_sec = timeout->tv_sec;
                 used_timeout.tv_usec = timeout->tv_usec;
                 timeout_us = (timeout->tv_sec * SEC_TO_US) + timeout->tv_usec;
             }
-            /* Cap the maximum select timeout at 1 second */
-            if (timeout_us > SEC_TO_US) {
+            /* Cap the maximum select timeout at 1 second during active test*/
+            if (test->state == TEST_RUNNING && timeout_us > SEC_TO_US) {
                 timeout_us = SEC_TO_US;
             }
             if (timeout_us < 0 || timeout_us > rcv_timeout_us) {
@@ -651,6 +652,8 @@ iperf_run_client(struct iperf_test * test)
             }
             timeout = &used_timeout;
         }
+
+        if (timeout) timeout_us = (timeout->tv_sec * SEC_TO_US) + timeout->tv_usec;
 
 #if (defined(__vxworks)) || (defined(__VXWORKS__))
     if (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0) {
@@ -668,23 +671,32 @@ iperf_run_client(struct iperf_test * test)
 	if (result < 0 && errno != EINTR) {
   	    i_errno = IESELECT;
 	    goto cleanup_and_fail;
-        } else if (result == 0 && test->state == TEST_RUNNING && rcv_timeout_us > 0) {
+        } else if (result == 0 && rcv_timeout_us > 0) {
             /*
-             * If nothing was received in non-reverse running state
-             * then probably something got stuck - either client,
-             * server or network, and test should be terminated./
+             * If nothing was received then probably something got stuck -
+             * either client, server or network, and test should be terminated.
              */
             iperf_time_now(&now);
-            if (iperf_time_diff(&now, &last_receive_time, &diff_time) == 0) {
-                t_usecs = iperf_time_in_usecs(&diff_time);
-                if (t_usecs > rcv_timeout_us) {
-                    /* Idle timeout if no new blocks received */
-                    if (test->blocks_received == last_receive_blocks) {
-                        i_errno = IENOMSG;
-                        goto cleanup_and_fail;
+            if (test->state == TEST_RUNNING && test->mode != SENDER) { // Check if data is received
+                if (iperf_time_diff(&now, &last_receive_time, &diff_time) == 0) {
+                    t_usecs = iperf_time_in_usecs(&diff_time);
+                    if (t_usecs > rcv_timeout_us) {
+                        /* Idle timeout if no new blocks received */
+                        if (test->blocks_received == last_receive_blocks) {
+                            if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                                iperf_printf(test, "Receiving data blocks timed out\n");
+                            }
+                            i_errno = IENOMSG;
+                            goto cleanup_and_fail;
+                        }
                     }
                 }
-
+            } else if (test->state != TEST_RUNNING && rcv_timeout_us == timeout_us) { // Check if control messages are received
+                if (test->debug >= DEBUG_LEVEL_INFO) {
+                    iperf_printf(test, "Receiving control messages timed out\n");
+                }
+                i_errno = IENOMSG;
+                goto cleanup_and_fail;
             }
         }
 

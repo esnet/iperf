@@ -1562,6 +1562,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     i_errno = IEDURATION;
                     return -1;
                 }
+                server_flag = 1;
                 break;
             case OPT_RCV_TIMEOUT:
                 rcv_timeout_in = atoi(optarg);

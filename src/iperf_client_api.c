@@ -334,7 +334,7 @@ iperf_handle_message_client(struct iperf_test *test)
     switch (test->state) {
         case PARAM_EXCHANGE:
             if (iperf_exchange_parameters(test) < 0)
-            return -1;
+                return -1;
             if (test->on_connect)
                 test->on_connect(test);
             break;

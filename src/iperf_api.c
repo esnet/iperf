@@ -698,6 +698,12 @@ iperf_set_test_json_stream(struct iperf_test *ipt, int json_stream)
 }
 
 void
+iperf_set_test_json_stream_full_output( struct iperf_test* ipt, int json_stream_full_output )
+{
+    ipt->json_stream_full_output = json_stream_full_output;
+}
+
+void
 iperf_set_test_json_callback(struct iperf_test *ipt, void (*callback)(struct iperf_test *, char *))
 {
     ipt->json_callback = callback;
@@ -1101,6 +1107,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"verbose", no_argument, NULL, 'V'},
         {"json", no_argument, NULL, 'J'},
         {"json-stream", no_argument, NULL, OPT_JSON_STREAM},
+        {"json-stream-full-output", no_argument, NULL, OPT_JSON_STREAM_FULL_OUTPUT},
         {"version", no_argument, NULL, 'v'},
         {"server", no_argument, NULL, 's'},
         {"client", required_argument, NULL, 'c'},
@@ -1266,6 +1273,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             case OPT_JSON_STREAM:
                 test->json_output = 1;
                 test->json_stream = 1;
+                break;
+            case OPT_JSON_STREAM_FULL_OUTPUT:
+                test->json_stream_full_output = 1;
                 break;
             case 'v':
                 printf("%s (cJSON %s)\n%s\n%s\n", version, cJSON_Version(), get_system_info(),
@@ -3755,7 +3765,7 @@ iperf_print_intermediate(struct iperf_test *test)
      *
      * This avoids unneeded memory build up for long sessions.
      */
-    discard_json = test->json_stream == 1 && !(test->role == 's' && test->get_server_output);
+    discard_json = !test->json_stream_full_output && test->json_stream == 1 && !(test->role == 's' && test->get_server_output);
 
     if (test->json_output) {
         json_interval = cJSON_CreateObject();
@@ -5150,6 +5160,8 @@ iperf_json_finish(struct iperf_test *test)
             cJSON_AddStringToObject(test->json_top, "server_output_text", test->server_output_text);
         }
 
+        int print_full_json = 1;
+
         /* --json-stream, so we print various individual objects */
         if (test->json_stream) {
             cJSON *error = iperf_cJSON_GetObjectItemType(test->json_top, "error", cJSON_String);
@@ -5163,9 +5175,12 @@ iperf_json_finish(struct iperf_test *test)
                 JSONStream_Output(test, "server_output_text", cJSON_CreateString(test->server_output_text));
             }
             JSONStream_Output(test, "end", test->json_end);
+
+            if (!test->json_stream_full_output)
+                print_full_json = 0;
         }
         /* Original --json output, single monolithic object */
-        else {
+        if (print_full_json) {
             /*
              * Get ASCII rendering of JSON structure.  Then make our
              * own copy of it and return the storage that cJSON

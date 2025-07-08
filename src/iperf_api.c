@@ -3764,8 +3764,10 @@ iperf_print_intermediate(struct iperf_test *test)
      * results around unless we're the server and the client requested the server output.
      *
      * This avoids unneeded memory build up for long sessions.
+     * 
+     * The user can still opt in for all measurement data via the --json-stream-full-output option.
      */
-    discard_json = !test->json_stream_full_output && test->json_stream == 1 && !(test->role == 's' && test->get_server_output);
+    discard_json =  test->json_stream == 1 && !test->json_stream_full_output && !(test->role == 's' && test->get_server_output);
 
     if (test->json_output) {
         json_interval = cJSON_CreateObject();

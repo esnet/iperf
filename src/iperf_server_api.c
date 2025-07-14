@@ -281,7 +281,6 @@ iperf_handle_message_server(struct iperf_test *test)
                 return -1;
             if (iperf_set_send_state(test, DISPLAY_RESULTS) != 0)
                 return -1;
-            test->reporter_callback(test);
             if (test->on_test_finish)
                 test->on_test_finish(test);
             break;

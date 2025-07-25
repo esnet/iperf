@@ -308,7 +308,6 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
     rsa = EVP_PKEY_get1_RSA(private_key);
     keysize = RSA_size(rsa);
 #endif
-    printf("%s %s %i\n", __FILE__,__func__, __LINE__);
     rsa_buffer  = OPENSSL_malloc(keysize * 2);
     // Note: +1 for NULL
     *plaintext = (unsigned char*)OPENSSL_malloc(keysize + 1);

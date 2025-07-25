@@ -326,19 +326,24 @@ server_timer_proc(TimerClientData client_data, struct iperf_time *nowP)
     if (test->done)
         return;
     test->done = 1;
-    iperf_err(test, "error - %s test is terminated by the server", iperf_strerror(IESERVERTESTDURATIONEXPIRED));
+    iperf_err(test, "error - server test duration expired - test is terminated by the server");
     if (iperf_set_send_state(test, SERVER_ERROR) == 0) {
         i_errno = IESERVERTESTDURATIONEXPIRED;
         err = htonl(i_errno);
-        Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp);
+        if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) == sizeof(err)) {
+            err = 0;
+            Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp);
+        };
     }
     /* Free streams */
     while (!SLIST_EMPTY(&test->streams)) {
         sp = SLIST_FIRST(&test->streams);
-        SLIST_REMOVE_HEAD(&test->streams, streams);
-        close(sp->socket);
-        sp->socket = -1;
-        iperf_free_stream(sp);
+        if (sp->socket != -1) {
+            SLIST_REMOVE_HEAD(&test->streams, streams);
+            close(sp->socket);
+            sp->socket = -1;
+            iperf_free_stream(sp);
+        }
     }
     close(test->ctrl_sck);
     test->ctrl_sck = -1;

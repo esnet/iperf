@@ -1,6 +1,28 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.19.1 2025-07-25
+-----------------------
+
+* Notable user-visible changes
+
+    * SECURITY NOTE: Thanks to Han Lee with Apple Information Security
+                     for finding and reporting several memory errors
+                     including a buffer overflow within the
+                     `--skip-rx-copy` option, and two memory errors
+                     within authentication, including a heap overflow
+                     in the plaintext password and an assert.
+                  
+    * An off-by-one heap overflow has been fixed in authentication.
+      (CVE-2025-54349, ESNET-SECADV-2025-0003)
+
+    * An assert in authentication has been removed. (CVE-2025-54350,
+      ESNET-SECADV-2025-0002)
+
+    * A buffer overflow in the `--skip-rx-copy` option for zerocopy
+      has been fixed. (CVE-2025-54351, ESNET-SECADV-2025-0001)
+
+
 iperf-3.19 2025-05-16
 ---------------------
 

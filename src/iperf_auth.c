@@ -28,7 +28,6 @@
 #include "iperf_config.h"
 
 #include <string.h>
-#include <assert.h>
 #include <time.h>
 #include <sys/types.h>
 /* FreeBSD needs _WITH_GETLINE to enable the getline() declaration */
@@ -152,7 +151,6 @@ int Base64Decode(const char* b64message, unsigned char** buffer, size_t* length)
 
     BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL); //Do not use newlines to flush buffer
     *length = BIO_read(bio, *buffer, strlen(b64message));
-    assert(*length == decodeLen); //length should equal decodeLen, else something went horribly wrong
     BIO_free_all(bio);
 
     return (0); //success
@@ -288,6 +286,7 @@ int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned ch
 }
 
 int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedtext_len, EVP_PKEY *private_key, unsigned char **plaintext, int use_pkcs1_padding) {
+    int ret =0;
 #if OPENSSL_VERSION_MAJOR >= 3
     EVP_PKEY_CTX *ctx;
 #else
@@ -310,7 +309,8 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
     keysize = RSA_size(rsa);
 #endif
     rsa_buffer  = OPENSSL_malloc(keysize * 2);
-    *plaintext = (unsigned char*)OPENSSL_malloc(keysize);
+    // Note: +1 for NULL
+    *plaintext = (unsigned char*)OPENSSL_malloc(keysize + 1);
 
     BIO *bioBuff   = BIO_new_mem_buf((void*)encryptedtext, encryptedtext_len);
     rsa_buffer_len = BIO_read(bioBuff, rsa_buffer, keysize * 2);
@@ -320,13 +320,15 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
         padding = RSA_PKCS1_PADDING;
     }
 #if OPENSSL_VERSION_MAJOR >= 3
+
     plaintext_len = keysize;
     EVP_PKEY_decrypt_init(ctx);
-    int ret = EVP_PKEY_CTX_set_rsa_padding(ctx, padding);
+
+    ret = EVP_PKEY_CTX_set_rsa_padding(ctx, padding);
     if (ret < 0){
         goto errreturn;
     }
-    EVP_PKEY_decrypt(ctx, *plaintext, &plaintext_len, rsa_buffer, rsa_buffer_len);
+    ret = EVP_PKEY_decrypt(ctx, *plaintext, &plaintext_len, rsa_buffer, rsa_buffer_len);
     EVP_PKEY_CTX_free(ctx);
 #else
     plaintext_len = RSA_private_decrypt(rsa_buffer_len, rsa_buffer, *plaintext, rsa, padding);
@@ -337,7 +339,7 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
     BIO_free(bioBuff);
 
     /* Treat a decryption error as an empty string. */
-    if (plaintext_len < 0) {
+    if (plaintext_len <= 0) {
         plaintext_len = 0;
     }
 
@@ -386,24 +388,28 @@ int decode_auth_setting(int enable_debug, const char *authtoken, EVP_PKEY *priva
     int plaintext_len;
     plaintext_len = decrypt_rsa_message(encrypted_b64, encrypted_len_b64, private_key, &plaintext, use_pkcs1_padding);
     free(encrypted_b64);
-    if (plaintext_len < 0) {
+    if (plaintext_len <= 0) {
         return -1;
     }
+
     plaintext[plaintext_len] = '\0';
 
     char *s_username, *s_password;
     s_username = (char *) calloc(plaintext_len, sizeof(char));
     if (s_username == NULL) {
+        OPENSSL_free(plaintext);
 	return -1;
     }
     s_password = (char *) calloc(plaintext_len, sizeof(char));
     if (s_password == NULL) {
+        OPENSSL_free(plaintext);
 	free(s_username);
 	return -1;
     }
 
     int rc = sscanf((char *) plaintext, auth_text_format, s_username, s_password, &utc_seconds);
     if (rc != 3) {
+        OPENSSL_free(plaintext);
 	free(s_password);
 	free(s_username);
 	return -1;

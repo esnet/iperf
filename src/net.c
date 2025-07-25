@@ -383,9 +383,7 @@ int
 Nrecv(int fd, char *buf, size_t count, int prot, int sock_opt)
 {
     register ssize_t r;
-    // `nleft` must be signed as it may get negative value for SKIP-RX-COPY UDP (MSG_TRUNC in sock_opt).
-    register ssize_t nleft = count;
-    register size_t total = 0;
+    register size_t nleft = count;
     struct iperf_time ftimeout = { 0, 0 };
 
     fd_set rfdset;
@@ -428,9 +426,15 @@ Nrecv(int fd, char *buf, size_t count, int prot, int sock_opt)
         } else if (r == 0)
             break;
 
-        total += r;
-        nleft -= r; 
-        buf += r;
+	if (sock_opt & MSG_TRUNC) {
+            size_t bytes_copied = (r > nleft)? nleft: r;
+            nleft -= bytes_copied;
+            buf += bytes_copied;
+        }
+	else {
+            nleft -= r;
+            buf += r;
+        }
 
         /*
          * We need some more bytes but don't want to wait around
@@ -465,7 +469,7 @@ Nrecv(int fd, char *buf, size_t count, int prot, int sock_opt)
             }
         }
     }
-    return total;
+    return count - nleft;
 }
 
 /********************************************************************/
@@ -491,6 +495,7 @@ Nrecv_no_select(int fd, char *buf, size_t count, int prot, int sock_opt)
             r = recv(fd, buf, nleft, sock_opt);
         else
             r = read(fd, buf, nleft);
+
         if (r < 0) {
             /* XXX EWOULDBLOCK can't happen without non-blocking sockets */
             if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
@@ -500,8 +505,16 @@ Nrecv_no_select(int fd, char *buf, size_t count, int prot, int sock_opt)
         } else if (r == 0)
             break;
 
-        nleft -= r;
-        buf += r;
+	if (sock_opt & MSG_TRUNC) {
+            size_t bytes_copied = (r > nleft)? nleft: r;
+            nleft -= bytes_copied;
+            buf += bytes_copied;
+        }
+	else {
+            nleft -= r;
+            buf += r;
+        }
+
 
     }
     return count - nleft;

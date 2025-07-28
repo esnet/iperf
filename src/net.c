@@ -258,11 +258,104 @@ netdial(int domain, int proto, const char *local, const char *bind_dev, int loca
 /***************************************************************/
 
 int
+netannounce_sockaddr(int domain, int proto, const struct sockaddr *local,
+		     socklen_t local_len, const char *bind_dev, int is_listen)
+{
+    int s, opt, saved_errno;
+
+    s = socket(local->sa_family, proto, 0);
+    if (s < 0)
+        return -1;
+
+    if (bind_dev) {
+#if defined(HAVE_SO_BINDTODEVICE)
+        if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE, bind_dev, IFNAMSIZ) < 0)
+#endif // HAVE_SO_BINDTODEVICE
+        {
+            saved_errno = errno;
+            close(s);
+            errno = saved_errno;
+            return -1;
+        }
+    }
+
+    opt = 1;
+    if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
+		   (char *) &opt, sizeof(opt)) < 0) {
+	saved_errno = errno;
+	close(s);
+	errno = saved_errno;
+	return -1;
+    }
+    /*
+     * If we got an IPv6 socket, figure out if it should accept IPv4
+     * connections as well.  We do that if and only if no address
+     * family was specified explicitly.  Note that we can only
+     * do this if the IPV6_V6ONLY socket option is supported.  Also,
+     * OpenBSD explicitly omits support for IPv4-mapped addresses,
+     * even though it implements IPV6_V6ONLY.
+     */
+#if defined(IPV6_V6ONLY) && !defined(__OpenBSD__)
+    if (local->sa_family == AF_INET6 && (domain == AF_UNSPEC || domain == AF_INET6)) {
+	if (domain == AF_UNSPEC)
+	    opt = 0;
+	else
+	    opt = 1;
+	if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY,
+		       (char *) &opt, sizeof(opt)) < 0) {
+	    saved_errno = errno;
+	    close(s);
+	    errno = saved_errno;
+	    return -1;
+	}
+    }
+#endif /* IPV6_V6ONLY */
+
+    /* Request the passing of in_pktinfo/in6_pktinfo as ancillary data. */
+    if (is_listen && proto == SOCK_DGRAM) {
+	opt = 1;
+	if (setsockopt(s, local->sa_family == AF_INET6?
+		       IPPROTO_IPV6: IPPROTO_IP,
+		       local->sa_family == AF_INET6?
+		       IPV6_RECVPKTINFO:
+#ifdef HAVE_IP_PKTINFO
+		       IP_PKTINFO,
+#elif defined(HAVE_IP_RECVDSTADDR)
+		       IP_RECVDSTADDR,
+#endif
+		       &opt, sizeof opt) < 0) {
+        saved_errno = errno;
+        close(s);
+        errno = saved_errno;
+        return -1;
+    }
+    }
+
+    if (bind(s, local, local_len) < 0) {
+	saved_errno = errno;
+	close(s);
+	errno = saved_errno;
+	return -1;
+    }
+
+    if (proto == SOCK_STREAM) {
+        if (listen(s, INT_MAX) < 0) {
+	    saved_errno = errno;
+	    close(s);
+	    errno = saved_errno;
+            return -1;
+        }
+    }
+
+    return s;
+}
+
+int
 netannounce(int domain, int proto, const char *local, const char *bind_dev, int port)
 {
     struct addrinfo hints, *res;
     char portstr[6];
-    int s, opt, saved_errno;
+    int s;
 
     snprintf(portstr, 6, "%d", port);
     memset(&hints, 0, sizeof(hints));
@@ -287,80 +380,17 @@ netannounce(int domain, int proto, const char *local, const char *bind_dev, int 
     hints.ai_socktype = proto;
     hints.ai_flags = AI_PASSIVE;
     if ((gerror = getaddrinfo(local, portstr, &hints, &res)) != 0)
-        return -1;
+	return -1;
 
-    s = socket(res->ai_family, proto, 0);
+    s = netannounce_sockaddr(domain, proto,
+			     (struct sockaddr *) res->ai_addr,
+			     res->ai_addrlen, bind_dev, 1);
     if (s < 0) {
 	freeaddrinfo(res);
-        return -1;
-    }
-
-    if (bind_dev) {
-#if defined(HAVE_SO_BINDTODEVICE)
-        if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE,
-                       bind_dev, IFNAMSIZ) < 0)
-#endif // HAVE_SO_BINDTODEVICE
-        {
-            saved_errno = errno;
-            close(s);
-            freeaddrinfo(res);
-            errno = saved_errno;
-            return -1;
-        }
-    }
-
-    opt = 1;
-    if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
-		   (char *) &opt, sizeof(opt)) < 0) {
-	saved_errno = errno;
-	close(s);
-	freeaddrinfo(res);
-	errno = saved_errno;
 	return -1;
-    }
-    /*
-     * If we got an IPv6 socket, figure out if it should accept IPv4
-     * connections as well.  We do that if and only if no address
-     * family was specified explicitly.  Note that we can only
-     * do this if the IPV6_V6ONLY socket option is supported.  Also,
-     * OpenBSD explicitly omits support for IPv4-mapped addresses,
-     * even though it implements IPV6_V6ONLY.
-     */
-#if defined(IPV6_V6ONLY) && !defined(__OpenBSD__)
-    if (res->ai_family == AF_INET6 && (domain == AF_UNSPEC || domain == AF_INET6)) {
-	if (domain == AF_UNSPEC)
-	    opt = 0;
-	else
-	    opt = 1;
-	if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY,
-		       (char *) &opt, sizeof(opt)) < 0) {
-	    saved_errno = errno;
-	    close(s);
-	    freeaddrinfo(res);
-	    errno = saved_errno;
-	    return -1;
-	}
-    }
-#endif /* IPV6_V6ONLY */
-
-    if (bind(s, (struct sockaddr *) res->ai_addr, res->ai_addrlen) < 0) {
-        saved_errno = errno;
-        close(s);
-	freeaddrinfo(res);
-        errno = saved_errno;
-        return -1;
     }
 
     freeaddrinfo(res);
-
-    if (proto == SOCK_STREAM) {
-        if (listen(s, INT_MAX) < 0) {
-	    saved_errno = errno;
-	    close(s);
-	    errno = saved_errno;
-            return -1;
-        }
-    }
 
     return s;
 }

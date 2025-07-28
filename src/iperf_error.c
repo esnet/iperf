@@ -482,6 +482,9 @@ iperf_strerror(int int_errno)
 	case IETOTALRATE:
 	    snprintf(errstr, len, "total required bandwidth is larger than server limit");
             break;
+        case IETOTALINTERVAL:
+            snprintf(errstr, len, "invalid time interval for calculating average data rate");
+            break;
         case IESKEWTHRESHOLD:
 	    snprintf(errstr, len, "skew threshold must be a positive number");
             break;

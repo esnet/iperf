@@ -212,9 +212,21 @@ iperf_udp_send(struct iperf_stream *sp)
 {
     int r;
     int       size = sp->settings->blksize;
+    char      *buffer = sp->buffer;
+    int       num_of_blocks = sp->settings->num_of_blocks;
+    int       block_to_send;
     struct iperf_time before;
 
     iperf_time_now(&before);
+
+    if (num_of_blocks > 1) {  // Send the next buffered block (mainly used for randomized blocks) 
+        block_to_send = sp->settings->last_block_sent + 1;
+        if (block_to_send >= num_of_blocks) {
+            block_to_send = 0;
+        }
+        sp->settings->last_block_sent = block_to_send;
+        buffer += (size * block_to_send);
+    }
 
     ++sp->packet_count;
 
@@ -227,9 +239,9 @@ iperf_udp_send(struct iperf_stream *sp)
 	usec = htonl(before.usecs);
 	pcount = htobe64(sp->packet_count);
 
-	memcpy(sp->buffer, &sec, sizeof(sec));
-	memcpy(sp->buffer+4, &usec, sizeof(usec));
-	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
+	memcpy(buffer, &sec, sizeof(sec));
+	memcpy(buffer+4, &usec, sizeof(usec));
+	memcpy(buffer+8, &pcount, sizeof(pcount));
 
     }
     else {
@@ -240,13 +252,13 @@ iperf_udp_send(struct iperf_stream *sp)
 	usec = htonl(before.usecs);
 	pcount = htonl(sp->packet_count);
 
-	memcpy(sp->buffer, &sec, sizeof(sec));
-	memcpy(sp->buffer+4, &usec, sizeof(usec));
-	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
+	memcpy(buffer, &sec, sizeof(sec));
+	memcpy(buffer+4, &usec, sizeof(usec));
+	memcpy(buffer+8, &pcount, sizeof(pcount));
 
     }
 
-    r = Nwrite(sp->socket, sp->buffer, size, Pudp);
+    r = Nwrite(sp->socket, buffer, size, Pudp);
 
     if (r <= 0) {
         --sp->packet_count;     /* Don't count messages that no data was sent from them.

@@ -1,6 +1,16 @@
 iperf3 Project News
 ===================
 
+2025-07-25:  iperf-3.19.1 released
+----------------------------------
+
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.19.1.tar.gz
+| SHA256: ``dc63f89ec581ea99f8b558d8eb35109de06383010db5a1906c208a562ba0c270``
+
+iperf-3.19.1 is a security fix release to address three issues
+reported by Han Lee of Apple Information Security. More information
+can be found in the release notes.
+
 2025-05-16:  iperf-3.19 released
 --------------------------------
 

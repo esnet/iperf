@@ -556,11 +556,11 @@ iperf_strerror(int int_errno)
 
     /* Append the result of strerror() or gai_strerror() if appropriate */
     if (herr || perr)
-        strncat(errstr, ": ", len - strlen(errstr) - 1);
+        strlcat(errstr, ": ", len);
     if (errno && perr)
-        strncat(errstr, strerror(errno), len - strlen(errstr) - 1);
+        strlcat(errstr, strerror(errno), len);
     else if (herr && gerror) {
-        strncat(errstr, gai_strerror(gerror), len - strlen(errstr) - 1);
+        strlcat(errstr, gai_strerror(gerror), len);
 	gerror = 0;
     }
 

@@ -1,5 +1,11 @@
 name: GitHub Actions Build Test
-on: [push, pull_request]
+on:
+  push:
+    branches:
+        - master
+  pull_request:
+    branches:
+        - master
 jobs:
   cppcheck-test:
     runs-on: ubuntu-latest

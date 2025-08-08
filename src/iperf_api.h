@@ -104,6 +104,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define OPT_USE_PKCS1_PADDING 30
 #define OPT_CNTL_KA 31
 #define OPT_SKIP_RX_COPY 32
+#define OPT_NO_GSRO 33
 
 /* states */
 #define TEST_START 1

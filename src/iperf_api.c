@@ -747,6 +747,12 @@ iperf_set_test_client_rsa_pubkey(struct iperf_test *ipt, const char *client_rsa_
 }
 
 void
+iperf_set_test_client_rsa_pubkey_from_file(struct iperf_test *ipt, const char *client_rsa_pubkey_file)
+{
+    ipt->settings->client_rsa_pubkey = load_pubkey_from_file(client_rsa_pubkey_file);
+}
+
+void
 iperf_set_test_server_authorized_users(struct iperf_test *ipt, const char *server_authorized_users)
 {
     ipt->server_authorized_users = strdup(server_authorized_users);
@@ -762,6 +768,12 @@ void
 iperf_set_test_server_rsa_privkey(struct iperf_test *ipt, const char *server_rsa_privkey_base64)
 {
     ipt->server_rsa_private_key = load_privkey_from_base64(server_rsa_privkey_base64);
+}
+
+void
+iperf_set_test_server_rsa_privkey_from_file(struct iperf_test *ipt, const char *server_rsa_privkey_file)
+{
+    ipt->server_rsa_private_key = load_privkey_from_file(server_rsa_privkey_file);
 }
 #endif // HAVE_SSL
 

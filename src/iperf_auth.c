@@ -235,7 +235,7 @@ int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned ch
     RSA *rsa = NULL;
 #endif
     unsigned char *rsa_buffer = NULL;
-    size_t encryptedtext_len = 0;
+    ssize_t encryptedtext_len = 0;
     int rsa_buffer_len, keysize;
 
 #if OPENSSL_VERSION_MAJOR >= 3
@@ -286,14 +286,14 @@ int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned ch
 }
 
 int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedtext_len, EVP_PKEY *private_key, unsigned char **plaintext, int use_pkcs1_padding) {
-    int ret =0;
+    int ret = 0;
 #if OPENSSL_VERSION_MAJOR >= 3
     EVP_PKEY_CTX *ctx;
 #else
     RSA *rsa = NULL;
 #endif
     unsigned char *rsa_buffer = NULL;
-    size_t plaintext_len = 0;
+    ssize_t plaintext_len = 0;
     int rsa_buffer_len, keysize;
 
 #if OPENSSL_VERSION_MAJOR >= 3
@@ -370,7 +370,7 @@ int encode_auth_setting(const char *username, const char *password, EVP_PKEY *pu
     encrypted_len = encrypt_rsa_message(text, public_key, &encrypted, use_pkcs1_padding);
     free(text);
     if (encrypted_len < 0) {
-      return -1;
+        return -1;
     }
     Base64Encode(encrypted, encrypted_len, authtoken);
     OPENSSL_free(encrypted);
@@ -398,21 +398,21 @@ int decode_auth_setting(int enable_debug, const char *authtoken, EVP_PKEY *priva
     s_username = (char *) calloc(plaintext_len, sizeof(char));
     if (s_username == NULL) {
         OPENSSL_free(plaintext);
-	return -1;
+        return -1;
     }
     s_password = (char *) calloc(plaintext_len, sizeof(char));
     if (s_password == NULL) {
         OPENSSL_free(plaintext);
-	free(s_username);
-	return -1;
+        free(s_username);
+        return -1;
     }
 
     int rc = sscanf((char *) plaintext, auth_text_format, s_username, s_password, &utc_seconds);
     if (rc != 3) {
         OPENSSL_free(plaintext);
-	free(s_password);
-	free(s_username);
-	return -1;
+        free(s_password);
+        free(s_username);
+        return -1;
     }
 
     if (enable_debug) {

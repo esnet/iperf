@@ -447,6 +447,8 @@ the executable.
                  will  be  in  human-readable format).  If the client is run with
                  --json, the server output is included in a JSON  object;  other-
                  wise it is appended at the bottom of the human-readable output.
+				 Note that the server output is available only if the test
+				 completes, not if it is interrupted.
    
           --udp-counters-64bit
                  Use 64-bit counters in UDP test packets.  The use of this option

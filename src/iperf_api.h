@@ -332,7 +332,6 @@ long get_rttvar(struct iperf_interval_results *irp);
 long get_pmtu(struct iperf_interval_results *irp);
 long get_reorder(struct iperf_interval_results *irp);
 void print_tcpinfo(struct iperf_test *test);
-void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 
 int iperf_set_send_state(struct iperf_test *test, signed char state);
 void iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP);

@@ -402,6 +402,7 @@ iperf_handle_message_client(struct iperf_test *test)
             errno = ntohl(err);
             return -1;
         default:
+            iperf_err(test, "Received unknown state %d from server, which may be the error: %s", test->state, iperf_strerror(test->state));
             i_errno = IEMESSAGE;
             return -1;
     }

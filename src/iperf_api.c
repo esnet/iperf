@@ -1811,7 +1811,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif //HAVE_SSL
 
     // File cannot be transferred using UDP because of the UDP packets header (packet number, etc.)
-    if (test->mode != RECEIVER && test->diskfile_name != (char*) 0 && test->protocol->id == Pudp) {
+    if (test->diskfile_name != (char*) 0 && test->protocol->id == Pudp) {
         i_errno = IEUDPFILETRANSFER;
         return -1;
     }
@@ -2241,8 +2241,11 @@ iperf_exchange_parameters(struct iperf_test *test)
 
     } else {
 
-        if (get_parameters(test) < 0)
+        if (get_parameters(test) < 0) {
+            if (iperf_set_send_state(test, i_errno) != 0)
+                return -1;
             return -1;
+        }
 
 #if defined(HAVE_SSL)
         if (test_is_authorized(test) < 0){
@@ -2523,6 +2526,15 @@ get_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(test->json_start, "target_bitrate", test->settings->rate);
 	cJSON_Delete(j);
     }
+
+    if (r != -1) {
+        // Do not allow to use input/output file for UDP test
+        if (test->diskfile_name != (char*) 0 && test->protocol->id == Pudp) {
+	    i_errno = IEUDPFILETRANSFER;
+            r = -1;
+        }
+    }
+
     return r;
 }
 

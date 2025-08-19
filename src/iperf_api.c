@@ -2233,6 +2233,7 @@ iperf_exchange_parameters(struct iperf_test *test)
 {
     int s;
     int32_t err;
+    char err_as_state;
 
     if (test->role == 'c') {
 
@@ -2242,8 +2243,9 @@ iperf_exchange_parameters(struct iperf_test *test)
     } else {
 
         if (get_parameters(test) < 0) {
-            if (iperf_set_send_state(test, i_errno) != 0)
-                return -1;
+            // If failed to get the parameters from the client, try to send it the error code
+            err_as_state = i_errno;
+            Nwrite(test->ctrl_sck, (char*) &err_as_state, sizeof(err_as_state), Ptcp);
             return -1;
         }
 

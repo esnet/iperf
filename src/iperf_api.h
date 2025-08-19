@@ -399,43 +399,43 @@ char *iperf_strerror(int);
 extern int i_errno;
 enum {
     IENONE = 0,             // No error
-    /* Parameter errors */
-    IESERVCLIENT = 1,       // Iperf cannot be both server and client
-    IENOROLE = 2,           // Iperf must either be a client (-c) or server (-s)
-    IESERVERONLY = 3,       // This option is server only
-    IECLIENTONLY = 4,       // This option is client only
-    IEDURATION = 5,         // test duration too long. Maximum value = %dMAX_TIME
-    IENUMSTREAMS = 6,       // Number of parallel streams too large. Maximum value = %dMAX_STREAMS
-    IEBLOCKSIZE = 7,        // Block size too large. Maximum value = %dMAX_BLOCKSIZE
-    IEBUFSIZE = 8,          // Socket buffer size too large. Maximum value = %dMAX_TCP_BUFFER
-    IEINTERVAL = 9,         // Invalid report interval (min = %gMIN_INTERVAL, max = %gMAX_INTERVAL seconds)
-    IEMSS = 10,             // MSS too large. Maximum value = %dMAX_MSS
-    IENOSENDFILE = 11,      // This OS does not support sendfile
-    IEOMIT = 12,            // Bogus value for --omit
-    IEUNIMP = 13,           // Not implemented yet
-    IEFILE = 14,            // -F file couldn't be opened
-    IEBURST = 15,           // Invalid burst count. Maximum value = %dMAX_BURST
-    IEENDCONDITIONS = 16,   // Only one test end condition (-t, -n, -k) may be specified
-    IELOGFILE = 17,	    // Can't open log file
-    IENOSCTP = 18,	    // No SCTP support available
-    IEBIND = 19,	    // UNUSED:  Local port specified with no local bind option
-    IEUDPBLOCKSIZE = 20,    // Block size invalid
-    IEBADTOS = 21,	    // Bad TOS value
-    IESETCLIENTAUTH = 22,   // Bad configuration of client authentication
-    IESETSERVERAUTH = 23,   // Bad configuration of server authentication
-    IEBADFORMAT = 24,	    // Bad format argument to -f
-    IEREVERSEBIDIR = 25,    // Iperf cannot be both reverse and bidirectional
-    IEBADPORT = 26,	    // Bad port number
-    IETOTALRATE = 27,       // Total required bandwidth is larger than server's limit
-    IETOTALINTERVAL = 28,   // Invalid time interval for calculating average data rate
-    IESKEWTHRESHOLD = 29,   // Invalid value specified as skew threshold
-    IEIDLETIMEOUT = 30,     // Invalid value specified as idle state timeout
-    IERCVTIMEOUT = 31,      // Illegal message receive timeout
-    IERVRSONLYRCVTIMEOUT = 32,  // Client receive timeout is valid only in reverse mode
-    IESNDTIMEOUT = 33,      // Illegal message send timeout
-    IEUDPFILETRANSFER = 34, // Cannot transfer file using UDP
-    IESERVERAUTHUSERS = 35,  // Cannot access authorized users file
-    IECNTLKA = 36,          // Control connection Keepalive period should be larger than the full retry period (interval * count)
+    /* Parameter errors - values should not be one of the States values, so start with 21 */
+    IESERVCLIENT = 21,      // Iperf cannot be both server and client
+    IENOROLE = 22,          // Iperf must either be a client (-c) or server (-s)
+    IESERVERONLY = 23,      // This option is server only
+    IECLIENTONLY = 24,      // This option is client only
+    IEDURATION = 25,        // test duration too long. Maximum value = %dMAX_TIME
+    IENUMSTREAMS = 26,      // Number of parallel streams too large. Maximum value = %dMAX_STREAMS
+    IEBLOCKSIZE = 27,       // Block size too large. Maximum value = %dMAX_BLOCKSIZE
+    IEBUFSIZE = 28,         // Socket buffer size too large. Maximum value = %dMAX_TCP_BUFFER
+    IEINTERVAL = 29,        // Invalid report interval (min = %gMIN_INTERVAL, max = %gMAX_INTERVAL seconds)
+    IEMSS = 30,             // MSS too large. Maximum value = %dMAX_MSS
+    IENOSENDFILE = 31,      // This OS does not support sendfile
+    IEOMIT = 32,            // Bogus value for --omit
+    IEUNIMP = 33,           // Not implemented yet
+    IEFILE = 34,            // -F file couldn't be opened
+    IEBURST = 35,           // Invalid burst count. Maximum value = %dMAX_BURST
+    IEENDCONDITIONS = 36,   // Only one test end condition (-t, -n, -k) may be specified
+    IELOGFILE = 37,	    // Can't open log file
+    IENOSCTP = 38,	    // No SCTP support available
+    IEBIND = 39,	    // UNUSED:  Local port specified with no local bind option
+    IEUDPBLOCKSIZE = 40,    // Block size invalid
+    IEBADTOS = 41,	    // Bad TOS value
+    IESETCLIENTAUTH = 42,   // Bad configuration of client authentication
+    IESETSERVERAUTH = 43,   // Bad configuration of server authentication
+    IEBADFORMAT = 44,	    // Bad format argument to -f
+    IEREVERSEBIDIR = 45,    // Iperf cannot be both reverse and bidirectional
+    IEBADPORT = 46,	    // Bad port number
+    IETOTALRATE = 47,       // Total required bandwidth is larger than server's limit
+    IETOTALINTERVAL = 48,   // Invalid time interval for calculating average data rate
+    IESKEWTHRESHOLD = 49,   // Invalid value specified as skew threshold
+    IEIDLETIMEOUT = 50,     // Invalid value specified as idle state timeout
+    IERCVTIMEOUT = 51,      // Illegal message receive timeout
+    IERVRSONLYRCVTIMEOUT = 52,  // Client receive timeout is valid only in reverse mode
+    IESNDTIMEOUT = 53,      // Illegal message send timeout
+    IEUDPFILETRANSFER = 54, // Cannot transfer file using UDP
+    IESERVERAUTHUSERS = 55,  // Cannot access authorized users file
+    IECNTLKA = 56,          // Control connection Keepalive period should be larger than the full retry period (interval * count)
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

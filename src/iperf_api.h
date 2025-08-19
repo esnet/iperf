@@ -226,9 +226,11 @@ void    iperf_set_on_test_finish_callback(struct iperf_test* ipt, void (*callbac
 void    iperf_set_test_client_username(struct iperf_test *ipt, const char *client_username);
 void    iperf_set_test_client_password(struct iperf_test *ipt, const char *client_password);
 void    iperf_set_test_client_rsa_pubkey(struct iperf_test *ipt, const char *client_rsa_pubkey_base64);
+void    iperf_set_test_client_rsa_pubkey_from_file(struct iperf_test *ipt, const char *client_rsa_pubkey_file);
 void    iperf_set_test_server_authorized_users(struct iperf_test *ipt, const char *server_authorized_users);
 void    iperf_set_test_server_skew_threshold(struct iperf_test *ipt, int server_skew_threshold);
 void    iperf_set_test_server_rsa_privkey(struct iperf_test *ipt, const char *server_rsa_privkey_base64);
+void    iperf_set_test_server_rsa_privkey_from_file(struct iperf_test *ipt, const char *server_rsa_privkey_file);
 #endif // HAVE_SSL
 
 void	iperf_set_test_connect_timeout(struct iperf_test *ipt, int ct);

@@ -609,6 +609,7 @@ iperf_run_server(struct iperf_test *test)
             i_errno = IECTRLWRITE;
             return -1;
         }
+
         err = htonl(errno);
         if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
             cleanup_server(test);

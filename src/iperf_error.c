@@ -489,7 +489,7 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "invalid time interval for calculating average data rate");
             break;
     case IETOTALREQUESTEDRATE:
-        snprintf(errstr, len, "client's requested bit rate exceeds the server's bitrate limit");
+        snprintf(errstr, len, "client's requested bit rate exceeds the server's bit rate limit");
             break;
         case IESKEWTHRESHOLD:
 	    snprintf(errstr, len, "skew threshold must be a positive number");

@@ -2308,6 +2308,12 @@ iperf_exchange_parameters(struct iperf_test *test)
                 i_errno = IECTRLWRITE;
                 return -1;
             }
+            
+            err = htonl(errno);
+            if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
+                i_errno = IECTRLWRITE;
+                return -1;
+            }
 
             return -1;
         }

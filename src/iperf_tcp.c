@@ -93,14 +93,31 @@ int
 iperf_tcp_send(struct iperf_stream *sp)
 {
     int r;
+    int       size = sp->settings->blksize;
+    char      *buffer = sp->buffer;
+    int       num_of_blocks = sp->settings->num_of_blocks;
+    int       block_to_send;
 
-    if (!sp->pending_size)
-	      sp->pending_size = sp->settings->blksize;
+    if (!sp->pending_size) {
+	sp->pending_size = size;
+        if (num_of_blocks > 1) {  // Send the next buffered block (mainly used for randomized blocks) 
+            block_to_send = sp->settings->last_block_sent + 1;
+            if (block_to_send >= num_of_blocks) {
+                block_to_send = 0;
+            }
+            sp->settings->last_block_sent = block_to_send;
+            buffer += (size * block_to_send);
+        }
+    } else {
+        if (num_of_blocks > 1) {  // Send the next buffered block (mainly used for randomized blocks)
+            buffer += (size * sp->settings->last_block_sent) - sp->pending_size;
+        }
+    }
 
     if (sp->test->zerocopy)
-	      r = Nsendfile(sp->buffer_fd, sp->socket, sp->buffer, sp->pending_size);
+	r = Nsendfile(sp->buffer_fd, sp->socket, buffer, sp->pending_size);
     else
-	      r = Nwrite(sp->socket, sp->buffer, sp->pending_size, Ptcp);
+	r = Nwrite(sp->socket, buffer, sp->pending_size, Ptcp);
 
     if (r < 0)
         return r;

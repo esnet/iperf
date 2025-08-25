@@ -87,8 +87,21 @@ iperf_sctp_send(struct iperf_stream *sp)
 {
 #if defined(HAVE_SCTP_H)
     int r;
+    int       size = sp->settings->blksize;
+    char      *buffer = sp->buffer;
+    int       num_of_blocks = sp->settings->num_of_blocks;
+    int       block_to_send;
 
-    r = Nwrite(sp->socket, sp->buffer, sp->settings->blksize, Psctp);
+    if (num_of_blocks > 1) {  // Send the next buffered block (mainly used for randomized blocks) 
+        block_to_send = sp->settings->last_block_sent + 1;
+        if (block_to_send >= num_of_blocks) {
+            block_to_send = 0;
+        }
+        sp->settings->last_block_sent = block_to_send;
+        buffer += (size * block_to_send);
+    }
+
+    r = Nwrite(sp->socket, buffer, size, Psctp);
     if (r < 0)
         return r;
 

@@ -1816,8 +1816,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
 #endif //HAVE_SSL
 
-    // File cannot be transferred using UDP because of the UDP packets header (packet number, etc.)
-    if(test->role == 'c' && test->diskfile_name != (char*) 0 && test->protocol->id == Pudp) {
+    /*
+     * File cannot be transferred using UDP because of the UDP packets
+     * header (packet number, etc.). Specifying Pudp here implies this is
+     * on the client side.
+     */
+    if (test->diskfile_name != (char*) 0 && test->protocol->id == Pudp) {
         i_errno = IEUDPFILETRANSFER;
         return -1;
     }
@@ -2451,8 +2455,17 @@ get_parameters(struct iperf_test *test)
 
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "tcp", cJSON_True)) != NULL)
 	    set_protocol(test, Ptcp);
-	if ((j_p = iperf_cJSON_GetObjectItemType(j, "udp", cJSON_True)) != NULL)
-	    set_protocol(test, Pudp);
+        if ((j_p = iperf_cJSON_GetObjectItemType(j, "udp", cJSON_True)) != NULL) {
+            /* Disallow UDP transfers if we already are to/from a file */
+            if (test->diskfile_name != NULL) {
+                i_errno = IEUDPFILETRANSFER;
+                r = -1;
+            }
+            else {
+                /* Not to/from a file, set UDP protocol as intended*/
+                set_protocol(test, Pudp);
+            }
+        }
         if ((j_p = iperf_cJSON_GetObjectItemType(j, "sctp", cJSON_True)) != NULL)
             set_protocol(test, Psctp);
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "omit", cJSON_Number)) != NULL)

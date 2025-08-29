@@ -448,6 +448,7 @@ static void
 cleanup_server(struct iperf_test *test)
 {
     struct iperf_stream *sp;
+    int i;
 
     /* Cancel outstanding threads */
     int i_errno_save = i_errno;
@@ -501,6 +502,13 @@ cleanup_server(struct iperf_test *test)
     if (test->prot_listener > -1) {     // May remain open if create socket failed
 	close(test->prot_listener);
         test->prot_listener = -1;
+    }
+
+    /* Close all listening ports in case pool of listening ports is used */
+    for (i = 0; i <= test->server_udp_streams_accepted; i++) {
+        if (test->debug)
+            printf("Closing UDP port %d;\n", test->server_port + i);
+        close(test->server_port + i);
     }
 
     /* Cancel any remaining timers. */

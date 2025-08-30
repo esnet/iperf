@@ -437,6 +437,8 @@ enum {
     IEUDPFILETRANSFER = 34, // Cannot transfer file using UDP
     IESERVERAUTHUSERS = 35,  // Cannot access authorized users file
     IECNTLKA = 36,          // Control connection Keepalive period should be larger than the full retry period (interval * count)
+    IENUMPORTS = 37,        // number of ports is less than 1 or larger than server limit
+    IEPORTNUM = 38,         // requested number of parallel streams is larger than the number of ports available for the server
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

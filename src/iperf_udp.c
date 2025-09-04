@@ -89,22 +89,10 @@ iperf_udp_recv(struct iperf_stream *sp)
     dgram_sz = sp->settings->blksize;
 
     if (sp->test->settings->gro) {
-	size = sp->test->settings->gro_bf_size;
-	r = Nread_gro(sp->socket, sp->buffer, size, Pudp, &dgram_sz);
-	if (dgram_sz == -1) {
-	    /*
-	     * For corner case where the socket configuration is
-	     * successful but the kernel network layer doesn't provide
-	     * GRO-format data or ancillary info.
-	     */
-            dgram_sz = sp->settings->blksize;
-	}
-	/* Validate dgram_sz against reasonable bounds */
-	if (dgram_sz <= 0 || dgram_sz < min_pkt_size || dgram_sz > sp->test->settings->gro_bf_size) {
-	    if (test->debug_level >= DEBUG_LEVEL_INFO)
-		printf("Invalid GRO dgram_sz %d, falling back to blksize %d\n", dgram_sz, sp->settings->blksize);
-	    dgram_sz = sp->settings->blksize;
-	}
+    size = sp->test->settings->gro_bf_size;
+    r = Nread_gro(sp->socket, sp->buffer, size, Pudp, &dgram_sz);
+    /* Use negotiated block size for GRO segment stride to ensure correct parsing. */
+    dgram_sz = sp->settings->blksize;
     } else {
         /* GRO available but disabled - use normal UDP receive and single packet size */
         r = Nrecv_no_select(sp->socket, sp->buffer, size, Pudp, sock_opt);
@@ -146,49 +134,66 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    dgram_buf_end = sp->buffer + r;
 	    tmp_r = r;
 	    
-	    /* Ensure we process complete datagrams only */
-	    while (tmp_r >= dgram_sz && dgram_buf + dgram_sz <= dgram_buf_end) {
-	    cnt++;
-	    if (sp->test->debug)
-		printf("%d (%d) remaining %d\n", cnt, dgram_sz, tmp_r);
+    /* Ensure we process complete datagrams only */
+    while (tmp_r >= dgram_sz && dgram_buf + dgram_sz <= dgram_buf_end) {
+        cnt++;
 
-	    /* Ensure we have enough bytes for the packet header */
-	    if (tmp_r < min_pkt_size) {
-		if (test->debug_level >= DEBUG_LEVEL_INFO)
-		    printf("Incomplete packet header: %d bytes remaining\n", tmp_r);
-		break;
-	    }
+        /* Ensure we have enough bytes for the packet header */
+        if (tmp_r < min_pkt_size)
+            break;
 
-	    if (sp->test->udp_counters_64bit) {
-		/* Verify we have enough space for 64-bit counter */
-		if (tmp_r < sizeof(uint32_t) * 2 + sizeof(uint64_t)) {
-		    if (test->debug_level >= DEBUG_LEVEL_INFO)
-			printf("Incomplete 64-bit packet: %d bytes remaining\n", tmp_r);
-		    break;
-		}
-		memcpy(&sec, dgram_buf, sizeof(sec));
-		memcpy(&usec, dgram_buf+4, sizeof(usec));
-		memcpy(&pcount, dgram_buf+8, sizeof(pcount));
-		sec = ntohl(sec);
-		usec = ntohl(usec);
-		pcount = be64toh(pcount);
-		sent_time.secs = sec;
-		sent_time.usecs = usec;
-	    }
-	    else {
-		uint32_t pc;
-		memcpy(&sec, dgram_buf, sizeof(sec));
-		memcpy(&usec, dgram_buf+4, sizeof(usec));
-		memcpy(&pc, dgram_buf+8, sizeof(pc));
-		sec = ntohl(sec);
-		usec = ntohl(usec);
-		pcount = ntohl(pc);
-		sent_time.secs = sec;
-		sent_time.usecs = usec;
-	    }
-		dgram_buf += dgram_sz;
-		tmp_r -= dgram_sz;
-	    } // end while loop
+        if (sp->test->udp_counters_64bit) {
+            /* Verify we have enough space for 64-bit counter */
+            if (tmp_r < sizeof(uint32_t) * 2 + sizeof(uint64_t))
+                break;
+            memcpy(&sec, dgram_buf, sizeof(sec));
+            memcpy(&usec, dgram_buf+4, sizeof(usec));
+            memcpy(&pcount, dgram_buf+8, sizeof(pcount));
+            sec = ntohl(sec);
+            usec = ntohl(usec);
+            pcount = be64toh(pcount);
+            sent_time.secs = sec;
+            sent_time.usecs = usec;
+        } else {
+            uint32_t pc;
+            memcpy(&sec, dgram_buf, sizeof(sec));
+            memcpy(&usec, dgram_buf+4, sizeof(usec));
+            memcpy(&pc, dgram_buf+8, sizeof(pc));
+            sec = ntohl(sec);
+            usec = ntohl(usec);
+            pcount = ntohl(pc);
+            sent_time.secs = sec;
+            sent_time.usecs = usec;
+        }
+
+        /* Per-datagram loss/out-of-order accounting */
+        if (pcount >= sp->packet_count + 1) {
+            if (pcount > sp->packet_count + 1) {
+                sp->cnt_error += (pcount - 1) - sp->packet_count;
+            }
+            sp->packet_count = pcount;
+        } else {
+            sp->outoforder_packets++;
+            if (sp->cnt_error > 0)
+                sp->cnt_error--;
+        }
+
+        /* Per-datagram jitter computation */
+        iperf_time_now(&arrival_time);
+        iperf_time_diff(&arrival_time, &sent_time, &temp_time);
+        transit = iperf_time_in_secs(&temp_time);
+        if (first_packet)
+            sp->prev_transit = transit;
+        d = transit - sp->prev_transit;
+        if (d < 0)
+            d = -d;
+        sp->prev_transit = transit;
+        sp->jitter += (d - sp->jitter) / 16.0;
+        first_packet = 0;
+
+        dgram_buf += dgram_sz;
+        tmp_r -= dgram_sz;
+    } // end while loop
 	} else {
 	    /* GRO disabled - process as single normal UDP packet */
 	    /* Dig the various counters out of the incoming UDP packet */
@@ -239,80 +244,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	}
 #endif /* HAVE_UDP_GRO */
 
-	if (test->debug_level >= DEBUG_LEVEL_DEBUG)
-	    fprintf(stderr, "pcount %" PRIu64 " packet_count %" PRIu64 "\n", pcount, sp->packet_count);
-
-	/*
-	 * Try to handle out of order packets.  The way we do this
-	 * uses a constant amount of storage but might not be
-	 * correct in all cases.  In particular we seem to have the
-	 * assumption that packets can't be duplicated in the network,
-	 * because duplicate packets will possibly cause some problems here.
-	 *
-	 * First figure out if the sequence numbers are going forward.
-	 * Note that pcount is the sequence number read from the packet,
-	 * and sp->packet_count is the highest sequence number seen so
-	 * far (so we're expecting to see the packet with sequence number
-	 * sp->packet_count + 1 arrive next).
-	 */
-	if (pcount >= sp->packet_count + 1) {
-
-	    /* Forward, but is there a gap in sequence numbers? */
-	    if (pcount > sp->packet_count + 1) {
-		/* There's a gap so count that as a loss. */
-		sp->cnt_error += (pcount - 1) - sp->packet_count;
-                if (test->debug_level >= DEBUG_LEVEL_INFO)
-		    fprintf(stderr, "LOST %" PRIu64 " PACKETS - received packet %" PRIu64 " but expected sequence %" PRIu64 " on stream %d\n", (pcount - sp->packet_count + 1), pcount, sp->packet_count + 1, sp->socket);
-	    }
-	    /* Update the highest sequence number seen so far. */
-	    sp->packet_count = pcount;
-	} else {
-
-	    /*
-	     * Sequence number went backward (or was stationary?!?).
-	     * This counts as an out-of-order packet.
-	     */
-	    sp->outoforder_packets++;
-
-	    /*
-	     * If we have lost packets, then the fact that we are now
-	     * seeing an out-of-order packet offsets a prior sequence
-	     * number gap that was counted as a loss.  So we can take
-	     * away a loss.
-	     */
-	    if (sp->cnt_error > 0)
-		sp->cnt_error--;
-
-	    /* Log the out-of-order packet */
-	    if (test->debug_level >= DEBUG_LEVEL_INFO)
-		fprintf(stderr, "OUT OF ORDER - received packet %" PRIu64 " but expected sequence %" PRIu64 " on stream %d\n", pcount, sp->packet_count + 1, sp->socket);
-	}
-
-	/*
-	 * jitter measurement
-	 *
-	 * This computation is based on RFC 1889 (specifically
-	 * sections 6.3.1 and A.8).
-	 *
-	 * Note that synchronized clocks are not required since
-	 * the source packet delta times are known.  Also this
-	 * computation does not require knowing the round-trip
-	 * time.
-	 */
-	iperf_time_now(&arrival_time);
-
-	iperf_time_diff(&arrival_time, &sent_time, &temp_time);
-	transit = iperf_time_in_secs(&temp_time);
-
-	/* Hack to handle the first packet by initializing prev_transit. */
-	if (first_packet)
-	    sp->prev_transit = transit;
-
-	d = transit - sp->prev_transit;
-	if (d < 0)
-	    d = -d;
-	sp->prev_transit = transit;
-	sp->jitter += (d - sp->jitter) / 16.0;
+    /* For GRO case, loss and jitter were handled per datagram inside the loop. */
     }
     else {
 	if (test->debug_level >= DEBUG_LEVEL_INFO)
@@ -343,8 +275,9 @@ iperf_udp_send(struct iperf_stream *sp)
     const int min_pkt_size = sizeof(uint32_t) * 3; /* sec + usec + pcount (32-bit) */
 
     if (sp->test->settings->gso) {
-	dgram_sz = sp->test->settings->gso_dg_size;
-	buf_sz = sp->test->settings->gso_bf_size;
+    dgram_sz = sp->test->settings->gso_dg_size;
+    /* Use full GSO buffer to pack multiple datagrams, as originally. */
+    buf_sz = sp->test->settings->gso_bf_size;
 	/* Validate GSO parameters */
 	if (dgram_sz <= 0 || dgram_sz < min_pkt_size || dgram_sz > buf_sz) {
 	    if (sp->test->debug_level >= DEBUG_LEVEL_INFO)

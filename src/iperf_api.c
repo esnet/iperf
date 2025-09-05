@@ -2487,6 +2487,22 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "pacing_timer", test->settings->pacing_timer);
 	if (test->settings->burst)
 	    cJSON_AddNumberToObject(j, "burst", test->settings->burst);
+
+#ifdef HAVE_UDP_SEGMENT
+	/* Send UDP GSO settings from client to server */
+	if (test->protocol->id == Pudp) {
+	    cJSON_AddNumberToObject(j, "gso", test->settings->gso);
+	    cJSON_AddNumberToObject(j, "gso_dg_size", test->settings->gso_dg_size);
+	    cJSON_AddNumberToObject(j, "gso_bf_size", test->settings->gso_bf_size);
+	}
+#endif
+#ifdef HAVE_UDP_GRO
+	/* Send UDP GRO settings from client to server */
+	if (test->protocol->id == Pudp) {
+	    cJSON_AddNumberToObject(j, "gro", test->settings->gro);
+	    cJSON_AddNumberToObject(j, "gro_bf_size", test->settings->gro_bf_size);
+	}
+#endif
 	if (test->settings->tos)
 	    cJSON_AddNumberToObject(j, "TOS", test->settings->tos);
 	if (test->settings->flowlabel)
@@ -2610,17 +2626,32 @@ get_parameters(struct iperf_test *test)
 	    test->settings->socket_bufsize = j_p->valueint;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "len", cJSON_Number)) != NULL)
 	    test->settings->blksize = j_p->valueint;
+
 #ifdef HAVE_UDP_SEGMENT
-	if (test->protocol->id == Pudp && test->settings->gso == 1) {
+	/* Accept UDP GSO settings provided by the client */
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "gso", cJSON_Number)) != NULL)
+	    test->settings->gso = j_p->valueint;
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "gso_dg_size", cJSON_Number)) != NULL)
+	    test->settings->gso_dg_size = j_p->valueint;
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "gso_bf_size", cJSON_Number)) != NULL)
+	    test->settings->gso_bf_size = j_p->valueint;
+
+	/* Backward-compatibility: If client didn't send GSO params, derive from blksize. */
+	if (test->protocol->id == Pudp && test->settings->gso == 1 && test->settings->gso_dg_size == 0) {
 	    test->settings->gso_dg_size = test->settings->blksize;
-	    /* use the multiple of datagram size for the best efficiency. */
 	    if (test->settings->gso_dg_size > 0) {
 	        test->settings->gso_bf_size = (test->settings->gso_bf_size / test->settings->gso_dg_size) * test->settings->gso_dg_size;
 	    } else {
-	        /* If gso_dg_size is 0 (unlimited bandwidth), use default UDP datagram size */
 	        test->settings->gso_dg_size = DEFAULT_UDP_BLKSIZE;
 	    }
 	}
+#endif
+#ifdef HAVE_UDP_GRO
+	/* Accept UDP GRO settings provided by the client */
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "gro", cJSON_Number)) != NULL)
+	    test->settings->gro = j_p->valueint;
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "gro_bf_size", cJSON_Number)) != NULL)
+	    test->settings->gro_bf_size = j_p->valueint;
 #endif
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "bandwidth", cJSON_Number)) != NULL)
 	    test->settings->rate = j_p->valueint;

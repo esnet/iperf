@@ -1,4 +1,4 @@
-.TH IPERF3 1 "May 2025" ESnet "User Manuals"
+.TH IPERF3 1 "September 2025" ESnet "User Manuals"
 .SH NAME
 iperf3 \- perform network throughput tests
 .SH SYNOPSIS
@@ -157,13 +157,20 @@ This option uses SO_BINDTODEVICE, and may require root permissions.
 give more detailed output
 .TP
 .BR -J ", " --json " "
-output in JSON format
+output in JSON format instead of the default human-readable
+output.
 .TP
 .BR --json-stream " "
-output in line-delimited JSON format
+output in line-delimited JSON format instead of the default
+human-readable output. This option overrides the
+.B --json
+option, if that option was also specified.
 .TP
 .BR --json-stream-full-output " "
-output in JSON format with JSON streams enabled
+output in JSON format with JSON streams enabled. This flag only takes
+effect if the
+.B --json-stream
+option was also specified.
 .TP
 .BR --logfile " \fIfile\fR"
 send output to a log file.

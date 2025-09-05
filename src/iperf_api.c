@@ -1939,7 +1939,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             test->settings->gso_bf_size = (test->settings->gso_bf_size / test->settings->gso_dg_size) * test->settings->gso_dg_size;
         } else {
             /* If gso_dg_size is 0 (unlimited bandwidth), use default UDP datagram size */
-            test->settings->gso_dg_size = 1472; /* Standard UDP payload size for Ethernet MTU */
+            test->settings->gso_dg_size = DEFAULT_UDP_BLKSIZE;
         }
     }
 #endif
@@ -2618,7 +2618,7 @@ get_parameters(struct iperf_test *test)
 	        test->settings->gso_bf_size = (test->settings->gso_bf_size / test->settings->gso_dg_size) * test->settings->gso_dg_size;
 	    } else {
 	        /* If gso_dg_size is 0 (unlimited bandwidth), use default UDP datagram size */
-	        test->settings->gso_dg_size = 1472; /* Standard UDP payload size for Ethernet MTU */
+	        test->settings->gso_dg_size = DEFAULT_UDP_BLKSIZE;
 	    }
 	}
 #endif

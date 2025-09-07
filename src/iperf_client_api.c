@@ -305,8 +305,6 @@ iperf_handle_message_client(struct iperf_test *test)
     int rval;
     int32_t err;
 
-  
-
     if (NULL == test)
     {
         iperf_err(NULL, "No test\n");

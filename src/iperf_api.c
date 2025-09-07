@@ -2333,7 +2333,7 @@ iperf_exchange_parameters(struct iperf_test *test)
         if (test->settings->bitrate_limit && total_requested_rate > test->settings->bitrate_limit) {
             if (iperf_set_send_state(test, SERVER_ERROR) != 0)
                 return -1;
-            i_errno = IETOTALREQUESTEDRATE;
+            i_errno = IETOTALRATE;
             err = htonl(i_errno);
             if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
                 i_errno = IECTRLWRITE;

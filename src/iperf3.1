@@ -1,4 +1,4 @@
-.TH IPERF3 1 "May 2025" ESnet "User Manuals"
+.TH IPERF3 1 "September 2025" ESnet "User Manuals"
 .SH NAME
 iperf3 \- perform network throughput tests
 .SH SYNOPSIS
@@ -110,17 +110,18 @@ viewed by running iperf3 with the -h flag.
 .SH "GENERAL OPTIONS"
 .TP
 .BR -p ", " --port " \fIn\fR"
-set server port to listen on/connect to to \fIn\fR (default 5201)
+Set server port to listen on/connect to to \fIn\fR (default 5201)
 .TP
-.BR -f ", " --format " "
-[kmgtKMGT]   format to report: Kbits/Mbits/Gbits/Tbits
+.BR -f ", " --format " [kmgtKMGT]"
+Set format to report: Kbits/Mbits/Gbits/Tbits
 .TP
 .BR -i ", " --interval " \fIn\fR"
-pause \fIn\fR seconds between periodic throughput reports;
-default is 1, use 0 to disable
+Pause \fIn\fR seconds between periodic throughput reports;
+default is 1, use 0 to disable.
 .TP
 .BR -I ", " --pidfile " \fIfile\fR"
-write a file with the process ID, most useful when running as a daemon.
+Write a file with the process ID.
+This option is most useful when running as a daemon.
 .TP
 .BR -F ", " --file " \fIname\fR"
 Use a file as the source (on the sender) or sink (on the receiver) of
@@ -129,7 +130,10 @@ This feature is used for finding whether or not the storage subsystem
 is the bottleneck for file transfers.
 It does not turn iperf3 into a file transfer tool.
 The length, attributes, and in some cases contents of the received
-file may not match those of the original file.
+file may not match those of the original file. This option is
+unavailable when doing
+.B --udp
+tests.
 .TP
 .BR -A ", " --affinity " \fIn/n,m\fR"
 Set the CPU affinity, if possible (Linux, FreeBSD, and Windows only).
@@ -143,37 +147,46 @@ to a single CPU (as opposed to a set containing potentially multiple
 CPUs).
 .TP
 .BR -B ", " --bind " \fIhost\fR[\fB%\fIdev\fR]"
-bind to the specific interface associated with address \fIhost\fR.
+Bind to the specific interface associated with address \fIhost\fR.
 If an optional interface is specified, it is treated as a shortcut
 for \fB--bind-dev \fIdev\fR.
-Note that a percent sign and interface device name are required for IPv6 link-local address literals.
+Note that a percent sign and interface device name are required for
+IPv6 link-local address literals, in order to set the link-local
+scope.
 .TP
 .BR --bind-dev " \fIdev\fR"
-bind to the specified network interface.
+Bind to the specified network interface.
 This option uses SO_BINDTODEVICE, and may require root permissions.
 (Available on Linux and possibly other systems.)
 .TP
 .BR -V ", " --verbose " "
-give more detailed output
+Produce more detailed output.
 .TP
 .BR -J ", " --json " "
-output in JSON format
+Output in JSON format instead of the default human-readable
+output.
 .TP
 .BR --json-stream " "
-output in line-delimited JSON format
+Output in line-delimited JSON format instead of the default
+human-readable output. This option overrides the
+.B --json
+option, if that option was also specified.
 .TP
 .BR --json-stream-full-output " "
-output in JSON format with JSON streams enabled
+Output in JSON format with JSON streams enabled. This flag only takes
+effect if the
+.B --json-stream
+option was also specified.
 .TP
 .BR --logfile " \fIfile\fR"
-send output to a log file.
+Send output to a log file.
 .TP
 .BR --forceflush " "
-force flushing output at every interval.
+Force flushing output at every interval.
 Used to avoid buffering when sending output to pipe.
 .TP
 .BR --timestamps "[\fB=\fIformat\fR]"
-prepend a timestamp at the start of each output line.
+Prepend a timestamp at the start of each output line.
 By default, timestamps have the format emitted by
 .BR ctime ( 1 ).
 Optionally, \fC=\fR followed by
@@ -184,12 +197,12 @@ If this optional format is given, the \fC=\fR must immediately
 follow the \fB--timestamps\fR option with no whitespace intervening.
 .TP
 .BR --rcv-timeout " \fI#\fR"
-set idle timeout for receiving data during active tests. The receiver
+Set idle timeout for receiving data during active tests. The receiver
 will halt a test if no data is received from the sender for this
 number of ms (default to 120000 ms, or 2 minutes).
 .TP
 .BR --snd-timeout " \fI#\fR"
-set timeout for unacknowledged TCP data (on both test and control
+Set timeout for unacknowledged TCP data (on both test and control
 connections) This option can be used to force a faster test timeout
 in case of a network partition during a test. The required
 parameter is specified in ms, and defaults to the system settings.
@@ -206,78 +219,86 @@ that is not compatible with older iperf3 versions.  Use this option to
 preserve the less secure, but more compatible, behavior.
 .TP
 .BR -m ", " --mptcp " "
-use mptcp variant for the current protocol. This only applies to
+Use the MPTCP variant for the current protocol. This only applies to
 TCP and enables MPTCP usage.
 .TP
 .BR -d ", " --debug " "
-emit debugging output.
+Emit debugging output.
 Primarily (perhaps exclusively) of use to developers.
 .TP
 .BR -v ", " --version " "
-show version information and quit
+Show version information and quit.
 .TP
 .BR -h ", " --help " "
-show a help synopsis
+Show a help synopsis.
 
 .SH "SERVER SPECIFIC OPTIONS"
 .TP
 .BR -s ", " --server " "
-run in server mode
+Run in server mode.
 .TP
 .BR -D ", " --daemon " "
-run the server in background as a daemon
+Run the server in background as a daemon.
 .TP
 .BR -1 ", " --one-off
-handle one client connection, then exit.  If an idle time is set, the
-server will exit after that amount of time with no connection.
+Handle (at most) one client connection, then exit.
+If an idle time is set, the server will exit after that amount of time
+with no connection.
 .TP
 .BR --idle-timeout " \fIn\fR"
-restart the server after \fIn\fR seconds in case it gets stuck.  In
-one-off mode, this is the number of seconds the server will wait
+Restart the server after \fIn\fR seconds in case it gets stuck.
+In one-off mode, this is the number of seconds the server will wait
 before exiting.
 .TP
-.BR --server-bitrate-limit " \fIn\fR[KMGT]"
-set a limit on the server side, which will cause a test to abort if
+.BR --server-bitrate-limit " \fIn\fR[KMGT][/\fCn\fR]"
+Set a limit on the server side, which will cause a test to abort if
 the client specifies a test of more than \fIn\fR bits per second, or
 if the average data sent or received by the client (including all data
 streams) is greater than \fIn\fR bits per second.  The default limit
-is zero, which implies no limit.  The interval over which to average
-the data rate is 5 seconds by default, but can be specified by adding
-a '/' and a number to the bitrate specifier.
+is 0, which implies no limit.  The interval over which to average the
+data rate is 5 seconds by default, but can be specified by adding a
+.B
+/
+character and a number to the bitrate specifier.
 .TP
 .BR --rsa-private-key-path " \fIfile\fR"
-path to the RSA private key (not password-protected) used to decrypt
+Path to the RSA private key (not password-protected) used to decrypt
 authentication credentials from the client (if built with OpenSSL
 support).
 .TP
 .BR --authorized-users-path " \fIfile\fR"
-path to the configuration file containing authorized users credentials to run
-iperf tests (if built with OpenSSL support).
-The file is a comma separated list of usernames and password hashes;
-more information on the structure of the file can be found in the
-EXAMPLES section.
+Path to the configuration file containing authorized users credentials
+to run iperf tests (if built with OpenSSL support).  The file is a
+comma separated list of usernames and password hashes; more
+information on the structure of the file can be found in the EXAMPLES
+section.
 .TP
-.BR --time-skew-threshold second " \fIseconds\fR"
-time skew threshold (in seconds) between the server and client
-during the authentication process.
+.BR --time-skew-threshold " \fIseconds\fR"
+Specify the allowable time skew threshold (in seconds) between the
+server and client during the authentication process.
 .SH "CLIENT SPECIFIC OPTIONS"
 .TP
 .BR -c ", " --client " \fIhost\fR[\fB%\fIdev\fR]"
-run in client mode, connecting to the specified server.
+Run in client mode, connecting to the specified server.
 By default, a test consists of sending data from the client to the
 server, unless the \-R flag is specified.
 If an optional interface is specified, it is treated as a shortcut
 for \fB--bind-dev \fIdev\fR.
-Note that a percent sign and interface device name are required for IPv6 link-local address literals.
+Note that a percent sign and interface device name are required for
+IPv6 link-local address literals.
 .TP
 .BR --sctp
-use SCTP rather than TCP (FreeBSD and Linux)
+Use SCTP for tests rather than TCP (FreeBSD and Linux).
+Note that TCP communication is still used for the control connection
+between client and server.
 .TP
 .BR -u ", " --udp
-use UDP rather than TCP
+Use UDP for tests rather than TCP.
+Note that TCP communication is still used for the control connection
+between client and server.
 .TP
 .BR --connect-timeout " \fIn\fR"
-set timeout for establishing the initial control connection to the
+Set timeout for establishing the initial control connection to the
 server, in milliseconds.
 The default behavior is the operating system's timeout for TCP
 connection establishment.
@@ -285,24 +306,29 @@ Providing a shorter value may speed up detection of a down iperf3
 server.
 .TP
 .BR -b ", " --bitrate " \fIn\fR[KMGT]"
-set target bitrate to \fIn\fR bits/sec (default 1 Mbit/sec for UDP,
+Set target bitrate to \fIn\fR bits/sec (default 1 Mbit/sec for UDP,
 unlimited for TCP/SCTP).
 If there are multiple streams (\-P flag), the throughput limit is applied
 separately to each stream.
 You can also add a '/' and a number to the bitrate specifier.
 This is called "burst mode".
-It will send the given number of packets without pausing, even if that
+It will perform the given number of sends without pausing,
+even if that
 temporarily exceeds the specified throughput limit.
 Setting the target bitrate to 0 will disable bitrate limits
 (particularly useful for UDP tests).
 This throughput limit is implemented internally inside iperf3, and is
 available on all platforms.
-Compare with the \--fq-rate flag.
-This option replaces the \--bandwidth flag, which is now deprecated
+Compare with the
+.B --fq-rate
+flag.
+This option replaces the
+.B --bandwidth
+flag, which is now deprecated
 but (at least for now) still accepted.
 .TP
 .BR --pacing-timer " \fIn\fR[KMGT]"
-set pacing timer interval in microseconds (default 1000 microseconds,
+Set pacing timer interval in microseconds (default 1000 microseconds,
 or 1 ms).
 This controls iperf3's internal pacing timer for the \-b/\--bitrate
 option.
@@ -323,73 +349,99 @@ The default is no fair-queueing based pacing.
 .TP
 .BR --no-fq-socket-pacing
 This option is deprecated and will be removed.
-It is equivalent to specifying --fq-rate=0.
+It is equivalent to specifying
+.BR
+--fq-rate=0 .
 .TP
 .BR -t ", " --time " \fIn\fR"
-time in seconds to transmit for (default 10 secs)
+Set the test duration in seconds (default 10 secs).
+The
+.BR
+-t , -n ", and" -k
+options are mutually exclusive.
 .TP
 .BR -n ", " --bytes " \fIn\fR[KMGT]"
-number of bytes to transmit (instead of \-t)
+Set the number of bytes to transmit.
+The
+.BR
+-t , -n ", and" -k
+options are mutually exclusive.
 .TP
 .BR -k ", " --blockcount " \fIn\fR[KMGT]"
-number of blocks (packets) to transmit (instead of \-t or \-n)
+Set the number of blocks (packets) to transmit.
+The
+.BR
+-t , -n ", and" -k
+options are mutually exclusive.
 .TP
 .BR -l ", " --length " \fIn\fR[KMGT]"
-length of buffer to read or write.  For TCP tests, the default value
-is 128KB.
+Set the length of the buffer to read or write.  For TCP tests, the
+default value is 128KB.
 In the case of UDP, iperf3 tries to dynamically determine a reasonable
 sending size based on the path MTU; if that cannot be determined it
 uses 1460 bytes as a sending size.
 For SCTP tests, the default size is 64KB.
 .TP
 .BR --cport " \fIport\fR"
-bind data streams to a specific client port (for TCP and UDP only,
-default is to use an ephemeral port)
+Bind data streams to a specific TCP or UDP client port (for TCP
+and UDP only, default is to use an ephemeral port).
 .TP
 .BR -P ", " --parallel " \fIn\fR"
-number of parallel client streams to run. iperf3 will spawn off a
-separate thread for each test stream. Using multiple streams may
-result in higher throughput than a single stream.
+Set the number of parallel client streams to run. Beginning with
+iperf-3.16, iperf3 will spawn off a separate thread for each test
+stream.
+Using multiple streams may result in higher throughput than a
+single stream, in cases where network throughput is CPU-limited.
 .TP
 .BR -R ", " --reverse
-reverse the direction of a test, so that the server sends data to the
-client
+Reverse the direction of a test, so that the server sends data to the
+client.
 .TP
 .BR --bidir
-test in both directions (normal and reverse), with both the client and
+Test in both directions (normal and reverse), with both the client and
 server sending and receiving data simultaneously
 .TP
 .BR -w ", " --window " \fIn\fR[KMGT]"
-set socket buffer size / window size.
-This value gets sent to the server and used on that side too; on both
-sides this option sets both the sending and receiving socket buffer sizes.
-This option can be used to set (indirectly) the maximum TCP window size.
-Note that on Linux systems, the effective maximum window size is approximately
-double what is specified by this option (this behavior is not a bug in iperf3
-but a "feature" of the Linux kernel, as documented by tcp(7) and socket(7)).
+Set t he socket buffer size / window size.
+This value gets sent to the server and used on that side too;
+on both sides this option sets both the sending and receiving
+socket buffer sizes.
+This option can be used to set (indirectly) the maximum TCP window
+size.
+Note that on Linux systems, the effective maximum window size is
+approximately
+double what is specified by this option.
+This behavior is not a bug in iperf3 but a feature of the
+Linux kernel, as documented by
+.BR tcp ( 7 )
+and
+.BR socket ( 7 )).
 .TP
 .BR -M ", " --set-mss " \fIn\fR"
-set TCP/SCTP maximum segment size (MTU - 40 bytes)
+Set the TCP/SCTP maximum segment size (MTU - 40 bytes).
 .TP
 .BR -N ", " --no-delay " "
-set TCP/SCTP no delay, disabling Nagle's Algorithm
+Set the TCP/SCTP no delay option, disabling Nagle's Algorithm.
 .TP
 .BR -4 ", " --version4 " "
-only use IPv4
+Force the use of IPv4.
 .TP
 .BR -6 ", " --version6 " "
-only use IPv6
+Force the use of IPv6.
 .TP
 .BR -S ", " --tos " \fIn\fR"
-set the IP type of service. The usual prefixes for octal and hex can be used,
+Set the IP type of service bits.
+The usual prefixes for octal and hex can be used,
 i.e. 52, 064 and 0x34 all specify the same value.
 .TP
 .BR "--dscp " \fIdscp\fR
-set the IP DSCP bits.  Both numeric and symbolic values are accepted. Numeric
-values can be specified in decimal, octal and hex (see --tos above).
+Set the IP DSCP bits.  Both numeric and symbolic values are accepted. Numeric
+values can be specified in decimal, octal and hex (see
+.B --tos
+above).
 .TP
 .BR -L ", " --flowlabel " \fIn\fR"
-set the IPv6 flow label (currently only supported on Linux)
+Set the IPv6 flow label (currently only supported on Linux).
 .TP
 .BR -X ", " --xbind " \fIname\fR"
 Bind SCTP associations to a specific subset of links using sctp_bindx(3).
@@ -402,7 +454,11 @@ association, and is supported for both iperf servers and clients
 (the latter are supported by passing the first \fB--X\fR argument to bind(2)).
 Hostnames are accepted as arguments and are resolved using
 getaddrinfo(3).
-If the \fB--4\fR or \fB--6\fR flags are specified, names
+If the
+.B --4
+or
+.B --6
+flags are also specified, names
 which do not resolve to addresses within the
 specified protocol family will be ignored.
 .TP
@@ -418,11 +474,14 @@ Ignored received packet data, using the MSG_TRUNC flag to the
 recv(2) system call.
 .TP
 .BR -O ", " --omit " \fIn\fR"
-Perform pre-test for N seconds and omit the pre-test statistics, to skip past the TCP slow-start
+Perform pre-test for
+.I n
+seconds and omit the pre-test statistics, to skip past the TCP slow-start
 period.
 .TP
 .BR -T ", " --title " \fIstr\fR"
-Prefix every output line with this string.
+Prefix every output line with the string
+.IR str .
 .TP
 .BR --extra-data " \fIstr\fR"
 Specify an extra data string field to be included in JSON output.
@@ -433,7 +492,7 @@ older
 .B --linux-congestion
 synonym for this flag is accepted but is deprecated.
 .TP
-.BR "--get-server-output"
+.BR --get-server-output
 Get the output from the server.
 The output format is determined by the server (in particular, if the
 server was invoked with the \fB--json\fR flag, the output will be in
@@ -462,15 +521,17 @@ Set the IPv4 Don't Fragment (DF) bit on outgoing packets.
 Only applicable to tests doing UDP over IPv4.
 .TP
 .BR --username " \fIusername\fR"
-username to use for authentication to the iperf server (if built with
-OpenSSL support).
-The password will be prompted for interactively when the test is run.  Note,
-the password to use can also be specified via the IPERF3_PASSWORD environment
-variable. If this variable is present, the password prompt will be skipped.
+Specify username to use for authentication to the iperf server
+(if built with OpenSSL support).
+The password will be prompted for interactively when the test is run.
+Note the password can also be specified via the IPERF3_PASSWORD
+environment variable. If this variable is present, the password
+prompt will be skipped.
 .TP
 .BR --rsa-public-key-path " \fIfile\fR"
-path to the RSA public key used to encrypt authentication credentials
-(if built with OpenSSL support)
+Set path to the RSA public key used to encrypt authentication
+credentials
+(if built with OpenSSL support).
 
 .SH EXAMPLES
 .SS "Authentication - RSA Keypair"
@@ -482,15 +543,15 @@ password set.
 The public key must be in PEM format and use SubjectPrefixKeyInfo encoding.
 An example of a set of UNIX/Linux commands using OpenSSL
 to generate a correctly-formed keypair follows:
-.sp 1
-.in +.5i
-> openssl genrsa -des3 -out private.pem 2048
+.IP
+\fC> openssl genrsa -des3 -out private.pem 2048\fR
 .sp 0
-> openssl rsa -in private.pem -outform PEM -pubout -out public.pem
+\fC> openssl rsa -in private.pem -outform PEM -pubout -out public.pem\fR
 .sp 0
-> openssl rsa -in private.pem -out private_not_protected.pem -outform PEM
-.in -.5i
-.sp 1
+\fC> openssl rsa -in private.pem -out private_not_protected.pem \\ \fR
+.sp 0
+\fC  -outform PEM\fR
+.PP
 After these commands, the public key will be contained in the file
 public.pem and the private key will be contained in the file
 private_not_protected.pem.
@@ -504,25 +565,21 @@ The file can also contain commented lines (starting with the \fC#\fR
 character).
 An example of commands to generate the password hash on a UNIX/Linux system
 is given below:
-.sp 1
-.in +.5i
-> S_USER=mario S_PASSWD=rossi
+.IP
+\fC> S_USER=mario S_PASSWD=rossi\fR
 .sp 0
-> echo -n "{$S_USER}$S_PASSWD" | sha256sum | awk '{ print $1 }'
-.in -.5i
-.sp 1
+\fC> echo -n "{$S_USER}$S_PASSWD" | sha256sum | awk '{ print $1 }'\fR
+.PP
 An example of a password file (with an entry corresponding to the
 above username and password) is given below:
-.sp 0
-.in +.5i
-> cat credentials.csv
-.sp 0
-# file format: username,sha256
-.sp 0
-mario,bf7a49a846d44b454a5d11e7acfaf13d138bbe0b7483aa3e050879700572709b
+.IP
+\fC> cat credentials.csv\fR
 .in -.5i
-.sp 1
-
+.sp 0
+\fC# file format: username,sha256\fR
+.sp 0
+\fCmario,bf7a49a846d44b454a5d11e7acfaf13d138bbe0b7483aa3e050879700572709b\fR
+.in +.5i
 .SH AUTHORS
 A list of the contributors to iperf3 can be found within the
 documentation located at

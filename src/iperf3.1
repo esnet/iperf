@@ -543,15 +543,15 @@ password set.
 The public key must be in PEM format and use SubjectPrefixKeyInfo encoding.
 An example of a set of UNIX/Linux commands using OpenSSL
 to generate a correctly-formed keypair follows:
-.sp 1
-.in +.5i
-> openssl genrsa -des3 -out private.pem 2048
+.IP
+\fC> openssl genrsa -des3 -out private.pem 2048\fR
 .sp 0
-> openssl rsa -in private.pem -outform PEM -pubout -out public.pem
+\fC> openssl rsa -in private.pem -outform PEM -pubout -out public.pem\fR
 .sp 0
-> openssl rsa -in private.pem -out private_not_protected.pem -outform PEM
-.in -.5i
-.sp 1
+\fC> openssl rsa -in private.pem -out private_not_protected.pem \\ \fR
+.sp 0
+\fC  -outform PEM\fR
+.PP
 After these commands, the public key will be contained in the file
 public.pem and the private key will be contained in the file
 private_not_protected.pem.
@@ -565,25 +565,21 @@ The file can also contain commented lines (starting with the \fC#\fR
 character).
 An example of commands to generate the password hash on a UNIX/Linux system
 is given below:
-.sp 1
-.in +.5i
-> S_USER=mario S_PASSWD=rossi
+.IP
+\fC> S_USER=mario S_PASSWD=rossi\fR
 .sp 0
-> echo -n "{$S_USER}$S_PASSWD" | sha256sum | awk '{ print $1 }'
-.in -.5i
-.sp 1
+\fC> echo -n "{$S_USER}$S_PASSWD" | sha256sum | awk '{ print $1 }'\fR
+.PP
 An example of a password file (with an entry corresponding to the
 above username and password) is given below:
-.sp 0
-.in +.5i
-> cat credentials.csv
-.sp 0
-# file format: username,sha256
-.sp 0
-mario,bf7a49a846d44b454a5d11e7acfaf13d138bbe0b7483aa3e050879700572709b
+.IP
+\fC> cat credentials.csv\fR
 .in -.5i
-.sp 1
-
+.sp 0
+\fC# file format: username,sha256\fR
+.sp 0
+\fCmario,bf7a49a846d44b454a5d11e7acfaf13d138bbe0b7483aa3e050879700572709b\fR
+.in +.5i
 .SH AUTHORS
 A list of the contributors to iperf3 can be found within the
 documentation located at

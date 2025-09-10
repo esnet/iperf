@@ -440,7 +440,8 @@ server was invoked with the \fB--json\fR flag, the output will be in
 JSON format, otherwise it will be in human-readable format).
 If the client is run with \fB--json\fR, the server output is included
 in a JSON object; otherwise it is appended at the bottom of the
-human-readable output.
+human-readable output. Note that the server output is available only
+if the test completes, not if it is interrupted.
 .TP
 .BR --udp-counters-64bit
 Use 64-bit counters in UDP test packets.

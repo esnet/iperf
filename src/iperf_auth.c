@@ -60,7 +60,7 @@ void sha256(const char *string, char outputBuffer[65])
     int i = 0;
     for(i = 0; i < SHA256_DIGEST_LENGTH; i++)
     {
-        sprintf(outputBuffer + (i * 2), "%02x", hash[i]);
+        snprintf(outputBuffer + (i * 2), 3, "%02x", hash[i]);
     }
     outputBuffer[64] = 0;
 }
@@ -74,7 +74,7 @@ int check_authentication(const char *username, const char *password, const time_
 
     char passwordHash[65];
     char salted[strlen(username) + strlen(password) + 3];
-    sprintf(salted, "{%s}%s", username, password);
+    snprintf(salted, sizeof(salted), "{%s}%s", username, password);
     sha256(&salted[0], passwordHash);
 
     char *s_username, *s_password;

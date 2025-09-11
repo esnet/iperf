@@ -235,18 +235,3 @@ get_reorder(struct iperf_interval_results *irp)
 #endif
 }
 
-/*************************************************************/
-void
-build_tcpinfo_message(struct iperf_interval_results *r, char *message)
-{
-#if defined(linux) && defined(TCP_INFO)
-    sprintf(message, report_tcpInfo, r->tcpInfo.tcpi_snd_cwnd, r->tcpInfo.tcpi_snd_ssthresh,
-	    r->tcpInfo.tcpi_rcv_ssthresh, r->tcpInfo.tcpi_unacked, r->tcpInfo.tcpi_sacked,
-	    r->tcpInfo.tcpi_lost, r->tcpInfo.tcpi_retrans, r->tcpInfo.tcpi_fackets,
-	    r->tcpInfo.tcpi_rtt, r->tcpInfo.tcpi_reordering);
-#endif
-#if (defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && defined(TCP_INFO)
-    sprintf(message, report_tcpInfo, r->tcpInfo.tcpi_snd_cwnd,
-	    r->tcpInfo.tcpi_rcv_space, r->tcpInfo.tcpi_snd_ssthresh, r->tcpInfo.tcpi_rtt);
-#endif
-}

@@ -2273,8 +2273,22 @@ iperf_exchange_parameters(struct iperf_test *test)
 
     } else {
 
-        if (get_parameters(test) < 0)
+        if (get_parameters(test) < 0) {
+            // Borrowing this from https://github.com/esnet/iperf/pull/1932
+            if (iperf_set_send_state(test, SERVER_ERROR) != 0)
+                return -1;
+            err = htonl(i_errno);
+            if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
+                i_errno = IECTRLWRITE;
+                return -1;
+            }
+            err = htonl(errno);
+            if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
+                i_errno = IECTRLWRITE;
+                return -1;
+            }
             return -1;
+        }
 
 #if defined(HAVE_SSL)
         if (test_is_authorized(test) < 0){
@@ -2563,6 +2577,20 @@ get_parameters(struct iperf_test *test)
 	if (test->settings->rate)
 	    cJSON_AddNumberToObject(test->json_start, "target_bitrate", test->settings->rate);
 	cJSON_Delete(j);
+
+    /* Ensure that total requested data rate is not above the server's limit */
+    iperf_size_t total_requested_rate = test->num_streams * test->settings->rate * (test->mode == BIDIRECTIONAL? 2 : 1);
+    if (test->settings->bitrate_limit && total_requested_rate > test->settings->bitrate_limit) {
+        i_errno = IETOTALRATE;
+        r = -1;
+    }
+
+    total_requested_rate = test->num_streams * test->settings->fqrate * (test->mode == BIDIRECTIONAL? 2 : 1);
+    if (test->settings->bitrate_limit && total_requested_rate > test->settings->bitrate_limit) {
+        i_errno = IETOTALRATE;
+        r = -1;
+    }
+
     }
     return r;
 }

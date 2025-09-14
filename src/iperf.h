@@ -202,6 +202,7 @@ struct iperf_stream
     pthread_t thr;
     int thread_created;
     int       done;
+    int       affinity;
 
     /* configurable members */
     int       local_port;
@@ -386,7 +387,8 @@ struct iperf_test
     double cpu_util[3];                            /* cpu utilization of the test - total, user, system */
     double remote_cpu_util[3];                     /* cpu utilization for the remote host/client - total, user, system */
 
-    int       num_streams;                      /* total streams in the test (-P) */
+    int       num_streams;                         /* total streams in the test (-P) */
+    int       stream_affinity[1024];               /* CPU affinity for the stream */
 
     atomic_iperf_size_t bytes_sent;
     atomic_iperf_size_t blocks_sent;

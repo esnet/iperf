@@ -1,4 +1,6 @@
 name: GitHub Actions Build Test
+permissions:
+  contents: read
 on:
   push:
     branches:

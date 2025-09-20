@@ -1145,6 +1145,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"timestamps", optional_argument, NULL, OPT_TIMESTAMPS},
 #if defined(HAVE_CPU_AFFINITY)
         {"affinity", required_argument, NULL, 'A'},
+        {"stream-affinity", required_argument, NULL, OPT_STREAM_AFFINITY},
 #endif /* HAVE_CPU_AFFINITY */
         {"title", required_argument, NULL, 'T'},
 #if defined(HAVE_TCP_CONGESTION)
@@ -1630,6 +1631,29 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 return -1;
 #endif /* HAVE_CPU_AFFINITY */
                 break;
+            case OPT_STREAM_AFFINITY:
+#if defined(HAVE_CPU_AFFINITY)
+        char *token;
+        int i = 0;
+        int cpu_num;
+
+        // Handling comma-separated list of integers: 0,1,2,3
+        token = strtok(optarg, ",");
+        while (token != NULL) {
+            cpu_num = atoi(token);
+            if (cpu_num < 0 || cpu_num > 1024) {
+                i_errno = IEAFFINITY; // TODO: Evaluate error code
+                return -1;
+            }
+            test->stream_affinity[i] = cpu_num;
+            token = strtok(NULL, ",");
+            i++;
+        }
+#else /* HAVE_CPU_AFFINITY */
+                i_errno = IEUNIMP;
+                return -1;
+#endif /* HAVE_CPU_AFFINITY */
+                break;
             case 'T':
                 test->title = strdup(optarg);
 		client_flag = 1;
@@ -1903,6 +1927,17 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         (duration_flag && test->settings->blocks != 0) ||
 	(test->settings->bytes != 0 && test->settings->blocks != 0)) {
         i_errno = IEENDCONDITIONS;
+        return -1;
+    }
+
+    /**
+     * Ensure that stream CPU core affinity is only configured
+     * up to the number of parallel streams. For example, when
+     * running a test with 2 parallel streams, configuring stream
+     * affinity for 3 streams is invalid: --parallel 2 --stream-affinity 0,2,5
+     */
+    if (test->stream_affinity[test->num_streams] > -1) {
+        i_errno = IEAFFINITY; // TODO: Evaluate error code
         return -1;
     }
 
@@ -3209,6 +3244,11 @@ iperf_defaults(struct iperf_test *testp)
     /* Set up protocol list */
     SLIST_INIT(&testp->streams);
     SLIST_INIT(&testp->protocols);
+
+    /* Stream affinity is disabled by default */
+    for (int i = 0; i < 1024; i++) {
+        testp->stream_affinity[i] = -1;
+    }
 
     tcp = protocol_new();
     if (!tcp)

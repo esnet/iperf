@@ -24,6 +24,9 @@
  * This code is distributed under a BSD style license, see the LICENSE
  * file for complete information.
  */
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
 #include <errno.h>
 #include <setjmp.h>
 #include <stdio.h>
@@ -37,6 +40,7 @@
 #include <sys/uio.h>
 #include <arpa/inet.h>
 #include <signal.h>
+#include <sched.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -72,6 +76,21 @@ iperf_client_worker_run(void *s) {
     if (pthread_sigmask(SIG_BLOCK, &set, NULL) != 0) {
 	    i_errno = IEPTHREADSIGMASK;
 	    goto cleanup_and_fail;
+    }
+
+    if (sp->affinity > -1) {
+#if defined(HAVE_SCHED_SETAFFINITY)
+        cpu_set_t cpu_set;
+        CPU_ZERO(&cpu_set);
+        CPU_SET(sp->affinity, &cpu_set);
+
+        if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpu_set) != 0) {
+            i_errno = IEAFFINITY; // TODO: Define a new error code?
+            goto cleanup_and_fail;
+        }
+        // TODO: Set to a debug log
+        iperf_printf(test, "Stream %d, Thread %lu, CPU Affinity %d\n", sp->id, pthread_self(), sp->affinity);
+#endif /* HAVE_SCHED_SETAFFINITY */
     }
 
     /* Allow this thread to be cancelled even if it's in a syscall */
@@ -168,6 +187,10 @@ iperf_create_streams(struct iperf_test *test, int sender)
         sp = iperf_new_stream(test, s, sender);
         if (!sp)
             return -1;
+
+        /* Set the CPU affinity for the stream */
+        /* TODO: Move to stream constructor */
+        sp->affinity = test->stream_affinity[i];
 
         /* Perform the new stream callback */
         if (test->on_new_stream)

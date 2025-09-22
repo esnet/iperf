@@ -56,6 +56,10 @@
 #endif
 #endif /* HAVE_SENDFILE */
 
+#ifdef HAVE_IP_BOUND_IF
+#include <netinet/in.h>
+#endif /* HAVE_IP_BOUND_IF */
+
 #ifdef HAVE_POLL_H
 #include <poll.h>
 #endif /* HAVE_POLL_H */
@@ -122,6 +126,35 @@ timeout_connect(int s, const struct sockaddr *name, socklen_t namelen,
  * Copyright: http://swtch.com/libtask/COPYRIGHT
 */
 
+int
+bind_to_device(int s, int domain, const char *bind_dev)
+{
+#if defined(HAVE_SO_BINDTODEVICE)
+    return setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE, bind_dev, IFNAMSIZ);
+#elif defined(HAVE_IP_BOUND_IF)
+    int opt;
+    switch (domain) {
+        case IPPROTO_IP:
+            opt = IP_BOUND_IF;
+            break;
+        case IPPROTO_IPV6:
+            opt = IPV6_BOUND_IF;
+            break;
+        default:
+            errno = ENOTSUP;
+            return -1;
+    }
+    int index = if_nametoindex(bind_dev);
+    if (index == 0) {
+        return -1;
+    }
+    return setsockopt(s, domain, opt, &index, sizeof(index));
+#else
+    errno = ENOTSUP;
+    return -1;
+#endif
+}
+
 /* create a socket */
 int
 create_socket(int domain, int type, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, struct addrinfo **server_res_out)
@@ -157,11 +190,7 @@ create_socket(int domain, int type, int proto, const char *local, const char *bi
     }
 
     if (bind_dev) {
-#if defined(HAVE_SO_BINDTODEVICE)
-        if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE,
-                       bind_dev, IFNAMSIZ) < 0)
-#endif // HAVE_SO_BINDTODEVICE
-        {
+        if (bind_to_device(s, domain, bind_dev) < 0) {
             saved_errno = errno;
             close(s);
             freeaddrinfo(local_res);

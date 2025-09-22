@@ -105,6 +105,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define OPT_CNTL_KA 31
 #define OPT_SKIP_RX_COPY 32
 #define OPT_JSON_STREAM_FULL_OUTPUT 33
+#define OPT_STREAM_AFFINITY 34
 
 /* states */
 #define TEST_START 1

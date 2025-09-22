@@ -106,7 +106,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -F, --file name           xmit/recv the specified file\n"
 #if defined(HAVE_CPU_AFFINITY)
                            "  -A, --affinity n[,m]      set CPU affinity core number to n (the core the process will use)\n"
-                          "                             (optional Client only m - the Server's core number for this test)\n"
+                           "                            (optional Client only m - the Server's core number for this test)\n"
+                           "  --stream-affinity list    set CPU affinity cores that each parallel stream (thread) will use\n"
 #endif /* HAVE_CPU_AFFINITY */
 #if defined(HAVE_SO_BINDTODEVICE)
                            "  -B, --bind <host>[%%<dev>] bind to the interface associated with the address <host>\n"

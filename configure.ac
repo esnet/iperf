@@ -277,6 +277,23 @@ if test "x$iperf3_cv_header_so_bindtodevice" = "xyes"; then
     AC_DEFINE([HAVE_SO_BINDTODEVICE], [1], [Have SO_BINDTODEVICE sockopt.])
 fi
 
+# Check for IP_BOUND_IF sockopt (believed to be macOS only)
+AC_CACHE_CHECK([IP_BOUND_IF socket option],
+[iperf3_cv_header_ip_bound_if],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <netinet/in.h>]],
+                   [[int foo = IP_BOUND_IF;]])],
+  iperf3_cv_header_ip_bound_if=yes,
+  iperf3_cv_header_ip_bound_if=no))
+if test "x$iperf3_cv_header_ip_bound_if" = "xyes"; then
+    AC_DEFINE([HAVE_IP_BOUND_IF], [1], [Have IP_BOUND_IF sockopt.])
+fi
+
+if test "x$iperf3_cv_header_so_bindtodevice" = "xyes" -o "x$iperf3_cv_header_ip_bound_if" = "xyes"; then
+    AC_DEFINE([CAN_BIND_TO_DEVICE], [1], [Can bind to device via SO_BINDTODEVICE or IP_BOUND_IF.])
+fi
+
+
 # Check for IP_MTU_DISCOVER (mostly on Linux)
 AC_CACHE_CHECK([IP_MTU_DISCOVER socket option],
 [iperf3_cv_header_ip_mtu_discover],

@@ -97,6 +97,18 @@ iperf_tcp_send(struct iperf_stream *sp)
     if (!sp->pending_size)
 	      sp->pending_size = sp->settings->blksize;
 
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+    if (sp->test->zerocopy == ZEROCOPY_MSG_ZEROCOPY) {
+        /* Wait until it is safe to rewite the sending buffer */
+        r = wait_zerocopy_buffer_available(sp);
+        if (r < 0) {
+            if (sp->test->debug_level >= DEBUG_LEVEL_INFO)
+                printf("Waining for TCP MSG_ZEROCOPY buffer to become available failed, errno=%s\n", strerror(errno));
+            return r;
+        }
+        r = Nsend_sp(sp, sp->buffer, sp->pending_size, Ptcp, MSG_ZEROCOPY);
+    } else
+#endif /* SUPPORTED_MSG_ZEROCOPY */
     if (sp->test->zerocopy)
 	      r = Nsendfile(sp->buffer_fd, sp->socket, sp->buffer, sp->pending_size);
     else
@@ -129,12 +141,27 @@ iperf_tcp_accept(struct iperf_test * test)
     char    cookie[COOKIE_SIZE] = {0};
     socklen_t len;
     struct sockaddr_storage addr;
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+    int opt;
+#endif /* SUPPORTED_MSG_ZEROCOPY */
 
     len = sizeof(addr);
     if ((s = accept(test->listener, (struct sockaddr *) &addr, &len)) < 0) {
         i_errno = IESTREAMCONNECT;
         return -1;
     }
+
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+    /* Setting should be done before the socket is conected */
+    if (test->zerocopy == ZEROCOPY_MSG_ZEROCOPY) {
+        opt = 1;
+        if (setsockopt(s, SOL_SOCKET, SO_ZEROCOPY, &opt, sizeof(opt)) < 0) {
+            i_errno = IESTREAMACCEPT;
+            return -1;
+        }
+    }
+#endif /* SUPPORTED_MSG_ZEROCOPY */
+
 #if defined(HAVE_SO_MAX_PACING_RATE)
     /* If fq socket pacing is specified, enable it. */
 
@@ -401,7 +428,8 @@ iperf_tcp_connect(struct iperf_test *test)
         proto = IPPROTO_MPTCP;
 #endif
 
-    s = create_socket(test->settings->domain, SOCK_STREAM, proto, test->bind_address, test->bind_dev, test->bind_port, test->server_hostname, test->server_port, &server_res);
+    s = create_socket(test->settings->domain, SOCK_STREAM, proto, test->bind_address, test->bind_dev, test->bind_port, test->server_hostname, test->server_port, &server_res, test->zerocopy);
+
     if (s < 0) {
 	i_errno = IESTREAMCONNECT;
 	return -1;

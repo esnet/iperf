@@ -672,7 +672,7 @@ iperf_run_server(struct iperf_test *test)
                  * Running a test. If we're receiving, be sure we're making
                  * progress (sender hasn't died/crashed).
                  */
-                else if (test->mode != SENDER && t_usecs > rcv_timeout_us) {
+                else if (test->mode != SENDER && test->mode != BIDIRECTIONAL && t_usecs > rcv_timeout_us) {
                     /* Idle timeout if no new blocks received */
                     if (test->blocks_received == last_receive_blocks) {
                         test->server_forced_no_msg_restarts_count += 1;

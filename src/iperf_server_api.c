@@ -930,6 +930,10 @@ iperf_run_server(struct iperf_test *test)
                         i_errno = IEPTHREADATTRDESTROY;
                         cleanup_server(test);
                     };
+
+                    /* Reset receive-progress baseline after workers are ready */
+                    last_receive_blocks = test->blocks_received;
+                    iperf_time_now(&last_receive_time);
                 }
             }
         }

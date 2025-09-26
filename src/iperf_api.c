@@ -931,7 +931,7 @@ iperf_on_test_start(struct iperf_test *test)
 		iperf_printf(test, test_start_time, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->duration, test->settings->tos);
 	}
     }
-    if (test->json_stream) {
+    if (test->json_stream && !test->json_stream_sum_only) {
         JSONStream_Output(test, "start", test->json_start);
     }
 }
@@ -1108,6 +1108,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"json", no_argument, NULL, 'J'},
         {"json-stream", no_argument, NULL, OPT_JSON_STREAM},
         {"json-stream-full-output", no_argument, NULL, OPT_JSON_STREAM_FULL_OUTPUT},
+        {"json-stream-sum-only",  no_argument, NULL, OPT_JSON_SUM_ONLY}
         {"version", no_argument, NULL, 'v'},
         {"server", no_argument, NULL, 's'},
         {"client", required_argument, NULL, 'c'},
@@ -1276,6 +1277,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case OPT_JSON_STREAM_FULL_OUTPUT:
                 test->json_stream_full_output = 1;
+                break;
+            case OPT_JSON_STREAM_SUM_ONLY:
+                test->json_stream_sum_only = 1;
                 break;
             case 'v':
                 printf("%s (cJSON %s)\n%s\n%s\n", version, cJSON_Version(), get_system_info(),
@@ -3939,7 +3943,7 @@ iperf_print_intermediate(struct iperf_test *test)
         }
     }
 
-    if (test->json_stream)
+    if (test->json_stream && !test->json_stream_sum_only)
         JSONStream_Output(test, "interval", json_interval);
     if (discard_json)
         cJSON_Delete(json_interval);

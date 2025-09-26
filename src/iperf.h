@@ -351,6 +351,7 @@ struct iperf_test
     int	      json_output;                      /* -J option - JSON output */
     int	      json_stream;                      /* --json-stream */
     int       json_stream_full_output;          /* --json-stream-full-output */
+    int       json_stream_sum_only;             /* --json-stream-sum-only */
     void      (*json_callback) (struct iperf_test *, char *); /* allow user apps to receive the
                                                 JSON strings,instead of writing them to the output file */
     int	      zerocopy;                         /* -Z option - use sendfile */

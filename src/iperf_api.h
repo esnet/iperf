@@ -105,6 +105,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define OPT_CNTL_KA 31
 #define OPT_SKIP_RX_COPY 32
 #define OPT_JSON_STREAM_FULL_OUTPUT 33
+#define OPT_JSON_SUM_ONLY 34
 
 /* states */
 #define TEST_START 1
@@ -157,6 +158,7 @@ int	iperf_get_test_json_output( struct iperf_test* ipt );
 char*	iperf_get_test_json_output_string ( struct iperf_test* ipt );
 int	iperf_get_test_json_stream( struct iperf_test* ipt );
 int	iperf_get_test_json_stream_full_output( struct iperf_test* ipt );
+int iperf_get_test_json_stream_sum_only( struct iperf_test* ipt);
 int	iperf_get_test_zerocopy( struct iperf_test* ipt );
 int	iperf_get_test_get_server_output( struct iperf_test* ipt );
 char	iperf_get_test_unit_format(struct iperf_test *ipt);
@@ -203,6 +205,7 @@ void	iperf_set_test_reverse( struct iperf_test* ipt, int reverse );
 void	iperf_set_test_json_output( struct iperf_test* ipt, int json_output );
 void	iperf_set_test_json_stream( struct iperf_test* ipt, int json_stream );
 void	iperf_set_test_json_stream_full_output( struct iperf_test* ipt, int json_stream_full_output );
+void    iperf_set_test_json_stream_sum_only ( struct iperf_test* ipt, int json_stream_sum_only);
 void    iperf_set_test_json_callback(struct iperf_test *ipt, void (*callback)(struct iperf_test *, char *));
 int	iperf_has_zerocopy( void );
 void	iperf_set_test_zerocopy( struct iperf_test* ipt, int zerocopy );

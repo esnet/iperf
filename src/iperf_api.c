@@ -330,7 +330,11 @@ iperf_get_test_json_stream(struct iperf_test *ipt)
 {
     return ipt->json_stream;
 }
-
+int
+iperf_get_test_json_stream_sum_only(struct iperf_test *ipt)
+{
+    return ipt->json_stream_sum_only;
+}
 int
 iperf_get_test_zerocopy(struct iperf_test *ipt)
 {
@@ -931,7 +935,7 @@ iperf_on_test_start(struct iperf_test *test)
 		iperf_printf(test, test_start_time, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->duration, test->settings->tos);
 	}
     }
-    if (test->json_stream) {
+    if (test->json_stream && !test->json_stream_sum_only) {
         JSONStream_Output(test, "start", test->json_start);
     }
 }
@@ -1106,8 +1110,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"one-off", no_argument, NULL, '1'},
         {"verbose", no_argument, NULL, 'V'},
         {"json", no_argument, NULL, 'J'},
+        {"json-output-stream", no_argument, NULL, OPT_JSON_OUTPUT_STREAM},
         {"json-stream", no_argument, NULL, OPT_JSON_STREAM},
         {"json-stream-full-output", no_argument, NULL, OPT_JSON_STREAM_FULL_OUTPUT},
+        {"json-stream-sum-only",  no_argument, NULL, OPT_JSON_STREAM_SUM_ONLY},
         {"version", no_argument, NULL, 'v'},
         {"server", no_argument, NULL, 's'},
         {"client", required_argument, NULL, 'c'},
@@ -1270,12 +1276,18 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             case 'J':
                 test->json_output = 1;
                 break;
+            case OPT_JSON_OUTPUT_STREAM:
+                test->json_output_stream = 1;
+                break;
             case OPT_JSON_STREAM:
                 test->json_output = 1;
                 test->json_stream = 1;
                 break;
             case OPT_JSON_STREAM_FULL_OUTPUT:
                 test->json_stream_full_output = 1;
+                break;
+            case OPT_JSON_STREAM_SUM_ONLY:
+                test->json_stream_sum_only = 1;
                 break;
             case 'v':
                 printf("%s (cJSON %s)\n%s\n%s\n", version, cJSON_Version(), get_system_info(),
@@ -3939,7 +3951,7 @@ iperf_print_intermediate(struct iperf_test *test)
         }
     }
 
-    if (test->json_stream)
+    if (test->json_stream && !test->json_stream_sum_only)
         JSONStream_Output(test, "interval", json_interval);
     if (discard_json)
         cJSON_Delete(json_interval);
@@ -5176,7 +5188,6 @@ iperf_json_finish(struct iperf_test *test)
         }
 
         int print_full_json = 1;
-
         /* --json-stream, so we print various individual objects */
         if (test->json_stream) {
             cJSON *error = iperf_cJSON_GetObjectItemType(test->json_top, "error", cJSON_String);
@@ -5196,32 +5207,37 @@ iperf_json_finish(struct iperf_test *test)
         }
         /* Original --json output, single monolithic object */
         if (print_full_json) {
-            /*
-             * Get ASCII rendering of JSON structure.  Then make our
-             * own copy of it and return the storage that cJSON
-             * allocated on our behalf.  We keep our own copy
-             * around.
-             */
-            char *str = cJSON_Print(test->json_top);
-            if (str == NULL) {
-                return -1;
+            if(test->json_output_stream){
+                JSONStream_Output(test, "full_json", test->json_top);
             }
-            test->json_output_string = strdup(str);
-            cJSON_free(str);
-            if (test->json_output_string == NULL) {
-                return -1;
-            }
-            if (test->json_callback != NULL) {
-                (test->json_callback)(test, test->json_output_string);
-            } else {
-                if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
-                    perror("iperf_json_finish: pthread_mutex_lock");
+            else {
+                /*
+                * Get ASCII rendering of JSON structure.  Then make our
+                * own copy of it and return the storage that cJSON
+                * allocated on our behalf.  We keep our own copy
+                * around.
+                */
+                char *str = cJSON_Print(test->json_top);
+                if (str == NULL) {
+                    return -1;
                 }
-                fprintf(test->outfile, "%s\n", test->json_output_string);
-                if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
-                    perror("iperf_json_finish: pthread_mutex_unlock");
+                test->json_output_string = strdup(str);
+                cJSON_free(str);
+                if (test->json_output_string == NULL) {
+                    return -1;
                 }
-                iflush(test);
+                if (test->json_callback != NULL) {
+                    (test->json_callback)(test, test->json_output_string);
+                } else {
+                    if (pthread_mutex_lock(&(test->print_mutex)) != 0) {
+                        perror("iperf_json_finish: pthread_mutex_lock");
+                    }
+                    fprintf(test->outfile, "%s\n", test->json_output_string);
+                    if (pthread_mutex_unlock(&(test->print_mutex)) != 0) {
+                        perror("iperf_json_finish: pthread_mutex_unlock");
+                    }
+                    iflush(test);
+                }
             }
         }
         cJSON_Delete(test->json_top);

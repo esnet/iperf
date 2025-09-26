@@ -117,6 +117,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 #endif /* HAVE_SO_BINDTODEVICE */
                            "  -V, --verbose             more detailed output\n"
                            "  -J, --json                output in JSON format\n"
+                           "  --json-output-stream      output in JSON format as a single string\n"
                            "  --json-stream             output in line-delimited JSON format\n"
                            "  --json-stream-full-output output in JSON format with JSON streams enabled\n"
                            "  --json-stream-sum-only    output only sum data with JSON streams enabled\n"

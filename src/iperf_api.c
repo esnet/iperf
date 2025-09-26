@@ -1112,7 +1112,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"json", no_argument, NULL, 'J'},
         {"json-stream", no_argument, NULL, OPT_JSON_STREAM},
         {"json-stream-full-output", no_argument, NULL, OPT_JSON_STREAM_FULL_OUTPUT},
-        {"json-stream-sum-only",  no_argument, NULL, OPT_JSON_SUM_ONLY}
+        {"json-stream-sum-only",  no_argument, NULL, OPT_JSON_STREAM_SUM_ONLY},
         {"version", no_argument, NULL, 'v'},
         {"server", no_argument, NULL, 's'},
         {"client", required_argument, NULL, 'c'},

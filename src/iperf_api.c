@@ -331,8 +331,9 @@ iperf_get_test_json_stream(struct iperf_test *ipt)
     return ipt->json_stream;
 }
 int
-iperf_get_test_json_stream_sum_only(struct iperf_test *ipt){
-    return ipt->json_stream_sum_only
+iperf_get_test_json_stream_sum_only(struct iperf_test *ipt)
+{
+    return ipt->json_stream_sum_only;
 }
 int
 iperf_get_test_zerocopy(struct iperf_test *ipt)

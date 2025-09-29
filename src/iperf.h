@@ -160,6 +160,8 @@ struct iperf_settings
     int       domain;               /* AF_INET or AF_INET6 */
     int       socket_bufsize;       /* window size for TCP */
     int       blksize;              /* size of read/writes (-l) */
+    int       num_of_blocks;     /* number of different (mainly for randomized) blocks to send (-l) */
+    int       last_block_sent;      /* last block sent from the `num_of_blocks` */
     iperf_size_t  rate;                 /* target data rate for application pacing*/
     iperf_size_t  bitrate_limit;   /* server's maximum allowed total data rate for all streams*/
     double        bitrate_limit_interval;  /* interval for averaging total data rate */
@@ -219,6 +221,7 @@ struct iperf_stream
     int       green_light;
     int       buffer_fd;	/* data to send, file descriptor */
     char      *buffer;		/* data to send, mmapped */
+    size_t    buffer_size;	/* size of the buffer */
     int       pending_size;     /* pending data to send */
     int       diskfile_fd;	/* file to send, file descriptor */
     int	      diskfile_left;	/* remaining file data on disk */

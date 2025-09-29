@@ -1379,7 +1379,19 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
             case 'l':
-                blksize = unit_atoi(optarg);
+		slash = strchr(optarg, '/');
+		if (slash) {
+		    *slash = '\0';
+		    ++slash;
+		    test->settings->num_of_blocks = atof(slash);
+		    if (test->settings->num_of_blocks < 1) {
+			i_errno = IETNUMOFBLOCKS;
+			return -1;
+		    }
+		}
+                if (strlen(optarg) > 0) {
+                    blksize = unit_atoi(optarg);
+                }
 		client_flag = 1;
                 break;
             case 'P':
@@ -1865,6 +1877,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	(blksize > 0 &&
 	    (blksize < MIN_UDP_BLOCKSIZE || blksize > MAX_UDP_BLOCKSIZE))) {
 	i_errno = IEUDPBLOCKSIZE;
+	return -1;
+    }
+    if (blksize * test->settings->num_of_blocks > MAX_BLOCKSIZE) {
+	i_errno = IETNUMOFBLOCKS;
 	return -1;
     }
     test->settings->blksize = blksize;
@@ -2402,6 +2418,7 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "window", test->settings->socket_bufsize);
 	if (test->settings->blksize)
 	    cJSON_AddNumberToObject(j, "len", test->settings->blksize);
+        cJSON_AddNumberToObject(j, "numblocks", test->settings->num_of_blocks);
 	if (test->settings->rate)
 	    cJSON_AddNumberToObject(j, "bandwidth", test->settings->rate);
 	if (test->settings->fqrate)
@@ -2533,6 +2550,8 @@ get_parameters(struct iperf_test *test)
 	    test->settings->socket_bufsize = j_p->valueint;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "len", cJSON_Number)) != NULL)
 	    test->settings->blksize = j_p->valueint;
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "numblocks", cJSON_Number)) != NULL)
+	    test->settings->num_of_blocks = j_p->valueint;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "bandwidth", cJSON_Number)) != NULL)
 	    test->settings->rate = j_p->valueint;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "fqrate", cJSON_Number)) != NULL)
@@ -3179,6 +3198,8 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->unit_format = 'a';
     testp->settings->socket_bufsize = 0;    /* use autotuning */
     testp->settings->blksize = DEFAULT_TCP_BLKSIZE;
+    testp->settings->num_of_blocks = 1;
+    testp->settings->last_block_sent = 0;
     testp->settings->rate = 0;
     testp->settings->bitrate_limit = 0;
     testp->settings->bitrate_limit_interval = 5;
@@ -3494,6 +3515,8 @@ iperf_reset_test(struct iperf_test *test)
     test->num_streams = 1;
     test->settings->socket_bufsize = 0;
     test->settings->blksize = DEFAULT_TCP_BLKSIZE;
+    test->settings->num_of_blocks = 1;
+    test->settings->last_block_sent = 0;
     test->settings->rate = 0;
     test->settings->fqrate = 0;
     test->settings->burst = 0;
@@ -4643,7 +4666,7 @@ iperf_free_stream(struct iperf_stream *sp)
     struct iperf_interval_results *irp, *nirp;
 
     /* XXX: need to free interval list too! */
-    munmap(sp->buffer, sp->test->settings->blksize);
+    munmap(sp->buffer, sp->buffer_size);
     close(sp->buffer_fd);
     if (sp->diskfile_fd >= 0)
 	close(sp->diskfile_fd);
@@ -4663,6 +4686,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 {
     struct iperf_stream *sp;
     int ret = 0;
+    size_t buffer_size = test->settings->blksize * test->settings->num_of_blocks;
 
     char template[1024];
     if (test->tmp_template) {
@@ -4721,19 +4745,20 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         free(sp);
         return NULL;
     }
-    if (ftruncate(sp->buffer_fd, test->settings->blksize) < 0) {
+    if (ftruncate(sp->buffer_fd, buffer_size) < 0) {
         i_errno = IECREATESTREAM;
         free(sp->result);
         free(sp);
         return NULL;
     }
-    sp->buffer = (char *) mmap(NULL, test->settings->blksize, PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
+    sp->buffer = (char *) mmap(NULL, buffer_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
     if (sp->buffer == MAP_FAILED) {
         i_errno = IECREATESTREAM;
         free(sp->result);
         free(sp);
         return NULL;
     }
+    sp->buffer_size = buffer_size;
     sp->pending_size = 0;
 
     /* Set socket */
@@ -4746,7 +4771,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 	sp->diskfile_fd = open(test->diskfile_name, sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC), S_IRUSR|S_IWUSR);
 	if (sp->diskfile_fd == -1) {
 	    i_errno = IEFILE;
-            munmap(sp->buffer, sp->test->settings->blksize);
+            munmap(sp->buffer, sp->buffer_size);
             free(sp->result);
             free(sp);
 	    return NULL;
@@ -4758,15 +4783,18 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     } else
         sp->diskfile_fd = -1;
 
-    /* Initialize stream */
-    if (test->repeating_payload)
-        fill_with_repeating_pattern(sp->buffer, test->settings->blksize);
-    else
-        ret = readentropy(sp->buffer, test->settings->blksize);
+    /* Initialize stream send buffer */
+    if (sender) {
+        if (test->repeating_payload)
+            fill_with_repeating_pattern(sp->buffer, sp->buffer_size);
+        else {
+            ret = readentropy(sp->buffer, sp->buffer_size);
+        }
+    }
 
     if ((ret < 0) || (iperf_init_stream(sp, test) < 0)) {
         close(sp->buffer_fd);
-        munmap(sp->buffer, sp->test->settings->blksize);
+        munmap(sp->buffer, sp->buffer_size);
         free(sp->result);
         free(sp);
         return NULL;

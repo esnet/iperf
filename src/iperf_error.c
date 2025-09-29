@@ -206,6 +206,9 @@ iperf_strerror(int int_errno)
         case IEUDPBLOCKSIZE:
             snprintf(errstr, len, "block size invalid (minimum = %d bytes, maximum = %d bytes)", MIN_UDP_BLOCKSIZE, MAX_UDP_BLOCKSIZE);
             break;
+        case IETNUMOFBLOCKS:
+            snprintf(errstr, len, "number of different (randomized) blocks to send invalid (minimum = 1, max total size of all blocks = %d)", MAX_BLOCKSIZE);
+            break;
         case IEBADTOS:
             snprintf(errstr, len, "bad TOS value (must be between 0 and 255 inclusive)");
             break;

@@ -157,6 +157,7 @@ iperf_accept(struct iperf_test *test)
     signed char rbuf = ACCESS_DENIED;
     socklen_t len;
     struct sockaddr_storage addr;
+    int32_t err;
 
     len = sizeof(addr);
     if ((s = accept(test->listener, (struct sockaddr *) &addr, &len)) < 0) {
@@ -230,6 +231,16 @@ iperf_accept(struct iperf_test *test)
     }
     return 0;
     error_handling:
+        /* Try to send the error code to the client*/
+        if (i_errno != IENONE && test->ctrl_sck != -1) {
+            if (iperf_set_send_state(test, SERVER_ERROR) == 0) {
+                err = htonl(i_errno);
+                if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) >= 0) {
+                    err = htonl(errno);
+                    Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp);
+                }
+            }
+        }
         close(s);
         return ret;
 }
@@ -440,6 +451,18 @@ static void
 cleanup_server(struct iperf_test *test)
 {
     struct iperf_stream *sp;
+    int32_t err;
+
+    /* Try to send the error code to the client*/
+    if (i_errno != IENONE && test->ctrl_sck != -1) {
+        if (iperf_set_send_state(test, SERVER_ERROR) == 0) {
+            err = htonl(i_errno);
+            if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) >= 0) {
+                err = htonl(errno);
+                Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp);
+            }
+        }
+    }
 
     /* Cancel outstanding threads */
     int i_errno_save = i_errno;

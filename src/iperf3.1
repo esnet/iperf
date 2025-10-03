@@ -250,6 +250,11 @@ Restart the server after \fIn\fR seconds in case it gets stuck.
 In one-off mode, this is the number of seconds the server will wait
 before exiting.
 .TP
+.BR --server-max-duration " "
+The maximum time, in seconds, that an iperf client can run against the server.
+When the sum of the client's time and omit values exceeds the max duration set by the server
+or the client's time value is 0, the measurement is rejected.
+.TP
 .BR --server-bitrate-limit " \fIn\fR[KMGT][/\fCn\fR]"
 Set a limit on the server side, which will cause a test to abort if
 the client specifies a test of more than \fIn\fR bits per second, or

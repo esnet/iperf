@@ -551,6 +551,9 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "unable to set/get socket keepalive TCP number of retries (TCP_KEEPCNT) option");
             perr = 1;
             break;
+        case IEMAXSERVERTESTDURATIONEXCEEDED:
+            snprintf(errstr, len, "client's requested duration exceeds the server's maximum permitted limit");
+            break;
 	default:
 	    snprintf(errstr, len, "int_errno=%d", int_errno);
 	    perr = 1;

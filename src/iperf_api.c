@@ -2298,26 +2298,6 @@ iperf_exchange_parameters(struct iperf_test *test)
             return -1;
         }
 
-        if ((test->max_server_duration > 0) && (((test->duration + test->omit) > test->max_server_duration) || (test->duration == 0))) {
-            if (iperf_set_send_state(test, SERVER_ERROR) != 0)
-                return -1;
-
-            i_errno = IEMAXSERVERTESTDURATIONEXCEEDED;
-            err = htonl(i_errno);
-            if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
-                i_errno = IECTRLWRITE;
-                return -1;
-            }
-            
-            err = htonl(errno);
-            if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
-                i_errno = IECTRLWRITE;
-                return -1;
-            }
-
-            return -1;
-        }
-
 #if defined(HAVE_SSL)
         if (test_is_authorized(test) < 0){
             if (iperf_set_send_state(test, SERVER_ERROR) != 0)
@@ -2590,6 +2570,13 @@ get_parameters(struct iperf_test *test)
 	    test->repeating_payload = 1;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "zerocopy", cJSON_Number)) != NULL)
 	    test->zerocopy = j_p->valueint;
+
+    /* Ensure that the client does not request to run longer than the server's configured max */
+    if ((test->max_server_duration > 0) && (((test->duration + test->omit) > test->max_server_duration) || (test->duration == 0))) {
+        i_errno = IEMAXSERVERTESTDURATIONEXCEEDED;
+        r = -1;
+    }
+
 #if defined(HAVE_DONT_FRAGMENT)
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "dont_fragment", cJSON_Number)) != NULL)
 	    test->settings->dont_fragment = j_p->valueint;

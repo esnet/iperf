@@ -99,7 +99,8 @@ const char usage_shortstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "       iperf3 [-h|--help] [-v|--version]\n\n"
                            "Server or Client:\n"
-                           "  -p, --port      #         server port to listen on/connect to\n"
+                           "  -p, --port      #[/#]     server port to listen on/connect to\n"
+                           "                            (optional Client only - port for UDP data send/receive)\n"
                            "  -f, --format   [kmgtKMGT] format to report: Kbits, Mbits, Gbits, Tbits\n"
                            "  -i, --interval  #         seconds between periodic throughput reports\n"
                            "  -I, --pidfile file        write PID file\n"
@@ -320,7 +321,7 @@ const char report_time[] =
 "Time: %s\n";
 
 const char report_connecting[] =
-"Connecting to host %s, port %d\n";
+"Connecting to host %s, port %d, data-port %d\n";
 
 const char report_authentication_succeeded[] =
 "Authentication succeeded for user '%s' ts %" PRIu64 "\n";

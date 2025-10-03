@@ -60,6 +60,6 @@ jobs:
         sudo apt-get -y update && sudo apt-get install -y build-essential
     - name: build
       run: |
-        ./configure CFLAGS="-g -O0 -fsanitize=address" LDFLAGS="-fsanitize=address" && make
+        ./configure CFLAGS="-g -O0 -fsanitize=address" LDFLAGS="-fsanitize=address" && make && make check
         timeout 300 src/iperf3 -s &
         ./test_commands.sh localhost

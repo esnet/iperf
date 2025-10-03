@@ -381,7 +381,7 @@ int encode_auth_setting(const char *username, const char *password, EVP_PKEY *pu
 int decode_auth_setting(int enable_debug, const char *authtoken, EVP_PKEY *private_key, char **username, char **password, time_t *ts, int use_pkcs1_padding){
     unsigned char *encrypted_b64 = NULL;
     size_t encrypted_len_b64;
-    int64_t utc_seconds;
+    int64_t utc_seconds =0;
     Base64Decode(authtoken, &encrypted_b64, &encrypted_len_b64);
 
     unsigned char *plaintext = NULL;

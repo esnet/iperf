@@ -400,6 +400,11 @@ iperf_handle_message_client(struct iperf_test *test)
                 return -1;
             }
             errno = ntohl(err);
+            if (errno > 0) {    
+                iperf_err(test, "SERVER ERROR - %s, errno: %s", iperf_strerror(i_errno), strerror(errno));
+            } else {
+                iperf_err(test, "SERVER ERROR - %s", iperf_strerror(i_errno));
+            }
             return -1;
         default:
             i_errno = IEMESSAGE;

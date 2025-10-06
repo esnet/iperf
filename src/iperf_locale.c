@@ -118,6 +118,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -V, --verbose             more detailed output\n"
                            "  -J, --json                output in JSON format\n"
                            "  --json-stream             output in line-delimited JSON format\n"
+                           "  --json-stream-full-output output in JSON format with JSON streams enabled\n"
                            "  --logfile f               send output to a log file\n"
                            "  --forceflush              force flushing output at every interval\n"
                            "  --timestamps<=format>     emit a timestamp at the start of each output line\n"
@@ -148,6 +149,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 			   "                            total data rate.  Default is 5 seconds)\n"
                            "  --idle-timeout #          restart idle server after # seconds in case it\n"
                            "                            got stuck (default - no timeout)\n"
+                           "  --server-max-duration #   max time, in seconds, that an iperf test can run against the server\n"
 #if defined(HAVE_SSL)
                            "  --rsa-private-key-path    path to the RSA private key used to decrypt\n"
 			   "                            authentication credentials\n"
@@ -314,7 +316,7 @@ const char test_start_bytes[] =
 "Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %"PRIuFAST64" bytes to send, tos %d\n";
 
 const char test_start_blocks[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %"PRIuFAST64" bytes to send, tos %d\n";
+"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %"PRIuFAST64" blocks to send, tos %d\n";
 
 
 /* -------------------------------------------------------------------

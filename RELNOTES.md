@@ -1,6 +1,73 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.19.1 2025-07-25
+-----------------------
+
+* Notable user-visible changes
+
+    * SECURITY NOTE: Thanks to Han Lee with Apple Information Security
+                     for finding and reporting several memory errors
+                     including a buffer overflow within the
+                     `--skip-rx-copy` option, and two memory errors
+                     within authentication, including a heap overflow
+                     in the plaintext password and an assert.
+                  
+    * An off-by-one heap overflow has been fixed in authentication.
+      (CVE-2025-54349, ESNET-SECADV-2025-0003)
+
+    * An assert in authentication has been removed. (CVE-2025-54350,
+      ESNET-SECADV-2025-0002)
+
+    * A buffer overflow in the `--skip-rx-copy` option for zerocopy
+      has been fixed. (CVE-2025-54351, ESNET-SECADV-2025-0001)
+
+
+iperf-3.19 2025-05-16
+---------------------
+
+* Notable user-visible changes
+
+    * iperf3 now supports the use of Multi-Path TCP (MPTCPv1) on Linux
+      with the use of the `-m` or `--mptcp` flag. (PR #1661)
+
+    * iperf3 now supports a `--cntl-ka` option to enable TCP keepalives
+      on the control connection. (#812, #835, PR #1423)
+
+    * iperf3 now supports the `MSG_TRUNC` receive option, specified by
+      the `--skip-rx-copy`. This theoretically improves the rated
+      throughput of tests at high bitrates by not delivering network
+      payload data to userspace. (#1678, PR #1717)
+
+    * A bug that caused the bitrate setting to be ignored when bursts
+      are set, has been fixed. (#1773, #1820, PR #1821, PR #1848)
+
+    * The congestion control protocol setting, if used, is now
+      properly reset between tests. (PR #1812)
+
+    * iperf3 now exits with a non-error 0 exit code if exiting via a
+      `SIGTERM`, `SIGHUP`, or `SIGINT`. (#1009, PR# 1829)
+
+    * The current behavior of iperf3 with respect to the `-n` and `-k`
+      options is now documented as correct. (#1768, #1775, #596, PR #1800)
+
+* Notable developer-visible changes
+
+    * iperf3 now supports a callback function to get the JSON output
+      strings. (#1711, PR #1798)
+
+    * iperf3 now builds correctly with gcc-15 (#1838, PR #1805)
+
+    * Various memory leaks were fixed (#1881, PR#1823, #1814, PR#1822)
+
+    * A potential segfault crash was fixed (#1807)
+
+    * Improved warning messages when reading malformed JSON messages
+      (PR #1817)
+
+    * The Github CI configuration was changed to use a more up-to-date
+      set of runners (PR #1864)
+
 iperf-3.18 2024-12-13
 ---------------------
 

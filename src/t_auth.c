@@ -41,6 +41,7 @@
 
 #include "units.h"
 
+
 #if defined(HAVE_SSL)
 int test_authtoken(const char *authUser, const char *authPassword, EVP_PKEY *pubkey, EVP_PKEY *privkey);
 
@@ -79,7 +80,7 @@ main(int argc, char **argv)
     assert(test_load_private_key_from_file(privkeyfile) == 0);
 
     /* load public key pair for use in further tests */
-    EVP_PKEY *pubkey, *privkey;
+    EVP_PKEY *pubkey = NULL, *privkey = NULL;
     pubkey = load_pubkey_from_file(pubkeyfile);
     assert(pubkey);
     privkey = load_privkey_from_file(privkeyfile);
@@ -87,6 +88,23 @@ main(int argc, char **argv)
 
     /* authentication token tests */
     assert(test_authtoken("kilroy", "fubar", pubkey, privkey) == 0);
+
+    if (pubkey != NULL){
+        EVP_PKEY_free(pubkey);
+        pubkey = NULL;
+    }
+    if (privkey != NULL){
+        EVP_PKEY_free(privkey);
+        privkey = NULL;
+    }
+    if (base64Text != NULL){
+        free(base64Text);
+        base64Text = NULL;
+    }
+    if (base64Decode != NULL){
+        free(base64Decode);
+        base64Decode = NULL;
+    }
 
     /* This should fail because the data is way too long for the RSA key */
     /* assert(test_authtoken("kilroykilroykilroykilroykilroykilroykilroykilroykilroykilroykilroykilroykilroykilroykilroykilroykilroykilroykilroykilroykilroykilroykilroykilroykilroykilroy", "fubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubarfubar", pubkey, privkey) < 0); */
@@ -107,6 +125,19 @@ test_authtoken(const char *authUser, const char *authPassword, EVP_PKEY *pubkey,
 
     assert(strcmp(decodeUser, authUser) == 0);
     assert(strcmp(decodePassword, authPassword) == 0);
+
+    if (authToken !=NULL){
+        free(authToken);
+        authToken = NULL;
+    }
+    if (decodeUser !=NULL){
+        free(decodeUser);
+        decodeUser = NULL;
+    }
+    if (decodePassword !=NULL){
+        free(decodePassword);
+        decodePassword = NULL;
+    }
 
     time_t now = time(NULL);
 

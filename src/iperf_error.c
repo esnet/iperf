@@ -489,6 +489,9 @@ iperf_strerror(int int_errno)
 	case IETOTALRATE:
 	    snprintf(errstr, len, "total required bandwidth is larger than server limit");
             break;
+        case IETOTALINTERVAL:
+            snprintf(errstr, len, "invalid time interval for calculating average data rate");
+            break;
         case IESKEWTHRESHOLD:
 	    snprintf(errstr, len, "skew threshold must be a positive number");
             break;
@@ -554,6 +557,9 @@ iperf_strerror(int int_errno)
         case IESETCNTLKACOUNT:
             snprintf(errstr, len, "unable to set/get socket keepalive TCP number of retries (TCP_KEEPCNT) option");
             perr = 1;
+            break;
+        case IEMAXSERVERTESTDURATIONEXCEEDED:
+            snprintf(errstr, len, "client's requested duration exceeds the server's maximum permitted limit");
             break;
 	default:
 	    snprintf(errstr, len, "int_errno=%d", int_errno);

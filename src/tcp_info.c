@@ -218,17 +218,20 @@ get_pmtu(struct iperf_interval_results *irp)
 }
 
 /*************************************************************/
-void
-build_tcpinfo_message(struct iperf_interval_results *r, char *message)
+/*
+ * Return number of reordering events seen.
+ */
+long
+get_reorder(struct iperf_interval_results *irp)
 {
-#if defined(linux) && defined(TCP_INFO)
-    sprintf(message, report_tcpInfo, r->tcpInfo.tcpi_snd_cwnd, r->tcpInfo.tcpi_snd_ssthresh,
-	    r->tcpInfo.tcpi_rcv_ssthresh, r->tcpInfo.tcpi_unacked, r->tcpInfo.tcpi_sacked,
-	    r->tcpInfo.tcpi_lost, r->tcpInfo.tcpi_retrans, r->tcpInfo.tcpi_fackets,
-	    r->tcpInfo.tcpi_rtt, r->tcpInfo.tcpi_reordering);
-#endif
-#if (defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && defined(TCP_INFO)
-    sprintf(message, report_tcpInfo, r->tcpInfo.tcpi_snd_cwnd,
-	    r->tcpInfo.tcpi_rcv_space, r->tcpInfo.tcpi_snd_ssthresh, r->tcpInfo.tcpi_rtt);
+	/* TCP_REPAIR_ON is unrelated, but both that define
+	 * and the tcpi_reord_seen field were added in Linux 4.19
+	 * (similar situation as has_tcpinfo_retransmits()).
+	 */
+#if defined(linux) && defined(TCP_REPAIR_ON)
+    return irp->tcpInfo.tcpi_reord_seen;
+#else
+    return -1;
 #endif
 }
+

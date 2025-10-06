@@ -36,16 +36,28 @@
 #include <time.h>
 
 int
-iperf_time_now(struct iperf_time *time1)
+clock_gettime_helper(struct iperf_time *now, clockid_t clk_id)
 {
     struct timespec ts;
     int result;
-    result = clock_gettime(CLOCK_MONOTONIC, &ts);
+    result = clock_gettime(clk_id, &ts);
     if (result == 0) {
-        time1->secs = (uint32_t) ts.tv_sec;
-        time1->usecs = (uint32_t) ts.tv_nsec / 1000;
+        now->secs = (uint32_t) ts.tv_sec;
+        now->usecs = (uint32_t) ts.tv_nsec / 1000;
     }
     return result;
+}
+
+int
+iperf_time_now(struct iperf_time *now)
+{
+    return clock_gettime_helper(now, CLOCK_MONOTONIC);
+}
+
+int
+iperf_time_now_wallclock(struct iperf_time *now)
+{
+    return clock_gettime_helper(now, CLOCK_REALTIME);
 }
 
 #else
@@ -53,14 +65,21 @@ iperf_time_now(struct iperf_time *time1)
 #include <sys/time.h>
 
 int
-iperf_time_now(struct iperf_time *time1)
+iperf_time_now_wallclock(struct iperf_time *now)
 {
     struct timeval tv;
     int result;
+    // Returns the non monotonic local wallclock time.
     result = gettimeofday(&tv, NULL);
-    time1->secs = tv.tv_sec;
-    time1->usecs = tv.tv_usec;
+    now->secs = (uint32_t) tv.tv_sec;
+    now->usecs = (uint32_t) tv.tv_usec;
     return result;
+}
+
+int
+iperf_time_now(struct iperf_time *now)
+{
+    return iperf_time_now_wallclock(now);
 }
 
 #endif

@@ -210,7 +210,13 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 #if defined(HAVE_FLOWLABEL)
                            "  -L, --flowlabel N         set the IPv6 flow label (only supported on Linux)\n"
 #endif /* HAVE_FLOWLABEL */
-                           "  -Z, --zerocopy            use a 'zero copy' method of sending data\n"
+#if defined(HAVE_MSG_ZEROCOPY) && defined(HAVE_POLL_H)
+                           "  -Z, --zerocopy[=z]        for UDP use MSG_ZEROCOPY 'zero copy' method for sending data;\n"
+                           "                            for TCP, use sendfile() uless '=z' is set for using MSG_ZEROCOPY\n"
+#else
+                           "  -Z, --zerocopy            use `sendfile()` for 'zero copy' send of TCP data\n"
+#endif /* SUPPORTED_MSG_ZEROCOPY */
+
 #if defined(HAVE_MSG_TRUNC)
                            "  --skip-rx-copy            ignore received messages using MSG_TRUNC option\n"
 #endif /* HAVE_MSG_TRUNC */

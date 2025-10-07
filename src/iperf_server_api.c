@@ -206,6 +206,15 @@ iperf_accept(struct iperf_test *test)
             goto error_handling;
         if (iperf_exchange_parameters(test) < 0)
             goto error_handling;
+
+        // Send server's parameters (if supported by the client)
+        if (test->client_capability_server_params) {
+            if (iperf_send_state(test, SERVER_PARAM_EXCHANGE) != 0)  // Only send the request - without changing server's state
+                goto error_handling;
+            if (iperf_send_server_params(test) < 0)
+                goto error_handling;
+        }
+
         if (test->server_affinity != -1) {
             if (iperf_setaffinity(test, test->server_affinity) != 0)
                 goto error_handling;

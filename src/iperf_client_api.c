@@ -304,6 +304,8 @@ iperf_handle_message_client(struct iperf_test *test)
 {
     int rval;
     int32_t err;
+    signed char old_state;
+    int rc;
 
     if (NULL == test)
     {
@@ -316,6 +318,7 @@ iperf_handle_message_client(struct iperf_test *test)
         iperf_printf(test, "Reading new State from the Server - current state is %d-%s\n", test->state, state_to_text(test->state));
     }
 
+    old_state = test->state;
     /*!!! Why is this read() and not Nread()? */
     if ((rval = read(test->ctrl_sck, (char*) &test->state, sizeof(signed char))) <= 0) {
         if (rval == 0) {
@@ -338,6 +341,18 @@ iperf_handle_message_client(struct iperf_test *test)
             if (test->on_connect)
                 test->on_connect(test);
             break;
+        case SERVER_PARAM_EXCHANGE: // Receive server's parameters
+            rc = iperf_get_server_params(test);
+            test->state = old_state; // For backward compatibility, keep the client's state unchanged
+            if (rc < 0) {
+                return -1;
+            } else if (rc > 0) {
+                return 1; // Exit if only had to print server full version, etc.
+            }
+            if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                iperf_printf(test, "State change: changed client state back to %d-%s\n", test->state, state_to_text(test->state));
+            }
+            break;
         case CREATE_STREAMS:
             if (test->mode == BIDIRECTIONAL)
             {
@@ -350,6 +365,12 @@ iperf_handle_message_client(struct iperf_test *test)
                 return -1;
             break;
         case TEST_START:
+            /* if client requested server full version and it got to this point,
+               it means that the server is an older version that does not support this capability */
+            if (test->get_server_version) {
+                i_errno = IENOSERVERFULLVERSION;
+                return -1;
+            }
             if (iperf_init_test(test) < 0)
                 return -1;
             if (create_client_timers(test) < 0)
@@ -583,6 +604,7 @@ iperf_run_client(struct iperf_test * test)
     int64_t timeout_us;
     int64_t rcv_timeout_us;
     int i_errno_save;
+    int rc;
 
     if (NULL == test)
     {
@@ -696,9 +718,14 @@ iperf_run_client(struct iperf_test * test)
 
 	if (result > 0) {
 	    if (FD_ISSET(test->ctrl_sck, &read_set)) {
- 	        if (iperf_handle_message_client(test) < 0) {
+                rc = iperf_handle_message_client(test);
+                if (rc < 0) {
 		    goto cleanup_and_fail;
-		}
+		} else if (rc > 0) { // Exit if only had to print server full version, etc.
+                    if (iperf_set_send_state(test, CLIENT_TERMINATE) != 0)
+                        goto cleanup_and_fail;
+                    goto cleanup;
+                }
 		FD_CLR(test->ctrl_sck, &read_set);
 	    }
 	}
@@ -796,6 +823,7 @@ iperf_run_client(struct iperf_test * test)
 	}
     }
 
+cleanup:
     /* Cancel outstanding receiver threads */
     SLIST_FOREACH(sp, &test->streams, streams) {
         if (!sp->sender) {

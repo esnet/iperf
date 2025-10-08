@@ -235,7 +235,7 @@ int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned ch
     RSA *rsa = NULL;
 #endif
     unsigned char *rsa_buffer = NULL;
-    size_t encryptedtext_len = 0;
+    size_t encryptedtext_len = 0, plaintext_len = 0;
     int rsa_buffer_len, output_buffer_len;
 
 #if OPENSSL_VERSION_MAJOR >= 3
@@ -250,12 +250,13 @@ int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned ch
     rsa = EVP_PKEY_get1_RSA(public_key);
     output_buffer_len = RSA_size(rsa);
 #endif
-    rsa_buffer  = OPENSSL_malloc(output_buffer_len * 2);
+    plaintext_len = strlen(plaintext);
+    rsa_buffer  = OPENSSL_malloc(output_buffer_len);
     *encryptedtext = (unsigned char*)OPENSSL_malloc(output_buffer_len);
     encryptedtext_len = output_buffer_len;
 
-    BIO *bioBuff   = BIO_new_mem_buf((void*)plaintext, (int)strlen(plaintext));
-    rsa_buffer_len = BIO_read(bioBuff, rsa_buffer, output_buffer_len * 2);
+    BIO *bioBuff   = BIO_new_mem_buf((void*)plaintext, (int)plaintext_len);
+    rsa_buffer_len = BIO_read(bioBuff, rsa_buffer, plaintext_len);
 
     int padding = RSA_PKCS1_OAEP_PADDING;
     if (use_pkcs1_padding){
@@ -309,12 +310,12 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
     rsa = EVP_PKEY_get1_RSA(private_key);
     output_buffer_len = RSA_size(rsa);
 #endif
-    rsa_buffer  = OPENSSL_malloc(output_buffer_len * 2);
+    rsa_buffer  = OPENSSL_malloc(output_buffer_len);
     // Note: +1 for NULL
     *plaintext = (unsigned char*)OPENSSL_malloc(output_buffer_len + 1);
 
     BIO *bioBuff   = BIO_new_mem_buf((void*)encryptedtext, encryptedtext_len);
-    rsa_buffer_len = BIO_read(bioBuff, rsa_buffer, output_buffer_len * 2);
+    rsa_buffer_len = BIO_read(bioBuff, rsa_buffer, encryptedtext_len);
 
     int padding = RSA_PKCS1_OAEP_PADDING;
     if (use_pkcs1_padding){

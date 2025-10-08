@@ -251,6 +251,9 @@ int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned ch
     output_buffer_len = RSA_size(rsa);
 #endif
     plaintext_len = strlen(plaintext);
+    if (plaintext_len > output_buffer_len) {
+        fprintf(stderr, "Plaintext of size %zd truncated to %d; data is lost.\n", plaintext_len, output_buffer_len);
+    }
     rsa_buffer  = OPENSSL_malloc(output_buffer_len);
     *encryptedtext = (unsigned char*)OPENSSL_malloc(output_buffer_len);
     encryptedtext_len = output_buffer_len;
@@ -310,6 +313,9 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
     rsa = EVP_PKEY_get1_RSA(private_key);
     output_buffer_len = RSA_size(rsa);
 #endif
+    if (encryptedtext_len > output_buffer_len) {
+        fprintf(stderr, "Encrypted text of size %d truncated to %d; likely invalid input.\n", encryptedtext_len, output_buffer_len);
+    }
     rsa_buffer  = OPENSSL_malloc(output_buffer_len);
     // Note: +1 for NULL
     *plaintext = (unsigned char*)OPENSSL_malloc(output_buffer_len + 1);

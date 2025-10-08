@@ -130,9 +130,9 @@ int Base64Encode(const unsigned char* buffer, const size_t length, char** b64tex
 
 size_t calcDecodeLength(const char* b64input) { //Calculates the length of a decoded string
     size_t len = strlen(b64input), padding = 0;
-    if (b64input[len-1] == '=' && b64input[len-2] == '=') //last two chars are =
+    if (len >= 2 && b64input[len-1] == '=' && b64input[len-2] == '=') //last two chars are =
         padding = 2;
-    else if (b64input[len-1] == '=') //last char is =
+    else if (len >= 1 && b64input[len-1] == '=') //last char is =
         padding = 1;
 
     return (len*3)/4 - padding;

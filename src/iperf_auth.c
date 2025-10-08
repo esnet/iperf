@@ -130,9 +130,9 @@ int Base64Encode(const unsigned char* buffer, const size_t length, char** b64tex
 
 size_t calcDecodeLength(const char* b64input) { //Calculates the length of a decoded string
     size_t len = strlen(b64input), padding = 0;
-    if (b64input[len-1] == '=' && b64input[len-2] == '=') //last two chars are =
+    if (len >= 2 && b64input[len-1] == '=' && b64input[len-2] == '=') //last two chars are =
         padding = 2;
-    else if (b64input[len-1] == '=') //last char is =
+    else if (len >= 1 && b64input[len-1] == '=') //last char is =
         padding = 1;
 
     return (len*3)/4 - padding;
@@ -235,26 +235,31 @@ int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned ch
     RSA *rsa = NULL;
 #endif
     unsigned char *rsa_buffer = NULL;
-    size_t encryptedtext_len = 0;
-    int rsa_buffer_len, keysize;
+    size_t encryptedtext_len = 0, plaintext_len = 0;
+    int rsa_buffer_len, output_buffer_len;
 
 #if OPENSSL_VERSION_MAJOR >= 3
     int rc;
     ctx = EVP_PKEY_CTX_new_from_pkey(NULL, public_key, "");
     /* See evp_pkey_rsa(7) and provider-keymgmt(7) */
-    rc = EVP_PKEY_get_int_param(public_key, OSSL_PKEY_PARAM_MAX_SIZE, &keysize); /* XXX not really keysize */
+    rc = EVP_PKEY_get_int_param(public_key, OSSL_PKEY_PARAM_MAX_SIZE, &output_buffer_len);
     if (!rc) {
         goto errreturn;
     }
 #else
     rsa = EVP_PKEY_get1_RSA(public_key);
-    keysize = RSA_size(rsa);
+    output_buffer_len = RSA_size(rsa);
 #endif
-    rsa_buffer  = OPENSSL_malloc(keysize * 2);
-    *encryptedtext = (unsigned char*)OPENSSL_malloc(keysize);
+    plaintext_len = strlen(plaintext);
+    if (plaintext_len > output_buffer_len) {
+        fprintf(stderr, "Plaintext of size %zd truncated to %d; data is lost.\n", plaintext_len, output_buffer_len);
+    }
+    rsa_buffer  = OPENSSL_malloc(output_buffer_len);
+    *encryptedtext = (unsigned char*)OPENSSL_malloc(output_buffer_len);
+    encryptedtext_len = output_buffer_len;
 
-    BIO *bioBuff   = BIO_new_mem_buf((void*)plaintext, (int)strlen(plaintext));
-    rsa_buffer_len = BIO_read(bioBuff, rsa_buffer, keysize * 2);
+    BIO *bioBuff   = BIO_new_mem_buf((void*)plaintext, (int)plaintext_len);
+    rsa_buffer_len = BIO_read(bioBuff, rsa_buffer, plaintext_len);
 
     int padding = RSA_PKCS1_OAEP_PADDING;
     if (use_pkcs1_padding){
@@ -294,26 +299,29 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
 #endif
     unsigned char *rsa_buffer = NULL;
     size_t plaintext_len = 0;
-    int rsa_buffer_len, keysize;
+    int rsa_buffer_len, output_buffer_len;
 
 #if OPENSSL_VERSION_MAJOR >= 3
     int rc;
     ctx = EVP_PKEY_CTX_new_from_pkey(NULL, private_key, "");
     /* See evp_pkey_rsa(7) and provider-keymgmt(7) */
-    rc = EVP_PKEY_get_int_param(private_key, OSSL_PKEY_PARAM_MAX_SIZE, &keysize); /* XXX not really keysize */
+    rc = EVP_PKEY_get_int_param(private_key, OSSL_PKEY_PARAM_MAX_SIZE, &output_buffer_len);
     if (!rc) {
         goto errreturn;
     }
 #else
     rsa = EVP_PKEY_get1_RSA(private_key);
-    keysize = RSA_size(rsa);
+    output_buffer_len = RSA_size(rsa);
 #endif
-    rsa_buffer  = OPENSSL_malloc(keysize * 2);
+    if (encryptedtext_len > output_buffer_len) {
+        fprintf(stderr, "Encrypted text of size %d truncated to %d; likely invalid input.\n", encryptedtext_len, output_buffer_len);
+    }
+    rsa_buffer  = OPENSSL_malloc(output_buffer_len);
     // Note: +1 for NULL
-    *plaintext = (unsigned char*)OPENSSL_malloc(keysize + 1);
+    *plaintext = (unsigned char*)OPENSSL_malloc(output_buffer_len + 1);
 
     BIO *bioBuff   = BIO_new_mem_buf((void*)encryptedtext, encryptedtext_len);
-    rsa_buffer_len = BIO_read(bioBuff, rsa_buffer, keysize * 2);
+    rsa_buffer_len = BIO_read(bioBuff, rsa_buffer, encryptedtext_len);
 
     int padding = RSA_PKCS1_OAEP_PADDING;
     if (use_pkcs1_padding){
@@ -321,7 +329,7 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
     }
 #if OPENSSL_VERSION_MAJOR >= 3
 
-    plaintext_len = keysize;
+    plaintext_len = output_buffer_len;
     EVP_PKEY_decrypt_init(ctx);
 
     ret = EVP_PKEY_CTX_set_rsa_padding(ctx, padding);

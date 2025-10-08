@@ -252,6 +252,7 @@ int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned ch
 #endif
     rsa_buffer  = OPENSSL_malloc(keysize * 2);
     *encryptedtext = (unsigned char*)OPENSSL_malloc(keysize);
+    encryptedtext_len = keysize;
 
     BIO *bioBuff   = BIO_new_mem_buf((void*)plaintext, (int)strlen(plaintext));
     rsa_buffer_len = BIO_read(bioBuff, rsa_buffer, keysize * 2);

@@ -349,6 +349,19 @@ if test "x$iperf3_cv_header_tcp_info_snd_wnd" = "xyes"; then
   AC_DEFINE([HAVE_TCP_INFO_SND_WND], [1], [Have tcpi_snd_wnd field in tcp_info.])
 fi
 
+# Check for MSG_ZEROCOPY (mostly on Linux)
+AC_CACHE_CHECK([MSG_ZEROCOPY send option],
+[iperf3_cv_header_msg_zerocopy],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <sys/types.h>
+                     #include <sys/socket.h>
+                     #include <netinet/in.h>]],
+                   [[int foo = MSG_ZEROCOPY;]])],
+  iperf3_cv_header_msg_zerocopy=yes,
+  iperf3_cv_header_msg_zerocopy=no))
+if test "x$iperf3_cv_header_msg_zerocopy" = "xyes"; then
+    AC_DEFINE([HAVE_MSG_ZEROCOPY], [1], [Have MSG_ZEROCOPY send option.])
+fi
 
 # Check for MSG_TRUNC (mostly on Linux)
 AC_CACHE_CHECK([MSG_TRUNC recv option],
@@ -363,6 +376,7 @@ AC_COMPILE_IFELSE(
 if test "x$iperf3_cv_header_msg_trunc" = "xyes"; then
     AC_DEFINE([HAVE_MSG_TRUNC], [1], [Have MSG_TRUNC recv option.])
 fi
+
 # Check for IPPROTO_MPTCP (Linux)
 AC_CACHE_CHECK([MPTCP protocol],
 [iperf3_cv_header_ipproto_mptcp],

@@ -213,6 +213,21 @@ iperf_udp_send(struct iperf_stream *sp)
     int r;
     int       size = sp->settings->blksize;
     struct iperf_time before;
+    int sock_opt = 0;
+    
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+    if (sp->test->zerocopy == ZEROCOPY_MSG_ZEROCOPY) {
+        sock_opt = MSG_ZEROCOPY;
+
+        /* Wait until it is safe to rewite the sending buffer */
+        r = wait_zerocopy_buffer_available(sp);
+        if (r < 0) {
+            if (sp->test->debug_level >= DEBUG_LEVEL_INFO)
+                printf("Waining for UDP MSG_ZEROCOPY buffer to become available failed, errno=%s\n", strerror(errno));
+            return r;
+        }
+    }
+#endif /* SUPPORTED_MSG_ZEROCOPY */
 
     iperf_time_now(&before);
 
@@ -246,7 +261,12 @@ iperf_udp_send(struct iperf_stream *sp)
 
     }
 
-    r = Nwrite(sp->socket, sp->buffer, size, Pudp);
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+    if (sock_opt & MSG_ZEROCOPY) {
+        r = Nsend_sp(sp, sp->buffer, size, Pudp, sock_opt);
+    } else
+#endif /* SUPPORTED_MSG_ZEROCOPY */
+    r = Nsend(sp->socket, sp->buffer, size, Pudp, sock_opt);
 
     if (r <= 0) {
         --sp->packet_count;     /* Don't count messages that no data was sent from them.
@@ -254,6 +274,8 @@ iperf_udp_send(struct iperf_stream *sp)
         if (r < 0) {
             if (r == NET_SOFTERROR && sp->test->debug_level >= DEBUG_LEVEL_INFO)
                 printf("UDP send failed on NET_SOFTERROR. errno=%s\n", strerror(errno));
+            else
+                printf("UDP send failed. errno=%s\n", strerror(errno));
             return r;
         }
     }
@@ -385,12 +407,26 @@ iperf_udp_accept(struct iperf_test *test)
     socklen_t len;
     int       sz, s;
     int	      rc;
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+    int opt;
+#endif /* SUPPORTED_MSG_ZEROCOPY */
 
     /*
      * Get the current outstanding socket.  This socket will be used to handle
      * data transfers and a new "listening" socket will be created.
      */
     s = test->prot_listener;
+
+#if defined(SUPPORTED_MSG_ZEROCOPY)
+    /* Setting should be done before the socket is conected */
+    if (test->zerocopy == ZEROCOPY_MSG_ZEROCOPY) {
+        opt = 1;
+        if (setsockopt(s, SOL_SOCKET, SO_ZEROCOPY, &opt, sizeof(opt)) < 0) {
+            i_errno = IESTREAMACCEPT;
+            return -1;
+        }
+    }
+#endif /* SUPPORTED_MSG_ZEROCOPY */
 
     /*
      * Grab the UDP packet sent by the client.  From that we can extract the
@@ -520,7 +556,7 @@ iperf_udp_connect(struct iperf_test *test)
     int i, max_len_wait_for_reply;
 
     /* Create and bind our local socket. */
-    if ((s = netdial(test->settings->domain, Pudp, test->bind_address, test->bind_dev, test->bind_port, test->server_hostname, test->server_port, -1)) < 0) {
+    if ((s = netdial(test->settings->domain, Pudp, test->bind_address, test->bind_dev, test->bind_port, test->server_hostname, test->server_port, -1, test->zerocopy)) < 0) {
         i_errno = IESTREAMCONNECT;
         return -1;
     }

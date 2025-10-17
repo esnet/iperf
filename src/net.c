@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2019, The Regents of the University of
+ * iperf, Copyright (c) 2014-2023, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -65,6 +65,9 @@
 #include "net.h"
 #include "timer.h"
 
+static int nread_read_timeout = 10;
+static int nread_overall_timeout = 30;
+
 /*
  * Declaration of gerror in iperf_error.c.  Most other files in iperf3 can get this
  * by including "iperf.h", but net.c lives "below" this layer.  Clearly the
@@ -121,7 +124,7 @@ timeout_connect(int s, const struct sockaddr *name, socklen_t namelen,
 
 /* create a socket */
 int
-create_socket(int domain, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, struct addrinfo **server_res_out)
+create_socket(int domain, int type, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, struct addrinfo **server_res_out)
 {
     struct addrinfo hints, *local_res = NULL, *server_res = NULL;
     int s, saved_errno;
@@ -130,14 +133,14 @@ create_socket(int domain, int proto, const char *local, const char *bind_dev, in
     if (local) {
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = domain;
-        hints.ai_socktype = proto;
+        hints.ai_socktype = type;
         if ((gerror = getaddrinfo(local, NULL, &hints, &local_res)) != 0)
             return -1;
     }
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = domain;
-    hints.ai_socktype = proto;
+    hints.ai_socktype = type;
     snprintf(portstr, sizeof(portstr), "%d", port);
     if ((gerror = getaddrinfo(server, portstr, &hints, &server_res)) != 0) {
 	if (local)
@@ -145,7 +148,7 @@ create_socket(int domain, int proto, const char *local, const char *bind_dev, in
         return -1;
     }
 
-    s = socket(server_res->ai_family, proto, 0);
+    s = socket(server_res->ai_family, type, proto);
     if (s < 0) {
 	if (local)
 	    freeaddrinfo(local_res);
@@ -235,7 +238,7 @@ netdial(int domain, int proto, const char *local, const char *bind_dev, int loca
     struct addrinfo *server_res = NULL;
     int s, saved_errno;
 
-    s = create_socket(domain, proto, local, bind_dev, local_port, server, port, &server_res);
+    s = create_socket(domain, proto, 0, local, bind_dev, local_port, server, port, &server_res);
     if (s < 0) {
       return -1;
     }
@@ -362,20 +365,60 @@ netannounce(int domain, int proto, const char *local, const char *bind_dev, int 
     return s;
 }
 
-
 /*******************************************************************/
-/* reads 'count' bytes from a socket  */
+/* Nread - reads 'count' bytes from a socket  */
 /********************************************************************/
 
 int
 Nread(int fd, char *buf, size_t count, int prot)
 {
+    return Nrecv(fd, buf, count, prot, 0);
+}
+
+/*******************************************************************/
+/* Nrecv - reads 'count' bytes from a socket  */
+/********************************************************************/
+
+int
+Nrecv(int fd, char *buf, size_t count, int prot, int sock_opt)
+{
     register ssize_t r;
     register size_t nleft = count;
+    struct iperf_time ftimeout = { 0, 0 };
+
+    fd_set rfdset;
+    struct timeval timeout = { nread_read_timeout, 0 };
+
+    /*
+     * fd might not be ready for reading on entry. Check for this
+     * (with timeout) first.
+     *
+     * This check could go inside the while() loop below, except we're
+     * currently considering whether it might make sense to support a
+     * codepath that bypasses this check, for situations where we
+     * already know that fd has data on it (for example if we'd gotten
+     * to here as the result of a select() call.
+     */
+    {
+        FD_ZERO(&rfdset);
+        FD_SET(fd, &rfdset);
+        r = select(fd + 1, &rfdset, NULL, NULL, &timeout);
+        if (r < 0) {
+            return NET_HARDERROR;
+        }
+        if (r == 0) {
+            return 0;
+        }
+    }
 
     while (nleft > 0) {
-        r = read(fd, buf, nleft);
+        if (sock_opt)
+            r = recv(fd, buf, nleft, sock_opt);
+        else
+            r = read(fd, buf, nleft);
+
         if (r < 0) {
+            /* XXX EWOULDBLOCK can't happen without non-blocking sockets */
             if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
                 break;
             else
@@ -383,8 +426,96 @@ Nread(int fd, char *buf, size_t count, int prot)
         } else if (r == 0)
             break;
 
-        nleft -= r;
-        buf += r;
+	if (sock_opt & MSG_TRUNC) {
+            size_t bytes_copied = (r > nleft)? nleft: r;
+            nleft -= bytes_copied;
+            buf += bytes_copied;
+        }
+	else {
+            nleft -= r;
+            buf += r;
+        }
+
+        /*
+         * We need some more bytes but don't want to wait around
+         * forever for them. In the case of partial results, we need
+         * to be able to read some bytes every nread_timeout seconds.
+         */
+        if (nleft > 0) {
+            struct iperf_time now;
+
+            /*
+             * Also, we have an approximate upper limit for the total time
+             * that a Nread call is supposed to take. We trade off accuracy
+             * of this timeout for a hopefully lower performance impact.
+             */
+            iperf_time_now(&now);
+            if (ftimeout.secs == 0) {
+                ftimeout = now;
+                iperf_time_add_usecs(&ftimeout, nread_overall_timeout * 1000000L);
+            }
+            if (iperf_time_compare(&ftimeout, &now) < 0) {
+                break;
+            }
+
+            FD_ZERO(&rfdset);
+            FD_SET(fd, &rfdset);
+            r = select(fd + 1, &rfdset, NULL, NULL, &timeout);
+            if (r < 0) {
+                return NET_HARDERROR;
+            }
+            if (r == 0) {
+                break;
+            }
+        }
+    }
+    return count - nleft;
+}
+
+/********************************************************************/
+/* Nreads 'count' bytes from a socket - but without using select()   */
+/********************************************************************/
+int
+Nread_no_select(int fd, char *buf, size_t count, int prot)
+{
+    return Nrecv_no_select(fd, buf, count, prot, 0);
+}
+
+/********************************************************************/
+/* Nrecv reads 'count' bytes from a socket - but without using select()   */
+/********************************************************************/
+int
+Nrecv_no_select(int fd, char *buf, size_t count, int prot, int sock_opt)
+{
+    register ssize_t r;
+    register size_t nleft = count;
+
+    while (nleft > 0) {
+        if (sock_opt)
+            r = recv(fd, buf, nleft, sock_opt);
+        else
+            r = read(fd, buf, nleft);
+
+        if (r < 0) {
+            /* XXX EWOULDBLOCK can't happen without non-blocking sockets */
+            if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
+                break;
+            else
+                return NET_HARDERROR;
+        } else if (r == 0)
+            break;
+
+	if (sock_opt & MSG_TRUNC) {
+            size_t bytes_copied = (r > nleft)? nleft: r;
+            nleft -= bytes_copied;
+            buf += bytes_copied;
+        }
+	else {
+            nleft -= r;
+            buf += r;
+        }
+
+
     }
     return count - nleft;
 }
@@ -407,14 +538,17 @@ Nwrite(int fd, const char *buf, size_t count, int prot)
 		case EINTR:
 		case EAGAIN:
 #if (EAGAIN != EWOULDBLOCK)
+                    /* XXX EWOULDBLOCK can't happen without non-blocking sockets */
 		case EWOULDBLOCK:
 #endif
+		if (count == nleft)
+		    return NET_SOFTERROR;
 		return count - nleft;
 
-		case ENOBUFS:
-		return NET_SOFTERROR;
+                case ENOBUFS :
+                return NET_SOFTERROR;
 
-		default:
+                default:
 		return NET_HARDERROR;
 	    }
 	} else if (r == 0)
@@ -477,6 +611,7 @@ Nsendfile(int fromfd, int tofd, const char *buf, size_t count)
 		case EINTR:
 		case EAGAIN:
 #if (EAGAIN != EWOULDBLOCK)
+                    /* XXX EWOULDBLOCK can't happen without non-blocking sockets */
 		case EWOULDBLOCK:
 #endif
 		if (count == nleft)

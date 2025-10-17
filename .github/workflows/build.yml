@@ -1,0 +1,65 @@
+name: GitHub Actions Build Test
+permissions:
+  contents: read
+on:
+  push:
+    branches:
+        - master
+  pull_request:
+    branches:
+        - master
+jobs:
+  cppcheck-test:
+    runs-on: ubuntu-latest
+    steps:
+    - run: echo "This job was triggered by a ${{ github.event_name }} event."
+    - name: Checkout Repo
+      uses: actions/checkout@v5
+    - name: install dependencies
+      run: |
+        sudo apt-get -y update && sudo apt-get install -y cppcheck && \
+        cppcheck . --force --inline-suppr
+  build-test-ubuntu-ish:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ubuntu-22.04, ubuntu-22.04-arm]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v5
+    - name: install dependencies
+      run: |
+        sudo apt-get -y update && sudo apt-get install -y build-essential
+    - name: build
+      run: |
+        ./configure && make && make check
+        timeout 300 src/iperf3 -s &
+        ./test_commands.sh localhost
+  build-test-macos-ish:
+    strategy:
+      matrix:
+        os: [macos-15, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v5
+    - name: install dependencies
+      run: |
+        brew install coreutils
+    - name: build
+      run: |
+        ./configure && make && make check
+        timeout 300 src/iperf3 -s &
+        ./test_commands.sh localhost
+  build-test-sanitizer-address:
+    runs-on: ubuntu-latest
+    steps:
+    - run: echo "Running address sanitzer"
+    - name: Checkout Repo
+      uses: actions/checkout@v5
+    - name: install dependencies
+      run: |
+        sudo apt-get -y update && sudo apt-get install -y build-essential
+    - name: build
+      run: |
+        ./configure CFLAGS="-g -O0 -fsanitize=address" LDFLAGS="-fsanitize=address" && make && make check
+        timeout 300 src/iperf3 -s &
+        ./test_commands.sh localhost

@@ -1,6 +1,103 @@
 iperf3 Project News
 ===================
 
+2025-07-25:  iperf-3.19.1 released
+----------------------------------
+
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.19.1.tar.gz
+| SHA256: ``dc63f89ec581ea99f8b558d8eb35109de06383010db5a1906c208a562ba0c270``
+
+iperf-3.19.1 is a security fix release to address three issues
+reported by Han Lee of Apple Information Security. More information
+can be found in the release notes.
+
+2025-05-16:  iperf-3.19 released
+--------------------------------
+
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.19.tar.gz
+| SHA256: ``040161da1555ec7411a9d81191049830ef37717d429a94ee6cf0842618e0e29c``
+
+iperf-3.19 includes support for MP-TCPv1 under Linux, keepalives on
+the control connection, support for the MSG_TRUNC receive option, and
+a number of minor bug fixes. The release notes contain more
+information on the changes.
+
+
+2024-12-13:  iperf-3.18 released
+--------------------------------
+
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.18.tar.gz
+| SHA256: ``c0618175514331e766522500e20c94bfb293b4424eb27d7207fb427b88d20bab``
+
+iperf-3.18 includes fixes for several bugs, including one that could
+cause an iperf3 server to crash if fed malformed data on the control
+connection. The release notes contain more information on the bug and
+the fix.
+
+
+2024-05-13:  iperf-3.17.1 released
+----------------------------------
+
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.17.1.tar.gz
+| SHA256: ``84404ca8431b595e86c473d8f23d8bb102810001f15feaf610effd3b318788aa``
+
+iperf-3.17.1 fixes some issues with version numbers in various
+places. It is otherwise identical to iperf-3.17.
+
+
+2024-05-10:  iperf-3.17 released
+--------------------------------
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.17.tar.gz
+| SHA256: ``077ede831b11b733ecf8b273abd97f9630fd7448d3ec1eaa789f396d82c8c943``
+
+iperf 3.17 contains a fix for a minor security vulnerability related
+to iperf3's authentication feature and its use of RSA-encrypted
+credentials. The release notes contain more
+details on this breaking change, and how to revert to older, less
+secure behavior if needed for backward compatibility with older
+versions of iperf3.
+
+This version also contains a new streaming JSON output format (enabled
+with the --json-stream) option, and a number of other bug fixes.
+
+2023-12-01:  iperf-3.16 released
+--------------------------------
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.16.tar.gz
+| SHA256: ``cc740c6bbea104398cc3e466befc515a25896ec85e44a662d5f4a767b9cf713e``
+
+iperf 3.16 uses multiple threads to serve parallel tests for improved
+throughput on high-speed links. It also includes support for
+OpenSSL 3. More details are provided in the release notes.
+
+2023-09-14:  iperf-3.15 released
+--------------------------------
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.15.tar.gz
+| SHA256:  ``bdb77c11f72bce90214883159577fa24412013e62b2083cf5f54391d79b1d8ff``
+
+iperf 3.15 fixes that could cause an iperf3 server process to hang
+waiting for input on the control connection. For more information,
+please see:
+
+https://downloads.es.net/pub/iperf/esnet-secadv-2023-0002.txt.asc
+
+This version of iperf3 also includes several other minor bug fixes,
+which are summarized in the release notes.
+
+2023-07-07:  iperf-3.14 released
+--------------------------------
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.14.tar.gz
+| SHA256:  ``723fcc430a027bc6952628fa2a3ac77584a1d0bd328275e573fc9b206c155004``
+
+iperf 3.14 fixes a memory allocation hazard that allowed a remote user
+to crash an iperf3 process (server or client).
+
+More information on this specific fix can be found at:
+
+https://downloads.es.net/pub/iperf/esnet-secadv-2023-0001.txt.asc
+
+This version of iperf3 also includes a number of minor bug fixes,
+which are summarized in the release notes.
+
 2023-02-16:  iperf-3.13 released
 ----------------------------------
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.13.tar.gz

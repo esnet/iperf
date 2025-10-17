@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2022 The Regents of the University of
+ * iperf, Copyright (c) 2014-2023 The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -40,13 +40,12 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sched.h>
 #include <setjmp.h>
+#include <signal.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -65,6 +64,50 @@
 #define TCP_CA_NAME_MAX 16
 #endif /* TCP_CA_NAME_MAX */
 #endif /* HAVE_TCP_CONGESTION */
+
+void *
+iperf_server_worker_run(void *s) {
+    struct iperf_stream *sp = (struct iperf_stream *) s;
+    struct iperf_test *test = sp->test;
+
+    /* Blocking signal to make sure that signal will be handled by main thread */
+    sigset_t set;
+    sigemptyset(&set);
+#ifdef SIGTERM
+    sigaddset(&set, SIGTERM);
+#endif
+#ifdef SIGHUP
+    sigaddset(&set, SIGHUP);
+#endif
+#ifdef SIGINT
+    sigaddset(&set, SIGINT);
+#endif
+    if (pthread_sigmask(SIG_BLOCK, &set, NULL) != 0) {
+	    i_errno = IEPTHREADSIGMASK;
+	    goto cleanup_and_fail;
+    }
+
+    /* Allow this thread to be cancelled even if it's in a syscall */
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+
+    while (! (test->done) && ! (sp->done)) {
+        if (sp->sender) {
+            if (iperf_send_mt(sp) < 0) {
+                goto cleanup_and_fail;
+            }
+        }
+        else {
+            if (iperf_recv_mt(sp) < 0) {
+                goto cleanup_and_fail;
+            }
+        }
+    }
+    return NULL;
+
+  cleanup_and_fail:
+    return NULL;
+}
 
 int
 iperf_server_listen(struct iperf_test *test)
@@ -110,6 +153,7 @@ int
 iperf_accept(struct iperf_test *test)
 {
     int s;
+    int ret = -1;
     signed char rbuf = ACCESS_DENIED;
     socklen_t len;
     struct sockaddr_storage addr;
@@ -117,7 +161,7 @@ iperf_accept(struct iperf_test *test)
     len = sizeof(addr);
     if ((s = accept(test->listener, (struct sockaddr *) &addr, &len)) < 0) {
         i_errno = IEACCEPT;
-        return -1;
+        return ret;
     }
 
     if (test->ctrl_sck == -1) {
@@ -127,7 +171,7 @@ iperf_accept(struct iperf_test *test)
         int flag = 1;
         if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int))) {
             i_errno = IESETNODELAY;
-            return -1;
+            goto error_handling;
         }
 
 #if defined(HAVE_TCP_USER_TIMEOUT)
@@ -135,34 +179,46 @@ iperf_accept(struct iperf_test *test)
         if ((opt = test->settings->snd_timeout)) {
             if (setsockopt(s, IPPROTO_TCP, TCP_USER_TIMEOUT, &opt, sizeof(opt)) < 0) {
                 i_errno = IESETUSERTIMEOUT;
-                return -1;
+                goto error_handling;
             }
         }
 #endif /* HAVE_TCP_USER_TIMEOUT */
 
-        if (Nread(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) < 0) {
-            i_errno = IERECVCOOKIE;
+#if defined (HAVE_TCP_KEEPALIVE)
+        // Set Control Connection TCP Keepalive (especially useful for long UDP test sessions)
+        if (iperf_set_control_keepalive(test) < 0)
             return -1;
-        }
-	FD_SET(test->ctrl_sck, &test->read_set);
-	if (test->ctrl_sck > test->max_fd) test->max_fd = test->ctrl_sck;
+#endif //HAVE_TCP_KEEPALIVE
 
-	if (iperf_set_send_state(test, PARAM_EXCHANGE) != 0)
-            return -1;
+        if (Nread(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) != COOKIE_SIZE) {
+            /*
+             * Note this error covers both the case of a system error
+             * or the inability to read the correct amount of data
+             * (i.e. timed out).
+             */
+            i_errno = IERECVCOOKIE;
+            goto error_handling;
+        }
+        FD_SET(test->ctrl_sck, &test->read_set);
+        if (test->ctrl_sck > test->max_fd) test->max_fd = test->ctrl_sck;
+
+        if (iperf_set_send_state(test, PARAM_EXCHANGE) != 0)
+            goto error_handling;
         if (iperf_exchange_parameters(test) < 0)
-            return -1;
-	if (test->server_affinity != -1)
-	    if (iperf_setaffinity(test, test->server_affinity) != 0)
-		return -1;
+            goto error_handling;
+        if (test->server_affinity != -1) {
+            if (iperf_setaffinity(test, test->server_affinity) != 0)
+                goto error_handling;
+        }
         if (test->on_connect)
             test->on_connect(test);
     } else {
-	/*
-	 * Don't try to read from the socket.  It could block an ongoing test.
-	 * Just send ACCESS_DENIED.
+        /*
+         * Don't try to read from the socket.  It could block an ongoing test.
+         * Just send ACCESS_DENIED.
          * Also, if sending failed, don't return an error, as the request is not related
          * to the ongoing test, and returning an error will terminate the test.
-	 */
+         */
         if (Nwrite(s, (char*) &rbuf, sizeof(rbuf), Ptcp) < 0) {
             if (test->debug)
                 printf("failed to send ACCESS_DENIED to an unsolicited connection request during active test\n");
@@ -172,8 +228,10 @@ iperf_accept(struct iperf_test *test)
         }
         close(s);
     }
-
     return 0;
+    error_handling:
+        close(s);
+        return ret;
 }
 
 
@@ -184,12 +242,16 @@ iperf_handle_message_server(struct iperf_test *test)
     int rval;
     struct iperf_stream *sp;
 
+    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+        iperf_printf(test, "Reading new State from the Client - current state is %d-%s\n", test->state, state_to_text(test->state));
+    }
+
     // XXX: Need to rethink how this behaves to fit API
     if ((rval = Nread(test->ctrl_sck, (char*) &test->state, sizeof(signed char), Ptcp)) <= 0) {
         if (rval == 0) {
-	    iperf_err(test, "the client has unexpectedly closed the connection");
+            iperf_err(test, "the client has unexpectedly closed the connection");
             i_errno = IECTRLCLOSE;
-            test->state = IPERF_DONE;
+            iperf_set_test_state(test, IPERF_DONE);
             return 0;
         } else {
             i_errno = IERECVMESSAGE;
@@ -197,11 +259,15 @@ iperf_handle_message_server(struct iperf_test *test)
         }
     }
 
+    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+        iperf_printf(test, "State change: server received and changed State to %d-%s\n", test->state, state_to_text(test->state));
+    }
+
     switch(test->state) {
         case TEST_START:
             break;
         case TEST_END:
-	    test->done = 1;
+            test->done = 1;
             cpu_util(test->cpu_util);
             test->stats_callback(test);
             SLIST_FOREACH(sp, &test->streams, streams) {
@@ -210,11 +276,11 @@ iperf_handle_message_server(struct iperf_test *test)
                 close(sp->socket);
             }
             test->reporter_callback(test);
-	    if (iperf_set_send_state(test, EXCHANGE_RESULTS) != 0)
+            if (iperf_set_send_state(test, EXCHANGE_RESULTS) != 0)
                 return -1;
             if (iperf_exchange_results(test) < 0)
                 return -1;
-	    if (iperf_set_send_state(test, DISPLAY_RESULTS) != 0)
+            if (iperf_set_send_state(test, DISPLAY_RESULTS) != 0)
                 return -1;
             if (test->on_test_finish)
                 test->on_test_finish(test);
@@ -239,7 +305,7 @@ iperf_handle_message_server(struct iperf_test *test)
                 FD_CLR(sp->socket, &test->write_set);
                 close(sp->socket);
             }
-            test->state = IPERF_DONE;
+            iperf_set_test_state(test, IPERF_DONE);
             break;
         default:
             i_errno = IEMESSAGE;
@@ -383,6 +449,36 @@ cleanup_server(struct iperf_test *test)
 {
     struct iperf_stream *sp;
 
+    /* Cancel outstanding threads */
+    int i_errno_save = i_errno;
+    SLIST_FOREACH(sp, &test->streams, streams) {
+        int rc;
+        sp->done = 1;
+        if (sp->thread_created == 1) {
+            rc = pthread_cancel(sp->thr);
+            if (rc != 0 && rc != ESRCH) {
+                i_errno = IEPTHREADCANCEL;
+                errno = rc;
+                iperf_err(test, "cleanup_server in pthread_cancel - %s", iperf_strerror(i_errno));
+            }
+            rc = pthread_join(sp->thr, NULL);
+            if (rc != 0 && rc != ESRCH) {
+                i_errno = IEPTHREADJOIN;
+                errno = rc;
+                iperf_err(test, "cleanup_server in pthread_join - %s", iperf_strerror(i_errno));
+            }
+            if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                iperf_printf(test, "Thread FD %d stopped\n", sp->socket);
+            }
+            sp->thread_created = 0;
+        }
+    }
+    i_errno = i_errno_save;
+
+    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+        iperf_printf(test, "All threads stopped\n");
+    }
+
     /* Close open streams */
     SLIST_FOREACH(sp, &test->streams, streams) {
 	if (sp->socket > -1) {
@@ -447,26 +543,30 @@ iperf_run_server(struct iperf_test *test)
     struct iperf_time diff_time;
     struct timeval* timeout;
     struct timeval used_timeout;
+    iperf_size_t last_receive_blocks;
     int flag;
     int64_t t_usecs;
     int64_t timeout_us;
     int64_t rcv_timeout_us;
 
-    if (test->logfile)
+    if (test->logfile) {
         if (iperf_open_logfile(test) < 0)
             return -2;
+    }
 
-    if (test->affinity != -1)
+    if (test->affinity != -1) {
 	if (iperf_setaffinity(test, test->affinity) != 0) {
             cleanup_server(test);
 	    return -2;
         }
+    }
 
-    if (test->json_output)
+    if (test->json_output) {
 	if (iperf_json_start(test) < 0) {
             cleanup_server(test);
 	    return -2;
         }
+    }
 
     if (test->json_output) {
 	cJSON_AddItemToObject(test->json_start, "version", cJSON_CreateString(version));
@@ -485,8 +585,9 @@ iperf_run_server(struct iperf_test *test)
     }
 
     iperf_time_now(&last_receive_time); // Initialize last time something was received
+    last_receive_blocks = 0;
 
-    test->state = IPERF_START;
+    iperf_set_test_state(test, IPERF_START);
     send_streams_accepted = 0;
     rec_streams_accepted = 0;
     rcv_timeout_us = (test->settings->rcv_timeout.secs * SEC_TO_US) + test->settings->rcv_timeout.usecs;
@@ -520,6 +621,10 @@ iperf_run_server(struct iperf_test *test)
                 used_timeout.tv_usec = timeout->tv_usec;
                 timeout_us = (timeout->tv_sec * SEC_TO_US) + timeout->tv_usec;
             }
+            /* Cap the maximum select timeout at 1 second */
+            if (timeout_us > SEC_TO_US) {
+                timeout_us = SEC_TO_US;
+            }
             if (timeout_us < 0 || timeout_us > rcv_timeout_us) {
                 used_timeout.tv_sec = test->settings->rcv_timeout.secs;
                 used_timeout.tv_usec = test->settings->rcv_timeout.usecs;
@@ -533,13 +638,18 @@ iperf_run_server(struct iperf_test *test)
             i_errno = IESELECT;
             return -1;
         } else if (result == 0) {
-            // If nothing was received during the specified time (per state)
-            // then probably something got stack either at the client, server or network,
-            // and Test should be forced to end.
+            /*
+             * If nothing was received during the specified time (per
+             * state) then probably something got stuck either at the
+             * client, server or network, and test should be forced to
+             * end.
+            */
             iperf_time_now(&now);
             t_usecs = 0;
             if (iperf_time_diff(&now, &last_receive_time, &diff_time) == 0) {
                 t_usecs = iperf_time_in_usecs(&diff_time);
+
+                /* We're in the state where we're still accepting connections */
                 if (test->state == IPERF_START) {
                     if (test->settings->idle_timeout > 0 && t_usecs >= test->settings->idle_timeout * SEC_TO_US) {
                         test->server_forced_idle_restarts_count += 1;
@@ -557,21 +667,33 @@ iperf_run_server(struct iperf_test *test)
                         return 2;
                     }
                 }
-                else if (test->mode != SENDER && t_usecs > rcv_timeout_us) {
-                    test->server_forced_no_msg_restarts_count += 1;
-                    i_errno = IENOMSG;
-                    if (iperf_get_verbose(test))
-                        iperf_err(test, "Server restart (#%d) during active test due to idle timeout for receiving data",
-                                  test->server_forced_no_msg_restarts_count);
-                    cleanup_server(test);
-                    return -1;
-                }
 
+                /*
+                 * Running a test. If we're receiving, be sure we're making
+                 * progress (sender hasn't died/crashed).
+                 */
+                else if (test->mode != SENDER && t_usecs > rcv_timeout_us) {
+                    /* Idle timeout if no new blocks received */
+                    if (test->blocks_received == last_receive_blocks) {
+                        test->server_forced_no_msg_restarts_count += 1;
+                        i_errno = IENOMSG;
+                        if (iperf_get_verbose(test))
+                            iperf_err(test, "Server restart (#%d) during active test due to idle timeout for receiving data",
+                                      test->server_forced_no_msg_restarts_count);
+                        cleanup_server(test);
+                        return -1;
+                    }
+                }
             }
         }
 
+        /* See if the test is making progress */
+        if (test->blocks_received > last_receive_blocks) {
+            last_receive_blocks = test->blocks_received;
+            last_receive_time = now;
+        }
+
 	if (result > 0) {
-            iperf_time_now(&last_receive_time);
             if (FD_ISSET(test->listener, &read_set)) {
                 if (test->state != CREATE_STREAMS) {
                     if (iperf_accept(test) < 0) {
@@ -709,23 +831,7 @@ iperf_run_server(struct iperf_test *test)
                                 return -1;
                             }
 
-                            if (sp->sender)
-                                FD_SET(s, &test->write_set);
-                            else
-                                FD_SET(s, &test->read_set);
-
                             if (s > test->max_fd) test->max_fd = s;
-
-                            /*
-                             * If the protocol isn't UDP, or even if it is but
-                             * we're the receiver, set nonblocking sockets.
-                             * We need this to allow a server receiver to
-                             * maintain interactivity with the control channel.
-                             */
-                            if (test->protocol->id != Pudp ||
-                                !sp->sender) {
-                                setnonblocking(s, 1);
-                            }
 
                             if (test->on_new_stream)
                                 test->on_new_stream(sp);
@@ -798,33 +904,38 @@ iperf_run_server(struct iperf_test *test)
 			cleanup_server(test);
                         return -1;
 		    }
+
+                    /* Create and spin up threads */
+                    pthread_attr_t attr;
+                    if (pthread_attr_init(&attr) != 0) {
+                        i_errno = IEPTHREADATTRINIT;
+                        cleanup_server(test);
+                    };
+
+                    SLIST_FOREACH(sp, &test->streams, streams) {
+                        if (pthread_create(&(sp->thr), &attr, &iperf_server_worker_run, sp) != 0) {
+                            i_errno = IEPTHREADCREATE;
+                            cleanup_server(test);
+                            return -1;
+                        }
+                        sp->thread_created = 1;
+                        if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                            iperf_printf(test, "Thread FD %d created\n", sp->socket);
+                        }
+                    }
+                    if (test->debug_level >= DEBUG_LEVEL_INFO) {
+                        iperf_printf(test, "All threads created\n");
+                    }
+                    if (pthread_attr_destroy(&attr) != 0) {
+                        i_errno = IEPTHREADATTRDESTROY;
+                        cleanup_server(test);
+                    };
+
+                    /* Reset receive-progress baseline after workers are ready */
+                    last_receive_blocks = test->blocks_received;
+                    iperf_time_now(&last_receive_time);
                 }
             }
-
-            if (test->state == TEST_RUNNING) {
-                if (test->mode == BIDIRECTIONAL) {
-                    if (iperf_recv(test, &read_set) < 0) {
-                        cleanup_server(test);
-                        return -1;
-                    }
-                    if (iperf_send(test, &write_set) < 0) {
-                        cleanup_server(test);
-                        return -1;
-                    }
-                } else if (test->mode == SENDER) {
-                    // Reverse mode. Server sends.
-                    if (iperf_send(test, &write_set) < 0) {
-			cleanup_server(test);
-                        return -1;
-		    }
-                } else {
-                    // Regular mode. Server receives.
-                    if (iperf_recv(test, &read_set) < 0) {
-			cleanup_server(test);
-                        return -1;
-		    }
-                }
-	    }
         }
 
 	if (result == 0 ||

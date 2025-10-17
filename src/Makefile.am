@@ -33,6 +33,8 @@ libiperf_la_SOURCES     = \
                         iperf_util.h \
                         iperf_time.c \
                         iperf_time.h \
+                        iperf_pthread.c \
+                        iperf_pthread.h \
 			dscp.c \
                         net.c \
                         net.h \

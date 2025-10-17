@@ -1,6 +1,270 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.19.1 2025-07-25
+-----------------------
+
+* Notable user-visible changes
+
+    * SECURITY NOTE: Thanks to Han Lee with Apple Information Security
+                     for finding and reporting several memory errors
+                     including a buffer overflow within the
+                     `--skip-rx-copy` option, and two memory errors
+                     within authentication, including a heap overflow
+                     in the plaintext password and an assert.
+                  
+    * An off-by-one heap overflow has been fixed in authentication.
+      (CVE-2025-54349, ESNET-SECADV-2025-0003)
+
+    * An assert in authentication has been removed. (CVE-2025-54350,
+      ESNET-SECADV-2025-0002)
+
+    * A buffer overflow in the `--skip-rx-copy` option for zerocopy
+      has been fixed. (CVE-2025-54351, ESNET-SECADV-2025-0001)
+
+
+iperf-3.19 2025-05-16
+---------------------
+
+* Notable user-visible changes
+
+    * iperf3 now supports the use of Multi-Path TCP (MPTCPv1) on Linux
+      with the use of the `-m` or `--mptcp` flag. (PR #1661)
+
+    * iperf3 now supports a `--cntl-ka` option to enable TCP keepalives
+      on the control connection. (#812, #835, PR #1423)
+
+    * iperf3 now supports the `MSG_TRUNC` receive option, specified by
+      the `--skip-rx-copy`. This theoretically improves the rated
+      throughput of tests at high bitrates by not delivering network
+      payload data to userspace. (#1678, PR #1717)
+
+    * A bug that caused the bitrate setting to be ignored when bursts
+      are set, has been fixed. (#1773, #1820, PR #1821, PR #1848)
+
+    * The congestion control protocol setting, if used, is now
+      properly reset between tests. (PR #1812)
+
+    * iperf3 now exits with a non-error 0 exit code if exiting via a
+      `SIGTERM`, `SIGHUP`, or `SIGINT`. (#1009, PR# 1829)
+
+    * The current behavior of iperf3 with respect to the `-n` and `-k`
+      options is now documented as correct. (#1768, #1775, #596, PR #1800)
+
+* Notable developer-visible changes
+
+    * iperf3 now supports a callback function to get the JSON output
+      strings. (#1711, PR #1798)
+
+    * iperf3 now builds correctly with gcc-15 (#1838, PR #1805)
+
+    * Various memory leaks were fixed (#1881, PR#1823, #1814, PR#1822)
+
+    * A potential segfault crash was fixed (#1807)
+
+    * Improved warning messages when reading malformed JSON messages
+      (PR #1817)
+
+    * The Github CI configuration was changed to use a more up-to-date
+      set of runners (PR #1864)
+
+iperf-3.18 2024-12-13
+---------------------
+
+* Notable user-visible changes
+
+    * SECURITY NOTE: Thanks to Leonid Krolle Bi.Zone for discovering a
+                     JSON type security vulnerability that caused a
+                     segmentation fault in the
+                     server. (CVE-2024-53580) This has now been
+                     fixed. (PR#1810)
+
+    * UDP packets per second now reports the correct number of
+      packets, by reporting NET_SOFTERROR if there's a EAGAIN/EINTR
+      errno if no data was sent (#1367/PR#1379).
+
+    * Several segmentation faults related to threading were fixed. One
+      where `pthread_cancel` was called on an improperly initialized
+      thread (#1801), another where threads were being recycled
+      (#1760/PR#1761), and another where threads were improperly
+      handling signals (#1750/PR#1752).
+
+    * A segmentation fault from calling `freeaddrinfo` with `NULL` was
+      fixed (PR#1755).
+
+    * Some JSON options were fixed, including checking the size for
+      `json_read` (PR#1709), but the size limit was removed for
+      received server output (PR#1779).
+
+    * A rcv-timeout error has been fixed. The Nread timeout was
+      hardcoded and timed out before the `--rcv-timeout` option
+      (PR#1744).
+
+    * There is no longer a limit on the omit time period
+      (#1770/PR#1774).
+
+    * Fixed an output crash under 32-bit big-endian systems (PR#1713).
+
+    * An issue was fixed where CPU utilization was unexpectedly high
+      during limited baud rate tests. The `--pacing-timer` option was
+      removed, but it is still available in the library
+      (#1741/PR#1743).
+
+    * Add SCTP information to `--json` output and fixed compile error
+      when SCTP is not supported (#1731).
+
+    * `--fq-rate` was changed from a uint to a uint64 to allow pacing above
+      32G.  Not yet tested on big-endian systems (PR#1728).
+
+* Notable developer-visible changes
+
+    * Clang compilation failure on Android were fixed (PR#1687).
+
+    * `iperf_time_add()` was optimizated to improve performance
+      (PR#1742).
+
+    * Debug messages were added when the state changes (PR#1734).
+
+    * To increase performance, the old UDP `prot_listener` is cleared
+      and removed after each test (PR#1708).
+
+    * A file descriptor leak was closed (PR#1619).
+
+iperf-3.17.1 2024-05-13
+-----------------------
+
+* Notable user-visible changes
+
+  * Version number has been corrected. (#1699)
+
+* Notable developer-visible changes
+
+  * No longer signing tags
+
+iperf-3.17 2024-05-10
+---------------------
+
+* Notable user-visible changes
+
+  * BREAKING CHANGE: iperf3's authentication features, when used with
+    OpenSSL prior to 3.2.0, contain a vulnerability to a side-channel
+    timing attack. To address this flaw, a change has been made to the
+    padding applied to encrypted strings. This change is not backwards
+    compatible with older versions of iperf3 (before 3.17). To restore
+    the older (vulnerable) behavior, and hence
+    backwards-compatibility, use the --use-pkcs1-padding flag. The
+    iperf3 team thanks Hubert Kario from RedHat for reporting this
+    issue and providing feedback on the fix. (CVE-2024-26306)(PR#1695)
+
+  * iperf3 no longer changes its current working directory in --daemon
+    mode. This results in more predictable behavior with relative
+    paths, in particular finding key and credential files for
+    authentication. (PR#1672)
+
+  * A new --json-stream option has been added to enable a streaming
+    output format, consisting of a series of JSON objects (for the
+    start of the test, each measurement interval, and the end of the
+    test) separated by newlines (#444, #923, #1098).
+
+  * UDP tests now work correctly between different endian hosts
+    (#1415).
+
+  * The --fq-rate parameter now works for --reverse tests (#1632, PR#1667).
+
+  * The statistics reporting interval is now available in the --json
+    start test object (#1663).
+
+  * A negative time test duration is now properly flagged as an error
+    (IS#1662 / PR#1666).
+
+* Notable developer-visible changes
+
+  * Fixes have been made to better (unofficially) support builds on
+    Android (#1641 / #1651) and VxWorks (#1595).
+
+  * iperf3 now builds correctly on architectures without native
+    support for 64-bit atomic types, by linking with the libatomic
+    library (#1611).
+
+iperf-3.16 2023-11-30
+---------------------
+
+* Notable user-visible changes
+
+  * Multiple test streams started with -P/--parallel will now be
+    serviced by different threads. This allows iperf3 to take
+    advantage of multiple CPU cores on modern processors, and will
+    generally result in significant throughput increases (PR #1591).
+
+  * OpenSSL 3 is now detected at build time. If OpenSSL 3 is found,
+    various older, deprecated, APIs will not be used. iperf3 will
+    continue to work with OpenSSL 1.1.1. OpenSSL is used as a part
+    of the iperf3 authentication functionality (Issue #1300, PR
+    #1589).
+    
+  * The authorized users file used by the authentication functionality
+    is now checked for accessibility much earlier during the program
+    startup, as opposed to being checked near the start of a
+    test (Issue #1583, PR #1585).
+
+* Developer-visible changes
+
+  * BREAKING CHANGE: iperf3 now requires pthreads and C atomic
+    variables to compile and run.
+
+iperf-3.15 2023-09-14
+---------------------
+
+* Notable user-visible changes
+
+  * Several bugs that could allow the iperf3 server to hang waiting
+    for input on the control connection has been fixed. ESnet thanks
+    Jorge Sancho Larraz from Canonical for reporting this issue. For
+    more information, see:
+    https://downloads.es.net/pub/iperf/esnet-secadv-2023-0002.txt.asc
+
+  * A bug that caused garbled output with UDP tests on 32-bit hosts
+    has been fixed (PR #1554, PR #1556). This bug was introduced in
+    iperf-3.14.
+
+  * A bug in counting UDP messages has been fixed (PR #1367, PR
+    #1380).
+
+iperf-3.14 2023-07-07
+---------------------
+
+* Notable user-visible changes
+
+  * A memory allocation hazard was fixed (Issue #1542/PR #1543). For
+    more information see:
+    https://downloads.es.net/pub/iperf/esnet-secadv-2023-0001.txt.asc
+
+  * JSON output was improved, such as print JSON numbers as signed (PR
+    #1539, Issue #1435), the exit code when doing JSON output was
+    fixed (PR #1523), and client_api was fixed so that it still
+    returns an error code when JSON is enabled (Issue #1405).  Also,
+    duplicate fields when using multiple streams was removed from the
+    JSON output (#1492).
+
+  * Prevent UDP packet count and operations overflow (PR #1536/Issue
+    #1534).
+
+  * Statistics are fixed when --omit is used (Issue #1489/PR #1498).
+
+* Developer-visible changes
+
+  * CI builds and tests using GitHub actions have been added (PR
+    #1519).
+
+  * A fix for Android "unable to create a new stream error" was added
+    (PR #1506).
+
+  * Support for Voice Admit DSCP code point from RFC 5865 was added
+    (PR #1490).
+
+  * A fix for preventing a crash when RSA public key path doesn't
+    exist was fixed (PR #1488/Issue #1471).
+
 iperf-3.13 2023-02-16
 ---------------------
 

@@ -1,4 +1,4 @@
-# iperf, Copyright (c) 2014-2022, The Regents of the University of
+# iperf, Copyright (c) 2014-2025, The Regents of the University of
 # California, through Lawrence Berkeley National Laboratory (subject
 # to receipt of any required approvals from the U.S. Dept. of
 # Energy).  All rights reserved.
@@ -25,8 +25,9 @@
 
 # Initialize the autoconf system for the specified tool, version and mailing list
 AC_PREREQ([2.71])
-AC_INIT([iperf],[3.13],[https://github.com/esnet/iperf],[iperf],[https://software.es.net/iperf/])
+AC_INIT([iperf],[3.19.1+],[https://github.com/esnet/iperf],[iperf],[https://software.es.net/iperf/])
 m4_include([config/ax_check_openssl.m4])
+m4_include([config/ax_pthread.m4])
 m4_include([config/iperf_config_static_bin.m4])
 AC_LANG(C)
 
@@ -48,9 +49,7 @@ AC_CANONICAL_HOST
 # Checks for tools: c compiler, ranlib (used for creating static libraries),
 # symlinks and libtool
 AC_PROG_CC
-AC_PROG_RANLIB
 AC_PROG_LN_S
-LT_INIT
 
 # Add -Wall if we are using GCC.
 if test "x$GCC" = "xyes"; then
@@ -82,6 +81,30 @@ exit 1
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
+
+AX_PTHREAD(
+[AC_DEFINE([HAVE_PTHREAD],[1],[Define if you have POSIX threads libraries and header files.])
+LIBS="$PTHREAD_LIBS $LIBS"
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
+CC="$PTHREAD_CC"
+CXX="$PTHREAD_CXX"
+])
+
+# Atomics
+AC_CHECK_HEADERS([stdatomic.h],
+    [AC_MSG_CHECKING([whether libatomic is required])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdatomic.h>]], [[atomic_uint_fast64_t i; i++;]])],
+        [AC_MSG_RESULT([no])],
+        [save_LIBS="$LIBS"
+        LIBS="$LIBS -latomic"
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdatomic.h>]], [[atomic_uint_fast64_t i; i++;]])],
+            [AC_MSG_RESULT([yes])],
+            [AC_MSG_ERROR([failed to find working configuration with atomics])]
+        )]
+    )],
+    []
+)
 
 # Check for poll.h (it's in POSIX so everyone should have it?)
 AC_CHECK_HEADERS([poll.h])
@@ -137,7 +160,7 @@ if test "x$with_openssl" = "xno"; then
     AC_MSG_WARN( [Building without OpenSSL; disabling iperf_auth functionality.] )
 else
     # Check for OPENSSL support
-    havs_ssl=false
+    have_ssl=false
     AX_CHECK_OPENSSL(
         [ AC_DEFINE([HAVE_SSL], [1], [OpenSSL Is Available])
           have_ssl=true ],
@@ -179,6 +202,18 @@ AC_COMPILE_IFELSE(
   iperf3_cv_header_tcp_user_timeout=no))
 if test "x$iperf3_cv_header_tcp_user_timeout" = "xyes"; then
     AC_DEFINE([HAVE_TCP_USER_TIMEOUT], [1], [Have TCP_USER_TIMEOUT sockopt.])
+fi
+
+# Check for TCP_KEEPIDLE sockopt (not clear where supported)
+AC_CACHE_CHECK([TCP_KEEPIDLE socket option],
+[iperf3_cv_header_tcp_keepalive],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <netinet/tcp.h>]],
+                   [[int foo = TCP_KEEPIDLE;]])],
+  iperf3_cv_header_tcp_keepalive=yes,
+  iperf3_cv_header_tcp_keepalive=no))
+if test "x$iperf3_cv_header_tcp_keepalive" = "xyes"; then
+    AC_DEFINE([HAVE_TCP_KEEPALIVE], [1], [Have TCP_KEEPIDLE sockopt.])
 fi
 
 # Check for IPv6 flowlabel support (believed to be Linux only)
@@ -314,10 +349,45 @@ if test "x$iperf3_cv_header_tcp_info_snd_wnd" = "xyes"; then
   AC_DEFINE([HAVE_TCP_INFO_SND_WND], [1], [Have tcpi_snd_wnd field in tcp_info.])
 fi
 
+
+# Check for MSG_TRUNC (mostly on Linux)
+AC_CACHE_CHECK([MSG_TRUNC recv option],
+[iperf3_cv_header_msg_trunc],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <sys/types.h>
+                     #include <sys/socket.h>
+                     #include <netinet/in.h>]],
+                   [[int foo = MSG_TRUNC;]])],
+  iperf3_cv_header_msg_trunc=yes,
+  iperf3_cv_header_msg_trunc=no))
+if test "x$iperf3_cv_header_msg_trunc" = "xyes"; then
+    AC_DEFINE([HAVE_MSG_TRUNC], [1], [Have MSG_TRUNC recv option.])
+fi
+# Check for IPPROTO_MPTCP (Linux)
+AC_CACHE_CHECK([MPTCP protocol],
+[iperf3_cv_header_ipproto_mptcp],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <netinet/in.h>]],
+		   [[int foo = IPPROTO_MPTCP;]])],
+  iperf3_cv_header_ipproto_mptcp=yes,
+  iperf3_cv_header_ipproto_mptcp=no))
+if test "x$iperf3_cv_header_ipproto_mptcp" = "xyes"; then
+    AC_DEFINE([HAVE_IPPROTO_MPTCP], [1], [Have MPTCP protocol.])
+fi
+
 # Check if we need -lrt for clock_gettime
 AC_SEARCH_LIBS(clock_gettime, [rt posix4])
 # Check for clock_gettime support
 AC_CHECK_FUNCS([clock_gettime])
+
+# Check if we need -lrt for nanosleep
+AC_SEARCH_LIBS(nanosleep, [rt posix4])
+# Check for nanosleep support
+AC_CHECK_FUNCS([nanosleep])
+# Check if we need -lrt for clock_nanosleep
+AC_SEARCH_LIBS(clock_nanosleep, [rt posix4])
+# Check for clock_nanosleep support
+AC_CHECK_FUNCS([clock_nanosleep])
 
 AC_CONFIG_FILES([Makefile src/Makefile src/version.h examples/Makefile iperf3.spec])
 AC_OUTPUT

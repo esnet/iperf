@@ -30,6 +30,9 @@ Then submit to the iperf3 issue tracker on GitHub:
 
 https://github.com/esnet/iperf/issues
 
+For reporting potential security issues, please contact the developers at
+iperf@es.net.
+
 **Note:** Issues submitted to the old iperf3 issue tracker on Google
 Code (or comments to existing issues on the Google Code issue tracker)
 will be ignored.
@@ -130,25 +133,34 @@ The developers increment the:
 Release Engineering Checklist
 -----------------------------
 
-1. Update the ``README`` and ``RELNOTES.md`` files to be accurate. Make sure
-   that the "Known Issues" section of the ``README`` file and in this document
+1. Start from a clean source tree (be sure that ``git status`` emits
+   no output). Also ensure up-to-date installs of ``autoconf`` and
+   ``automake``.
+
+2. Ensure that ``README.md`` and ``LICENSE`` have correct copyright
+   dates.
+
+3. Update the ``README.md`` and ``RELNOTES.md`` files to be accurate. Make sure
+   that the "Known Issues" section of the ``README.md`` file and in this document
    are up to date.
 
-2. Compose a release announcement.  Most of the release announcement
+4. Compose a release announcement.  Most of the release announcement
    can be written before tagging.  Usually the previous version's
    announcement can be used as a starting point.
 
-3. Preferably starting from a clean source tree (be sure that ``git
-   status`` emits no output), make the changes necessary to produce
+5. Make the changes necessary to produce
    the new version, such as bumping version numbers::
 
     vi RELNOTES.md     # update version number and release date
     vi configure.ac    # update version parameter in AC_INIT
-    vi src/iperf3.1    # update manpage revision date if needed
-    vi src/libiperf.3  # update manpage revision date if needed
+                       # (there should not be any "+" in artifacts)
+    vi src/iperf3.1    # update manpage revision date (only if needed)
+    vi src/libiperf.3  # update manpage revision date (only if needed)
     git commit -a      # commit changes to the local repository only
+                       # (commit log should mention version number)
     ./bootstrap.sh     # regenerate configure script, etc.
     git commit -a      # commit changes to the local repository only
+                       # (commit can be simply "Regen.")
 
     # Assuming that $VERSION is the version number to be released...
     ./make_release tag $VERSION # this creates a tag in the local repo
@@ -156,43 +168,60 @@ Release Engineering Checklist
 
    These steps should be done on a platform with a relatively recent
    version of autotools / libtools.  Examples are MacOS / MacPorts or
-   FreeBSD.  The versions of these tools in CentOS 6 are somewhat
+   FreeBSD.  The versions of these tools in CentOS and similar
+   distributions are somewhat
    older and probably should be avoided.
 
-   The result will be a release artifact that should be used for
-   pre-testing.
+   The result will be release artifacts that should be used for
+   pre-testing. One will be a compressed tarball
+   (e.g. ``iperf-3.17.1.tar.gz``) and the other will contain SHA256
+   checksum (e.g. ``iperf-3.17.1.tar.gz.sha256``)
 
-4. Stage the tarball (and a file containing the SHA256 hash) to the
-   download site.  Currently this is located on ``downloads.es.net``.
+6. Stage the tarball (and a file containing the SHA256 hash) to the
+   download site.  Currently this is located on ``downloads.es.net``
+   in the directory ``/var/www/html/pub/iperf/``.
 
-5. From another host, test the link in the release announcement by
+7. From another host, test the link in the release announcement by
    downloading a fresh copy of the file and verifying the SHA256
    checksum.  Checking all other links in the release announcement is
    strongly recommended as well.
 
-6. Also verify (with file(1)) that the tarball is actually a gzipped
+   The link to the tarball will be something of the form
+   ``https://downloads.es.net/pub/iperf/iperf-3.17.1.tar.gz``. If
+   composing a release announcement using a HTML-aware editor, verify
+   the link targets point to the correct artifacts.
+
+8. Also verify (with file(1)) that the tarball is actually a gzipped
    tarball.
 
-7. For extra points, actually try downloading, compiling, and
-   smoke-testing the results of the tarball on all supported
-   platforms.
+9. Try downloading, compiling, and smoke-testing the results of the
+   tarball on all supported platforms.
 
-8. Plug the SHA256 checksum into the release announcement.
+10. Verify that the version string in ``iperf3 --version`` matches the
+    version number of the artifacts.
 
-9. PGP-sign the release announcement text using ``gpg --clearsign``.
-   The signed announcement will be sent out in a subsequent emails,
-   but could also be archived.  Decoupling the signing from emailing
-   allows a signed release announcement to be resent via email or sent
-   by other, non-email means.
+11. Plug the SHA256 checksum into the release announcement.
 
-10. At this point, the release can and should be considered
+12. (optional) PGP-sign the release announcement text using ``gpg
+    --clearsign``.  The signed announcement will be sent out in a
+    subsequent emails, but could also be archived.  Decoupling the
+    signing from emailing allows a signed release announcement to be
+    resent via email or sent by other, non-email means.
+
+13. At this point, the release can and should be considered
     finalized.  To commit the release-engineering-related changes to
     GitHub and make them public, push them out thusly::
 
      git push            # Push version changes
      git push --tags     # Push the new tag to the GitHub repo
 
-11. Send the PGP-signed release announcement to the following
+14. Update GitHub Releases with the current release notes. Start from:
+    ``https://github.com/esnet/iperf/releases/new``. Remember to
+    properly select the tag from the dropdown menu and drop
+    the artifacts into the GitHub Release. Check "Set as the latest
+    release" and (optionally) "Create a discussion for this release".
+
+15. Send the release announcement to the following
     addresses.  Remember to turn off signing in the MUA, if
     applicable.  Remember to check the source address when posting to
     lists, as "closed" list will reject posting from all from
@@ -214,18 +243,34 @@ Release Engineering Checklist
     sending process by sending a copy to oneself first and attempting
     to verify the signature is highly encouraged.
 
-12. Update the iperf3 Project News section of the documentation site
+16. Announce the new release in the #iperf3 channel in ESnet Slack.
+
+17. Update the iperf3 Project News section of the documentation site
     to announce the new release (see ``docs/news.rst`` and
     ``docs/conf.py`` in the source tree) and deploy a new build of the
-    documentation to GitHub Pages.
+    documentation to GitHub Pages. Be sure to double-check version
+    numbers and copyright dates.
 
-13. If an update to the on-line manual page is needed, it can be
+18. If an update to the on-line manual page is needed, it can be
     generated with this sequence of commands (tested on CentOS 7) and
     import the result into ``invoking.rst``::
 
      TERM=
      export TERM
      nroff -Tascii -c -man src/iperf3.1 | ul | sed 's/^/   /' > iperf3.txt
+
+19. Update the version number in ``configure.ac`` to some
+    post-release number (with a "+") and regenerate::
+
+      vi configure.ac         # update version in AC_INIT, add "+"
+      git commit configure.ac # commit changes to local repository
+                              # commit log should mention
+                              # "post-release version bump"
+      ./bootstrap.sh          # regenerate configure script, etc.
+      git commit -a           # commit changes to local repository
+                              # (commit can be simply "Regen.")
+      # test
+      git push
 
 Code Authors
 ------------

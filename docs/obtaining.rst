@@ -16,7 +16,7 @@ of binary packages for various operating systems and distributions:
 * Fedora / RedHat Linux / CentOS / Rocky: `iperf3
   <https://packages.fedoraproject.org/pkgs/iperf3/iperf3/>`_ and
   `iperf3-devel
-  <https://packages.fedoraproject.org/pkgs/iperf3/iperf3-devel/`_ in Fedora
+  <https://packages.fedoraproject.org/pkgs/iperf3/iperf3-devel/>`_ in Fedora
   19 and 20 and in Fedora EPEL 5, 6, and 7.  iperf3 is included as a
   part of RedHat Enterprise Linux 7.4 and later (as well as CentOS 7.4
   and later, and all versions of Rocky Linux), and can generally be
@@ -31,6 +31,8 @@ of binary packages for various operating systems and distributions:
   locations, including `<https://files.budman.pw/>`_
   (`discussion thread
   <https://www.neowin.net/forum/topic/1234695-iperf/>`_).
+* Android:  iperf3 binaries for Android can be found in several
+  locations, including `<https://github.com/davidBar-On/android-iperf3/>`_.
 
 Source Distributions
 --------------------
@@ -72,7 +74,7 @@ GitHub using:
 
 ``git clone https://github.com/esnet/iperf.git``
 
-Primary development for iperf3 takes place on CentOS 7 Linux, FreeBSD 11,
-and macOS 10.12. At this time, these are the only officially supported
+Primary development for iperf3 takes place on Ubuntu Linux, FreeBSD,
+and macOS. At this time, these are the only officially supported
 platforms, however there have been some reports of success with
 NetBSD, OpenBSD, Windows, Solaris, Android, and iOS.

@@ -157,7 +157,8 @@ iperf_exit(struct iperf_test *test, int exit_code, const char *format, va_list a
     exit(exit_code);
 }
 
-int i_errno;
+int i_errno = 0;
+const char *errarg = NULL;
 
 char *
 iperf_strerror(int int_errno)
@@ -394,6 +395,8 @@ iperf_strerror(int int_errno)
             break;
         case IEUDPFILETRANSFER:
             snprintf(errstr, len, "cannot transfer file using UDP");
+        case IEUNITVAL:
+            snprintf(errstr, len, "invalid unit value or suffix: '%s'", errarg);
             break;
         case IERVRSONLYRCVTIMEOUT:
             snprintf(errstr, len, "client receive timeout is valid only in receiving mode");

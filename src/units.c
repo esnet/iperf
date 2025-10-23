@@ -61,6 +61,7 @@
 
 
 #include "iperf.h"
+#include "iperf_api.h"
 
 #ifdef __cplusplus
 extern    "C"
@@ -93,7 +94,11 @@ extern    "C"
 	          assert(s != NULL);
 
 	/* scan the number and any suffices */
-	          sscanf(s, "%lf%c", &n, &suffix);
+	if (sscanf(s, "%lf%c", &n, &suffix) < 1) {
+		i_errno = IEUNITVAL;
+		errarg = s;
+		return 0;
+	}
 
 	/* convert according to [Tt Gg Mm Kk] */
 	switch    (suffix)
@@ -110,7 +115,11 @@ extern    "C"
 	case 'k': case 'K':
 	    n *= KILO_UNIT;
 	    break;
+	case '\0':
+	    break;
 	default:
+	    i_errno = IEUNITVAL;
+	    errarg = s;
 	    break;
 	}
 	          return n;
@@ -132,7 +141,11 @@ extern    "C"
 	          assert(s != NULL);
 
 	/* scan the number and any suffices */
-	          sscanf(s, "%lf%c", &n, &suffix);
+	if (sscanf(s, "%lf%c", &n, &suffix) < 1) {
+		i_errno = IEUNITVAL;
+		errarg = s;
+		return 0;
+	}
 
 	/* convert according to [Tt Gg Mm Kk] */
 	switch    (suffix)
@@ -149,7 +162,11 @@ extern    "C"
 	case 'k': case 'K':
 	    n *= KILO_RATE_UNIT;
 	    break;
+	case '\0':
+	    break;
 	default:
+	    i_errno = IEUNITVAL;
+	    errarg = s;
 	    break;
 	}
 	          return n;
@@ -173,7 +190,11 @@ extern    "C"
 	          assert(s != NULL);
 
 	/* scan the number and any suffices */
-	          sscanf(s, "%lf%c", &n, &suffix);
+	if (sscanf(s, "%lf%c", &n, &suffix) < 1) {
+		i_errno = IEUNITVAL;
+		errarg = s;
+		return 0;
+	}
 
 	/* convert according to [Tt Gg Mm Kk] */
 	switch    (suffix)
@@ -190,11 +211,15 @@ extern    "C"
 	case 'k': case 'K':
 	    n *= KILO_UNIT;
 	    break;
-	default:
+	case '\0':
 	    break;
+	default:
+	    i_errno = IEUNITVAL;
+	    errarg = s;
+	    return 0;
 	}
 	          return (iperf_size_t) n;
-    }				/* end unit_atof */
+    }				/* end unit_atoi */
 
 /* -------------------------------------------------------------------
  * constants for byte_printf

@@ -402,6 +402,7 @@ void iperf_signormalexit(struct iperf_test *test, const char *format, ...) __att
 void iperf_exit(struct iperf_test *test, int exit_code, const char *format, va_list argp) __attribute__ ((noreturn));
 char *iperf_strerror(int);
 extern int i_errno;
+extern const char *errarg;
 enum {
     IENONE = 0,             // No error
     /* Parameter errors */
@@ -442,6 +443,7 @@ enum {
     IESERVERAUTHUSERS = 35,  // Cannot access authorized users file
     IECNTLKA = 36,          // Control connection Keepalive period should be larger than the full retry period (interval * count)
     IEMAXSERVERTESTDURATIONEXCEEDED = 37, // Client's duration exceeds server's maximum duration
+    IEUNITVAL = 38,         // Invalid unit value or suffix
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

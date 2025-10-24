@@ -398,10 +398,6 @@ iperf_strerror(int int_errno)
         case IEUNITVAL:
             snprintf(errstr, len, "invalid unit value or suffix: '%s'", errarg);
             break;
-        case IERVRSONLYRCVTIMEOUT:
-            snprintf(errstr, len, "client receive timeout is valid only in receiving mode");
-            perr = 1;
-            break;
 	case IEDAEMON:
 	    snprintf(errstr, len, "unable to become a daemon");
 	    perr = 1;
@@ -504,7 +500,7 @@ iperf_strerror(int int_errno)
 	    snprintf(errstr, len, "host device name (ip%%<dev>) is supported (and required) only for IPv6 link-local address");
             break;        
 	case IENOMSG:
-	    snprintf(errstr, len, "idle timeout for receiving data");
+	    snprintf(errstr, len, "idle timeout for receiving data or control messages");
             break;
         case IESETDONTFRAGMENT:
 	    snprintf(errstr, len, "unable to set IP Do-Not-Fragment flag");

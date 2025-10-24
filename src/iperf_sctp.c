@@ -209,11 +209,7 @@ iperf_sctp_listen(struct iperf_test *test)
     }
 
     if (test->bind_dev) {
-#if defined(SO_BINDTODEVICE)
-        if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE,
-                       test->bind_dev, IFNAMSIZ) < 0)
-#endif // SO_BINDTODEVICE
-        {
+        if (bind_to_device(s, res->ai_family, test->bind_dev) < 0) {
             saved_errno = errno;
             close(s);
             freeaddrinfo(res);
@@ -348,11 +344,7 @@ iperf_sctp_connect(struct iperf_test *test)
     }
 
     if (test->bind_dev) {
-#if defined(SO_BINDTODEVICE)
-        if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE,
-                       test->bind_dev, IFNAMSIZ) < 0)
-#endif // SO_BINDTODEVICE
-        {
+        if (bind_to_device(s, server_res->ai_family, test->bind_dev) < 0) {
             saved_errno = errno;
             close(s);
             freeaddrinfo(local_res);

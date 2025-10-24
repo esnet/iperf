@@ -60,6 +60,10 @@
 #include <sys/cpuset.h>
 #endif /* HAVE_CPUSET_SETAFFINITY */
 
+#if defined(HAVE_IP_BOUND_IF)
+#include <netinet/in.h>
+#endif
+
 #if defined(__CYGWIN__) || defined(_WIN32) || defined(_WIN64) || defined(__WINDOWS__)
 #define CPU_SETSIZE __CPU_SETSIZE
 #endif /* __CYGWIN__, _WIN32, _WIN64, __WINDOWS__ */
@@ -1125,9 +1129,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"bidir", no_argument, NULL, OPT_BIDIRECTIONAL},
         {"window", required_argument, NULL, 'w'},
         {"bind", required_argument, NULL, 'B'},
-#if defined(HAVE_SO_BINDTODEVICE)
+#if defined(CAN_BIND_TO_DEVICE)
         {"bind-dev", required_argument, NULL, OPT_BIND_DEV},
-#endif /* HAVE_SO_BINDTODEVICE */
+#endif /* CAN_BIND_TO_DEVICE */
         {"cport", required_argument, NULL, OPT_CLIENT_PORT},
         {"set-mss", required_argument, NULL, 'M'},
         {"no-delay", no_argument, NULL, 'N'},
@@ -1298,15 +1302,15 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		iperf_set_test_server_hostname(test, optarg);
 
                 if (iperf_parse_hostname(test, optarg, &p, &p1)) {
-#if defined(HAVE_SO_BINDTODEVICE)
+#if defined(CAN_BIND_TO_DEVICE)
                     /* Get rid of the hostname we saved earlier. */
                     free(iperf_get_test_server_hostname(test));
                     iperf_set_test_server_hostname(test, p);
                     iperf_set_test_bind_dev(test, p1);
-#else /* HAVE_SO_BINDTODEVICE */
+#else /* CAN_BIND_TO_DEVICE */
                     i_errno = IEBINDDEVNOSUPPORT;
                     return -1;
-#endif /* HAVE_SO_BINDTODEVICE */
+#endif /* CAN_BIND_TO_DEVICE */
                 }
                 break;
             case 'u':
@@ -1445,22 +1449,22 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 iperf_set_test_bind_address(test, optarg);
 
                 if (iperf_parse_hostname(test, optarg, &p, &p1)) {
-#if defined(HAVE_SO_BINDTODEVICE)
+#if defined(CAN_BIND_TO_DEVICE)
                     /* Get rid of the hostname we saved earlier. */
                     free(iperf_get_test_bind_address(test));
                     iperf_set_test_bind_address(test, p);
                     iperf_set_test_bind_dev(test, p1);
-#else /* HAVE_SO_BINDTODEVICE */
+#else /* CAN_BIND_TO_DEVICE */
                     i_errno = IEBINDDEVNOSUPPORT;
                     return -1;
-#endif /* HAVE_SO_BINDTODEVICE */
+#endif /* CAN_BIND_TO_DEVICE */
                 }
                 break;
-#if defined (HAVE_SO_BINDTODEVICE)
+#if defined(CAN_BIND_TO_DEVICE)
             case OPT_BIND_DEV:
                 iperf_set_test_bind_dev(test, optarg);
                 break;
-#endif /* HAVE_SO_BINDTODEVICE */
+#endif /* CAN_BIND_TO_DEVICE */
             case OPT_CLIENT_PORT:
 		portno = atoi(optarg);
 		if (portno < 1 || portno > 65535) {

@@ -17162,6 +17162,49 @@ printf "%s\n" "#define HAVE_SO_BINDTODEVICE 1" >>confdefs.h
 
 fi
 
+# Check for IP_BOUND_IF sockopt (believed to be macOS only)
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking IP_BOUND_IF socket option" >&5
+printf %s "checking IP_BOUND_IF socket option... " >&6; }
+if test ${iperf3_cv_header_ip_bound_if+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <netinet/in.h>
+int
+main (void)
+{
+int foo = IP_BOUND_IF;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  iperf3_cv_header_ip_bound_if=yes
+else case e in #(
+  e) iperf3_cv_header_ip_bound_if=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $iperf3_cv_header_ip_bound_if" >&5
+printf "%s\n" "$iperf3_cv_header_ip_bound_if" >&6; }
+if test "x$iperf3_cv_header_ip_bound_if" = "xyes"; then
+
+printf "%s\n" "#define HAVE_IP_BOUND_IF 1" >>confdefs.h
+
+fi
+
+if test "x$iperf3_cv_header_so_bindtodevice" = "xyes" -o "x$iperf3_cv_header_ip_bound_if" = "xyes"; then
+
+printf "%s\n" "#define CAN_BIND_TO_DEVICE 1" >>confdefs.h
+
+fi
+
+
 # Check for IP_MTU_DISCOVER (mostly on Linux)
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking IP_MTU_DISCOVER socket option" >&5
 printf %s "checking IP_MTU_DISCOVER socket option... " >&6; }

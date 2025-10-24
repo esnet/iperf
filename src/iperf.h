@@ -342,6 +342,12 @@ struct iperf_test
     int       use_pkcs1_padding;
 #endif // HAVE_SSL
 
+    /* Client capabilities (for server use) */
+    int       client_capability_server_params; /* whether the client supports getting server's parameters (and capabilities) */
+
+    /* Server capabilities (for client use) */
+    // For Future Use
+
     /* boolean variables for Options */
     int       daemon;                           /* -D option */
     int       one_off;                          /* -1 option */
@@ -365,6 +371,7 @@ struct iperf_test
     int       timestamps;			/* --timestamps */
     char     *timestamp_format;
     int       mptcp;				/* -m, --mptcp */
+    int       get_server_version;               /* --get-server-version */
 
     char     *json_output_string; /* rendered JSON output if json_output is set */
     /* Select related parameters */

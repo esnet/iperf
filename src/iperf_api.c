@@ -1289,7 +1289,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 }
 		iperf_set_test_role(test, 's');
                 break;
-            case 'c':
+            case 'c': {
                 if (test->role == 's') {
                     i_errno = IESERVCLIENT;
                     return -1;
@@ -1297,7 +1297,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		iperf_set_test_role(test, 'c');
 		iperf_set_test_server_hostname(test, optarg);
 
-                if (iperf_parse_hostname(test, optarg, &p, &p1)) {
+                char *arg = strdup(optarg);
+                if (iperf_parse_hostname(test, arg, &p, &p1)) {
 #if defined(HAVE_SO_BINDTODEVICE)
                     /* Get rid of the hostname we saved earlier. */
                     free(iperf_get_test_server_hostname(test));
@@ -1308,7 +1309,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     return -1;
 #endif /* HAVE_SO_BINDTODEVICE */
                 }
+                free(arg);
                 break;
+            }
             case 'u':
                 set_protocol(test, Pudp);
 		client_flag = 1;
@@ -1441,10 +1444,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
 
-            case 'B':
+            case 'B': {
                 iperf_set_test_bind_address(test, optarg);
 
-                if (iperf_parse_hostname(test, optarg, &p, &p1)) {
+                char *arg = strdup(optarg);
+                if (iperf_parse_hostname(test, arg, &p, &p1)) {
 #if defined(HAVE_SO_BINDTODEVICE)
                     /* Get rid of the hostname we saved earlier. */
                     free(iperf_get_test_bind_address(test));
@@ -1455,7 +1459,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     return -1;
 #endif /* HAVE_SO_BINDTODEVICE */
                 }
+                free(arg);
                 break;
+            }
 #if defined (HAVE_SO_BINDTODEVICE)
             case OPT_BIND_DEV:
                 iperf_set_test_bind_dev(test, optarg);

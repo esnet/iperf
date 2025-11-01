@@ -209,6 +209,7 @@ struct iperf_stream
     int       socket;
     int       id;
     int       sender;
+    int       affinity;            /* stream specific affinity override */
 	/* XXX: is settings just a pointer to the same struct in iperf_test? if not,
 		should it be? */
     struct iperf_settings *settings;	/* pointer to structure settings */
@@ -315,8 +316,15 @@ struct iperf_test
     int       max_server_duration;               /* maximum possible duration of test as enforced by the server (--max-server-duration flag) */
     char     *diskfile_name;			/* -F option */
     int       affinity, server_affinity;	/* -A option */
+    int      *affinity_list;
+    int       affinity_list_len;
+    int      *server_affinity_list;
+    int       server_affinity_list_len;
+    int       next_affinity_index;
+    int       next_server_affinity_index;
 #if defined(HAVE_CPUSET_SETAFFINITY)
     cpuset_t cpumask;
+    int       cpumask_valid;
 #endif /* HAVE_CPUSET_SETAFFINITY */
     char     *title;				/* -T option */
     char     *extra_data;			/* --extra-data */

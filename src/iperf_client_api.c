@@ -78,6 +78,12 @@ iperf_client_worker_run(void *s) {
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
+    if (sp->affinity != -1) {
+        if (iperf_setaffinity(test, sp->affinity) != 0) {
+            goto cleanup_and_fail;
+        }
+    }
+
     while (! (test->done) && ! (sp->done)) {
         if (sp->sender) {
             if (iperf_send_mt(sp) < 0) {
@@ -168,6 +174,16 @@ iperf_create_streams(struct iperf_test *test, int sender)
         sp = iperf_new_stream(test, s, sender);
         if (!sp)
             return -1;
+        if (test->affinity_list_len > 0) {
+            int affinity_idx;
+            if (test->affinity_list_len == 1) {
+                affinity_idx = 0;
+            } else {
+                affinity_idx = test->next_affinity_index % test->affinity_list_len;
+                test->next_affinity_index++;
+            }
+            sp->affinity = test->affinity_list[affinity_idx];
+        }
 
         /* Perform the new stream callback */
         if (test->on_new_stream)

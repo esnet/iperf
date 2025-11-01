@@ -40,6 +40,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <assert.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -1094,6 +1095,70 @@ iperf_parse_hostname(struct iperf_test *test, char *spec, char **p, char **p1) {
     }
 }
 
+static int
+parse_affinity_list(const char *spec, int **list_out, int *len_out)
+{
+    int *values = NULL;
+    int count = 0;
+    const char *cursor;
+
+    if (spec == NULL) {
+        return -1;
+    }
+
+    cursor = spec;
+    while (*cursor != '\0') {
+        char *endptr;
+        long value;
+
+        value = strtol(cursor, &endptr, 0);
+        if (endptr == cursor) {
+            free(values);
+            return -1;
+        }
+        while (*endptr && isspace((unsigned char)*endptr)) {
+            endptr++;
+        }
+        if (value < 0 || value > 1024) {
+            free(values);
+            return -1;
+        }
+
+        int *tmp = realloc(values, sizeof(int) * (count + 1));
+        if (tmp == NULL) {
+            free(values);
+            return -1;
+        }
+        values = tmp;
+        values[count++] = (int)value;
+
+        if (*endptr == '\0') {
+            cursor = endptr;
+        } else if (*endptr == ':') {
+            cursor = endptr + 1;
+            while (*cursor && isspace((unsigned char)*cursor)) {
+                cursor++;
+            }
+            if (*cursor == '\0') {
+                free(values);
+                return -1;
+            }
+        } else {
+            free(values);
+            return -1;
+        }
+    }
+
+    if (count == 0) {
+        free(values);
+        return -1;
+    }
+
+    *list_out = values;
+    *len_out = count;
+    return 0;
+}
+
 int
 iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 {
@@ -1640,21 +1705,80 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif /* HAVE_TCP_KEEPALIVE */
             case 'A':
 #if defined(HAVE_CPU_AFFINITY)
-                test->affinity = strtol(optarg, &endptr, 0);
-                if (endptr == optarg ||
-		    test->affinity < 0 || test->affinity > 1024) {
+            {
+                const char *comma = strchr(optarg, ',');
+                int had_server_spec = comma != NULL;
+                char *local_spec = NULL;
+                char *server_spec = NULL;
+                size_t local_len = comma ? (size_t)(comma - optarg) : strlen(optarg);
+                int *local_list = NULL;
+                int local_list_len = 0;
+                int parse_rc;
+
+                local_spec = malloc(local_len + 1);
+                if (local_spec == NULL) {
                     i_errno = IEAFFINITY;
                     return -1;
                 }
-		comma = strchr(optarg, ',');
-		if (comma != NULL) {
-		    test->server_affinity = atoi(comma+1);
-		    if (test->server_affinity < 0 || test->server_affinity > 1024) {
-			i_errno = IEAFFINITY;
-			return -1;
-		    }
-		    client_flag = 1;
-		}
+                memcpy(local_spec, optarg, local_len);
+                local_spec[local_len] = '\0';
+
+                if (comma != NULL) {
+                    size_t server_len = strlen(comma + 1);
+                    server_spec = malloc(server_len + 1);
+                    if (server_spec == NULL) {
+                        free(local_spec);
+                        i_errno = IEAFFINITY;
+                        return -1;
+                    }
+                    memcpy(server_spec, comma + 1, server_len + 1);
+                }
+
+                parse_rc = parse_affinity_list(local_spec, &local_list, &local_list_len);
+                free(local_spec);
+                if (parse_rc < 0) {
+                    free(server_spec);
+                    i_errno = IEAFFINITY;
+                    return -1;
+                }
+
+                if (test->affinity_list) {
+                    free(test->affinity_list);
+                }
+                test->affinity = local_list[0];
+                test->affinity_list = local_list;
+                test->affinity_list_len = local_list_len;
+                test->next_affinity_index = 0;
+
+                if (server_spec != NULL) {
+                    int *server_list = NULL;
+                    int server_list_len = 0;
+
+                    parse_rc = parse_affinity_list(server_spec, &server_list, &server_list_len);
+                    free(server_spec);
+                    if (parse_rc < 0) {
+                        i_errno = IEAFFINITY;
+                        return -1;
+                    }
+                    if (test->server_affinity_list) {
+                        free(test->server_affinity_list);
+                    }
+                    test->server_affinity = server_list[0];
+                    test->server_affinity_list = server_list;
+                    test->server_affinity_list_len = server_list_len;
+                    test->next_server_affinity_index = 0;
+                } else {
+                    if (test->server_affinity_list) {
+                        free(test->server_affinity_list);
+                        test->server_affinity_list = NULL;
+                    }
+                    test->server_affinity = -1;
+                    test->server_affinity_list_len = 0;
+                    test->next_server_affinity_index = 0;
+                }
+                if (had_server_spec)
+                    client_flag = 1;
+            }
 #else /* HAVE_CPU_AFFINITY */
                 i_errno = IEUNIMP;
                 return -1;
@@ -2419,8 +2543,33 @@ send_parameters(struct iperf_test *test)
         else if (test->protocol->id == Psctp)
             cJSON_AddTrueToObject(j, "sctp");
 	cJSON_AddNumberToObject(j, "omit", test->omit);
-	if (test->server_affinity != -1)
+	if (test->server_affinity_list_len > 1) {
+	    cJSON *affinity_array = cJSON_CreateArray();
+	    if (affinity_array == NULL) {
+		i_errno = IESENDPARAMS;
+		r = -1;
+	    } else {
+		int idx;
+		for (idx = 0; idx < test->server_affinity_list_len; ++idx) {
+		    cJSON *value = cJSON_CreateNumber(test->server_affinity_list[idx]);
+		    if (value == NULL) {
+			cJSON_Delete(affinity_array);
+			i_errno = IESENDPARAMS;
+			r = -1;
+			break;
+		    }
+		    cJSON_AddItemToArray(affinity_array, value);
+		}
+		if (r == 0)
+		    cJSON_AddItemToObject(j, "server_affinity_list", affinity_array);
+	    }
+	} else if (test->server_affinity != -1) {
 	    cJSON_AddNumberToObject(j, "server_affinity", test->server_affinity);
+	}
+	if (r < 0) {
+	    cJSON_Delete(j);
+	    return r;
+	}
 	cJSON_AddNumberToObject(j, "time", test->duration);
         cJSON_AddNumberToObject(j, "num", test->settings->bytes);
         cJSON_AddNumberToObject(j, "blockcount", test->settings->blocks);
@@ -2544,8 +2693,43 @@ get_parameters(struct iperf_test *test)
             set_protocol(test, Psctp);
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "omit", cJSON_Number)) != NULL)
 	    test->omit = j_p->valueint;
-	if ((j_p = iperf_cJSON_GetObjectItemType(j, "server_affinity", cJSON_Number)) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "server_affinity_list", cJSON_Array)) != NULL) {
+	    int list_len = cJSON_GetArraySize(j_p);
+	    if (list_len > 0) {
+		int *server_list = malloc(sizeof(int) * list_len);
+		int idx;
+		if (server_list == NULL) {
+		    cJSON_Delete(j);
+		    i_errno = IESENDPARAMS;
+		    return -1;
+		}
+		for (idx = 0; idx < list_len; ++idx) {
+		    cJSON *value = cJSON_GetArrayItem(j_p, idx);
+		    if (value == NULL || value->type != cJSON_Number) {
+			free(server_list);
+			cJSON_Delete(j);
+			i_errno = IEAFFINITY;
+			return -1;
+		    }
+		    server_list[idx] = value->valueint;
+		}
+		if (test->server_affinity_list) {
+		    free(test->server_affinity_list);
+		}
+		test->server_affinity_list = server_list;
+		test->server_affinity_list_len = list_len;
+		test->server_affinity = server_list[0];
+		test->next_server_affinity_index = 0;
+	    }
+	} else if ((j_p = iperf_cJSON_GetObjectItemType(j, "server_affinity", cJSON_Number)) != NULL) {
+	    if (test->server_affinity_list) {
+		free(test->server_affinity_list);
+		test->server_affinity_list = NULL;
+	    }
+	    test->server_affinity_list_len = 0;
+	    test->next_server_affinity_index = 0;
 	    test->server_affinity = j_p->valueint;
+	}
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "time", cJSON_Number)) != NULL)
 	    test->duration = j_p->valueint;
         test->settings->bytes = 0;
@@ -3200,9 +3384,16 @@ iperf_defaults(struct iperf_test *testp)
     testp->diskfile_name = (char*) 0;
     testp->affinity = -1;
     testp->server_affinity = -1;
+    testp->affinity_list = NULL;
+    testp->affinity_list_len = 0;
+    testp->server_affinity_list = NULL;
+    testp->server_affinity_list_len = 0;
+    testp->next_affinity_index = 0;
+    testp->next_server_affinity_index = 0;
     TAILQ_INIT(&testp->xbind_addrs);
 #if defined(HAVE_CPUSET_SETAFFINITY)
     CPU_ZERO(&testp->cpumask);
+    testp->cpumask_valid = 0;
 #endif /* HAVE_CPUSET_SETAFFINITY */
     testp->title = NULL;
     testp->extra_data = NULL;
@@ -3340,6 +3531,18 @@ iperf_free_test(struct iperf_test *test)
 	free(test->bind_address);
     if (test->bind_dev)
 	free(test->bind_dev);
+    if (test->affinity_list) {
+        free(test->affinity_list);
+        test->affinity_list = NULL;
+    }
+    if (test->server_affinity_list) {
+        free(test->server_affinity_list);
+        test->server_affinity_list = NULL;
+    }
+    test->affinity_list_len = 0;
+    test->server_affinity_list_len = 0;
+    test->next_affinity_index = 0;
+    test->next_server_affinity_index = 0;
     if (!TAILQ_EMPTY(&test->xbind_addrs)) {
         struct xbind_entry *xbe;
 
@@ -3473,6 +3676,13 @@ iperf_reset_test(struct iperf_test *test)
         SLIST_REMOVE_HEAD(&test->streams, streams);
         iperf_free_stream(sp);
     }
+    if (test->server_affinity_list) {
+        free(test->server_affinity_list);
+        test->server_affinity_list = NULL;
+    }
+    test->server_affinity_list_len = 0;
+    test->next_server_affinity_index = 0;
+    test->next_affinity_index = 0;
     if (test->omit_timer != NULL) {
 	tmr_cancel(test->omit_timer);
 	test->omit_timer = NULL;
@@ -3508,6 +3718,7 @@ iperf_reset_test(struct iperf_test *test)
     test->server_affinity = -1;
 #if defined(HAVE_CPUSET_SETAFFINITY)
     CPU_ZERO(&test->cpumask);
+    test->cpumask_valid = 0;
 #endif /* HAVE_CPUSET_SETAFFINITY */
     test->state = 0;
 
@@ -4740,6 +4951,8 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 
     memset(sp, 0, sizeof(struct iperf_stream));
 
+    sp->affinity = -1;
+
     sp->sender = sender;
     sp->test = test;
     sp->settings = test->settings;
@@ -5296,10 +5509,13 @@ iperf_setaffinity(struct iperf_test *test, int affinity)
 #elif defined(HAVE_CPUSET_SETAFFINITY)
     cpuset_t cpumask;
 
-    if(cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, -1,
-                          sizeof(cpuset_t), &test->cpumask) != 0) {
-        i_errno = IEAFFINITY;
-        return -1;
+    if (!test->cpumask_valid) {
+        if(cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, -1,
+                              sizeof(cpuset_t), &test->cpumask) != 0) {
+            i_errno = IEAFFINITY;
+            return -1;
+        }
+        test->cpumask_valid = 1;
     }
 
     CPU_ZERO(&cpumask);
@@ -5342,11 +5558,14 @@ iperf_clearaffinity(struct iperf_test *test)
     }
     return 0;
 #elif defined(HAVE_CPUSET_SETAFFINITY)
+    if (!test->cpumask_valid)
+        return 0;
     if(cpuset_setaffinity(CPU_LEVEL_WHICH,CPU_WHICH_PID, -1,
                           sizeof(cpuset_t), &test->cpumask) != 0) {
         i_errno = IEAFFINITY;
         return -1;
     }
+    test->cpumask_valid = 0;
     return 0;
 #elif defined(HAVE_SETPROCESSAFFINITYMASK)
 	HANDLE process = GetCurrentProcess();

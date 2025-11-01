@@ -91,6 +91,12 @@ iperf_server_worker_run(void *s) {
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
+    if (sp->affinity != -1) {
+        if (iperf_setaffinity(test, sp->affinity) != 0) {
+            goto cleanup_and_fail;
+        }
+    }
+
     while (! (test->done) && ! (sp->done)) {
         if (sp->sender) {
             if (iperf_send_mt(sp) < 0) {
@@ -835,6 +841,28 @@ iperf_run_server(struct iperf_test *test)
 
                             if (test->on_new_stream)
                                 test->on_new_stream(sp);
+
+                            if (test->server_affinity_list_len > 0) {
+                                int affinity_idx;
+                                if (test->server_affinity_list_len == 1) {
+                                    affinity_idx = 0;
+                                } else {
+                                    affinity_idx = test->next_server_affinity_index % test->server_affinity_list_len;
+                                    test->next_server_affinity_index++;
+                                }
+                                sp->affinity = test->server_affinity_list[affinity_idx];
+                            } else if (test->server_affinity != -1) {
+                                sp->affinity = test->server_affinity;
+                            } else if (test->affinity_list_len > 0) {
+                                int affinity_idx;
+                                if (test->affinity_list_len == 1) {
+                                    affinity_idx = 0;
+                                } else {
+                                    affinity_idx = test->next_affinity_index % test->affinity_list_len;
+                                    test->next_affinity_index++;
+                                }
+                                sp->affinity = test->affinity_list[affinity_idx];
+                            }
 
                             flag = -1;
                         }

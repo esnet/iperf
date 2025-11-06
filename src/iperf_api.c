@@ -3371,6 +3371,50 @@ protocol_free(struct protocol *proto)
 }
 
 /**************************************************************************/
+
+/* Helper function to get optimal socket buffer size based on system limits */
+static int
+get_optimal_socket_bufsize(void)
+{
+    FILE *fp;
+    int rmem_max = 0, wmem_max = 0, sys_max;
+    int optimal_size = DEFAULT_TCP_SOCKET_BUFSIZE;
+
+    /* Read system's maximum receive buffer size */
+    fp = fopen("/proc/sys/net/core/rmem_max", "r");
+    if (fp) {
+        if (fscanf(fp, "%d", &rmem_max) != 1) {
+            rmem_max = 0;
+        }
+        fclose(fp);
+    }
+
+    /* Read system's maximum send buffer size */
+    fp = fopen("/proc/sys/net/core/wmem_max", "r");
+    if (fp) {
+        if (fscanf(fp, "%d", &wmem_max) != 1) {
+            wmem_max = 0;
+        }
+        fclose(fp);
+    }
+
+    /* Use the smaller of the two maximums */
+    sys_max = (rmem_max < wmem_max && rmem_max > 0) ? rmem_max : wmem_max;
+
+    if (sys_max > 0) {
+        /* Use 50% of system maximum, but at least MIN and at most DESIRED */
+        optimal_size = sys_max / 2;
+
+        if (optimal_size < MIN_TCP_SOCKET_BUFSIZE) {
+            optimal_size = MIN_TCP_SOCKET_BUFSIZE;
+        } else if (optimal_size > DESIRED_TCP_SOCKET_BUFSIZE) {
+            optimal_size = DESIRED_TCP_SOCKET_BUFSIZE;
+        }
+    }
+
+    return optimal_size;
+}
+
 int
 iperf_defaults(struct iperf_test *testp)
 {
@@ -3414,7 +3458,7 @@ iperf_defaults(struct iperf_test *testp)
 
     testp->settings->domain = AF_UNSPEC;
     testp->settings->unit_format = 'a';
-    testp->settings->socket_bufsize = 0;    /* use autotuning */
+    testp->settings->socket_bufsize = get_optimal_socket_bufsize();    /* use optimal buffer for high-bandwidth networks */
     testp->settings->blksize = DEFAULT_TCP_BLKSIZE;
     testp->settings->rate = 0;
     testp->settings->bitrate_limit = 0;
@@ -3749,7 +3793,7 @@ iperf_reset_test(struct iperf_test *test)
     FD_ZERO(&test->write_set);
 
     test->num_streams = 1;
-    test->settings->socket_bufsize = 0;
+    test->settings->socket_bufsize = get_optimal_socket_bufsize();
     test->settings->blksize = DEFAULT_TCP_BLKSIZE;
     test->settings->rate = 0;
     test->settings->fqrate = 0;

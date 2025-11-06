@@ -272,6 +272,20 @@ iperf_tcp_listen(struct iperf_test *test)
                 return -1;
             }
         }
+#if defined(TCP_NOTSENT_LOWAT)
+        /* Set TCP_NOTSENT_LOWAT for better application pacing */
+        opt = DEFAULT_TCP_NOTSENT_LOWAT;
+        if (setsockopt(s, IPPROTO_TCP, TCP_NOTSENT_LOWAT, &opt, sizeof(opt)) < 0) {
+            if (test->debug) {
+                warning("Unable to set TCP_NOTSENT_LOWAT");
+            }
+            /* Non-fatal error, continue */
+        } else {
+            if (test->debug) {
+                printf("TCP_NOTSENT_LOWAT set to %d bytes\n", opt);
+            }
+        }
+#endif /* TCP_NOTSENT_LOWAT */
     {
 	unsigned int rate = test->settings->rate / 8;
 	if (rate > 0) {
@@ -447,6 +461,20 @@ iperf_tcp_connect(struct iperf_test *test)
             return -1;
         }
     }
+#if defined(TCP_NOTSENT_LOWAT)
+    /* Set TCP_NOTSENT_LOWAT for better application pacing */
+    opt = DEFAULT_TCP_NOTSENT_LOWAT;
+    if (setsockopt(s, IPPROTO_TCP, TCP_NOTSENT_LOWAT, &opt, sizeof(opt)) < 0) {
+        if (test->debug) {
+            warning("Unable to set TCP_NOTSENT_LOWAT");
+        }
+        /* Non-fatal error, continue */
+    } else {
+        if (test->debug) {
+            printf("TCP_NOTSENT_LOWAT set to %d bytes\n", opt);
+        }
+    }
+#endif /* TCP_NOTSENT_LOWAT */
 #if defined(HAVE_TCP_USER_TIMEOUT)
     if ((opt = test->settings->snd_timeout)) {
         if (setsockopt(s, IPPROTO_TCP, TCP_USER_TIMEOUT, &opt, sizeof(opt)) < 0) {

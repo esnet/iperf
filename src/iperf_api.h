@@ -70,6 +70,15 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define DEFAULT_NO_MSG_RCVD_TIMEOUT 120000
 #define MIN_NO_MSG_RCVD_TIMEOUT 100
 
+/* Socket buffer size settings for high-performance networks */
+#define DESIRED_TCP_SOCKET_BUFSIZE (16 * 1024 * 1024)  /* 16MB desired for high-bandwidth networks */
+#define DEFAULT_TCP_SOCKET_BUFSIZE (128 * 1024)        /* 128KB safe default */
+#define MIN_TCP_SOCKET_BUFSIZE (64 * 1024)             /* 64KB minimum */
+#define MAX_TCP_SOCKET_BUFSIZE (512 * 1024 * 1024)     /* 512MB maximum */
+
+/* TCP_NOTSENT_LOWAT setting for better application pacing */
+#define DEFAULT_TCP_NOTSENT_LOWAT (16 * 1024)          /* 16KB threshold */
+
 #define WARN_STR_LEN 128
 
 /* short option equivalents, used to support options that only have long form */

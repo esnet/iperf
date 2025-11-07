@@ -94,10 +94,10 @@ jobs:
         ./src/iperf3 --version
     - name: Create draft release
       uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          draft: True
-          prerelease: True
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        draft: True
+        prerelease: True
           tag_name: ${{ github.ref }}
           release_name: iperf-${{ github.ref }}

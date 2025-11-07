@@ -3376,6 +3376,7 @@ protocol_free(struct protocol *proto)
 static int
 get_optimal_socket_bufsize(void)
 {
+    return 0;
     FILE *fp;
     int rmem_max = 0, wmem_max = 0, sys_max;
     int optimal_size = DEFAULT_TCP_SOCKET_BUFSIZE;
@@ -3398,12 +3399,11 @@ get_optimal_socket_bufsize(void)
         fclose(fp);
     }
 
-    /* Use the smaller of the two maximums */
-    sys_max = (rmem_max < wmem_max && rmem_max > 0) ? rmem_max : wmem_max;
+    /* Use the bigger of the two maximums */
+    sys_max = (rmem_max > wmem_max && rmem_max > 0) ? rmem_max : wmem_max;
 
     if (sys_max > 0) {
-        /* Use 50% of system maximum, but at least MIN and at most DESIRED */
-        optimal_size = sys_max / 2;
+        optimal_size = sys_max;
 
         if (optimal_size < MIN_TCP_SOCKET_BUFSIZE) {
             optimal_size = MIN_TCP_SOCKET_BUFSIZE;

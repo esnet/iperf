@@ -99,5 +99,5 @@ jobs:
       with:
         draft: True
         prerelease: True
-          tag_name: ${{ github.ref }}
-          release_name: iperf-${{ github.ref }}
+        tag_name: ${{ github.ref }}
+        release_name: iperf-${{ github.ref }}

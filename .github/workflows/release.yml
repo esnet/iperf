@@ -92,7 +92,7 @@ jobs:
       run: |
         ls
         #tar -vxf iperf-${{ github.ref }}.tar
-        tar -vxf iperf-0.0.0.tar
+        tar -vxf iperf-0.0.0.tar.gz
         ./src/iperf3 --version
     - name: Create draft release
       uses: actions/create-release@v1

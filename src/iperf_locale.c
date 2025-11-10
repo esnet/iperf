@@ -108,13 +108,13 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -A, --affinity n[,m]      set CPU affinity core number to n (the core the process will use)\n"
                           "                             (optional Client only m - the Server's core number for this test)\n"
 #endif /* HAVE_CPU_AFFINITY */
-#if defined(HAVE_SO_BINDTODEVICE)
+#if defined(CAN_BIND_TO_DEVICE)
                            "  -B, --bind <host>[%%<dev>] bind to the interface associated with the address <host>\n"
                            "                            (optional <dev> equivalent to `--bind-dev <dev>`)\n"
                            "  --bind-dev <dev>          bind to the network interface with SO_BINDTODEVICE\n"
-#else /* HAVE_SO_BINDTODEVICE */
+#else /* CAN_BIND_TO_DEVICE */
                            "  -B, --bind      <host>    bind to the interface associated with the address <host>\n"
-#endif /* HAVE_SO_BINDTODEVICE */
+#endif /* CAN_BIND_TO_DEVICE */
                            "  -V, --verbose             more detailed output\n"
                            "  -J, --json                output in JSON format\n"
                            "  --json-stream             output in line-delimited JSON format\n"

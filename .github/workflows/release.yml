@@ -86,11 +86,13 @@ jobs:
         ./test_commands.sh localhost
     - name: create release tar
       run: |
-        ./make_release tar ${{ github.ref}}
+        #./make_release tar ${{ github.ref}}
+        ./make_release tar 0.0.0
     - name: Test Release Version
       run: |
         ls
-        tar -vxf iperf-${{github.ref}}.tar
+        #tar -vxf iperf-${{ github.ref }}.tar
+        tar -vxf iperf-0.0.0.tar
         ./src/iperf3 --version
     - name: Create draft release
       uses: actions/create-release@v1
@@ -99,5 +101,6 @@ jobs:
       with:
         draft: True
         prerelease: True
-        tag_name: ${{ github.ref }}
-        release_name: iperf-${{ github.ref }}
+        tag_name: 0.0.0
+        #tag_name: ${{ github.ref }}
+        #release_name: iperf-${{ github.ref }}

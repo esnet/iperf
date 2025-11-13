@@ -1,6 +1,7 @@
 name: GitHub Actions Release
 permissions:
   contents: read
+  contents: write
 on:
   push:
     branches:
@@ -85,7 +86,6 @@ jobs:
         timeout 300 src/iperf3 -s &
         ./test_commands.sh localhost
     - name: create release tar
-      run: |
         #./make_release tar ${{ github.ref}}
         ./make_release tar 0.0.0
     - name: Test Release Version
@@ -95,9 +95,15 @@ jobs:
         tar -vxf iperf-0.0.0.tar.gz
         ./src/iperf3 --version
     - name: Create draft release
-      uses: actions/create-release@v1
+      #uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ github.ref_name }}
+      run: |
+        gh release create "$tag" \
+           --repo="$GITHUB_REPOSITORY" \
+           --title="${tag}" \
+           --generate-notes
       with:
         draft: True
         prerelease: True

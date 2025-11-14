@@ -840,3 +840,20 @@ getsockdomain(int sock)
     }
     return ((struct sockaddr *) &sa)->sa_family;
 }
+
+/****************************************************************************/
+
+// Sync and close a socket
+void
+iperf_sync_close_socket(int sock)
+{
+#ifdef HAVE_SOCKET_SHUTDOWN_SHUT_WR
+    char buffer[128];
+    shutdown(sock, SHUT_WR); // Signal that we are done writing
+    while (Nread(sock, buffer, sizeof(buffer), 0) > 0); // Read until EOF
+#else // HAVE_SOCKET_SHUTDOWN_SHUT_WR
+    sleep(1); // Not the best mechanism, but should be good enough for error cases (and is simple and portable)
+#endif // HAVE_SOCKET_SHUTDOWN_SHUT_WR
+    close(sock);
+}
+

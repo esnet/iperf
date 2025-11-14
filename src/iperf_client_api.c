@@ -575,8 +575,10 @@ iperf_client_end(struct iperf_test *test)
     }
 
     /* Close control socket */
-    if (test->ctrl_sck >= 0)
-        close(test->ctrl_sck);
+    if (test->ctrl_sck >= 0) {
+        // Make sure all control messages (especially error messages) are received by the client before closing socket
+        iperf_sync_close_socket(test->ctrl_sck);
+    }
 
     return 0;
 }

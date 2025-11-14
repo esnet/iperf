@@ -157,7 +157,6 @@ iperf_accept(struct iperf_test *test)
     signed char rbuf = ACCESS_DENIED;
     socklen_t len;
     struct sockaddr_storage addr;
-    int32_t err;
 
     len = sizeof(addr);
     if ((s = accept(test->listener, (struct sockaddr *) &addr, &len)) < 0) {
@@ -231,17 +230,6 @@ iperf_accept(struct iperf_test *test)
     }
     return 0;
     error_handling:
-        /* Try to send the error code to the client*/
-        if (i_errno != IENONE && test->ctrl_sck != -1) {
-            if (iperf_set_send_state(test, SERVER_ERROR) == 0) {
-                err = htonl(i_errno);
-                if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) >= 0) {
-                    err = htonl(errno);
-                    Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp);
-                }
-            }
-        }
-        close(s);
         return ret;
 }
 
@@ -506,7 +494,8 @@ cleanup_server(struct iperf_test *test)
 
     /* Close open test sockets */
     if (test->ctrl_sck > -1) {
-	close(test->ctrl_sck);
+        // Make sure all control messages (especially error messages) are received by the client before closing socket
+        iperf_sync_close_socket(test->ctrl_sck);
         test->ctrl_sck = -1;
     }
     if (test->listener > -1) {

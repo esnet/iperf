@@ -16,8 +16,6 @@ docs/_static
 src/.deps
 src/.libs
 src/Makefile
-src/iperf_config.h
-src/version.h
 src/stamp-h1
 src/iperf3
 src/iperf3_profile

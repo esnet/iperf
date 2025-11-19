@@ -172,6 +172,7 @@ struct iperf_settings
     int       tos;                  /* type of service bit */
     int       flowlabel;            /* IPv6 flow label */
     iperf_size_t bytes;             /* number of bytes to send */
+    iperf_size_t bytes_limit;       /* server's maximum bytes that can be sent or received for a single test */
     iperf_size_t blocks;            /* number of blocks (packets) to send */
     char      unit_format;          /* -f */
     int       num_ostreams;         /* SCTP initmsg settings */

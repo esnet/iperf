@@ -1115,6 +1115,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"bitrate", required_argument, NULL, 'b'},
         {"bandwidth", required_argument, NULL, 'b'},
         {"server-bitrate-limit", required_argument, NULL, OPT_SERVER_BITRATE_LIMIT},
+        {"server-bytes-limit", required_argument, NULL, OPT_SERVER_BYTES_LIMIT},
         {"server-max-duration", required_argument, NULL, OPT_SERVER_MAX_DURATION},
         {"time", required_argument, NULL, 't'},
         {"bytes", required_argument, NULL, 'n'},
@@ -1577,6 +1578,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 }
 		server_flag = 1;
 	        break;
+            case OPT_SERVER_BYTES_LIMIT:
+                test->settings->bytes_limit = unit_atoi(optarg);
+                server_flag = 1;
+                break;
             case OPT_SERVER_MAX_DURATION:
                 test->max_server_duration = atoi(optarg);
                 if (test->max_server_duration < 0 || test->max_server_duration > MAX_TIME) {
@@ -2619,6 +2624,12 @@ get_parameters(struct iperf_test *test)
     /* Ensure that the client does not request to run longer than the server's configured max */
     if ((test->max_server_duration > 0) && (((test->duration + test->omit) > test->max_server_duration) || (test->duration == 0))) {
         i_errno = IEMAXSERVERTESTDURATIONEXCEEDED;
+        r = -1;
+    }
+
+    /* Ensure that the client does not request to send or receive more bytes than the server's configured max */
+    if (test->settings->bytes > test->settings->bytes_limit) {
+        i_errno = IEBYTESLIMITEXCEEDED;
         r = -1;
     }
 

@@ -557,6 +557,9 @@ iperf_strerror(int int_errno)
         case IEMAXSERVERTESTDURATIONEXCEEDED:
             snprintf(errstr, len, "client's requested duration exceeds the server's maximum permitted limit");
             break;
+        case IEBYTESLIMITEXCEEDED:
+            snprintf(errstr, len, "client's requested bytes exceeds the server's maximum permitted limit");
+            break;
 	default:
 	    snprintf(errstr, len, "int_errno=%d", int_errno);
 	    perr = 1;

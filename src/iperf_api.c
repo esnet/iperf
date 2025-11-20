@@ -1115,7 +1115,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"bitrate", required_argument, NULL, 'b'},
         {"bandwidth", required_argument, NULL, 'b'},
         {"server-bitrate-limit", required_argument, NULL, OPT_SERVER_BITRATE_LIMIT},
-        {"server-bytes-limit", required_argument, NULL, OPT_SERVER_BYTES_LIMIT},
+        {"server-max-bytes", required_argument, NULL, OPT_SERVER_MAX_BYTES},
         {"server-max-duration", required_argument, NULL, OPT_SERVER_MAX_DURATION},
         {"time", required_argument, NULL, 't'},
         {"bytes", required_argument, NULL, 'n'},
@@ -1578,8 +1578,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 }
 		server_flag = 1;
 	        break;
-            case OPT_SERVER_BYTES_LIMIT:
-                test->settings->bytes_limit = unit_atoi(optarg);
+            case OPT_SERVER_MAX_BYTES:
+                test->settings->bytes_max = unit_atoi(optarg);
                 server_flag = 1;
                 break;
             case OPT_SERVER_MAX_DURATION:
@@ -2628,8 +2628,8 @@ get_parameters(struct iperf_test *test)
     }
 
     /* Ensure that the client does not request to send or receive more bytes than the server's configured max */
-    if (test->settings->bytes > test->settings->bytes_limit) {
-        i_errno = IEBYTESLIMITEXCEEDED;
+    if (test->settings->bytes > test->settings->bytes_max) {
+        i_errno = IEMAXSERVERBYTESEXCEEDED;
         r = -1;
     }
 
@@ -3245,6 +3245,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->burst = 0;
     testp->settings->mss = 0;
     testp->settings->bytes = 0;
+    testp->settings->bytes_max = 0;
     testp->settings->blocks = 0;
     testp->settings->connect_timeout = -1;
     testp->settings->rcv_timeout.secs = DEFAULT_NO_MSG_RCVD_TIMEOUT / SEC_TO_mS;

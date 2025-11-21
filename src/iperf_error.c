@@ -557,6 +557,10 @@ iperf_strerror(int int_errno)
         case IEMAXSERVERTESTDURATIONEXCEEDED:
             snprintf(errstr, len, "client's requested duration exceeds the server's maximum permitted limit");
             break;
+        case IENOSERVERFULLVERSION:
+            snprintf(errstr, len, "server does not support --get-server-version option");
+            perr = 1;
+            break;
 	default:
 	    snprintf(errstr, len, "int_errno=%d", int_errno);
 	    perr = 1;

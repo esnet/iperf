@@ -16,6 +16,37 @@ Information on joining the mailing list can be found at:
 
 http://groups.google.com/group/iperf-dev
 
+Project Constituencies
+----------------------
+
+iperf3 has several different audiences.  The development priorities
+for iperf3 are based around the needs of those various types of users,
+in roughly descending priority order.
+
+1. perfSONAR: iperf3 was developed initially to serve as the bandwidth
+   tester for the perfSONAR measurement suite
+   (https://www.perfsonar.net). This is considered the primary user
+   base for iperf3 and requests from the developers of this project
+   will generally get the highest priority.
+
+2. ESnet and R&E Networking: iperf3 is often used as a standalone tool
+   for testing within ESnet (https://www.es.net/) and other R&E
+   (Research and Education) networking environments. These settings
+   are similar to those encountered in many networks using
+   perfSONAR. They often include wide-area networks (sometimes with
+   national or international scale) that have bitrates up to (and
+   sometimes exceeding) 100Gbps speeds.
+
+3. The Internet community: iperf3 has been found to be useful by the
+   Internet community at large.  Users in this community may have a
+   wide range of networking needs and environments, which might
+   include different speeds and types of networks (such as homelabs,
+   residential broadband, corporate networks), operating systems
+   (non-UNIX or embedded OSs). Catering to the desires of this
+   community can be challenging, but might be undertaken if this can
+   be done without compromising the needs of the first two
+   communities.
+
 Bug Reports
 -----------
 
@@ -31,6 +62,45 @@ iperf@es.net.
 **Note:** Issues submitted to the old iperf3 issue tracker on Google
 Code (or comments to existing issues on the Google Code issue tracker)
 will be ignored.
+
+Code Submissions
+----------------
+
+Submissions of potential code changes can be made via
+GitHub's Pull Request mechanism:
+
+https://github.com/esnet/iperf/issues
+
+The iperf3 development team is grateful for all contributions,
+particularly those that fix bugs or security issues.
+
+Please note that iperf3 is an extremely complicated program, primarily
+due to the large number of options it supports. (One of the primary
+developers has said repeatedly for years that there are "way too many
+options".) These options often interact in various ways that might not
+be initially obvious to those unfamiliar with the iperf3 code base (or
+even those who have been reading it for years), so adding new features
+has in the past caused bugs due to unforeseen interactions wtih other
+bugs. The sheer number of combinations of options makes testing
+difficult for both humans and automated testing systems.
+
+In addition the developers need to be able to maintain any code
+submissions. This can be difficult when dealing with new features
+outside the maintainers' experience.
+
+Finally every new feature comes at a cost (principally in terms of
+evaluating new code and later maintenance). The maintainers need to
+prioritize their limited time and effort to be able to support its
+main users (as detailed above, those are the perfSONAR community,
+ESnet, and R&E networking). This means that unrelated requests from
+the community might not get consideration.
+
+As of this writing (late 2025), the developers are unlikely to add any
+major new features into the iperf3 codebase unless they're known to be
+generally useful to the main audiences of this software. To those
+users who nevertheless want to add something to iperf3, please discuss
+your ideas with the iperf3 maintainers, preferably before starting
+work.
 
 Known Issues
 ------------

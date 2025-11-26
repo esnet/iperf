@@ -227,7 +227,7 @@ Release Engineering Checklist
 
 6. Stage the tarball (and a file containing the SHA256 hash) to the
    download site.  Currently this is located on ``downloads.es.net``
-   (accessed via ``downloads-mgt.es.net``)
+   (accessed via ``downloads-mgt.es.net`` from the ESnet internal network)
    in the directory ``/var/www/html/pub/iperf/``.
 
 7. From another host, test the link in the release announcement by
@@ -263,9 +263,9 @@ Release Engineering Checklist
 
 13. Update GitHub Releases with the current release notes. Start from:
     ``https://github.com/esnet/iperf/releases/new``. Remember to
-    properly select the tag from the dropdown menu and drop
-    the artifacts into the GitHub Release. Check "Set as the latest
-    release" and (optionally) "Create a discussion for this release".
+    properly select the tag from the dropdown menu. Check "Set as the
+    latest release" and (optionally) "Create a discussion for this
+    release".
 
 14. Attach the tarball and the SHA256 file to the release.
 
@@ -293,7 +293,7 @@ Release Engineering Checklist
 
 16. Announce the new release in the #iperf3 channel in ESnet Slack.
 
-17. Create a Monday Ping entry for the new release.
+17. Create and submit a Monday Ping entry for the new release.
 
 18. Update the iperf3 Project News section of the documentation site
     to announce the new release (see ``docs/news.rst`` and
@@ -301,7 +301,7 @@ Release Engineering Checklist
     numbers and copyright dates.
 
 19. If an update to the on-line manual page is needed, it can be
-    generated with this sequence of commands (tested on CentOS 7) and
+    generated with this sequence of commands and
     import the result into ``invoking.rst``::
 
      TERM=
@@ -309,7 +309,7 @@ Release Engineering Checklist
      nroff -Tascii -c -man src/iperf3.1 | ul | sed 's/^/   /' > iperf3.txt
 
 20. Commit documentation changes after viewing the rendered HTML, and
-    deplkoy a new build of the documentation to GitHub Pages.
+    deploy a new build of the documentation to GitHub Pages.
      
 21. Update the version number in ``configure.ac`` to some
     post-release number (with a "+") and regenerate::

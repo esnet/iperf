@@ -919,8 +919,28 @@ iperf_on_new_stream(struct iperf_stream *sp)
 void
 iperf_on_test_start(struct iperf_test *test)
 {
+    cJSON *json_start_data = NULL;
+
     if (test->json_output) {
-	cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d  omit: %d  duration: %d  bytes: %d  blocks: %d  reverse: %d  tos: %d  target_bitrate: %d bidir: %d fqrate: %d interval: %f", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->omit, (int64_t) test->duration, (int64_t) test->settings->bytes, (int64_t) test->settings->blocks, test->reverse?(int64_t)1:(int64_t)0, (int64_t) test->settings->tos, (int64_t) test->settings->rate, (int64_t) test->bidirectional, (uint64_t) test->settings->fqrate, test->stats_interval));
+        json_start_data = cJSON_CreateObject();
+        if (json_start_data == NULL)
+            return;
+
+        cJSON_AddStringToObject(json_start_data, "protocol", test->protocol->name);
+        cJSON_AddNumberToObject(json_start_data, "num_streams", test->num_streams);
+        cJSON_AddNumberToObject(json_start_data, "blksize", test->settings->blksize);
+        cJSON_AddNumberToObject(json_start_data, "omit", test->omit);
+        cJSON_AddNumberToObject(json_start_data, "duration", test->duration);
+        cJSON_AddNumberToObject(json_start_data, "bytes", test->settings->bytes);
+        cJSON_AddNumberToObject(json_start_data, "blocks", test->settings->blocks);
+        cJSON_AddNumberToObject(json_start_data, "reverse", test->reverse?(int64_t)1:(int64_t)0);
+        cJSON_AddNumberToObject(json_start_data, "tos", test->settings->tos);
+        cJSON_AddNumberToObject(json_start_data, "target_bitrate", test->settings->rate);
+        cJSON_AddNumberToObject(json_start_data, "bidir", test->bidirectional);
+        cJSON_AddNumberToObject(json_start_data, "fqrate", test->settings->fqrate);
+        cJSON_AddNumberToObject(json_start_data, "interval", test->stats_interval);
+
+        cJSON_AddItemToObject(test->json_start, "test_start", json_start_data);
     } else {
 	if (test->verbose) {
 	    if (test->settings->bytes)

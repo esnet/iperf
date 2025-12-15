@@ -3009,7 +3009,6 @@ JSON_read(int fd, int max_size)
 	}
     }
     else {
-        warning("Failed to read JSON data size");
         snprintf(msg_buf, sizeof(msg_buf), "Failed to read JSON data size - read returned %d; errno=%d", rc, errno);
         warning(msg_buf);
     }

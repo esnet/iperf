@@ -219,12 +219,12 @@ iperf_strerror(int int_errno)
         case IESERVERAUTHUSERS:
              snprintf(errstr, len, "cannot access authorized users file");
             break;
-	case IEBADFORMAT:
-	    snprintf(errstr, len, "bad format specifier (valid formats are in the set [kmgtKMGT])");
-	    break;
-	case IEBADPORT:
-	    snprintf(errstr, len, "port number must be between 1 and 65535 inclusive");
-	    break;
+        case IEBADFORMAT:
+            snprintf(errstr, len, "bad format specifier (valid formats are in the set [kmgtKMGT])");
+            break;
+        case IEBADPORT:
+            snprintf(errstr, len, "port number must be between 1 and 65535 inclusive");
+            break;
         case IEMSS:
             snprintf(errstr, len, "TCP MSS too large (maximum = %d bytes)", MAX_MSS);
             break;
@@ -247,13 +247,13 @@ iperf_strerror(int int_errno)
         case IEENDCONDITIONS:
             snprintf(errstr, len, "only one test end condition (-t, -n, -k) may be specified");
             break;
-	case IELOGFILE:
-	    snprintf(errstr, len, "unable to open log file");
-	    perr = 1;
-	    break;
-	case IENOSCTP:
-	    snprintf(errstr, len, "no SCTP support available");
-	    break;
+        case IELOGFILE:
+            snprintf(errstr, len, "unable to open log file");
+            perr = 1;
+            break;
+        case IENOSCTP:
+            snprintf(errstr, len, "no SCTP support available");
+            break;
         case IENEWTEST:
             snprintf(errstr, len, "unable to create a new test");
             perr = 1;
@@ -267,13 +267,13 @@ iperf_strerror(int int_errno)
             break;
         case IELISTEN:
             snprintf(errstr, len, "unable to start listener for connections");
-	    herr = 1;
+            herr = 1;
             perr = 1;
             break;
         case IECONNECT:
             snprintf(errstr, len, "unable to connect to server - server may have stopped running or use a different port, firewall issue, etc.");
             perr = 1;
-	    herr = 1;
+            herr = 1;
             break;
         case IEACCEPT:
             snprintf(errstr, len, "unable to accept connection from client");
@@ -395,6 +395,7 @@ iperf_strerror(int int_errno)
             break;
         case IEUDPFILETRANSFER:
             snprintf(errstr, len, "cannot transfer file using UDP");
+            break;
         case IEUNITVAL:
             snprintf(errstr, len, "invalid unit value or suffix: '%s'", errarg);
             break;
@@ -402,10 +403,10 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "client receive timeout is valid only in receiving mode");
             perr = 1;
             break;
-	case IEDAEMON:
-	    snprintf(errstr, len, "unable to become a daemon");
-	    perr = 1;
-	    break;
+        case IEDAEMON:
+            snprintf(errstr, len, "unable to become a daemon");
+            perr = 1;
+            break;
         case IECREATESTREAM:
             snprintf(errstr, len, "unable to create a new stream");
             herr = 1;
@@ -418,7 +419,7 @@ iperf_strerror(int int_errno)
             break;
         case IESTREAMLISTEN:
             snprintf(errstr, len, "unable to start stream listener");
-	    herr = 1;
+            herr = 1;
             perr = 1;
             break;
         case IESTREAMCONNECT:
@@ -456,14 +457,14 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "unable to set TCP_CONGESTION: "
                                   "Supplied congestion control algorithm not supported on this host");
             break;
-	case IEPIDFILE:
+        case IEPIDFILE:
             snprintf(errstr, len, "unable to write PID file");
             perr = 1;
             break;
-	case IEV6ONLY:
-	    snprintf(errstr, len, "Unable to set/reset IPV6_V6ONLY");
-	    perr = 1;
-	    break;
+        case IEV6ONLY:
+            snprintf(errstr, len, "Unable to set/reset IPV6_V6ONLY");
+            perr = 1;
+            break;
         case IESETSCTPDISABLEFRAG:
             snprintf(errstr, len, "unable to set SCTP_DISABLE_FRAGMENTS");
             perr = 1;
@@ -472,68 +473,69 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "unable to set SCTP_INIT num of SCTP streams\n");
             perr = 1;
             break;
-	case IESETPACING:
-	    snprintf(errstr, len, "unable to set socket pacing");
-	    perr = 1;
-	    break;
-	case IESETBUF2:
-	    snprintf(errstr, len, "socket buffer size not set correctly");
-	    break;
-	case IEREVERSEBIDIR:
-	    snprintf(errstr, len, "cannot be both reverse and bidirectional");
+        case IESETPACING:
+            snprintf(errstr, len, "unable to set socket pacing");
+            perr = 1;
             break;
-	case IETOTALRATE:
-	    snprintf(errstr, len, "total required bandwidth is larger than server limit");
+        case IESETBUF2:
+            snprintf(errstr, len, "socket buffer size not set correctly");
+            break;
+        case IEREVERSEBIDIR:
+            snprintf(errstr, len, "cannot be both reverse and bidirectional");
+            break;
+        case IETOTALRATE:
+            snprintf(errstr, len, "total required bandwidth is larger than server limit");
             break;
         case IETOTALINTERVAL:
             snprintf(errstr, len, "invalid time interval for calculating average data rate");
             break;
         case IESKEWTHRESHOLD:
-	    snprintf(errstr, len, "skew threshold must be a positive number");
+            snprintf(errstr, len, "skew threshold must be a positive number");
             break;
-	case IEIDLETIMEOUT:
-	    snprintf(errstr, len, "idle timeout parameter is not positive or larger than allowed limit");
+        case IEIDLETIMEOUT:
+            snprintf(errstr, len, "idle timeout parameter is not positive or larger than allowed limit");
             break;
-	case IEBINDDEV:
-	    snprintf(errstr, len, "Unable to bind-to-device (check perror, maybe permissions?)");
+        case IEBINDDEV:
+            snprintf(errstr, len, "Unable to bind-to-device (check perror, maybe permissions?)");
             break;
         case IEBINDDEVNOSUPPORT:
-	    snprintf(errstr, len, "`<ip>%%<dev>` is not supported as system does not support bind to device");
+            snprintf(errstr, len, "`<ip>%%<dev>` is not supported as system does not support bind to device");
             break;
         case IEHOSTDEV:
-	    snprintf(errstr, len, "host device name (ip%%<dev>) is supported (and required) only for IPv6 link-local address");
-            break;        
-	case IENOMSG:
-	    snprintf(errstr, len, "idle timeout for receiving data");
+            snprintf(errstr, len, "host device name (ip%%<dev>) is supported (and required) only for IPv6 link-local address");
+            break;
+        case IENOMSG:
+            snprintf(errstr, len, "idle timeout for receiving data");
             break;
         case IESETDONTFRAGMENT:
-	    snprintf(errstr, len, "unable to set IP Do-Not-Fragment flag");
+            snprintf(errstr, len, "unable to set IP Do-Not-Fragment flag");
             break;
         case IESETUSERTIMEOUT:
             snprintf(errstr, len, "unable to set TCP USER_TIMEOUT");
             perr = 1;
             break;
-	case IEPTHREADCREATE:
+        case IEPTHREADCREATE:
             snprintf(errstr, len, "unable to create thread");
             perr = 1;
             break;
-	case IEPTHREADCANCEL:
+        case IEPTHREADCANCEL:
             snprintf(errstr, len, "unable to cancel thread");
             perr = 1;
             break;
-	case IEPTHREADJOIN:
+        case IEPTHREADJOIN:
             snprintf(errstr, len, "unable to join thread");
             perr = 1;
             break;
-	case IEPTHREADATTRINIT:
+        case IEPTHREADATTRINIT:
             snprintf(errstr, len, "unable to create thread attributes");
             perr = 1;
             break;
-	case IEPTHREADSIGMASK:
-	    snprintf(errstr, len, "unable to change mask of blocked signals");
-	    break;
-	case IEPTHREADATTRDESTROY:
+        case IEPTHREADSIGMASK:
+            snprintf(errstr, len, "unable to change mask of blocked signals");
+            break;
+        case IEPTHREADATTRDESTROY:
             snprintf(errstr, len, "unable to destroy thread attributes");
+            break;
         case IECNTLKA:
             snprintf(errstr, len, "control connection Keepalive period should be larger than the full retry period (interval * count)");
             perr = 1;
@@ -557,10 +559,10 @@ iperf_strerror(int int_errno)
         case IEMAXSERVERTESTDURATIONEXCEEDED:
             snprintf(errstr, len, "client's requested duration exceeds the server's maximum permitted limit");
             break;
-	default:
-	    snprintf(errstr, len, "int_errno=%d", int_errno);
-	    perr = 1;
-	    break;
+	    default:
+            snprintf(errstr, len, "int_errno=%d", int_errno);
+            perr = 1;
+            break;
     }
 
     /* Append the result of strerror() or gai_strerror() if appropriate */

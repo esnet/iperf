@@ -50,7 +50,7 @@ Building iperf3
 
 ### Prerequisites: ###
 
-None.
+Ensure all physical connections are secure. iperf3 tests require a stable and reliable physical link between the server and client. Loose or partial connections between iperf server and client can cause test failures or inconsistent results. High-speed Ethernet communication relies on precise impedance matching across the cable and connectors. When a connector is not fully seated, the electrical path is disrupted, leading to Impedance mismatch, Increased bit errors, Link flapping or negotiation failures.
 
 ### Building ###
 

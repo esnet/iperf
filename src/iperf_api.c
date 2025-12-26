@@ -1109,6 +1109,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"json-stream", no_argument, NULL, OPT_JSON_STREAM},
         {"json-stream-full-output", no_argument, NULL, OPT_JSON_STREAM_FULL_OUTPUT},
         {"version", no_argument, NULL, 'v'},
+        {"get-server-version", no_argument, NULL, OPT_GET_SERVER_VERSION},
         {"server", no_argument, NULL, 's'},
         {"client", required_argument, NULL, 'c'},
         {"udp", no_argument, NULL, 'u'},
@@ -1282,6 +1283,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 printf("%s (cJSON %s)\n%s\n%s\n", version, cJSON_Version(), get_system_info(),
 		       get_optional_features());
                 exit(0);
+            case OPT_GET_SERVER_VERSION:
+                test->get_server_version = 1;
+                client_flag = 1;
+                break;
             case 's':
                 if (test->role == 'c') {
                     i_errno = IESERVCLIENT;
@@ -2002,13 +2007,24 @@ void iperf_close_logfile(struct iperf_test *test)
 }
 
 int
+iperf_send_state(struct iperf_test *test, signed char state)
+{
+    if (test->ctrl_sck >= 0) {
+        if (Nwrite(test->ctrl_sck, (char*) &state, sizeof(state), Ptcp) < 0) {
+	    i_errno = IESENDMESSAGE;
+	    return -1;
+        }
+    }
+    return 0;
+}
+
+int
 iperf_set_send_state(struct iperf_test *test, signed char state)
 {
     if (test->ctrl_sck >= 0) {
         iperf_set_test_state(test, state);
-        if (Nwrite(test->ctrl_sck, (char*) &state, sizeof(state), Ptcp) < 0) {
-	    i_errno = IESENDMESSAGE;
-	    return -1;
+        if (iperf_send_state(test, state) < 0) {
+            return -1;
         }
     }
     return 0;
@@ -2489,6 +2505,9 @@ send_parameters(struct iperf_test *test)
 #endif // HAVE_SSL
 	if (test->settings->skip_rx_copy)
 	    cJSON_AddNumberToObject(j, "skip_rx_copy", test->settings->skip_rx_copy);
+	if (test->get_server_version)
+	    cJSON_AddNumberToObject(j, "get_server_version", test->get_server_version);
+	cJSON_AddNumberToObject(j, "cap_server_params", 1); // Client capability - can receive parameters from the server
 	cJSON_AddStringToObject(j, "client_version", IPERF_VERSION);
 
 	if (test->debug) {
@@ -2608,21 +2627,116 @@ get_parameters(struct iperf_test *test)
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "authtoken", cJSON_String)) != NULL)
         test->settings->authtoken = strdup(j_p->valuestring);
 #endif //HAVE_SSL
-	if ((j_p = cJSON_GetObjectItem(j, "skip_rx_copy")) != NULL)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "skip_rx_copy", cJSON_Number)) != NULL)
 	    test->settings->skip_rx_copy = j_p->valueint;
-	if (test->mode && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "cap_server_params", cJSON_Number)) != NULL)
+	    test->client_capability_server_params = j_p->valueint;
+        if ((j_p = iperf_cJSON_GetObjectItemType(j, "get_server_version", cJSON_Number)) != NULL)
+	    test->get_server_version = j_p->valueint;
+        if (test->mode && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
 	    test->sender_has_retransmits = 1;
 	if (test->settings->rate)
 	    cJSON_AddNumberToObject(test->json_start, "target_bitrate", test->settings->rate);
+
+        if ((j_p = iperf_cJSON_GetObjectItemType(j, "client_version", cJSON_String)) != NULL) {
+            cJSON_AddStringToObject(test->json_start, "client_version", j_p->valuestring);
+            if (test->verbose)
+                iperf_printf(test, "Client Version: %s\n", j_p->valuestring);
+        }
+
+        cJSON_Delete(j);
+
+        /* Ensure that the client does not request to run longer than the server's configured max */
+        if ((test->max_server_duration > 0) && (((test->duration + test->omit) > test->max_server_duration) || (test->duration == 0))) {
+            i_errno = IEMAXSERVERTESTDURATIONEXCEEDED;
+            r = -1;
+        }
+
+    }
+    return r;
+}
+
+/*************************************************************/
+
+int
+iperf_send_server_params(struct iperf_test *test)
+{
+    int r = 0;
+    cJSON *j;
+    char msg_buf[512];
+
+    j = cJSON_CreateObject();
+    if (j == NULL) {
+	i_errno = IESENDPARAMS;
+	r = -1;
+    } else {
+	cJSON_AddStringToObject(j, "server_version", IPERF_VERSION);
+        if (test->settings->bitrate_limit)
+	    cJSON_AddNumberToObject(j, "bitrate_limit", test->settings->bitrate_limit);
+        if (test->get_server_version) {
+            snprintf(msg_buf, sizeof(msg_buf), "%s (cJSON %s)\n%s\n%s", version, cJSON_Version(), get_system_info(),
+		       get_optional_features());
+            cJSON_AddStringToObject(j, "server_full_version", msg_buf);
+        }
+
+	if (test->debug) {
+	    char *str = cJSON_Print(j);
+	    printf("send_server_parameters:\n%s\n", str);
+	    cJSON_free(str);
+	}
+
+	if (JSON_write(test->ctrl_sck, j) < 0) {
+	    i_errno = IESENDPARAMS;
+	    r = -1;
+	}
 	cJSON_Delete(j);
+    }
 
-    /* Ensure that the client does not request to run longer than the server's configured max */
-    if ((test->max_server_duration > 0) && (((test->duration + test->omit) > test->max_server_duration) || (test->duration == 0))) {
-        i_errno = IEMAXSERVERTESTDURATIONEXCEEDED;
+    return r;
+}
+
+/*************************************************************/
+
+int
+iperf_get_server_params(struct iperf_test *test)
+{
+    int r = 0;
+    cJSON *j;
+    cJSON *j_p;
+
+    j = JSON_read(test->ctrl_sck, MAX_PARAMS_JSON_STRING);
+    if (j == NULL) {
+	i_errno = IERECVPARAMS;
         r = -1;
+    } else {
+	if (test->debug) {
+            char *str;
+            str = cJSON_Print(j);
+            printf("get_parameters:\n%s\n", str );
+            cJSON_free(str);
+	}
+
+        if ((j_p = iperf_cJSON_GetObjectItemType(j, "server_version", cJSON_String)) != NULL) {
+            cJSON_AddStringToObject(test->json_start, "server_version", j_p->valuestring);
+            if (test->verbose)
+                iperf_printf(test, "Server Version: %s\n", j_p->valuestring);
+        }
+        if ((j_p = iperf_cJSON_GetObjectItemType(j, "bitrate_limit", cJSON_Number)) != NULL)
+	    test->settings->bitrate_limit = j_p->valueint;
+        if (test->get_server_version) {
+	    if ((j_p = iperf_cJSON_GetObjectItemType(j, "server_full_version", cJSON_String)) != NULL) {
+	        printf("Server Full Version: %s\n", j_p->valuestring);
+                r = 1; // Indicate that client should terminate without error
+	    } else {
+                iperf_err(test, "Server does not support --get-server-version option");
+                i_errno = IENOSERVERFULLVERSION;
+                r = -1;
+            }
+        }
+
+	cJSON_Delete(j);
     }
 
-    }
     return r;
 }
 
@@ -3500,6 +3614,7 @@ iperf_reset_test(struct iperf_test *test)
     test->remote_congestion_used = NULL;
     test->role = 's';
     test->mode = RECEIVER;
+    test->client_capability_server_params = 0;
     test->sender_has_retransmits = 0;
     set_protocol(test, Ptcp);
     test->omit = OMIT;

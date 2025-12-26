@@ -106,6 +106,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define OPT_SKIP_RX_COPY 32
 #define OPT_JSON_STREAM_FULL_OUTPUT 33
 #define OPT_SERVER_MAX_DURATION 34
+#define OPT_GET_SERVER_VERSION 35
 
 /* states */
 #define TEST_START 1
@@ -124,6 +125,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define DISPLAY_RESULTS 14
 #define IPERF_START 15
 #define IPERF_DONE 16
+#define SERVER_PARAM_EXCHANGE 17
 #define ACCESS_DENIED (-1)
 #define SERVER_ERROR (-2)
 
@@ -246,6 +248,12 @@ void	iperf_set_test_connect_timeout(struct iperf_test *ipt, int ct);
 int      iperf_exchange_parameters(struct iperf_test * test);
 
 /**
+ * send/get_server_params - Send (server) and receive (client) Server parameters
+ *
+ */
+int      iperf_send_server_params(struct iperf_test * test);
+int      iperf_get_server_params(struct iperf_test * test);
+/**
  * add_to_interval_list -- adds new interval to the interval_list
  *
  */
@@ -340,6 +348,7 @@ long get_reorder(struct iperf_interval_results *irp);
 void print_tcpinfo(struct iperf_test *test);
 
 int iperf_set_send_state(struct iperf_test *test, signed char state);
+int iperf_send_state(struct iperf_test *test, signed char state);
 void iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP);
 int iperf_send_mt(struct iperf_stream *) /* __attribute__((hot)) */;
 int iperf_recv_mt(struct iperf_stream *);
@@ -504,6 +513,7 @@ enum {
     IESETCNTLKAINTERVAL = 157, // Unable to set/get socket keepalive TCP retry interval (TCP_KEEPINTVL) option
     IESETCNTLKACOUNT = 158,    // Unable to set/get socket keepalive TCP number of retries (TCP_KEEPCNT) option
     IEPTHREADSIGMASK=159,      // Unable to initialize sub thread signal mask (check perror)
+    IENOSERVERFULLVERSION=160, // The server does not support sending full version information
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

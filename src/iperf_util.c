@@ -644,6 +644,7 @@ state_to_text(signed char state)
         case TEST_RUNNING: txt = "TEST_RUNNING"; break;
         case TEST_END: txt = "TEST_END"; break;
         case PARAM_EXCHANGE: txt = "PARAM_EXCHANGE - Client to Server Parameters Exchange"; break;
+        case SERVER_PARAM_EXCHANGE: txt = "SERVER_PARAM_EXCHANGE - Server to Client Parameters Exchange (temporary state)"; break;
         case CREATE_STREAMS: txt = "CREATE_STREAMS"; break;
         case SERVER_TERMINATE: txt = "SERVER_TERMINATE"; break;
         case CLIENT_TERMINATE: txt = "CLIENT_TERMINATE"; break;

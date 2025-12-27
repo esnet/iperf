@@ -319,19 +319,11 @@ static void
 server_timer_proc(TimerClientData client_data, struct iperf_time *nowP)
 {
     struct iperf_test *test = client_data.p;
-    struct iperf_stream *sp;
 
     test->timer = NULL;
     if (test->done)
         return;
     test->done = 1;
-    /* Free streams */
-    while (!SLIST_EMPTY(&test->streams)) {
-        sp = SLIST_FIRST(&test->streams);
-        SLIST_REMOVE_HEAD(&test->streams, streams);
-        close(sp->socket);
-        iperf_free_stream(sp);
-    }
     close(test->ctrl_sck);
     test->ctrl_sck = -1;
 }

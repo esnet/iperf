@@ -24,6 +24,8 @@
  * This code is distributed under a BSD style license, see the LICENSE
  * file for complete information.
  */
+#include <sys/types.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
 #include <netdb.h>
@@ -46,6 +48,9 @@ iperf_err(struct iperf_test *test, const char *format, ...)
     time_t now;
     struct tm *ltm = NULL;
     char *ct = NULL;
+    pid_t pid;
+    char pid_str[128];
+    struct iperf_stream *sp;
 
     /* Timestamp if requested */
     if (test != NULL && test->timestamps) {
@@ -53,6 +58,23 @@ iperf_err(struct iperf_test *test, const char *format, ...)
 	ltm = localtime(&now);
 	strftime(iperf_timestrerr, sizeof(iperf_timestrerr), test->timestamp_format, ltm);
 	ct = iperf_timestrerr;
+    }
+
+    /* Server - get process id if multi-server */
+    if (test->settings->max_servers > 1) {
+        pid = getpid();
+        sprintf(pid_str, "[%d]", pid);
+    /* Client - get process id and first local port number */
+    } else if (test->role == 'c') {
+        pid = getpid();
+        if (!SLIST_EMPTY(&test->streams)) {
+            sp = SLIST_FIRST(&test->streams);
+            sprintf(pid_str, "[%d (%d)]", pid, ntohs(((struct sockaddr_in6 *) &sp->local_addr)->sin6_port));
+        } else {
+            sprintf(pid_str, "[%d(unknown port)]", pid);
+        }
+    } else {
+        pid_str[0] = '\0';
     }
 
     va_start(argp, format);
@@ -68,13 +90,13 @@ iperf_err(struct iperf_test *test, const char *format, ...)
 	    if (ct) {
 		fprintf(test->outfile, "%s", ct);
 	    }
-	    fprintf(test->outfile, "iperf3: %s\n", str);
+	    fprintf(test->outfile, "iperf3%s: %s\n", pid_str, str);
 	}
 	else {
 	    if (ct) {
 		fprintf(stderr, "%s", ct);
 	    }
-	    fprintf(stderr, "iperf3: %s\n", str);
+	    fprintf(stderr, "iperf3%s: %s\n", pid_str, str);
 	}
 
         if (test != NULL && pthread_mutex_unlock(&(test->print_mutex)) != 0) {
@@ -113,6 +135,9 @@ iperf_exit(struct iperf_test *test, int exit_code, const char *format, va_list a
     time_t now;
     struct tm *ltm = NULL;
     char *ct = NULL;
+    pid_t pid;
+    char pid_str[128];
+    struct iperf_stream *sp;
 
     /* Timestamp if requested */
     if (test != NULL && test->timestamps) {
@@ -120,6 +145,23 @@ iperf_exit(struct iperf_test *test, int exit_code, const char *format, va_list a
 	ltm = localtime(&now);
 	strftime(iperf_timestrerr, sizeof(iperf_timestrerr), iperf_get_test_timestamp_format(test), ltm);
 	ct = iperf_timestrerr;
+    }
+
+    /* Server - get process id if multi-server */
+    if (test->settings->max_servers > 1) {
+        pid = getpid();
+        sprintf(pid_str, "[%d]", pid);
+    /* Client - get process id and first local port number */
+    } else if (test->role == 'c') {
+        pid = getpid();
+        if (!SLIST_EMPTY(&test->streams)) {
+            sp = SLIST_FIRST(&test->streams);
+            sprintf(pid_str, "[%d (%d)]", pid, ntohs(((struct sockaddr_in6 *) &sp->local_addr)->sin6_port));
+        } else {
+            sprintf(pid_str, "[%d(unknown port)]", pid);
+        }
+    } else {
+        pid_str[0] = '\0';
     }
 
     vsnprintf(str, sizeof(str), format, argp);
@@ -137,13 +179,13 @@ iperf_exit(struct iperf_test *test, int exit_code, const char *format, va_list a
 	    if (ct) {
 		fprintf(test->outfile, "%s", ct);
 	    }
-	    fprintf(test->outfile, "iperf3: %s\n", str);
+	    fprintf(test->outfile, "iperf3%s: %s\n", pid_str,  str);
 	}
 	else {
 	    if (ct) {
 		fprintf(stderr, "%s", ct);
 	    }
-	    fprintf(stderr, "iperf3: %s\n", str);
+	    fprintf(stderr, "iperf3%s: %s\n", pid_str, str);
 	}
 
         if (test != NULL && pthread_mutex_unlock(&(test->print_mutex)) != 0) {
@@ -343,6 +385,21 @@ iperf_strerror(int int_errno)
         case IEACCESSDENIED:
             snprintf(errstr, len, "the server is busy running a test. try again later");
             break;
+        case IESERVERSNUMEXCEEDED:
+            snprintf(errstr, len, "all servers are busy running a test. try again later");
+            break;
+        case IEPORTNUMNOTINLIMITS:
+            snprintf(errstr, len, "internal server error when determining available port number. try again later");
+            break;
+        case IETOOMANYSERVEROPTIONS:
+            snprintf(errstr, len, "internal server error - too many options for new server");
+            break;
+        case IEFORKSERVERFAILED:
+            snprintf(errstr, len, "internal server error - failed to fork server. try again later");
+            break;
+        case IEFAILEDSTARTINGNEWSERVER:
+            snprintf(errstr, len, "internal server error - failed to start new server. try again later");
+            break;
         case IESETNODELAY:
             snprintf(errstr, len, "unable to set TCP/SCTP NODELAY");
             perr = 1;
@@ -400,6 +457,10 @@ iperf_strerror(int int_errno)
             break;
         case IERVRSONLYRCVTIMEOUT:
             snprintf(errstr, len, "client receive timeout is valid only in receiving mode");
+            perr = 1;
+            break;
+        case IEMAXSERVERS:
+            snprintf(errstr, len, "nax-servers ilegal value for maximum number of servers or connect timeout");
             perr = 1;
             break;
 	case IEDAEMON:
@@ -556,6 +617,16 @@ iperf_strerror(int int_errno)
             break;
         case IEMAXSERVERTESTDURATIONEXCEEDED:
             snprintf(errstr, len, "client's requested duration exceeds the server's maximum permitted limit");
+        case IECLIENTEXEC:
+            snprintf(errstr, len, "unable to execute new client process");
+            perr = 1;
+            break;
+        case IESERVEREXEC:
+            snprintf(errstr, len, "unable to execute new server process");
+            perr = 1;
+            break;
+        case IETESTNUMBER:
+            snprintf(errstr, len, "test number is incorrect - 0 is minimum (not for manual use)");
             break;
 	default:
 	    snprintf(errstr, len, "int_errno=%d", int_errno);

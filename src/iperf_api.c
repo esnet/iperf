@@ -115,7 +115,7 @@ usage()
 void
 usage_long(FILE *f)
 {
-    fprintf(f, usage_longstr, DEFAULT_NO_MSG_RCVD_TIMEOUT, UDP_RATE / (1024*1024), DEFAULT_PACING_TIMER, DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE);
+    fprintf(f, usage_longstr, DEFAULT_NO_MSG_RCVD_TIMEOUT, (CONTROL_PORT_MAX - CONTROL_PORT_MIN +1), DEFAULT_EXEC_SERVER_CONNECT_TIMEOUT, UDP_RATE / (1024*1024), DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE);
 }
 
 
@@ -1190,6 +1190,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"mptcp", no_argument, NULL, 'm'},
 #endif
         {"debug", optional_argument, NULL, 'd'},
+        {"max-servers", required_argument, NULL, OPT_MAX_SERVERS},
+        {"server-test-number", required_argument, NULL, OPT_SERVER_TEST_NUMBER},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
     };
@@ -1638,6 +1640,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 }
                 break;
 #endif /* HAVE_TCP_KEEPALIVE */
+	    case OPT_SERVER_TEST_NUMBER:
+		test->server_test_number = unit_atoi(optarg);
+                if (test->server_test_number < 1) {
+			i_errno = IETESTNUMBER;
+			return -1;
+		    }
+		server_flag = 1;
+		break;
             case 'A':
 #if defined(HAVE_CPU_AFFINITY)
                 test->affinity = strtol(optarg, &endptr, 0);
@@ -1774,7 +1784,26 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		if (i_errno != 0) {
 			return -1;
 		}
-		client_flag = 1;
+		break;
+	    case OPT_MAX_SERVERS:
+               slash = strchr(optarg, '/');
+               if (slash) {
+                   *slash = '\0';
+                   ++slash;
+                   test->settings->exec_server_connect_timeout = atoi(slash);
+                   if (test->settings->exec_server_connect_timeout <= 0) {
+                       i_errno = IEMAXSERVERS;
+                       return -1;
+                   }
+               }
+		test->settings->max_servers = unit_atoi(optarg);
+                if (test->settings->max_servers < 1
+                        || test->settings->max_servers > (CONTROL_PORT_MAX - CONTROL_PORT_MIN + 1)
+                    ) {
+			i_errno = IEMAXSERVERS;
+			return -1;
+		    }
+		server_flag = 1;
 		break;
 #if defined(HAVE_IPPROTO_MPTCP)
 	    case 'm':
@@ -1801,6 +1830,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         i_errno = IECLIENTONLY;
         return -1;
     }
+
+    /* Setting server test number manually is not allowed */
+    if (test->server_test_number > 0
+        && (test->settings->max_servers > 1 || !iperf_get_test_one_off(test))) {
+            i_errno = IETESTNUMBER;
+            return -1;
+        }
 
 #if defined(HAVE_SSL)
 
@@ -3235,6 +3271,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->bytes = 0;
     testp->settings->blocks = 0;
     testp->settings->connect_timeout = -1;
+    testp->settings->exec_server_connect_timeout = DEFAULT_EXEC_SERVER_CONNECT_TIMEOUT;
     testp->settings->rcv_timeout.secs = DEFAULT_NO_MSG_RCVD_TIMEOUT / SEC_TO_mS;
     testp->settings->rcv_timeout.usecs = (DEFAULT_NO_MSG_RCVD_TIMEOUT % SEC_TO_mS) * mS_TO_US;
     testp->zerocopy = 0;
@@ -3247,6 +3284,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->json_callback = NULL;
 
 
+    testp->settings->max_servers = 1;
     memset(testp->cookie, 0, COOKIE_SIZE);
 
     testp->multisend = 10;	/* arbitrary */

@@ -389,6 +389,21 @@ iperf_handle_message_client(struct iperf_test *test)
         case ACCESS_DENIED:
             i_errno = IEACCESSDENIED;
             return -1;
+        case SERVERS_NUM_EXCEEDED:
+            i_errno = IESERVERSNUMEXCEEDED;
+            return -1;
+        case PORT_NUMBER_NOT_IN_LIMITS:
+            i_errno = IEPORTNUMNOTINLIMITS;
+            return -1;
+        case TOO_MANY_OPTIONS_FOR_NEW_PROCESS:
+            i_errno = IETOOMANYSERVEROPTIONS;
+            return -1;
+        case FORK_SERVER_FAILED:
+            i_errno = IEFORKSERVERFAILED;
+            return -1;
+        case FAILED_STARTING_NEW_SERVER:
+            i_errno = IEFAILEDSTARTINGNEWSERVER;
+            return -1;
         case SERVER_ERROR:
             if (Nread(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
                 i_errno = IECTRLREAD;
@@ -402,8 +417,48 @@ iperf_handle_message_client(struct iperf_test *test)
             errno = ntohl(err);
             return -1;
         default:
-            i_errno = IEMESSAGE;
-            return -1;
+            if (test->state < CONTROL_PORT_MIN || test->state > CONTROL_PORT_MAX) { // Error
+                i_errno = IEMESSAGE;
+                return -1;
+            }
+
+            if (test->ctrl_sck) close(test->ctrl_sck);  /* Close control socket before restarting client*/
+
+            /* Client is redirected to new server - restart client with the new port*/
+            #define MAX_ARGS 100
+            char *argv[MAX_ARGS];
+            int argc = test->argc;
+
+            #define port_str_size 10
+            char port_str[port_str_size];
+            int port;
+            int i;
+
+            // Determine new port number
+            port = test->server_port + test->state - CONTROL_PORT_MIN;
+            if (port < 1 || port > 999999)   // Port number not appropriate for port_str
+                return -1;
+
+            // Copy original parameters
+            // NOTE: assigning argv[0] process path if full-path or in PATH
+            if (argc + 3 > MAX_ARGS)   // Too many arguments
+                return -1;
+            for (i = 0; i < argc; argv[i] = test->argv[i], i++);
+
+            // Add new port number
+            argv[argc++] = "-p";
+            snprintf(port_str, port_str_size, "%d", port);
+            argv[argc++] = port_str;
+
+            argv[argc] = NULL;  // Terminating list of arguments
+
+            sleep(2);   // Allow time for new server to initialize;
+
+            // Executing the new server
+            iperf_printf(test, "Restarting client with new server control port=%d\n", port);
+            execv(argv[0], argv);
+            iperf_err(test, "Restarting Client using port %d failed - %s", port, iperf_strerror(IECLIENTEXEC));
+            return -1;          // If `exec returned` it means that it failed
     }
 
     return 0;

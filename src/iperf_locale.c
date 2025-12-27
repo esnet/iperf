@@ -158,6 +158,13 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  --time-skew-threshold     time skew threshold (in seconds) between the server\n"
                            "                            and client during the authentication process\n"
                            "  --use-pkcs1-padding       use pkcs1 padding at your own risk\n"
+                           "  --connect-timeout #       timeout for receiving connection request from first client (ms)\n"
+                           "                            default is no timeout\n"
+                           "  --max-servers #[/#]       maximum number of servers allowed to run in parallel (including first)\n"
+                           "                            maximum: %d; default: 1 (request from only one client can be supported)\n"
+                           "                            optional: slash and new activated server timeout (ms) for waiting to\n"
+                           "                            connection from the client (default %d)\n"
+
 #endif //HAVE_SSL
                            "Client specific:\n"
                            "  -c, --client <host>[%%<dev>] run in client mode, connecting to <host>\n"

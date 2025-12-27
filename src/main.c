@@ -121,6 +121,10 @@ main(int argc, char **argv)
         exit(1);
     }
 
+    /* Save the command line arguments */
+    test->argv = argv;
+    test->argc = argc;
+
     if (run(test) < 0)
         iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 
@@ -183,9 +187,12 @@ run(struct iperf_test *test)
 		    }
                 }
                 iperf_reset_test(test);
-                if (iperf_get_test_one_off(test) && rc != 2) {
-		    /* Authentication failure doesn't count for 1-off test */
-		    if (rc < 0 && i_errno == IEAUTHTEST) {
+                if (iperf_get_test_one_off(test)) {
+		    /* Authentication failure doesn't count for 1-off test,
+                     * unless timeout was set for receiving first client connection,
+                     * which means this is a one time try server (i.e. exec by the main server)
+                    */
+		    if (rc < 0 && i_errno == IEAUTHTEST && test->settings->connect_timeout == 0) {
 			continue;
 		    }
 		    break;

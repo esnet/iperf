@@ -69,6 +69,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define DEFAULT_PACING_TIMER 1000
 #define DEFAULT_NO_MSG_RCVD_TIMEOUT 120000
 #define MIN_NO_MSG_RCVD_TIMEOUT 100
+#define DEFAULT_EXEC_SERVER_CONNECT_TIMEOUT 30000   /* [ms] */
 
 #define WARN_STR_LEN 128
 
@@ -106,6 +107,8 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define OPT_SKIP_RX_COPY 32
 #define OPT_JSON_STREAM_FULL_OUTPUT 33
 #define OPT_SERVER_MAX_DURATION 34
+#define OPT_MAX_SERVERS 35
+#define OPT_SERVER_TEST_NUMBER 36
 
 /* states */
 #define TEST_START 1
@@ -124,8 +127,18 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define DISPLAY_RESULTS 14
 #define IPERF_START 15
 #define IPERF_DONE 16
+
+#define CONTROL_PORT_MIN 64
+#define CONTROL_PORT_MAX 127
+
 #define ACCESS_DENIED (-1)
 #define SERVER_ERROR (-2)
+
+#define SERVERS_NUM_EXCEEDED (-11)
+#define PORT_NUMBER_NOT_IN_LIMITS (-12)
+#define TOO_MANY_OPTIONS_FOR_NEW_PROCESS (-13)
+#define FORK_SERVER_FAILED (-14)
+#define FAILED_STARTING_NEW_SERVER (-15)
 
 /* Getter routines for some fields inside iperf_test. */
 int	iperf_get_verbose( struct iperf_test* ipt );
@@ -444,6 +457,9 @@ enum {
     IECNTLKA = 36,          // Control connection Keepalive period should be larger than the full retry period (interval * count)
     IEMAXSERVERTESTDURATIONEXCEEDED = 37, // Client's duration exceeds server's maximum duration
     IEUNITVAL = 38,         // Invalid unit value or suffix
+    IEMAXSERVERS = 39,      // Maximum number of servers servers is too high
+    IETESTNUMBER = 40,      // Starting server test number - 0 is minimum (Not for manual use)
+
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)
@@ -504,6 +520,13 @@ enum {
     IESETCNTLKAINTERVAL = 157, // Unable to set/get socket keepalive TCP retry interval (TCP_KEEPINTVL) option
     IESETCNTLKACOUNT = 158,    // Unable to set/get socket keepalive TCP number of retries (TCP_KEEPCNT) option
     IEPTHREADSIGMASK=159,      // Unable to initialize sub thread signal mask (check perror)
+    IECLIENTEXEC = 160,     // unable to execute new client process
+    IESERVEREXEC = 161,     // unable to execute new server process
+    IESERVERSNUMEXCEEDED =162,       // all servers are busy running a test. try again later
+    IEPORTNUMNOTINLIMITS = 163,      // internal server error when determining available port number. try again later
+    IETOOMANYSERVEROPTIONS = 164,    //internal server error - too many options for new server"
+    IEFORKSERVERFAILED = 165,        // internal server error - failed to fork new server. try again later
+    IEFAILEDSTARTINGNEWSERVER = 166, // internal server error - failed to start new server. try again later
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

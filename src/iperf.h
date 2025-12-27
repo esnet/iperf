@@ -176,6 +176,8 @@ struct iperf_settings
     char      unit_format;          /* -f */
     int       num_ostreams;         /* SCTP initmsg settings */
     int       dont_fragment;        /* Whether to set IP flag Do-Not_Fragment */
+    int       max_servers;          /* Number of servers that can run in parallel */
+    int       exec_server_connect_timeout; /* Connection timeout server started by the main (ms) */
 #if defined(HAVE_SSL)
     char      *authtoken;           /* Authentication token */
     char      *client_username;
@@ -335,6 +337,10 @@ struct iperf_test
 
     int	      ctrl_sck_mss;			/* MSS for the control channel */
 
+    char      **argv;           /* Original main() argv */
+    int       argc;             /* Original main() argc */
+    int       *servers_list;    /* For list of active servers */
+
 #if defined(HAVE_SSL)
     char      *server_authorized_users;
     EVP_PKEY  *server_rsa_private_key;
@@ -439,6 +445,7 @@ struct iperf_test
 #define uS_TO_NS 1000
 #define mS_TO_US 1000
 #define SEC_TO_mS 1000
+#define mS_TO_US 1000
 #define SEC_TO_US 1000000LL
 #define UDP_RATE (1024 * 1024) /* 1 Mbps */
 #define OMIT 0 /* seconds */

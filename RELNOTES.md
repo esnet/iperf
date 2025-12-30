@@ -185,7 +185,7 @@ iperf-3.18 2024-12-13
 
     * Clang compilation failure on Android were fixed (PR#1687).
 
-    * `iperf_time_add()` was optimizated to improve performance
+    * `iperf_time_add()` was optimized to improve performance
       (PR#1742).
 
     * Debug messages were added when the state changes (PR#1734).
@@ -777,7 +777,7 @@ iperf 3.2 2017-06-26
     accepted for backwards compatibility (#583).
 
   * Application-level bandwidth pacing (--bitrate option) is now
-    checked every millisecond by default, instead of of every tenth of
+    checked every millisecond by default, instead of every tenth of
     a second, to provide smoother traffic behavior when using
     application pacing (#460).  The pacing can be tuned via the use of
     the --pacing-timer option (#563).
@@ -1133,7 +1133,7 @@ iperf 3.0.8 2014-09-30
 
 * User-visible changes
 
-  * Updated license and copyright verbage to confirm to LBNL Tech
+  * Updated license and copyright verbiage to confirm to LBNL Tech
     Transfer requirements.  No substantive changes; license remains
     the 3-clause BSD license.
 

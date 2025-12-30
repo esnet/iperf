@@ -168,7 +168,7 @@ iperf_sctp_listen(struct iperf_test *test)
     /*
      * If binding to the wildcard address with no explicit address
      * family specified, then force us to get an AF_INET6 socket.
-     * More details in the comments in netanounce().
+     * More details in the comments in netannounce().
      */
     if (test->settings->domain == AF_UNSPEC && !test->bind_address) {
         hints.ai_family = AF_INET6;
@@ -735,9 +735,9 @@ out:
 /* iperf_sctp_get_rtt
  *
  * Get SCTP stream RTT.
- * Assuming that iperf3 supports only one-toone SCTP associassion, and not one-to-many associassion.
+ * Assuming that iperf3 supports only one-to-one SCTP association, and not one-to-many association.
  * 
- * Main resouses used are RFC-6458, man pages for SCTP,
+ * Main resources used are RFC-6458, man pages for SCTP,
  * https://docs.oracle.com/cd/E19253-01/817-4415/sockets-199/index.html.
  * 
  */

@@ -35,7 +35,7 @@
  #
  * FreeBSD has a limited implementation that only includes the following:
  *   tcpi_snd_ssthresh, tcpi_snd_cwnd, tcpi_rcv_space, tcpi_rtt
- * Based on information on http://wiki.freebsd.org/8.0TODO, I dont think this will be
+ * Based on information on http://wiki.freebsd.org/8.0TODO, I don't think this will be
  * fixed before v8.1 at the earliest.
  *
  * OSX has no support.

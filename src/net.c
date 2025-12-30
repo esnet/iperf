@@ -118,7 +118,7 @@ timeout_connect(int s, const struct sockaddr *name, socklen_t namelen,
 	return (ret);
 }
 
-/* netdial and netannouce code comes from libtask: http://swtch.com/libtask/
+/* netdial and netannounce code comes from libtask: http://swtch.com/libtask/
  * Copyright: http://swtch.com/libtask/COPYRIGHT
 */
 

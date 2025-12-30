@@ -632,7 +632,7 @@ getline(char **buf, size_t *bufsiz, FILE *fp)
 
 #endif
 
-/* Translate numeric State to text - for debugging pupposes */
+/* Translate numeric State to text - for debugging purposes */
 char *
 state_to_text(signed char state)
 {

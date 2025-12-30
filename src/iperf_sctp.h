@@ -51,7 +51,7 @@ int iperf_sctp_recv(struct iperf_stream *);
 
 /**
  * iperf_sctp_send -- sends the client data for sctp
- * and the  Param/result message exchanges
+ * and the Param/result message exchanges
  * returns: bytes sent
  *
  */

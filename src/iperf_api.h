@@ -253,7 +253,7 @@ void      add_to_interval_list(struct iperf_stream_result * rp, struct iperf_int
 
 /**
  * connect_msg -- displays connection message
- * denoting senfer/receiver details
+ * denoting sender/receiver details
  *
  */
 void      connect_msg(struct iperf_stream * sp);
@@ -509,7 +509,7 @@ enum {
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)
     IESTREAMLISTEN = 202,   // Unable to start stream listener (check perror)
     IESTREAMCONNECT = 203,  // Unable to connect stream (check herror/perror)
-    IESTREAMACCEPT = 204,   // Unable to accepte stream connection (check perror)
+    IESTREAMACCEPT = 204,   // Unable to accept stream connection (check perror)
     IESTREAMWRITE = 205,    // Unable to write to stream socket (check perror)
     IESTREAMREAD = 206,     // Unable to read from stream (check perror)
     IESTREAMCLOSE = 207,    // Stream has closed unexpectedly

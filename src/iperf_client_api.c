@@ -437,6 +437,11 @@ iperf_connect(struct iperf_test *test)
         return -1;
     }
 
+    // Set IP TOS
+    if (iperf_set_tos(test->ctrl_sck, test->settings->ctrl_tos) < 0) {
+        return -1;
+    }
+
     // set TCP_NODELAY for lower latency on control messages
     int flag = 1;
     if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int))) {

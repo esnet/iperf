@@ -106,6 +106,8 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define OPT_SKIP_RX_COPY 32
 #define OPT_JSON_STREAM_FULL_OUTPUT 33
 #define OPT_SERVER_MAX_DURATION 34
+#define OPT_CONTROL_TOS 35
+#define OPT_CONTROL_DSCP 36
 
 /* states */
 #define TEST_START 1
@@ -318,6 +320,12 @@ void      iperf_free_stream(struct iperf_stream * sp);
  *
  */
 int       iperf_common_sockopts(struct iperf_test *, int s);
+
+/**
+ * iperf_set_tos -- set socket TOS
+ *
+ */
+int       iperf_set_tos(int s, int tos);
 
 #if defined (HAVE_TCP_KEEPALIVE)
 /**

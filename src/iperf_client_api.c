@@ -78,13 +78,16 @@ iperf_client_worker_run(void *s) {
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
-    while (! (test->done) && ! (sp->done)) {
-        if (sp->sender) {
+    if (sp->sender) {
+        // Send until TEST_END
+        while (! (test->done) && ! (sp->done)) {
             if (iperf_send_mt(sp) < 0) {
                 goto cleanup_and_fail;
             }
         }
-        else {
+    } else { // Receiver
+        // Receive until EXCHANGE_PARAMETERS to allow receiving late messages
+        while (! (test->done == 2) && ! (sp->done)) {
             if (iperf_recv_mt(sp) < 0) {
                 goto cleanup_and_fail;
             }
@@ -333,6 +336,7 @@ iperf_handle_message_client(struct iperf_test *test)
 
     switch (test->state) {
         case PARAM_EXCHANGE:
+            test->done = 2; // Stop receiving
             if (iperf_exchange_parameters(test) < 0)
                 return -1;
             if (test->on_connect)

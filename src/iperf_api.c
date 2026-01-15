@@ -3985,7 +3985,7 @@ iperf_print_intermediate(struct iperf_test *test)
                         if (test->json_output)
                             cJSON_AddItemToObject(json_interval, sum_name, iperf_json_printf("start: %f  end: %f  seconds: %f  bytes: %d  bits_per_second: %f  jitter_ms: %f  lost_packets: %d  packets: %d  lost_percent: %f  omitted: %b sender: %b", (double) start_time, (double) end_time, (double) irp->interval_duration, (int64_t) bytes, bandwidth * 8, (double) avg_jitter * 1000.0, (int64_t) lost_packets, (int64_t) total_packets, (double) lost_percent, test->omitting, stream_must_be_sender));
                         else
-                            iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, end_time, ubuf, nbuf, avg_jitter * 1000.0, lost_packets, total_packets, lost_percent, test->omitting?report_omitted:"");
+                            iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, end_time, ubuf, nbuf, avg_jitter * 1000.0, lost_packets, total_packets, lost_percent, (int)((total_packets - lost_packets) / (end_time - start_time)), test->omitting?report_omitted:"");
                     }
                 }
             }
@@ -4452,7 +4452,7 @@ iperf_print_results(struct iperf_test *test)
                      */
                     if (! (test->role == 's' && !stream_must_be_sender) ) {
                         unit_snprintf(ubuf, UNIT_LEN, (double) total_sent, 'A');
-                        iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, sender_time, ubuf, nbuf, 0.0, (int64_t) 0, sender_total_packets, 0.0, report_sender);
+                        iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, sender_time, ubuf, nbuf, 0.0, (int64_t) 0, sender_total_packets, 0.0, (int)(sender_total_packets / (sender_time - start_time)), report_sender);
                     }
                     if (! (test->role == 's' && stream_must_be_sender) ) {
 
@@ -4465,7 +4465,7 @@ iperf_print_results(struct iperf_test *test)
                             bandwidth = 0.0;
                         }
                         unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
-                        iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, receiver_time, ubuf, nbuf, avg_jitter * 1000.0, lost_packets, receiver_total_packets, lost_percent, report_receiver);
+                        iperf_printf(test, report_sum_bw_udp_format, mbuf, start_time, receiver_time, ubuf, nbuf, avg_jitter * 1000.0, lost_packets, receiver_total_packets, lost_percent, (int)((receiver_total_packets - lost_packets) / (receiver_time - start_time)), report_receiver);
                     }
                 }
             }
@@ -4747,6 +4747,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 
     memset(sp, 0, sizeof(struct iperf_stream));
 
+    sp->affinity = -1;
     sp->sender = sender;
     sp->test = test;
     sp->settings = test->settings;
@@ -5286,6 +5287,85 @@ iperf_json_finish(struct iperf_test *test)
 
 
 /* CPU affinity stuff - Linux, FreeBSD, and Windows only. */
+/* init streams cpu map
+   If the number of CPUs >= streams (-P), map each stream to a specific CPU core.
+ */
+void
+iperf_affinity_streams_init(struct iperf_test *test)
+{
+#if defined(HAVE_SCHED_SETAFFINITY)
+    if (sched_getaffinity(0, sizeof(cpu_set_t), &test->cpumask) != 0) {
+        return;
+    }
+
+    /* Assign bindings according to main process affinity */
+    int available_cpu_num = CPU_COUNT(&test->cpumask);
+    int affinity_stream_cnt = 0;
+    if (available_cpu_num > 0) {
+        affinity_stream_cnt = (test->num_streams / available_cpu_num) * available_cpu_num;
+    }
+
+    for (int i = 0; i < test->num_streams; i++) {
+        if (affinity_stream_cnt > 0) {
+            int offset = i % available_cpu_num;
+            int j = 0;
+            for (; j < CPU_SETSIZE; j++) {
+                if (CPU_ISSET(j, &test->cpumask)) {
+                    if (offset == 0) {
+                        break;
+                    }
+                    offset--;
+                }
+            }
+            test->streams_affinity[i] = j;
+            affinity_stream_cnt--;
+        } else {
+            test->streams_affinity[i] = -1;
+        }
+    }
+#else
+    for (int i = 0; i < test->num_streams; i++) {
+        test->streams_affinity[i] = -1;
+    }
+#endif
+}
+
+void
+iperf_setaffinity_streams_raw(int affinity)
+{
+#if defined(HAVE_SCHED_SETAFFINITY)
+    cpu_set_t cpu_set;
+    CPU_ZERO(&cpu_set);
+    CPU_SET(affinity, &cpu_set);
+    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0) {
+        return;
+    }
+#endif
+}
+
+void
+iperf_setaffinity_streams(struct iperf_test *test, int index)
+{
+#if defined(HAVE_SCHED_SETAFFINITY)
+    iperf_setaffinity_streams_raw(test->streams_affinity[index]);
+#endif
+}
+
+void
+iperf_setaffinity_streams_post(struct iperf_test *test)
+{
+#if defined(HAVE_SCHED_SETAFFINITY)
+    if (sched_setaffinity(0, sizeof(cpu_set_t), &test->cpumask) != 0) {
+        return;
+    }
+
+    struct iperf_stream *sp;
+    int index = 0;
+    SLIST_FOREACH(sp, &test->streams, streams){
+        sp->affinity = test->streams_affinity[index++ % test->num_streams];
+    }
+#endif
+}
 
 int
 iperf_setaffinity(struct iperf_test *test, int affinity)

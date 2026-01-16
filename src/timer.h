@@ -86,8 +86,8 @@ extern void tmr_run( struct iperf_time* nowP ) /* __attribute__((hot)) */;
 /* Reset the clock on a timer, to current time plus the original timeout. */
 extern void tmr_reset( struct iperf_time* nowP, Timer* timer );
 
-/* Deschedule a timer.  Note that non-periodic timers are automatically
-** descheduled when they run, so you don't have to call this on them.
+/* Unschedule a timer.  Note that non-periodic timers are automatically
+** unscheduled when they run, so you don't have to call this on them.
 */
 extern void tmr_cancel( Timer* timer );
 

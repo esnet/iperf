@@ -159,6 +159,13 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "                            and client during the authentication process\n"
                            "  --use-pkcs1-padding       use pkcs1 padding at your own risk\n"
 #endif //HAVE_SSL
+                           "  --control-tos N           set the IP type of service of the control connection, 0-255.\n"
+                           "                            The usual prefixes for octal and hex can be used,\n"
+                           "                            i.e. 52, 064 and 0x34 all specify the same value.\n"
+
+                           "  --control-dscp val        set the IP dscp value of the control connection, either 0-63 or symbolic.\n"
+                           "                            Numeric values can be specified in decimal,\n"
+                           "                            octal and hex (see --control-tos above).\n"
                            "Client specific:\n"
                            "  -c, --client <host>[%%<dev>] run in client mode, connecting to <host>\n"
                            "                              (option <dev> equivalent to `--bind-dev <dev>`)\n"

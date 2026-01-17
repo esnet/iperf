@@ -129,6 +129,12 @@ iperf_server_listen(struct iperf_test *test)
 	}
     }
 
+    // Set IP TOS
+    if (iperf_set_tos(test->listener, test->settings->ctrl_tos) < 0) {
+        close(test->listener);
+        return -1;
+    }
+
     if (!test->json_output) {
         if (test->server_last_run_rc != 2)
             test->server_test_number +=1;
@@ -171,6 +177,11 @@ iperf_accept(struct iperf_test *test)
         int flag = 1;
         if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int))) {
             i_errno = IESETNODELAY;
+            goto error_handling;
+        }
+
+        // Set IP TOS
+        if (iperf_set_tos(test->ctrl_sck, test->settings->ctrl_tos) < 0) {
             goto error_handling;
         }
 

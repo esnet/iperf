@@ -444,6 +444,8 @@ enum {
     IECNTLKA = 36,          // Control connection Keepalive period should be larger than the full retry period (interval * count)
     IEMAXSERVERTESTDURATIONEXCEEDED = 37, // Client's duration exceeds server's maximum duration
     IEUNITVAL = 38,         // Invalid unit value or suffix
+    IENUMPORTS = 39,        // number of ports is less than 1 or larger than server limit
+    IEPORTNUM = 40,         // requested number of parallel streams is larger than the number of ports available for the server
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

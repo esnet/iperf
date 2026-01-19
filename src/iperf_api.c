@@ -60,9 +60,9 @@
 #include <sys/cpuset.h>
 #endif /* HAVE_CPUSET_SETAFFINITY */
 
-#if defined(__CYGWIN__) || defined(_WIN32) || defined(_WIN64) || defined(__WINDOWS__)
+#if defined(WINDOWS_ANY)
 #define CPU_SETSIZE __CPU_SETSIZE
-#endif /* __CYGWIN__, _WIN32, _WIN64, __WINDOWS__ */
+#endif /* WINDOWS_ANY */
 
 #if defined(HAVE_SETPROCESSAFFINITYMASK)
 #include <Windows.h>
@@ -1220,12 +1220,30 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     while ((flag = getopt_long(argc, argv, "p:f:i:D1VJvsc:ub:t:n:k:l:P:Rw:B:M:N46S:L:ZO:F:A:T:C:dI:mhX:", longopts, NULL)) != -1) {
         switch (flag) {
             case 'p':
-		portno = atoi(optarg);
-		if (portno < 1 || portno > 65535) {
-		    i_errno = IEBADPORT;
-		    return -1;
+                slash = optarg;
+#if defined(WINDOWS_ANY)
+            	slash = strchr(optarg, '/');
+		if (slash) {
+		    *slash = '\0';
+		    ++slash;
+                    if (*slash != '\0') {
+                        test->num_server_ports = atoi(slash);
+                        if (test->num_server_ports < 1 || test->num_server_ports > MAX_STREAMS) {
+                            i_errno = IENUMPORTS;
+                            return -1;
+                        }
+                        server_flag = 1;
+                    }
 		}
-		test->server_port = portno;
+#endif /* WINDOWS_ANY */
+                if (!slash || strlen(optarg) > 0) {
+		    portno = atoi(optarg);
+		    if (portno < 1 || portno > 65535) {
+		        i_errno = IEBADPORT;
+		        return -1;
+		    }
+		    test->server_port = portno;
+                }
                 break;
             case 'f':
 		if (!optarg) {
@@ -1407,7 +1425,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'P':
                 test->num_streams = atoi(optarg);
-                if (test->num_streams > MAX_STREAMS) {
+                if (test->num_streams > MAX_STREAMS || test->num_streams < 1) {
                     i_errno = IENUMSTREAMS;
                     return -1;
                 }
@@ -2336,6 +2354,17 @@ iperf_exchange_parameters(struct iperf_test *test)
             return -1;
         }
 
+        // Check spcific conditions required for UDP under Windows as parallel streams
+        // using the same port numebr is not supported.
+#if defined(WINDOWS_ANY)
+        if (test->protocol->id == Pudp) {
+            if (test->num_server_ports < test->num_streams * (test->bidirectional ? 2 : 1)) {
+                i_errno = IEPORTNUM;
+                return -1;
+            }
+        }
+#endif /* WINDOWS_ANY */
+
 #if defined(HAVE_SSL)
         if (test_is_authorized(test) < 0){
             if (iperf_set_send_state(test, SERVER_ERROR) != 0)
@@ -3217,6 +3246,8 @@ iperf_defaults(struct iperf_test *testp)
     testp->congestion_used = NULL;
     testp->remote_congestion_used = NULL;
     testp->server_port = PORT;
+    testp->num_server_ports = 1;
+    testp->server_udp_streams_accepted = 0;
     testp->ctrl_sck = -1;
     testp->listener = -1;
     testp->prot_listener = -1;
@@ -3510,6 +3541,7 @@ iperf_reset_test(struct iperf_test *test)
     test->mode = RECEIVER;
     test->sender_has_retransmits = 0;
     set_protocol(test, Ptcp);
+    test->server_udp_streams_accepted = 0;
     test->omit = OMIT;
     test->duration = DURATION;
     test->server_affinity = -1;

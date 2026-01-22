@@ -36,7 +36,7 @@
 
 #define IPERF_QUIC_DEFAULT_MAX_IDLE_TIMEOUT 10000 // 10 seconds
 
-#define IPERF_QUIC_MAX_TX_PAYLOAD_SIZE (1024 * 60) //TBD: should be Something else? (current value is from tests)
+#define IPERF_QUIC_MAX_TX_PAYLOAD_SIZE (1024 * 60) //TBD: should be Something else? (current value is based on tests)
 
 #define IPERF_QUIC_DEFAULT_MAX_RECV_UDP_PAYLOAD_SIZE NGTCP2_DEFAULT_MAX_RECV_UDP_PAYLOAD_SIZE //TBD: is this ok?
 
@@ -63,6 +63,8 @@ int iperf_quic_init(struct iperf_test *test);
 int iperf_quic_connection_init(struct iperf_stream *sp);
 
 void iperf_quic_delete_connection(struct iperf_quic_conn_data *quic_conn_data);
+
+void iperf_quic_get_tcpinfo(struct iperf_stream *sp, struct tcp_info *tcpinfo);
 
 #endif
 

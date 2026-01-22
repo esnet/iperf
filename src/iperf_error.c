@@ -32,10 +32,7 @@
 #include <stdarg.h>
 #include "iperf.h"
 #include "iperf_api.h"
-
-#if defined(HAVE_QUIC_NGTCP2)
 #include "iperf_quic.h"
-#endif /* HAVE_QUIC_NGTCP2 */
 
 int gerror;
 
@@ -563,6 +560,7 @@ iperf_strerror(int int_errno)
         case IEMAXSERVERTESTDURATIONEXCEEDED:
             snprintf(errstr, len, "client's requested duration exceeds the server's maximum permitted limit");
             break;
+#if defined(HAVE_QUIC_NGTCP2)
         case IEQUICNONSUPPORTOPTIONS:
             snprintf(errstr, len, "using QUIC does not support Zero-copy or Skip-rx-copy options");
             break;
@@ -590,10 +588,11 @@ iperf_strerror(int int_errno)
         case IEQUICEXPIRED:
             snprintf(errstr, len, "QUIC connection timeout has expired");
             break;
-	    default:
-            snprintf(errstr, len, "int_errno=%d", int_errno);
-            perr = 1;
-            break;
+#endif /* HAVE_QUIC_NGTCP2 */
+        default:
+	    snprintf(errstr, len, "int_errno=%d", int_errno);
+	    perr = 1;
+	    break;
     }
 
     /* Append the result of strerror() or gai_strerror() if appropriate */

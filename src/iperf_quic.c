@@ -1359,4 +1359,37 @@ iperf_quic_init(struct iperf_test *test)
     return 0;
 }
 
+
+/* iperf_quic_get_tcpinfo
+ *
+ * Retrieve TCP info from QUIC stream info
+ */
+void
+iperf_quic_get_tcpinfo(struct iperf_stream *sp, struct tcp_info *tcpinfo)
+{
+    ngtcp2_conn_info cinfo;
+
+    // Get QUIC connection info
+    memset(&cinfo, 0, sizeof(cinfo));
+    ngtcp2_conn_get_conn_info(sp->quic_conn_data.pconn, &cinfo);
+
+    // Map QUIC connection info to tcp_info structure
+    memset(tcpinfo, 0, sizeof(struct tcp_info));
+    tcpinfo->tcpi_rto = 0; // Retransmission timeout
+    tcpinfo->tcpi_snd_mss = 1; // Max send UDP payload size //TBD: set to 1 to allow get_snd_cwnd() to return the CWND value
+    tcpinfo->tcpi_rcv_mss = 0; // Max recv UDP payload size
+    tcpinfo->tcpi_snd_ssthresh = cinfo.ssthresh; // Slow start threshold
+    tcpinfo->tcpi_bytes_acked = cinfo.bytes_sent - cinfo.bytes_lost - cinfo.bytes_in_flight; // Bytes sent
+    tcpinfo->tcpi_bytes_received = cinfo.bytes_recv; // Bytes received
+    tcpinfo->tcpi_snd_cwnd = cinfo.cwnd; // Congestion window
+    tcpinfo->tcpi_rtt = (uint32_t)(cinfo.latest_rtt / 1000ull); // RTT in micro-sec
+    tcpinfo->tcpi_rttvar = (uint32_t)(cinfo.rttvar / 1000ull); // RTT variance in micro-sec
+    tcpinfo->tcpi_snd_wnd = 0; // Send window
+    tcpinfo->tcpi_total_retrans = cinfo.pkt_lost; // Packets lost
+    tcpinfo->tcpi_segs_in = cinfo.pkt_recv; // Packets received
+    tcpinfo->tcpi_segs_out = cinfo.pkt_sent; // Packets sent
+
+    return;
+}
+
 #endif /* HAVE_QUIC_NGTCP2 */

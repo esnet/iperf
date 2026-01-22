@@ -630,7 +630,7 @@ iperf_set_on_test_finish_callback(struct iperf_test* ipt, void (*callback)(struc
 static void
 check_sender_has_retransmits(struct iperf_test *ipt)
 {
-    if (ipt->mode != RECEIVER && ipt->protocol->id == Ptcp && has_tcpinfo_retransmits())
+    if (ipt->mode != RECEIVER && (ipt->protocol->id == Ptcp || ipt->protocol->id == Pquic) && has_tcpinfo_retransmits())
 	ipt->sender_has_retransmits = 1;
     else
 	ipt->sender_has_retransmits = 0;
@@ -2669,7 +2669,7 @@ get_parameters(struct iperf_test *test)
 #endif //HAVE_SSL
 	if ((j_p = cJSON_GetObjectItem(j, "skip_rx_copy")) != NULL)
 	    test->settings->skip_rx_copy = j_p->valueint;
-	if (test->mode && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
+	if (test->mode && (test->protocol->id == Ptcp || test->protocol->id == Pquic) && has_tcpinfo_retransmits())
 	    test->sender_has_retransmits = 1;
 	if (test->settings->rate)
 	    cJSON_AddNumberToObject(test->json_start, "target_bitrate", test->settings->rate);
@@ -3754,7 +3754,7 @@ iperf_stats_callback(struct iperf_test *test)
         memcpy(&temp.interval_end_time, &rp->end_time, sizeof(struct iperf_time));
         iperf_time_diff(&temp.interval_start_time, &temp.interval_end_time, &temp_time);
         temp.interval_duration = iperf_time_in_secs(&temp_time);
-	if (test->protocol->id == Ptcp) {
+	if (test->protocol->id == Ptcp || test->protocol->id == Pquic) {
 	    if ( has_tcpinfo()) {
 		save_tcpinfo(sp, &temp);
 		if (test->sender_has_retransmits == 1) {
@@ -3993,7 +3993,7 @@ iperf_print_intermediate(struct iperf_test *test)
                     return;
                 }
                 bytes += irp->bytes_transferred;
-                if (test->protocol->id == Ptcp) {
+                if (test->protocol->id == Ptcp || test->protocol->id == Pquic) {
                     if (test->sender_has_retransmits == 1) {
                         retransmits += irp->interval_retrans;
                     }
@@ -4036,7 +4036,7 @@ iperf_print_intermediate(struct iperf_test *test)
 	    start_time = iperf_time_in_secs(&temp_time);
 	    iperf_time_diff(&sp->result->start_time,&irp->interval_end_time, &temp_time);
 	    end_time = iperf_time_in_secs(&temp_time);
-                if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
+                if (test->protocol->id == Ptcp || test->protocol->id == Psctp || test->protocol->id == Pquic) {
                     if (test->sender_has_retransmits == 1 && stream_must_be_sender) {
                         /* Interval sum, TCP with retransmits. */
                         if (test->json_output)

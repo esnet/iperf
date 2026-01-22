@@ -106,6 +106,8 @@ iperf_server_worker_run(void *s) {
     return NULL;
 
   cleanup_and_fail:
+    iperf_err(test, "Server Worker Thread failed - %s", iperf_strerror(i_errno));
+    iflush(test);
     return NULL;
 }
 
@@ -832,6 +834,14 @@ iperf_run_server(struct iperf_test *test)
                             }
 
                             if (s > test->max_fd) test->max_fd = s;
+
+                            // Init protocol connection (mainly used for QUIC connection and streams)
+                            if (test->protocol->connection_init) {
+                                if (test->protocol->connection_init(sp) != 0) {
+                                    cleanup_server(test);
+                                    return -1;
+                                }
+                            }
 
                             if (test->on_new_stream)
                                 test->on_new_stream(sp);

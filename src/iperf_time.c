@@ -54,6 +54,25 @@ iperf_time_now(struct iperf_time *now)
     return clock_gettime_helper(now, CLOCK_MONOTONIC);
 }
 
+
+uint64_t
+iperf_time_now_in_ms()
+{
+    struct timespec ts;
+    
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return ts.tv_sec * 1000LL + ts.tv_nsec / 1000000LL;
+}
+
+uint64_t
+iperf_time_now_in_ns()
+{
+    struct timespec ts;
+    
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return ts.tv_sec * 1000000000LL + ts.tv_nsec;
+}
+
 int
 iperf_time_now_wallclock(struct iperf_time *now)
 {
@@ -96,6 +115,14 @@ iperf_time_add_usecs(struct iperf_time *time1, uint64_t usecs)
     total_usecs = time1->usecs + usecs;
     time1->secs += total_usecs / 1000000L;
     time1->usecs = total_usecs % 1000000L;
+}
+
+uint64_t
+iperf_time_now_in_usecs()
+{
+    struct iperf_time now;
+    iperf_time_now(&now);
+    return now.secs * 1000000LL + now.usecs;
 }
 
 uint64_t

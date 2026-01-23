@@ -63,9 +63,11 @@
 
 #include "iperf_pthread.h"
 
+#if defined(HAVE_QUIC_NGTCP2)
 #include <ngtcp2/ngtcp2.h>
 #include <ngtcp2/ngtcp2_crypto.h>
 #include <ngtcp2/ngtcp2_crypto_ossl.h>
+#endif /* HAVE_QUIC_NGTCP2 */
 
 /*
  * Atomic types highly desired, but if not, we approximate what we need

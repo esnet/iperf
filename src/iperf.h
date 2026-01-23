@@ -63,6 +63,12 @@
 
 #include "iperf_pthread.h"
 
+#if defined(HAVE_QUIC_NGTCP2)
+#include <ngtcp2/ngtcp2.h>
+#include <ngtcp2/ngtcp2_crypto.h>
+#include <ngtcp2/ngtcp2_crypto_ossl.h>
+#endif /* HAVE_QUIC_NGTCP2 */
+
 /*
  * Atomic types highly desired, but if not, we approximate what we need
  * with normal integers and warn.
@@ -90,6 +96,28 @@ struct iperf_sctp_info
     uint32_t wnd;
     uint32_t cwnd;
 };
+
+#if defined (HAVE_QUIC_NGTCP2)
+struct iperf_quic_conn_data {
+    struct iperf_stream *sp;
+    ngtcp2_conn *pconn; // Pointer to QUIC connection
+
+    ngtcp2_crypto_conn_ref ng_quic_conn_ref; // Reference to ngtcp2 connection for OpenSSL
+    int      quic_handshake_completed;
+    int64_t  quic_stream_id;
+    int      quic_hello_writing;
+    
+    ngtcp2_path_storage path; // QUIC path info
+    ngtcp2_cid dcid, scid; // Destination and Source Connection IDs
+
+    ngtcp2_crypto_ossl_ctx *ng_ssl_ctx; // ngtcp2 OpenSSL crypto context
+    SSL_CTX *ssl_ctx; // OpenSSL SSL context object
+    SSL *ssl; // OpenSSL SSL object
+    
+    int got_app_data;
+};
+#endif /* HAVE_QUIC_NGTCP2 */
+
 
 struct iperf_interval_results
 {
@@ -240,7 +268,9 @@ struct iperf_stream
     uint64_t  target;
 
     struct sockaddr_storage local_addr;
+    socklen_t local_addr_len;
     struct sockaddr_storage remote_addr;
+    socklen_t remote_addr_len;
 
     int       (*rcv) (struct iperf_stream * stream);
     int       (*snd) (struct iperf_stream * stream);
@@ -253,6 +283,10 @@ struct iperf_stream
     SLIST_ENTRY(iperf_stream) streams;
 
     void     *data;
+
+#if defined (HAVE_QUIC_NGTCP2)
+    struct iperf_quic_conn_data quic_conn_data; // QUIC context
+#endif /* HAVE_QUIC_NGTCP2 */
 };
 
 struct protocol {
@@ -264,6 +298,7 @@ struct protocol {
     int       (*send)(struct iperf_stream *);
     int       (*recv)(struct iperf_stream *);
     int       (*init)(struct iperf_test *);
+    int       (*connection_init)(struct iperf_stream *);
     SLIST_ENTRY(protocol) protocols;
 };
 

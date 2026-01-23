@@ -93,6 +93,10 @@ iperf_client_worker_run(void *s) {
     return NULL;
 
   cleanup_and_fail:
+    if (test->ctrl_sck != -1) { // Make sure test was not cleared yet but the main thread
+        iperf_err(test, "Client Worker Thread failed - %s", iperf_strerror(i_errno));
+        if (test->ctrl_sck != -1) iflush(test);
+    }
     return NULL;
 }
 
@@ -159,7 +163,7 @@ iperf_create_streams(struct iperf_test *test, int sender)
                 else
                     test->congestion_used = strdup(ca);
 		if (test->debug) {
-		    printf("Congestion algorithm is %s\n", test->congestion_used);
+		    printf("TCP Congestion algorithm is %s\n", test->congestion_used);
 		}
 	    }
 	}
@@ -168,6 +172,13 @@ iperf_create_streams(struct iperf_test *test, int sender)
         sp = iperf_new_stream(test, s, sender);
         if (!sp)
             return -1;
+
+        // Init protocol connection (mainly used for QUIC connection and streams)
+        if (test->protocol->connection_init) {
+            if (test->protocol->connection_init(sp) != 0) {
+                return -1;
+            }
+        }
 
         /* Perform the new stream callback */
         if (test->on_new_stream)
@@ -504,7 +515,7 @@ iperf_connect(struct iperf_test *test)
      * directions.  Note that even if the algorithm guesses wrong,
      * the user always has the option to override.
      */
-    if (test->protocol->id == Pudp) {
+    if (test->protocol->id == Pudp || test->protocol->id == Pquic) {
 	if (test->settings->blksize == 0) {
 	    if (test->ctrl_sck_mss) {
 		test->settings->blksize = test->ctrl_sck_mss;

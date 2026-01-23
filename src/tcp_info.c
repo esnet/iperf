@@ -55,6 +55,7 @@
 #include "iperf.h"
 #include "iperf_api.h"
 #include "iperf_locale.h"
+#include "iperf_quic.h"
 
 /*************************************************************/
 int
@@ -96,10 +97,19 @@ save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp)
 {
 #if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && \
 	defined(TCP_INFO)
+
+#if defined(HAVE_QUIC_NGTCP2)
+    if (sp->test->protocol->id == Pquic) {
+        iperf_quic_get_tcpinfo(sp, &irp->tcpInfo);
+    }
+    else
+#endif /* HAVE_QUIC_NGTCP2 */
+    {
     socklen_t tcp_info_length = sizeof(struct tcp_info);
 
     if (getsockopt(sp->socket, IPPROTO_TCP, TCP_INFO, (void *)&irp->tcpInfo, &tcp_info_length) < 0)
 	iperf_err(sp->test, "getsockopt - %s", strerror(errno));
+    }
 
     if (sp->test->debug) {
 	printf("tcpi_snd_cwnd %u tcpi_snd_mss %u tcpi_rtt %u\n",

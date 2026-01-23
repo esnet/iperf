@@ -128,6 +128,9 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 #if defined(HAVE_TCP_USER_TIMEOUT)
                            "  --snd-timeout #           timeout for unacknowledged TCP data\n"
                            "                            (in ms, default is system settings)\n"
+#if defined(HAVE_QUIC_NGTCP2)
+                           "                            for QUIC timeout for control messages ack (default 10 sec)\n"
+#endif /* HAVE_QUIC_NGTCP2 */
 #endif /* HAVE_TCP_USER_TIMEOUT */
 #if defined(HAVE_TCP_KEEPALIVE)
                            "  --cntl-ka[=#/#/#]         use control connection TCP keepalive - KEEPIDLE/KEEPINTV/KEEPCNT\n"
@@ -168,6 +171,9 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  --nstreams      #         number of SCTP streams\n"
 #endif /* HAVE_SCTP_H */
                            "  -u, --udp                 use UDP rather than TCP\n"
+#if defined(HAVE_QUIC_NGTCP2)
+                           "  -q, --quic                use QUIC rather than TCP\n"
+#endif /* HAVE_QUIC_NGTCP2 */
                            "  --connect-timeout #       timeout for control connection setup (ms)\n"
                            "  -b, --bitrate #[KMG][/#]  target bitrate in bits/sec (0 for unlimited)\n"
                            "                            (default %d Mbit/sec for UDP, unlimited for TCP)\n"
@@ -194,8 +200,16 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "                            (indirectly sets TCP window size)\n"
 
 #if defined(HAVE_TCP_CONGESTION)
-                           "  -C, --congestion <algo>   set TCP congestion control algorithm (Linux and FreeBSD only)\n"
+                           "  -C, --congestion <algo>   TCP: set congestion control algorithm (Linux and FreeBSD only)\n"
 #endif /* HAVE_TCP_CONGESTION */
+#if defined (HAVE_QUIC_NGTCP2)
+#if defined(HAVE_TCP_CONGESTION)
+                           "                            "
+#else /* HAVE_TCP_CONGESTION */
+                           "  -C, --congestion <algo>   "
+#endif /* HAVE_TCP_CONGESTION */
+                           "QUIC: set congestion control algorithm to either reno, cubic or bbr\n"
+#endif /* HAVE_QUIC_NGTCP2 */
                            "  -M, --set-mss   #         set TCP/SCTP maximum segment size (MTU - 40 bytes)\n"
                            "  -N, --no-delay            set TCP/SCTP no delay, disabling Nagle's Algorithm\n"
                            "  -4, --version4            only use IPv4\n"

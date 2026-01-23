@@ -365,6 +365,38 @@ netannounce(int domain, int proto, const char *local, const char *bind_dev, int 
     return s;
 }
 
+
+/********************************************************************/
+/* Nread_once_up_to - reads from a socket more than 0 bytes, */
+/*  up to 'count', with timeout in ms (-1 for not timeout).                             */
+/********************************************************************/
+
+int
+Nread_something_with_timeout(int s, char *buf, size_t count, int prot, int timeout)
+{
+    register ssize_t r;
+    struct pollfd pfd;
+
+    pfd.fd = s;
+    pfd.events = POLLIN;
+    r = poll(&pfd, 1, timeout);
+    if (r == 0) {
+        errno = ETIMEDOUT;
+        r = -1;
+    } else if (r == 1) {
+        r = read(s, buf, count);
+        //r = recv(s, buf, count, MSG_DONTWAIT);
+    } else {
+        if (r < 0) {
+            /* XXX EWOULDBLOCK can't happen without non-blocking sockets */
+            if (!(errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK))
+            r = NET_HARDERROR;
+        }
+    }
+    return r;
+}
+
+
 /*******************************************************************/
 /* Nread - reads 'count' bytes from a socket  */
 /********************************************************************/

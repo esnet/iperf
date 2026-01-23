@@ -177,8 +177,42 @@ else
         LDFLAGS="$LDFLAGS $OPENSSL_LDFLAGS"
         LIBS="$OPENSSL_LIBS $LIBS"
         CPPFLAGS="$OPENSSL_INCLUDES $CPPFLAGS"
+
+        # Check for ngtcp2 when openssl is supported
+        # Allow user to disable QUIC support with --without-ngtcp2
+        if test "x$with_ngtcp2" != "xno"; then
+            AC_ARG_WITH([ngtcp2],
+                [AS_HELP_STRING([--without-ngtcp2],
+                    [disable QUIC support])],
+                [
+                    case "$withval" in
+                        n | no)
+                            ;;
+                        y | ye | yes)
+                            with_ngtcp2="yes"
+                            ;;
+                        *)
+                            with_ngtcp2="$withval"
+                            ;;
+                    esac
+                ], [
+                    with_ngtcp2="yes"
+                ]
+            )
+            if test "x$with_ngtcp2" = "xyes"; then
+                AC_MSG_CHECKING([for ngtcp2])
+                PKG_CHECK_MODULES([NGTCP2], [libngtcp2 libngtcp2_crypto_ossl],
+                    [AC_MSG_RESULT([ngtcp2 libs found])
+                    AC_DEFINE([HAVE_QUIC_NGTCP2], [1], [ngtcp2 is available])
+                    LDFLAGS="$LDFLAGS $NGTCP2_CFLAGS"
+                    LIBS="$NGTCP2_LIBS $LIBS"],
+                    [AC_MSG_RESULT([ngtcp2 libs not found])
+                    with_ngtcp2="no"])
+            fi
+        fi
     fi
 fi
+
 
 # Check for TCP_CONGESTION sockopt (believed to be Linux and FreeBSD only)
 AC_CACHE_CHECK([TCP_CONGESTION socket option],

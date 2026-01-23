@@ -32,6 +32,7 @@
 #include <stdarg.h>
 #include "iperf.h"
 #include "iperf_api.h"
+#include "iperf_quic.h"
 
 int gerror;
 
@@ -559,10 +560,39 @@ iperf_strerror(int int_errno)
         case IEMAXSERVERTESTDURATIONEXCEEDED:
             snprintf(errstr, len, "client's requested duration exceeds the server's maximum permitted limit");
             break;
-	    default:
-            snprintf(errstr, len, "int_errno=%d", int_errno);
-            perr = 1;
+#if defined(HAVE_QUIC_NGTCP2)
+        case IEQUICNONSUPPORTOPTIONS:
+            snprintf(errstr, len, "using QUIC does not support Zero-copy or Skip-rx-copy options");
             break;
+        case IEQUICBLOCKSIZE:
+            snprintf(errstr, len, "QUIC block size invalid (maximum = %d bytes)", IPERF_QUIC_MAX_TX_PAYLOAD_SIZE);
+            break;
+        case IEQUICINIT:
+            snprintf(errstr, len, "unable to initialize QUIC stream");
+            break;
+        case IEQUICCONNECTIONID:
+            snprintf(errstr, len, "unable to set QUIC connection ID in call-back function");
+            break;
+        case IEQUICPARSEID:
+            snprintf(errstr, len, "unable to parse QUIC connection IDs from initial packet");
+            break;   
+        case IEQUICOPENSSLINIT:
+            snprintf(errstr, len, "unable to initialize OpenSSL for QUIC");
+            break;
+        case IEQUICSEND:
+            snprintf(errstr, len, "unable to send on QUIC stream");
+            break;
+        case IEQUICRECV:
+            snprintf(errstr, len, "unable to receive on QUIC stream");
+            break;
+        case IEQUICEXPIRED:
+            snprintf(errstr, len, "QUIC connection timeout has expired");
+            break;
+#endif /* HAVE_QUIC_NGTCP2 */
+        default:
+	    snprintf(errstr, len, "int_errno=%d", int_errno);
+	    perr = 1;
+	    break;
     }
 
     /* Append the result of strerror() or gai_strerror() if appropriate */

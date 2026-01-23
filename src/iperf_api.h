@@ -63,6 +63,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define Ptcp SOCK_STREAM
 #define Pudp SOCK_DGRAM
 #define Psctp 12
+#define Pquic 13
 #define DEFAULT_UDP_BLKSIZE 1460 /* default is dynamically set, else this */
 #define DEFAULT_TCP_BLKSIZE (128 * 1024)  /* default read/write block size */
 #define DEFAULT_SCTP_BLKSIZE (64 * 1024)
@@ -444,6 +445,8 @@ enum {
     IECNTLKA = 36,          // Control connection Keepalive period should be larger than the full retry period (interval * count)
     IEMAXSERVERTESTDURATIONEXCEEDED = 37, // Client's duration exceeds server's maximum duration
     IEUNITVAL = 38,         // Invalid unit value or suffix
+    IEQUICNONSUPPORTOPTIONS = 39, // Options not supported for QUIC
+    IEQUICBLOCKSIZE = 40,   // QUIC block size invalid
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)
@@ -514,6 +517,13 @@ enum {
     IESTREAMREAD = 206,     // Unable to read from stream (check perror)
     IESTREAMCLOSE = 207,    // Stream has closed unexpectedly
     IESTREAMID = 208,       // Stream has invalid ID
+    IEQUICINIT = 209,       // Unable to initialize QUIC stream (check perror)
+    IEQUICOPENSSLINIT = 210, // Unable to initialize OpenSSL for QUIC (check perror)
+    IEQUICCONNECTIONID = 211, // Unable to set QUIC connection ID (check perror)
+    IEQUICPARSEID = 212,   // Unable to parse QUIC connection IDs
+    IEQUICSEND = 213,      // Unable to send on QUIC stream (check perror)
+    IEQUICRECV = 214,      // Unable to receive on QUIC stream
+    IEQUICEXPIRED = 215,   // QUIC connection timeout has expired
     /* Timer errors */
     IENEWTIMER = 300,       // Unable to create new timer (check perror)
     IEUPDATETIMER = 301,    // Unable to update timer (check perror)

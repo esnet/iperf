@@ -40,6 +40,7 @@
 #include <sys/time.h>
 #include <sys/select.h>
 #include <poll.h>
+#include <ctype.h>
 
 #include <openssl/bio.h>
 #include <openssl/err.h>
@@ -458,6 +459,60 @@ static int quic_recv_stream_data_cb(ngtcp2_conn *conn, uint32_t flags, int64_t s
     return 0; // Return 0 on success
 }
 
+
+static char algo_str_reno[] = "reno";
+static char algo_str_cubic[] = "cubic";
+static char algo_str_bbr[] = "bbr";
+static ngtcp2_cc_algo quic_init_cc_algo(struct iperf_test *test, ngtcp2_cc_algo default_cc_algo) {
+    ngtcp2_cc_algo cc_algo = default_cc_algo;
+    char *pcalgo, *p;
+
+    if (test->congestion) {
+        pcalgo = strdup(test->congestion);
+        for (p = pcalgo; *p; ++p) {
+            *p = tolower((unsigned char)*p);
+        }
+
+        if (strcmp(pcalgo, algo_str_reno) == 0) {
+            cc_algo = NGTCP2_CC_ALGO_RENO;
+        } else if (strcmp(pcalgo, algo_str_cubic) == 0) {
+            cc_algo = NGTCP2_CC_ALGO_CUBIC;
+        } else if (strcmp(pcalgo, algo_str_bbr) == 0) {
+            cc_algo = NGTCP2_CC_ALGO_BBR;
+        } else {
+            iperf_err(test, "Unknown QUIC congestion control algorithm: %s;  Using default", test->congestion);
+        }
+
+        free(pcalgo);
+    }
+
+    if (test->congestion_used) {
+	    free(test->congestion_used);
+    }
+
+    switch (cc_algo) {
+        case NGTCP2_CC_ALGO_RENO:
+            test->congestion_used = strdup(algo_str_reno);
+            break;
+        case NGTCP2_CC_ALGO_CUBIC:
+            test->congestion_used = strdup(algo_str_cubic);
+            break;
+        case NGTCP2_CC_ALGO_BBR:
+            test->congestion_used = strdup(algo_str_bbr);
+            break;
+        default:
+            iperf_err(test, "Unexpected unknown QUIC congestion algorithm; Using CUBIC");
+            cc_algo = NGTCP2_CC_ALGO_CUBIC;
+            test->congestion_used = strdup(algo_str_cubic);
+            break;
+    }
+
+    if (test->debug_level >= DEBUG_LEVEL_INFO)
+        printf("QUIC Congestion algorithm is %s\n", test->congestion_used);
+
+    return cc_algo;
+}
+
 /* Init ngtcp2 params */
 static void quic_init_params(struct iperf_quic_conn_data *quic_conn_data, ngtcp2_transport_params *params) {
     struct iperf_test *test = quic_conn_data->sp->test;
@@ -487,6 +542,7 @@ static void quic_init_settings(struct iperf_quic_conn_data *quic_conn_data, ngtc
 
     memset(settings, 0, sizeof(ngtcp2_settings));
     ngtcp2_settings_default(settings);
+    settings->cc_algo = quic_init_cc_algo(test, settings->cc_algo);
     settings->initial_ts = iperf_time_now_in_ns(); // Current time for RTT calculation
     settings->no_tx_udp_payload_size_shaping = 1;
     //settings->max_stream_window = IPERF_QUIC_MAX_STREAM_WINDOWS; //TBD: needed? Value OK?

@@ -200,8 +200,16 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "                            (indirectly sets TCP window size)\n"
 
 #if defined(HAVE_TCP_CONGESTION)
-                           "  -C, --congestion <algo>   set TCP congestion control algorithm (Linux and FreeBSD only)\n"
+                           "  -C, --congestion <algo>   TCP: set congestion control algorithm (Linux and FreeBSD only)\n"
 #endif /* HAVE_TCP_CONGESTION */
+#if defined (HAVE_QUIC_NGTCP2)
+#if defined(HAVE_TCP_CONGESTION)
+                           "                            "
+#else /* HAVE_TCP_CONGESTION */
+                           "  -C, --congestion <algo>   "
+#endif /* HAVE_TCP_CONGESTION */
+                           "QUIC: set congestion control algorithm to either reno, cubic or bbr\n"
+#endif /* HAVE_QUIC_NGTCP2 */
                            "  -M, --set-mss   #         set TCP/SCTP maximum segment size (MTU - 40 bytes)\n"
                            "  -N, --no-delay            set TCP/SCTP no delay, disabling Nagle's Algorithm\n"
                            "  -4, --version4            only use IPv4\n"

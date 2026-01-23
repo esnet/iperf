@@ -277,15 +277,15 @@ get_optional_features(void)
     numfeatures++;
 #endif /* HAVE_SCTP_H */
 
-#if defined(HAVE_TCP_CONGESTION)
+#if defined(HAVE_TCP_CONGESTION) || defined(HAVE_QUIC_NGTCP2)
     if (numfeatures > 0) {
 	strncat(features, ", ",
 		sizeof(features) - strlen(features) - 1);
     }
-    strncat(features, "TCP congestion algorithm setting",
+    strncat(features, "Congestion algorithm setting",
 	sizeof(features) - strlen(features) - 1);
     numfeatures++;
-#endif /* HAVE_TCP_CONGESTION */
+#endif /* HAVE_TCP_CONGESTION || HAVE_QUIC_NGTCP2 */
 
 #if defined(HAVE_SENDFILE)
     if (numfeatures > 0) {

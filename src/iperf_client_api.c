@@ -93,8 +93,10 @@ iperf_client_worker_run(void *s) {
     return NULL;
 
   cleanup_and_fail:
-    iperf_err(test, "Client Worker Thread failed - %s", iperf_strerror(i_errno));
-    iflush(test);
+    if (test->ctrl_sck != -1) { // Make sure test was not cleared yet but the main thread
+        iperf_err(test, "Client Worker Thread failed - %s", iperf_strerror(i_errno));
+        if (test->ctrl_sck != -1) iflush(test);
+    }
     return NULL;
 }
 
@@ -161,7 +163,7 @@ iperf_create_streams(struct iperf_test *test, int sender)
                 else
                     test->congestion_used = strdup(ca);
 		if (test->debug) {
-		    printf("Congestion algorithm is %s\n", test->congestion_used);
+		    printf("TCP Congestion algorithm is %s\n", test->congestion_used);
 		}
 	    }
 	}

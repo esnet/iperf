@@ -1152,8 +1152,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"affinity", required_argument, NULL, 'A'},
 #endif /* HAVE_CPU_AFFINITY */
         {"title", required_argument, NULL, 'T'},
-#if defined(HAVE_TCP_CONGESTION)
+#if defined(HAVE_TCP_CONGESTION) || defined(HAVE_QUIC_NGTCP2)
         {"congestion", required_argument, NULL, 'C'},
+#endif /* HAVE_TCP_CONGESTION || HAVE_QUIC_NGTCP2 */
+#if defined(HAVE_TCP_CONGESTION)
         {"linux-congestion", required_argument, NULL, 'C'},
 #endif /* HAVE_TCP_CONGESTION */
 #if defined(HAVE_SCTP_H)
@@ -1683,7 +1685,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
 	    case 'C':
-#if defined(HAVE_TCP_CONGESTION)
+#if defined(HAVE_TCP_CONGESTION) || defined(HAVE_QUIC_NGTCP2)
 		test->congestion = strdup(optarg);
 		client_flag = 1;
 #else /* HAVE_TCP_CONGESTION */
@@ -4556,7 +4558,7 @@ iperf_print_results(struct iperf_test *test)
 
         if (test->json_output && current_mode == upper_mode) {
             cJSON_AddItemToObject(test->json_end, "cpu_utilization_percent", iperf_json_printf("host_total: %f  host_user: %f  host_system: %f  remote_total: %f  remote_user: %f  remote_system: %f", (double) test->cpu_util[0], (double) test->cpu_util[1], (double) test->cpu_util[2], (double) test->remote_cpu_util[0], (double) test->remote_cpu_util[1], (double) test->remote_cpu_util[2]));
-            if (test->protocol->id == Ptcp) {
+            if (test->protocol->id == Ptcp || test->protocol->id == Pquic) {
                 char *snd_congestion = NULL, *rcv_congestion = NULL;
                 if (stream_must_be_sender) {
                     snd_congestion = test->congestion_used;
@@ -4583,7 +4585,7 @@ iperf_print_results(struct iperf_test *test)
                     } else
                         iperf_printf(test, report_cpu, report_local, stream_must_be_sender?report_sender:report_receiver, test->cpu_util[0], test->cpu_util[1], test->cpu_util[2], report_remote, stream_must_be_sender?report_receiver:report_sender, test->remote_cpu_util[0], test->remote_cpu_util[1], test->remote_cpu_util[2]);
                 }
-                if (test->protocol->id == Ptcp) {
+                if (test->protocol->id == Ptcp || test->protocol->id == Pquic) {
                     char *snd_congestion = NULL, *rcv_congestion = NULL;
                     if (stream_must_be_sender) {
                         snd_congestion = test->congestion_used;
@@ -4594,10 +4596,10 @@ iperf_print_results(struct iperf_test *test)
                         rcv_congestion = test->congestion_used;
                     }
                     if (snd_congestion) {
-                        iperf_printf(test, "snd_tcp_congestion %s\n", snd_congestion);
+                        iperf_printf(test, "snd_congestion %s\n", snd_congestion);
                     }
                     if (rcv_congestion) {
-                        iperf_printf(test, "rcv_tcp_congestion %s\n", rcv_congestion);
+                        iperf_printf(test, "rcv_congestion %s\n", rcv_congestion);
                     }
                 }
             }

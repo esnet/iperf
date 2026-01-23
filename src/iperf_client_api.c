@@ -93,7 +93,10 @@ iperf_client_worker_run(void *s) {
     return NULL;
 
   cleanup_and_fail:
-    iperf_err(test, "Client Worker Thread failed - %s", iperf_strerror(i_errno));
+    if (test->ctrl_sck != -1) { // Make sure test was not cleared yet but the main thread
+        iperf_err(test, "Server Worker Thread failed - %s", iperf_strerror(i_errno));
+        if (test->ctrl_sck != -1) iflush(test);
+    }
     return NULL;
 }
 

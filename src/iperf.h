@@ -464,7 +464,7 @@ struct iperf_test
 #define MAX_TIME 86400
 #define MAX_OMIT_TIME 600
 #define MAX_BURST 1000
-#define MAX_MSS (9 * 1024)
+#define MAX_MSS (32 * 1024 - 1)
 #define MAX_STREAMS 128
 
 #define TIMESTAMP_FORMAT "%c "

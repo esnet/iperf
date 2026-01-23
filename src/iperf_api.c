@@ -1289,7 +1289,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 }
 		iperf_set_test_role(test, 's');
                 break;
-            case 'c':
+            case 'c': {
                 if (test->role == 's') {
                     i_errno = IESERVCLIENT;
                     return -1;
@@ -1297,18 +1297,22 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		iperf_set_test_role(test, 'c');
 		iperf_set_test_server_hostname(test, optarg);
 
-                if (iperf_parse_hostname(test, optarg, &p, &p1)) {
+                char *arg = strdup(optarg);
+                if (iperf_parse_hostname(test, arg, &p, &p1)) {
 #if defined(HAVE_SO_BINDTODEVICE)
                     /* Get rid of the hostname we saved earlier. */
                     free(iperf_get_test_server_hostname(test));
                     iperf_set_test_server_hostname(test, p);
                     iperf_set_test_bind_dev(test, p1);
 #else /* HAVE_SO_BINDTODEVICE */
+                    free(arg);
                     i_errno = IEBINDDEVNOSUPPORT;
                     return -1;
 #endif /* HAVE_SO_BINDTODEVICE */
                 }
+                free(arg);
                 break;
+            }
             case 'u':
                 set_protocol(test, Pudp);
 		client_flag = 1;
@@ -1441,21 +1445,25 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
 
-            case 'B':
+            case 'B': {
                 iperf_set_test_bind_address(test, optarg);
 
-                if (iperf_parse_hostname(test, optarg, &p, &p1)) {
+                char *arg = strdup(optarg);
+                if (iperf_parse_hostname(test, arg, &p, &p1)) {
 #if defined(HAVE_SO_BINDTODEVICE)
                     /* Get rid of the hostname we saved earlier. */
                     free(iperf_get_test_bind_address(test));
                     iperf_set_test_bind_address(test, p);
                     iperf_set_test_bind_dev(test, p1);
 #else /* HAVE_SO_BINDTODEVICE */
+                    free(arg);
                     i_errno = IEBINDDEVNOSUPPORT;
                     return -1;
 #endif /* HAVE_SO_BINDTODEVICE */
                 }
+                free(arg);
                 break;
+            }
 #if defined (HAVE_SO_BINDTODEVICE)
             case OPT_BIND_DEV:
                 iperf_set_test_bind_dev(test, optarg);
@@ -1629,7 +1637,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                         test->settings->cntl_ka_keepidle = atoi(optarg);
                     }
                 }
-                // Seems that at least in Windows WSL2, TCP keepalive retries full inteval must be
+                // Seems that at least in Windows WSL2, TCP keepalive retries full interval must be
                 // smaller than the idle interval. Otherwise, the keepalive message is sent only once.
                 if (test->settings->cntl_ka_keepidle &&
                     test->settings->cntl_ka_keepidle <= (test->settings->cntl_ka_count * test->settings->cntl_ka_interval)) {
@@ -2050,7 +2058,7 @@ iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP)
     // If estimated time to next send is large enough, sleep instead of just CPU looping until green light is set
     if (missing_rate < 0) {
         delta_bits = bits_sent - (seconds * sp->test->settings->rate);
-        // Calclate time until next data send is required
+        // Calculate time until next data send is required
         time_to_green_light = (SEC_TO_NS * delta_bits / sp->test->settings->rate);
         // Whether should wait before next send
         if (time_to_green_light >= 0) {
@@ -2073,7 +2081,7 @@ iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP)
 
 #else /* HAVE_NANOSLEEP */
             nanosleep_time.tv_sec = 0;
-            // Sleep until average baud rate reaches the target value or intrupt / error
+            // Sleep until average baud rate reaches the target value or interrupt / error
             do {
                 // nansleep() time should be less than 1 sec
                 nanosleep_time.tv_nsec = (time_to_green_light >= SEC_TO_NS) ? SEC_TO_NS - 1 : time_to_green_light;
@@ -2101,7 +2109,7 @@ iperf_check_total_rate(struct iperf_test *test, iperf_size_t last_interval_bytes
     if (test->done || test->settings->bitrate_limit == 0)    // Continue only if check should be done
         return;
 
-    /* Add last inetrval's transferred bytes to the array */
+    /* Add last interval's transferred bytes to the array */
     if (++test->bitrate_limit_last_interval_index >= test->settings->bitrate_limit_stats_per_interval)
         test->bitrate_limit_last_interval_index = 0;
     test->bitrate_limit_intervals_traffic_bytes[test->bitrate_limit_last_interval_index] = last_interval_bytes_transferred;
@@ -2824,7 +2832,7 @@ get_results(struct iperf_test *test)
 			    i_errno = IERECVRESULTS;
 			    r = -1;
                         } else if ( (j_omitted_errors == NULL && j_omitted_packets != NULL) || (j_omitted_errors != NULL && j_omitted_packets == NULL) ) {
-                            /* For backward compatibility allow to not receive "omitted" statistcs */
+                            /* For backward compatibility allow to not receive "omitted" statistics */
                             i_errno = IERECVRESULTS;
 			    r = -1;
 			} else {
@@ -3009,7 +3017,6 @@ JSON_read(int fd, int max_size)
 	}
     }
     else {
-        warning("Failed to read JSON data size");
         snprintf(msg_buf, sizeof(msg_buf), "Failed to read JSON data size - read returned %d; errno=%d", rc, errno);
         warning(msg_buf);
     }
@@ -3059,7 +3066,7 @@ add_to_interval_list(struct iperf_stream_result * rp, struct iperf_interval_resu
 {
     struct iperf_interval_results *irp;
 
-    /* Only the last interval result is needed, so removing last old entry to reduce memory consupmtion */
+    /* Only the last interval result is needed, so removing last old entry to reduce memory consumption */
     if (!TAILQ_EMPTY(&rp->interval_results) &&
         (irp = TAILQ_LAST(&rp->interval_results, irlisthead)) != NULL
     ) {
@@ -5534,7 +5541,7 @@ iperf_set_control_keepalive(struct iperf_test *test)
             }
         }
    
-        // Seems that at least in Windows WSL2, TCP keepalive retries full inteval must be
+        // Seems that at least in Windows WSL2, TCP keepalive retries full interval must be
         // smaller than the idle interval. Otherwise, the keepalive message is sent only once.
         if (test->settings->cntl_ka_keepidle) {
             if (test->settings->cntl_ka_keepidle <= (kainterval * kacount)) {

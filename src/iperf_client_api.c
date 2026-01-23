@@ -561,11 +561,10 @@ iperf_client_end(struct iperf_test *test)
 
     /* Close control socket */
     if (test->ctrl_sck >= 0) {
-    
         close(test->ctrl_sck);
         test->ctrl_sck = -1;
     }
-    
+
     return 0;
 }
 

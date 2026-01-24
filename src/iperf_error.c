@@ -219,6 +219,9 @@ iperf_strerror(int int_errno)
         case IESERVERAUTHUSERS:
              snprintf(errstr, len, "cannot access authorized users file");
             break;
+        case IEBADSOPRIO:
+            snprintf(errstr, len, "bad socket priority value (must be between 0 and 6 inclusive)");
+            break;
         case IEBADFORMAT:
             snprintf(errstr, len, "bad format specifier (valid formats are in the set [kmgtKMGT])");
             break;
@@ -532,6 +535,10 @@ iperf_strerror(int int_errno)
             break;
         case IEPTHREADSIGMASK:
             snprintf(errstr, len, "unable to change mask of blocked signals");
+            break;
+        case IESETSOPRIO:
+            snprintf(errstr, len, "unable to set socket priority");
+            perr = 1;
             break;
         case IEPTHREADATTRDESTROY:
             snprintf(errstr, len, "unable to destroy thread attributes");

@@ -919,8 +919,33 @@ iperf_on_new_stream(struct iperf_stream *sp)
 void
 iperf_on_test_start(struct iperf_test *test)
 {
+    cJSON *json_start_data = NULL;
+
     if (test->json_output) {
-	cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d  omit: %d  duration: %d  bytes: %d  blocks: %d  reverse: %d  tos: %d  target_bitrate: %d bidir: %d fqrate: %d interval: %f", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->omit, (int64_t) test->duration, (int64_t) test->settings->bytes, (int64_t) test->settings->blocks, test->reverse?(int64_t)1:(int64_t)0, (int64_t) test->settings->tos, (int64_t) test->settings->rate, (int64_t) test->bidirectional, (uint64_t) test->settings->fqrate, test->stats_interval));
+        json_start_data = cJSON_CreateObject();
+        if (json_start_data == NULL)
+            return;
+
+        cJSON_AddStringToObject(json_start_data, "protocol", test->protocol->name);
+        cJSON_AddNumberToObject(json_start_data, "num_streams", test->num_streams);
+        cJSON_AddNumberToObject(json_start_data, "blksize", test->settings->blksize);
+        cJSON_AddNumberToObject(json_start_data, "omit", test->omit);
+        cJSON_AddNumberToObject(json_start_data, "duration", test->duration);
+        cJSON_AddNumberToObject(json_start_data, "bytes", test->settings->bytes);
+        cJSON_AddNumberToObject(json_start_data, "blocks", test->settings->blocks);
+        cJSON_AddNumberToObject(json_start_data, "reverse", test->reverse?(int64_t)1:(int64_t)0);
+        cJSON_AddNumberToObject(json_start_data, "tos", test->settings->tos);
+        cJSON_AddNumberToObject(json_start_data, "target_bitrate", test->settings->rate);
+        cJSON_AddNumberToObject(json_start_data, "bidir", test->bidirectional);
+        cJSON_AddNumberToObject(json_start_data, "fqrate", test->settings->fqrate);
+        cJSON_AddNumberToObject(json_start_data, "interval", test->stats_interval);
+
+#if defined(HAVE_SO_PRIORITY)
+        if (test->settings->sock_prio >= 0)
+            cJSON_AddNumberToObject(json_start_data, "sock_prio", test->settings->sock_prio);
+#endif
+
+        cJSON_AddItemToObject(test->json_start, "test_start", json_start_data);
     } else {
 	if (test->verbose) {
 	    if (test->settings->bytes)
@@ -1134,6 +1159,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"version4", no_argument, NULL, '4'},
         {"version6", no_argument, NULL, '6'},
         {"tos", required_argument, NULL, 'S'},
+#if defined(HAVE_SO_PRIORITY)
+        {"sock-prio", required_argument, NULL, OPT_SOCK_PRIO},
+#endif /* HAVE_SO_PRIORITY */
         {"dscp", required_argument, NULL, OPT_DSCP},
 	{"extra-data", required_argument, NULL, OPT_EXTRA_DATA},
 #if defined(HAVE_FLOWLABEL)
@@ -1505,6 +1533,18 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		}
 		client_flag = 1;
                 break;
+#if defined(HAVE_SO_PRIORITY)
+            case OPT_SOCK_PRIO:
+                test->settings->sock_prio = strtol(optarg, &endptr, 0);
+                if (endptr == optarg ||
+                    test->settings->sock_prio < 0 ||
+                    test->settings->sock_prio > 6) {
+                    i_errno = IEBADSOPRIO;
+                    return -1;
+                }
+                client_flag = 1;
+                break;
+#endif /* HAVE_SO_PRIORITY */
 	    case OPT_DSCP:
                 test->settings->tos = parse_qos(optarg);
 		if(test->settings->tos < 0) {
@@ -2459,6 +2499,10 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "burst", test->settings->burst);
 	if (test->settings->tos)
 	    cJSON_AddNumberToObject(j, "TOS", test->settings->tos);
+#if defined(HAVE_SO_PRIORITY)
+        if (test->settings->sock_prio >= 0)
+            cJSON_AddNumberToObject(j, "sock_prio", test->settings->sock_prio);
+#endif /* HAVE_SO_PRIORITY */
 	if (test->settings->flowlabel)
 	    cJSON_AddNumberToObject(j, "flowlabel", test->settings->flowlabel);
 	if (test->title)
@@ -2592,6 +2636,10 @@ get_parameters(struct iperf_test *test)
 	    test->settings->tos = j_p->valueint;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "flowlabel", cJSON_Number)) != NULL)
 	    test->settings->flowlabel = j_p->valueint;
+#if defined(HAVE_SO_PRIORITY)
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "sock_prio", cJSON_Number)) != NULL)
+            test->settings->sock_prio = j_p->valueint;
+#endif /* HAVE_SO_PRIORITY */
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "title", cJSON_String)) != NULL)
 	    test->title = strdup(j_p->valuestring);
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "extra_data", cJSON_String)) != NULL)
@@ -3552,6 +3600,9 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->burst = 0;
     test->settings->mss = 0;
     test->settings->tos = 0;
+#if defined(HAVE_SO_PRIORITY)
+    test->settings->sock_prio = -1; /* -1 indicates not set by user */
+#endif /* HAVE_SO_PRIORITY */
     test->settings->dont_fragment = 0;
     test->zerocopy = 0;
     test->settings->skip_rx_copy = 0;
@@ -4862,6 +4913,17 @@ iperf_common_sockopts(struct iperf_test *test, int s)
             }
         }
     }
+
+#if defined(HAVE_SO_PRIORITY)
+    if (test->settings->sock_prio >= 0) {
+        int opt = test->settings->sock_prio;
+        if (setsockopt(s, SOL_SOCKET, SO_PRIORITY, &opt, sizeof(opt)) < 0) {
+            i_errno = IESETSOPRIO;
+            return -1;
+        }
+    }
+#endif /* HAVE_SO_PRIORITY */
+
     return 0;
 }
 

@@ -353,9 +353,11 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
 
     return plaintext_len;
 
+#if OPENSSL_VERSION_MAJOR >= 3
   errreturn:
     fprintf(stderr, "%s\n", ERR_error_string(ERR_get_error(), NULL));
     return 0;
+#endif
 }
 
 int encode_auth_setting(const char *username, const char *password, EVP_PKEY *public_key, char **authtoken, int use_pkcs1_padding){

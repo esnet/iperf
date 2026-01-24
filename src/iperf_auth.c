@@ -291,7 +291,6 @@ int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned ch
 }
 
 int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedtext_len, EVP_PKEY *private_key, unsigned char **plaintext, int use_pkcs1_padding) {
-    int ret =0;
 #if OPENSSL_VERSION_MAJOR >= 3
     EVP_PKEY_CTX *ctx;
 #else
@@ -328,7 +327,7 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
         padding = RSA_PKCS1_PADDING;
     }
 #if OPENSSL_VERSION_MAJOR >= 3
-
+    int ret = 0;
     plaintext_len = output_buffer_len;
     EVP_PKEY_decrypt_init(ctx);
 

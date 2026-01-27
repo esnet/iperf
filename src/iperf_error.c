@@ -453,6 +453,9 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "unable to update timer");
             perr = 1;
             break;
+        case IECONGESTIONSUPPORT:
+            snprintf(errstr, len, "Client does not support setting TCP congestion control algorithm");
+            break;
         case IESETCONGESTION:
             snprintf(errstr, len, "unable to set TCP_CONGESTION: "
                                   "Supplied congestion control algorithm not supported on this host");

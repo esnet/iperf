@@ -38,6 +38,10 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <ifaddrs.h>
+#if defined(__CYGWIN__)
+#include <cygwin/if.h>
+#endif /* __CYGWIN__ */
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <stdint.h>
@@ -112,6 +116,12 @@ iperf_server_worker_run(void *s) {
 int
 iperf_server_listen(struct iperf_test *test)
 {
+    struct ifaddrs *ifaddr, *ifa; 
+    void *addr_ptr;
+    char ip[INET_ADDRSTRLEN], ip6[INET6_ADDRSTRLEN];
+    char *pip, *pname;
+    int ips_count, name_len;
+
     retry:
     if((test->listener = netannounce(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, test->server_port)) < 0) {
 	if (errno == EAFNOSUPPORT && (test->settings->domain == AF_INET6 || test->settings->domain == AF_UNSPEC)) {
@@ -135,6 +145,58 @@ iperf_server_listen(struct iperf_test *test)
         if (test->debug || test->server_last_run_rc != 2) {
 	    iperf_printf(test, "-----------------------------------------------------------\n");
 	    iperf_printf(test, "Server listening on %d (test #%d)\n", test->server_port, test->server_test_number);
+
+            // Show available interfaces IP addresses
+            // based on code from: https://www.quora.com/How-do-I-write-a-C-program-in-Linux-to-print-all-IP-addresses-on-LAN */
+            if (test->verbose) {
+                iperf_printf(test, "Available Interfaces: ");
+                ips_count = 0;
+                if (getifaddrs(&ifaddr) != -1) { // Get the list of network interfaces
+                    // Loop through the linked list of interfaces 
+                    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) { 
+                        // Check if the interface is up and has an address 
+                        if (ifa->ifa_addr == NULL || (ifa->ifa_flags & IFF_UP) == 0) { 
+                                continue; 
+                        } 
+                        
+                        pip = NULL;
+                        if (test->settings->domain != AF_INET6 && ifa->ifa_addr->sa_family == AF_INET) { // Check for IPv4 addresses
+                            // Convert the address to a string 
+                            addr_ptr = &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;  
+                            inet_ntop(AF_INET, addr_ptr, ip, sizeof(ip));
+                            pip = ip;
+                        } else if (test->settings->domain != AF_INET && ifa->ifa_addr->sa_family == AF_INET6) { // Check for IPv6 addresses
+                            // Convert the address to a string 
+                            addr_ptr = &((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr; 
+                            inet_ntop(AF_INET6, addr_ptr, ip6, sizeof(ip6));
+                            pip = ip6;
+                        }
+                        if (pip != NULL) {
+                            if (ips_count > 0) iperf_printf(test, "                      ");
+                            pname = ifa->ifa_name;
+                            name_len = strlen(pname);
+#if defined(__CYGWIN__)
+                            struct ifaddrs_hwdata *pd = ifa->ifa_data;
+                            if (pd != NULL) {
+                                struct ifreq_frndlyname *frnd = &pd->ifa_frndlyname;
+                                if (frnd->ifrf_len > 0) {
+                                    pname = frnd->ifrf_friendlyname;
+                                    name_len = frnd->ifrf_len;
+                                }
+                            }
+#endif /* __CYGWIN__ */
+                            iperf_printf(test, "%.*s__%s\n", name_len, pname, pip);
+                            ips_count++;
+                        }
+                    }
+                    // Free the list of interfaces 
+                    freeifaddrs(ifaddr);
+                }
+                if (ips_count == 0) {
+                    iperf_printf(test, "UNKNOWN\n");
+                }
+            }
+
 	    iperf_printf(test, "-----------------------------------------------------------\n");
 	    if (test->forceflush)
 	        iflush(test);

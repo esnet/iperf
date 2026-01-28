@@ -33,6 +33,7 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <netdb.h>
 #include <sys/select.h>
 #include <sys/uio.h>
 #include <arpa/inet.h>
@@ -409,6 +410,37 @@ iperf_handle_message_client(struct iperf_test *test)
     return 0;
 }
 
+/*
+ * Make connection to server
+ * This is derived from netdial() but also sets the tos before connection.
+ */
+static int
+netdial_with_tos(int domain, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, int timeout, int tos)
+{
+    struct addrinfo *server_res = NULL;
+    int s, saved_errno;
+
+    s = create_socket(domain, proto, 0, local, bind_dev, local_port, server, port, &server_res);
+    if (s < 0) {
+      return -1;
+    }
+
+    // Set IP TOS
+    if (iperf_set_tos(s, tos) < 0) {
+        return -1;
+    }
+
+    if (timeout_connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen, timeout) < 0 && errno != EINPROGRESS) {
+	saved_errno = errno;
+	close(s);
+	freeaddrinfo(server_res);
+	errno = saved_errno;
+        return -1;
+    }
+
+    freeaddrinfo(server_res);
+    return s;
+}
 
 
 /* iperf_connect -- client to server connection function */
@@ -430,8 +462,9 @@ iperf_connect(struct iperf_test *test)
 
     /* Create and connect the control channel */
     if (test->ctrl_sck < 0)
-	// Create the control channel using an ephemeral port
-	test->ctrl_sck = netdial(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, 0, test->server_hostname, test->server_port, test->settings->connect_timeout);
+    // Create the control channel using an ephemeral port
+    test->ctrl_sck = netdial_with_tos(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, 0, test->server_hostname,
+                                      test->server_port, test->settings->connect_timeout, test->settings->ctrl_tos);
     if (test->ctrl_sck < 0) {
         i_errno = IECONNECT;
         return -1;

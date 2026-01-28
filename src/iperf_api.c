@@ -1135,6 +1135,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"version6", no_argument, NULL, '6'},
         {"tos", required_argument, NULL, 'S'},
         {"dscp", required_argument, NULL, OPT_DSCP},
+        {"control-tos", required_argument, NULL, OPT_CONTROL_TOS},
+        {"control-dscp", required_argument, NULL, OPT_CONTROL_DSCP},
 	{"extra-data", required_argument, NULL, OPT_EXTRA_DATA},
 #if defined(HAVE_FLOWLABEL)
         {"flowlabel", required_argument, NULL, 'L'},
@@ -1512,6 +1514,22 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 			return -1;
 		}
 		client_flag = 1;
+                break;
+            case OPT_CONTROL_TOS:
+                test->settings->ctrl_tos = strtol(optarg, &endptr, 0);
+		if (endptr == optarg ||
+		    test->settings->ctrl_tos < 0 ||
+		    test->settings->ctrl_tos > 255) {
+		    i_errno = IEBADTOS;
+		    return -1;
+		}
+                break;
+	    case OPT_CONTROL_DSCP:
+                test->settings->ctrl_tos = parse_qos(optarg);
+		if(test->settings->ctrl_tos < 0) {
+			i_errno = IEBADTOS;
+			return -1;
+		}
                 break;
 	    case OPT_EXTRA_DATA:
 		test->extra_data = strdup(optarg);
@@ -5492,6 +5510,34 @@ iflush(struct iperf_test *test)
     }
 
     return rc2;
+}
+
+int
+iperf_set_tos(int s, int tos)
+{
+    if (tos) {
+        if (getsockdomain(s) == AF_INET6) {
+#ifdef IPV6_TCLASS
+            if (setsockopt(s, IPPROTO_IPV6, IPV6_TCLASS, &tos, sizeof(tos)) < 0) {
+                i_errno = IESETCOS;
+                return -1;
+            }
+            if (setsockopt(s, IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) < 0) {
+                /* ignore any failure of v4 TOS in IPv6 case */
+            }
+#else
+            i_errno = IESETCOS;
+            return -1;
+#endif
+        } else {
+            if (setsockopt(s, IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) < 0) {
+                i_errno = IESETTOS;
+                return -1;
+            }
+        }
+    }
+
+    return 0;
 }
 
 #if defined (HAVE_TCP_KEEPALIVE)

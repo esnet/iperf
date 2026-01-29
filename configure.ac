@@ -253,6 +253,10 @@ AC_CHECK_FUNCS([sendfile])
 # connections.
 AC_CHECK_FUNCS([getline])
 
+# Check for sendmmsg/recvmmsg support for better throughput.
+AC_CHECK_FUNCS([sendmmsg recvmmsg],
+	       AC_DEFINE([HAVE_SEND_RECVMMSG], [1], [Have sendmmsg/recvmmsg functions.]))
+
 # Check for packet pacing socket option (Linux only for now).
 AC_CACHE_CHECK([SO_MAX_PACING_RATE socket option],
 [iperf3_cv_header_so_max_pacing_rate],

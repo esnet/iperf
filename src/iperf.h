@@ -91,6 +91,16 @@ struct iperf_sctp_info
     uint32_t cwnd;
 };
 
+#ifndef HAVE_SENDMMSG
+struct dummy_mmsghdr  {
+    struct msghdr msg_hdr;  /* Message header */
+    unsigned int  msg_len;  /* Number of received bytes for header */
+};
+#endif /* HAVE_SENDMMSG */
+
+/* macro to calculate buffer sizes used for a stream (to support hse of send/recvmmsg) */
+#define STREAM_BUFSIZE(prefix) (((prefix)->settings->blksize) * (((prefix)->settings->send_recvmmsg == 0 || (prefix)->settings->burst == 0)? 1 : (prefix)->settings->burst))
+
 struct iperf_interval_results
 {
     atomic_iperf_size_t bytes_transferred; /* bytes transferred in this interval */
@@ -186,6 +196,7 @@ struct iperf_settings
     int	      connect_timeout;	    /* socket connection timeout, in ms */
     int       idle_timeout;         /* server idle time timeout */
     unsigned int snd_timeout; /* Timeout for sending tcp messages in active mode, in us */
+    int       send_recvmmsg;        /* whether sendmmsg/recvmmsg should be used - mainly per the -Z option */
     struct iperf_time rcv_timeout;  /* Timeout for receiving messages in active mode, in us */
     int       cntl_ka;              /* Use Control TCP connection Keepalive */
     int       cntl_ka_keepidle;     /* Control TCP connection Keepalive idle time (TCP_KEEPIDLE) */
@@ -237,6 +248,16 @@ struct iperf_stream
     int64_t   omitted_outoforder_packets;
     int64_t   cnt_error;
     int64_t   omitted_cnt_error;
+    
+#ifdef HAVE_SENDMMSG
+    struct mmsghdr *msg; /* For some reason, just struct and not a pointer failes on "field ‘msg’ has incomplete type" */
+#else
+    struct dummy_mmsghdr *msg;
+#endif /* HAVE_SENDMMSG */
+    struct    iovec *pmsg_iov; /* Pointer to the array of iov_msg per mmsg message */
+    int       sendmmsg_buffered_packets_count; /* number of buffered packets for sendmmsg */
+    char      *pbuf; /* Pointer to current vailable space in buffer */
+
     uint64_t  target;
 
     struct sockaddr_storage local_addr;

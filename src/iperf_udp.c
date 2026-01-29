@@ -24,6 +24,13 @@
  * This code is distributed under a BSD style license, see the LICENSE
  * file for complete information.
  */
+
+#include "iperf_config.h"
+
+#ifdef HAVE_SENDMMSG
+#define _GNU_SOURCE	/* required for sendmmg() */
+#endif /* HAVE_SENDMMSG */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -73,6 +80,52 @@ iperf_udp_recv(struct iperf_stream *sp)
 #endif /* HAVE_MSG_TRUNC */
 
     r = Nrecv_no_select(sp->socket, sp->buffer, size, Pudp, sock_opt);
+/*
+ * Tests under WSL Ubunto 20 shows that using `mmsgrecv()` has no prformance advantage
+ * over `Nread()`. It may be that is is because of extra "read" required to find that
+ * there are is more data to read.
+ * In addition, `mmsgrecv` requires the use of timeout parameter,
+ * as otherwise it can get stack after receiving the last message send.
+ * However, adding the timeout may have major impact on the performance.
+ * Therefore, using `mmsgrecv` is commented out.
+ * To fully support `mmsgrecv`, in addition to uncommenting (here and in other parts
+ * of `iperf_udp_recv`), `sp->buffer` should be changed to `pbuf`.
+ */
+/**************** NOT USING `mmsgrecv()` ******************************
+    int msgs_recvd;
+    int i;
+    char *pbuf;
+
+    // Select message reading method
+#ifdef HAVE_SEND_RECVMMSG
+
+    struct timespec tmo;
+
+    if (sp->settings->send_recvmmsg == 1) { // Use recvmmsg()
+    	// Set read timeout
+	tmo.tv_sec = sp->settings->rcv_timeout.secs;
+	tmo.tv_nsec = sp->settings->rcv_timeout.usecs;
+
+        // Receive at least one message
+        do {
+	    msgs_recvd = recvmmsg(sp->socket, sp->msg, sp->settings->burst, MSG_WAITFORONE, &tmo);
+	} while (msgs_recvd < 0 && (errno == EAGAIN || errno == EWOULDBLOCK));
+        if (msgs_recvd <= 0) {
+            r = msgs_recvd;
+        } else {
+            for (i = 0, r = 0; i < msgs_recvd; i++) {
+                r += sp->msg[i].msg_hdr.msg_iov->iov_len;
+            }
+        } 
+    } // recvmmsg
+    else
+#endif // HAVE_SEND_RECVMMSG
+    { // Nread
+        r = Nread(sp->socket, sp->buffer, size, Pudp);
+        msgs_recvd = 1;
+        // `sp->msg[0].msg_hdr.msg_iov->iov_base = sp->buffer;` - not needed as initialized as part of Stream init
+    }
+**************** NOT USING `mmsgrecv()` ******************************/
 
     /*
      * If we got an error in the read, or if we didn't read anything
@@ -95,6 +148,12 @@ iperf_udp_recv(struct iperf_stream *sp)
 
 	sp->result->bytes_received += r;
 	sp->result->bytes_received_this_interval += r;
+
+/**************** NOT USING `mmsgrecv()` ******************************
+	// Go over all nessages received to evalauet packet count and timings
+	for (i = 0; i < msgs_recvd; i++) {
+            pbuf = sp->msg[i].msg_hdr.msg_iov->iov_base; // current msg buffer
+**************** NOT USING `mmsgrecv()` ******************************/
 
 	/* Dig the various counters out of the incoming UDP packet */
 	if (test->udp_counters_64bit) {
@@ -148,11 +207,11 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    sp->packet_count = pcount;
 	} else {
 
-	    /*
-	     * Sequence number went backward (or was stationary?!?).
-	     * This counts as an out-of-order packet.
-	     */
-	    sp->outoforder_packets++;
+            /*
+             * Sequence number went backward (or was stationary?!?).
+             * This counts as an out-of-order packet.
+             */
+            sp->outoforder_packets++;
 
 	    /*
 	     * If we have lost packets, then the fact that we are now
@@ -184,16 +243,23 @@ iperf_udp_recv(struct iperf_stream *sp)
 	iperf_time_diff(&arrival_time, &sent_time, &temp_time);
 	transit = iperf_time_in_secs(&temp_time);
 
-	/* Hack to handle the first packet by initializing prev_transit. */
-	if (first_packet)
-	    sp->prev_transit = transit;
+        /* Hack to handle the first packet by initializing prev_transit. */
+        if (first_packet) {
+            sp->prev_transit = transit;
+            first_packet = 0;
+        }
 
 	d = transit - sp->prev_transit;
 	if (d < 0)
 	    d = -d;
 	sp->prev_transit = transit;
 	sp->jitter += (d - sp->jitter) / 16.0;
-    }
+
+/**************** NOT USING `mmsgrecv()` ******************************
+	} // for over all received messages
+**************** NOT USING `mmsgrecv()` ******************************/
+
+    } /* if state is TEST_RUNNING */
     else {
 	if (test->debug_level >= DEBUG_LEVEL_INFO)
 	    printf("Late receive, state = %d\n", test->state);
@@ -210,43 +276,97 @@ iperf_udp_recv(struct iperf_stream *sp)
 int
 iperf_udp_send(struct iperf_stream *sp)
 {
-    int r;
-    int       size = sp->settings->blksize;
+    int r = 0;
+    int size = sp->settings->blksize;
     struct iperf_time before;
+    char *buf = sp->buffer;
+    uint32_t  sec, usec;
 
-    iperf_time_now(&before);
+#ifdef HAVE_SENDMMSG
+    int i, j, k;
+    char *b;
+#endif /* HAVE_SENDMMSG */
 
+#ifdef HAVE_SENDMMSG
+    /* if sendmmsg is used - set buffer pointer to next buffer */
+    if (sp->settings->send_recvmmsg == 1) {
+        i = sp->sendmmsg_buffered_packets_count++;
+        sp->msg[i].msg_hdr.msg_iovlen = 1;
+        buf = sp->pbuf;
+        sp->msg[i].msg_hdr.msg_iov->iov_base = buf;
+        sp->pbuf += sp->settings->blksize;
+        sp->msg[i].msg_hdr.msg_iov->iov_len = size;
+    }
+#endif /* HAVE_SENDMMSG */
+
+    /* Set message packet count */
     ++sp->packet_count;
-
     if (sp->test->udp_counters_64bit) {
-
-	uint32_t  sec, usec;
 	uint64_t  pcount;
-
-	sec = htonl(before.secs);
-	usec = htonl(before.usecs);
 	pcount = htobe64(sp->packet_count);
-
-	memcpy(sp->buffer, &sec, sizeof(sec));
-	memcpy(sp->buffer+4, &usec, sizeof(usec));
-	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
-
-    }
-    else {
-
-	uint32_t  sec, usec, pcount;
-
-	sec = htonl(before.secs);
-	usec = htonl(before.usecs);
+	memcpy(buf+8, &pcount, sizeof(pcount));
+    } else {
+	uint32_t  pcount;
 	pcount = htonl(sp->packet_count);
-
-	memcpy(sp->buffer, &sec, sizeof(sec));
-	memcpy(sp->buffer+4, &usec, sizeof(usec));
-	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
-
+	memcpy(buf+8, &pcount, sizeof(pcount));	
     }
 
-    r = Nwrite(sp->socket, sp->buffer, size, Pudp);
+/* Use sendmmsg when approriate to send the packet, else use Nwrite */
+#ifdef HAVE_SENDMMSG
+    if (sp->settings->send_recvmmsg == 1) {
+	/* When enough "burst" packets were buffered - send them */
+	if (sp->sendmmsg_buffered_packets_count >= sp->settings->burst) {
+            /* Set actual sending time to all packets*/
+            iperf_time_now(&before);
+            sec = htonl(before.secs);
+	    usec = htonl(before.usecs);
+            for (i = 0; i < sp->sendmmsg_buffered_packets_count; i++) {
+                b = sp->msg[i].msg_hdr.msg_iov->iov_base;
+                memcpy(b, &sec, sizeof(sec));
+		memcpy(b+4, &usec, sizeof(usec));	
+	    }
+
+	    /* Sending messages and making sure all packets are sent */
+	    i = 0;	/* count of messages sent */
+	    r = 0;	/* total bytes sent */
+	    while (i < sp->sendmmsg_buffered_packets_count) {
+	        j = sendmmsg(sp->socket, &sp->msg[i], sp->sendmmsg_buffered_packets_count - i, MSG_DONTWAIT);
+		if (j < 0) {
+		    r = j;
+		    break;
+		}
+
+		if (sp->test->debug && i+j < sp->sendmmsg_buffered_packets_count)
+                    printf("sendmmsg() sent only %d messges out of %d still bufferred\n",
+		           j, sp->sendmmsg_buffered_packets_count-i);
+
+                for (k = i; k < i+j; k++) { /* accumulate number of bytes sent */
+                    r += sp->msg[k].msg_len;
+                }
+                i += j; /* accumulate number of messages received */
+	    }
+
+	    if (sp->test->debug_level >= DEBUG_LEVEL_DEBUG)
+                printf("sendmmsg() %s. Sent %d messges out of %d bufferred. %d bytes sent. (errno=%d: %s)\n",
+		       ((r > 0)? "succesful":"FAILED"), i, sp->sendmmsg_buffered_packets_count, r, errno, strerror(errno));
+	    
+	    sp->sendmmsg_buffered_packets_count = 0;
+            sp->pbuf = sp->buffer;
+	}
+    }
+    else
+#endif	/* HAVE_SENDMMSG */
+    {
+        /* Set sending time */
+        iperf_time_now(&before);
+        sec = htonl(before.secs);
+	usec = htonl(before.usecs);
+        memcpy(buf, &sec, sizeof(sec));
+	memcpy(buf+4, &usec, sizeof(usec));
+
+        /* Write singe message */
+        r = Nwrite(sp->socket, buf, size, Pudp);
+    }
 
     if (r <= 0) {
         --sp->packet_count;     /* Don't count messages that no data was sent from them.
@@ -261,8 +381,10 @@ iperf_udp_send(struct iperf_stream *sp)
     sp->result->bytes_sent += r;
     sp->result->bytes_sent_this_interval += r;
 
-    if (sp->test->debug_level >=  DEBUG_LEVEL_DEBUG)
-	printf("sent %d bytes of %d, total %" PRIu64 "\n", r, sp->settings->blksize, sp->result->bytes_sent);
+    if (sp->test->debug_level >=  DEBUG_LEVEL_DEBUG) {
+	if (sp->settings->send_recvmmsg == 0 || r > 0)
+	    printf("sent %d bytes of %d bytes buffers, total %" PRIu64 "\n", r, size, sp->result->bytes_sent);
+    }
 
     return r;
 }
@@ -325,7 +447,7 @@ iperf_udp_buffercheck(struct iperf_test *test, int s)
 	char str[WARN_STR_LEN];
 	snprintf(str, sizeof(str),
 		 "Block size %d > sending socket buffer size %d",
-		 test->settings->blksize, sndbuf_actual);
+		 STREAM_BUFSIZE(test), sndbuf_actual);
 	warning(str);
 	rc = 1;
     }
@@ -343,11 +465,11 @@ iperf_udp_buffercheck(struct iperf_test *test, int s)
 	i_errno = IESETBUF2;
 	return -1;
     }
-    if (test->settings->blksize > rcvbuf_actual) {
+    if (STREAM_BUFSIZE(test) > rcvbuf_actual) {
 	char str[WARN_STR_LEN];
 	snprintf(str, sizeof(str),
 		 "Block size %d > receiving socket buffer size %d",
-		 test->settings->blksize, rcvbuf_actual);
+		 STREAM_BUFSIZE(test), rcvbuf_actual);
 	warning(str);
 	rc = 1;
     }
@@ -537,7 +659,7 @@ iperf_udp_connect(struct iperf_test *test)
     if (rc > 0) {
 	if (test->settings->socket_bufsize == 0) {
             char str[WARN_STR_LEN];
-	    int bufsize = test->settings->blksize + UDP_BUFFER_EXTRA;
+	    int bufsize = STREAM_BUFSIZE(test) + UDP_BUFFER_EXTRA;
 	    snprintf(str, sizeof(str), "Increasing socket buffer size to %d",
 	             bufsize);
 	    warning(str);

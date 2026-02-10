@@ -1215,6 +1215,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = rcv_timeout_flag = snd_timeout_flag =0;
+#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)
+    int gsro_flag = 0;
+#endif
 #if defined(HAVE_SSL)
     char *client_username = NULL, *client_rsa_public_key = NULL, *server_rsa_private_key = NULL;
     FILE *ptr_file;
@@ -1796,6 +1799,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)
             case OPT_GSRO:
 		/* Enable GSO/GRO which is disabled by default */
+		gsro_flag = 1;
 #ifdef HAVE_UDP_SEGMENT
 		test->settings->gso = 1;
 #endif
@@ -1823,6 +1827,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         i_errno = IECLIENTONLY;
         return -1;
     }
+#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)
+    if (test->role == 's' && gsro_flag) {
+        i_errno = IECLIENTONLY;
+        return -1;
+    }
+#endif
 
 /* GSO/GRO are disabled by default when available, enabled only via --gsro */
 

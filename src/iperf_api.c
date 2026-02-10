@@ -1190,7 +1190,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"mptcp", no_argument, NULL, 'm'},
 #endif
 #if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)
-        {"no-gsro", no_argument, NULL, OPT_NO_GSRO},
+        {"gsro", no_argument, NULL, OPT_GSRO},
 #endif
         {"debug", optional_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
@@ -1794,13 +1794,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		break;
 #endif
 #if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)
-            case OPT_NO_GSRO:
-		/* Disable GSO/GRO which would otherwise be enabled by default */
+            case OPT_GSRO:
+		/* Enable GSO/GRO which is disabled by default */
 #ifdef HAVE_UDP_SEGMENT
-		test->settings->gso = 0;
+		test->settings->gso = 1;
 #endif
 #ifdef HAVE_UDP_GRO
-		test->settings->gro = 0;
+		test->settings->gro = 1;
 #endif
                 break;
 #endif
@@ -1824,7 +1824,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         return -1;
     }
 
-/* GSO/GRO are enabled by default when available, disabled only via --no-gsro */
+/* GSO/GRO are disabled by default when available, enabled only via --gsro */
 
 #if defined(HAVE_SSL)
 
@@ -3313,12 +3313,12 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->pacing_timer = DEFAULT_PACING_TIMER;
     testp->settings->burst = 0;
 #ifdef HAVE_UDP_SEGMENT
-    testp->settings->gso = 1;  /* Enable GSO by default */
+    testp->settings->gso = 0;  /* Disable GSO by default, enabled via --gsro */
     testp->settings->gso_dg_size = 0;
     testp->settings->gso_bf_size = GSO_BF_MAX_SIZE;
 #endif
 #ifdef HAVE_UDP_GRO
-    testp->settings->gro = 1;  /* Enable GRO by default */
+    testp->settings->gro = 0;  /* Disable GRO by default, enabled via --gsro */
     testp->settings->gro_bf_size = GRO_BF_MAX_SIZE;
 #endif
     testp->settings->mss = 0;

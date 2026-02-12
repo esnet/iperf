@@ -1189,9 +1189,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_IPPROTO_MPTCP)
         {"mptcp", no_argument, NULL, 'm'},
 #endif
-#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)
         {"gsro", no_argument, NULL, OPT_GSRO},
-#endif
         {"debug", optional_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -1215,9 +1213,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = rcv_timeout_flag = snd_timeout_flag =0;
-#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)
     int gsro_flag = 0;
-#endif
 #if defined(HAVE_SSL)
     char *client_username = NULL, *client_rsa_public_key = NULL, *server_rsa_private_key = NULL;
     FILE *ptr_file;
@@ -1796,18 +1792,20 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->mptcp = 1;
 		break;
 #endif
-#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)
             case OPT_GSRO:
 		/* Enable GSO/GRO which is disabled by default */
+		/* Flag is available regardless of local support to allow client to request server to use it */
 		gsro_flag = 1;
-#ifdef HAVE_UDP_SEGMENT
 		test->settings->gso = 1;
-#endif
-#ifdef HAVE_UDP_GRO
 		test->settings->gro = 1;
+#if !defined(HAVE_UDP_SEGMENT) && !defined(HAVE_UDP_GRO)
+		warning("--gsro requested but UDP GSO/GRO not supported on this client; will only be enabled on server if supported");
+#elif !defined(HAVE_UDP_SEGMENT)
+		warning("--gsro requested but UDP GSO not supported on this client; will be enabled on server if supported");
+#elif !defined(HAVE_UDP_GRO)
+		warning("--gsro requested but UDP GRO not supported on this client; will be enabled on server if supported");
 #endif
                 break;
-#endif
 	    case 'h':
 		usage_long(stdout);
 		exit(0);
@@ -1827,12 +1825,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         i_errno = IECLIENTONLY;
         return -1;
     }
-#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)
     if (test->role == 's' && gsro_flag) {
         i_errno = IECLIENTONLY;
         return -1;
     }
-#endif
 
 /* GSO/GRO are disabled by default when available, enabled only via --gsro */
 
@@ -2498,21 +2494,15 @@ send_parameters(struct iperf_test *test)
 	if (test->settings->burst)
 	    cJSON_AddNumberToObject(j, "burst", test->settings->burst);
 
-#ifdef HAVE_UDP_SEGMENT
-	/* Send UDP GSO settings from client to server */
+	/* Send UDP GSO/GRO settings from client to server */
+	/* Always send these fields to allow server to use GSO/GRO even if client doesn't support it */
 	if (test->protocol->id == Pudp) {
 	    cJSON_AddNumberToObject(j, "gso", test->settings->gso);
 	    cJSON_AddNumberToObject(j, "gso_dg_size", test->settings->gso_dg_size);
 	    cJSON_AddNumberToObject(j, "gso_bf_size", test->settings->gso_bf_size);
-	}
-#endif
-#ifdef HAVE_UDP_GRO
-	/* Send UDP GRO settings from client to server */
-	if (test->protocol->id == Pudp) {
 	    cJSON_AddNumberToObject(j, "gro", test->settings->gro);
 	    cJSON_AddNumberToObject(j, "gro_bf_size", test->settings->gro_bf_size);
 	}
-#endif
 	if (test->settings->tos)
 	    cJSON_AddNumberToObject(j, "TOS", test->settings->tos);
 	if (test->settings->flowlabel)
@@ -2637,8 +2627,8 @@ get_parameters(struct iperf_test *test)
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "len", cJSON_Number)) != NULL)
 	    test->settings->blksize = j_p->valueint;
 
-#ifdef HAVE_UDP_SEGMENT
-	/* Accept UDP GSO settings provided by the client */
+	/* Accept UDP GSO/GRO settings provided by the client */
+	/* Always accept these fields to allow server to use GSO/GRO based on its own support */
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "gso", cJSON_Number)) != NULL)
 	    test->settings->gso = j_p->valueint;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "gso_dg_size", cJSON_Number)) != NULL)
@@ -2655,14 +2645,12 @@ get_parameters(struct iperf_test *test)
 	        test->settings->gso_dg_size = DEFAULT_UDP_BLKSIZE;
 	    }
 	}
-#endif
-#ifdef HAVE_UDP_GRO
-	/* Accept UDP GRO settings provided by the client */
+
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "gro", cJSON_Number)) != NULL)
 	    test->settings->gro = j_p->valueint;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "gro_bf_size", cJSON_Number)) != NULL)
 	    test->settings->gro_bf_size = j_p->valueint;
-#endif
+
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "bandwidth", cJSON_Number)) != NULL)
 	    test->settings->rate = j_p->valueint;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "fqrate", cJSON_Number)) != NULL)
@@ -3322,15 +3310,12 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->fqrate = 0;
     testp->settings->pacing_timer = DEFAULT_PACING_TIMER;
     testp->settings->burst = 0;
-#ifdef HAVE_UDP_SEGMENT
+    /* Always initialize GSO/GRO fields to allow client-server negotiation */
     testp->settings->gso = 0;  /* Disable GSO by default, enabled via --gsro */
     testp->settings->gso_dg_size = 0;
     testp->settings->gso_bf_size = GSO_BF_MAX_SIZE;
-#endif
-#ifdef HAVE_UDP_GRO
     testp->settings->gro = 0;  /* Disable GRO by default, enabled via --gsro */
     testp->settings->gro_bf_size = GRO_BF_MAX_SIZE;
-#endif
     testp->settings->mss = 0;
     testp->settings->bytes = 0;
     testp->settings->blocks = 0;
@@ -3644,13 +3629,10 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->burst = 0;
     test->settings->mss = 0;
     test->settings->tos = 0;
-#ifdef HAVE_UDP_SEGMENT
+    /* Always initialize GSO/GRO fields */
     test->settings->gso_dg_size = 0;
     test->settings->gso_bf_size = GSO_BF_MAX_SIZE;
-#endif
-#ifdef HAVE_UDP_GRO
     test->settings->gro_bf_size = GRO_BF_MAX_SIZE;
-#endif
     test->settings->dont_fragment = 0;
     test->zerocopy = 0;
     test->settings->skip_rx_copy = 0;

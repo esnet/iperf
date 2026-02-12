@@ -191,15 +191,12 @@ struct iperf_settings
     int       cntl_ka_keepidle;     /* Control TCP connection Keepalive idle time (TCP_KEEPIDLE) */
     int       cntl_ka_interval;     /* Control TCP connection Keepalive interval between retries (TCP_KEEPINTV) */
     int       cntl_ka_count;        /* Control TCP connection Keepalive number of retries (TCP_KEEPCNT) */
-#ifdef HAVE_UDP_SEGMENT
+    /* GSO/GRO fields always present to allow client-server negotiation regardless of local support */
     int       gso;
     int       gso_dg_size;
     int       gso_bf_size;
-#endif
-#ifdef HAVE_UDP_GRO
     int       gro;
     int       gro_bf_size;
-#endif
 };
 
 struct iperf_test;

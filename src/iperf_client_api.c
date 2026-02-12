@@ -516,7 +516,7 @@ iperf_connect(struct iperf_test *test)
         printf("Setting UDP block size to %d\n", test->settings->blksize);
         }
     }
-#ifdef HAVE_UDP_SEGMENT
+    /* Initialize GSO parameters when --gsro is used */
     if (test->settings->gso) {
         test->settings->gso_dg_size = test->settings->blksize;
         /* use the multiple of datagram size for the best efficiency. */
@@ -527,7 +527,6 @@ iperf_connect(struct iperf_test *test)
             test->settings->gso_dg_size = DEFAULT_UDP_BLKSIZE;
         }
     }
-#endif
 
     /*
     * Regardless of whether explicitly or implicitly set, if the

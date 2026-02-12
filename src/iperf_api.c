@@ -1798,13 +1798,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		gsro_flag = 1;
 		test->settings->gso = 1;
 		test->settings->gro = 1;
-#if !defined(HAVE_UDP_SEGMENT) && !defined(HAVE_UDP_GRO)
-		warning("--gsro requested but UDP GSO/GRO not supported on this client; will only be enabled on server if supported");
-#elif !defined(HAVE_UDP_SEGMENT)
-		warning("--gsro requested but UDP GSO not supported on this client; will be enabled on server if supported");
-#elif !defined(HAVE_UDP_GRO)
-		warning("--gsro requested but UDP GRO not supported on this client; will be enabled on server if supported");
-#endif
                 break;
 	    case 'h':
 		usage_long(stdout);
@@ -1828,6 +1821,17 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     if (test->role == 's' && gsro_flag) {
         i_errno = IECLIENTONLY;
         return -1;
+    }
+
+    /* Show platform support warnings only after confirming we're in client mode */
+    if (gsro_flag) {
+#if !defined(HAVE_UDP_SEGMENT) && !defined(HAVE_UDP_GRO)
+        warning("--gsro requested but UDP GSO/GRO not supported on this client; will only be enabled on server if supported");
+#elif !defined(HAVE_UDP_SEGMENT)
+        warning("--gsro requested but UDP GSO not supported on this client; will be enabled on server if supported");
+#elif !defined(HAVE_UDP_GRO)
+        warning("--gsro requested but UDP GRO not supported on this client; will be enabled on server if supported");
+#endif
     }
 
 #if defined(HAVE_SSL)

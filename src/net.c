@@ -603,6 +603,13 @@ Nread_gro(int fd, char *buf, size_t count, int prot, int *dgram_sz)
 
 	return r;
 }
+#else
+int
+Nread_gro(int fd, char *buf, size_t count, int prot, int *dgram_sz)
+{
+	/* GRO not supported on this platform */
+	return NET_HARDERROR;
+}
 #endif /* HAVE_UDP_GRO */
 
 /*
@@ -708,6 +715,13 @@ Nwrite_gso(int fd, const char *buf, size_t count, int prot, uint16_t gso_size)
 		}
 	}
 	return r;
+}
+#else
+int
+Nwrite_gso(int fd, const char *buf, size_t count, int prot, uint16_t gso_size)
+{
+	/* GSO not supported on this platform */
+	return NET_HARDERROR;
 }
 #endif /* HAVE_UDP_SEGMENT */
 

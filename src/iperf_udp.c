@@ -70,7 +70,6 @@ iperf_udp_recv(struct iperf_stream *sp)
     int sock_opt = 0;
     int       dgram_sz;
     int       buf_sz;
-    int       cnt = 0;
     char      *dgram_buf;
     char      *dgram_buf_end;
     const int min_pkt_size = sizeof(uint32_t) * 3; /* sec + usec + pcount (32-bit) */
@@ -84,16 +83,13 @@ iperf_udp_recv(struct iperf_stream *sp)
 #endif /* HAVE_MSG_TRUNC */
 
     /* Configure loop parameters based on GRO availability */
-#ifdef HAVE_UDP_GRO
     if (sp->test->settings->gro) {
 	size = sp->test->settings->gro_bf_size;
 	r = Nread_gro(sp->socket, sp->buffer, size, Pudp, &dgram_sz);
 	/* Use negotiated block size for GRO segment stride to ensure correct parsing. */
 	dgram_sz = sp->settings->blksize;
 	buf_sz = r;
-    } else
-#endif
-    {
+    } else {
 	/* GRO disabled or unavailable - use normal UDP receive and single packet size */
 	r = Nrecv_no_select(sp->socket, sp->buffer, size, Pudp, sock_opt);
 	dgram_sz = sp->settings->blksize;
@@ -130,7 +126,6 @@ iperf_udp_recv(struct iperf_stream *sp)
 	dgram_buf_end = sp->buffer + buf_sz;
 
 	while (buf_sz >= dgram_sz && dgram_buf + dgram_sz <= dgram_buf_end) {
-	    cnt++;
 
 	    /* Ensure we have enough bytes for the packet header */
 	    if (buf_sz < min_pkt_size)
@@ -217,7 +212,6 @@ iperf_udp_send(struct iperf_stream *sp)
     const int min_pkt_size = sizeof(uint32_t) * 3; /* sec + usec + pcount (32-bit) */
 
     /* Configure loop parameters based on GSO availability */
-#ifdef HAVE_UDP_SEGMENT
     if (sp->test->settings->gso) {
 	dgram_sz = sp->test->settings->gso_dg_size;
 	buf_sz = sp->test->settings->gso_bf_size;
@@ -228,9 +222,7 @@ iperf_udp_send(struct iperf_stream *sp)
 	    dgram_sz = buf_sz = size;
 	    sp->test->settings->gso = 0;  /* Disable GSO for safety */
 	}
-    } else
-#endif
-    {
+    } else {
 	/* GSO disabled or unavailable - single packet */
 	dgram_sz = buf_sz = size;
     }
@@ -287,13 +279,12 @@ iperf_udp_send(struct iperf_stream *sp)
 	printf("GSO: %d bytes remaining unprocessed\n", buf_sz);
     }
 
-#ifdef HAVE_UDP_SEGMENT
     if (sp->test->settings->gso) {
         size = sp->test->settings->gso_bf_size;
         r = Nwrite_gso(sp->socket, sp->buffer, size, Pudp, sp->test->settings->gso_dg_size);
-    } else
-#endif
-    r = Nwrite(sp->socket, sp->buffer, size, Pudp);
+    } else {
+        r = Nwrite(sp->socket, sp->buffer, size, Pudp);
+    }
 
     if (r <= 0) {
         --sp->packet_count;     /* Don't count messages that no data was sent from them.
@@ -438,6 +429,14 @@ iperf_udp_gso(struct iperf_test *test, int s)
 
     return rc;
 }
+#else
+int
+iperf_udp_gso(struct iperf_test *test, int s)
+{
+    /* GSO not supported on this platform */
+    test->settings->gso = 0;
+    return -1;
+}
 #endif
 
 #ifdef HAVE_UDP_GRO
@@ -458,6 +457,14 @@ iperf_udp_gro(struct iperf_test *test, int s)
     }
 
     return rc;
+}
+#else
+int
+iperf_udp_gro(struct iperf_test *test, int s)
+{
+    /* GRO not supported on this platform */
+    test->settings->gro = 0;
+    return -1;
 }
 #endif
 
@@ -520,14 +527,10 @@ iperf_udp_accept(struct iperf_test *test)
 	}
     }
 
-#ifdef HAVE_UDP_SEGMENT
     if (test->settings->gso)
         iperf_udp_gso(test, s);
-#endif
-#ifdef HAVE_UDP_GRO
     if (test->settings->gro)
         iperf_udp_gro(test, s);
-#endif
 
 #if defined(HAVE_SO_MAX_PACING_RATE)
     /* If socket pacing is specified, try it. */
@@ -629,14 +632,10 @@ iperf_udp_connect(struct iperf_test *test)
 	/* error */
 	return rc;
 
-#ifdef HAVE_UDP_SEGMENT
     if (test->settings->gso)
         iperf_udp_gso(test, s);
-#endif
-#ifdef HAVE_UDP_GRO
     if (test->settings->gro)
         iperf_udp_gro(test, s);
-#endif
 
     /*
      * If the socket buffer was too small, but it was the default

@@ -3197,7 +3197,7 @@ protocol_free(struct protocol *proto)
 int
 iperf_defaults(struct iperf_test *testp)
 {
-    struct protocol *tcp, *udp;
+    struct protocol *tcp, *udp, *quic;
 #if defined(HAVE_SCTP_H)
     struct protocol *sctp;
 #endif /* HAVE_SCTP_H */
@@ -3292,6 +3292,23 @@ iperf_defaults(struct iperf_test *testp)
     udp->recv = iperf_udp_recv;
     udp->init = iperf_udp_init;
     SLIST_INSERT_AFTER(tcp, udp, protocols);
+
+    quic = protocol_new();
+    if (!quic) {
+        protocol_free(tcp);
+        return -1;
+    }
+
+    // TODO: implement QUIC protocol functions and set them here
+    quic->id = Pquic;
+    quic->name = "UDP";
+    quic->accept = NULL;
+    quic->listen = NULL;
+    quic->connect = NULL;
+    quic->send = NULL;
+    quic->recv = NULL;
+    quic->init = NULL;
+    SLIST_INSERT_AFTER(udp, quic, protocols);
 
     set_protocol(testp, Ptcp);
 

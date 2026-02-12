@@ -62,6 +62,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 /* default settings */
 #define Ptcp SOCK_STREAM
 #define Pudp SOCK_DGRAM
+#define Pquic SOCK_DGRAM
 #define Psctp 12
 #define DEFAULT_UDP_BLKSIZE 1460 /* default is dynamically set, else this */
 #define DEFAULT_TCP_BLKSIZE (128 * 1024)  /* default read/write block size */

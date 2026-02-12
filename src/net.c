@@ -42,8 +42,6 @@
 #include <linux/udp.h>
 #endif
 
-#include "iperf.h"
-
 #ifdef HAVE_SENDFILE
 #ifdef linux
 #include <sys/sendfile.h>
@@ -593,7 +591,6 @@ Nread_gro(int fd, char *buf, size_t count, int prot, int *dgram_sz)
 		if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK) {
 			return 0;
 		} else {
-			printf("\nUnexpected error (%d)\n", errno);
 			return NET_HARDERROR;
 		}
 	}
@@ -684,9 +681,6 @@ static int udp_sendmsg_gso(int fd, const char *buf, size_t count, uint16_t gso_s
 
 	ret = sendmsg(fd, &msg, 0);
 
-	if (ret != iov.iov_len)
-		printf("msg: %u != %llu\n", ret, (unsigned long long) iov.iov_len);
-
 	return ret;
 }
 
@@ -704,15 +698,12 @@ Nwrite_gso(int fd, const char *buf, size_t count, int prot, uint16_t gso_size)
 #if (EAGAIN != EWOULDBLOCK)
 			case EWOULDBLOCK:
 #endif
-				printf("\nerrono (%d)\n", errno);
 				return 0;
 
 			case ENOBUFS:
-				printf("\nUnexpected error ENOBUFS (%d)\n", ENOBUFS);
 				return NET_SOFTERROR;
 
 			default:
-				printf("\nUnexpected error (%d)\n", errno);
 				return NET_HARDERROR;
 		}
 	}

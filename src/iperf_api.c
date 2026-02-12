@@ -1830,8 +1830,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         return -1;
     }
 
-/* GSO/GRO are disabled by default when available, enabled only via --gsro */
-
 #if defined(HAVE_SSL)
 
     if (test->role == 's' && (client_username || client_rsa_public_key)){
@@ -1937,7 +1935,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	return -1;
     }
 
-#ifdef HAVE_UDP_SEGMENT
     if (test->protocol->id == Pudp && test->settings->gso) {
         test->settings->gso_dg_size = blksize;
         /* use the multiple of datagram size for the best efficiency. */
@@ -1948,7 +1945,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             test->settings->gso_dg_size = DEFAULT_UDP_BLKSIZE;
         }
     }
-#endif
 
     test->settings->blksize = blksize;
 
@@ -4857,14 +4853,10 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         return NULL;
     }
     size = test->settings->blksize;
-#ifdef HAVE_UDP_SEGMENT
     if (test->protocol->id == Pudp && test->settings->gso && (size < test->settings->gso_bf_size))
         size = test->settings->gso_bf_size;
-#endif
-#ifdef HAVE_UDP_GRO
     if (test->protocol->id == Pudp && test->settings->gro && (size < test->settings->gro_bf_size))
         size = test->settings->gro_bf_size;
-#endif
     if (sp->test->debug)
         printf("Buffer %d bytes\n", size);
     if (ftruncate(sp->buffer_fd, size) < 0) {
@@ -4873,7 +4865,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         free(sp);
         return NULL;
     }
-    sp->buffer = (char *) mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_PRIVATE, sp->buffer_fd, 0);
+    sp->buffer = (char *) mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, sp->buffer_fd, 0);
     if (sp->buffer == MAP_FAILED) {
         i_errno = IECREATESTREAM;
         free(sp->result);

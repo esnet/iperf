@@ -2426,6 +2426,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddTrueToObject(j, "udp");
         else if (test->protocol->id == Psctp)
             cJSON_AddTrueToObject(j, "sctp");
+        else if (test->protocol->id == Pquic)
+            cJSON_AddTrueToObject(j, "quic");
 	cJSON_AddNumberToObject(j, "omit", test->omit);
 	if (test->server_affinity != -1)
 	    cJSON_AddNumberToObject(j, "server_affinity", test->server_affinity);
@@ -3307,6 +3309,7 @@ iperf_defaults(struct iperf_test *testp)
     quic->connect = NULL;
     quic->send = NULL;
     quic->recv = NULL;
+    quic->name = "QUIC";
     quic->init = NULL;
     SLIST_INSERT_AFTER(udp, quic, protocols);
 

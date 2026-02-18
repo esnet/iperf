@@ -56,6 +56,18 @@ if test "x$GCC" = "xyes"; then
   CFLAGS="$CFLAGS -Wall"
 fi
 
+# Check for ldconfig
+AC_ARG_WITH([ldconfig], AS_HELP_STRING([--without-ldconfig], [do not run ldconfig]))
+
+if test "$with_ldconfig" != no; then
+  AC_CHECK_PROG([LDCONFIG], [ldconfig], [ldconfig], [false])
+  if test "$LDCONFIG" != false; then
+    AC_SUBST([LDCONFIG], [$LDCONFIG])
+  else
+    AC_MSG_WARN([ldconfig not found; library path not updated])
+  fi
+fi
+
 # Check if enable profiling
 AC_ARG_ENABLE([profiling],
     AS_HELP_STRING([--enable-profiling], [Enable iperf3 profiling binary]))

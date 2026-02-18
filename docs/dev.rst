@@ -112,9 +112,6 @@ tracker.  These issues are either open (indicating no solution
 currently exists) or closed with the notation that no further attempts
 to solve the problem are currently being made:
 
-* The ``-Z`` flag sometimes causes the iperf3 client to hang on OSX.
-  (Issue #129)
-
 * When specifying the TCP buffer size using the ``-w`` flag on Linux,
   the Linux kernel automatically doubles the value passed in to
   compensate for overheads.  (This can be observed by using
@@ -130,17 +127,17 @@ to solve the problem are currently being made:
 * On some platforms (observed on at least one version of Ubuntu
   Linux), it might be necessary to invoke ``ldconfig`` manually after
   doing a ``make install`` before the ``iperf3`` executable can find
-  its shared library.  (Issue #153)
+  its shared library.
 
 * The results printed on the server side at the end of a test do not
   correctly reflect the client-side measurements.  This is due to the
   ordering of computing and transferring results between the client
-  and server.  (Issue #293)
+  and server.
 
 * The server could have a very short measurement reporting interval at
   the end of a test (particularly a UDP test), containing few or no
   packets.  This issue is due to an artifact of timing between the
-  client and server.  (Issue #278)
+  client and server.
 
 There are, of course, many other open and closed issues in the issue
 tracker.

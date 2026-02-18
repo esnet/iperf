@@ -1125,6 +1125,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"bidir", no_argument, NULL, OPT_BIDIRECTIONAL},
         {"window", required_argument, NULL, 'w'},
         {"bind", required_argument, NULL, 'B'},
+        {"quic", no_argument, NULL, 'q'},
 #if defined(HAVE_SO_BINDTODEVICE)
         {"bind-dev", required_argument, NULL, OPT_BIND_DEV},
 #endif /* HAVE_SO_BINDTODEVICE */
@@ -1315,6 +1316,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             }
             case 'u':
                 set_protocol(test, Pudp);
+                break;
+            case 'q':
+                set_protocol(test, Pquic);
 		client_flag = 1;
                 break;
             case OPT_SCTP:
@@ -3196,6 +3200,33 @@ protocol_free(struct protocol *proto)
 }
 
 /**************************************************************************/
+// TODO: add actual QUIC functionality. These are placeholder functions to allow the --quic flag to run without error, but with wrong functionality
+int iperf_quic_listen(struct iperf_test *test)
+{
+    return iperf_tcp_listen(test);
+}
+int iperf_quic_connect(struct iperf_test *test)
+{
+    return iperf_tcp_connect(test);
+}
+int iperf_quic_accept(struct iperf_test *test)
+{
+    return iperf_tcp_accept(test);
+}
+int iperf_quic_send(struct iperf_stream *sp)
+{
+    return iperf_tcp_send(sp);
+}
+int iperf_quic_recv(struct iperf_stream *sp)
+{
+    return iperf_tcp_recv(sp);
+}
+int iperf_quic_init(struct iperf_test *test)
+{
+    return iperf_udp_init(test);
+}
+// End temporary functions
+
 int
 iperf_defaults(struct iperf_test *testp)
 {
@@ -3303,14 +3334,13 @@ iperf_defaults(struct iperf_test *testp)
 
     // TODO: implement QUIC protocol functions and set them here
     quic->id = Pquic;
-    quic->name = "UDP";
-    quic->accept = NULL;
-    quic->listen = NULL;
-    quic->connect = NULL;
-    quic->send = NULL;
-    quic->recv = NULL;
     quic->name = "QUIC";
-    quic->init = NULL;
+    quic->accept = iperf_quic_accept;
+    quic->listen = iperf_quic_listen;
+    quic->connect = iperf_quic_connect;
+    quic->send = iperf_quic_send;
+    quic->recv = iperf_quic_recv;
+    quic->init = iperf_quic_init;
     SLIST_INSERT_AFTER(udp, quic, protocols);
 
     set_protocol(testp, Ptcp);

@@ -514,6 +514,17 @@ or high-bitrate UDP tests.  Both client and server need to be running
 at least version 3.1 for this option to work.  It may become the
 default behavior at some point in the future.
 .TP
+.BR --gsro
+Enable UDP Generic Segmentation Offload (GSO) on the sender and
+Generic Receive Offload (GRO) on the receiver, where supported by
+the operating system and network hardware (currently Linux only).
+GSO allows the network stack to aggregate multiple UDP datagrams
+into larger packets, improving throughput and reducing CPU overhead.
+This is a client-only option; the client communicates the GSO/GRO
+settings to the server automatically.
+This feature is disabled by default and must be explicitly enabled
+with this flag.
+.TP
 .BR --repeating-payload
 Use repeating pattern in payload, instead of random bytes.
 The same payload is used in iperf2 (ASCII '0..9' repeating).

@@ -17399,6 +17399,78 @@ printf "%s\n" "#define HAVE_IPPROTO_MPTCP 1" >>confdefs.h
 
 fi
 
+# Check for UDP_SEGMENT sockopt
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking UDP_SEGMENT socket option" >&5
+printf %s "checking UDP_SEGMENT socket option... " >&6; }
+if test ${iperf3_cv_header_udp_segment+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <linux/udp.h>
+int
+main (void)
+{
+int foo = UDP_SEGMENT;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  iperf3_cv_header_udp_segment=yes
+else case e in #(
+  e) iperf3_cv_header_udp_segment=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $iperf3_cv_header_udp_segment" >&5
+printf "%s\n" "$iperf3_cv_header_udp_segment" >&6; }
+if test "x$iperf3_cv_header_udp_segment" = "xyes"; then
+
+printf "%s\n" "#define HAVE_UDP_SEGMENT 1" >>confdefs.h
+
+fi
+
+# Check for UDP_GRO sockopt
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking UDP_GRO socket option" >&5
+printf %s "checking UDP_GRO socket option... " >&6; }
+if test ${iperf3_cv_header_udp_gro+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <linux/udp.h>
+int
+main (void)
+{
+int foo = UDP_GRO;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  iperf3_cv_header_udp_gro=yes
+else case e in #(
+  e) iperf3_cv_header_udp_gro=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $iperf3_cv_header_udp_gro" >&5
+printf "%s\n" "$iperf3_cv_header_udp_gro" >&6; }
+if test "x$iperf3_cv_header_udp_gro" = "xyes"; then
+
+printf "%s\n" "#define HAVE_UDP_GRO 1" >>confdefs.h
+
+fi
+
 # Check if we need -lrt for clock_gettime
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing clock_gettime" >&5
 printf %s "checking for library containing clock_gettime... " >&6; }

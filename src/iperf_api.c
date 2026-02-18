@@ -1189,6 +1189,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_IPPROTO_MPTCP)
         {"mptcp", no_argument, NULL, 'm'},
 #endif
+        {"gsro", no_argument, NULL, OPT_GSRO},
         {"debug", optional_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -1212,6 +1213,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = rcv_timeout_flag = snd_timeout_flag =0;
+    int gsro_flag = 0;
 #if defined(HAVE_SSL)
     char *client_username = NULL, *client_rsa_public_key = NULL, *server_rsa_private_key = NULL;
     FILE *ptr_file;
@@ -1790,6 +1792,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->mptcp = 1;
 		break;
 #endif
+            case OPT_GSRO:
+		/* Enable GSO/GRO which is disabled by default */
+		/* Flag is available regardless of local support to allow client to request server to use it */
+		gsro_flag = 1;
+		test->settings->gso = 1;
+		test->settings->gro = 1;
+                break;
 	    case 'h':
 		usage_long(stdout);
 		exit(0);
@@ -1808,6 +1817,21 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     if (test->role == 's' && client_flag) {
         i_errno = IECLIENTONLY;
         return -1;
+    }
+    if (test->role == 's' && gsro_flag) {
+        i_errno = IECLIENTONLY;
+        return -1;
+    }
+
+    /* Show platform support warnings only after confirming we're in client mode */
+    if (gsro_flag) {
+#if !defined(HAVE_UDP_SEGMENT) && !defined(HAVE_UDP_GRO)
+        warning("--gsro requested but UDP GSO/GRO not supported on this client; will only be enabled on server if supported");
+#elif !defined(HAVE_UDP_SEGMENT)
+        warning("--gsro requested but UDP GSO not supported on this client; will be enabled on server if supported");
+#elif !defined(HAVE_UDP_GRO)
+        warning("--gsro requested but UDP GRO not supported on this client; will be enabled on server if supported");
+#endif
     }
 
 #if defined(HAVE_SSL)
@@ -1914,6 +1938,18 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	i_errno = IEUDPBLOCKSIZE;
 	return -1;
     }
+
+    if (test->protocol->id == Pudp && test->settings->gso) {
+        test->settings->gso_dg_size = blksize;
+        /* use the multiple of datagram size for the best efficiency. */
+        if (test->settings->gso_dg_size > 0) {
+            test->settings->gso_bf_size = (test->settings->gso_bf_size / test->settings->gso_dg_size) * test->settings->gso_dg_size;
+        } else {
+            /* If gso_dg_size is 0 (unlimited bandwidth), use default UDP datagram size */
+            test->settings->gso_dg_size = DEFAULT_UDP_BLKSIZE;
+        }
+    }
+
     test->settings->blksize = blksize;
 
     if (!rate_flag)
@@ -2457,6 +2493,16 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "pacing_timer", test->settings->pacing_timer);
 	if (test->settings->burst)
 	    cJSON_AddNumberToObject(j, "burst", test->settings->burst);
+
+	/* Send UDP GSO/GRO settings from client to server */
+	/* Always send these fields to allow server to use GSO/GRO even if client doesn't support it */
+	if (test->protocol->id == Pudp) {
+	    cJSON_AddNumberToObject(j, "gso", test->settings->gso);
+	    cJSON_AddNumberToObject(j, "gso_dg_size", test->settings->gso_dg_size);
+	    cJSON_AddNumberToObject(j, "gso_bf_size", test->settings->gso_bf_size);
+	    cJSON_AddNumberToObject(j, "gro", test->settings->gro);
+	    cJSON_AddNumberToObject(j, "gro_bf_size", test->settings->gro_bf_size);
+	}
 	if (test->settings->tos)
 	    cJSON_AddNumberToObject(j, "TOS", test->settings->tos);
 	if (test->settings->flowlabel)
@@ -2580,6 +2626,31 @@ get_parameters(struct iperf_test *test)
 	    test->settings->socket_bufsize = j_p->valueint;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "len", cJSON_Number)) != NULL)
 	    test->settings->blksize = j_p->valueint;
+
+	/* Accept UDP GSO/GRO settings provided by the client */
+	/* Always accept these fields to allow server to use GSO/GRO based on its own support */
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "gso", cJSON_Number)) != NULL)
+	    test->settings->gso = j_p->valueint;
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "gso_dg_size", cJSON_Number)) != NULL)
+	    test->settings->gso_dg_size = j_p->valueint;
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "gso_bf_size", cJSON_Number)) != NULL)
+	    test->settings->gso_bf_size = j_p->valueint;
+
+	/* Backward-compatibility: If client didn't send GSO params, derive from blksize. */
+	if (test->protocol->id == Pudp && test->settings->gso == 1 && test->settings->gso_dg_size == 0) {
+	    test->settings->gso_dg_size = test->settings->blksize;
+	    if (test->settings->gso_dg_size > 0) {
+	        test->settings->gso_bf_size = (test->settings->gso_bf_size / test->settings->gso_dg_size) * test->settings->gso_dg_size;
+	    } else {
+	        test->settings->gso_dg_size = DEFAULT_UDP_BLKSIZE;
+	    }
+	}
+
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "gro", cJSON_Number)) != NULL)
+	    test->settings->gro = j_p->valueint;
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "gro_bf_size", cJSON_Number)) != NULL)
+	    test->settings->gro_bf_size = j_p->valueint;
+
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "bandwidth", cJSON_Number)) != NULL)
 	    test->settings->rate = j_p->valueint;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "fqrate", cJSON_Number)) != NULL)
@@ -3239,6 +3310,12 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->fqrate = 0;
     testp->settings->pacing_timer = DEFAULT_PACING_TIMER;
     testp->settings->burst = 0;
+    /* Always initialize GSO/GRO fields to allow client-server negotiation */
+    testp->settings->gso = 0;  /* Disable GSO by default, enabled via --gsro */
+    testp->settings->gso_dg_size = 0;
+    testp->settings->gso_bf_size = GSO_BF_MAX_SIZE;
+    testp->settings->gro = 0;  /* Disable GRO by default, enabled via --gsro */
+    testp->settings->gro_bf_size = GRO_BF_MAX_SIZE;
     testp->settings->mss = 0;
     testp->settings->bytes = 0;
     testp->settings->blocks = 0;
@@ -3552,6 +3629,10 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->burst = 0;
     test->settings->mss = 0;
     test->settings->tos = 0;
+    /* Always initialize GSO/GRO fields */
+    test->settings->gso_dg_size = 0;
+    test->settings->gso_bf_size = GSO_BF_MAX_SIZE;
+    test->settings->gro_bf_size = GRO_BF_MAX_SIZE;
     test->settings->dont_fragment = 0;
     test->zerocopy = 0;
     test->settings->skip_rx_copy = 0;
@@ -4716,6 +4797,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
 {
     struct iperf_stream *sp;
     int ret = 0;
+    int size;
 
     char template[1024];
     if (test->tmp_template) {
@@ -4774,13 +4856,20 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         free(sp);
         return NULL;
     }
-    if (ftruncate(sp->buffer_fd, test->settings->blksize) < 0) {
+    size = test->settings->blksize;
+    if (test->protocol->id == Pudp && test->settings->gso && (size < test->settings->gso_bf_size))
+        size = test->settings->gso_bf_size;
+    if (test->protocol->id == Pudp && test->settings->gro && (size < test->settings->gro_bf_size))
+        size = test->settings->gro_bf_size;
+    if (sp->test->debug)
+        printf("Buffer %d bytes\n", size);
+    if (ftruncate(sp->buffer_fd, size) < 0) {
         i_errno = IECREATESTREAM;
         free(sp->result);
         free(sp);
         return NULL;
     }
-    sp->buffer = (char *) mmap(NULL, test->settings->blksize, PROT_READ|PROT_WRITE, MAP_SHARED, sp->buffer_fd, 0);
+    sp->buffer = (char *) mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, sp->buffer_fd, 0);
     if (sp->buffer == MAP_FAILED) {
         i_errno = IECREATESTREAM;
         free(sp->result);

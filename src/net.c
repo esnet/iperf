@@ -38,6 +38,9 @@
 #include <string.h>
 #include <fcntl.h>
 #include <limits.h>
+#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)
+#include <linux/udp.h>
+#endif
 
 #ifdef HAVE_SENDFILE
 #ifdef linux
@@ -520,6 +523,94 @@ Nrecv_no_select(int fd, char *buf, size_t count, int prot, int sock_opt)
     return count - nleft;
 }
 
+#ifdef HAVE_UDP_GRO
+static int recv_msg_gro(int fd, char *buf, int len, int *gso_size)
+{
+	char control[CMSG_SPACE(sizeof(uint16_t))] = {0};
+	struct msghdr msg = {0};
+	struct iovec iov = {0};
+	struct cmsghdr *cmsg;
+	uint16_t *gsosizeptr;
+	int ret;
+
+	/* Input validation */
+	if (!buf || len <= 0 || !gso_size) {
+		return -1;
+	}
+
+	iov.iov_base = buf;
+	iov.iov_len = len;
+
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+
+	msg.msg_control = control;
+	msg.msg_controllen = sizeof(control);
+
+	*gso_size = -1;
+	ret = recvmsg(fd, &msg, MSG_DONTWAIT);
+
+	if (ret > 0) {
+		for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+			if (cmsg->cmsg_level == IPPROTO_UDP && cmsg->cmsg_type == UDP_GRO) {
+				/* Validate cmsg data length */
+				if (cmsg->cmsg_len >= CMSG_LEN(sizeof(uint16_t))) {
+					gsosizeptr = (uint16_t *) CMSG_DATA(cmsg);
+					*gso_size = *gsosizeptr;
+					/* Sanity check the gso_size value */
+					if (*gso_size <= 0 || *gso_size > len) {
+						*gso_size = -1;  /* Mark as invalid */
+					}
+				}
+				break;
+			}
+		}
+	}
+
+	return ret;
+}
+
+int
+Nread_gro(int fd, char *buf, size_t count, int prot, int *dgram_sz)
+{
+	register ssize_t r;
+
+	/* Input validation */
+	if (!buf || count <= 0 || !dgram_sz) {
+		return NET_HARDERROR;
+	}
+
+	/* Limit maximum buffer size to prevent excessive memory usage */
+	if (count > MAX_UDP_BLOCKSIZE) {
+		count = MAX_UDP_BLOCKSIZE;
+	}
+
+	r = recv_msg_gro(fd, buf, count, dgram_sz);
+
+	if (r < 0) {
+		if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK) {
+			return 0;
+		} else {
+			return NET_HARDERROR;
+		}
+	}
+
+	/* Additional validation of returned dgram_sz */
+	if (r > 0 && *dgram_sz > 0 && *dgram_sz > r) {
+		/* dgram_sz shouldn't be larger than actual received data */
+		*dgram_sz = r;
+	}
+
+	return r;
+}
+#else
+int
+Nread_gro(int fd, char *buf, size_t count, int prot, int *dgram_sz)
+{
+	/* GRO not supported on this platform */
+	return NET_HARDERROR;
+}
+#endif /* HAVE_UDP_GRO */
 
 /*
  *                      N W R I T E
@@ -559,6 +650,80 @@ Nwrite(int fd, const char *buf, size_t count, int prot)
     return count;
 }
 
+#ifdef HAVE_UDP_SEGMENT
+static void udp_msg_gso(struct cmsghdr *cm, uint16_t gso_size)
+{
+	uint16_t *valp;
+
+	cm->cmsg_level = IPPROTO_UDP;
+	cm->cmsg_type = UDP_SEGMENT;
+	cm->cmsg_len = CMSG_LEN(sizeof(gso_size));
+	valp = (void *) CMSG_DATA(cm);
+	*valp = gso_size;
+}
+
+static int udp_sendmsg_gso(int fd, const char *buf, size_t count, uint16_t gso_size)
+{
+	char control[CMSG_SPACE(sizeof(gso_size))] = {0};
+	struct msghdr msg = {0};
+	struct iovec iov = {0};
+	size_t msg_controllen;
+	struct cmsghdr *cmsg;
+	int ret;
+
+	iov.iov_base = (void *) buf;
+	iov.iov_len = count;
+
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+
+	msg.msg_control = control;
+	msg.msg_controllen = sizeof(control);
+	cmsg = CMSG_FIRSTHDR(&msg);
+
+	udp_msg_gso(cmsg, gso_size);
+
+	msg_controllen = CMSG_SPACE(sizeof(gso_size));
+	msg.msg_controllen = msg_controllen;
+
+	ret = sendmsg(fd, &msg, 0);
+
+	return ret;
+}
+
+int
+Nwrite_gso(int fd, const char *buf, size_t count, int prot, uint16_t gso_size)
+{
+	register ssize_t r;
+
+	r = udp_sendmsg_gso(fd, buf, count, gso_size);
+
+	if (r < 0) {
+		switch (errno) {
+			case EINTR:
+			case EAGAIN:
+#if (EAGAIN != EWOULDBLOCK)
+			case EWOULDBLOCK:
+#endif
+				return 0;
+
+			case ENOBUFS:
+				return NET_SOFTERROR;
+
+			default:
+				return NET_HARDERROR;
+		}
+	}
+	return r;
+}
+#else
+int
+Nwrite_gso(int fd, const char *buf, size_t count, int prot, uint16_t gso_size)
+{
+	/* GSO not supported on this platform */
+	return NET_HARDERROR;
+}
+#endif /* HAVE_UDP_SEGMENT */
 
 int
 has_sendfile(void)

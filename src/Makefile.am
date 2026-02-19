@@ -7,6 +7,9 @@ noinst_PROGRAMS         = t_timer t_units t_uuid t_api t_auth                  #
 endif
 include_HEADERS         = iperf_api.h                                   # Defines the headers that get installed with the program
 
+MSQUIC_CFLAGS           = @MSQUIC_CFLAGS@
+MSQUIC_LIBS             = @MSQUIC_LIBS@
+
 
 # Specify the source files and flags for the iperf library
 libiperf_la_SOURCES     = \
@@ -27,6 +30,8 @@ libiperf_la_SOURCES     = \
                         iperf_tcp.h \
                         iperf_udp.c \
                         iperf_udp.h \
+                        iperf_quic.c \
+                        iperf_quic.h \
                         iperf_sctp.c \
                         iperf_sctp.h \
                         iperf_util.c \
@@ -47,11 +52,15 @@ libiperf_la_SOURCES     = \
                         units.h \
                         version.h
 
+libiperf_la_CFLAGS      = $(MSQUIC_CFLAGS)
+libiperf_la_LIBADD      = $(MSQUIC_LIBS)
+libiperf_la_LDFLAGS     = $(LIBIPERF_INSTALL_NAME)
+
 # Specify the sources and various flags for the iperf binary
 iperf3_SOURCES          = main.c
 iperf3_CFLAGS           = -g
 iperf3_LDADD            = libiperf.la
-iperf3_LDFLAGS          = -g
+iperf3_LDFLAGS          = -g $(IPERF_RPATH_FLAGS)
 
 if ENABLE_PROFILING
 # If the iperf-profiled-binary is enabled

@@ -63,6 +63,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define Ptcp SOCK_STREAM
 #define Pudp SOCK_DGRAM
 #define Psctp 12
+#define Pquic 0x100
 #define DEFAULT_UDP_BLKSIZE 1460 /* default is dynamically set, else this */
 #define DEFAULT_TCP_BLKSIZE (128 * 1024)  /* default read/write block size */
 #define DEFAULT_SCTP_BLKSIZE (64 * 1024)
@@ -106,6 +107,14 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define OPT_SKIP_RX_COPY 32
 #define OPT_JSON_STREAM_FULL_OUTPUT 33
 #define OPT_SERVER_MAX_DURATION 34
+#define OPT_QUIC 35
+#define OPT_QUIC_CERT 36
+#define OPT_QUIC_KEY 37
+#define OPT_QUIC_KEY_PASSWORD 38
+#define OPT_QUIC_P12 39
+#define OPT_QUIC_P12_PASSWORD 40
+#define OPT_QUIC_PORT 41
+#define OPT_QUIC_BUF 42
 
 /* states */
 #define TEST_START 1
@@ -269,6 +278,7 @@ void     iperf_stats_callback(struct iperf_test * test);
  *
  */
 void     iperf_reporter_callback(struct iperf_test * test);
+void     iperf_print_results(struct iperf_test *test);
 
 /**
  * iperf_new_test -- return a new iperf_test with default values

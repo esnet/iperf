@@ -1,4 +1,4 @@
-iperf3:  A TCP, UDP, and SCTP network bandwidth measurement tool
+iperf3:  A TCP, UDP, SCTP, and QUIC network bandwidth measurement tool
 ================================================================
 
 Summary
@@ -57,6 +57,21 @@ None.
     ./configure; make; make install
 
 (Note: If configure fails, try running `./bootstrap.sh` first)
+
+### QUIC (MsQuic) ###
+
+To enable QUIC support, build MsQuic and then configure with:
+
+    ./configure --with-msquic=/path/to/msquic
+
+Run QUIC tests with `--quic`. On the server, provide a certificate and key
+using `--quic-cert` and `--quic-key`. If your platform rejects PEM
+credentials, you can use PKCS#12 via `--quic-p12` and `--quic-p12-pass`.
+If no QUIC certificate is provided, the server defaults to
+`/tmp/iperf_quic.p12`. QUIC data uses UDP and defaults to `--port+1` unless
+you override `--quic-port` on both client and server.
+You can also tune the QUIC stream/receive buffer sizes with `--quic-buf`
+(bytes). The default is 33554432.
 
 Invoking iperf3
 ---------------

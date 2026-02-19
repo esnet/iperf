@@ -109,6 +109,97 @@ AC_CHECK_HEADERS([stdatomic.h],
 # Check for poll.h (it's in POSIX so everyone should have it?)
 AC_CHECK_HEADERS([poll.h])
 
+# MsQuic (QUIC) support.
+have_msquic=false
+msquic_requested=false
+MSQUIC_CFLAGS=""
+MSQUIC_LIBS=""
+MSQUIC_RPATH=""
+AC_ARG_WITH([msquic],
+    [AS_HELP_STRING([--with-msquic=PATH],
+        [enable MsQuic (QUIC) support; PATH is msquic root or install prefix])],
+    [msquic_prefix="$withval"; msquic_requested=true],
+    [msquic_prefix=""]
+)
+
+if test "x$msquic_prefix" != "xno"; then
+    if test "x$msquic_prefix" = "x" || test "x$msquic_prefix" = "xyes"; then
+        if $msquic_requested; then
+            msquic_prefix="$srcdir/../msquic"
+        else
+            msquic_prefix=""
+        fi
+    fi
+
+    if ! $msquic_requested && test "x$msquic_prefix" = "x"; then
+        if test -f "$srcdir/../msquic/src/inc/msquic.h"; then
+            msquic_prefix="$srcdir/../msquic"
+        fi
+    fi
+
+    if test "x$msquic_prefix" != "x"; then
+        if test -f "$msquic_prefix/src/inc/msquic.h"; then
+            MSQUIC_CFLAGS="-I$msquic_prefix/src/inc"
+            have_msquic=true
+        elif test -f "$msquic_prefix/include/msquic.h"; then
+            MSQUIC_CFLAGS="-I$msquic_prefix/include"
+            have_msquic=true
+        fi
+    fi
+
+    if $have_msquic; then
+        if test "x$MSQUIC_LIBS" = "x"; then
+            if test -f "$msquic_prefix/build/bin/Release/libmsquic.dylib"; then
+                MSQUIC_LIBS="-L$msquic_prefix/build/bin/Release -lmsquic"
+            elif test -f "$msquic_prefix/build/bin/libmsquic.dylib"; then
+                MSQUIC_LIBS="-L$msquic_prefix/build/bin -lmsquic"
+            elif test -f "$msquic_prefix/build/libmsquic.dylib"; then
+                MSQUIC_LIBS="-L$msquic_prefix/build -lmsquic"
+            elif test -f "$msquic_prefix/lib/libmsquic.dylib"; then
+                MSQUIC_LIBS="-L$msquic_prefix/lib -lmsquic"
+            elif test -f "$msquic_prefix/lib/libmsquic.a"; then
+                MSQUIC_LIBS="-L$msquic_prefix/lib -lmsquic"
+            else
+                MSQUIC_LIBS="-lmsquic"
+            fi
+        fi
+        for tok in $MSQUIC_LIBS; do
+            case $tok in
+                -L*)
+                    MSQUIC_RPATH="${tok#-L}"
+                    break
+                    ;;
+            esac
+        done
+        AC_DEFINE([HAVE_MSQUIC], [1], [Have MsQuic support.])
+    else
+        if $msquic_requested; then
+            AC_MSG_ERROR([--with-msquic was given, but msquic.h was not found])
+        fi
+    fi
+fi
+
+AC_SUBST([MSQUIC_CFLAGS])
+AC_SUBST([MSQUIC_LIBS])
+AC_SUBST([MSQUIC_RPATH])
+
+IPERF_RPATH_FLAGS=""
+LIBIPERF_INSTALL_NAME=""
+case "$host_os" in
+    darwin*)
+        IPERF_RPATH_FLAGS="-Wl,-rpath,@loader_path"
+        if test "x$MSQUIC_RPATH" != "x"; then
+            IPERF_RPATH_FLAGS="$IPERF_RPATH_FLAGS -Wl,-rpath,$MSQUIC_RPATH"
+        fi
+        if test "x$msquic_prefix" != "x" && test -d "$msquic_prefix/build/bin/Release"; then
+            IPERF_RPATH_FLAGS="$IPERF_RPATH_FLAGS -Wl,-rpath,$msquic_prefix/build/bin/Release"
+        fi
+        LIBIPERF_INSTALL_NAME="-Wl,-install_name -Wl,@rpath/libiperf.0.dylib"
+        ;;
+esac
+AC_SUBST([IPERF_RPATH_FLAGS])
+AC_SUBST([LIBIPERF_INSTALL_NAME])
+
 # SCTP.  Allow user to disable SCTP support with --without-sctp.
 # Otherwise we try to find whatever support is required.
 try_sctp=true

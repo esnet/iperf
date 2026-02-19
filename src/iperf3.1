@@ -255,6 +255,28 @@ The maximum time, in seconds, that an iperf client can run against the server.
 When the sum of the client's time and omit values exceeds the max duration set by the server
 or the client's time value is 0, the measurement is rejected.
 .TP
+.BR --quic-cert " \fIfile\fR"
+Path to the server QUIC certificate file (PEM).
+.TP
+.BR --quic-key " \fIfile\fR"
+Path to the server QUIC private key file (PEM).
+.TP
+.BR --quic-key-pass " \fIpass\fR"
+Password for the server QUIC private key file (optional).
+.TP
+.BR --quic-p12 " \fIfile\fR"
+Path to the server QUIC certificate file (PKCS#12). If no QUIC certificate is
+provided, the default is \fI/tmp/iperf_quic.p12\fR.
+.TP
+.BR --quic-p12-pass " \fIpass\fR"
+Password for the server QUIC PKCS#12 file (optional).
+.TP
+.BR --quic-port " \fIn\fR"
+UDP port for the QUIC data listener. Defaults to \fB--port\fR+1.
+.TP
+.BR --quic-buf " \fIn\fR"
+QUIC stream/receive buffer size in bytes (default 33554432).
+.TP
 .BR --server-bitrate-limit " \fIn\fR[KMGT][/\fCn\fR]"
 Set a limit on the server side, which will cause a test to abort if
 the client specifies a test of more than \fIn\fR bits per second, or
@@ -301,6 +323,17 @@ between client and server.
 Use UDP for tests rather than TCP.
 Note that TCP communication is still used for the control connection
 between client and server.
+.TP
+.BR --quic
+Use QUIC (MsQuic) for tests rather than TCP.
+Note that TCP communication is still used for the control connection
+between client and server.
+.TP
+.BR --quic-port " \fIn\fR"
+UDP port for the QUIC data connection. Defaults to \fB--port\fR+1.
+.TP
+.BR --quic-buf " \fIn\fR"
+QUIC stream/receive buffer size in bytes (default 33554432).
 .TP
 .BR --connect-timeout " \fIn\fR"
 Set timeout for establishing the initial control connection to the

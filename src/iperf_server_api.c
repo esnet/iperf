@@ -51,6 +51,7 @@
 #include "iperf_api.h"
 #include "iperf_udp.h"
 #include "iperf_tcp.h"
+#include "iperf_quic.h"
 #include "iperf_util.h"
 #include "timer.h"
 #include "iperf_time.h"
@@ -270,20 +271,49 @@ iperf_handle_message_server(struct iperf_test *test)
             test->done = 1;
             cpu_util(test->cpu_util);
             test->stats_callback(test);
-            SLIST_FOREACH(sp, &test->streams, streams) {
-                FD_CLR(sp->socket, &test->read_set);
-                FD_CLR(sp->socket, &test->write_set);
-                close(sp->socket);
+            if (test->debug) {
+                iperf_printf(test, "TEST_END: printing summary\n");
             }
-            test->reporter_callback(test);
-            if (iperf_set_send_state(test, EXCHANGE_RESULTS) != 0)
-                return -1;
-            if (iperf_exchange_results(test) < 0)
-                return -1;
-            if (iperf_set_send_state(test, DISPLAY_RESULTS) != 0)
-                return -1;
+            if (test->protocol->id != Pquic) {
+                SLIST_FOREACH(sp, &test->streams, streams) {
+                    FD_CLR(sp->socket, &test->read_set);
+                    FD_CLR(sp->socket, &test->write_set);
+                    close(sp->socket);
+                }
+            }
+            int exchange_ok = 1;
+            if (iperf_set_send_state(test, EXCHANGE_RESULTS) != 0) {
+                if (test->protocol->id != Pquic)
+                    return -1;
+                exchange_ok = 0;
+            }
+            if (exchange_ok && iperf_exchange_results(test) < 0) {
+                if (test->protocol->id != Pquic)
+                    return -1;
+            }
+            /*
+             * Server-side summary output. Do this after exchange_results
+             * so retransmit/other-side stats are available.
+             */
+            {
+                FILE *old_out = test->outfile;
+                if (test->protocol->id == Pquic) {
+                    test->outfile = stderr;
+                }
+                test->summary_printed = 1;
+                iperf_print_results(test);
+                test->outfile = old_out;
+                iflush(test);
+            }
+            if (iperf_set_send_state(test, DISPLAY_RESULTS) != 0) {
+                if (test->protocol->id != Pquic)
+                    return -1;
+            }
             if (test->on_test_finish)
                 test->on_test_finish(test);
+            if (test->protocol->id == Pquic && iperf_get_test_one_off(test)) {
+                iperf_set_test_state(test, IPERF_DONE);
+            }
             break;
         case IPERF_DONE:
             break;
@@ -299,11 +329,13 @@ iperf_handle_message_server(struct iperf_test *test)
 	    test->state = oldstate;
 
             // XXX: Remove this line below!
-	    iperf_err(test, "the client has terminated");
-            SLIST_FOREACH(sp, &test->streams, streams) {
-                FD_CLR(sp->socket, &test->read_set);
-                FD_CLR(sp->socket, &test->write_set);
-                close(sp->socket);
+		    iperf_err(test, "the client has terminated");
+            if (test->protocol->id != Pquic) {
+                SLIST_FOREACH(sp, &test->streams, streams) {
+                    FD_CLR(sp->socket, &test->read_set);
+                    FD_CLR(sp->socket, &test->write_set);
+                    close(sp->socket);
+                }
             }
             iperf_set_test_state(test, IPERF_DONE);
             break;
@@ -324,8 +356,18 @@ server_timer_proc(TimerClientData client_data, struct iperf_time *nowP)
     if (test->done)
         return;
     test->done = 1;
-    close(test->ctrl_sck);
-    test->ctrl_sck = -1;
+    if (!(test->protocol && test->protocol->id == Pquic)) {
+        cpu_util(test->cpu_util);
+        if (test->stats_callback)
+            test->stats_callback(test);
+        if (!test->summary_printed) {
+            test->summary_printed = 1;
+            iperf_print_results(test);
+            iflush(test);
+        }
+        close(test->ctrl_sck);
+        test->ctrl_sck = -1;
+    }
 }
 
 static void
@@ -358,6 +400,7 @@ create_server_timers(struct iperf_test * test)
     int max_rtt = 4; /* seconds */
     int state_transitions = 10; /* number of state transitions in iperf3 */
     int grace_period = max_rtt * state_transitions;
+
 
     if (iperf_time_now(&now) < 0) {
 	i_errno = IEINITTEST;
@@ -471,14 +514,32 @@ cleanup_server(struct iperf_test *test)
         iperf_printf(test, "All threads stopped\n");
     }
 
+    /*
+     * If we completed a test but haven't printed the summary, do it now.
+     * This also covers cases where the client closes the control channel
+     * before the TEST_END message arrives.
+     */
+    if (!test->summary_printed &&
+        (test->bytes_received > 0 || test->bytes_sent > 0 ||
+         test->blocks_received > 0 || test->blocks_sent > 0)) {
+        cpu_util(test->cpu_util);
+        if (test->stats_callback)
+            test->stats_callback(test);
+        test->summary_printed = 1;
+        iperf_print_results(test);
+        iflush(test);
+    }
+
     /* Close open streams */
-    SLIST_FOREACH(sp, &test->streams, streams) {
-	if (sp->socket > -1) {
-            FD_CLR(sp->socket, &test->read_set);
-            FD_CLR(sp->socket, &test->write_set);
-            close(sp->socket);
-            sp->socket = -1;
-	}
+    if (test->protocol->id != Pquic) {
+        SLIST_FOREACH(sp, &test->streams, streams) {
+	    if (sp->socket > -1) {
+                FD_CLR(sp->socket, &test->read_set);
+                FD_CLR(sp->socket, &test->write_set);
+                close(sp->socket);
+                sp->socket = -1;
+	    }
+        }
     }
 
     /* Close open test sockets */
@@ -486,13 +547,27 @@ cleanup_server(struct iperf_test *test)
 	close(test->ctrl_sck);
         test->ctrl_sck = -1;
     }
-    if (test->listener > -1) {
-	close(test->listener);
-        test->listener = -1;
-    }
-    if (test->prot_listener > -1) {     // May remain open if create socket failed
-	close(test->prot_listener);
-        test->prot_listener = -1;
+    if (test->protocol->id != Pquic) {
+        if (test->listener > -1) {
+	    close(test->listener);
+            test->listener = -1;
+        }
+        if (test->prot_listener > -1) {     // May remain open if create socket failed
+	    close(test->prot_listener);
+            test->prot_listener = -1;
+        }
+    } else {
+        if (test->listener > -1) {
+            FD_CLR(test->listener, &test->read_set);
+            FD_CLR(test->listener, &test->write_set);
+            close(test->listener);
+            test->listener = -1;
+        }
+        if (test->prot_listener > -1) {
+            FD_CLR(test->prot_listener, &test->read_set);
+            FD_CLR(test->prot_listener, &test->write_set);
+        }
+        iperf_quic_reset_test(test);
     }
 
     /* Cancel any remaining timers. */
@@ -553,6 +628,25 @@ iperf_run_server(struct iperf_test *test)
         }
     }
 
+    /* Ensure final summary is printed before exit if it wasn't already. */
+    if (!test->summary_printed) {
+        int have_data = 0;
+        SLIST_FOREACH(sp, &test->streams, streams) {
+            if (sp->result && !TAILQ_EMPTY(&sp->result->interval_results)) {
+                have_data = 1;
+                break;
+            }
+        }
+        if (have_data) {
+            cpu_util(test->cpu_util);
+            if (test->stats_callback)
+                test->stats_callback(test);
+            test->summary_printed = 1;
+            iperf_print_results(test);
+            iflush(test);
+        }
+    }
+
     if (test->json_output) {
 	if (iperf_json_start(test) < 0) {
             cleanup_server(test);
@@ -585,7 +679,6 @@ iperf_run_server(struct iperf_test *test)
     rcv_timeout_us = (test->settings->rcv_timeout.secs * SEC_TO_US) + test->settings->rcv_timeout.usecs;
 
     while (test->state != IPERF_DONE) {
-
         // Check if average transfer rate was exceeded (condition set in the callback routines)
 	if (test->bitrate_limit_exceeded) {
 	    cleanup_server(test);
@@ -718,6 +811,37 @@ iperf_run_server(struct iperf_test *test)
             if (test->state == CREATE_STREAMS) {
                 if (FD_ISSET(test->prot_listener, &read_set)) {
 
+                    if (test->protocol->id == Pquic) {
+                        if ((s = test->protocol->accept(test)) < 0) {
+                            cleanup_server(test);
+                            return -1;
+                        }
+
+                        if (rec_streams_accepted != streams_to_rec) {
+                            flag = 0;
+                            ++rec_streams_accepted;
+                        } else if (send_streams_accepted != streams_to_send) {
+                            flag = 1;
+                            ++send_streams_accepted;
+                        }
+
+                        if (flag != -1) {
+                            sp = iperf_new_stream(test, s, flag);
+                            if (!sp) {
+                                cleanup_server(test);
+                                return -1;
+                            }
+
+                            if (test->on_new_stream)
+                                test->on_new_stream(sp);
+
+                            flag = -1;
+                        }
+
+                        FD_CLR(test->prot_listener, &read_set);
+                        goto streams_accept_done;
+                    }
+
                     if ((s = test->protocol->accept(test)) < 0) {
 			cleanup_server(test);
                         return -1;
@@ -834,9 +958,12 @@ iperf_run_server(struct iperf_test *test)
                     FD_CLR(test->prot_listener, &read_set);
                 }
 
+streams_accept_done:
 
                 if (rec_streams_accepted == streams_to_rec && send_streams_accepted == streams_to_send) {
-                    if (test->protocol->id != Ptcp) {
+                    if (test->protocol->id == Pquic) {
+                        iperf_quic_close_listener(test);
+                    } else if (test->protocol->id != Ptcp) {
                         FD_CLR(test->prot_listener, &test->read_set);
                         close(test->prot_listener);
                         test->prot_listener = -1;

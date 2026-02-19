@@ -355,7 +355,7 @@ get_optional_features(void)
     strncat(features, "GSO/GRO support",
 	sizeof(features) - strlen(features) - 1);
     numfeatures++;
-#endif /* HAVE_PTHREAD */
+#endif /* HAVE_UDP_GRO || HAVE_UDP_SEGMENT */
 
     if (numfeatures == 0) {
 	strncat(features, "None",

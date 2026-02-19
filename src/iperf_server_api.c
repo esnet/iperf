@@ -540,6 +540,7 @@ iperf_run_server(struct iperf_test *test)
     int64_t t_usecs;
     int64_t timeout_us;
     int64_t rcv_timeout_us;
+    int32_t err;
 
     if (test->logfile) {
         if (iperf_open_logfile(test) < 0)
@@ -586,11 +587,30 @@ iperf_run_server(struct iperf_test *test)
 
     while (test->state != IPERF_DONE) {
 
-        // Check if average transfer rate was exceeded (condition set in the callback routines)
+    // Check if average transfer rate was exceeded (condition set in the callback routines)
 	if (test->bitrate_limit_exceeded) {
-	    cleanup_server(test);
-            i_errno = IETOTALRATE;
+        i_errno = IETOTALRATE;
+        if (iperf_set_send_state(test, SERVER_ERROR) != 0) {
+            cleanup_server(test);
             return -1;
+        }
+
+        err = htonl(i_errno);
+        if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
+            cleanup_server(test);
+            i_errno = IECTRLWRITE;
+            return -1;
+        }
+
+        err = htonl(errno);
+        if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
+            cleanup_server(test);
+            i_errno = IECTRLWRITE;
+            return -1;
+        }
+
+        cleanup_server(test);
+        return -1;
 	}
 
         memcpy(&read_set, &test->read_set, sizeof(fd_set));

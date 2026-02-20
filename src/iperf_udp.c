@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2022, The Regents of the University of
+ * iperf, Copyright (c) 2014-2026, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -156,22 +156,68 @@ iperf_udp_recv(struct iperf_stream *sp)
 		sent_time.usecs = usec;
 	    }
 
-	    /* Loss/out-of-order accounting - now always executed */
+            /*
+             * Try to handle out of order packets.  The way we do this
+             * uses a constant amount of storage but might not be
+             * correct in all cases.  In particular we seem to have the
+             * assumption that packets can't be duplicated in the network,
+             * because duplicate packets will possibly cause some problems here.
+             *
+             * First figure out if the sequence numbers are going forward.
+             * Note that pcount is the sequence number read from the packet,
+             * and sp->packet_count is the highest sequence number seen so
+             * far (so we're expecting to see the packet with sequence number
+             * sp->packet_count + 1 arrive next).
+             */
 	    if (pcount >= sp->packet_count + 1) {
+
+                /* Forward, but is there a gap in sequence numbers? */
 		if (pcount > sp->packet_count + 1) {
+                    /* There's a gap so count that as a loss. */
 		    sp->cnt_error += (pcount - 1) - sp->packet_count;
+                    if (test->debug_level >= DEBUG_LEVEL_INFO)
+                        fprintf(stderr, "LOST %" PRIu64 " PACKETS - received packet %" PRIu64 " but expected sequence %" PRIu64 " on stream %d\n", (pcount - sp->packet_count + 1), pcount, sp->packet_count + 1, sp->socket);
 		}
+                /* Update the highest sequence number seen so far. */
 		sp->packet_count = pcount;
 	    } else {
+
+                /*
+                 * Sequence number went backward (or was stationary?!?).
+                 * This counts as an out-of-order packet.
+                 */
 		sp->outoforder_packets++;
+
+                /*
+                 * If we have lost packets, then the fact that we are now
+                 * seeing an out-of-order packet offsets a prior sequence
+                 * number gap that was counted as a loss.  So we can take
+                 * away a loss.
+                 */
 		if (sp->cnt_error > 0)
 		    sp->cnt_error--;
+
+                /* Log the out-of-order packet */
+                if (test->debug_level >= DEBUG_LEVEL_INFO)
+                    fprintf(stderr, "OUT OF ORDER - received packet %" PRIu64 " but expected sequence %" PRIu64 " on stream %d\n", pcount, sp->packet_count + 1, sp->socket);
 	    }
 
-	    /* Jitter computation - now always executed */
+            /*
+             * jitter measurement
+             *
+             * This computation is based on RFC 1889 (specifically
+             * sections 6.3.1 and A.8).
+             *
+             * Note that synchronized clocks are not required since
+             * the source packet delta times are known.  Also this
+             * computation does not require knowing the round-trip
+             * time.
+             */
 	    iperf_time_now(&arrival_time);
 	    iperf_time_diff(&arrival_time, &sent_time, &temp_time);
 	    transit = iperf_time_in_secs(&temp_time);
+
+            /* Hack to handle the first packet by initializing prev_transit. */
 	    if (first_packet)
 		sp->prev_transit = transit;
 	    d = transit - sp->prev_transit;
@@ -234,7 +280,7 @@ iperf_udp_send(struct iperf_stream *sp)
     while (buf_sz > 0 && dgram_buf + dgram_sz <= dgram_buf_end) {
 	cnt++;
 
-	if (sp->test->debug)
+	if (sp->test->debug_level  >= DEBUG_LEVEL_DEBUG)
 	    printf("%d (%d) remaining %d\n", cnt, dgram_sz, buf_sz);
 
 	/* Prevent buffer underflow */

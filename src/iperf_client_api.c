@@ -75,7 +75,7 @@ iperf_client_worker_run(void *s) {
     }
 
     /* Allow this thread to be cancelled even if it's in a syscall */
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
     while (! (test->done) && ! (sp->done)) {

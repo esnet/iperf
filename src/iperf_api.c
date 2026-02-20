@@ -2003,7 +2003,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     /* Set Total-rate average interval to multiplicity of State interval */
     if (test->settings->bitrate_limit_interval != 0) {
 	test->settings->bitrate_limit_stats_per_interval =
-	    (test->settings->bitrate_limit_interval <= test->stats_interval ?
+	    (test->settings->bitrate_limit_interval <= test->stats_interval ||
+	     test->stats_interval == 0 ?
 	    1 : round(test->settings->bitrate_limit_interval/test->stats_interval) );
     }
 

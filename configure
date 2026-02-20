@@ -667,6 +667,7 @@ ax_pthread_config
 CPP
 ENABLE_PROFILING_FALSE
 ENABLE_PROFILING_TRUE
+LDCONFIG
 MAINT
 MAINTAINER_MODE_FALSE
 MAINTAINER_MODE_TRUE
@@ -808,6 +809,7 @@ with_gnu_ld
 with_sysroot
 enable_libtool_lock
 enable_maintainer_mode
+with_ldconfig
 enable_profiling
 with_sctp
 with_openssl
@@ -1477,6 +1479,7 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-sysroot[=DIR]    Search for dependent libraries within DIR (or the
                           compiler's sysroot if not specified).
+  --without-ldconfig      do not run ldconfig
   --without-sctp          disable SCTP
   --with-openssl=DIR      root of the OpenSSL directory
 
@@ -14964,6 +14967,69 @@ fi
 # Add -Wall if we are using GCC.
 if test "x$GCC" = "xyes"; then
   CFLAGS="$CFLAGS -Wall"
+fi
+
+# Check for ldconfig
+
+# Check whether --with-ldconfig was given.
+if test ${with_ldconfig+y}
+then :
+  withval=$with_ldconfig;
+fi
+
+
+if test "$with_ldconfig" != no; then
+  # Extract the first word of "ldconfig", so it can be a program name with args.
+set dummy ldconfig; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_LDCONFIG+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) if test -n "$LDCONFIG"; then
+  ac_cv_prog_LDCONFIG="$LDCONFIG" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_LDCONFIG="ldconfig"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_LDCONFIG" && ac_cv_prog_LDCONFIG="false"
+fi ;;
+esac
+fi
+LDCONFIG=$ac_cv_prog_LDCONFIG
+if test -n "$LDCONFIG"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $LDCONFIG" >&5
+printf "%s\n" "$LDCONFIG" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+  if test "$LDCONFIG" != false; then
+    LDCONFIG=$LDCONFIG
+
+  else
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: ldconfig not found; library path not updated" >&5
+printf "%s\n" "$as_me: WARNING: ldconfig not found; library path not updated" >&2;}
+  fi
 fi
 
 # Check if enable profiling

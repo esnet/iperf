@@ -102,3 +102,6 @@ TESTS                   = \
 			t_auth
 
 dist_man_MANS          = iperf3.1 libiperf.3
+
+install-exec-hook:
+	if test -n "$(LDCONFIG)"; then $(LDCONFIG) || true; fi

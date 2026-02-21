@@ -2436,6 +2436,10 @@ iperf_exchange_results(struct iperf_test *test)
         /* Get client results. */
         if (get_results(test) < 0)
             return -1;
+
+        /* Report results once client's results are received */
+        test->reporter_callback(test);
+
         /* Send results to client. */
 	if (send_results(test) < 0)
             return -1;
@@ -4655,6 +4659,7 @@ iperf_reporter_callback(struct iperf_test *test)
             iperf_print_intermediate(test);
             break;
         case TEST_END:
+        case EXCHANGE_RESULTS:
         case DISPLAY_RESULTS:
             iperf_print_intermediate(test);
             iperf_print_results(test);

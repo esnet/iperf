@@ -274,6 +274,7 @@ iperf_handle_message_server(struct iperf_test *test)
                 FD_CLR(sp->socket, &test->read_set);
                 FD_CLR(sp->socket, &test->write_set);
                 close(sp->socket);
+                sp->socket = -1;
             }
             test->reporter_callback(test);
             if (iperf_set_send_state(test, EXCHANGE_RESULTS) != 0)
@@ -304,6 +305,7 @@ iperf_handle_message_server(struct iperf_test *test)
                 FD_CLR(sp->socket, &test->read_set);
                 FD_CLR(sp->socket, &test->write_set);
                 close(sp->socket);
+                sp->socket = -1;
             }
             iperf_set_test_state(test, IPERF_DONE);
             break;
@@ -324,6 +326,7 @@ server_timer_proc(TimerClientData client_data, struct iperf_time *nowP)
     if (test->done)
         return;
     test->done = 1;
+
     close(test->ctrl_sck);
     test->ctrl_sck = -1;
 }
@@ -864,9 +867,9 @@ iperf_run_server(struct iperf_test *test)
                         if (test->no_delay || test->settings->mss || test->settings->socket_bufsize) {
                             FD_CLR(test->listener, &test->read_set);
                             close(test->listener);
-			    test->listener = -1;
+                            test->listener = -1;
                             if ((s = netannounce(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, test->server_port)) < 0) {
-				cleanup_server(test);
+                                cleanup_server(test);
                                 i_errno = IELISTEN;
                                 return -1;
                             }

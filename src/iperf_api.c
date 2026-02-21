@@ -2855,7 +2855,9 @@ get_results(struct iperf_test *test)
     cJSON *j_server_output;
     cJSON *j_start_time, *j_end_time;
     int sid;
-    int64_t cerror, pcount, omitted_cerror, omitted_pcount;
+    int64_t cerror, pcount;
+    // Init as seems to not be au-initialized to 0 by default, maybe because later init is only under if statement
+    int64_t omitted_cerror = 0, omitted_pcount = 0;
     double jitter;
     iperf_size_t bytes_transferred;
     int retransmits;
@@ -4412,7 +4414,9 @@ iperf_print_results(struct iperf_test *test)
                      * data here.
                      */
                     if (! test->json_output) {
-                        if (receiver_packet_count - receiver_omitted_packet_count > 0 && sp->omitted_cnt_error > -1) {
+                        if (test->omit == 0 && receiver_packet_count > 0) {
+                            lost_percent = 100.0 * sp->cnt_error / receiver_packet_count;
+                        } else if (receiver_packet_count - receiver_omitted_packet_count > 0 && sp->omitted_cnt_error > -1) {
                             lost_percent = 100.0 * (sp->cnt_error - sp->omitted_cnt_error) / (receiver_packet_count - receiver_omitted_packet_count);
                         }
                         else {
@@ -4424,7 +4428,9 @@ iperf_print_results(struct iperf_test *test)
                                 iperf_printf(test, report_receiver_not_available_format, sp->socket);
                         }
                         else {
-                            if (sp->omitted_cnt_error > -1) {
+                            if (test->omit == 0) {
+                                iperf_printf(test, report_bw_udp_format, sp->socket, mbuf, start_time, receiver_time, ubuf, nbuf, sp->jitter * 1000.0, sp->cnt_error, receiver_packet_count, lost_percent, report_receiver);
+                            } else if (sp->omitted_cnt_error > -1) {
                                 iperf_printf(test, report_bw_udp_format, sp->socket, mbuf, start_time, receiver_time, ubuf, nbuf, sp->jitter * 1000.0, (sp->cnt_error - sp->omitted_cnt_error), (receiver_packet_count - receiver_omitted_packet_count), lost_percent, report_receiver);
                             } else {
                                 iperf_printf(test, report_bw_udp_format_no_omitted_error, sp->socket, mbuf, start_time, receiver_time, ubuf, nbuf, sp->jitter * 1000.0, (receiver_packet_count - receiver_omitted_packet_count), report_receiver);

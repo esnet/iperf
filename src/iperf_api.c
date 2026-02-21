@@ -428,6 +428,12 @@ iperf_get_test_congestion_control(struct iperf_test* ipt)
     return ipt->congestion;
 }
 
+char*
+iperf_get_test_congestion_control_server(struct iperf_test* ipt)
+{
+    return ipt->congestion_server;
+}
+
 int
 iperf_get_test_mss(struct iperf_test *ipt)
 {
@@ -867,6 +873,12 @@ iperf_set_test_congestion_control(struct iperf_test* ipt, char* cc)
 }
 
 void
+iperf_set_test_congestion_server_control_server(struct iperf_test* ipt, char* cc)
+{
+    ipt->congestion_server = strdup(cc);
+}
+
+void
 iperf_set_test_mss(struct iperf_test *ipt, int mss)
 {
     ipt->settings->mss = mss;
@@ -1148,10 +1160,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"affinity", required_argument, NULL, 'A'},
 #endif /* HAVE_CPU_AFFINITY */
         {"title", required_argument, NULL, 'T'},
-#if defined(HAVE_TCP_CONGESTION)
         {"congestion", required_argument, NULL, 'C'},
         {"linux-congestion", required_argument, NULL, 'C'},
-#endif /* HAVE_TCP_CONGESTION */
 #if defined(HAVE_SCTP_H)
         {"sctp", no_argument, NULL, OPT_SCTP},
         {"nstreams", required_argument, NULL, OPT_NUMSTREAMS},
@@ -1675,13 +1685,30 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
 	    case 'C':
-#if defined(HAVE_TCP_CONGESTION)
-		test->congestion = strdup(optarg);
+                if (optarg) {
+                    slash = strchr(optarg, '/');
+		    if (slash) {
+		        *slash = '\0';
+		        ++slash;
+                        if (strlen(slash) > 0) {
+                            test->congestion_server = strdup(slash);
+                        }
+                    }
+                    if (strlen(optarg) > 0) {
+                        test->congestion = strdup(optarg);
+                        if (!test->congestion_server) {
+                            test->congestion_server = strdup(test->congestion);
+                        }
+                    }
+                }
 		client_flag = 1;
-#else /* HAVE_TCP_CONGESTION */
-		i_errno = IEUNIMP;
-		return -1;
+#ifndef HAVE_TCP_CONGESTION
+		if (test->congestion) { // Client does not support congestion control, so should not be set for the client
+                    i_errno = IECONGESTIONSUPPORT;
+		    return -1;
+                }
 #endif /* HAVE_TCP_CONGESTION */
+
 		break;
 	    case 'd':
 		test->debug = 1;
@@ -1998,6 +2025,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     if ((test->role != 'c') && (test->role != 's')) {
         i_errno = IENOROLE;
         return -1;
+    }
+
+    // Warning if congestion control algorithm was set to non-sending client or server
+    if (test->congestion != NULL && test->mode == RECEIVER) {
+        warning("Congestion control algorithm was set to non-sending client");
+    }
+    if (test->congestion == NULL && test->congestion_server != NULL && test->mode == SENDER) {
+        warning("Congestion control algorithm was set to non-sending server");
     }
 
     /* Set Total-rate average interval to multiplicity of State interval */
@@ -2511,8 +2546,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddStringToObject(j, "title", test->title);
 	if (test->extra_data)
 	    cJSON_AddStringToObject(j, "extra_data", test->extra_data);
-	if (test->congestion)
-	    cJSON_AddStringToObject(j, "congestion", test->congestion);
+	if (test->congestion_server)
+	    cJSON_AddStringToObject(j, "congestion", test->congestion_server);
 	if (test->congestion_used)
 	    cJSON_AddStringToObject(j, "congestion_used", test->congestion_used);
 	if (test->get_server_output)
@@ -3478,6 +3513,8 @@ iperf_free_test(struct iperf_test *test)
 	free(test->extra_data);
     if (test->congestion)
 	free(test->congestion);
+    if (test->congestion_server)
+	free(test->congestion_server);
     if (test->congestion_used)
 	free(test->congestion_used);
     if (test->remote_congestion_used)
@@ -3593,6 +3630,8 @@ iperf_reset_test(struct iperf_test *test)
 
     if (test->congestion)
         free(test->congestion);
+    if (test->congestion_server)
+	free(test->congestion_server);
     test->congestion = NULL;
     if (test->remote_congestion_used)
         free(test->remote_congestion_used);

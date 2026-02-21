@@ -173,6 +173,7 @@ int	iperf_get_test_no_delay( struct iperf_test* ipt );
 int	iperf_get_test_connect_timeout( struct iperf_test* ipt );
 int	iperf_get_dont_fragment( struct iperf_test* ipt );
 char*   iperf_get_test_congestion_control(struct iperf_test* ipt);
+char*   iperf_get_test_congestion_control_server(struct iperf_test* ipt);
 int iperf_get_test_mss(struct iperf_test* ipt);
 int     iperf_get_mapped_v4(struct iperf_test* ipt);
 
@@ -220,6 +221,7 @@ void    iperf_set_test_bidirectional( struct iperf_test* ipt, int bidirectional)
 void    iperf_set_test_no_delay( struct iperf_test* ipt, int no_delay);
 void    iperf_set_dont_fragment( struct iperf_test* ipt, int dont_fragment );
 void    iperf_set_test_congestion_control(struct iperf_test* ipt, char* cc);
+void    iperf_set_test_congestion_control_server(struct iperf_test* ipt, char* cc);
 void    iperf_set_test_mss(struct iperf_test* ipt, int mss);
 void    iperf_set_mapped_v4(struct iperf_test* ipt, const int val);
 void    iperf_set_on_new_stream_callback(struct iperf_test* ipt, void (*callback)(struct iperf_stream *));
@@ -505,6 +507,7 @@ enum {
     IESETCNTLKAINTERVAL = 157, // Unable to set/get socket keepalive TCP retry interval (TCP_KEEPINTVL) option
     IESETCNTLKACOUNT = 158,    // Unable to set/get socket keepalive TCP number of retries (TCP_KEEPCNT) option
     IEPTHREADSIGMASK=159,      // Unable to initialize sub thread signal mask (check perror)
+    IECONGESTIONSUPPORT = 160, // Client does not support setting TCP congestion control algorithm
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

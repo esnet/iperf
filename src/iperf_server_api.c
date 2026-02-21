@@ -46,6 +46,7 @@
 #include <sched.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <ctype.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -157,11 +158,37 @@ iperf_accept(struct iperf_test *test)
     signed char rbuf = ACCESS_DENIED;
     socklen_t len;
     struct sockaddr_storage addr;
+    int port;
+    char ipr[INET6_ADDRSTRLEN];
+    struct sockaddr_in *addr_inP;
+    struct sockaddr_in6 *addr_in6P;
+    int received_cookie_size, j;
 
     len = sizeof(addr);
     if ((s = accept(test->listener, (struct sockaddr *) &addr, &len)) < 0) {
         i_errno = IEACCEPT;
         return ret;
+    }
+
+    if (test->verbose) {
+        if (addr.ss_family == AF_INET || addr.ss_family == AF_INET6) {
+            len = sizeof(addr);
+            if (addr.ss_family == AF_INET) {
+                addr_inP = (struct sockaddr_in *) &addr;
+                inet_ntop(AF_INET, &addr_inP->sin_addr, ipr, sizeof(ipr));
+                port = ntohs(addr_inP->sin_port);
+            } else {
+                addr_in6P = (struct sockaddr_in6 *) &addr;
+                inet_ntop(AF_INET6, &addr_in6P->sin6_addr, ipr, sizeof(ipr));
+                port = ntohs(addr_in6P->sin6_port);
+            }
+            if (iperf_mapped_v4_to_regular_v4(ipr)) {
+                iperf_set_mapped_v4(test, 1);
+            }
+            iperf_printf(test, "New test connection accepted from %s, port %d (address family %d)\n", ipr, port, addr.ss_family);
+        } else {
+            iperf_printf(test, "New test connection accepted from unknown address family %d\n", addr.ss_family);
+        }
     }
 
     if (test->ctrl_sck == -1) {
@@ -190,12 +217,23 @@ iperf_accept(struct iperf_test *test)
             return -1;
 #endif //HAVE_TCP_KEEPALIVE
 
-        if (Nread(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) != COOKIE_SIZE) {
+        if ((received_cookie_size = Nread(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp)) != COOKIE_SIZE) {
             /*
              * Note this error covers both the case of a system error
              * or the inability to read the correct amount of data
              * (i.e. timed out).
              */
+            if (received_cookie_size >= 0 && test->debug_level >= DEBUG_LEVEL_INFO) {
+                // Print the cookie contents as it may help to understand where the bad connection was sent from
+                printf("Cookie size received is too short - %d bytes instead of %d\n", received_cookie_size, COOKIE_SIZE);
+                if (received_cookie_size > 0) {
+                    printf("Cookie received=");
+                    for (j = 0; j < received_cookie_size; j++) {
+                        isprint(test->cookie[j]) ? printf("%c", test->cookie[j]) : printf("\\x%02X", test->cookie[j]);
+                    }
+                    printf("\n");
+                }
+            }
             i_errno = IERECVCOOKIE;
             goto error_handling;
         }

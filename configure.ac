@@ -411,6 +411,20 @@ if test "x$iperf3_cv_header_udp_gro" = "xyes"; then
     AC_DEFINE([HAVE_UDP_GRO], [1], [Have UDP_GRO sockopt.])
 fi
 
+# Check socket shutdown() with SHUT_WR
+AC_CACHE_CHECK([SHUT_WR socket shutdown option],
+[iperf3_cv_header_ip_shut_wr],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <sys/types.h>
+                     #include <sys/socket.h>
+                     #include <netinet/in.h>]],
+                   [[int foo = SHUT_WR;]])],
+  iperf3_cv_header_ip_shut_wr=yes,
+  iperf3_cv_header_ip_shut_wr=no))
+if test "x$iperf3_cv_header_ip_shut_wr" = "xyes"; then
+    AC_DEFINE([HAVE_SOCKET_SHUTDOWN_SHUT_WR], [1], [Have SHUT_WR socket shutdown option.])
+fi
+
 # Check if we need -lrt for clock_gettime
 AC_SEARCH_LIBS(clock_gettime, [rt posix4])
 # Check for clock_gettime support

@@ -1,0 +1,40 @@
+name: windows_build
+on: [push, pull_request]
+
+jobs:
+  build_package:
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+    - name: msys install
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MSYS
+        update: true
+        install: make gcc zip git
+    - name: get-hash
+      id: hash
+      run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+    - name: build
+      run: |
+        ./configure
+        make
+    - name: make zip
+      run: |
+        name=iperf3_${{ steps.hash.outputs.sha_short }}-windows
+        mkdir $name
+        cp src/iperf3.exe $name/
+        cp /usr/bin/msys-2.0.dll $name/
+        cp LICENSE $name/
+        zip -r $name.zip $name/
+    - name: artifact package
+      uses: actions/upload-artifact@v2
+      with:
+        name: package
+        path: iperf3_${{ steps.hash.outputs.sha_short }}-windows.zip

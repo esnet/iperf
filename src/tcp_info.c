@@ -62,6 +62,9 @@ has_tcpinfo(void)
 {
 #if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) \
 	&& defined(TCP_INFO)
+    printf("has_tcpinfo MACOS\n");
+    return 1;
+#elif (defined(__APPLE__) && defined(__MACH__)) && defined(TCP_CONNECTION_INFO)
     return 1;
 #else
     return 0;
@@ -83,6 +86,8 @@ has_tcpinfo_retransmits(void)
 #if defined(__FreeBSD__) && __FreeBSD_version >= 600000
     return 1; /* Should work now */
 #elif (defined(__NetBSD__) || defined(__OpenBSD__)) && defined(TCP_INFO)
+    return 1;
+#elif (defined(__APPLE__) && defined(__MACH__))  && defined(TCP_CONNECTION_INFO)
     return 1;
 #else
     return 0;
@@ -107,6 +112,19 @@ save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp)
 	       irp->tcpInfo.tcpi_rtt);
     }
 
+#elif (defined(__APPLE__) && defined(__MACH__))  && defined(TCP_CONNECTION_INFO)
+    struct tcp_connection_info conn_info;
+    socklen_t tcp_info_length = sizeof(conn_info );
+
+    if (getsockopt(sp->socket, IPPROTO_TCP, TCP_CONNECTION_INFO, (void *)&irp->tcpConnInfo, &tcp_info_length) < 0) 
+    	iperf_err(sp->test, "getsockopt - %s", strerror(errno));
+
+    if (sp->test->debug) {
+	printf("tcpi_snd_cwnd %u tcpi_snd_cwnd %u tcpi_srtt %u\n",
+	       irp->tcpConnInfo.tcpi_snd_cwnd, irp->tcpConnInfo.tcpi_snd_cwnd,
+	       irp->tcpConnInfo.tcpi_srtt);
+    }
+
 #endif
 }
 
@@ -120,6 +138,8 @@ get_total_retransmits(struct iperf_interval_results *irp)
     return irp->tcpInfo.tcpi_snd_rexmitpack;
 #elif (defined(__NetBSD__) || defined(__OpenBSD__)) && defined(TCP_INFO)
     return irp->tcpInfo.tcpi_snd_rexmitpack;
+#elif (defined(__APPLE__) && defined(__MACH__))  && defined(TCP_CONNECTION_INFO)
+    return irp->tcpConnInfo.tcpi_txretransmitpackets;
 #else
     return -1;
 #endif
@@ -140,6 +160,8 @@ get_snd_cwnd(struct iperf_interval_results *irp)
     return (long)irp->tcpInfo.tcpi_snd_cwnd * irp->tcpInfo.tcpi_snd_mss;
 #elif defined(__OpenBSD__) && defined(TCP_INFO)
     return irp->tcpInfo.tcpi_snd_cwnd;
+#elif (defined(__APPLE__) && defined(__MACH__))  && defined(TCP_CONNECTION_INFO)
+    return irp->tcpConnInfo.tcpi_snd_cwnd;
 #else
     return -1;
 #endif
@@ -162,6 +184,8 @@ get_snd_wnd(struct iperf_interval_results *irp)
     return (long)irp->tcpInfo.tcpi_snd_wnd * irp->tcpInfo.tcpi_snd_mss;
 #elif defined(__OpenBSD__) && defined(TCP_INFO)
     return irp->tcpInfo.tcpi_snd_wnd;
+#elif (defined(__APPLE__) && defined(__MACH__))  && defined(TCP_CONNECTION_INFO)
+    return irp->tcpConnInfo.tcpi_snd_wnd;
 #else
     return -1;
 #endif
@@ -180,6 +204,11 @@ get_rtt(struct iperf_interval_results *irp)
     return irp->tcpInfo.tcpi_rtt;
 #elif (defined(__NetBSD__) || defined(__OpenBSD__)) && defined(TCP_INFO)
     return irp->tcpInfo.tcpi_rtt;
+#elif (defined(__APPLE__) && defined(__MACH__))  && defined(TCP_CONNECTION_INFO)
+    // Linux's tcpi_rtt is a smoothed average, 
+    // macOS's tcp_connection_info explicitly separates the smoothed average (tcpi_srtt) 
+    // from the most recently measured RTT (tcpi_rttcur).
+    return irp->tcpConnInfo.tcpi_srtt;
 #else
     return -1;
 #endif
@@ -198,6 +227,8 @@ get_rttvar(struct iperf_interval_results *irp)
     return irp->tcpInfo.tcpi_rttvar;
 #elif (defined(__NetBSD__) || defined(__OpenBSD__)) && defined(TCP_INFO)
     return irp->tcpInfo.tcpi_rttvar;
+#elif (defined(__APPLE__) && defined(__MACH__))  && defined(TCP_CONNECTION_INFO)
+    return irp->tcpConnInfo.tcpi_rttvar;
 #else
     return -1;
 #endif

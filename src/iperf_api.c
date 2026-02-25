@@ -102,6 +102,36 @@ static int JSON_write(int fd, cJSON *json);
 static void print_interval_results(struct iperf_test *test, struct iperf_stream *sp, cJSON *json_interval_streams);
 static cJSON *JSON_read(int fd, int max_size);
 static int JSONStream_Output(struct iperf_test *test, const char* event_name, cJSON* obj);
+static int ensure_default_quic_p12(struct iperf_test *test);
+
+static int
+ensure_default_quic_p12(struct iperf_test *test)
+{
+    const char *p12 = "/tmp/iperf_quic.p12";
+    const char *crt = "/tmp/iperf_quic.crt";
+    const char *key = "/tmp/iperf_quic.key";
+    int rc;
+
+    if (access(p12, R_OK) == 0)
+        return 0;
+
+    if (test->debug)
+        iperf_printf(test, "QUIC: auto-generating default certificate bundle at %s\n", p12);
+
+    rc = system("openssl req -x509 -newkey rsa:2048 -nodes -keyout /tmp/iperf_quic.key -out /tmp/iperf_quic.crt -days 365 -subj '/CN=iperf-quic' >/dev/null 2>&1");
+    if (rc != 0) {
+        i_errno = IEQUICCERT;
+        return -1;
+    }
+
+    rc = system("openssl pkcs12 -export -inkey /tmp/iperf_quic.key -in /tmp/iperf_quic.crt -out /tmp/iperf_quic.p12 -passout pass: >/dev/null 2>&1");
+    if (rc != 0 || access(p12, R_OK) != 0 || access(crt, R_OK) != 0 || access(key, R_OK) != 0) {
+        i_errno = IEQUICCERT;
+        return -1;
+    }
+
+    return 0;
+}
 
 
 /*************************** Print usage functions ****************************/
@@ -1922,6 +1952,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             !test->quic_p12_file && !test->quic_cert_file && !test->quic_key_file) {
             test->quic_p12_file = strdup("/tmp/iperf_quic.p12");
             test->quic_p12_password = NULL;
+            if (!test->quic_p12_file || ensure_default_quic_p12(test) < 0)
+                return -1;
         }
     }
 

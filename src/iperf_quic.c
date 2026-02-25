@@ -353,35 +353,35 @@ quic_open_configuration(struct iperf_test *test, struct iperf_quic_context *ctx)
         if (test->quic_p12_file) {
             FILE *fp = fopen(test->quic_p12_file, "rb");
             if (!fp) {
-                i_errno = IEFILE;
+                i_errno = IEQUICCERT;
                 return -1;
             }
             if (fseek(fp, 0, SEEK_END) != 0) {
                 fclose(fp);
-                i_errno = IEFILE;
+                i_errno = IEQUICCERT;
                 return -1;
             }
             long sz = ftell(fp);
             if (sz <= 0) {
                 fclose(fp);
-                i_errno = IEFILE;
+                i_errno = IEQUICCERT;
                 return -1;
             }
             if (fseek(fp, 0, SEEK_SET) != 0) {
                 fclose(fp);
-                i_errno = IEFILE;
+                i_errno = IEQUICCERT;
                 return -1;
             }
             uint8_t *blob = malloc((size_t)sz);
             if (!blob) {
                 fclose(fp);
-                i_errno = IEFILE;
+                i_errno = IEQUICCERT;
                 return -1;
             }
             if (fread(blob, 1, (size_t)sz, fp) != (size_t)sz) {
                 fclose(fp);
                 free(blob);
-                i_errno = IEFILE;
+                i_errno = IEQUICCERT;
                 return -1;
             }
             fclose(fp);
@@ -403,7 +403,7 @@ quic_open_configuration(struct iperf_test *test, struct iperf_quic_context *ctx)
             }
         } else {
             if (!test->quic_cert_file || !test->quic_key_file) {
-                i_errno = IEFILE;
+                i_errno = IEQUICCERT;
                 return -1;
             }
             cred.Flags = QUIC_CREDENTIAL_FLAG_USE_PORTABLE_CERTIFICATES;

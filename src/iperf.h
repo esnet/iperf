@@ -108,7 +108,7 @@ struct iperf_interval_results
     int64_t   cnt_error;
 
     int omitted;
-#if ((defined(__APPLE__) && defined(__MACH__)) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && \
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && \
 	defined(TCP_INFO)
     struct tcp_info tcpInfo; /* getsockopt(TCP_INFO) for Linux, {Free,Net,Open}BSD */
 #elif (defined(__APPLE__) && defined(__MACH__))  && defined(TCP_CONNECTION_INFO)

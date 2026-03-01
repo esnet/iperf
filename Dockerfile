@@ -5,5 +5,4 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   apt update && apt-get install -y gcc && apt-get --no-install-recommends install -y make
 COPY . .
 RUN ./bootstrap.sh && ./configure && make && make install
-EXPOSE 5201/tcp 5201/udp
 CMD ["./src/iperf3", "-s"]

@@ -58,6 +58,23 @@ None.
 
 (Note: If configure fails, try running `./bootstrap.sh` first)
 
+### Cmake (simple out-of-source build) ###
+
+    mkdir iperf-build 
+    cd iperf-build
+    cmake ../iperf
+    cmake --build .
+
+### Cmake (iPhoneOS example built with Ninja) ###
+    mkdir iperf-build 
+    cd iperf-build
+    cmake -G Ninja \
+        -D BUILD_APPLE_FRAMEWORK=on \
+        -D BITCODE_ENABLED=on \
+        -D CMAKE_TOOLCHAIN_FILE=../iperf/cmake/toolchains/iphoneos.toolchain.cmake \
+        ../iperf
+    cmake --build .
+
 Invoking iperf3
 ---------------
 

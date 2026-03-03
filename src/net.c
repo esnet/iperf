@@ -234,12 +234,17 @@ create_socket(int domain, int type, int proto, const char *local, const char *bi
     return s;
 }
 
-/* make connection to server */
+/* Make connection to server.
+ *
+ * Returns:
+ *   On success: socket number.
+ *   On failure: -4 / -6 if tried to connect useing IPv4 / IPv6 address, otherwise -1.
+*/
 int
 netdial(int domain, int proto, const char *local, const char *bind_dev, int local_port, const char *server, int port, int timeout)
 {
     struct addrinfo *server_res = NULL;
-    int s, saved_errno;
+    int s, saved_errno, ret;
 
     s = create_socket(domain, proto, 0, local, bind_dev, local_port, server, port, &server_res);
     if (s < 0) {
@@ -248,10 +253,19 @@ netdial(int domain, int proto, const char *local, const char *bind_dev, int loca
 
     if (timeout_connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen, timeout) < 0 && errno != EINPROGRESS) {
 	saved_errno = errno;
+
+        // Set failure return value per the addr-family that was tried.
+        if (server_res->ai_family == AF_INET)
+            ret = -4;
+        else if (server_res->ai_family == AF_INET6)
+            ret = -6;
+        else
+            ret = -1;
+
 	close(s);
 	freeaddrinfo(server_res);
 	errno = saved_errno;
-        return -1;
+        return ret;
     }
 
     freeaddrinfo(server_res);

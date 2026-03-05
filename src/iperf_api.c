@@ -2575,19 +2575,14 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddTrueToObject(j, "tcp");
     else if (test->protocol->id == Pudp)
 	    cJSON_AddTrueToObject(j, "udp");
-<<<<<<< HEAD
-    else if (test->protocol->id == Psctp)
+else if (test->protocol->id == Psctp)
         cJSON_AddTrueToObject(j, "sctp");
     else if (test->protocol->id == Pquic)
         cJSON_AddTrueToObject(j, "quic");
-    if (test->quic_port > 0)
+
+    /* Include QUIC port in JSON when QUIC is used */
+    if (test->protocol->id == Pquic && test->quic_port > 0)
         cJSON_AddNumberToObject(j, "quic_port", test->quic_port);
-=======
-        else if (test->protocol->id == Psctp)
-            cJSON_AddTrueToObject(j, "sctp");
-        else if (test->protocol->id == Pquic)
-            cJSON_AddTrueToObject(j, "quic");
->>>>>>> origin/9-json-output-validation
 	cJSON_AddNumberToObject(j, "omit", test->omit);
 	if (test->server_affinity != -1)
 	    cJSON_AddNumberToObject(j, "server_affinity", test->server_affinity);
@@ -3502,17 +3497,9 @@ iperf_defaults(struct iperf_test *testp)
     quic = protocol_new();
     if (!quic) {
         protocol_free(tcp);
-<<<<<<< HEAD
         protocol_free(udp);
         return -1;
     }
-
-=======
-        return -1;
-    }
-
-    // TODO: implement QUIC protocol functions and set them here
->>>>>>> origin/9-json-output-validation
     quic->id = Pquic;
     quic->name = "QUIC";
     quic->accept = iperf_quic_accept;

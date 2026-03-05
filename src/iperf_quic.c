@@ -877,12 +877,7 @@ iperf_quic_shutdown_complete(struct iperf_test *test)
 
 #else /* HAVE_MSQUIC */
 
-int iperf_quic_init(struct iperf_test *test) { (void)test; i_errno = IEUNIMP; return -1; }
-int iperf_quic_listen(struct iperf_test *test) { (void)test; i_errno = IEUNIMP; return -1; }
-int iperf_quic_accept(struct iperf_test *test) { (void)test; i_errno = IEUNIMP; return -1; }
-int iperf_quic_connect(struct iperf_test *test) { (void)test; i_errno = IEUNIMP; return -1; }
-int iperf_quic_send(struct iperf_stream *sp) { (void)sp; i_errno = IEUNIMP; return -1; }
-int iperf_quic_recv(struct iperf_stream *sp) { (void)sp; i_errno = IEUNIMP; return -1; }
+
 int iperf_quic_attach_stream(struct iperf_test *test, struct iperf_stream *sp, int stream_id)
 {
     (void)test;

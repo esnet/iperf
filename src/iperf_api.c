@@ -3361,30 +3361,7 @@ protocol_free(struct protocol *proto)
 
 /**************************************************************************/
 // TODO: add actual QUIC functionality. These are placeholder functions to allow the --quic flag to run without error, but with wrong functionality
-int iperf_quic_listen(struct iperf_test *test)
-{
-    return iperf_tcp_listen(test);
-}
-int iperf_quic_connect(struct iperf_test *test)
-{
-    return iperf_tcp_connect(test);
-}
-int iperf_quic_accept(struct iperf_test *test)
-{
-    return iperf_tcp_accept(test);
-}
-int iperf_quic_send(struct iperf_stream *sp)
-{
-    return iperf_tcp_send(sp);
-}
-int iperf_quic_recv(struct iperf_stream *sp)
-{
-    return iperf_tcp_recv(sp);
-}
-int iperf_quic_init(struct iperf_test *test)
-{
-    return iperf_udp_init(test);
-}
+
 // End temporary functions
 
 int

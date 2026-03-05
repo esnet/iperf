@@ -1164,6 +1164,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"bidir", no_argument, NULL, OPT_BIDIRECTIONAL},
         {"window", required_argument, NULL, 'w'},
         {"bind", required_argument, NULL, 'B'},
+        {"quic", no_argument, NULL, 'q'},
 #if defined(HAVE_SO_BINDTODEVICE)
         {"bind-dev", required_argument, NULL, OPT_BIND_DEV},
 #endif /* HAVE_SO_BINDTODEVICE */
@@ -1354,6 +1355,9 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             }
             case 'u':
                 set_protocol(test, Pudp);
+                break;
+            case 'q':
+                set_protocol(test, Pquic);
 		client_flag = 1;
                 break;
             case OPT_QUIC:
@@ -2571,12 +2575,19 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddTrueToObject(j, "tcp");
     else if (test->protocol->id == Pudp)
 	    cJSON_AddTrueToObject(j, "udp");
+<<<<<<< HEAD
     else if (test->protocol->id == Psctp)
         cJSON_AddTrueToObject(j, "sctp");
     else if (test->protocol->id == Pquic)
         cJSON_AddTrueToObject(j, "quic");
     if (test->quic_port > 0)
         cJSON_AddNumberToObject(j, "quic_port", test->quic_port);
+=======
+        else if (test->protocol->id == Psctp)
+            cJSON_AddTrueToObject(j, "sctp");
+        else if (test->protocol->id == Pquic)
+            cJSON_AddTrueToObject(j, "quic");
+>>>>>>> origin/9-json-output-validation
 	cJSON_AddNumberToObject(j, "omit", test->omit);
 	if (test->server_affinity != -1)
 	    cJSON_AddNumberToObject(j, "server_affinity", test->server_affinity);
@@ -3354,6 +3365,33 @@ protocol_free(struct protocol *proto)
 }
 
 /**************************************************************************/
+// TODO: add actual QUIC functionality. These are placeholder functions to allow the --quic flag to run without error, but with wrong functionality
+int iperf_quic_listen(struct iperf_test *test)
+{
+    return iperf_tcp_listen(test);
+}
+int iperf_quic_connect(struct iperf_test *test)
+{
+    return iperf_tcp_connect(test);
+}
+int iperf_quic_accept(struct iperf_test *test)
+{
+    return iperf_tcp_accept(test);
+}
+int iperf_quic_send(struct iperf_stream *sp)
+{
+    return iperf_tcp_send(sp);
+}
+int iperf_quic_recv(struct iperf_stream *sp)
+{
+    return iperf_tcp_recv(sp);
+}
+int iperf_quic_init(struct iperf_test *test)
+{
+    return iperf_udp_init(test);
+}
+// End temporary functions
+
 int
 iperf_defaults(struct iperf_test *testp)
 {
@@ -3464,10 +3502,17 @@ iperf_defaults(struct iperf_test *testp)
     quic = protocol_new();
     if (!quic) {
         protocol_free(tcp);
+<<<<<<< HEAD
         protocol_free(udp);
         return -1;
     }
 
+=======
+        return -1;
+    }
+
+    // TODO: implement QUIC protocol functions and set them here
+>>>>>>> origin/9-json-output-validation
     quic->id = Pquic;
     quic->name = "QUIC";
     quic->accept = iperf_quic_accept;

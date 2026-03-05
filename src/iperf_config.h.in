@@ -51,6 +51,9 @@
 /* Have MSG_TRUNC recv option. */
 #undef HAVE_MSG_TRUNC
 
+/* Have MsQuic support. */
+#undef HAVE_MSQUIC
+
 /* Define to 1 if you have the 'nanosleep' function. */
 #undef HAVE_NANOSLEEP
 

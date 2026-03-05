@@ -241,6 +241,10 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "unable to open -F file");
             perr = 1;
             break;
+        case IEQUICCERT:
+            snprintf(errstr, len, "unable to open or load QUIC certificate credentials");
+            perr = 1;
+            break;
         case IEBURST:
             snprintf(errstr, len, "invalid burst count (maximum = %d)", MAX_BURST);
             break;

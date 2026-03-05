@@ -147,17 +147,25 @@ am__uninstall_files_from_dir = { \
        $(am__cd) "$$dir" && echo $$files | $(am__xargs_n) 40 $(am__rm_f); }; \
   }
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libiperf_la_LIBADD =
-am_libiperf_la_OBJECTS = cjson.lo iperf_api.lo iperf_error.lo \
-	iperf_auth.lo iperf_client_api.lo iperf_locale.lo \
-	iperf_server_api.lo iperf_tcp.lo iperf_udp.lo iperf_sctp.lo \
-	iperf_util.lo iperf_time.lo iperf_pthread.lo dscp.lo net.lo \
-	tcp_info.lo timer.lo units.lo
+am__DEPENDENCIES_1 =
+libiperf_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_libiperf_la_OBJECTS = libiperf_la-cjson.lo libiperf_la-iperf_api.lo \
+	libiperf_la-iperf_error.lo libiperf_la-iperf_auth.lo \
+	libiperf_la-iperf_client_api.lo libiperf_la-iperf_locale.lo \
+	libiperf_la-iperf_server_api.lo libiperf_la-iperf_tcp.lo \
+	libiperf_la-iperf_udp.lo libiperf_la-iperf_quic.lo \
+	libiperf_la-iperf_sctp.lo libiperf_la-iperf_util.lo \
+	libiperf_la-iperf_time.lo libiperf_la-iperf_pthread.lo \
+	libiperf_la-dscp.lo libiperf_la-net.lo libiperf_la-tcp_info.lo \
+	libiperf_la-timer.lo libiperf_la-units.lo
 libiperf_la_OBJECTS = $(am_libiperf_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+libiperf_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libiperf_la_CFLAGS) \
+	$(CFLAGS) $(libiperf_la_LDFLAGS) $(LDFLAGS) -o $@
 am_iperf3_OBJECTS = iperf3-main.$(OBJEXT)
 iperf3_OBJECTS = $(am_iperf3_OBJECTS)
 iperf3_DEPENDENCIES = libiperf.la
@@ -168,10 +176,11 @@ am__iperf3_profile_SOURCES_DIST = main.c cjson.c cjson.h flowlabel.h \
 	iperf.h iperf_api.c iperf_api.h iperf_error.c iperf_auth.h \
 	iperf_auth.c iperf_client_api.c iperf_locale.c iperf_locale.h \
 	iperf_server_api.c iperf_tcp.c iperf_tcp.h iperf_udp.c \
-	iperf_udp.h iperf_sctp.c iperf_sctp.h iperf_util.c \
-	iperf_util.h iperf_time.c iperf_time.h iperf_pthread.c \
-	iperf_pthread.h dscp.c net.c net.h portable_endian.h queue.h \
-	tcp_info.c timer.c timer.h units.c units.h version.h
+	iperf_udp.h iperf_quic.c iperf_quic.h iperf_sctp.c \
+	iperf_sctp.h iperf_util.c iperf_util.h iperf_time.c \
+	iperf_time.h iperf_pthread.c iperf_pthread.h dscp.c net.c \
+	net.h portable_endian.h queue.h tcp_info.c timer.c timer.h \
+	units.c units.h version.h
 am__objects_1 = iperf3_profile-cjson.$(OBJEXT) \
 	iperf3_profile-iperf_api.$(OBJEXT) \
 	iperf3_profile-iperf_error.$(OBJEXT) \
@@ -181,6 +190,7 @@ am__objects_1 = iperf3_profile-cjson.$(OBJEXT) \
 	iperf3_profile-iperf_server_api.$(OBJEXT) \
 	iperf3_profile-iperf_tcp.$(OBJEXT) \
 	iperf3_profile-iperf_udp.$(OBJEXT) \
+	iperf3_profile-iperf_quic.$(OBJEXT) \
 	iperf3_profile-iperf_sctp.$(OBJEXT) \
 	iperf3_profile-iperf_util.$(OBJEXT) \
 	iperf3_profile-iperf_time.$(OBJEXT) \
@@ -242,8 +252,8 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/cjson.Plo ./$(DEPDIR)/dscp.Plo \
-	./$(DEPDIR)/iperf3-main.Po ./$(DEPDIR)/iperf3_profile-cjson.Po \
+am__depfiles_remade = ./$(DEPDIR)/iperf3-main.Po \
+	./$(DEPDIR)/iperf3_profile-cjson.Po \
 	./$(DEPDIR)/iperf3_profile-dscp.Po \
 	./$(DEPDIR)/iperf3_profile-iperf_api.Po \
 	./$(DEPDIR)/iperf3_profile-iperf_auth.Po \
@@ -251,6 +261,7 @@ am__depfiles_remade = ./$(DEPDIR)/cjson.Plo ./$(DEPDIR)/dscp.Plo \
 	./$(DEPDIR)/iperf3_profile-iperf_error.Po \
 	./$(DEPDIR)/iperf3_profile-iperf_locale.Po \
 	./$(DEPDIR)/iperf3_profile-iperf_pthread.Po \
+	./$(DEPDIR)/iperf3_profile-iperf_quic.Po \
 	./$(DEPDIR)/iperf3_profile-iperf_sctp.Po \
 	./$(DEPDIR)/iperf3_profile-iperf_server_api.Po \
 	./$(DEPDIR)/iperf3_profile-iperf_tcp.Po \
@@ -261,17 +272,28 @@ am__depfiles_remade = ./$(DEPDIR)/cjson.Plo ./$(DEPDIR)/dscp.Plo \
 	./$(DEPDIR)/iperf3_profile-net.Po \
 	./$(DEPDIR)/iperf3_profile-tcp_info.Po \
 	./$(DEPDIR)/iperf3_profile-timer.Po \
-	./$(DEPDIR)/iperf3_profile-units.Po ./$(DEPDIR)/iperf_api.Plo \
-	./$(DEPDIR)/iperf_auth.Plo ./$(DEPDIR)/iperf_client_api.Plo \
-	./$(DEPDIR)/iperf_error.Plo ./$(DEPDIR)/iperf_locale.Plo \
-	./$(DEPDIR)/iperf_pthread.Plo ./$(DEPDIR)/iperf_sctp.Plo \
-	./$(DEPDIR)/iperf_server_api.Plo ./$(DEPDIR)/iperf_tcp.Plo \
-	./$(DEPDIR)/iperf_time.Plo ./$(DEPDIR)/iperf_udp.Plo \
-	./$(DEPDIR)/iperf_util.Plo ./$(DEPDIR)/net.Plo \
-	./$(DEPDIR)/t_api-t_api.Po ./$(DEPDIR)/t_auth-t_auth.Po \
-	./$(DEPDIR)/t_timer-t_timer.Po ./$(DEPDIR)/t_units-t_units.Po \
-	./$(DEPDIR)/t_uuid-t_uuid.Po ./$(DEPDIR)/tcp_info.Plo \
-	./$(DEPDIR)/timer.Plo ./$(DEPDIR)/units.Plo
+	./$(DEPDIR)/iperf3_profile-units.Po \
+	./$(DEPDIR)/libiperf_la-cjson.Plo \
+	./$(DEPDIR)/libiperf_la-dscp.Plo \
+	./$(DEPDIR)/libiperf_la-iperf_api.Plo \
+	./$(DEPDIR)/libiperf_la-iperf_auth.Plo \
+	./$(DEPDIR)/libiperf_la-iperf_client_api.Plo \
+	./$(DEPDIR)/libiperf_la-iperf_error.Plo \
+	./$(DEPDIR)/libiperf_la-iperf_locale.Plo \
+	./$(DEPDIR)/libiperf_la-iperf_pthread.Plo \
+	./$(DEPDIR)/libiperf_la-iperf_quic.Plo \
+	./$(DEPDIR)/libiperf_la-iperf_sctp.Plo \
+	./$(DEPDIR)/libiperf_la-iperf_server_api.Plo \
+	./$(DEPDIR)/libiperf_la-iperf_tcp.Plo \
+	./$(DEPDIR)/libiperf_la-iperf_time.Plo \
+	./$(DEPDIR)/libiperf_la-iperf_udp.Plo \
+	./$(DEPDIR)/libiperf_la-iperf_util.Plo \
+	./$(DEPDIR)/libiperf_la-net.Plo \
+	./$(DEPDIR)/libiperf_la-tcp_info.Plo \
+	./$(DEPDIR)/libiperf_la-timer.Plo \
+	./$(DEPDIR)/libiperf_la-units.Plo ./$(DEPDIR)/t_api-t_api.Po \
+	./$(DEPDIR)/t_auth-t_auth.Po ./$(DEPDIR)/t_timer-t_timer.Po \
+	./$(DEPDIR)/t_units-t_units.Po ./$(DEPDIR)/t_uuid-t_uuid.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -551,8 +573,10 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+IPERF_RPATH_FLAGS = @IPERF_RPATH_FLAGS@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
+LIBIPERF_INSTALL_NAME = @LIBIPERF_INSTALL_NAME@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
@@ -564,6 +588,9 @@ MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
+MSQUIC_CFLAGS = @MSQUIC_CFLAGS@
+MSQUIC_LIBS = @MSQUIC_LIBS@
+MSQUIC_RPATH = @MSQUIC_RPATH@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
@@ -670,6 +697,8 @@ libiperf_la_SOURCES = \
                         iperf_tcp.h \
                         iperf_udp.c \
                         iperf_udp.h \
+                        iperf_quic.c \
+                        iperf_quic.h \
                         iperf_sctp.c \
                         iperf_sctp.h \
                         iperf_util.c \
@@ -690,12 +719,15 @@ libiperf_la_SOURCES = \
                         units.h \
                         version.h
 
+libiperf_la_CFLAGS = $(MSQUIC_CFLAGS)
+libiperf_la_LIBADD = $(MSQUIC_LIBS)
+libiperf_la_LDFLAGS = $(LIBIPERF_INSTALL_NAME)
 
 # Specify the sources and various flags for the iperf binary
 iperf3_SOURCES = main.c
 iperf3_CFLAGS = -g
 iperf3_LDADD = libiperf.la
-iperf3_LDFLAGS = -g
+iperf3_LDFLAGS = -g $(IPERF_RPATH_FLAGS)
 
 # If the iperf-profiled-binary is enabled
 # Specify the sources and various flags for the profiled iperf binary. This
@@ -863,7 +895,7 @@ clean-libLTLIBRARIES:
 	$(am__rm_f) $${locs}
 
 libiperf.la: $(libiperf_la_OBJECTS) $(libiperf_la_DEPENDENCIES) $(EXTRA_libiperf_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libiperf_la_OBJECTS) $(libiperf_la_LIBADD) $(LIBS)
+	$(AM_V_CCLD)$(libiperf_la_LINK) -rpath $(libdir) $(libiperf_la_OBJECTS) $(libiperf_la_LIBADD) $(LIBS)
 
 iperf3$(EXEEXT): $(iperf3_OBJECTS) $(iperf3_DEPENDENCIES) $(EXTRA_iperf3_DEPENDENCIES) 
 	@rm -f iperf3$(EXEEXT)
@@ -899,8 +931,6 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cjson.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dscp.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3-main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-cjson.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-dscp.Po@am__quote@ # am--include-marker
@@ -910,6 +940,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_error.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_locale.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_pthread.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_quic.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_sctp.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_server_api.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_tcp.Po@am__quote@ # am--include-marker
@@ -921,27 +952,30 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-tcp_info.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-timer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-units.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_api.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_auth.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_client_api.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_error.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_locale.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_pthread.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_sctp.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_server_api.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_tcp.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_time.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_udp.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_util.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/net.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-cjson.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-dscp.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-iperf_api.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-iperf_auth.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-iperf_client_api.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-iperf_error.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-iperf_locale.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-iperf_pthread.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-iperf_quic.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-iperf_sctp.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-iperf_server_api.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-iperf_tcp.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-iperf_time.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-iperf_udp.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-iperf_util.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-net.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-tcp_info.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-timer.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiperf_la-units.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_api-t_api.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_auth-t_auth.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_timer-t_timer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_units-t_units.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_uuid-t_uuid.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcp_info.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timer.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/units.Plo@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -969,6 +1003,139 @@ am--depfiles: $(am__depfiles_remade)
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+
+libiperf_la-cjson.lo: cjson.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-cjson.lo -MD -MP -MF $(DEPDIR)/libiperf_la-cjson.Tpo -c -o libiperf_la-cjson.lo `test -f 'cjson.c' || echo '$(srcdir)/'`cjson.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-cjson.Tpo $(DEPDIR)/libiperf_la-cjson.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='cjson.c' object='libiperf_la-cjson.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-cjson.lo `test -f 'cjson.c' || echo '$(srcdir)/'`cjson.c
+
+libiperf_la-iperf_api.lo: iperf_api.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-iperf_api.lo -MD -MP -MF $(DEPDIR)/libiperf_la-iperf_api.Tpo -c -o libiperf_la-iperf_api.lo `test -f 'iperf_api.c' || echo '$(srcdir)/'`iperf_api.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-iperf_api.Tpo $(DEPDIR)/libiperf_la-iperf_api.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_api.c' object='libiperf_la-iperf_api.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-iperf_api.lo `test -f 'iperf_api.c' || echo '$(srcdir)/'`iperf_api.c
+
+libiperf_la-iperf_error.lo: iperf_error.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-iperf_error.lo -MD -MP -MF $(DEPDIR)/libiperf_la-iperf_error.Tpo -c -o libiperf_la-iperf_error.lo `test -f 'iperf_error.c' || echo '$(srcdir)/'`iperf_error.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-iperf_error.Tpo $(DEPDIR)/libiperf_la-iperf_error.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_error.c' object='libiperf_la-iperf_error.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-iperf_error.lo `test -f 'iperf_error.c' || echo '$(srcdir)/'`iperf_error.c
+
+libiperf_la-iperf_auth.lo: iperf_auth.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-iperf_auth.lo -MD -MP -MF $(DEPDIR)/libiperf_la-iperf_auth.Tpo -c -o libiperf_la-iperf_auth.lo `test -f 'iperf_auth.c' || echo '$(srcdir)/'`iperf_auth.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-iperf_auth.Tpo $(DEPDIR)/libiperf_la-iperf_auth.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_auth.c' object='libiperf_la-iperf_auth.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-iperf_auth.lo `test -f 'iperf_auth.c' || echo '$(srcdir)/'`iperf_auth.c
+
+libiperf_la-iperf_client_api.lo: iperf_client_api.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-iperf_client_api.lo -MD -MP -MF $(DEPDIR)/libiperf_la-iperf_client_api.Tpo -c -o libiperf_la-iperf_client_api.lo `test -f 'iperf_client_api.c' || echo '$(srcdir)/'`iperf_client_api.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-iperf_client_api.Tpo $(DEPDIR)/libiperf_la-iperf_client_api.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_client_api.c' object='libiperf_la-iperf_client_api.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-iperf_client_api.lo `test -f 'iperf_client_api.c' || echo '$(srcdir)/'`iperf_client_api.c
+
+libiperf_la-iperf_locale.lo: iperf_locale.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-iperf_locale.lo -MD -MP -MF $(DEPDIR)/libiperf_la-iperf_locale.Tpo -c -o libiperf_la-iperf_locale.lo `test -f 'iperf_locale.c' || echo '$(srcdir)/'`iperf_locale.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-iperf_locale.Tpo $(DEPDIR)/libiperf_la-iperf_locale.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_locale.c' object='libiperf_la-iperf_locale.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-iperf_locale.lo `test -f 'iperf_locale.c' || echo '$(srcdir)/'`iperf_locale.c
+
+libiperf_la-iperf_server_api.lo: iperf_server_api.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-iperf_server_api.lo -MD -MP -MF $(DEPDIR)/libiperf_la-iperf_server_api.Tpo -c -o libiperf_la-iperf_server_api.lo `test -f 'iperf_server_api.c' || echo '$(srcdir)/'`iperf_server_api.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-iperf_server_api.Tpo $(DEPDIR)/libiperf_la-iperf_server_api.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_server_api.c' object='libiperf_la-iperf_server_api.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-iperf_server_api.lo `test -f 'iperf_server_api.c' || echo '$(srcdir)/'`iperf_server_api.c
+
+libiperf_la-iperf_tcp.lo: iperf_tcp.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-iperf_tcp.lo -MD -MP -MF $(DEPDIR)/libiperf_la-iperf_tcp.Tpo -c -o libiperf_la-iperf_tcp.lo `test -f 'iperf_tcp.c' || echo '$(srcdir)/'`iperf_tcp.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-iperf_tcp.Tpo $(DEPDIR)/libiperf_la-iperf_tcp.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_tcp.c' object='libiperf_la-iperf_tcp.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-iperf_tcp.lo `test -f 'iperf_tcp.c' || echo '$(srcdir)/'`iperf_tcp.c
+
+libiperf_la-iperf_udp.lo: iperf_udp.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-iperf_udp.lo -MD -MP -MF $(DEPDIR)/libiperf_la-iperf_udp.Tpo -c -o libiperf_la-iperf_udp.lo `test -f 'iperf_udp.c' || echo '$(srcdir)/'`iperf_udp.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-iperf_udp.Tpo $(DEPDIR)/libiperf_la-iperf_udp.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_udp.c' object='libiperf_la-iperf_udp.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-iperf_udp.lo `test -f 'iperf_udp.c' || echo '$(srcdir)/'`iperf_udp.c
+
+libiperf_la-iperf_quic.lo: iperf_quic.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-iperf_quic.lo -MD -MP -MF $(DEPDIR)/libiperf_la-iperf_quic.Tpo -c -o libiperf_la-iperf_quic.lo `test -f 'iperf_quic.c' || echo '$(srcdir)/'`iperf_quic.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-iperf_quic.Tpo $(DEPDIR)/libiperf_la-iperf_quic.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_quic.c' object='libiperf_la-iperf_quic.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-iperf_quic.lo `test -f 'iperf_quic.c' || echo '$(srcdir)/'`iperf_quic.c
+
+libiperf_la-iperf_sctp.lo: iperf_sctp.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-iperf_sctp.lo -MD -MP -MF $(DEPDIR)/libiperf_la-iperf_sctp.Tpo -c -o libiperf_la-iperf_sctp.lo `test -f 'iperf_sctp.c' || echo '$(srcdir)/'`iperf_sctp.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-iperf_sctp.Tpo $(DEPDIR)/libiperf_la-iperf_sctp.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_sctp.c' object='libiperf_la-iperf_sctp.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-iperf_sctp.lo `test -f 'iperf_sctp.c' || echo '$(srcdir)/'`iperf_sctp.c
+
+libiperf_la-iperf_util.lo: iperf_util.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-iperf_util.lo -MD -MP -MF $(DEPDIR)/libiperf_la-iperf_util.Tpo -c -o libiperf_la-iperf_util.lo `test -f 'iperf_util.c' || echo '$(srcdir)/'`iperf_util.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-iperf_util.Tpo $(DEPDIR)/libiperf_la-iperf_util.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_util.c' object='libiperf_la-iperf_util.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-iperf_util.lo `test -f 'iperf_util.c' || echo '$(srcdir)/'`iperf_util.c
+
+libiperf_la-iperf_time.lo: iperf_time.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-iperf_time.lo -MD -MP -MF $(DEPDIR)/libiperf_la-iperf_time.Tpo -c -o libiperf_la-iperf_time.lo `test -f 'iperf_time.c' || echo '$(srcdir)/'`iperf_time.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-iperf_time.Tpo $(DEPDIR)/libiperf_la-iperf_time.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_time.c' object='libiperf_la-iperf_time.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-iperf_time.lo `test -f 'iperf_time.c' || echo '$(srcdir)/'`iperf_time.c
+
+libiperf_la-iperf_pthread.lo: iperf_pthread.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-iperf_pthread.lo -MD -MP -MF $(DEPDIR)/libiperf_la-iperf_pthread.Tpo -c -o libiperf_la-iperf_pthread.lo `test -f 'iperf_pthread.c' || echo '$(srcdir)/'`iperf_pthread.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-iperf_pthread.Tpo $(DEPDIR)/libiperf_la-iperf_pthread.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_pthread.c' object='libiperf_la-iperf_pthread.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-iperf_pthread.lo `test -f 'iperf_pthread.c' || echo '$(srcdir)/'`iperf_pthread.c
+
+libiperf_la-dscp.lo: dscp.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-dscp.lo -MD -MP -MF $(DEPDIR)/libiperf_la-dscp.Tpo -c -o libiperf_la-dscp.lo `test -f 'dscp.c' || echo '$(srcdir)/'`dscp.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-dscp.Tpo $(DEPDIR)/libiperf_la-dscp.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dscp.c' object='libiperf_la-dscp.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-dscp.lo `test -f 'dscp.c' || echo '$(srcdir)/'`dscp.c
+
+libiperf_la-net.lo: net.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-net.lo -MD -MP -MF $(DEPDIR)/libiperf_la-net.Tpo -c -o libiperf_la-net.lo `test -f 'net.c' || echo '$(srcdir)/'`net.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-net.Tpo $(DEPDIR)/libiperf_la-net.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='net.c' object='libiperf_la-net.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-net.lo `test -f 'net.c' || echo '$(srcdir)/'`net.c
+
+libiperf_la-tcp_info.lo: tcp_info.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-tcp_info.lo -MD -MP -MF $(DEPDIR)/libiperf_la-tcp_info.Tpo -c -o libiperf_la-tcp_info.lo `test -f 'tcp_info.c' || echo '$(srcdir)/'`tcp_info.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-tcp_info.Tpo $(DEPDIR)/libiperf_la-tcp_info.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tcp_info.c' object='libiperf_la-tcp_info.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-tcp_info.lo `test -f 'tcp_info.c' || echo '$(srcdir)/'`tcp_info.c
+
+libiperf_la-timer.lo: timer.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-timer.lo -MD -MP -MF $(DEPDIR)/libiperf_la-timer.Tpo -c -o libiperf_la-timer.lo `test -f 'timer.c' || echo '$(srcdir)/'`timer.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-timer.Tpo $(DEPDIR)/libiperf_la-timer.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='timer.c' object='libiperf_la-timer.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-timer.lo `test -f 'timer.c' || echo '$(srcdir)/'`timer.c
+
+libiperf_la-units.lo: units.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -MT libiperf_la-units.lo -MD -MP -MF $(DEPDIR)/libiperf_la-units.Tpo -c -o libiperf_la-units.lo `test -f 'units.c' || echo '$(srcdir)/'`units.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libiperf_la-units.Tpo $(DEPDIR)/libiperf_la-units.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='units.c' object='libiperf_la-units.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libiperf_la_CFLAGS) $(CFLAGS) -c -o libiperf_la-units.lo `test -f 'units.c' || echo '$(srcdir)/'`units.c
 
 iperf3-main.o: main.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_CFLAGS) $(CFLAGS) -MT iperf3-main.o -MD -MP -MF $(DEPDIR)/iperf3-main.Tpo -c -o iperf3-main.o `test -f 'main.c' || echo '$(srcdir)/'`main.c
@@ -1123,6 +1290,20 @@ iperf3_profile-iperf_udp.obj: iperf_udp.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_udp.c' object='iperf3_profile-iperf_udp.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-iperf_udp.obj `if test -f 'iperf_udp.c'; then $(CYGPATH_W) 'iperf_udp.c'; else $(CYGPATH_W) '$(srcdir)/iperf_udp.c'; fi`
+
+iperf3_profile-iperf_quic.o: iperf_quic.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-iperf_quic.o -MD -MP -MF $(DEPDIR)/iperf3_profile-iperf_quic.Tpo -c -o iperf3_profile-iperf_quic.o `test -f 'iperf_quic.c' || echo '$(srcdir)/'`iperf_quic.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/iperf3_profile-iperf_quic.Tpo $(DEPDIR)/iperf3_profile-iperf_quic.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_quic.c' object='iperf3_profile-iperf_quic.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-iperf_quic.o `test -f 'iperf_quic.c' || echo '$(srcdir)/'`iperf_quic.c
+
+iperf3_profile-iperf_quic.obj: iperf_quic.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-iperf_quic.obj -MD -MP -MF $(DEPDIR)/iperf3_profile-iperf_quic.Tpo -c -o iperf3_profile-iperf_quic.obj `if test -f 'iperf_quic.c'; then $(CYGPATH_W) 'iperf_quic.c'; else $(CYGPATH_W) '$(srcdir)/iperf_quic.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/iperf3_profile-iperf_quic.Tpo $(DEPDIR)/iperf3_profile-iperf_quic.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_quic.c' object='iperf3_profile-iperf_quic.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-iperf_quic.obj `if test -f 'iperf_quic.c'; then $(CYGPATH_W) 'iperf_quic.c'; else $(CYGPATH_W) '$(srcdir)/iperf_quic.c'; fi`
 
 iperf3_profile-iperf_sctp.o: iperf_sctp.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-iperf_sctp.o -MD -MP -MF $(DEPDIR)/iperf3_profile-iperf_sctp.Tpo -c -o iperf3_profile-iperf_sctp.o `test -f 'iperf_sctp.c' || echo '$(srcdir)/'`iperf_sctp.c
@@ -1784,8 +1965,6 @@ clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
 	clean-libtool clean-noinstPROGRAMS mostlyclean-am
 
 distclean: distclean-am
-	-rm -f ./$(DEPDIR)/cjson.Plo
-	-rm -f ./$(DEPDIR)/dscp.Plo
 	-rm -f ./$(DEPDIR)/iperf3-main.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-cjson.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-dscp.Po
@@ -1795,6 +1974,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_error.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_locale.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_pthread.Po
+	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_quic.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_sctp.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_server_api.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_tcp.Po
@@ -1806,27 +1986,30 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/iperf3_profile-tcp_info.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-timer.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-units.Po
-	-rm -f ./$(DEPDIR)/iperf_api.Plo
-	-rm -f ./$(DEPDIR)/iperf_auth.Plo
-	-rm -f ./$(DEPDIR)/iperf_client_api.Plo
-	-rm -f ./$(DEPDIR)/iperf_error.Plo
-	-rm -f ./$(DEPDIR)/iperf_locale.Plo
-	-rm -f ./$(DEPDIR)/iperf_pthread.Plo
-	-rm -f ./$(DEPDIR)/iperf_sctp.Plo
-	-rm -f ./$(DEPDIR)/iperf_server_api.Plo
-	-rm -f ./$(DEPDIR)/iperf_tcp.Plo
-	-rm -f ./$(DEPDIR)/iperf_time.Plo
-	-rm -f ./$(DEPDIR)/iperf_udp.Plo
-	-rm -f ./$(DEPDIR)/iperf_util.Plo
-	-rm -f ./$(DEPDIR)/net.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-cjson.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-dscp.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_api.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_auth.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_client_api.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_error.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_locale.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_pthread.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_quic.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_sctp.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_server_api.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_tcp.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_time.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_udp.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_util.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-net.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-tcp_info.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-timer.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-units.Plo
 	-rm -f ./$(DEPDIR)/t_api-t_api.Po
 	-rm -f ./$(DEPDIR)/t_auth-t_auth.Po
 	-rm -f ./$(DEPDIR)/t_timer-t_timer.Po
 	-rm -f ./$(DEPDIR)/t_units-t_units.Po
 	-rm -f ./$(DEPDIR)/t_uuid-t_uuid.Po
-	-rm -f ./$(DEPDIR)/tcp_info.Plo
-	-rm -f ./$(DEPDIR)/timer.Plo
-	-rm -f ./$(DEPDIR)/units.Plo
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-tags
@@ -1872,8 +2055,6 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -f ./$(DEPDIR)/cjson.Plo
-	-rm -f ./$(DEPDIR)/dscp.Plo
 	-rm -f ./$(DEPDIR)/iperf3-main.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-cjson.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-dscp.Po
@@ -1883,6 +2064,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_error.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_locale.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_pthread.Po
+	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_quic.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_sctp.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_server_api.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_tcp.Po
@@ -1894,27 +2076,30 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/iperf3_profile-tcp_info.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-timer.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-units.Po
-	-rm -f ./$(DEPDIR)/iperf_api.Plo
-	-rm -f ./$(DEPDIR)/iperf_auth.Plo
-	-rm -f ./$(DEPDIR)/iperf_client_api.Plo
-	-rm -f ./$(DEPDIR)/iperf_error.Plo
-	-rm -f ./$(DEPDIR)/iperf_locale.Plo
-	-rm -f ./$(DEPDIR)/iperf_pthread.Plo
-	-rm -f ./$(DEPDIR)/iperf_sctp.Plo
-	-rm -f ./$(DEPDIR)/iperf_server_api.Plo
-	-rm -f ./$(DEPDIR)/iperf_tcp.Plo
-	-rm -f ./$(DEPDIR)/iperf_time.Plo
-	-rm -f ./$(DEPDIR)/iperf_udp.Plo
-	-rm -f ./$(DEPDIR)/iperf_util.Plo
-	-rm -f ./$(DEPDIR)/net.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-cjson.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-dscp.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_api.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_auth.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_client_api.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_error.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_locale.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_pthread.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_quic.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_sctp.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_server_api.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_tcp.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_time.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_udp.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-iperf_util.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-net.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-tcp_info.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-timer.Plo
+	-rm -f ./$(DEPDIR)/libiperf_la-units.Plo
 	-rm -f ./$(DEPDIR)/t_api-t_api.Po
 	-rm -f ./$(DEPDIR)/t_auth-t_auth.Po
 	-rm -f ./$(DEPDIR)/t_timer-t_timer.Po
 	-rm -f ./$(DEPDIR)/t_units-t_units.Po
 	-rm -f ./$(DEPDIR)/t_uuid-t_uuid.Po
-	-rm -f ./$(DEPDIR)/tcp_info.Plo
-	-rm -f ./$(DEPDIR)/timer.Plo
-	-rm -f ./$(DEPDIR)/units.Plo
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

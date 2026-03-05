@@ -45,6 +45,7 @@
 #include "iperf_time.h"
 #include "net.h"
 #include "timer.h"
+#include "iperf_quic.h"
 
 #if defined(HAVE_TCP_CONGESTION)
 #if !defined(TCP_CA_NAME_MAX)
@@ -545,8 +546,12 @@ iperf_client_end(struct iperf_test *test)
     struct iperf_stream *sp;
 
     /* Close all stream sockets */
-    SLIST_FOREACH(sp, &test->streams, streams) {
-        close(sp->socket);
+    if (test->protocol->id != Pquic) {
+        SLIST_FOREACH(sp, &test->streams, streams) {
+            close(sp->socket);
+        }
+    } else {
+        iperf_quic_reset_test(test);
     }
 
     /* show final summary */

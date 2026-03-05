@@ -659,6 +659,11 @@ OPENSSL_LDFLAGS
 OPENSSL_LIBS
 OPENSSL_INCLUDES
 PKG_CONFIG
+LIBIPERF_INSTALL_NAME
+IPERF_RPATH_FLAGS
+MSQUIC_RPATH
+MSQUIC_LIBS
+MSQUIC_CFLAGS
 PTHREAD_CFLAGS
 PTHREAD_LIBS
 PTHREAD_CXX
@@ -809,6 +814,7 @@ with_sysroot
 enable_libtool_lock
 enable_maintainer_mode
 enable_profiling
+with_msquic
 with_sctp
 with_openssl
 '
@@ -1477,6 +1483,8 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-sysroot[=DIR]    Search for dependent libraries within DIR (or the
                           compiler's sysroot if not specified).
+  --with-msquic=PATH      enable MsQuic (QUIC) support; PATH is msquic root or
+                          install prefix
   --without-sctp          disable SCTP
   --with-openssl=DIR      root of the OpenSSL directory
 
@@ -16418,6 +16426,99 @@ then :
   printf "%s\n" "#define HAVE_POLL_H 1" >>confdefs.h
 
 fi
+
+
+# MsQuic (QUIC) support.
+have_msquic=false
+msquic_requested=false
+MSQUIC_CFLAGS=""
+MSQUIC_LIBS=""
+MSQUIC_RPATH=""
+
+# Check whether --with-msquic was given.
+if test ${with_msquic+y}
+then :
+  withval=$with_msquic; msquic_prefix="$withval"; msquic_requested=true
+else case e in #(
+  e) msquic_prefix=""
+ ;;
+esac
+fi
+
+
+if test "x$msquic_prefix" != "xno"; then
+    if test "x$msquic_prefix" = "x" || test "x$msquic_prefix" = "xyes"; then
+        if $msquic_requested; then
+            msquic_prefix="$srcdir/../msquic"
+        else
+            msquic_prefix=""
+        fi
+    fi
+
+    if ! $msquic_requested && test "x$msquic_prefix" = "x"; then
+        if test -f "$srcdir/../msquic/src/inc/msquic.h"; then
+            msquic_prefix="$srcdir/../msquic"
+        fi
+    fi
+
+    if test "x$msquic_prefix" != "x"; then
+        if test -f "$msquic_prefix/src/inc/msquic.h"; then
+            MSQUIC_CFLAGS="-I$msquic_prefix/src/inc"
+            have_msquic=true
+        elif test -f "$msquic_prefix/include/msquic.h"; then
+            MSQUIC_CFLAGS="-I$msquic_prefix/include"
+            have_msquic=true
+        fi
+    fi
+
+    if $have_msquic; then
+        if test "x$MSQUIC_LIBS" = "x"; then
+            if test -f "$msquic_prefix/build/bin/libmsquic.dylib"; then
+                MSQUIC_LIBS="-L$msquic_prefix/build/bin -lmsquic"
+            elif test -f "$msquic_prefix/build/libmsquic.dylib"; then
+                MSQUIC_LIBS="-L$msquic_prefix/build -lmsquic"
+            elif test -f "$msquic_prefix/lib/libmsquic.dylib"; then
+                MSQUIC_LIBS="-L$msquic_prefix/lib -lmsquic"
+            elif test -f "$msquic_prefix/lib/libmsquic.a"; then
+                MSQUIC_LIBS="-L$msquic_prefix/lib -lmsquic"
+            else
+                MSQUIC_LIBS="-lmsquic"
+            fi
+        fi
+        for tok in $MSQUIC_LIBS; do
+            case $tok in
+                -L*)
+                    MSQUIC_RPATH="${tok#-L}"
+                    break
+                    ;;
+            esac
+        done
+
+printf "%s\n" "#define HAVE_MSQUIC 1" >>confdefs.h
+
+    else
+        if $msquic_requested; then
+            as_fn_error $? "--with-msquic was given, but msquic.h was not found" "$LINENO" 5
+        fi
+    fi
+fi
+
+
+
+
+
+IPERF_RPATH_FLAGS=""
+LIBIPERF_INSTALL_NAME=""
+case "$host_os" in
+    darwin*)
+        IPERF_RPATH_FLAGS="-Wl,-rpath,@loader_path"
+        if test "x$MSQUIC_RPATH" != "x"; then
+            IPERF_RPATH_FLAGS="$IPERF_RPATH_FLAGS -Wl,-rpath,$MSQUIC_RPATH"
+        fi
+        LIBIPERF_INSTALL_NAME="-Wl,-install_name -Wl,@rpath/libiperf.0.dylib"
+        ;;
+esac
+
 
 
 # SCTP.  Allow user to disable SCTP support with --without-sctp.

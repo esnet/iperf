@@ -194,6 +194,7 @@ struct iperf_settings
 };
 
 struct iperf_test;
+struct iperf_quic_context;
 
 struct iperf_stream
 {
@@ -310,6 +311,7 @@ struct iperf_test
     TAILQ_HEAD(xbind_addrhead, xbind_entry) xbind_addrs; /* all -X opts */
     int       bind_port;                        /* --cport option */
     int       server_port;
+    int       quic_port;                        /* --quic-port option (0 = use server_port) */
     int       omit;                             /* duration of omit period (-O flag) */
     int       duration;                         /* total duration of test (-t flag) */
     int       max_server_duration;               /* maximum possible duration of test as enforced by the server (--max-server-duration flag) */
@@ -342,6 +344,15 @@ struct iperf_test
     int       use_pkcs1_padding;
 #endif // HAVE_SSL
 
+    /* QUIC (MsQuic) configuration */
+    char     *quic_cert_file;
+    char     *quic_key_file;
+    char     *quic_key_password;
+    char     *quic_p12_file;
+    char     *quic_p12_password;
+    uint32_t  quic_buf_size;                    /* --quic-buf option (bytes) */
+    struct iperf_quic_context *quic_ctx;
+
     /* boolean variables for Options */
     int       daemon;                           /* -D option */
     int       one_off;                          /* -1 option */
@@ -367,6 +378,8 @@ struct iperf_test
     int       mptcp;				/* -m, --mptcp */
 
     char     *json_output_string; /* rendered JSON output if json_output is set */
+
+    int       summary_printed;                 /* server-side summary printed */
     /* Select related parameters */
     int       max_fd;
     fd_set    read_set;                         /* set of read sockets */

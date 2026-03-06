@@ -43,6 +43,7 @@ int Nsendfile(int fromfd, int tofd, const char *buf, size_t count) /* __attribut
 int setnonblocking(int fd, int nonblocking);
 int getsockdomain(int sock);
 int parse_qos(const char *tos);
+int bind_to_device(int s, int domain, const char *bind_dev);
 void iperf_sync_close_socket(int sock);
 
 #define NET_SOFTERROR -1

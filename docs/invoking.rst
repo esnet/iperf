@@ -167,9 +167,9 @@ the executable.
                  order to set the link-local scope.
    
           --bind-dev dev
-                 Bind  to  the  specified  network  interface.   This option uses
-                 SO_BINDTODEVICE, and may require root  permissions.   (Available
-                 on Linux and possibly other systems.)
+                 Bind to the  specified  network  interface.   This  option  uses
+                 SO_BINDTODEVICE or IP_BOUND_IF,  and  may require root permissions.
+                 (Available on Linux and possibly other systems.)
    
           -V, --verbose
                  Produce more detailed output.

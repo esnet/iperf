@@ -1,5 +1,8 @@
 /* src/iperf_config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Can bind to device via SO_BINDTODEVICE or IP_BOUND_IF. */
+#undef CAN_BIND_TO_DEVICE
+
 /* Define to 1 if you have the 'clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
@@ -35,6 +38,9 @@
 
 /* Have MPTCP protocol. */
 #undef HAVE_IPPROTO_MPTCP
+
+/* Have IP_BOUND_IF sockopt. */
+#undef HAVE_IP_BOUND_IF
 
 /* Have IP_DONTFRAG sockopt. */
 #undef HAVE_IP_DONTFRAG

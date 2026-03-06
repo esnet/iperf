@@ -191,6 +191,12 @@ struct iperf_settings
     int       cntl_ka_keepidle;     /* Control TCP connection Keepalive idle time (TCP_KEEPIDLE) */
     int       cntl_ka_interval;     /* Control TCP connection Keepalive interval between retries (TCP_KEEPINTV) */
     int       cntl_ka_count;        /* Control TCP connection Keepalive number of retries (TCP_KEEPCNT) */
+    /* GSO/GRO fields always present to allow client-server negotiation regardless of local support */
+    int       gso;
+    int       gso_dg_size;
+    int       gso_bf_size;
+    int       gro;
+    int       gro_bf_size;
 };
 
 struct iperf_test;
@@ -312,6 +318,7 @@ struct iperf_test
     int       server_port;
     int       omit;                             /* duration of omit period (-O flag) */
     int       duration;                         /* total duration of test (-t flag) */
+    int       max_server_duration;               /* maximum possible duration of test as enforced by the server (--max-server-duration flag) */
     char     *diskfile_name;			/* -F option */
     int       affinity, server_affinity;	/* -A option */
 #if defined(HAVE_CPUSET_SETAFFINITY)
@@ -463,7 +470,7 @@ struct iperf_test
 #define MAX_TIME 86400
 #define MAX_OMIT_TIME 600
 #define MAX_BURST 1000
-#define MAX_MSS (9 * 1024)
+#define MAX_MSS (32 * 1024 - 1)
 #define MAX_STREAMS 128
 
 #define TIMESTAMP_FORMAT "%c "
@@ -484,5 +491,8 @@ extern int gerror; /* error value from getaddrinfo(3), for use in internal error
 
 /* In Reverse mode, maximum number of packets to wait for "accept" response - to handle out of order packets */
 #define MAX_REVERSE_OUT_OF_ORDER_PACKETS 2
+
+#define GSO_BF_MAX_SIZE MAX_UDP_BLOCKSIZE
+#define GRO_BF_MAX_SIZE MAX_UDP_BLOCKSIZE
 
 #endif /* !__IPERF_H */

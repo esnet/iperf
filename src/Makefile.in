@@ -552,6 +552,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LD = @LD@
+LDCONFIG = @LDCONFIG@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -1850,7 +1851,8 @@ install-dvi: install-dvi-am
 install-dvi-am:
 
 install-exec-am: install-binPROGRAMS install-libLTLIBRARIES
-
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
 install-html: install-html-am
 
 install-html-am:
@@ -1936,7 +1938,7 @@ uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
 
 uninstall-man: uninstall-man1 uninstall-man3
 
-.MAKE: all check-am install-am install-strip
+.MAKE: all check-am install-am install-exec-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles check check-TESTS \
 	check-am clean clean-binPROGRAMS clean-generic \
@@ -1946,7 +1948,7 @@ uninstall-man: uninstall-man1 uninstall-man3
 	distclean-tags distdir dvi dvi-am html html-am info info-am \
 	install install-am install-binPROGRAMS install-data \
 	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am \
+	install-exec-am install-exec-hook install-html install-html-am \
 	install-includeHEADERS install-info install-info-am \
 	install-libLTLIBRARIES install-man install-man1 install-man3 \
 	install-pdf install-pdf-am install-ps install-ps-am \
@@ -1960,6 +1962,9 @@ uninstall-man: uninstall-man1 uninstall-man3
 
 .PRECIOUS: Makefile
 
+
+install-exec-hook:
+	if test -n "$(LDCONFIG)"; then $(LDCONFIG) || true; fi
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

@@ -1,4 +1,4 @@
-.TH IPERF3 1 "September 2025" ESnet "User Manuals"
+.TH IPERF3 1 "November 2025" ESnet "User Manuals"
 .SH NAME
 iperf3 \- perform network throughput tests
 .SH SYNOPSIS
@@ -249,6 +249,11 @@ with no connection.
 Restart the server after \fIn\fR seconds in case it gets stuck.
 In one-off mode, this is the number of seconds the server will wait
 before exiting.
+.TP
+.BR --server-max-duration " \fIn\fR"
+The maximum time, in seconds, that an iperf client can run against the server.
+When the sum of the client's time and omit values exceeds the max duration set by the server
+or the client's time value is 0, the measurement is rejected.
 .TP
 .BR --server-bitrate-limit " \fIn\fR[KMGT][/\fCn\fR]"
 Set a limit on the server side, which will cause a test to abort if
@@ -508,6 +513,17 @@ The use of this option can help prevent counter overflows during long
 or high-bitrate UDP tests.  Both client and server need to be running
 at least version 3.1 for this option to work.  It may become the
 default behavior at some point in the future.
+.TP
+.BR --gsro
+Enable UDP Generic Segmentation Offload (GSO) on the sender and
+Generic Receive Offload (GRO) on the receiver, where supported by
+the operating system and network hardware (currently Linux only).
+GSO allows the network stack to aggregate multiple UDP datagrams
+into larger packets, improving throughput and reducing CPU overhead.
+This is a client-only option; the client communicates the GSO/GRO
+settings to the server automatically.
+This feature is disabled by default and must be explicitly enabled
+with this flag.
 .TP
 .BR --repeating-payload
 Use repeating pattern in payload, instead of random bytes.

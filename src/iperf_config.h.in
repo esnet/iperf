@@ -84,6 +84,9 @@
 /* Define to 1 if you have the 'SetProcessAffinityMask' function. */
 #undef HAVE_SETPROCESSAFFINITYMASK
 
+/* Have SHUT_WR socket shutdown option. */
+#undef HAVE_SOCKET_SHUTDOWN_SHUT_WR
+
 /* Have SO_BINDTODEVICE sockopt. */
 #undef HAVE_SO_BINDTODEVICE
 
@@ -137,6 +140,12 @@
 
 /* Have TCP_USER_TIMEOUT sockopt. */
 #undef HAVE_TCP_USER_TIMEOUT
+
+/* Have UDP_GRO sockopt. */
+#undef HAVE_UDP_GRO
+
+/* Have UDP_SEGMENT sockopt. */
+#undef HAVE_UDP_SEGMENT
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H

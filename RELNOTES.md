@@ -1,6 +1,71 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.20 2025-11-14
+---------------------
+
+NOTE: iperf-3.20 incorporates all of the changes in prior iperf3
+releases, including iperf-3.19.1.
+
+* Notable user-visible changes
+
+    * Millisecond-resolution representations have been added to JSON
+      timestamps. (PR #1846)
+
+    * The reorder_seen metric, where available, is now available in
+      the JSON output. (PR #1278)
+
+    * A division by zero error has been fixed. (PR #1906)
+
+    * Some command-line options were not properly restricted to the
+      client or server; this problem has been fixed. (#1892 / PR #1894)
+
+    * The combination of `--udp` and `--file` is now explicitly
+      disallowed. (PR #1909)
+
+    * It is now possible to get both the full JSON result object as
+      well as streaming intermediate JSON result objects. This
+      functionality is enabled by using the new `--json-stream-full`
+      command-line flag, in addition to the existing `--json-stream`
+      flag (PR #1903)
+
+    * Sends with `--zerocopy` are now properly seeded with data
+      instead of being all-zeroes. (PR #1949)
+
+    * The `--server-max-duration` flag is now allowed on the iperf3 server to impose
+      a maximum duration on timed tests. (PR #1684)
+
+    * The `--rcv-timeout` flag is now ignored for `--bidir`
+      tests. This change prevents premature termination of
+      bidirectional tests. (#1766 / PR #1946)
+
+    * Several errors in the authentication code were uncovered when
+      building with OpenSSL 3.5.3 and later versions. These were
+      fixed. (#1951 / PR #1956)
+
+    * Various issues in the iperf3 manual page were fixed up. (PR
+      #1887, PR #1927, PR #1936, PR #1941, #1891 / PR #1952)
+
+* Notable developer-visible changes
+
+    * A build failure with uClibc has been fixed. (#1888 / PR #1890)
+
+    * It is now possible to use the API to load RSA keys from a file.
+      (PR #1889)
+
+    * Some calls to sprintf() were replaced with calls to
+      snprintf(). There were no hazards in the code as written, but
+      this change might help silence some compiler warnings and
+      potentially prevent future vulnerabilities. (PR #1929)
+
+    * Proper error handling has been added to the `unit_atoX()`
+      functions. (PR #1394)
+
+    * Some memory handling errors in `t_auth` were fixed. (PR #1953)
+
+    * Minor enhancements and fixes to GitHub Actions workflows (PR
+      #1919, PR #1928, PR #1942).
+
 iperf-3.19.1 2025-07-25
 -----------------------
 
@@ -120,7 +185,7 @@ iperf-3.18 2024-12-13
 
     * Clang compilation failure on Android were fixed (PR#1687).
 
-    * `iperf_time_add()` was optimizated to improve performance
+    * `iperf_time_add()` was optimized to improve performance
       (PR#1742).
 
     * Debug messages were added when the state changes (PR#1734).
@@ -712,7 +777,7 @@ iperf 3.2 2017-06-26
     accepted for backwards compatibility (#583).
 
   * Application-level bandwidth pacing (--bitrate option) is now
-    checked every millisecond by default, instead of of every tenth of
+    checked every millisecond by default, instead of every tenth of
     a second, to provide smoother traffic behavior when using
     application pacing (#460).  The pacing can be tuned via the use of
     the --pacing-timer option (#563).
@@ -1068,7 +1133,7 @@ iperf 3.0.8 2014-09-30
 
 * User-visible changes
 
-  * Updated license and copyright verbage to confirm to LBNL Tech
+  * Updated license and copyright verbiage to confirm to LBNL Tech
     Transfer requirements.  No substantive changes; license remains
     the 3-clause BSD license.
 

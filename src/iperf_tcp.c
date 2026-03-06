@@ -206,7 +206,7 @@ iperf_tcp_listen(struct iperf_test *test)
 	/*
 	 * If binding to the wildcard address with no explicit address
 	 * family specified, then force us to get an AF_INET6 socket.
-	 * More details in the comments in netanounce().
+	 * More details in the comments in netannounce().
 	 */
 	if (test->settings->domain == AF_UNSPEC && !test->bind_address) {
 	    hints.ai_family = AF_INET6;

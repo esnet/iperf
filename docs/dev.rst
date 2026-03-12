@@ -69,7 +69,7 @@ Code Submissions
 Submissions of potential code changes can be made via
 GitHub's Pull Request mechanism:
 
-https://github.com/esnet/iperf/issues
+https://github.com/esnet/iperf/pulls
 
 The iperf3 development team is grateful for all contributions,
 particularly those that fix bugs or security issues.
@@ -156,6 +156,18 @@ The developers increment the:
 * *MINOR* version when adding functionality in a backwards-compatible manner, and
 
 * *PATCH* version when making backwards-compatible bug fixes.
+
+The iperf3 developers aim to produce two software releases per year,
+in April and October. These releases, indicated by a new minor version
+number, are essentially snapshots of the `master` codeline, and might
+contain new features or functionality.
+
+Between these releases, the developers might need to release patch
+releases to address major bugs or security vulnerabilities. These will
+generally be based on the most recent minor release and will increment
+the patch version number component. Typically they will only contain
+selected fixes cherry-picked from the `master` codeline, which will be
+rolled up into the next minor release.
 
 Release Engineering Checklist
 -----------------------------

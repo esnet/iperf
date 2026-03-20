@@ -40,6 +40,8 @@ Discussion forums: https://github.com/esnet/iperf/discussions
 
 Reporting security vulnerabilities: iperf@es.net
 
+Frequently Asked Questions: https://software.es.net/iperf/faq.html
+
 Obtaining iperf3
 ----------------
 

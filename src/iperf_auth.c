@@ -272,7 +272,8 @@ int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned ch
     EVP_PKEY_encrypt(ctx, *encryptedtext, &encryptedtext_len, rsa_buffer, rsa_buffer_len);
     EVP_PKEY_CTX_free(ctx);
 #else
-    encryptedtext_len = RSA_public_encrypt(rsa_buffer_len, rsa_buffer, *encryptedtext, rsa, padding);
+    int encrypt_ret = RSA_public_encrypt(rsa_buffer_len, rsa_buffer, *encryptedtext, rsa, padding);
+    encryptedtext_len = encrypt_ret < 0 ? 0 : (size_t) encrypt_ret;
     RSA_free(rsa);
 #endif
 
@@ -338,7 +339,8 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
     ret = EVP_PKEY_decrypt(ctx, *plaintext, &plaintext_len, rsa_buffer, rsa_buffer_len);
     EVP_PKEY_CTX_free(ctx);
 #else
-    plaintext_len = RSA_private_decrypt(rsa_buffer_len, rsa_buffer, *plaintext, rsa, padding);
+    int decrypt_ret = RSA_private_decrypt(rsa_buffer_len, rsa_buffer, *plaintext, rsa, padding);
+    plaintext_len = decrypt_ret < 0 ? 0 : (size_t) decrypt_ret;
     RSA_free(rsa);
 #endif
 
@@ -370,7 +372,7 @@ int encode_auth_setting(const char *username, const char *password, EVP_PKEY *pu
     const int text_len = strlen(auth_text_format) + strlen(username) + strlen(password) + 32;
     char *text = (char *) calloc(text_len, sizeof(char));
     if (text == NULL) {
-	return -1;
+        return -1;
     }
     snprintf(text, text_len, auth_text_format, username, password, (int64_t)utc_seconds);
 
@@ -407,21 +409,21 @@ int decode_auth_setting(int enable_debug, const char *authtoken, EVP_PKEY *priva
     s_username = (char *) calloc(plaintext_len, sizeof(char));
     if (s_username == NULL) {
         OPENSSL_free(plaintext);
-	return -1;
+        return -1;
     }
     s_password = (char *) calloc(plaintext_len, sizeof(char));
     if (s_password == NULL) {
         OPENSSL_free(plaintext);
-	free(s_username);
-	return -1;
+        free(s_username);
+        return -1;
     }
 
     int rc = sscanf((char *) plaintext, auth_text_format, s_username, s_password, &utc_seconds);
     if (rc != 3) {
         OPENSSL_free(plaintext);
-	free(s_password);
-	free(s_username);
-	return -1;
+        free(s_password);
+        free(s_username);
+        return -1;
     }
 
     if (enable_debug) {

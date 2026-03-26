@@ -1,0 +1,43 @@
+# To contribute improvements to CI/CD templates, please follow the Development guide at:
+# https://docs.gitlab.com/development/cicd/templates/
+# This specific template is located at:
+# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/C++.gitlab-ci.yml
+
+# use the official gcc image, based on debian
+# can use versions as well, like gcc:5.2
+# see https://hub.docker.com/_/gcc/
+# To contribute improvements to CI/CD templates, please follow the Development guide at:
+# https://docs.gitlab.com/development/cicd/templates/
+# This specific template is located at:
+# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/C++.gitlab-ci.yml
+
+# use the official gcc image, based on debian
+# can use versions as well, like gcc:5.2
+# see https://hub.docker.com/_/gcc/
+
+image: gcc
+
+build:
+  stage: build
+  before_script:
+     - apt update && apt -y install make autoconf libssl-dev
+  script:
+    - ./configure CFLAGS="-g -O0 -fsanitize=address" LDFLAGS="-fsanitize=address"
+    - make
+    - timeout 300 ./src/iperf3 -s &
+    - ./test_commands.sh localhost
+  artifacts:
+    paths:
+      - src/iperf3
+      - src/.libs/*
+
+# run tests using the binary built before
+test:
+  stage: test
+  script:
+    - ls
+
+deploy:
+  stage: deploy
+  script: echo "Define your deployment script!"
+  environment: production

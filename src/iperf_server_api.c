@@ -88,7 +88,7 @@ iperf_server_worker_run(void *s) {
     }
 
     /* Allow this thread to be cancelled even if it's in a syscall */
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
     while (! (test->done) && ! (sp->done)) {
@@ -230,7 +230,6 @@ iperf_accept(struct iperf_test *test)
     }
     return 0;
     error_handling:
-        close(s);
         return ret;
 }
 
@@ -461,6 +460,18 @@ static void
 cleanup_server(struct iperf_test *test)
 {
     struct iperf_stream *sp;
+    int32_t err;
+
+    /* Try to send the error code to the client*/
+    if (i_errno != IENONE && test->ctrl_sck != -1) {
+        if (iperf_set_send_state(test, SERVER_ERROR) == 0) {
+            err = htonl(i_errno);
+            if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) >= 0) {
+                err = htonl(errno);
+                Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp);
+            }
+        }
+    }
 
     /* Cancel outstanding threads */
     int i_errno_save = i_errno;
@@ -504,7 +515,8 @@ cleanup_server(struct iperf_test *test)
 
     /* Close open test sockets */
     if (test->ctrl_sck > -1) {
-	close(test->ctrl_sck);
+        // Make sure all control messages (especially error messages) are received by the client before the socket is closed
+        iperf_sync_close_socket(test->ctrl_sck);
         test->ctrl_sck = -1;
     }
     if (test->listener > -1) {
@@ -561,6 +573,7 @@ iperf_run_server(struct iperf_test *test)
     int64_t t_usecs;
     int64_t timeout_us;
     int64_t rcv_timeout_us;
+    int32_t err;
 
     if (test->logfile) {
         if (iperf_open_logfile(test) < 0)
@@ -607,11 +620,30 @@ iperf_run_server(struct iperf_test *test)
 
     while (test->state != IPERF_DONE) {
 
-        // Check if average transfer rate was exceeded (condition set in the callback routines)
+    // Check if average transfer rate was exceeded (condition set in the callback routines)
 	if (test->bitrate_limit_exceeded) {
-	    cleanup_server(test);
-            i_errno = IETOTALRATE;
+        i_errno = IETOTALRATE;
+        if (iperf_set_send_state(test, SERVER_ERROR) != 0) {
+            cleanup_server(test);
             return -1;
+        }
+
+        err = htonl(i_errno);
+        if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
+            cleanup_server(test);
+            i_errno = IECTRLWRITE;
+            return -1;
+        }
+
+        err = htonl(errno);
+        if (Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
+            cleanup_server(test);
+            i_errno = IECTRLWRITE;
+            return -1;
+        }
+
+        cleanup_server(test);
+        return -1;
 	}
 
         memcpy(&read_set, &test->read_set, sizeof(fd_set));
@@ -943,6 +975,10 @@ iperf_run_server(struct iperf_test *test)
                         i_errno = IEPTHREADATTRDESTROY;
                         cleanup_server(test);
                     };
+
+                    /* Reset receive-progress baseline after workers are ready */
+                    last_receive_blocks = test->blocks_received;
+                    iperf_time_now(&last_receive_time);
                 }
             }
         }

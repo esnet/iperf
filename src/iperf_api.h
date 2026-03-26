@@ -104,6 +104,9 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define OPT_USE_PKCS1_PADDING 30
 #define OPT_CNTL_KA 31
 #define OPT_SKIP_RX_COPY 32
+#define OPT_JSON_STREAM_FULL_OUTPUT 33
+#define OPT_SERVER_MAX_DURATION 34
+#define OPT_GSRO 35
 
 /* states */
 #define TEST_START 1
@@ -155,6 +158,7 @@ int	iperf_get_test_protocol_id( struct iperf_test* ipt );
 int	iperf_get_test_json_output( struct iperf_test* ipt );
 char*	iperf_get_test_json_output_string ( struct iperf_test* ipt );
 int	iperf_get_test_json_stream( struct iperf_test* ipt );
+int	iperf_get_test_json_stream_full_output( struct iperf_test* ipt );
 int	iperf_get_test_zerocopy( struct iperf_test* ipt );
 int	iperf_get_test_get_server_output( struct iperf_test* ipt );
 char	iperf_get_test_unit_format(struct iperf_test *ipt);
@@ -200,6 +204,7 @@ void    iperf_set_test_template( struct iperf_test *ipt, const char *tmp_templat
 void	iperf_set_test_reverse( struct iperf_test* ipt, int reverse );
 void	iperf_set_test_json_output( struct iperf_test* ipt, int json_output );
 void	iperf_set_test_json_stream( struct iperf_test* ipt, int json_stream );
+void	iperf_set_test_json_stream_full_output( struct iperf_test* ipt, int json_stream_full_output );
 void    iperf_set_test_json_callback(struct iperf_test *ipt, void (*callback)(struct iperf_test *, char *));
 int	iperf_has_zerocopy( void );
 void	iperf_set_test_zerocopy( struct iperf_test* ipt, int zerocopy );
@@ -226,9 +231,11 @@ void    iperf_set_on_test_finish_callback(struct iperf_test* ipt, void (*callbac
 void    iperf_set_test_client_username(struct iperf_test *ipt, const char *client_username);
 void    iperf_set_test_client_password(struct iperf_test *ipt, const char *client_password);
 void    iperf_set_test_client_rsa_pubkey(struct iperf_test *ipt, const char *client_rsa_pubkey_base64);
+void    iperf_set_test_client_rsa_pubkey_from_file(struct iperf_test *ipt, const char *client_rsa_pubkey_file);
 void    iperf_set_test_server_authorized_users(struct iperf_test *ipt, const char *server_authorized_users);
 void    iperf_set_test_server_skew_threshold(struct iperf_test *ipt, int server_skew_threshold);
 void    iperf_set_test_server_rsa_privkey(struct iperf_test *ipt, const char *server_rsa_privkey_base64);
+void    iperf_set_test_server_rsa_privkey_from_file(struct iperf_test *ipt, const char *server_rsa_privkey_file);
 #endif // HAVE_SSL
 
 void	iperf_set_test_connect_timeout(struct iperf_test *ipt, int ct);
@@ -247,7 +254,7 @@ void      add_to_interval_list(struct iperf_stream_result * rp, struct iperf_int
 
 /**
  * connect_msg -- displays connection message
- * denoting senfer/receiver details
+ * denoting sender/receiver details
  *
  */
 void      connect_msg(struct iperf_stream * sp);
@@ -332,7 +339,6 @@ long get_rttvar(struct iperf_interval_results *irp);
 long get_pmtu(struct iperf_interval_results *irp);
 long get_reorder(struct iperf_interval_results *irp);
 void print_tcpinfo(struct iperf_test *test);
-void build_tcpinfo_message(struct iperf_interval_results *r, char *message);
 
 int iperf_set_send_state(struct iperf_test *test, signed char state);
 void iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP);
@@ -397,6 +403,7 @@ void iperf_signormalexit(struct iperf_test *test, const char *format, ...) __att
 void iperf_exit(struct iperf_test *test, int exit_code, const char *format, va_list argp) __attribute__ ((noreturn));
 char *iperf_strerror(int);
 extern int i_errno;
+extern const char *errarg;
 enum {
     IENONE = 0,             // No error
     /* Parameter errors */
@@ -436,6 +443,8 @@ enum {
     IEUDPFILETRANSFER = 34, // Cannot transfer file using UDP
     IESERVERAUTHUSERS = 35,  // Cannot access authorized users file
     IECNTLKA = 36,          // Control connection Keepalive period should be larger than the full retry period (interval * count)
+    IEMAXSERVERTESTDURATIONEXCEEDED = 37, // Client's duration exceeds server's maximum duration
+    IEUNITVAL = 38,         // Invalid unit value or suffix
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)
@@ -502,7 +511,7 @@ enum {
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)
     IESTREAMLISTEN = 202,   // Unable to start stream listener (check perror)
     IESTREAMCONNECT = 203,  // Unable to connect stream (check herror/perror)
-    IESTREAMACCEPT = 204,   // Unable to accepte stream connection (check perror)
+    IESTREAMACCEPT = 204,   // Unable to accept stream connection (check perror)
     IESTREAMWRITE = 205,    // Unable to write to stream socket (check perror)
     IESTREAMREAD = 206,     // Unable to read from stream (check perror)
     IESTREAMCLOSE = 207,    // Stream has closed unexpectedly

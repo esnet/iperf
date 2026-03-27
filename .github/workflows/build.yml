@@ -32,8 +32,14 @@ jobs:
     - name: build
       run: |
         ./configure && make && make check
+    - name: test commands
+      run: |
         timeout 300 src/iperf3 -s &
         ./test_commands.sh localhost
+    - name: test auth
+      run: |
+        pkill iperf3
+        ./auth_test.sh
   build-test-macos-ish:
     strategy:
       matrix:
@@ -47,8 +53,14 @@ jobs:
     - name: build
       run: |
         ./configure && make && make check
+    - name: test commands
+      run: |
         timeout 300 src/iperf3 -s &
         ./test_commands.sh localhost
+    - name: test auth
+      run: |
+        pkill iperf3
+        ./auth_test.sh
   build-test-sanitizer-address:
     runs-on: ubuntu-latest
     steps:
@@ -61,5 +73,11 @@ jobs:
     - name: build
       run: |
         ./configure CFLAGS="-g -O0 -fsanitize=address" LDFLAGS="-fsanitize=address" && make && make check
+    - name: test commands
+      run: |
         timeout 300 src/iperf3 -s &
         ./test_commands.sh localhost
+    - name: test auth
+      run: |
+        pkill iperf3
+        ./auth_test.sh

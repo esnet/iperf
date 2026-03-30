@@ -5,12 +5,11 @@ Requires=network.target
 [Service]
 ExecStart=/usr/bin/iperf3 -s
 Restart=on-failure
-User=nobody
+DynamicUser=yes
 
 NoNewPrivileges=yes
 PrivateTmp=yes
 PrivateDevices=yes
-DevicePolicy=closed
 ProtectSystem=strict
 ProtectHome=read-only
 ProtectControlGroups=yes

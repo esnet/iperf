@@ -34,6 +34,24 @@ struct iperf_time {
     uint32_t usecs;
 };
 
+/**
+ * Retrieves the current wallclock time.
+ *
+ * When during operation the system-wide clock changes, users will see
+ * this and results might become inconsistent.
+ */
+int iperf_time_now_wallclock(struct iperf_time *time1);
+
+/**
+ * Retrieves the current time using a monotonic clock.
+ *
+ * When during operation the system-wide clock changes, users still will see
+ * a strictly monotonic increasing clock.
+ *
+ * Please note that a monotonic clock is only available on systems that have the
+ * `clock_gettime()` system call. On other systems, this falls back to
+ * `iperf_time_now_wallclock()`.
+ */
 int iperf_time_now(struct iperf_time *time1);
 
 void iperf_time_add_usecs(struct iperf_time *time1, uint64_t usecs);
@@ -44,6 +62,9 @@ int iperf_time_diff(struct iperf_time *time1, struct iperf_time *time2, struct i
 
 uint64_t iperf_time_in_usecs(struct iperf_time *time);
 
+/**
+ * Returns the time in seconds as double type with a microsecond granularity.
+ */
 double iperf_time_in_secs(struct iperf_time *time);
 
 #endif

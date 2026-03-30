@@ -38,6 +38,9 @@
 #include <string.h>
 #include <fcntl.h>
 #include <limits.h>
+#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)
+#include <linux/udp.h>
+#endif
 
 #ifdef HAVE_SENDFILE
 #ifdef linux
@@ -55,6 +58,10 @@
 #endif
 #endif
 #endif /* HAVE_SENDFILE */
+
+#ifdef HAVE_IP_BOUND_IF
+#include <netinet/in.h>
+#endif /* HAVE_IP_BOUND_IF */
 
 #ifdef HAVE_POLL_H
 #include <poll.h>
@@ -118,9 +125,38 @@ timeout_connect(int s, const struct sockaddr *name, socklen_t namelen,
 	return (ret);
 }
 
-/* netdial and netannouce code comes from libtask: http://swtch.com/libtask/
+/* netdial and netannounce code comes from libtask: http://swtch.com/libtask/
  * Copyright: http://swtch.com/libtask/COPYRIGHT
 */
+
+int
+bind_to_device(int s, int domain, const char *bind_dev)
+{
+#if defined(HAVE_SO_BINDTODEVICE)
+    return setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE, bind_dev, IFNAMSIZ);
+#elif defined(HAVE_IP_BOUND_IF)
+    int opt;
+    switch (domain) {
+        case IPPROTO_IP:
+            opt = IP_BOUND_IF;
+            break;
+        case IPPROTO_IPV6:
+            opt = IPV6_BOUND_IF;
+            break;
+        default:
+            errno = ENOTSUP;
+            return -1;
+    }
+    int index = if_nametoindex(bind_dev);
+    if (index == 0) {
+        return -1;
+    }
+    return setsockopt(s, domain, opt, &index, sizeof(index));
+#else
+    errno = ENOTSUP;
+    return -1;
+#endif
+}
 
 /* create a socket */
 int
@@ -157,11 +193,7 @@ create_socket(int domain, int type, int proto, const char *local, const char *bi
     }
 
     if (bind_dev) {
-#if defined(HAVE_SO_BINDTODEVICE)
-        if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE,
-                       bind_dev, IFNAMSIZ) < 0)
-#endif // HAVE_SO_BINDTODEVICE
-        {
+        if (bind_to_device(s, domain, bind_dev) < 0) {
             saved_errno = errno;
             close(s);
             freeaddrinfo(local_res);
@@ -365,13 +397,22 @@ netannounce(int domain, int proto, const char *local, const char *bind_dev, int 
     return s;
 }
 
-
 /*******************************************************************/
-/* reads 'count' bytes from a socket  */
+/* Nread - reads 'count' bytes from a socket  */
 /********************************************************************/
 
 int
 Nread(int fd, char *buf, size_t count, int prot)
+{
+    return Nrecv(fd, buf, count, prot, 0);
+}
+
+/*******************************************************************/
+/* Nrecv - reads 'count' bytes from a socket  */
+/********************************************************************/
+
+int
+Nrecv(int fd, char *buf, size_t count, int prot, int sock_opt)
 {
     register ssize_t r;
     register size_t nleft = count;
@@ -386,7 +427,7 @@ Nread(int fd, char *buf, size_t count, int prot)
      *
      * This check could go inside the while() loop below, except we're
      * currently considering whether it might make sense to support a
-     * codepath that bypassese this check, for situations where we
+     * codepath that bypasses this check, for situations where we
      * already know that fd has data on it (for example if we'd gotten
      * to here as the result of a select() call.
      */
@@ -403,7 +444,11 @@ Nread(int fd, char *buf, size_t count, int prot)
     }
 
     while (nleft > 0) {
-        r = read(fd, buf, nleft);
+        if (sock_opt)
+            r = recv(fd, buf, nleft, sock_opt);
+        else
+            r = read(fd, buf, nleft);
+
         if (r < 0) {
             /* XXX EWOULDBLOCK can't happen without non-blocking sockets */
             if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
@@ -413,8 +458,15 @@ Nread(int fd, char *buf, size_t count, int prot)
         } else if (r == 0)
             break;
 
-        nleft -= r;
-        buf += r;
+	if (sock_opt & MSG_TRUNC) {
+            size_t bytes_copied = (r > nleft)? nleft: r;
+            nleft -= bytes_copied;
+            buf += bytes_copied;
+        }
+	else {
+            nleft -= r;
+            buf += r;
+        }
 
         /*
          * We need some more bytes but don't want to wait around
@@ -453,16 +505,29 @@ Nread(int fd, char *buf, size_t count, int prot)
 }
 
 /********************************************************************/
-/* reads 'count' bytes from a socket - but without using select()   */
+/* Nreads 'count' bytes from a socket - but without using select()   */
 /********************************************************************/
 int
 Nread_no_select(int fd, char *buf, size_t count, int prot)
+{
+    return Nrecv_no_select(fd, buf, count, prot, 0);
+}
+
+/********************************************************************/
+/* Nrecv reads 'count' bytes from a socket - but without using select()   */
+/********************************************************************/
+int
+Nrecv_no_select(int fd, char *buf, size_t count, int prot, int sock_opt)
 {
     register ssize_t r;
     register size_t nleft = count;
 
     while (nleft > 0) {
-        r = read(fd, buf, nleft);
+        if (sock_opt)
+            r = recv(fd, buf, nleft, sock_opt);
+        else
+            r = read(fd, buf, nleft);
+
         if (r < 0) {
             /* XXX EWOULDBLOCK can't happen without non-blocking sockets */
             if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
@@ -472,13 +537,109 @@ Nread_no_select(int fd, char *buf, size_t count, int prot)
         } else if (r == 0)
             break;
 
-        nleft -= r;
-        buf += r;
+	if (sock_opt & MSG_TRUNC) {
+            size_t bytes_copied = (r > nleft)? nleft: r;
+            nleft -= bytes_copied;
+            buf += bytes_copied;
+        }
+	else {
+            nleft -= r;
+            buf += r;
+        }
+
 
     }
     return count - nleft;
 }
 
+#ifdef HAVE_UDP_GRO
+static int recv_msg_gro(int fd, char *buf, int len, int *gso_size)
+{
+	char control[CMSG_SPACE(sizeof(uint16_t))] = {0};
+	struct msghdr msg = {0};
+	struct iovec iov = {0};
+	struct cmsghdr *cmsg;
+	uint16_t *gsosizeptr;
+	int ret;
+
+	/* Input validation */
+	if (!buf || len <= 0 || !gso_size) {
+		return -1;
+	}
+
+	iov.iov_base = buf;
+	iov.iov_len = len;
+
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+
+	msg.msg_control = control;
+	msg.msg_controllen = sizeof(control);
+
+	*gso_size = -1;
+	ret = recvmsg(fd, &msg, MSG_DONTWAIT);
+
+	if (ret > 0) {
+		for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+			if (cmsg->cmsg_level == IPPROTO_UDP && cmsg->cmsg_type == UDP_GRO) {
+				/* Validate cmsg data length */
+				if (cmsg->cmsg_len >= CMSG_LEN(sizeof(uint16_t))) {
+					gsosizeptr = (uint16_t *) CMSG_DATA(cmsg);
+					*gso_size = *gsosizeptr;
+					/* Sanity check the gso_size value */
+					if (*gso_size <= 0 || *gso_size > len) {
+						*gso_size = -1;  /* Mark as invalid */
+					}
+				}
+				break;
+			}
+		}
+	}
+
+	return ret;
+}
+
+int
+Nread_gro(int fd, char *buf, size_t count, int prot, int *dgram_sz)
+{
+	register ssize_t r;
+
+	/* Input validation */
+	if (!buf || count <= 0 || !dgram_sz) {
+		return NET_HARDERROR;
+	}
+
+	/* Limit maximum buffer size to prevent excessive memory usage */
+	if (count > MAX_UDP_BLOCKSIZE) {
+		count = MAX_UDP_BLOCKSIZE;
+	}
+
+	r = recv_msg_gro(fd, buf, count, dgram_sz);
+
+	if (r < 0) {
+		if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK) {
+			return 0;
+		} else {
+			return NET_HARDERROR;
+		}
+	}
+
+	/* Additional validation of returned dgram_sz */
+	if (r > 0 && *dgram_sz > 0 && *dgram_sz > r) {
+		/* dgram_sz shouldn't be larger than actual received data */
+		*dgram_sz = r;
+	}
+
+	return r;
+}
+#else
+int
+Nread_gro(int fd, char *buf, size_t count, int prot, int *dgram_sz)
+{
+	/* GRO not supported on this platform */
+	return NET_HARDERROR;
+}
+#endif /* HAVE_UDP_GRO */
 
 /*
  *                      N W R I T E
@@ -518,6 +679,80 @@ Nwrite(int fd, const char *buf, size_t count, int prot)
     return count;
 }
 
+#ifdef HAVE_UDP_SEGMENT
+static void udp_msg_gso(struct cmsghdr *cm, uint16_t gso_size)
+{
+	uint16_t *valp;
+
+	cm->cmsg_level = IPPROTO_UDP;
+	cm->cmsg_type = UDP_SEGMENT;
+	cm->cmsg_len = CMSG_LEN(sizeof(gso_size));
+	valp = (void *) CMSG_DATA(cm);
+	*valp = gso_size;
+}
+
+static int udp_sendmsg_gso(int fd, const char *buf, size_t count, uint16_t gso_size)
+{
+	char control[CMSG_SPACE(sizeof(gso_size))] = {0};
+	struct msghdr msg = {0};
+	struct iovec iov = {0};
+	size_t msg_controllen;
+	struct cmsghdr *cmsg;
+	int ret;
+
+	iov.iov_base = (void *) buf;
+	iov.iov_len = count;
+
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+
+	msg.msg_control = control;
+	msg.msg_controllen = sizeof(control);
+	cmsg = CMSG_FIRSTHDR(&msg);
+
+	udp_msg_gso(cmsg, gso_size);
+
+	msg_controllen = CMSG_SPACE(sizeof(gso_size));
+	msg.msg_controllen = msg_controllen;
+
+	ret = sendmsg(fd, &msg, 0);
+
+	return ret;
+}
+
+int
+Nwrite_gso(int fd, const char *buf, size_t count, int prot, uint16_t gso_size)
+{
+	register ssize_t r;
+
+	r = udp_sendmsg_gso(fd, buf, count, gso_size);
+
+	if (r < 0) {
+		switch (errno) {
+			case EINTR:
+			case EAGAIN:
+#if (EAGAIN != EWOULDBLOCK)
+			case EWOULDBLOCK:
+#endif
+				return 0;
+
+			case ENOBUFS:
+				return NET_SOFTERROR;
+
+			default:
+				return NET_HARDERROR;
+		}
+	}
+	return r;
+}
+#else
+int
+Nwrite_gso(int fd, const char *buf, size_t count, int prot, uint16_t gso_size)
+{
+	/* GSO not supported on this platform */
+	return NET_HARDERROR;
+}
+#endif /* HAVE_UDP_SEGMENT */
 
 int
 has_sendfile(void)
@@ -634,3 +869,20 @@ getsockdomain(int sock)
     }
     return ((struct sockaddr *) &sa)->sa_family;
 }
+
+/****************************************************************************/
+
+// Sync and close a socket
+void
+iperf_sync_close_socket(int sock)
+{
+#ifdef HAVE_SOCKET_SHUTDOWN_SHUT_WR
+    char buffer[128];
+    shutdown(sock, SHUT_WR); // Signal that we are done writing
+    while (Nread(sock, buffer, sizeof(buffer), 0) > 0); // Read until EOF
+#else // HAVE_SOCKET_SHUTDOWN_SHUT_WR
+    sleep(1); // Not the best mechanism, but should be good enough for error cases (and is simple and portable)
+#endif // HAVE_SOCKET_SHUTDOWN_SHUT_WR
+    close(sock);
+}
+

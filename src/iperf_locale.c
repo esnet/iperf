@@ -108,16 +108,17 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -A, --affinity n[,m]      set CPU affinity core number to n (the core the process will use)\n"
                           "                             (optional Client only m - the Server's core number for this test)\n"
 #endif /* HAVE_CPU_AFFINITY */
-#if defined(HAVE_SO_BINDTODEVICE)
+#if defined(CAN_BIND_TO_DEVICE)
                            "  -B, --bind <host>[%%<dev>] bind to the interface associated with the address <host>\n"
                            "                            (optional <dev> equivalent to `--bind-dev <dev>`)\n"
                            "  --bind-dev <dev>          bind to the network interface with SO_BINDTODEVICE\n"
-#else /* HAVE_SO_BINDTODEVICE */
+#else /* CAN_BIND_TO_DEVICE */
                            "  -B, --bind      <host>    bind to the interface associated with the address <host>\n"
-#endif /* HAVE_SO_BINDTODEVICE */
+#endif /* CAN_BIND_TO_DEVICE */
                            "  -V, --verbose             more detailed output\n"
                            "  -J, --json                output in JSON format\n"
                            "  --json-stream             output in line-delimited JSON format\n"
+                           "  --json-stream-full-output output in JSON format with JSON streams enabled\n"
                            "  --logfile f               send output to a log file\n"
                            "  --forceflush              force flushing output at every interval\n"
                            "  --timestamps<=format>     emit a timestamp at the start of each output line\n"
@@ -136,7 +137,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -m, --mptcp               use MPTCP rather than plain TCP\n"
 #endif
                            "  -d, --debug[=#]           emit debugging output\n"
-                           "                            (optional optional \"=\" and debug level: 1-4. Default is 4 - all messages)\n"
+                           "                            (optional \"=\" and debug level: 1-4. Default is 4 - all messages)\n"
                            "  -v, --version             show version information and quit\n"
                            "  -h, --help                show this message and quit\n"
                            "Server specific:\n"
@@ -148,6 +149,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 			   "                            total data rate.  Default is 5 seconds)\n"
                            "  --idle-timeout #          restart idle server after # seconds in case it\n"
                            "                            got stuck (default - no timeout)\n"
+                           "  --server-max-duration #   max time, in seconds, that an iperf test can run against the server\n"
 #if defined(HAVE_SSL)
                            "  --rsa-private-key-path    path to the RSA private key used to decrypt\n"
 			   "                            authentication credentials\n"
@@ -171,7 +173,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "                            (default %d Mbit/sec for UDP, unlimited for TCP)\n"
                            "                            (optional slash and packet count for burst mode)\n"
 			   "  --pacing-timer #[KMG]     set the Server timing for pacing, in microseconds (default %d)\n"
-                           "                            (deprecated - for servers using older versions ackward compatibility)\n"
+                           "                            (deprecated - for servers using older versions backward compatibility)\n"
 #if defined(HAVE_SO_MAX_PACING_RATE)
                            "  --fq-rate #[KMG]          enable fair-queuing based socket pacing in\n"
 			   "                            bits/sec (Linux only)\n"
@@ -209,11 +211,15 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -L, --flowlabel N         set the IPv6 flow label (only supported on Linux)\n"
 #endif /* HAVE_FLOWLABEL */
                            "  -Z, --zerocopy            use a 'zero copy' method of sending data\n"
+#if defined(HAVE_MSG_TRUNC)
+                           "  --skip-rx-copy            ignore received messages using MSG_TRUNC option\n"
+#endif /* HAVE_MSG_TRUNC */
                            "  -O, --omit N              perform pre-test for N seconds and omit the pre-test statistics\n"
                            "  -T, --title str           prefix every output line with this string\n"
                            "  --extra-data str          data string to include in client and server JSON\n"
                            "  --get-server-output       get results from server\n"
                            "  --udp-counters-64bit      use 64-bit counters in UDP test packets\n"
+                           "  --gsro                    enable UDP GSO/GRO on both client and server (client-only option)\n"
                            "  --repeating-payload       use repeating pattern in payload, instead of\n"
                            "                            randomized payload (like in iperf2)\n"
 #if defined(HAVE_DONT_FRAGMENT)
@@ -305,7 +311,7 @@ const char test_start_bytes[] =
 "Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %"PRIuFAST64" bytes to send, tos %d\n";
 
 const char test_start_blocks[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %"PRIuFAST64" bytes to send, tos %d\n";
+"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %"PRIuFAST64" blocks to send, tos %d\n";
 
 
 /* -------------------------------------------------------------------

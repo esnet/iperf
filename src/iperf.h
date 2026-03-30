@@ -111,6 +111,8 @@ struct iperf_interval_results
 #if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && \
 	defined(TCP_INFO)
     struct tcp_info tcpInfo; /* getsockopt(TCP_INFO) for Linux, {Free,Net,Open}BSD */
+#elif (defined(__APPLE__) && defined(__MACH__))  && defined(TCP_CONNECTION_INFO)
+    struct tcp_connection_info tcpConnInfo;
 #else
     /* Just placeholders, never accessed. */
     char *tcpInfo;
@@ -126,6 +128,7 @@ struct iperf_interval_results
     long rtt;
     long rttvar;
     long pmtu;
+    long reorder;
 };
 
 struct iperf_stream_result
@@ -137,6 +140,7 @@ struct iperf_stream_result
     atomic_iperf_size_t bytes_sent_omit;
     long stream_prev_total_retrans;
     long stream_retrans;
+    long stream_reorder;
     long stream_max_rtt;
     long stream_min_rtt;
     long stream_sum_rtt;
@@ -180,6 +184,7 @@ struct iperf_settings
     char      *client_password;
     EVP_PKEY  *client_rsa_pubkey;
 #endif // HAVE_SSL
+    int       skip_rx_copy;         /* Whether to ignore received messages data, using MSG_TRUNC option */
     int	      connect_timeout;	    /* socket connection timeout, in ms */
     int       idle_timeout;         /* server idle time timeout */
     unsigned int snd_timeout; /* Timeout for sending tcp messages in active mode, in us */
@@ -188,6 +193,12 @@ struct iperf_settings
     int       cntl_ka_keepidle;     /* Control TCP connection Keepalive idle time (TCP_KEEPIDLE) */
     int       cntl_ka_interval;     /* Control TCP connection Keepalive interval between retries (TCP_KEEPINTV) */
     int       cntl_ka_count;        /* Control TCP connection Keepalive number of retries (TCP_KEEPCNT) */
+    /* GSO/GRO fields always present to allow client-server negotiation regardless of local support */
+    int       gso;
+    int       gso_dg_size;
+    int       gso_bf_size;
+    int       gro;
+    int       gro_bf_size;
 };
 
 struct iperf_test;
@@ -309,6 +320,7 @@ struct iperf_test
     int       server_port;
     int       omit;                             /* duration of omit period (-O flag) */
     int       duration;                         /* total duration of test (-t flag) */
+    int       max_server_duration;               /* maximum possible duration of test as enforced by the server (--max-server-duration flag) */
     char     *diskfile_name;			/* -F option */
     int       affinity, server_affinity;	/* -A option */
 #if defined(HAVE_CPUSET_SETAFFINITY)
@@ -347,6 +359,7 @@ struct iperf_test
     int	      verbose;                          /* -V option - verbose mode */
     int	      json_output;                      /* -J option - JSON output */
     int	      json_stream;                      /* --json-stream */
+    int       json_stream_full_output;          /* --json-stream-full-output */
     void      (*json_callback) (struct iperf_test *, char *); /* allow user apps to receive the
                                                 JSON strings,instead of writing them to the output file */
     int	      zerocopy;                         /* -Z option - use sendfile */
@@ -459,7 +472,7 @@ struct iperf_test
 #define MAX_TIME 86400
 #define MAX_OMIT_TIME 600
 #define MAX_BURST 1000
-#define MAX_MSS (9 * 1024)
+#define MAX_MSS (32 * 1024 - 1)
 #define MAX_STREAMS 128
 
 #define TIMESTAMP_FORMAT "%c "
@@ -480,5 +493,8 @@ extern int gerror; /* error value from getaddrinfo(3), for use in internal error
 
 /* In Reverse mode, maximum number of packets to wait for "accept" response - to handle out of order packets */
 #define MAX_REVERSE_OUT_OF_ORDER_PACKETS 2
+
+#define GSO_BF_MAX_SIZE MAX_UDP_BLOCKSIZE
+#define GRO_BF_MAX_SIZE MAX_UDP_BLOCKSIZE
 
 #endif /* !__IPERF_H */

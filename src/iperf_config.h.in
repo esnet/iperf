@@ -1,5 +1,8 @@
 /* src/iperf_config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Can bind to device via SO_BINDTODEVICE or IP_BOUND_IF. */
+#undef CAN_BIND_TO_DEVICE
+
 /* Define to 1 if you have the 'clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
@@ -36,6 +39,9 @@
 /* Have MPTCP protocol. */
 #undef HAVE_IPPROTO_MPTCP
 
+/* Have IP_BOUND_IF sockopt. */
+#undef HAVE_IP_BOUND_IF
+
 /* Have IP_DONTFRAG sockopt. */
 #undef HAVE_IP_DONTFRAG
 
@@ -47,6 +53,9 @@
 
 /* Define to 1 if you have the <linux/tcp.h> header file. */
 #undef HAVE_LINUX_TCP_H
+
+/* Have MSG_TRUNC recv option. */
+#undef HAVE_MSG_TRUNC
 
 /* Define to 1 if you have the 'nanosleep' function. */
 #undef HAVE_NANOSLEEP
@@ -74,6 +83,9 @@
 
 /* Define to 1 if you have the 'SetProcessAffinityMask' function. */
 #undef HAVE_SETPROCESSAFFINITYMASK
+
+/* Have SHUT_WR socket shutdown option. */
+#undef HAVE_SOCKET_SHUTDOWN_SHUT_WR
 
 /* Have SO_BINDTODEVICE sockopt. */
 #undef HAVE_SO_BINDTODEVICE
@@ -123,8 +135,17 @@
 /* Have tcpi_snd_wnd field in tcp_info. */
 #undef HAVE_TCP_INFO_SND_WND
 
+/* Have TCP_KEEPIDLE sockopt. */
+#undef HAVE_TCP_KEEPALIVE
+
 /* Have TCP_USER_TIMEOUT sockopt. */
 #undef HAVE_TCP_USER_TIMEOUT
+
+/* Have UDP_GRO sockopt. */
+#undef HAVE_UDP_GRO
+
+/* Have UDP_SEGMENT sockopt. */
+#undef HAVE_UDP_SEGMENT
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H

@@ -48,7 +48,7 @@ int iperf_tcp_recv(struct iperf_stream *);
 
 /**
  * iperf_tcp_send -- sends the client data for TCP
- * and the  Param/result message exchanges
+ * and the Param/result message exchanges
  * returns: bytes sent
  *
  */

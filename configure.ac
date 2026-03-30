@@ -1,4 +1,4 @@
-# iperf, Copyright (c) 2014-2024, The Regents of the University of
+# iperf, Copyright (c) 2014-2026, The Regents of the University of
 # California, through Lawrence Berkeley National Laboratory (subject
 # to receipt of any required approvals from the U.S. Dept. of
 # Energy).  All rights reserved.
@@ -25,7 +25,7 @@
 
 # Initialize the autoconf system for the specified tool, version and mailing list
 AC_PREREQ([2.71])
-AC_INIT([iperf],[3.18+],[https://github.com/esnet/iperf],[iperf],[https://software.es.net/iperf/])
+AC_INIT([iperf],[3.20+],[https://github.com/esnet/iperf],[iperf],[https://software.es.net/iperf/])
 m4_include([config/ax_check_openssl.m4])
 m4_include([config/ax_pthread.m4])
 m4_include([config/iperf_config_static_bin.m4])
@@ -54,6 +54,18 @@ AC_PROG_LN_S
 # Add -Wall if we are using GCC.
 if test "x$GCC" = "xyes"; then
   CFLAGS="$CFLAGS -Wall"
+fi
+
+# Check for ldconfig
+AC_ARG_WITH([ldconfig], AS_HELP_STRING([--without-ldconfig], [do not run ldconfig]))
+
+if test "$with_ldconfig" != no; then
+  AC_CHECK_PROG([LDCONFIG], [ldconfig], [ldconfig], [false])
+  if test "$LDCONFIG" != false; then
+    AC_SUBST([LDCONFIG], [$LDCONFIG])
+  else
+    AC_MSG_WARN([ldconfig not found; library path not updated])
+  fi
 fi
 
 # Check if enable profiling
@@ -277,6 +289,23 @@ if test "x$iperf3_cv_header_so_bindtodevice" = "xyes"; then
     AC_DEFINE([HAVE_SO_BINDTODEVICE], [1], [Have SO_BINDTODEVICE sockopt.])
 fi
 
+# Check for IP_BOUND_IF sockopt (believed to be macOS only)
+AC_CACHE_CHECK([IP_BOUND_IF socket option],
+[iperf3_cv_header_ip_bound_if],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <netinet/in.h>]],
+                   [[int foo = IP_BOUND_IF;]])],
+  iperf3_cv_header_ip_bound_if=yes,
+  iperf3_cv_header_ip_bound_if=no))
+if test "x$iperf3_cv_header_ip_bound_if" = "xyes"; then
+    AC_DEFINE([HAVE_IP_BOUND_IF], [1], [Have IP_BOUND_IF sockopt.])
+fi
+
+if test "x$iperf3_cv_header_so_bindtodevice" = "xyes" -o "x$iperf3_cv_header_ip_bound_if" = "xyes"; then
+    AC_DEFINE([CAN_BIND_TO_DEVICE], [1], [Can bind to device via SO_BINDTODEVICE or IP_BOUND_IF.])
+fi
+
+
 # Check for IP_MTU_DISCOVER (mostly on Linux)
 AC_CACHE_CHECK([IP_MTU_DISCOVER socket option],
 [iperf3_cv_header_ip_mtu_discover],
@@ -349,6 +378,20 @@ if test "x$iperf3_cv_header_tcp_info_snd_wnd" = "xyes"; then
   AC_DEFINE([HAVE_TCP_INFO_SND_WND], [1], [Have tcpi_snd_wnd field in tcp_info.])
 fi
 
+
+# Check for MSG_TRUNC (mostly on Linux)
+AC_CACHE_CHECK([MSG_TRUNC recv option],
+[iperf3_cv_header_msg_trunc],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <sys/types.h>
+                     #include <sys/socket.h>
+                     #include <netinet/in.h>]],
+                   [[int foo = MSG_TRUNC;]])],
+  iperf3_cv_header_msg_trunc=yes,
+  iperf3_cv_header_msg_trunc=no))
+if test "x$iperf3_cv_header_msg_trunc" = "xyes"; then
+    AC_DEFINE([HAVE_MSG_TRUNC], [1], [Have MSG_TRUNC recv option.])
+fi
 # Check for IPPROTO_MPTCP (Linux)
 AC_CACHE_CHECK([MPTCP protocol],
 [iperf3_cv_header_ipproto_mptcp],
@@ -359,6 +402,44 @@ AC_COMPILE_IFELSE(
   iperf3_cv_header_ipproto_mptcp=no))
 if test "x$iperf3_cv_header_ipproto_mptcp" = "xyes"; then
     AC_DEFINE([HAVE_IPPROTO_MPTCP], [1], [Have MPTCP protocol.])
+fi
+
+# Check for UDP_SEGMENT sockopt
+AC_CACHE_CHECK([UDP_SEGMENT socket option],
+[iperf3_cv_header_udp_segment],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <linux/udp.h>]],
+                   [[int foo = UDP_SEGMENT;]])],
+  iperf3_cv_header_udp_segment=yes,
+  iperf3_cv_header_udp_segment=no))
+if test "x$iperf3_cv_header_udp_segment" = "xyes"; then
+    AC_DEFINE([HAVE_UDP_SEGMENT], [1], [Have UDP_SEGMENT sockopt.])
+fi
+
+# Check for UDP_GRO sockopt
+AC_CACHE_CHECK([UDP_GRO socket option],
+[iperf3_cv_header_udp_gro],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <linux/udp.h>]],
+                   [[int foo = UDP_GRO;]])],
+  iperf3_cv_header_udp_gro=yes,
+  iperf3_cv_header_udp_gro=no))
+if test "x$iperf3_cv_header_udp_gro" = "xyes"; then
+    AC_DEFINE([HAVE_UDP_GRO], [1], [Have UDP_GRO sockopt.])
+fi
+
+# Check socket shutdown() with SHUT_WR
+AC_CACHE_CHECK([SHUT_WR socket shutdown option],
+[iperf3_cv_header_ip_shut_wr],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <sys/types.h>
+                     #include <sys/socket.h>
+                     #include <netinet/in.h>]],
+                   [[int foo = SHUT_WR;]])],
+  iperf3_cv_header_ip_shut_wr=yes,
+  iperf3_cv_header_ip_shut_wr=no))
+if test "x$iperf3_cv_header_ip_shut_wr" = "xyes"; then
+    AC_DEFINE([HAVE_SOCKET_SHUTDOWN_SHUT_WR], [1], [Have SHUT_WR socket shutdown option.])
 fi
 
 # Check if we need -lrt for clock_gettime

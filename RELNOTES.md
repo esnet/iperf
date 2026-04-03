@@ -38,6 +38,11 @@ iperf-3.21 2026-04-XX
 
     * A division by zero error has been avoided (PR #2002).
 
+    * The security posture of the `iperf3.service` file has been
+      improved considerably by updating a number of settings (PR
+      #1855). Note that this file is neither installed nor activated
+      by default.
+
 * Notable developer-visible changes
 
     * iperf3 finally performs `ldconfig` as a part of `make install`

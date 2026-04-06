@@ -886,3 +886,20 @@ iperf_sync_close_socket(int sock)
     close(sock);
 }
 
+
+/* Accessors for nread timeouts — used to tighten handshake window */
+int
+nread_set_read_timeout(int seconds)
+{
+    int old = nread_read_timeout;
+    nread_read_timeout = seconds;
+    return old;
+}
+
+int
+nread_set_overall_timeout(int seconds)
+{
+    int old = nread_overall_timeout;
+    nread_overall_timeout = seconds;
+    return old;
+}

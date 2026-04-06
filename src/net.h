@@ -49,4 +49,6 @@ void iperf_sync_close_socket(int sock);
 #define NET_SOFTERROR -1
 #define NET_HARDERROR -2
 
+int nread_set_read_timeout(int seconds);
+int nread_set_overall_timeout(int seconds);
 #endif /* __NET_H */

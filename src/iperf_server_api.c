@@ -149,6 +149,81 @@ iperf_server_listen(struct iperf_test *test)
     return 0;
 }
 
+/**
+ * iperf_nb_read - Non-blocking read with timeout.
+ *
+ * Reads exactly 'count' bytes from fd using non-blocking I/O driven by
+ * select().  Returns count on success, 0 on timeout/EOF, -1 on error.
+ * This replaces the blocking Nread() for the accept handshake so that a
+ * slow or malicious client cannot stall the server for more than
+ * IPERF_ACCEPT_TIMEOUT seconds.
+ */
+#define IPERF_ACCEPT_TIMEOUT 5  /* seconds — max time for cookie + param handshake */
+
+static int
+iperf_nb_read(int fd, char *buf, size_t count, int timeout_s)
+{
+    size_t nleft = count;
+    struct timeval deadline, now, remaining;
+
+    gettimeofday(&deadline, NULL);
+    deadline.tv_sec += timeout_s;
+
+    /* Set socket non-blocking */
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags < 0) return -1;
+    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) return -1;
+
+    while (nleft > 0) {
+        /* How much time is left? */
+        gettimeofday(&now, NULL);
+        remaining.tv_sec  = deadline.tv_sec  - now.tv_sec;
+        remaining.tv_usec = deadline.tv_usec - now.tv_usec;
+        if (remaining.tv_usec < 0) {
+            remaining.tv_sec--;
+            remaining.tv_usec += 1000000;
+        }
+        if (remaining.tv_sec < 0) {
+            /* Timeout reached */
+            fcntl(fd, F_SETFL, flags);  /* restore */
+            return 0;
+        }
+
+        fd_set rset;
+        FD_ZERO(&rset);
+        FD_SET(fd, &rset);
+        int sr = select(fd + 1, &rset, NULL, NULL, &remaining);
+        if (sr < 0) {
+            if (errno == EINTR) continue;
+            fcntl(fd, F_SETFL, flags);
+            return -1;
+        }
+        if (sr == 0) {
+            /* Timeout */
+            fcntl(fd, F_SETFL, flags);
+            return 0;
+        }
+
+        ssize_t n = read(fd, buf + (count - nleft), nleft);
+        if (n < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
+                continue;
+            fcntl(fd, F_SETFL, flags);
+            return -1;
+        }
+        if (n == 0) {
+            /* EOF */
+            fcntl(fd, F_SETFL, flags);
+            return 0;
+        }
+        nleft -= (size_t)n;
+    }
+
+    /* Restore blocking mode */
+    fcntl(fd, F_SETFL, flags);
+    return (int)count;
+}
+
 int
 iperf_accept(struct iperf_test *test)
 {
@@ -190,12 +265,16 @@ iperf_accept(struct iperf_test *test)
             return -1;
 #endif //HAVE_TCP_KEEPALIVE
 
-        if (Nread(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) != COOKIE_SIZE) {
-            /*
-             * Note this error covers both the case of a system error
-             * or the inability to read the correct amount of data
-             * (i.e. timed out).
-             */
+        /*
+         * NON-BLOCKING COOKIE READ (CVE DoS fix)
+         *
+         * Use iperf_nb_read() instead of Nread() so that a malicious
+         * client that connects but sends partial/no data cannot block
+         * the server for 10-30 seconds.  The timeout is capped at
+         * IPERF_ACCEPT_TIMEOUT seconds.
+         */
+        if (iperf_nb_read(test->ctrl_sck, test->cookie,
+                          COOKIE_SIZE, IPERF_ACCEPT_TIMEOUT) != COOKIE_SIZE) {
             i_errno = IERECVCOOKIE;
             goto error_handling;
         }
@@ -204,8 +283,27 @@ iperf_accept(struct iperf_test *test)
 
         if (iperf_set_send_state(test, PARAM_EXCHANGE) != 0)
             goto error_handling;
-        if (iperf_exchange_parameters(test) < 0)
-            goto error_handling;
+
+        /*
+         * NON-BLOCKING PARAMETER EXCHANGE (CVE DoS fix)
+         *
+         * iperf_exchange_parameters() calls get_parameters() which
+         * calls JSON_read() which calls Nread()/Nrecv() — all blocking.
+         * Nrecv() uses an internal select() with nread_read_timeout (default 10s)
+         * and nread_overall_timeout (default 30s).  SO_RCVTIMEO does NOT affect
+         * select(), so we temporarily lower the Nread timeouts themselves to
+         * IPERF_ACCEPT_TIMEOUT seconds for the handshake window.
+         */
+        {
+            int old_rd  = nread_set_read_timeout(IPERF_ACCEPT_TIMEOUT);
+            int old_ovr = nread_set_overall_timeout(IPERF_ACCEPT_TIMEOUT);
+            int rc = iperf_exchange_parameters(test);
+            nread_set_read_timeout(old_rd);
+            nread_set_overall_timeout(old_ovr);
+            if (rc < 0)
+                goto error_handling;
+        }
+
         if (test->server_affinity != -1) {
             if (iperf_setaffinity(test, test->server_affinity) != 0)
                 goto error_handling;
@@ -230,7 +328,20 @@ iperf_accept(struct iperf_test *test)
     }
     return 0;
     error_handling:
-        return ret;
+        /*
+         * Handshake failed (malicious/slow client or genuine error).
+         * Clean up this connection but DON'T return -1 — that would
+         * terminate the entire server.  Instead, close the bad socket,
+         * remove it from the fd sets, log the error, and return 0 so
+         * the server continues accepting new clients.
+         */
+        if (test->ctrl_sck >= 0) {
+            FD_CLR(test->ctrl_sck, &test->read_set);
+            close(test->ctrl_sck);
+            test->ctrl_sck = -1;
+        }
+        iperf_err(test, "accept handshake failed - %s", iperf_strerror(i_errno));
+        return 0;
 }
 
 

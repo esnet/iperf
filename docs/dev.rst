@@ -223,16 +223,14 @@ Release Engineering Checklist
 9. Merge pull request to `master` or other appropriate integration
    branch.
 
-10. Create tag and tarfile::
+10. Create tag and tarfile.
+    The result will be release artifacts that should be used for
+    pre-testing. One will be a compressed tarball
+    (e.g. ``iperf-3.20.tar.gz``) and the other will contain SHA256
+    checksum (e.g. ``iperf-3.20.tar.gz.sha256``)::
    
-    # Assuming that $VERSION is the version number to be released...
-    ./make_release tag $VERSION # this creates a tag in the local repo
-    ./make_release tar $VERSION # create tarball and compute SHA256 hash
-
-   The result will be release artifacts that should be used for
-   pre-testing. One will be a compressed tarball
-   (e.g. ``iperf-3.20.tar.gz``) and the other will contain SHA256
-   checksum (e.g. ``iperf-3.20.tar.gz.sha256``)
+    ./make_release tag 3.20 # this creates a tag in the local repo
+    ./make_release tar 3.20 # create tarball and compute SHA256 hash
 
 6. Stage the tarball (and a file containing the SHA256 hash) to the
    download site.  Currently this is located on ``downloads.es.net``

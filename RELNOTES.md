@@ -7,7 +7,7 @@ iperf-3.21 2026-04-09
 * Notable user-visible changes
 
     * Support has been added for Global Segmentation Offload (GSO) and
-      Global Receive Offload (GRO) under Linux (PR #1926, PR #2007,
+      Global Receive Offload (GRO) under Linux (PR #1925, PR #2007,
       also note that a number of other pull requests were submitted
       towards this functionality).
 

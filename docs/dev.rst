@@ -3,7 +3,7 @@ iperf3 Development
 
 The iperf3 project is hosted on GitHub at:
 
-http://github.com/esnet/iperf
+https://github.com/esnet/iperf
 
 This site includes the source code repository, issue tracker, and
 discussion forums.
@@ -14,7 +14,7 @@ Mailing Lists
 The developer list for iperf3 is:  iperf-dev@googlegroups.com.
 Information on joining the mailing list can be found at:
 
-http://groups.google.com/group/iperf-dev
+https://groups.google.com/group/iperf-dev
 
 Project Constituencies
 ----------------------
@@ -146,7 +146,7 @@ Versioning
 ----------
 
 iperf3 version numbers use (roughly) a `Semantic Versioning
-<http://semver.org/>`_ scheme, in which version numbers consist of
+<https://semver.org/>`_ scheme, in which version numbers consist of
 three parts:  *MAJOR.MINOR.PATCH*
 
 The developers increment the:

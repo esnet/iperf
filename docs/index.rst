@@ -27,8 +27,8 @@ and macOS.  At this time, these are the only officially
 supported platforms, however there have been some reports of success
 with OpenBSD, Android, and other Linux distributions.
 
-iperf3 is principally developed by `ESnet <http://www.es.net/>`_ /
-`Lawrence Berkeley National Laboratory <http://www.lbl.gov/>`_.  It
+iperf3 is principally developed by `ESnet <https://www.es.net/>`_ /
+`Lawrence Berkeley National Laboratory <https://www.lbl.gov/>`_.  It
 is released under a three-clause BSD license.
 
 iperf2 is no longer being developed by its original maintainers.

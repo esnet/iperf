@@ -1,6 +1,17 @@
 iperf3 Project News
 ===================
 
+2026-04-09:  iperf-3.21 released
+--------------------------------
+
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.21.tar.gz
+| SHA256: ``656e4405ebd620121de7ceca3eaf43a88f79ea1b857d041a6a0b1314801acdd8``
+
+iperf-3.21 includes support for GSO and GRO under Linux, improves
+feature parity for macOS, and adds a number of minor bugs and
+enhancements. More details on the changes can be found in the release
+notes.
+
 2025-11-14:  iperf-3.20 released
 --------------------------------
 

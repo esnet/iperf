@@ -112,7 +112,7 @@ html_theme_options = {
 	"navbar_site_name": "Section",
     "navbar_links": [
         ("Index", "genindex"),
-        ("ESnet", "https://www.es.net", True),
+        ("<img src=\"_static/ESnet_2025_XX1B_2025_TILE_Orb_RGB_Color.png\" height=20 width=20>", "https://www.es.net", True),
     ],
 }
 

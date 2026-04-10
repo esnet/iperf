@@ -773,6 +773,20 @@ iperf_run_client(struct iperf_test * test)
 	         (test->settings->blocks != 0 && (test->blocks_sent >= test->settings->blocks ||
 						  test->blocks_received >= test->settings->blocks)))) {
 
+                /*
+                 * Cancel the periodic timers.  As the timers are not re-set in this stage their expiration time
+                 * is in the past, so without the cancellation the select() timeout is set to 0,
+                 * and it enters a loop while waiting the exchanged results, etc.
+                 */
+                if (test->stats_timer != NULL) {
+                    tmr_cancel(test->stats_timer);
+                    test->stats_timer = NULL;
+                }
+                if (test->reporter_timer != NULL) {
+                    tmr_cancel(test->reporter_timer);
+                    test->reporter_timer = NULL;
+                }
+
                 /* Cancel outstanding sender threads */
                 SLIST_FOREACH(sp, &test->streams, streams) {
                     if (sp->sender) {

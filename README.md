@@ -1,4 +1,4 @@
-![iperf3 logo](images/iperf3-logos-0410_6.png)
+![iperf3 logo](images/iperf3-logos-0410_6-50.png "iperf3 logo")
 
 iperf3:  A TCP, UDP, and SCTP network bandwidth measurement tool
 ================================================================

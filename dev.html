@@ -90,17 +90,13 @@
             <li class="divider-vertical"></li>
             
                 <li><a href="genindex.html">Index</a></li>
-                <li><a href="https://www.es.net">ESnet</a></li>
+                <li><a href="https://www.es.net"><img src="_static/ESnet_2025_XX1B_2025_TILE_Orb_RGB_Color.png" height=20 width=20></a></li>
             
-            <li><a href="https://github.com/esnet/iperf"><img src="_static/icon-github.png" height="20" width="20"></a></li>
+            <li><a href="https://github.com/esnet/iperf"><img src="_static/GitHub_Invertocat_Black.png" height="20" width="20"></a></li>
             
             
             
-              <li class="hidden-sm">
-<div id="sourcelink">
-  <a href="_sources/dev.rst.txt"
-     rel="nofollow">Source</a>
-</div></li>
+              <li class="hidden-sm"></li>
             
           </ul>
           
@@ -141,14 +137,14 @@
   <section id="iperf3-development">
 <h1>iperf3 Development<a class="headerlink" href="#iperf3-development" title="Link to this heading">¶</a></h1>
 <p>The iperf3 project is hosted on GitHub at:</p>
-<p><a class="reference external" href="http://github.com/esnet/iperf">http://github.com/esnet/iperf</a></p>
+<p><a class="reference external" href="https://github.com/esnet/iperf">https://github.com/esnet/iperf</a></p>
 <p>This site includes the source code repository, issue tracker, and
 discussion forums.</p>
 <section id="mailing-lists">
 <h2>Mailing Lists<a class="headerlink" href="#mailing-lists" title="Link to this heading">¶</a></h2>
 <p>The developer list for iperf3 is:  <a class="reference external" href="mailto:iperf-dev&#37;&#52;&#48;googlegroups&#46;com">iperf-dev<span>&#64;</span>googlegroups<span>&#46;</span>com</a>.
 Information on joining the mailing list can be found at:</p>
-<p><a class="reference external" href="http://groups.google.com/group/iperf-dev">http://groups.google.com/group/iperf-dev</a></p>
+<p><a class="reference external" href="https://groups.google.com/group/iperf-dev">https://groups.google.com/group/iperf-dev</a></p>
 </section>
 <section id="project-constituencies">
 <h2>Project Constituencies<a class="headerlink" href="#project-constituencies" title="Link to this heading">¶</a></h2>
@@ -260,7 +256,7 @@ tracker.</p>
 </section>
 <section id="versioning">
 <h2>Versioning<a class="headerlink" href="#versioning" title="Link to this heading">¶</a></h2>
-<p>iperf3 version numbers use (roughly) a <a class="reference external" href="http://semver.org/">Semantic Versioning</a> scheme, in which version numbers consist of
+<p>iperf3 version numbers use (roughly) a <a class="reference external" href="https://semver.org/">Semantic Versioning</a> scheme, in which version numbers consist of
 three parts:  <em>MAJOR.MINOR.PATCH</em></p>
 <p>The developers increment the:</p>
 <ul class="simple">
@@ -332,20 +328,17 @@ the new version, such as bumping version numbers:</p>
 <li><p>Review and get approval for the pull request</p></li>
 <li><p>Merge pull request to <cite>master</cite> or other appropriate integration
 branch.</p></li>
-<li><p>Create tag and tarfile:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Assuming that $VERSION is the version number to be released...</span>
-</pre></div>
-</div>
-<p>./make_release tag $VERSION # this creates a tag in the local repo
-./make_release tar $VERSION # create tarball and compute SHA256 hash</p>
-</li>
-</ol>
-<blockquote>
-<div><p>The result will be release artifacts that should be used for
+<li><p>Create tag and tarfile.
+The result will be release artifacts that should be used for
 pre-testing. One will be a compressed tarball
 (e.g. <code class="docutils literal notranslate"><span class="pre">iperf-3.20.tar.gz</span></code>) and the other will contain SHA256
-checksum (e.g. <code class="docutils literal notranslate"><span class="pre">iperf-3.20.tar.gz.sha256</span></code>)</p>
-</div></blockquote>
+checksum (e.g. <code class="docutils literal notranslate"><span class="pre">iperf-3.20.tar.gz.sha256</span></code>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">make_release</span> <span class="n">tag</span> <span class="mf">3.20</span> <span class="c1"># this creates a tag in the local repo</span>
+<span class="o">./</span><span class="n">make_release</span> <span class="n">tar</span> <span class="mf">3.20</span> <span class="c1"># create tarball and compute SHA256 hash</span>
+</pre></div>
+</div>
+</li>
+</ol>
 <ol class="arabic" start="6">
 <li><p>Stage the tarball (and a file containing the SHA256 hash) to the
 download site.  Currently this is located on <code class="docutils literal notranslate"><span class="pre">downloads.es.net</span></code>
@@ -459,7 +452,7 @@ Jones, Feng Qin, Gerrit Renker, Ajay Tirumala, Alex Warshavsky.</p>
   <div class="container">
     <div class="row">
       <div class="col-md-1">
-        <a href="http://www.es.net/"><img src="_static/ESnet_Final_Logos_All_Blue_Circle_Stamp_RGB.png" alt="[ESnet]"></a>
+        <a href="https://www.es.net/"><img src="_static/ESnet_2025_001_2025_LogoShortName_RGB_Color.png" alt="[ESnet]"></a>
       </div>
       <div class="col-md-11">
         <p class="pull-right">

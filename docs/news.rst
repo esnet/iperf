@@ -90,8 +90,12 @@ iperf 3.16 uses multiple threads to serve parallel tests for improved
 throughput on high-speed links. It also includes support for
 OpenSSL 3. More details are provided in the release notes.
 
+Older News
+----------
+
 2023-09-14:  iperf-3.15 released
---------------------------------
+................................
+
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.15.tar.gz
 | SHA256:  ``bdb77c11f72bce90214883159577fa24412013e62b2083cf5f54391d79b1d8ff``
 
@@ -105,7 +109,8 @@ This version of iperf3 also includes several other minor bug fixes,
 which are summarized in the release notes.
 
 2023-07-07:  iperf-3.14 released
---------------------------------
+................................
+
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.14.tar.gz
 | SHA256:  ``723fcc430a027bc6952628fa2a3ac77584a1d0bd328275e573fc9b206c155004``
 
@@ -120,7 +125,8 @@ This version of iperf3 also includes a number of minor bug fixes,
 which are summarized in the release notes.
 
 2023-02-16:  iperf-3.13 released
-----------------------------------
+................................
+
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.13.tar.gz
 | SHA256:  ``bee427aeb13d6a2ee22073f23261f63712d82befaa83ac8cb4db5da4c2bdc865``
 
@@ -128,7 +134,8 @@ iperf 3.13 is primarily a bugfix release.
 
 
 2022-09-30:  iperf-3.12 released
-----------------------------------
+................................
+
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.12.tar.gz
 | SHA256:  ``72034ecfb6a7d6d67e384e19fb6efff3236ca4f7ed4c518d7db649c447e1ffd6``
 
@@ -137,7 +144,8 @@ updated version of cJSON and adds a few new features.
 
 
 2022-01-28:  iperf-3.11 released
-----------------------------------
+................................
+
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.11.tar.gz
 | SHA256:  ``de8cb409fad61a0574f4cb07eb19ce1159707403ac2dc01b5d175e91240b7e5f``
 
@@ -146,7 +154,7 @@ Discussions are now supported.
 
 
 2021-06-02:  iperf-3.10.1 released
-----------------------------------
+..................................
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.10.1.tar.gz
 | SHA256:  ``03bc9760cc54a245191d46bfc8edaf8a4750f0e87abca6764486972044d6715a  iperf-3.10.1.tar.gz``
@@ -156,7 +164,7 @@ make not work correctly in some circumstances. It is functionally
 identical to iperf 3.10.
 
 2021-05-26:  iperf-3.10 released
---------------------------------
+................................
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.10.tar.gz
 | SHA256:  ``4390982928542256c17d6dd1f56eede9092649ebfd8a97c8cecfad12d238ad57  iperf-3.10.tar.gz``
@@ -167,7 +175,7 @@ been added (``--time-skew-threshold``, ``--bind-dev``,
 these new features can be found in the release notes.
 
 2020-08-17:  iperf-3.9 released
----------------------------------
+...............................
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.9.tar.gz
 | SHA256:  ``24b63a26382325f759f11d421779a937b63ca1bc17c44587d2fcfedab60ac038  iperf-3.9.tar.gz``
@@ -179,7 +187,7 @@ to enforce a maximum throughput rate.  More information on these new
 features can be found in the release notes.
 
 2020-06-10:  iperf-3.8.1 released
----------------------------------
+.................................
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.8.1.tar.gz
 | SHA256:  ``e5b080f3273a8a715a4100f13826ac2ca31cc7b1315925631b2ecf64957ded96 iperf-3.8.1.tar.gz``
@@ -188,7 +196,7 @@ iperf 3.8.1 fixes a regression with ``make install`` in iperf 3.8.  It
 is otherwise identical to iperf 3.8.
 
 2020-06-08:  iperf-3.8 released
--------------------------------
+...............................
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.8.tar.gz
 | SHA256:  ``edc1c317b0ae31925e5eb84f0295faefbaa1db3229f4693e11d954d114de4bcd  iperf-3.8.tar.gz``
@@ -197,7 +205,7 @@ iperf 3.8 contains minor bugfixes and enhancements.
 
 
 2019-06-21:  iperf-3.7 released
--------------------------------
+...............................
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.7.tar.gz
 | SHA256:  ``d846040224317caf2f75c843d309a950a7db23f9b44b94688ccbe557d6d1710c  iperf-3.7.tar.gz``
@@ -211,7 +219,7 @@ omitted from the manual page.  This will be fixed in a future
 release.
 
 2018-06-25:  iperf-3.6 released
--------------------------------
+...............................
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.6.tar.gz
 | SHA256:  ``de5d51e46dc460cc590fb4d44f95e7cad54b74fea1eba7d6ebd6f8887d75946e  iperf-3.6.tar.gz``
@@ -220,7 +228,7 @@ iperf 3.6 adds the ``--extra-data`` and ``--repeating-payload``
 options and fixes some minor bugs.
 
 2018-03-02:  iperf-3.5 released
--------------------------------
+...............................
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.5.tar.gz
 | SHA256:  ``539bd9ecdca1b8c1157ff85b70ed09b3c75242e69886fc16b54883b399f72cd5  iperf-3.5.tar.gz``
@@ -229,7 +237,7 @@ iperf 3.5 fixes a bug that could over-count data transfers (and hence
 measured bitrate).
 
 2018-02-14:  iperf-3.4 released
--------------------------------
+...............................
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.4.tar.gz
 | SHA256:  ``71528332d751df85e046d1944d9a0269773cadd6e51840aecdeed30925f79111  iperf-3.4.tar.gz``
@@ -237,7 +245,7 @@ measured bitrate).
 iperf 3.4 fixes a number of minor bugs and adds a few enhancements.
 
 2017-10-31:  iperf-3.3 released
--------------------------------
+...............................
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.3.tar.gz
 | SHA256:  ``6f596271251056bffc11bbb8f17d4244ad9a7d4a317c2459fdbb853ae51284d8  iperf-3.3.tar.gz``
@@ -245,7 +253,7 @@ iperf 3.4 fixes a number of minor bugs and adds a few enhancements.
 New minor release of iperf 3.3, fixing a number of minor bugs.
 
 2017-06-26:  iperf-3.2 released
--------------------------------
+...............................
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.2.tar.gz
 | SHA256:  ``f207b36f861485845dbdf09f909c62f3d2222a3cf3d2682095aede8213cd9c1d  iperf-3.2.tar.gz``
@@ -253,19 +261,19 @@ New minor release of iperf 3.3, fixing a number of minor bugs.
 New minor release of iperf 3.2, with new features, bugfixes, and enhancements.
 
 2017-06-06:  iperf3 update, June 2017
---------------------------------------
+.....................................
 
 https://raw.githubusercontent.com/esnet/iperf/master/docs/2017-06-06.txt
 
 
 2017-04-27:  iperf3 update, April 2017
---------------------------------------
+......................................
 
 https://raw.githubusercontent.com/esnet/iperf/master/docs/2017-04-27.txt
 
 
 2017-03-06:  iperf-3.1.7 released
----------------------------------
+.................................
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.1.7.tar.gz
 | SHA256:  ``a4ef73406fe92250602b8da2ae89ec53211f805df97a1d1d629db5a14043734f  iperf-3.1.7.tar.gz``
@@ -275,7 +283,7 @@ otherwise identical to the prior release.
 
 
 2017-02-02:  iperf-3.1.6 released
----------------------------------
+.................................
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.1.6.tar.gz
 | SHA256:  ``70f0c72d9e60c6ecb2c478ed17e4fd81d3b827d57896fee43bcd0c53abccb29d  iperf-3.1.6.tar.gz``
@@ -285,7 +293,7 @@ unbreaks JSON output with UDP tests.
 
 
 2017-01-12:  iperf-3.1.5 released
----------------------------------
+.................................
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.1.5.tar.gz
 | SHA256:  ``6e1a6200cd38baeab58ef0d7b8769e7aa6410c3a3168e65ea8277a4de79e5500  iperf-3.1.5.tar.gz``
@@ -297,7 +305,7 @@ review the release notes for this version.
 
 
 2016-10-31:  iperf-3.1.4 released
----------------------------------
+.................................
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.1.4.tar.gz
 | SHA256:  ``db61d70ac62003ebe0bf15496bd8c4b3c4b728578a44d0a1a88fcf8afc0e8f76  iperf-3.1.4.tar.gz``
@@ -308,7 +316,7 @@ cjson.
 
 
 2016-06-08:  Security Issue:  iperf-3.1.3, iperf-3.0.12 released
-----------------------------------------------------------------
+................................................................
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.1.3.tar.gz
 | SHA256:  ``60d8db69b1d74a64d78566c2317c373a85fef691b8d277737ee5d29f448595bf  iperf-3.1.3.tar.gz``
@@ -331,16 +339,13 @@ distributions), as well as several other fixes.
 
 
 2016-02-01:  iperf-3.1.2 released
----------------------------------
+.................................
 
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.1.2.tar.gz
 | SHA256:  ``f9dbdb99f869c077d14bc1de78675f5e4b8d1bf78dc92381e96c3eb5b1fd7d86  iperf-3.1.2.tar.gz``
 
 This release fixes a couple of minor bugs, including one that results
 in invalid JSON being emitted for UDP tests.
-
-Older News
-----------
 
 2015-11-19:  iperf-3.1.1 released
 .................................

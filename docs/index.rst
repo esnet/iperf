@@ -3,6 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. image:: _static/iperf3-logos-0410_6.png
+
 iperf3
 ======
 

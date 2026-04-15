@@ -318,6 +318,8 @@ struct iperf_test
     TAILQ_HEAD(xbind_addrhead, xbind_entry) xbind_addrs; /* all -X opts */
     int       bind_port;                        /* --cport option */
     int       server_port;
+    int       num_server_ports;                 /* second value of --port option */
+    int       server_udp_streams_accepted;      /* offset of last server port used - 0 means none used */
     int       omit;                             /* duration of omit period (-O flag) */
     int       duration;                         /* total duration of test (-t flag) */
     int       max_server_duration;               /* maximum possible duration of test as enforced by the server (--max-server-duration flag) */
@@ -484,10 +486,12 @@ extern int gerror; /* error value from getaddrinfo(3), for use in internal error
 #if BYTE_ORDER == BIG_ENDIAN
 #define UDP_CONNECT_MSG 0x39383736
 #define UDP_CONNECT_REPLY 0x36373839
+#define UDP_CONNECT_REPLY_NEXT_PORT 0x35373839
 #define LEGACY_UDP_CONNECT_REPLY 0xb168de3a
 #else
 #define UDP_CONNECT_MSG 0x36373839          // "6789" - legacy value was 123456789
 #define UDP_CONNECT_REPLY 0x39383736        // "9876" - legacy value was 987654321
+#define UDP_CONNECT_REPLY_NEXT_PORT 0x39383735 // "9875": for Windows - indicates use next port
 #define LEGACY_UDP_CONNECT_REPLY 987654321  // Old servers may still reply with the legacy value
 #endif
 
@@ -496,5 +500,10 @@ extern int gerror; /* error value from getaddrinfo(3), for use in internal error
 
 #define GSO_BF_MAX_SIZE MAX_UDP_BLOCKSIZE
 #define GRO_BF_MAX_SIZE MAX_UDP_BLOCKSIZE
+
+/* Any type of WIndows OS or Cygwin */
+#if (defined(__CYGWIN__) || defined(_WIN32) || defined(_WIN64) || defined(__WINDOWS__))
+#define WINDOWS_ANY 1
+#endif /* Any Windows type */
 
 #endif /* !__IPERF_H */

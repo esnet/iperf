@@ -513,6 +513,11 @@ iperf_strerror(int int_errno)
         case IESETUSERTIMEOUT:
             snprintf(errstr, len, "unable to set TCP USER_TIMEOUT");
             perr = 1;
+        case IENUMPORTS:
+	    snprintf(errstr, len, "number of ports is less than 1 or larger than server limit");
+            break;
+        case IEPORTNUM:
+	    snprintf(errstr, len, "requested number of parallel streams is larger than the number of ports available for the server");
             break;
         case IEPTHREADCREATE:
             snprintf(errstr, len, "unable to create thread");

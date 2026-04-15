@@ -810,6 +810,7 @@ iperf_run_client(struct iperf_test * test)
 		test->stats_callback(test);
 		if (iperf_set_send_state(test, TEST_END) != 0)
                     goto cleanup_and_fail;
+                test->reporter_callback(test);
 	    }
 	}
     }

@@ -220,6 +220,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  --get-server-output       get results from server\n"
                            "  --udp-counters-64bit      use 64-bit counters in UDP test packets\n"
                            "  --gsro                    enable UDP GSO/GRO on both client and server (client-only option)\n"
+                           "  --gso                     enable UDP GSO on both client and server (client-only option)\n"
+                           "  --gro                     enable UDP GRO on both client and server (client-only option)\n"
                            "  --repeating-payload       use repeating pattern in payload, instead of\n"
                            "                            randomized payload (like in iperf2)\n"
 #if defined(HAVE_DONT_FRAGMENT)

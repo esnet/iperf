@@ -1194,6 +1194,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"mptcp", no_argument, NULL, 'm'},
 #endif
         {"gsro", no_argument, NULL, OPT_GSRO},
+        {"gso", no_argument, NULL, OPT_GSO},
+        {"gro", no_argument, NULL, OPT_GRO},
         {"debug", optional_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -1218,6 +1220,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = rcv_timeout_flag = snd_timeout_flag =0;
     int gsro_flag = 0;
+    int gso_flag = 0;
+    int gro_flag = 0;
 #if defined(HAVE_SSL)
     char *client_username = NULL, *client_rsa_public_key = NULL, *server_rsa_private_key = NULL;
     FILE *ptr_file;
@@ -1803,6 +1807,20 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->settings->gso = 1;
 		test->settings->gro = 1;
                 break;
+      case OPT_GSO:
+    /* Enable GSO which is disabled by default */
+    /* Flag is available regardless of local support to allow client to request server to use it */
+    gso_flag = 1;
+    test->settings->gso = 1;
+    test->settings->gro = 0;
+    break;
+      case OPT_GRO:
+    /* Enable GRO which is disabled by default */
+    /* Flag is available regardless of local support to allow client to request server to use it */
+    gro_flag = 1;
+    test->settings->gso = 0;
+    test->settings->gro = 1;
+    break;
 	    case 'h':
 		usage_long(stdout);
 		exit(0);
@@ -1826,6 +1844,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         i_errno = IECLIENTONLY;
         return -1;
     }
+    if (test->role == 's' && gso_flag) {
+        i_errno = IECLIENTONLY;
+        return -1;
+    }
+    if (test->role == 's' && gro_flag) {
+        i_errno = IECLIENTONLY;
+        return -1;
+    }
 
     /* Show platform support warnings only after confirming we're in client mode */
     if (gsro_flag) {
@@ -1837,6 +1863,18 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         warning("--gsro requested but UDP GRO not supported on this client; will be enabled on server if supported");
 #endif
     }
+
+    if (gso_flag) {
+#if !defined(HAVE_UDP_SEGMENT)
+        warning("--gso requested but UDP GSO not supported on this client; will be enabled on server if supported");
+#endif
+    }
+
+    if (gro_flag) {
+#if !defined(HAVE_UDP_GRO)
+        warning("--gro requested but UDP GRO not supported on this client; will be enabled on server if supported");
+#endif
+    }    
 
 #if defined(HAVE_SSL)
 
@@ -3294,10 +3332,10 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->pacing_timer = DEFAULT_PACING_TIMER;
     testp->settings->burst = 0;
     /* Always initialize GSO/GRO fields to allow client-server negotiation */
-    testp->settings->gso = 0;  /* Disable GSO by default, enabled via --gsro */
+    testp->settings->gso = 0;  /* Disable GSO by default, enabled via --gsro or --gso*/
     testp->settings->gso_dg_size = 0;
     testp->settings->gso_bf_size = GSO_BF_MAX_SIZE;
-    testp->settings->gro = 0;  /* Disable GRO by default, enabled via --gsro */
+    testp->settings->gro = 0;  /* Disable GRO by default, enabled via --gsro or --gro*/
     testp->settings->gro_bf_size = GRO_BF_MAX_SIZE;
     testp->settings->mss = 0;
     testp->settings->bytes = 0;

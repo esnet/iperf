@@ -1,4 +1,4 @@
-.TH IPERF3 1 "November 2025" ESnet "User Manuals"
+.TH IPERF3 1 "April 2026" ESnet "User Manuals"
 .SH NAME
 iperf3 \- perform network throughput tests
 .SH SYNOPSIS
@@ -156,7 +156,7 @@ scope.
 .TP
 .BR --bind-dev " \fIdev\fR"
 Bind to the specified network interface.
-This option uses SO_BINDTODEVICE, and may require root permissions.
+This option uses SO_BINDTODEVICE or IP_BOUND_IF, and may require root permissions.
 (Available on Linux and possibly other systems.)
 .TP
 .BR -V ", " --verbose " "
@@ -513,6 +513,17 @@ The use of this option can help prevent counter overflows during long
 or high-bitrate UDP tests.  Both client and server need to be running
 at least version 3.1 for this option to work.  It may become the
 default behavior at some point in the future.
+.TP
+.BR --gsro
+Enable UDP Generic Segmentation Offload (GSO) on the sender and
+Generic Receive Offload (GRO) on the receiver, where supported by
+the operating system and network hardware (currently Linux only).
+GSO allows the network stack to aggregate multiple UDP datagrams
+into larger packets, improving throughput and reducing CPU overhead.
+This is a client-only option; the client communicates the GSO/GRO
+settings to the server automatically.
+This feature is disabled by default and must be explicitly enabled
+with this flag.
 .TP
 .BR --repeating-payload
 Use repeating pattern in payload, instead of random bytes.

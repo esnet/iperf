@@ -76,7 +76,7 @@ iperf_client_worker_run(void *s) {
     }
 
     /* Allow this thread to be cancelled even if it's in a syscall */
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
     while (! (test->done) && ! (sp->done)) {
@@ -401,6 +401,11 @@ iperf_handle_message_client(struct iperf_test *test)
                 return -1;
             }
             errno = ntohl(err);
+            if (errno > 0) {    
+                iperf_err(test, "SERVER ERROR - %s, errno: %s", iperf_strerror(i_errno), strerror(errno));
+            } else {
+                iperf_err(test, "SERVER ERROR - %s", iperf_strerror(i_errno));
+            }
             return -1;
         default:
             i_errno = IEMESSAGE;
@@ -549,6 +554,17 @@ iperf_connect(struct iperf_test *test)
 		printf("Setting UDP block size to %d\n", test->settings->blksize);
 	    }
 	}
+	/* Initialize GSO parameters when --gsro is used */
+	if (test->settings->gso) {
+	    test->settings->gso_dg_size = test->settings->blksize;
+	    /* use the multiple of datagram size for the best efficiency. */
+	    if (test->settings->gso_dg_size > 0) {
+		test->settings->gso_bf_size = (test->settings->gso_bf_size / test->settings->gso_dg_size) * test->settings->gso_dg_size;
+	    } else {
+		/* If gso_dg_size is 0 (unlimited bandwidth), use default UDP datagram size */
+		test->settings->gso_dg_size = DEFAULT_UDP_BLKSIZE;
+	    }
+	}
 
 	/*
 	 * Regardless of whether explicitly or implicitly set, if the
@@ -592,8 +608,10 @@ iperf_client_end(struct iperf_test *test)
     }
 
     /* Close control socket */
-    if (test->ctrl_sck >= 0)
-        close(test->ctrl_sck);
+    if (test->ctrl_sck >= 0) {
+        // Make sure all control messages are received by the server before the socket is closed
+        iperf_sync_close_socket(test->ctrl_sck);
+    }
 
     return 0;
 }

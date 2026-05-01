@@ -1,6 +1,57 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.21 2026-04-09
+---------------------
+
+* Notable user-visible changes
+
+    * Support has been added for Global Segmentation Offload (GSO) and
+      Global Receive Offload (GRO) under Linux (PR #1925, PR #2007,
+      also note that a number of other pull requests were submitted
+      towards this functionality).
+
+    * The `--bind-dev` option is now supported on macOS (PR #1945).
+
+    * Support has been added on macOS for the equivalent of the
+      `tcp_info` structure (#1411, PR #2008). This change results in
+      TCP window information being printed in human-readable output
+      and a number of TCP statistics being added to the JSON output.
+
+    * The iperf3 server provides more information about various error
+      conditions to the client (PR #1914, PR #1931, PR #1950).
+
+    * The maximum value for the `--set-mss` option is now 32K (PR
+      #1816). Note that this option still does not work reliably in
+      all cases.
+
+    * The cancellation type of child threads was changed from
+      `PTHREAD_CANCEL_ASYNCHRONOUS` to `PTHREAD_CANCEL_DEFERRED`
+      (#1991, #2003, PR #2004). This change fixes some hangs that
+      could occur at the end of a test.
+
+    * A race condition leading to a crash when closing sockets at the
+      end of a test has been fixed (PR #1990).
+
+    * iperf3 no longer erroneously prints that zero UDP packets were
+      lost during a lossy UDP test (#1984, PR #1988).
+
+    * A division by zero error has been avoided (PR #2002).
+
+    * The security posture of the `iperf3.service` file has been
+      improved considerably by updating a number of settings (PR
+      #1855). Note that this file is neither installed nor activated
+      by default.
+
+* Notable developer-visible changes
+
+    * iperf3 finally performs `ldconfig` as a part of `make install`
+      on platforms that require it (#1995, PR #2005).
+
+    * Various bug fixes (PR #1960, PR #1981, PR #2001).
+
+    * Various documentation fixes (PR #1972, PR #1974, PR #1993).
+
 iperf-3.20 2025-11-14
 ---------------------
 
@@ -185,7 +236,7 @@ iperf-3.18 2024-12-13
 
     * Clang compilation failure on Android were fixed (PR#1687).
 
-    * `iperf_time_add()` was optimizated to improve performance
+    * `iperf_time_add()` was optimized to improve performance
       (PR#1742).
 
     * Debug messages were added when the state changes (PR#1734).
@@ -777,7 +828,7 @@ iperf 3.2 2017-06-26
     accepted for backwards compatibility (#583).
 
   * Application-level bandwidth pacing (--bitrate option) is now
-    checked every millisecond by default, instead of of every tenth of
+    checked every millisecond by default, instead of every tenth of
     a second, to provide smoother traffic behavior when using
     application pacing (#460).  The pacing can be tuned via the use of
     the --pacing-timer option (#563).
@@ -1133,7 +1184,7 @@ iperf 3.0.8 2014-09-30
 
 * User-visible changes
 
-  * Updated license and copyright verbage to confirm to LBNL Tech
+  * Updated license and copyright verbiage to confirm to LBNL Tech
     Transfer requirements.  No substantive changes; license remains
     the 3-clause BSD license.
 

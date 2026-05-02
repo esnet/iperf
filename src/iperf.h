@@ -494,6 +494,7 @@ extern int gerror; /* error value from getaddrinfo(3), for use in internal error
 /* In Reverse mode, maximum number of packets to wait for "accept" response - to handle out of order packets */
 #define MAX_REVERSE_OUT_OF_ORDER_PACKETS 2
 
+#define GSO_MAX_DG_IN_BF (1 << 7UL) // 128 - the Linux Kernel limit hardcoded as `UDP_MAX_SEGMENTS (1 << 7UL)` in `udpgso.c`
 #define GSO_BF_MAX_SIZE MAX_UDP_BLOCKSIZE
 #define GRO_BF_MAX_SIZE MAX_UDP_BLOCKSIZE
 

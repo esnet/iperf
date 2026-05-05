@@ -4765,7 +4765,10 @@ iperf_free_stream(struct iperf_stream *sp)
 
     /* XXX: need to free interval list too! */
     munmap(sp->buffer, sp->test->settings->blksize);
-    close(sp->buffer_fd);
+    if (sp->buffer_fd >= 0) {
+        close(sp->buffer_fd);
+        sp->buffer_fd = -1;
+    }
     if (sp->diskfile_fd >= 0)
 	close(sp->diskfile_fd);
     for (irp = TAILQ_FIRST(&sp->result->interval_results); irp != NULL; irp = nirp) {

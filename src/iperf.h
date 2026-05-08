@@ -29,6 +29,11 @@
 
 #include "iperf_config.h"
 
+/* uint was removed from <sys/types.h> in C23 (GCC 15 default). */
+#ifndef uint
+typedef unsigned int uint;
+#endif
+
 #include <sys/time.h>
 #include <sys/types.h>
 #include <stdint.h>

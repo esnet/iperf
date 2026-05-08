@@ -300,7 +300,7 @@ extern    "C"
 	{
 	    inNum *= 8;
 	}
-	switch    (toupper((u_char)inFormat))
+    switch    (toupper((unsigned char)inFormat))
 	{
 	case 'B':
 	    conv = UNIT_CONV;

@@ -24,6 +24,8 @@
  * This code is distributed under a BSD style license, see the LICENSE
  * file for complete information.
  */
+
+#define _DEFAULT_SOURCE 1
 #include <errno.h>
 #include <setjmp.h>
 #include <stdio.h>

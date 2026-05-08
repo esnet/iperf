@@ -25,8 +25,10 @@
  * file for complete information.
  */
 /* iperf_server_api.c: Functions to be used by an iperf server
-*/
+ */
 
+#define _DEFAULT_SOURCE 1
+#include "iperf_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

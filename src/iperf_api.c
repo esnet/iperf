@@ -4628,8 +4628,12 @@ iperf_reporter_callback(struct iperf_test *test)
             iperf_print_intermediate(test);
             break;
         case TEST_END:
-        case DISPLAY_RESULTS:
             iperf_print_intermediate(test);
+            if (test->role == 's') {
+                iperf_print_results(test);
+            }
+            break;
+        case DISPLAY_RESULTS:
             iperf_print_results(test);
             break;
     }

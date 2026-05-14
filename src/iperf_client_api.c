@@ -420,7 +420,7 @@ iperf_handle_message_client(struct iperf_test *test)
 int
 iperf_connect(struct iperf_test *test)
 {
-    int opt;
+    int opt, n;
     socklen_t len;
 
     if (NULL == test)
@@ -526,7 +526,11 @@ iperf_connect(struct iperf_test *test)
 	    test->settings->gso_dg_size = test->settings->blksize;
 	    /* use the multiple of datagram size for the best efficiency. */
 	    if (test->settings->gso_dg_size > 0) {
-		test->settings->gso_bf_size = (test->settings->gso_bf_size / test->settings->gso_dg_size) * test->settings->gso_dg_size;
+                n = test->settings->gso_bf_size / test->settings->gso_dg_size;
+                if (n > GSO_MAX_DG_IN_BF) {
+                    n = GSO_MAX_DG_IN_BF;
+                }
+		test->settings->gso_bf_size = n * test->settings->gso_dg_size;
 	    } else {
 		/* If gso_dg_size is 0 (unlimited bandwidth), use default UDP datagram size */
 		test->settings->gso_dg_size = DEFAULT_UDP_BLKSIZE;

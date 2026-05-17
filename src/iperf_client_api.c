@@ -567,6 +567,10 @@ iperf_client_end(struct iperf_test *test)
     /* Close all stream sockets */
     SLIST_FOREACH(sp, &test->streams, streams) {
         close(sp->socket);
+        if (sp->buffer_fd >= 0) {
+            close(sp->buffer_fd);
+            sp->buffer_fd = -1;
+        }
     }
 
     /* show final summary */

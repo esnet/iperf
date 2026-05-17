@@ -1,0 +1,25 @@
+name: iperf3
+version: "0.1.0"
+summary: A TCP, UDP, and SCTP network bandwidth measurement tool
+description: |
+    iperf is a tool for active measurements of the maximum achievable
+    bandwidth on IP networks. It supports tuning of various parameters
+    related to timing, protocols, and buffers.
+    For each test it reports the measured throughput / bitrate, loss,
+    and other parameters.
+
+confinement: classic
+grade: stable
+
+apps:
+    iperf3:
+        command: bin/iperf3
+
+parts:
+    iperf3:
+        plugin: autotools
+        build-packages:
+        - libcrypto++-dev
+        - libsctp-dev
+        stage-packages:
+        - libc6

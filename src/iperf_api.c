@@ -4842,6 +4842,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     }
     if (unlink(template) < 0) {
         i_errno = IECREATESTREAM;
+        close(sp->buffer_fd);
         free(sp->result);
         free(sp);
         return NULL;
@@ -4855,6 +4856,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         printf("Buffer %d bytes\n", size);
     if (ftruncate(sp->buffer_fd, size) < 0) {
         i_errno = IECREATESTREAM;
+        close(sp->buffer_fd);
         free(sp->result);
         free(sp);
         return NULL;
@@ -4862,6 +4864,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     sp->buffer = (char *) mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, sp->buffer_fd, 0);
     if (sp->buffer == MAP_FAILED) {
         i_errno = IECREATESTREAM;
+        close(sp->buffer_fd);
         free(sp->result);
         free(sp);
         return NULL;
@@ -4875,18 +4878,19 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     sp->rcv = test->protocol->recv;
 
     if (test->diskfile_name != (char*) 0) {
-	sp->diskfile_fd = open(test->diskfile_name, sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC), S_IRUSR|S_IWUSR);
-	if (sp->diskfile_fd == -1) {
-	    i_errno = IEFILE;
+        sp->diskfile_fd = open(test->diskfile_name, sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC), S_IRUSR|S_IWUSR);
+        if (sp->diskfile_fd == -1) {
+            i_errno = IEFILE;
+            close(sp->buffer_fd);
             munmap(sp->buffer, sp->test->settings->blksize);
             free(sp->result);
             free(sp);
-	    return NULL;
-	}
+            return NULL;
+        }
         sp->snd2 = sp->snd;
-	sp->snd = diskfile_send;
-	sp->rcv2 = sp->rcv;
-	sp->rcv = diskfile_recv;
+        sp->snd = diskfile_send;
+        sp->rcv2 = sp->rcv;
+        sp->rcv = diskfile_recv;
     } else
         sp->diskfile_fd = -1;
 
@@ -4899,6 +4903,9 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     if ((ret < 0) || (iperf_init_stream(sp, test) < 0)) {
         close(sp->buffer_fd);
         munmap(sp->buffer, sp->test->settings->blksize);
+        if (sp->diskfile_fd >= 0) {
+            close(sp->diskfile_fd);
+        }
         free(sp->result);
         free(sp);
         return NULL;

@@ -1,5 +1,12 @@
 /* src/iperf_config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* C23 (GCC 15 default) removes implicit _DEFAULT_SOURCE;
+   define it explicitly so POSIX functions (daemon, gai_strerror,
+   fileno, getline, etc.) remain visible. */
+#ifndef _DEFAULT_SOURCE
+#define _DEFAULT_SOURCE 1
+#endif
+
 /* Can bind to device via SO_BINDTODEVICE or IP_BOUND_IF. */
 #undef CAN_BIND_TO_DEVICE
 

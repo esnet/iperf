@@ -1360,9 +1360,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 if (i_errno != 0) {
                     return -1;
                 }
-                if (test->settings->rate < 0){
-                    return -1;
-                }
+                // NOTE: rate is unsigned, can't be less than 0
+
 		rate_flag = 1;
 		client_flag = 1;
                 break;
@@ -1398,9 +1397,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 if (i_errno != 0) {
                     return -1;
                 }
-                if (test->settings->bytes < 0){
-                    return -1;
-                }
+                // NOTE: bytes is unsigned, can't be less than 0
 		client_flag = 1;
                 break;
             case 'k':
@@ -1408,9 +1405,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 if (i_errno != 0) {
                     return -1;
                 }
-                if (test->settings->blocks < 0){
-                    return -1;
-                }
+                // NOTE: blocks is unsigned, can't be less than 0
 		client_flag = 1;
                 break;
             case 'l':
@@ -1418,9 +1413,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 if (i_errno != 0) {
                     return -1;
                 }
-                if (blksize < 0){
-                    return -1;
-                }
+                // NOTE: blksize is unsigned, can't be less than 0
 		client_flag = 1;
                 break;
             case 'P':
@@ -1741,9 +1734,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		if (i_errno != 0) {
                     return -1;
 		}
-                if (test->settings->fqrate < 0){
-                    return -1;
-                }
+                // NOTE: fqrate is unsigned, can't be less than 0
 		client_flag = 1;
 #else /* HAVE_SO_MAX_PACING_RATE */
 		i_errno = IEUNIMP;
@@ -1796,6 +1787,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		if (i_errno != 0) {
                     return -1;
 		}
+                // NOTE: pacing_timer is an int and needs to be checked
                 if (test->settings->pacing_timer < 0){
                     return -1;
                 }
@@ -2608,7 +2600,6 @@ get_parameters(struct iperf_test *test)
         }
         test->settings->bytes = 0;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "num", cJSON_Number)) != NULL){
-            // TODO MAX?
             if (j_p->valueint < 0){
                 i_errno = IERECVPARAMS;
                 r = -1;
@@ -2618,7 +2609,6 @@ get_parameters(struct iperf_test *test)
         }
         test->settings->blocks = 0;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "blockcount", cJSON_Number)) != NULL){
-            // TODO MAX?
             if (j_p->valueint < 0){
                 i_errno = IERECVPARAMS;
                 r = -1;
@@ -2811,7 +2801,6 @@ get_parameters(struct iperf_test *test)
 
 	cJSON_Delete(j);
 
-        // TODO check all the other stuff that happens at the end of argument parsing
         /* Check flag / role compatibility. */
         if ((test->protocol->id != Pudp && test->settings->blksize <= 0)
             || test->settings->blksize > MAX_BLOCKSIZE) {

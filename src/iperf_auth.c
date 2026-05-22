@@ -144,20 +144,29 @@ size_t calcDecodeLength(const char* b64input) { //Calculates the length of a dec
 
 int Base64Decode(const char* b64message, unsigned char** buffer, size_t* length) { //Decodes a base64 encoded string
     BIO *bio, *b64;
+    int br;
 
     size_t decodeLen = calcDecodeLength(b64message);
     *buffer = (unsigned char*)malloc(decodeLen + 1);
     if (!*buffer)
         return -1;
     (*buffer)[decodeLen] = '\0';
+    *length = 0;
 
     bio = BIO_new_mem_buf(b64message, -1);
     b64 = BIO_new(BIO_f_base64());
     bio = BIO_push(b64, bio);
 
     BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL); //Do not use newlines to flush buffer
-    *length = BIO_read(bio, *buffer, strlen(b64message));
+    br = BIO_read(bio, *buffer, strlen(b64message));
     BIO_free_all(bio);
+
+    if (br < 0) {
+        free(*buffer);
+        *buffer = NULL;
+        return -1;
+    }
+    *length = (size_t)br;
 
     return (0); //success
 }

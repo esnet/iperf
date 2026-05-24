@@ -469,6 +469,10 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "unable to set SCTP_DISABLE_FRAGMENTS");
             perr = 1;
             break;
+        case IESETSCTPDELAYEDSACK:
+            snprintf(errstr, len, "unable to set SCTP_DELAYED_SACK");
+            perr = 1;
+            break;
         case IESETSCTPNSTREAM:
             snprintf(errstr, len, "unable to set SCTP_INIT num of SCTP streams\n");
             perr = 1;

@@ -125,6 +125,23 @@ iperf_sctp_accept(struct iperf_test * test)
         return -1;
     }
 
+    {
+        /*
+         * Apply SO_RCVBUF/SO_SNDBUF on the accepted association.  The
+         * listener-side setting does not reliably open the per-association
+         * receive window on Linux SCTP (see iperf_sctp_listen()), so repeat
+         * here.  Honour --window if the user supplied it, otherwise apply
+         * DEFAULT_SCTP_SOCKBUF.  Best-effort; failures are silently ignored
+         * to match the iperf_sctp_listen() / iperf_sctp_connect() default
+         * branches.
+         */
+        int opt = test->settings->socket_bufsize;
+        if (opt == 0)
+            opt = DEFAULT_SCTP_SOCKBUF;
+        (void) setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt));
+        (void) setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt));
+    }
+
     if (Nread(s, cookie, COOKIE_SIZE, Psctp) < 0) {
         i_errno = IERECVCOOKIE;
         close(s);
@@ -206,6 +223,18 @@ iperf_sctp_listen(struct iperf_test *test)
             i_errno = IESETBUF;
             return -1;
         }
+    } else {
+        /*
+         * Linux SCTP does not auto-tune SO_RCVBUF/SO_SNDBUF the way TCP does
+         * (no equivalent of tcp_moderate_rcvbuf), so without an explicit
+         * setting the per-association rwnd collapses to a few tens of KB and
+         * gates single-stream throughput.  Apply a sensible default; the
+         * kernel will silently cap at net.core.{r,w}mem_max where smaller.
+         * Failures are non-fatal -- this is best-effort, not user-requested.
+         */
+        opt = DEFAULT_SCTP_SOCKBUF;
+        (void) setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt));
+        (void) setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt));
     }
 
     if (test->bind_dev) {
@@ -341,6 +370,11 @@ iperf_sctp_connect(struct iperf_test *test)
             i_errno = IESETBUF;
             return -1;
         }
+    } else {
+        /* see iperf_sctp_listen() for rationale; best-effort, non-fatal. */
+        opt = DEFAULT_SCTP_SOCKBUF;
+        (void) setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt));
+        (void) setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt));
     }
 
     if (test->bind_dev) {

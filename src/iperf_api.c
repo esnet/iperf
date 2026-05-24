@@ -3770,6 +3770,7 @@ iperf_reset_test(struct iperf_test *test)
     test->num_streams = 1;
     test->settings->socket_bufsize = 0;
     test->settings->blksize = DEFAULT_TCP_BLKSIZE;
+    test->settings->blksize_set = 0;
     test->settings->rate = 0;
     test->settings->fqrate = 0;
     test->settings->burst = 0;

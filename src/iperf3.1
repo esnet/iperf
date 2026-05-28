@@ -525,7 +525,7 @@ settings to the server automatically.
 This feature is disabled by default and must be explicitly enabled
 with this flag.
 .TP
-.BR --gso
+.BR --gsro/s
 Enable UDP Generic Segmentation Offload (GSO) on the sender, where 
 supported by the operating system and network hardware (currently Linux only).
 GSO allows the network stack to aggregate multiple UDP datagrams
@@ -535,7 +535,7 @@ settings to the server automatically.
 This feature is disabled by default and must be explicitly enabled
 with this flag.
 .TP
-.BR --gro
+.BR --gsro/r
 Enable UDP Generic Receive Offload (GRO) on the receiver, where supported by
 the operating system and network hardware (currently Linux only).
 GRO is an aggregation technique to coalesce several receive packets from a 

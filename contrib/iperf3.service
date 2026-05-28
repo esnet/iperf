@@ -6,7 +6,6 @@ Requires=network.target
 ExecStart=/usr/bin/iperf3 -s
 Restart=on-failure
 DynamicUser=yes
-
 NoNewPrivileges=yes
 PrivateTmp=yes
 PrivateDevices=yes

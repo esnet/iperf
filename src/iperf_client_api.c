@@ -420,7 +420,7 @@ iperf_handle_message_client(struct iperf_test *test)
 int
 iperf_connect(struct iperf_test *test)
 {
-    int opt;
+    int opt, n;
     socklen_t len;
 
     if (NULL == test)
@@ -526,7 +526,11 @@ iperf_connect(struct iperf_test *test)
 	    test->settings->gso_dg_size = test->settings->blksize;
 	    /* use the multiple of datagram size for the best efficiency. */
 	    if (test->settings->gso_dg_size > 0) {
-		test->settings->gso_bf_size = (test->settings->gso_bf_size / test->settings->gso_dg_size) * test->settings->gso_dg_size;
+                n = test->settings->gso_bf_size / test->settings->gso_dg_size;
+                if (n > GSO_MAX_DG_IN_BF) {
+                    n = GSO_MAX_DG_IN_BF;
+                }
+		test->settings->gso_bf_size = n * test->settings->gso_dg_size;
 	    } else {
 		/* If gso_dg_size is 0 (unlimited bandwidth), use default UDP datagram size */
 		test->settings->gso_dg_size = DEFAULT_UDP_BLKSIZE;
@@ -772,6 +776,20 @@ iperf_run_client(struct iperf_test * test)
 						 test->bytes_received >= test->settings->bytes)) ||
 	         (test->settings->blocks != 0 && (test->blocks_sent >= test->settings->blocks ||
 						  test->blocks_received >= test->settings->blocks)))) {
+
+                /*
+                 * Cancel the periodic timers.  As the timers are not re-set in this stage their expiration time
+                 * is in the past, so without the cancellation the select() timeout is set to 0,
+                 * and it enters a loop while waiting the exchanged results, etc.
+                 */
+                if (test->stats_timer != NULL) {
+                    tmr_cancel(test->stats_timer);
+                    test->stats_timer = NULL;
+                }
+                if (test->reporter_timer != NULL) {
+                    tmr_cancel(test->reporter_timer);
+                    test->reporter_timer = NULL;
+                }
 
                 /* Cancel outstanding sender threads */
                 SLIST_FOREACH(sp, &test->streams, streams) {

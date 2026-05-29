@@ -74,7 +74,7 @@ GitHub using:
 
 ``git clone https://github.com/esnet/iperf.git``
 
-Primary development for iperf3 takes place on CentOS 7 Linux, FreeBSD 11,
-and macOS 10.12. At this time, these are the only officially supported
+Primary development for iperf3 takes place on Ubuntu Linux, FreeBSD,
+and macOS. At this time, these are the only officially supported
 platforms, however there have been some reports of success with
 NetBSD, OpenBSD, Windows, Solaris, Android, and iOS.

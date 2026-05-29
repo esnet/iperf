@@ -12,7 +12,7 @@ What is the history of iperf3, and what is the difference between iperf2 and ipe
   base. For this reason, it was decided to make the tool single
   threaded, and not worry about backwards compatibility with
   iperf2. Many of the feature requests for iperf3 came from the
-  perfSONAR project (http://www.perfsonar.net).
+  perfSONAR project (https://www.perfsonar.net).
 
   Then in 2014, Bob (Robert) McMahon from Broadcom restarted
   development of iperf2 (See
@@ -262,7 +262,7 @@ A file sent using the ``-F`` option got corrupted...what happened?
 
 I have a question regarding iperf3...what's the best way to get help?
   Searching on the Internet is a good first step.
-  http://stackoverflow.com/ has a number of iperf3-related questions
+  https://stackoverflow.com/ has a number of iperf3-related questions
   and answers, but a simple query into your favorite search engine can
   also yield some results.
 

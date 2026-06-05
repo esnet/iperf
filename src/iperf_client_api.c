@@ -550,6 +550,27 @@ iperf_connect(struct iperf_test *test)
 	}
     }
 
+    /*
+     * For TCP, when the user did not pass -l, round the default block size
+     * down to the largest multiple of the MSS so that each write decomposes
+     * into integer-many full-sized wire segments after TSO/GSO splits it.
+     * Prefer a user-specified -M value (settings->mss); otherwise fall back
+     * to the kernel-reported control-socket MSS.
+     */
+    if (test->protocol->id == Ptcp && !test->settings->blksize_set) {
+	int mss = test->settings->mss ? test->settings->mss : test->ctrl_sck_mss;
+	if (mss > 0) {
+	    int aligned = (DEFAULT_TCP_BLKSIZE / mss) * mss;
+	    if (aligned < mss)
+		aligned = mss;
+	    test->settings->blksize = aligned;
+	    if (test->verbose) {
+		printf("Setting TCP block size to %d (MSS %d)\n",
+		       test->settings->blksize, mss);
+	    }
+	}
+    }
+
     return 0;
 }
 

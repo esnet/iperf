@@ -110,6 +110,7 @@ extern const char report_receiver_not_available_summary_format[];
 extern const char report_tcpInfo[] ;
 extern const char report_tcpInfo[] ;
 
+extern const char report_retry_after_connect_refused[] ;
 
 extern const char warn_window_requested[] ;
 extern const char warn_window_small[] ;

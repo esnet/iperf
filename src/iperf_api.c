@@ -2082,8 +2082,9 @@ iperf_set_send_state(struct iperf_test *test, signed char state)
 {
     if (test->ctrl_sck >= 0) {
         iperf_set_test_state(test, state);
-        if (iperf_send_state(test, state) < 0) {
-            return -1;
+        if (Nwrite(test->ctrl_sck, (char*) &state, sizeof(state), Ptcp) < 0) {
+	    i_errno = IESENDMESSAGE;
+	    return -1;
         }
     }
     return 0;
@@ -2822,13 +2823,47 @@ get_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(test->json_start, "target_bitrate", test->settings->rate);
 	cJSON_Delete(j);
 
+        /* Check flag / role compatibility. */
+        if ((test->protocol->id != Pudp && test->settings->blksize <= 0)
+            || test->settings->blksize > MAX_BLOCKSIZE) {
+            i_errno = IEBLOCKSIZE;
+            return -1;
+        }
+        if (test->protocol->id == Pudp &&
+            (test->settings->blksize > 0 &&
+                (test->settings->blksize < MIN_UDP_BLOCKSIZE || test->settings->blksize > MAX_UDP_BLOCKSIZE))) {
+            i_errno = IEUDPBLOCKSIZE;
+            return -1;
+        }
+
+        if (test->protocol->id == Pudp && test->settings->gso) {
+            test->settings->gso_dg_size = test->settings->blksize;
+            /* use the multiple of datagram size for the best efficiency. */
+            if (test->settings->gso_dg_size > 0) {
+                test->settings->gso_bf_size = (test->settings->gso_bf_size / test->settings->gso_dg_size) * test->settings->gso_dg_size;
+            }
+        }
+
         /* Ensure that the client does not request to run longer than the server's configured max */
         if ((test->max_server_duration > 0) && (((test->duration + test->omit) > test->max_server_duration) || (test->duration == 0))) {
             i_errno = IEMAXSERVERTESTDURATIONEXCEEDED;
             r = -1;
         }
 
+        /* Ensure that total requested data rate is not above the server's limit */
+        iperf_size_t total_requested_rate = test->num_streams * test->settings->rate * (test->mode == BIDIRECTIONAL? 2 : 1);
+        if (test->settings->bitrate_limit && total_requested_rate > test->settings->bitrate_limit) {
+            i_errno = IETOTALRATE;
+            r = -1;
+        }
+
+        total_requested_rate = test->num_streams * test->settings->fqrate * (test->mode == BIDIRECTIONAL? 2 : 1);
+        if (test->settings->bitrate_limit && total_requested_rate > test->settings->bitrate_limit) {
+            i_errno = IETOTALRATE;
+            r = -1;
+        }
     }
+
     return r;
 }
 

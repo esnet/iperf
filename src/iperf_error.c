@@ -563,10 +563,14 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "server test duration expired");
             perr = 1;
             break;
-	    default:
-            snprintf(errstr, len, "int_errno=%d", int_errno);
+        case IENOSERVERFULLVERSION:
+            snprintf(errstr, len, "server does not support --get-server-version option");
             perr = 1;
             break;
+	default:
+	    snprintf(errstr, len, "int_errno=%d", int_errno);
+	    perr = 1;
+	    break;
     }
 
     /* Append the result of strerror() or gai_strerror() if appropriate */

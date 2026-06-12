@@ -4926,7 +4926,10 @@ iperf_free_stream(struct iperf_stream *sp)
 
     /* XXX: need to free interval list too! */
     munmap(sp->buffer, sp->test->settings->blksize);
-    close(sp->buffer_fd);
+    if (sp->buffer_fd >= 0) {
+        close(sp->buffer_fd);
+        sp->buffer_fd = -1;
+    }
     if (sp->diskfile_fd >= 0)
 	close(sp->diskfile_fd);
     for (irp = TAILQ_FIRST(&sp->result->interval_results); irp != NULL; irp = nirp) {
@@ -4972,7 +4975,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     sp = (struct iperf_stream *) malloc(sizeof(struct iperf_stream));
     if (!sp) {
         i_errno = IECREATESTREAM;
-        return NULL;
+        goto err_exit;
     }
 
     memset(sp, 0, sizeof(struct iperf_stream));
@@ -4982,9 +4985,8 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     sp->settings = test->settings;
     sp->result = (struct iperf_stream_result *) malloc(sizeof(struct iperf_stream_result));
     if (!sp->result) {
-        free(sp);
         i_errno = IECREATESTREAM;
-        return NULL;
+        goto err_exit_free_sp;
     }
 
     memset(sp->result, 0, sizeof(struct iperf_stream_result));
@@ -4994,15 +4996,11 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     sp->buffer_fd = mkstemp(template);
     if (sp->buffer_fd == -1) {
         i_errno = IECREATESTREAM;
-        free(sp->result);
-        free(sp);
-        return NULL;
+        goto err_exit_free_result;
     }
     if (unlink(template) < 0) {
         i_errno = IECREATESTREAM;
-        free(sp->result);
-        free(sp);
-        return NULL;
+        goto err_exit_close_buffer;
     }
     size = test->settings->blksize;
     if (test->protocol->id == Pudp && test->settings->gso && (size < test->settings->gso_bf_size))
@@ -5013,16 +5011,12 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         printf("Buffer %d bytes\n", size);
     if (ftruncate(sp->buffer_fd, size) < 0) {
         i_errno = IECREATESTREAM;
-        free(sp->result);
-        free(sp);
-        return NULL;
+        goto err_exit_close_buffer;
     }
     sp->buffer = (char *) mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, sp->buffer_fd, 0);
     if (sp->buffer == MAP_FAILED) {
         i_errno = IECREATESTREAM;
-        free(sp->result);
-        free(sp);
-        return NULL;
+        goto err_exit_close_buffer;
     }
     sp->pending_size = 0;
 
@@ -5033,18 +5027,15 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     sp->rcv = test->protocol->recv;
 
     if (test->diskfile_name != (char*) 0) {
-	sp->diskfile_fd = open(test->diskfile_name, sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC), S_IRUSR|S_IWUSR);
-	if (sp->diskfile_fd == -1) {
-	    i_errno = IEFILE;
-            munmap(sp->buffer, sp->test->settings->blksize);
-            free(sp->result);
-            free(sp);
-	    return NULL;
-	}
+        sp->diskfile_fd = open(test->diskfile_name, sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC), S_IRUSR|S_IWUSR);
+        if (sp->diskfile_fd == -1) {
+            i_errno = IEFILE;
+            goto err_exit_munmap_buffer;
+        }
         sp->snd2 = sp->snd;
-	sp->snd = diskfile_send;
-	sp->rcv2 = sp->rcv;
-	sp->rcv = diskfile_recv;
+        sp->snd = diskfile_send;
+        sp->rcv2 = sp->rcv;
+        sp->rcv = diskfile_recv;
     } else
         sp->diskfile_fd = -1;
 
@@ -5055,15 +5046,27 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         ret = readentropy(sp->buffer, test->settings->blksize);
 
     if ((ret < 0) || (iperf_init_stream(sp, test) < 0)) {
-        close(sp->buffer_fd);
-        munmap(sp->buffer, sp->test->settings->blksize);
-        free(sp->result);
-        free(sp);
-        return NULL;
+        goto err_exit_close_diskfile;
     }
     iperf_add_stream(test, sp);
 
     return sp;
+
+err_exit_close_diskfile:
+    /* The file may not be open because it depends on user given -F option. */
+    if (sp->diskfile_fd >= 0) {
+        close(sp->diskfile_fd);
+    }
+err_exit_munmap_buffer:
+    munmap(sp->buffer, sp->test->settings->blksize);
+err_exit_close_buffer:
+    close(sp->buffer_fd);
+err_exit_free_result:
+    free(sp->result);
+err_exit_free_sp:
+    free(sp);
+err_exit:
+    return NULL;
 }
 
 /**************************************************************************/

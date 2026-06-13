@@ -1418,7 +1418,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'P':
                 test->num_streams = atoi(optarg);
-                if (test->num_streams < 0 || test->num_streams > MAX_STREAMS) {
+                if (test->num_streams < 1 || test->num_streams > MAX_STREAMS) {
                     i_errno = IENUMSTREAMS;
                     return -1;
                 }
@@ -2627,7 +2627,7 @@ get_parameters(struct iperf_test *test)
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "nodelay", cJSON_True)) != NULL)
 	    test->no_delay = 1;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "parallel", cJSON_Number)) != NULL){
-            if (j_p->valueint < 0  || j_p->valueint > MAX_STREAMS) {
+            if (j_p->valueint < 1  || j_p->valueint > MAX_STREAMS) {
                 i_errno = IENUMSTREAMS;
                 r = -1;
             } else {
@@ -2823,25 +2823,25 @@ get_parameters(struct iperf_test *test)
        }
 
 
-    /* Ensure that the client does not request to run longer than the server's configured max */
-    if ((test->max_server_duration > 0) && (((test->duration + test->omit) > test->max_server_duration) || (test->duration == 0))) {
-        i_errno = IEMAXSERVERTESTDURATIONEXCEEDED;
-        r = -1;
-    }
+        /* Ensure that the client does not request to run longer than the server's configured max */
+        if ((test->max_server_duration > 0) && (((test->duration + test->omit) > test->max_server_duration) || (test->duration == 0))) {
+            i_errno = IEMAXSERVERTESTDURATIONEXCEEDED;
+            r = -1;
+        }
 
 
-    /* Ensure that total requested data rate is not above the server's limit */
-    iperf_size_t total_requested_rate = test->num_streams * test->settings->rate * (test->mode == BIDIRECTIONAL? 2 : 1);
-    if (test->settings->bitrate_limit && total_requested_rate > test->settings->bitrate_limit) {
-        i_errno = IETOTALRATE;
-        r = -1;
-    }
+        /* Ensure that total requested data rate is not above the server's limit */
+        iperf_size_t total_requested_rate = test->num_streams * test->settings->rate * (test->mode == BIDIRECTIONAL? 2 : 1);
+        if (test->settings->bitrate_limit && total_requested_rate > test->settings->bitrate_limit) {
+            i_errno = IETOTALRATE;
+            r = -1;
+        }
 
-    total_requested_rate = test->num_streams * test->settings->fqrate * (test->mode == BIDIRECTIONAL? 2 : 1);
-    if (test->settings->bitrate_limit && total_requested_rate > test->settings->bitrate_limit) {
-        i_errno = IETOTALRATE;
-        r = -1;
-    }
+        total_requested_rate = test->num_streams * test->settings->fqrate * (test->mode == BIDIRECTIONAL? 2 : 1);
+        if (test->settings->bitrate_limit && total_requested_rate > test->settings->bitrate_limit) {
+            i_errno = IETOTALRATE;
+            r = -1;
+        }
     }
 
     return r;

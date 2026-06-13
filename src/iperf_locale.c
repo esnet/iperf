@@ -212,14 +212,17 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 #endif /* HAVE_FLOWLABEL */
                            "  -Z, --zerocopy            use a 'zero copy' method of sending data\n"
 #if defined(HAVE_MSG_TRUNC)
-                           "  --skip-rx-copy            ignore received messages using MSG_TRUNC option\n"
+#define IPERF_HELP_MSG_TRUNK_SUPPORTED_BY_THIS_OS ""
+#else /* !HAVE_MSG_TRUNC */
+#define IPERF_HELP_MSG_TRUNK_SUPPORTED_BY_THIS_OS " (this OS does not support but server OS may)"
 #endif /* HAVE_MSG_TRUNC */
+                           "  --skip-rx-copy            ignore received messages using MSG_TRUNC option" IPERF_HELP_MSG_TRUNK_SUPPORTED_BY_THIS_OS "\n"
                            "  -O, --omit N              perform pre-test for N seconds and omit the pre-test statistics\n"
                            "  -T, --title str           prefix every output line with this string\n"
                            "  --extra-data str          data string to include in client and server JSON\n"
                            "  --get-server-output       get results from server\n"
                            "  --udp-counters-64bit      use 64-bit counters in UDP test packets\n"
-                           "  --gsro                    enable UDP GSO/GRO on both client and server (client-only option)\n"
+                           "  --gsro                    enable UDP GSO/GRO on both client and server\n"
                            "  --repeating-payload       use repeating pattern in payload, instead of\n"
                            "                            randomized payload (like in iperf2)\n"
 #if defined(HAVE_DONT_FRAGMENT)

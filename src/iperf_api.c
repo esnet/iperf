@@ -2655,7 +2655,7 @@ get_parameters(struct iperf_test *test)
             if (j_p->valueint < 0){
                 i_errno = IEBLOCKSIZE;
                 r = -1;
-            }else {
+            } else {
 	        test->settings->blksize = j_p->valueint;
             }
         }
@@ -2702,7 +2702,7 @@ get_parameters(struct iperf_test *test)
             if (j_p->valueint < 0 || j_p->valueint > 1){
                 i_errno = IERECVPARAMS;
                 r = -1;
-            }else {
+            } else {
 	        test->settings->gro = j_p->valueint;
             }
         }
@@ -2710,7 +2710,7 @@ get_parameters(struct iperf_test *test)
             if (j_p->valueint < 0){
                 i_errno = IERECVPARAMS;
                 r = -1;
-            }else {
+            } else {
 	        test->settings->gro_bf_size = j_p->valueint;
             }
         }
@@ -2718,7 +2718,7 @@ get_parameters(struct iperf_test *test)
             if (j_p->valueint < 0){
                 i_errno = IERECVPARAMS;
                 r = -1;
-            }else {
+            } else {
 	        test->settings->rate = j_p->valueint;
             }
         }
@@ -2726,7 +2726,7 @@ get_parameters(struct iperf_test *test)
             if (j_p->valueint < 0){
                 i_errno = IERECVPARAMS;
                 r = -1;
-            }else {
+            } else {
 	        test->settings->fqrate = j_p->valueint;
             }
         }
@@ -2734,7 +2734,7 @@ get_parameters(struct iperf_test *test)
             if (j_p->valueint < 0){
                 i_errno = IERECVPARAMS;
                 r = -1;
-            }else {
+            } else {
 	        test->settings->pacing_timer = j_p->valueint;
             }
         }
@@ -2742,7 +2742,7 @@ get_parameters(struct iperf_test *test)
             if (j_p->valueint <= 0 || j_p->valueint > MAX_BURST){
                 i_errno = IEBURST;
                 r = -1;
-            }else {
+            } else {
 	        test->settings->burst = j_p->valueint;
             }
         }
@@ -2750,7 +2750,7 @@ get_parameters(struct iperf_test *test)
             if (j_p->valueint < 0 || j_p->valueint > 255){
                 i_errno = IEBADTOS;
                 r = -1;
-            }else {
+            } else {
 	        test->settings->tos = j_p->valueint;
             }
         }
@@ -2759,7 +2759,7 @@ get_parameters(struct iperf_test *test)
             if (j_p->valueint < 1 || j_p->valueint > 0xfffff ){
                 i_errno = IESETFLOW;
                 r = -1;
-            }else {
+            } else {
 	        test->settings->flowlabel = j_p->valueint;
             }
         }

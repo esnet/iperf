@@ -31,3 +31,4 @@ examples/Makefile
 examples/mic
 examples/mis
 .vscode/
+.worktrees/

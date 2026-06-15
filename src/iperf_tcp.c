@@ -395,13 +395,23 @@ iperf_tcp_connect(struct iperf_test *test)
     int saved_errno;
     int rcvbuf_actual, sndbuf_actual;
     int proto = 0;
+    const char *connect_host;
+    int connect_port;
 
 #if defined(HAVE_IPPROTO_MPTCP)
     if (test->mptcp)
         proto = IPPROTO_MPTCP;
 #endif
 
-    s = create_socket(test->settings->domain, SOCK_STREAM, proto, test->bind_address, test->bind_dev, test->bind_port, test->server_hostname, test->server_port, &server_res);
+    if (test->settings->proxy_type != IPERF_PROXY_NONE) {
+        connect_host = test->settings->proxy_host;
+        connect_port = test->settings->proxy_port;
+    } else {
+        connect_host = test->server_hostname;
+        connect_port = test->server_port;
+    }
+
+    s = create_socket(test->settings->domain, SOCK_STREAM, proto, test->bind_address, test->bind_dev, test->bind_port, connect_host, connect_port, &server_res);
     if (s < 0) {
 	i_errno = IESTREAMCONNECT;
 	return -1;
@@ -600,6 +610,16 @@ iperf_tcp_connect(struct iperf_test *test)
     }
 
     freeaddrinfo(server_res);
+
+    if (test->settings->proxy_type != IPERF_PROXY_NONE) {
+        if (iperf_proxy_handshake(s, test->settings, test->server_hostname, test->server_port) < 0) {
+            saved_errno = errno;
+            close(s);
+            errno = saved_errno;
+            i_errno = IEPROXYHANDSHAKE;
+            return -1;
+        }
+    }
 
     /* Send cookie for verification */
     if (Nwrite(s, test->cookie, COOKIE_SIZE, Ptcp) < 0) {

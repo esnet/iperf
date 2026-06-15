@@ -434,9 +434,13 @@ iperf_connect(struct iperf_test *test)
     make_cookie(test->cookie);
 
     /* Create and connect the control channel */
-    if (test->ctrl_sck < 0)
+    if (test->ctrl_sck < 0) {
 	// Create the control channel using an ephemeral port
-	test->ctrl_sck = netdial(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, 0, test->server_hostname, test->server_port, test->settings->connect_timeout);
+        if (test->settings->proxy_type != IPERF_PROXY_NONE)
+	    test->ctrl_sck = netdial(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, 0, test->settings->proxy_host, test->settings->proxy_port, test->settings->connect_timeout);
+        else
+	    test->ctrl_sck = netdial(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, 0, test->server_hostname, test->server_port, test->settings->connect_timeout);
+    }
     if (test->ctrl_sck < 0) {
         i_errno = IECONNECT;
         return -1;
@@ -463,6 +467,15 @@ iperf_connect(struct iperf_test *test)
         }
     }
 #endif /* HAVE_TCP_USER_TIMEOUT */
+
+    if (test->settings->proxy_type != IPERF_PROXY_NONE) {
+        if (iperf_proxy_handshake(test->ctrl_sck, test->settings, test->server_hostname, test->server_port) < 0) {
+            close(test->ctrl_sck);
+            test->ctrl_sck = -1;
+            i_errno = IEPROXYHANDSHAKE;
+            return -1;
+        }
+    }
 
     if (Nwrite(test->ctrl_sck, test->cookie, COOKIE_SIZE, Ptcp) < 0) {
         i_errno = IESENDCOOKIE;

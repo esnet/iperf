@@ -157,6 +157,8 @@ struct iperf_stream_result
 };
 
 #define COOKIE_SIZE 37		/* size of an ascii uuid */
+#include "iperf_proxy.h"
+
 struct iperf_settings
 {
     int       domain;               /* AF_INET or AF_INET6 */
@@ -178,6 +180,9 @@ struct iperf_settings
     char      unit_format;          /* -f */
     int       num_ostreams;         /* SCTP initmsg settings */
     int       dont_fragment;        /* Whether to set IP flag Do-Not_Fragment */
+    enum iperf_proxy_type proxy_type; /* TCP client proxy type */
+    char      *proxy_host;          /* TCP client proxy host */
+    int       proxy_port;           /* TCP client proxy port */
 #if defined(HAVE_SSL)
     char      *authtoken;           /* Authentication token */
     char      *client_username;

@@ -1,9 +1,9 @@
 lib_LTLIBRARIES         = libiperf.la                                   # Build and install an iperf library
 bin_PROGRAMS            = iperf3                                        # Build and install an iperf binary
 if ENABLE_PROFILING
-noinst_PROGRAMS         = t_timer t_units t_uuid t_api t_auth iperf3_profile   # Build, but don't install the test programs and a profiled version of iperf3
+noinst_PROGRAMS         = t_timer t_units t_uuid t_api t_auth t_proxy iperf3_profile   # Build, but don't install the test programs and a profiled version of iperf3
 else
-noinst_PROGRAMS         = t_timer t_units t_uuid t_api t_auth                  # Build, but don't install the test programs
+noinst_PROGRAMS         = t_timer t_units t_uuid t_api t_auth t_proxy                  # Build, but don't install the test programs
 endif
 include_HEADERS         = iperf_api.h                                   # Defines the headers that get installed with the program
 
@@ -35,6 +35,8 @@ libiperf_la_SOURCES     = \
                         iperf_time.h \
                         iperf_pthread.c \
                         iperf_pthread.h \
+                        iperf_proxy.c \
+                        iperf_proxy.h \
 			dscp.c \
                         net.c \
                         net.h \
@@ -91,6 +93,11 @@ t_auth_CFLAGS            = -g
 t_auth_LDFLAGS           =
 t_auth_LDADD             = libiperf.la
 
+t_proxy_SOURCES          = t_proxy.c
+t_proxy_CFLAGS           = -g
+t_proxy_LDFLAGS          =
+t_proxy_LDADD            = libiperf.la
+
 
 
 # Specify which tests to run during a "make check"
@@ -99,7 +106,8 @@ TESTS                   = \
                         t_units \
                         t_uuid  \
                         t_api \
-			t_auth
+			t_auth \
+			t_proxy
 
 dist_man_MANS          = iperf3.1 libiperf.3
 

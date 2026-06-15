@@ -26,6 +26,7 @@ src/t_units
 src/t_uuid
 src/t_api
 src/t_auth
+src/t_proxy
 examples/.libs
 examples/Makefile
 examples/mic

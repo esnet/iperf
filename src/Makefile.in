@@ -95,13 +95,14 @@ host_triplet = @host@
 bin_PROGRAMS = iperf3$(EXEEXT)
 @ENABLE_PROFILING_FALSE@noinst_PROGRAMS = t_timer$(EXEEXT) \
 @ENABLE_PROFILING_FALSE@	t_units$(EXEEXT) t_uuid$(EXEEXT) \
-@ENABLE_PROFILING_FALSE@	t_api$(EXEEXT) t_auth$(EXEEXT)
+@ENABLE_PROFILING_FALSE@	t_api$(EXEEXT) t_auth$(EXEEXT) \
+@ENABLE_PROFILING_FALSE@	t_proxy$(EXEEXT)
 @ENABLE_PROFILING_TRUE@noinst_PROGRAMS = t_timer$(EXEEXT) \
 @ENABLE_PROFILING_TRUE@	t_units$(EXEEXT) t_uuid$(EXEEXT) \
 @ENABLE_PROFILING_TRUE@	t_api$(EXEEXT) t_auth$(EXEEXT) \
-@ENABLE_PROFILING_TRUE@	iperf3_profile$(EXEEXT)
+@ENABLE_PROFILING_TRUE@	t_proxy$(EXEEXT) iperf3_profile$(EXEEXT)
 TESTS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT) \
-	t_api$(EXEEXT) t_auth$(EXEEXT)
+	t_api$(EXEEXT) t_auth$(EXEEXT) t_proxy$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/ax_check_openssl.m4 \
@@ -151,8 +152,8 @@ libiperf_la_LIBADD =
 am_libiperf_la_OBJECTS = cjson.lo iperf_api.lo iperf_error.lo \
 	iperf_auth.lo iperf_client_api.lo iperf_locale.lo \
 	iperf_server_api.lo iperf_tcp.lo iperf_udp.lo iperf_sctp.lo \
-	iperf_util.lo iperf_time.lo iperf_pthread.lo dscp.lo net.lo \
-	tcp_info.lo timer.lo units.lo
+	iperf_util.lo iperf_time.lo iperf_pthread.lo iperf_proxy.lo \
+	dscp.lo net.lo tcp_info.lo timer.lo units.lo
 libiperf_la_OBJECTS = $(am_libiperf_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -170,8 +171,9 @@ am__iperf3_profile_SOURCES_DIST = main.c cjson.c cjson.h flowlabel.h \
 	iperf_server_api.c iperf_tcp.c iperf_tcp.h iperf_udp.c \
 	iperf_udp.h iperf_sctp.c iperf_sctp.h iperf_util.c \
 	iperf_util.h iperf_time.c iperf_time.h iperf_pthread.c \
-	iperf_pthread.h dscp.c net.c net.h portable_endian.h queue.h \
-	tcp_info.c timer.c timer.h units.c units.h version.h
+	iperf_pthread.h iperf_proxy.c iperf_proxy.h dscp.c net.c \
+	net.h portable_endian.h queue.h tcp_info.c timer.c timer.h \
+	units.c units.h version.h
 am__objects_1 = iperf3_profile-cjson.$(OBJEXT) \
 	iperf3_profile-iperf_api.$(OBJEXT) \
 	iperf3_profile-iperf_error.$(OBJEXT) \
@@ -185,6 +187,7 @@ am__objects_1 = iperf3_profile-cjson.$(OBJEXT) \
 	iperf3_profile-iperf_util.$(OBJEXT) \
 	iperf3_profile-iperf_time.$(OBJEXT) \
 	iperf3_profile-iperf_pthread.$(OBJEXT) \
+	iperf3_profile-iperf_proxy.$(OBJEXT) \
 	iperf3_profile-dscp.$(OBJEXT) iperf3_profile-net.$(OBJEXT) \
 	iperf3_profile-tcp_info.$(OBJEXT) \
 	iperf3_profile-timer.$(OBJEXT) iperf3_profile-units.$(OBJEXT)
@@ -209,6 +212,12 @@ t_auth_DEPENDENCIES = libiperf.la
 t_auth_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(t_auth_CFLAGS) $(CFLAGS) \
 	$(t_auth_LDFLAGS) $(LDFLAGS) -o $@
+am_t_proxy_OBJECTS = t_proxy-t_proxy.$(OBJEXT)
+t_proxy_OBJECTS = $(am_t_proxy_OBJECTS)
+t_proxy_DEPENDENCIES = libiperf.la
+t_proxy_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(t_proxy_CFLAGS) $(CFLAGS) \
+	$(t_proxy_LDFLAGS) $(LDFLAGS) -o $@
 am_t_timer_OBJECTS = t_timer-t_timer.$(OBJEXT)
 t_timer_OBJECTS = $(am_t_timer_OBJECTS)
 t_timer_DEPENDENCIES = libiperf.la
@@ -267,8 +276,9 @@ am__depfiles_remade = ./$(DEPDIR)/cjson.Plo ./$(DEPDIR)/dscp.Plo \
 	./$(DEPDIR)/iperf_pthread.Plo ./$(DEPDIR)/iperf_sctp.Plo \
 	./$(DEPDIR)/iperf_server_api.Plo ./$(DEPDIR)/iperf_tcp.Plo \
 	./$(DEPDIR)/iperf_time.Plo ./$(DEPDIR)/iperf_udp.Plo \
-	./$(DEPDIR)/iperf_util.Plo ./$(DEPDIR)/net.Plo \
-	./$(DEPDIR)/t_api-t_api.Po ./$(DEPDIR)/t_auth-t_auth.Po \
+	./$(DEPDIR)/iperf_util.Plo ./$(DEPDIR)/iperf_proxy.Plo \
+	./$(DEPDIR)/net.Plo ./$(DEPDIR)/t_api-t_api.Po \
+	./$(DEPDIR)/t_auth-t_auth.Po ./$(DEPDIR)/t_proxy-t_proxy.Po \
 	./$(DEPDIR)/t_timer-t_timer.Po ./$(DEPDIR)/t_units-t_units.Po \
 	./$(DEPDIR)/t_uuid-t_uuid.Po ./$(DEPDIR)/tcp_info.Plo \
 	./$(DEPDIR)/timer.Plo ./$(DEPDIR)/units.Plo
@@ -293,11 +303,12 @@ am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libiperf_la_SOURCES) $(iperf3_SOURCES) \
 	$(iperf3_profile_SOURCES) $(t_api_SOURCES) $(t_auth_SOURCES) \
-	$(t_timer_SOURCES) $(t_units_SOURCES) $(t_uuid_SOURCES)
+	$(t_proxy_SOURCES) $(t_timer_SOURCES) $(t_units_SOURCES) \
+	$(t_uuid_SOURCES)
 DIST_SOURCES = $(libiperf_la_SOURCES) $(iperf3_SOURCES) \
 	$(am__iperf3_profile_SOURCES_DIST) $(t_api_SOURCES) \
-	$(t_auth_SOURCES) $(t_timer_SOURCES) $(t_units_SOURCES) \
-	$(t_uuid_SOURCES)
+	$(t_auth_SOURCES) $(t_proxy_SOURCES) $(t_timer_SOURCES) \
+	$(t_units_SOURCES) $(t_uuid_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -679,6 +690,8 @@ libiperf_la_SOURCES = \
                         iperf_time.h \
                         iperf_pthread.c \
                         iperf_pthread.h \
+                        iperf_proxy.c \
+                        iperf_proxy.h \
 			dscp.c \
                         net.c \
                         net.h \
@@ -729,6 +742,10 @@ t_auth_SOURCES = t_auth.c
 t_auth_CFLAGS = -g
 t_auth_LDFLAGS = 
 t_auth_LDADD = libiperf.la
+t_proxy_SOURCES = t_proxy.c
+t_proxy_CFLAGS = -g
+t_proxy_LDFLAGS = 
+t_proxy_LDADD = libiperf.la
 dist_man_MANS = iperf3.1 libiperf.3
 all: iperf_config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -882,6 +899,10 @@ t_auth$(EXEEXT): $(t_auth_OBJECTS) $(t_auth_DEPENDENCIES) $(EXTRA_t_auth_DEPENDE
 	@rm -f t_auth$(EXEEXT)
 	$(AM_V_CCLD)$(t_auth_LINK) $(t_auth_OBJECTS) $(t_auth_LDADD) $(LIBS)
 
+t_proxy$(EXEEXT): $(t_proxy_OBJECTS) $(t_proxy_DEPENDENCIES) $(EXTRA_t_proxy_DEPENDENCIES) 
+	@rm -f t_proxy$(EXEEXT)
+	$(AM_V_CCLD)$(t_proxy_LINK) $(t_proxy_OBJECTS) $(t_proxy_LDADD) $(LIBS)
+
 t_timer$(EXEEXT): $(t_timer_OBJECTS) $(t_timer_DEPENDENCIES) $(EXTRA_t_timer_DEPENDENCIES) 
 	@rm -f t_timer$(EXEEXT)
 	$(AM_V_CCLD)$(t_timer_LINK) $(t_timer_OBJECTS) $(t_timer_LDADD) $(LIBS)
@@ -928,6 +949,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_error.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_locale.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_pthread.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_proxy.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_sctp.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_server_api.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_tcp.Plo@am__quote@ # am--include-marker
@@ -937,6 +959,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/net.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_api-t_api.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_auth-t_auth.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_proxy-t_proxy.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_timer-t_timer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_units-t_units.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_uuid-t_uuid.Po@am__quote@ # am--include-marker
@@ -1278,6 +1301,20 @@ t_auth-t_auth.obj: t_auth.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='t_auth.c' object='t_auth-t_auth.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(t_auth_CFLAGS) $(CFLAGS) -c -o t_auth-t_auth.obj `if test -f 't_auth.c'; then $(CYGPATH_W) 't_auth.c'; else $(CYGPATH_W) '$(srcdir)/t_auth.c'; fi`
+
+t_proxy-t_proxy.o: t_proxy.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(t_proxy_CFLAGS) $(CFLAGS) -MT t_proxy-t_proxy.o -MD -MP -MF $(DEPDIR)/t_proxy-t_proxy.Tpo -c -o t_proxy-t_proxy.o `test -f 't_proxy.c' || echo '$(srcdir)/'`t_proxy.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/t_proxy-t_proxy.Tpo $(DEPDIR)/t_proxy-t_proxy.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='t_proxy.c' object='t_proxy-t_proxy.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(t_proxy_CFLAGS) $(CFLAGS) -c -o t_proxy-t_proxy.o `test -f 't_proxy.c' || echo '$(srcdir)/'`t_proxy.c
+
+t_proxy-t_proxy.obj: t_proxy.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(t_proxy_CFLAGS) $(CFLAGS) -MT t_proxy-t_proxy.obj -MD -MP -MF $(DEPDIR)/t_proxy-t_proxy.Tpo -c -o t_proxy-t_proxy.obj `if test -f 't_proxy.c'; then $(CYGPATH_W) 't_proxy.c'; else $(CYGPATH_W) '$(srcdir)/t_proxy.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/t_proxy-t_proxy.Tpo $(DEPDIR)/t_proxy-t_proxy.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='t_proxy.c' object='t_proxy-t_proxy.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(t_proxy_CFLAGS) $(CFLAGS) -c -o t_proxy-t_proxy.obj `if test -f 't_proxy.c'; then $(CYGPATH_W) 't_proxy.c'; else $(CYGPATH_W) '$(srcdir)/t_proxy.c'; fi`
 
 t_timer-t_timer.o: t_timer.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(t_timer_CFLAGS) $(CFLAGS) -MT t_timer-t_timer.o -MD -MP -MF $(DEPDIR)/t_timer-t_timer.Tpo -c -o t_timer-t_timer.o `test -f 't_timer.c' || echo '$(srcdir)/'`t_timer.c

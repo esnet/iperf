@@ -20,5 +20,6 @@ enum iperf_proxy_type {
 
 int iperf_parse_proxy_url(const char *url, struct iperf_settings *settings);
 void iperf_clear_proxy_settings(struct iperf_settings *settings);
+int iperf_proxy_handshake(int fd, const struct iperf_settings *settings, const char *target_host, int target_port);
 
 #endif /* __IPERF_PROXY_H */

@@ -27,12 +27,14 @@
 
 
 #include <assert.h>
+#include <getopt.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
+#include "iperf_proxy.h"
 
 #include "version.h"
 
@@ -55,6 +57,42 @@ int test_iperf_set_mss(struct iperf_test *test)
     mss = iperf_get_test_mss(test);
     assert(mss == 535);
     return 0;
+}
+
+static struct iperf_test *
+new_default_test(void)
+{
+    struct iperf_test *test;
+
+    test = iperf_new_test();
+    assert(test != NULL);
+    iperf_defaults(test);
+    optind = 1;
+    return test;
+}
+
+static void
+test_proxy_argument_parsing(void)
+{
+    struct iperf_test *test;
+    char *ok_argv[] = { "iperf3", "-c", "server.example", "--proxy", "socks5://127.0.0.1:1080", NULL };
+    char *udp_argv[] = { "iperf3", "-c", "server.example", "-u", "--proxy", "http://127.0.0.1:8080", NULL };
+    char *server_argv[] = { "iperf3", "-s", "--proxy", "http://127.0.0.1:8080", NULL };
+
+    test = new_default_test();
+    assert(iperf_parse_arguments(test, 5, ok_argv) == 0);
+    assert(test->settings->proxy_type == IPERF_PROXY_SOCKS5);
+    assert(strcmp(test->settings->proxy_host, "127.0.0.1") == 0);
+    assert(test->settings->proxy_port == 1080);
+    iperf_free_test(test);
+
+    test = new_default_test();
+    assert(iperf_parse_arguments(test, 6, udp_argv) == -1);
+    iperf_free_test(test);
+
+    test = new_default_test();
+    assert(iperf_parse_arguments(test, 4, server_argv) == -1);
+    iperf_free_test(test);
 }
 
 int
@@ -81,6 +119,10 @@ main(int argc, char **argv)
     ret = test_iperf_set_test_bind_port(test);
 
     ret += test_iperf_set_mss(test);
+
+    test_proxy_argument_parsing();
+
+    iperf_free_test(test);
 
     if (ret < 0)
     {

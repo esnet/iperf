@@ -1184,6 +1184,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
 	{"pacing-timer", required_argument, NULL, OPT_PACING_TIMER},
 	{"connect-timeout", required_argument, NULL, OPT_CONNECT_TIMEOUT},
+	{"proxy", required_argument, NULL, OPT_PROXY},
         {"idle-timeout", required_argument, NULL, OPT_IDLE_TIMEOUT},
         {"rcv-timeout", required_argument, NULL, OPT_RCV_TIMEOUT},
         {"snd-timeout", required_argument, NULL, OPT_SND_TIMEOUT},
@@ -1800,6 +1801,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		}
 		client_flag = 1;
 		break;
+            case OPT_PROXY:
+                if (iperf_parse_proxy_url(optarg, test->settings) < 0) {
+                    i_errno = IEPROXYURL;
+                    return -1;
+                }
+                client_flag = 1;
+                break;
 #if defined(HAVE_IPPROTO_MPTCP)
 	    case 'm':
 		set_protocol(test, Ptcp);
@@ -1834,6 +1842,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     }
     if (test->role == 's' && gsro_flag) {
         i_errno = IECLIENTONLY;
+        return -1;
+    }
+    if (test->settings->proxy_type != IPERF_PROXY_NONE &&
+        (test->role != 'c' || test->protocol->id != Ptcp)) {
+        i_errno = IEPROXYURL;
         return -1;
     }
 
@@ -3600,6 +3613,8 @@ iperf_free_test(struct iperf_test *test)
     test->settings->client_rsa_pubkey = NULL;
 #endif /* HAVE_SSL */
 
+    iperf_clear_proxy_settings(test->settings);
+
     if (test->settings)
     free(test->settings);
     if (test->title)
@@ -3799,6 +3814,8 @@ iperf_reset_test(struct iperf_test *test)
         test->settings->client_rsa_pubkey = NULL;
     }
 #endif /* HAVE_SSL */
+
+    iperf_clear_proxy_settings(test->settings);
 
     memset(test->cookie, 0, COOKIE_SIZE);
     test->multisend = 10;	/* arbitrary */

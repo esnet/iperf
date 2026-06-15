@@ -399,6 +399,9 @@ iperf_strerror(int int_errno)
         case IEUNITVAL:
             snprintf(errstr, len, "invalid unit value or suffix: '%s'", errarg);
             break;
+        case IEPROXYURL:
+            snprintf(errstr, len, "proxy must be socks5://host:port or http://host:port and is supported only for TCP client tests");
+            break;
         case IERVRSONLYRCVTIMEOUT:
             snprintf(errstr, len, "client receive timeout is valid only in receiving mode");
             perr = 1;
@@ -561,6 +564,10 @@ iperf_strerror(int int_errno)
             break;
         case IESERVERTESTDURATIONEXPIRED:
             snprintf(errstr, len, "server test duration expired");
+            perr = 1;
+            break;
+        case IEPROXYHANDSHAKE:
+            snprintf(errstr, len, "proxy negotiation failed");
             perr = 1;
             break;
 	    default:

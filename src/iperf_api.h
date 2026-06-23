@@ -107,6 +107,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define OPT_JSON_STREAM_FULL_OUTPUT 33
 #define OPT_SERVER_MAX_DURATION 34
 #define OPT_GSRO 35
+#define OPT_GAP_TIME 36
 
 /* states */
 #define TEST_START 1
@@ -175,6 +176,8 @@ int	iperf_get_dont_fragment( struct iperf_test* ipt );
 char*   iperf_get_test_congestion_control(struct iperf_test* ipt);
 int iperf_get_test_mss(struct iperf_test* ipt);
 int     iperf_get_mapped_v4(struct iperf_test* ipt);
+uint64_t iperf_get_test_gap_time( struct iperf_test* ipt );
+uint64_t iperf_get_test_gap_time_max( struct iperf_test* ipt );
 
 /* Setter routines for some fields inside iperf_test. */
 void	iperf_set_verbose( struct iperf_test* ipt, int verbose );
@@ -227,6 +230,8 @@ void    iperf_set_on_test_start_callback(struct iperf_test* ipt, void (*callback
 void    iperf_set_on_test_connect_callback(struct iperf_test* ipt, void (*callback)(struct iperf_test *));
 void    iperf_set_on_test_finish_callback(struct iperf_test* ipt, void (*callback)(struct iperf_test *));
 
+void    iperf_set_test_gap_time( struct iperf_test* ipt, uint64_t sleep_timer );
+void    iperf_set_test_gap_time_max( struct iperf_test* ipt, uint64_t sleep_timer_max );
 #if defined(HAVE_SSL)
 void    iperf_set_test_client_username(struct iperf_test *ipt, const char *client_username);
 void    iperf_set_test_client_password(struct iperf_test *ipt, const char *client_password);
@@ -445,6 +450,8 @@ enum {
     IECNTLKA = 36,          // Control connection Keepalive period should be larger than the full retry period (interval * count)
     IEMAXSERVERTESTDURATIONEXCEEDED = 37, // Client's duration exceeds server's maximum duration
     IEUNITVAL = 38,         // Invalid unit value or suffix
+    IEGAP = 39,             // Illegal gap time value
+    IEGAPCONDITIONS = 40,   // --gap is mutual exclusive with --bitrate and --pacing-timer
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

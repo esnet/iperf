@@ -45,9 +45,13 @@ extern const char tcp_window_size[] ;
 extern const char udp_buffer_size[] ;
 extern const char window_default[] ;
 extern const char wait_server_threads[] ;
+extern const char test_start_begin[];
 extern const char test_start_time[];
 extern const char test_start_bytes[];
 extern const char test_start_blocks[];
+extern const char test_start_gap[];
+extern const char test_start_rate[];
+extern const char test_start_end[];
 
 extern const char report_time[] ;
 extern const char report_connecting[] ;

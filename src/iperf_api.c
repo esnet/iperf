@@ -444,6 +444,18 @@ iperf_get_mapped_v4(struct iperf_test* ipt)
     return ipt->mapped_v4;
 }
 
+uint64_t
+iperf_get_test_gap_time(struct iperf_test *ipt)
+{
+    return ipt->settings->gap_time;
+}
+
+uint64_t
+iperf_get_test_gap_time_max(struct iperf_test *ipt)
+{
+    return ipt->settings->gap_time_max;
+}
+
 /************** Setter routines for some fields inside iperf_test *************/
 
 void
@@ -876,6 +888,18 @@ iperf_set_test_mss(struct iperf_test *ipt, int mss)
     ipt->settings->mss = mss;
 }
 
+void
+iperf_set_test_gap_time(struct iperf_test *ipt, uint64_t gap_time)
+{
+    ipt->settings->gap_time = gap_time;
+}
+
+void
+iperf_set_test_gap_time_max(struct iperf_test *ipt, uint64_t gap_time)
+{
+    ipt->settings->gap_time_max = gap_time;
+}
+
 /********************** Get/set test protocol structure ***********************/
 
 struct protocol *
@@ -924,15 +948,23 @@ void
 iperf_on_test_start(struct iperf_test *test)
 {
     if (test->json_output) {
-	cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d  omit: %d  duration: %d  bytes: %d  blocks: %d  reverse: %d  tos: %d  target_bitrate: %d bidir: %d fqrate: %d interval: %f  gso: %d  gro: %d", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->omit, (int64_t) test->duration, (int64_t) test->settings->bytes, (int64_t) test->settings->blocks, test->reverse?(int64_t)1:(int64_t)0, (int64_t) test->settings->tos, (int64_t) test->settings->rate, (int64_t) test->bidirectional, (uint64_t) test->settings->fqrate, test->stats_interval, (uint64_t) test->settings->gso, (uint64_t) test->settings->gro));
+	cJSON_AddItemToObject(test->json_start, "test_start", iperf_json_printf("protocol: %s  num_streams: %d  blksize: %d  omit: %d  duration: %d  bytes: %d  blocks: %d  reverse: %d  tos: %d  target_bitrate: %d bidir: %d fqrate: %d interval: %f  gso: %d  gro: %d  gap_time: %llu  gap_time_max: %llu", test->protocol->name, (int64_t) test->num_streams, (int64_t) test->settings->blksize, (int64_t) test->omit, (int64_t) test->duration, (int64_t) test->settings->bytes, (int64_t) test->settings->blocks, test->reverse?(int64_t)1:(int64_t)0, (int64_t) test->settings->tos, (int64_t) test->settings->rate, (int64_t) test->bidirectional, (uint64_t) test->settings->fqrate, test->stats_interval, (uint64_t) test->settings->gso, (uint64_t) test->settings->gro, (int64_t) test->settings->gap_time, (int64_t) test->settings->gap_time_max));
     } else {
 	if (test->verbose) {
+            iperf_printf(test, test_start_begin, test->protocol->name, test->num_streams, test->settings->blksize, test->omit);
 	    if (test->settings->bytes)
-		iperf_printf(test, test_start_bytes, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->settings->bytes, test->settings->tos);
+		iperf_printf(test, test_start_bytes, test->settings->bytes);
 	    else if (test->settings->blocks)
-		iperf_printf(test, test_start_blocks, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->settings->blocks, test->settings->tos);
+		iperf_printf(test, test_start_blocks, test->settings->blocks);
 	    else
-		iperf_printf(test, test_start_time, test->protocol->name, test->num_streams, test->settings->blksize, test->omit, test->duration, test->settings->tos);
+		iperf_printf(test, test_start_time, test->duration);
+
+            if (test->settings->gap_time_max > 0)
+                iperf_printf(test, test_start_gap, test->settings->gap_time, test->settings->gap_time_max);
+            else if (test->settings->rate > 0)
+                iperf_printf(test, test_start_rate, test->settings->rate);
+
+            iperf_printf(test, test_start_end, test->settings->tos);
 	}
     }
     if (test->json_stream) {
@@ -1195,6 +1227,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #endif
         {"gsro", no_argument, NULL, OPT_GSRO},
         {"debug", optional_argument, NULL, 'd'},
+#if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
+        {"gap", required_argument, NULL, OPT_GAP_TIME},
+#endif /* HAVE_CLOCK_NANOSLEEP || HAVE_NANOSLEEP */
+        {"debug", no_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
     };
@@ -1214,6 +1250,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     struct xbind_entry *xbe;
     double farg;
     int rcv_timeout_in = 0;
+    int pacing_timer_flag = 0;
 
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = rcv_timeout_flag = snd_timeout_flag =0;
@@ -1588,6 +1625,32 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             case 'F':
                 test->diskfile_name = optarg;
                 break;
+#if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
+            case OPT_GAP_TIME:  // Gap-time option is in [ms] but saving in [us]
+                slash = strchr(optarg, '/');
+                if (slash) {
+                    *slash = '\0';
+                    ++slash;
+                    test->settings->gap_time_max = unit_time_atoi(slash);
+                    if (i_errno != 0) {
+                        return -1;
+		    }
+                }
+                test->settings->gap_time = unit_time_atoi(optarg);
+                if (i_errno != 0) {
+                    return -1;
+		}
+                if (test->settings->gap_time_max == 0)
+                    test->settings->gap_time_max = test->settings->gap_time * 5;
+                if (test->settings->gap_time < 0 || test->settings->gap_time_max < 0 ||
+                    test->settings->gap_time > test->settings->gap_time_max)
+                {
+                    i_errno = IEGAP;
+                    return -1;
+                }
+                client_flag = 1;
+                break;
+#endif /* HAVE_CLOCK_NANOSLEEP || HAVE_NANOSLEEP */
             case OPT_IDLE_TIMEOUT:
                 test->settings->idle_timeout = atoi(optarg);
                 if (test->settings->idle_timeout < 1 || test->settings->idle_timeout > MAX_TIME) {
@@ -1966,8 +2029,19 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 
     test->settings->blksize = blksize;
 
-    if (!rate_flag)
+    /* Disallow setting gap and either/bot bitrate or pace, as gap practically sets both */
+    if (test->settings->gap_time != 0 && (rate_flag || pacing_timer_flag != 0)) {
+        i_errno = IEGAPCONDITIONS;
+        return -1;
+    }
+
+    /* Set UDP default rate if rate was not set */
+    if (!rate_flag && test->settings->gap_time == 0)
 	test->settings->rate = test->protocol->id == Pudp ? UDP_RATE : 0;
+
+    /* If gap was set and bust was not set - set burst to 1 */
+    if (test->settings->burst == 0 && test->settings->gap_time != 0)
+        test->settings->burst = 1;
 
     /* if no bytes or blocks specified, nor a duration_flag, and we have -F,
     ** get the file-size as the bytes count to be transferred
@@ -2081,6 +2155,7 @@ iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP)
     uint64_t bits_per_second;
     int64_t missing_rate;
     uint64_t bits_sent;
+    uint64_t gap_time = sp->test->settings->gap_time;
 
 #if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
     struct timespec nanosleep_time;
@@ -2091,27 +2166,40 @@ iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP)
     int64_t ns;
 #endif /* HAVE_CLOCK_NANOSLEEP */
 
-    if (sp->test->done || sp->test->settings->rate == 0)
+    if (sp->test->done || (sp->test->settings->rate == 0 && gap_time == 0))
         return;
-    iperf_time_diff(&sp->result->start_time_fixed, nowP, &temp_time);
-    seconds = iperf_time_in_secs(&temp_time);
-    bits_sent = sp->result->bytes_sent * 8;
-    bits_per_second = bits_sent / seconds;
-    missing_rate = sp->test->settings->rate - bits_per_second;
 
-    if (missing_rate > 0) {
-        sp->green_light = 1;
-    } else {
+    // Determine there is already a green light for sending the next message
+    if (gap_time == 0) { // Check per bit rate
+        iperf_time_diff(&sp->result->start_time_fixed, nowP, &temp_time);
+        seconds = iperf_time_in_secs(&temp_time);
+        bits_sent = sp->result->bytes_sent * 8;
+        bits_per_second = bits_sent / seconds;
+        missing_rate = sp->test->settings->rate - bits_per_second;
+
+        if (missing_rate > 0) {
+            sp->green_light = 1;
+        } else {
+            sp->green_light = 0;
+        }
+    } else { // Check per gap time - need to wait the gap time
         sp->green_light = 0;
     }
 
 #if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
     // If estimated time to next send is large enough, sleep instead of just CPU looping until green light is set
-    if (missing_rate < 0) {
-        delta_bits = bits_sent - (seconds * sp->test->settings->rate);
-        // Calculate time until next data send is required
-        time_to_green_light = (SEC_TO_NS * delta_bits / sp->test->settings->rate);
-        // Whether should wait before next send
+    if (sp->green_light == 0) {
+        if (gap_time == 0) { // Wait per bits rate
+            delta_bits = bits_sent - (seconds * sp->test->settings->rate);
+            // Calculate time until next data send is required
+            time_to_green_light = (SEC_TO_NS * delta_bits / sp->test->settings->rate);
+            // Whether should wait before next send
+        } else { // Wait per gap time
+            time_to_green_light = uS_TO_NS * (gap_time + round(((float)rand()/RAND_MAX)*(sp->test->settings->gap_time_max - gap_time)));
+            if (sp->test->debug_level >= DEBUG_LEVEL_DEBUG) {
+                printf("Gap time for sending next message is %lu ns\n", time_to_green_light);
+            }
+        }
         if (time_to_green_light >= 0) {
 #if defined(HAVE_CLOCK_NANOSLEEP)
             if (clock_gettime(CLOCK_MONOTONIC, &nanosleep_time) == 0) {
@@ -2209,7 +2297,7 @@ iperf_send_mt(struct iperf_stream *sp)
 
     /* Should bitrate throttle be checked for every send */
 #if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
-    if (test->settings->rate != 0) {
+    if (test->settings->rate != 0 || test->settings->gap_time != 0) {
         throttle_check = 1;
         if (test->settings->burst == 0)
             throttle_check_per_message = 1;
@@ -2285,6 +2373,8 @@ iperf_init_test(struct iperf_test *test)
 {
     struct iperf_time now;
     struct iperf_stream *sp;
+
+    srand(time(0)); /* reset random seed using current time for each new test */
 
     if (test->protocol->init) {
         if (test->protocol->init(test) < 0)
@@ -2500,6 +2590,10 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddNumberToObject(j, "repeating_payload", test->repeating_payload);
 	if (test->zerocopy)
 	    cJSON_AddNumberToObject(j, "zerocopy", test->zerocopy);
+        if (test->settings->gap_time)
+	    cJSON_AddNumberToObject(j, "gap_time", test->settings->gap_time);
+	if (test->settings->gap_time_max)
+	    cJSON_AddNumberToObject(j, "gap_time_max", test->settings->gap_time_max);          
 #if defined(HAVE_DONT_FRAGMENT)
 	if (test->settings->dont_fragment)
 	    cJSON_AddNumberToObject(j, "dont_fragment", test->settings->dont_fragment);
@@ -2782,6 +2876,18 @@ get_parameters(struct iperf_test *test)
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "zerocopy", cJSON_Number)) != NULL){
             test->zerocopy = (j_p->valueint) ? 1: 0;
         }
+#if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
+        if ((j_p = iperf_cJSON_GetObjectItemType(j, "gap_time", cJSON_Number)) != NULL)
+	    test->settings->gap_time = j_p->valueint;
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "gap_time_max", cJSON_Number)) != NULL)
+	    test->settings->gap_time_max = j_p->valueint;
+        if (test->settings->gap_time < 0 || test->settings->gap_time_max < 0 ||
+            test->settings->gap_time > test->settings->gap_time_max)
+        {
+                i_errno = IEGAP;
+                r = -1;
+        }
+#endif /* HAVE_CLOCK_NANOSLEEP || HAVE_NANOSLEEP)*/
 #if defined(HAVE_DONT_FRAGMENT)
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "dont_fragment", cJSON_Number)) != NULL){
             test->settings->dont_fragment = (j_p->valueint) ? 1: 0;
@@ -3780,6 +3886,8 @@ iperf_reset_test(struct iperf_test *test)
     test->settings->dont_fragment = 0;
     test->zerocopy = 0;
     test->settings->skip_rx_copy = 0;
+    test->settings->gap_time = 0;
+    test->settings->gap_time_max = 0;
 
 #if defined(HAVE_SSL)
     if (test->settings->authtoken) {

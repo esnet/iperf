@@ -31,4 +31,5 @@ enum {
 double unit_atof( const char *s );
 double unit_atof_rate( const char *s );
 iperf_size_t unit_atoi( const char *s );
+uint64_t unit_time_atoi( const char *s );
 void unit_snprintf( char *s, int inLen, double inNum, char inFormat );

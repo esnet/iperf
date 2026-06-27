@@ -563,10 +563,16 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "server test duration expired");
             perr = 1;
             break;
-	    default:
-            snprintf(errstr, len, "int_errno=%d", int_errno);
-            perr = 1;
-            break;
+        case IEGAP:
+	    snprintf(errstr, len, "illegal gap time value");
+	    break;
+        case IEGAPCONDITIONS:
+	    snprintf(errstr, len, "--gap is mutual exclusive with --bitrate and --pacing-timer");
+	    break;
+	default:
+	    snprintf(errstr, len, "int_errno=%d", int_errno);
+	    perr = 1;
+	    break;
     }
 
     /* Append the result of strerror() or gai_strerror() if appropriate */

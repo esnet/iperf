@@ -174,6 +174,10 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "                            (optional slash and packet count for burst mode)\n"
 			   "  --pacing-timer #[KMG]     set the Server timing for pacing, in microseconds (default %d)\n"
                            "                            (deprecated - for servers using older versions backward compatibility)\n"
+#if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
+                           "  --gap #[SMU][/#[SMU]]     range for random time to delay between (burst of) packets - min/max;\n"
+			   "                            max is optional - default is 5 times the min (units default is M (ms)),\n"
+#endif /* HAVE_CLOCK_NANOSLEEP || HAVE_NANOSLEEP */
 #if defined(HAVE_SO_MAX_PACING_RATE)
                            "  --fq-rate #[KMG]          enable fair-queuing based socket pacing in\n"
 			   "                            bits/sec (Linux only)\n"
@@ -236,6 +240,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
 
 			   "\n"
                            "[KMG] indicates options that support a K/M/G suffix for kilo-, mega-, or giga-\n"
+                           "[SMU] indicates options that support a S/M/U time suffix for Sec, Mili, or Micro\n"
 			   "\n"
 #ifdef PACKAGE_URL
                            "iperf3 homepage at: " PACKAGE_URL "\n"
@@ -304,15 +309,26 @@ const char window_default[] =
 const char wait_server_threads[] =
 "Waiting for server threads to complete. Interrupt again to force quit.\n";
 
+const char test_start_begin[] =
+"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds";
+
 const char test_start_time[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %d second test, tos %d\n";
+", %d second test";
 
 const char test_start_bytes[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %"PRIuFAST64" bytes to send, tos %d\n";
+", %llu bytes to send";
 
 const char test_start_blocks[] =
-"Starting Test: protocol: %s, %d streams, %d byte blocks, omitting %d seconds, %"PRIuFAST64" blocks to send, tos %d\n";
+", %d blocks to send";
 
+const char test_start_gap[] =
+", gap between packets %d to %d us";
+
+const char test_start_rate[] =
+", %d bps";
+
+const char test_start_end[] =
+", tos %d\n";
 
 /* -------------------------------------------------------------------
  * reports

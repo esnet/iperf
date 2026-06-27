@@ -365,8 +365,14 @@ iperf_tcp_listen(struct iperf_test *test)
     }
     if (test->settings->socket_bufsize && test->settings->socket_bufsize > rcvbuf_actual) {
 	i_errno = IESETBUF2;
-    close(s);
+        close(s);
 	return -1;
+    }
+
+    /* Set common socket options */
+    if (iperf_common_sockopts(test, s) < 0) {
+        close(s);
+        return -1;
     }
 
     if (test->json_output) {
@@ -587,7 +593,13 @@ iperf_tcp_connect(struct iperf_test *test)
     }
 
     /* Set common socket options */
-    iperf_common_sockopts(test, s);
+    if (iperf_common_sockopts(test, s) < 0) {
+        saved_errno = errno;
+	close(s);
+	freeaddrinfo(server_res);
+	errno = saved_errno;
+        return -1;
+    }
 
     if (timeout_connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen,
                         DEFAULT_NO_MSG_RCVD_TIMEOUT) < 0 && errno != EINPROGRESS) {

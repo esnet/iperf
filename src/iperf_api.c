@@ -1519,7 +1519,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	    case OPT_DSCP:
                 test->settings->tos = parse_qos(optarg);
 		if(test->settings->tos < 0) {
-			i_errno = IEBADTOS;
+			i_errno = IEBADDSCP;
 			return -1;
 		}
 		client_flag = 1;

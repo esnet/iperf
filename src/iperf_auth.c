@@ -284,7 +284,10 @@ int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned ch
     encryptedtext_len = output_buffer_len;
 
     BIO *bioBuff   = BIO_new_mem_buf((void*)plaintext, (int)plaintext_len);
-    rsa_buffer_len = BIO_read(bioBuff, rsa_buffer, plaintext_len);
+    /* rsa_buffer only holds output_buffer_len bytes, so never read more than
+       that even when the input is longer (the truncation warned about above). */
+    int read_len = plaintext_len > (size_t)output_buffer_len ? output_buffer_len : (int)plaintext_len;
+    rsa_buffer_len = BIO_read(bioBuff, rsa_buffer, read_len);
 
     int padding = RSA_PKCS1_OAEP_PADDING;
     if (use_pkcs1_padding){
@@ -346,7 +349,10 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
     *plaintext = (unsigned char*)OPENSSL_malloc(output_buffer_len + 1);
 
     BIO *bioBuff   = BIO_new_mem_buf((void*)encryptedtext, encryptedtext_len);
-    rsa_buffer_len = BIO_read(bioBuff, rsa_buffer, encryptedtext_len);
+    /* rsa_buffer only holds output_buffer_len bytes, so never read more than
+       that even when the input is longer (the truncation warned about above). */
+    int read_len = encryptedtext_len > output_buffer_len ? output_buffer_len : encryptedtext_len;
+    rsa_buffer_len = BIO_read(bioBuff, rsa_buffer, read_len);
 
     int padding = RSA_PKCS1_OAEP_PADDING;
     if (use_pkcs1_padding){

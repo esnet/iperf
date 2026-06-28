@@ -1170,9 +1170,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_DONT_FRAGMENT)
 	{"dont-fragment", no_argument, NULL, OPT_DONT_FRAGMENT},
 #endif /* HAVE_DONT_FRAGMENT */
-#if defined(HAVE_MSG_TRUNC)
 	{"skip-rx-copy", no_argument, NULL, OPT_SKIP_RX_COPY},
-#endif /* HAVE_MSG_TRUNC */
 #if defined(HAVE_SSL)
     {"username", required_argument, NULL, OPT_CLIENT_USERNAME},
     {"rsa-public-key-path", required_argument, NULL, OPT_CLIENT_RSA_PUBLIC_KEY},
@@ -1557,10 +1555,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		TAILQ_INSERT_TAIL(&test->xbind_addrs, xbe, link);
                 break;
             case 'Z':
-                if (!has_sendfile()) {
-                    i_errno = IENOSENDFILE;
-                    return -1;
-                }
                 test->zerocopy = 1;
 		client_flag = 1;
                 break;
@@ -1776,12 +1770,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             server_flag = 1;
 	    break;
 #endif /* HAVE_SSL */
-#if defined(HAVE_MSG_TRUNC)
-            case OPT_SKIP_RX_COPY:
+            case OPT_SKIP_RX_COPY: /* Allow the option even when `HAVE_MSG_TRUNC` is not defined, as server may support it */
                 test->settings->skip_rx_copy = 1;
                 client_flag = 1;
                 break;
-#endif /* HAVE_MSG_TRUNC */
 	    case OPT_PACING_TIMER:
 		test->settings->pacing_timer = unit_atoi(optarg);
 		if (i_errno != 0) {
@@ -1890,6 +1882,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     } else if (test->role == 'c' && rcv_timeout_flag && test->mode == SENDER){
         i_errno = IERVRSONLYRCVTIMEOUT;
         return -1;
+     } else if (test->role == 'c' && test->zerocopy == 1 && test->mode != RECEIVER && !has_sendfile()) {
+            i_errno = IENOSENDFILE; // Zerocopy required for the Client but is not supported
+            return -1;
+#if !defined(HAVE_MSG_TRUNC)
+     } else if (test->role == 'c' && test->settings->skip_rx_copy == 1 && test->mode != RECEIVER) {
+            i_errno = IERVRSONLYSKIPRXCOPY;
+            return -1;
+#endif /* !HAVE_MSG_TRUNC */
     } else if (test->role == 's' && (server_rsa_private_key || test->server_authorized_users) &&
         !(server_rsa_private_key && test->server_authorized_users)) {
          i_errno = IESETSERVERAUTH;
@@ -2791,7 +2791,7 @@ get_parameters(struct iperf_test *test)
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "authtoken", cJSON_String)) != NULL)
         test->settings->authtoken = strdup(j_p->valuestring);
 #endif //HAVE_SSL
-	if ((j_p = cJSON_GetObjectItem(j, "skip_rx_copy")) != NULL){
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "skip_rx_copy", cJSON_Number)) != NULL){
             test->settings->skip_rx_copy = (j_p->valueint) ? 1: 0;
         }
 	if (test->mode && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
@@ -2842,7 +2842,22 @@ get_parameters(struct iperf_test *test)
             i_errno = IETOTALRATE;
             r = -1;
         }
-    }
+
+        /* Ensure a sending server supports zerocpy */
+        if (test->zerocopy == 1 && test->mode != RECEIVER && !has_sendfile()) {
+            i_errno = IENOSENDFILE; // Zerocopy required for the Server but is not supported
+            return -1;
+        }
+
+        /* Ensure a receiving server supports Skip Rx Copy in reverse/bidir modes */
+#if !defined(HAVE_MSG_TRUNC)
+        if (test->settings->skip_rx_copy == 1 && test->mode != RECEIVER) {
+            i_errno = IERVRSONLYSKIPRXCOPY;
+            return -1;
+        }
+#endif /* !HAVE_MSG_TRUNC */
+
+    } /* else */
 
     return r;
 }

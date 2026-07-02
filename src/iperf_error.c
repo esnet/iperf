@@ -163,12 +163,27 @@ const char *errarg = NULL;
 char *
 iperf_strerror(int int_errno)
 {
-    static char errstr[256];
-    int len, perr, herr;
+    static char errstr_buf[256];
+    char *errstr;
+    int len, perr, herr, i;
+
     perr = herr = 0;
 
-    len = sizeof(errstr);
+    len = sizeof(errstr_buf);
+    errstr = errstr_buf;
     memset(errstr, 0, len);
+
+    if (int_errno < 0) { // Handle Server error (received as the negative value of the internal error)
+        int_errno = -int_errno;
+        if (errno > 0) { // If server also sent its errno - print it
+            perr = 1;
+        }
+        i = snprintf(errstr, len, "%s", "SERVER ERROR - ");
+        if (i > 0) {
+            len -= i;
+            errstr += i;
+        }
+    }
 
     switch (int_errno) {
         case IENONE:
@@ -579,5 +594,5 @@ iperf_strerror(int int_errno)
 	gerror = 0;
     }
 
-    return errstr;
+    return errstr_buf;
 }

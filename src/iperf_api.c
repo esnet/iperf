@@ -1184,6 +1184,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 	{"fq-rate", required_argument, NULL, OPT_FQ_RATE},
 	{"pacing-timer", required_argument, NULL, OPT_PACING_TIMER},
 	{"connect-timeout", required_argument, NULL, OPT_CONNECT_TIMEOUT},
+        {"ctrl-timeout", required_argument, NULL, OPT_CTRL_TIMEOUT},
         {"idle-timeout", required_argument, NULL, OPT_IDLE_TIMEOUT},
         {"rcv-timeout", required_argument, NULL, OPT_RCV_TIMEOUT},
         {"snd-timeout", required_argument, NULL, OPT_SND_TIMEOUT},
@@ -1800,6 +1801,15 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		}
 		client_flag = 1;
 		break;
+	    case OPT_CTRL_TIMEOUT: {
+		int ctrl_timeout_in = atoi(optarg);
+		if (ctrl_timeout_in < 1 || ctrl_timeout_in > MAX_TIME) {
+		    i_errno = IECTRLTIMEOUT;
+		    return -1;
+		}
+		set_ctrl_read_timeout(ctrl_timeout_in);
+		break;
+	    }
 #if defined(HAVE_IPPROTO_MPTCP)
 	    case 'm':
 		set_protocol(test, Ptcp);
@@ -3192,7 +3202,13 @@ JSON_read(int fd, int max_size)
      * Read a four-byte integer, which is the length of the JSON to follow.
      * Then read the JSON into a buffer and parse it.  Return a parsed JSON
      * structure, NULL if there was an error.
+     *
+     * Clear errno first: Nrecv() can fail by timing out or seeing a clean
+     * EOF, neither of which sets errno.  Without this reset a stale errno
+     * from an earlier, unrelated syscall would be reported by callers that
+     * append strerror(errno) (e.g. IERECVRESULTS -> "Bad file descriptor").
      */
+    errno = 0;
     rc = Nread(fd, (char*) &nsize, sizeof(nsize), Ptcp);
     if (rc == sizeof(nsize)) {
         hsize = ntohl(nsize);
@@ -3235,6 +3251,14 @@ JSON_read(int fd, int max_size)
         snprintf(msg_buf, sizeof(msg_buf), "Failed to read JSON data size - read returned %d; errno=%d", rc, errno);
         warning(msg_buf);
     }
+
+    /*
+     * If the read failed but no syscall set errno (Nrecv() read timeout, or
+     * the peer closed the control connection without sending data), report a
+     * meaningful cause rather than whatever stale value errno happens to hold.
+     */
+    if (json == NULL && errno == 0)
+        errno = ETIMEDOUT;
     return json;
 }
 

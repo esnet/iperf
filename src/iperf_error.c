@@ -563,6 +563,9 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "server test duration expired");
             perr = 1;
             break;
+        case IECTRLTIMEOUT:
+            snprintf(errstr, len, "control connection read timeout value is incorrect or not in range");
+            break;
 	    default:
             snprintf(errstr, len, "int_errno=%d", int_errno);
             perr = 1;

@@ -190,7 +190,7 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "test duration valid values are 0 to %d seconds", MAX_TIME);
             break;
         case IENUMSTREAMS:
-            snprintf(errstr, len, "number of parallel streams too large (maximum = %d)", MAX_STREAMS);
+            snprintf(errstr, len, "invalid number of parallel streams (min = 1, max = %d)", MAX_STREAMS);
             break;
         case IEBLOCKSIZE:
             snprintf(errstr, len, "block size too large (maximum = %d bytes)", MAX_BLOCKSIZE);
@@ -566,7 +566,10 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "server test duration expired");
             perr = 1;
             break;
-	    default:
+        case IERVRSONLYSKIPRXCOPY:
+            snprintf(errstr, len, "this OS does not support --skip-rx-copy");
+            break;
+	default:
             snprintf(errstr, len, "int_errno=%d", int_errno);
             perr = 1;
             break;

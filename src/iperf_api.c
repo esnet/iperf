@@ -1170,9 +1170,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_DONT_FRAGMENT)
 	{"dont-fragment", no_argument, NULL, OPT_DONT_FRAGMENT},
 #endif /* HAVE_DONT_FRAGMENT */
-#if defined(HAVE_MSG_TRUNC)
 	{"skip-rx-copy", no_argument, NULL, OPT_SKIP_RX_COPY},
-#endif /* HAVE_MSG_TRUNC */
 #if defined(HAVE_SSL)
     {"username", required_argument, NULL, OPT_CLIENT_USERNAME},
     {"rsa-public-key-path", required_argument, NULL, OPT_CLIENT_RSA_PUBLIC_KEY},
@@ -1418,7 +1416,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 break;
             case 'P':
                 test->num_streams = atoi(optarg);
-                if (test->num_streams < 0 || test->num_streams > MAX_STREAMS) {
+                if (test->num_streams < 1 || test->num_streams > MAX_STREAMS) {
                     i_errno = IENUMSTREAMS;
                     return -1;
                 }
@@ -1557,10 +1555,6 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		TAILQ_INSERT_TAIL(&test->xbind_addrs, xbe, link);
                 break;
             case 'Z':
-                if (!has_sendfile()) {
-                    i_errno = IENOSENDFILE;
-                    return -1;
-                }
                 test->zerocopy = 1;
 		client_flag = 1;
                 break;
@@ -1776,12 +1770,10 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
             server_flag = 1;
 	    break;
 #endif /* HAVE_SSL */
-#if defined(HAVE_MSG_TRUNC)
-            case OPT_SKIP_RX_COPY:
+            case OPT_SKIP_RX_COPY: /* Allow the option even when `HAVE_MSG_TRUNC` is not defined, as server may support it */
                 test->settings->skip_rx_copy = 1;
                 client_flag = 1;
                 break;
-#endif /* HAVE_MSG_TRUNC */
 	    case OPT_PACING_TIMER:
 		test->settings->pacing_timer = unit_atoi(optarg);
 		if (i_errno != 0) {
@@ -1890,6 +1882,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     } else if (test->role == 'c' && rcv_timeout_flag && test->mode == SENDER){
         i_errno = IERVRSONLYRCVTIMEOUT;
         return -1;
+     } else if (test->role == 'c' && test->zerocopy == 1 && test->mode != RECEIVER && !has_sendfile()) {
+            i_errno = IENOSENDFILE; // Zerocopy required for the Client but is not supported
+            return -1;
+#if !defined(HAVE_MSG_TRUNC)
+     } else if (test->role == 'c' && test->settings->skip_rx_copy == 1 && test->mode != RECEIVER) {
+            i_errno = IERVRSONLYSKIPRXCOPY;
+            return -1;
+#endif /* !HAVE_MSG_TRUNC */
     } else if (test->role == 's' && (server_rsa_private_key || test->server_authorized_users) &&
         !(server_rsa_private_key && test->server_authorized_users)) {
          i_errno = IESETSERVERAUTH;
@@ -2627,7 +2627,7 @@ get_parameters(struct iperf_test *test)
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "nodelay", cJSON_True)) != NULL)
 	    test->no_delay = 1;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "parallel", cJSON_Number)) != NULL){
-            if (j_p->valueint < 0  || j_p->valueint > MAX_STREAMS) {
+            if (j_p->valueint < 1  || j_p->valueint > MAX_STREAMS) {
                 i_errno = IENUMSTREAMS;
                 r = -1;
             } else {
@@ -2655,7 +2655,7 @@ get_parameters(struct iperf_test *test)
             if (j_p->valueint < 0){
                 i_errno = IEBLOCKSIZE;
                 r = -1;
-            }else {
+            } else {
 	        test->settings->blksize = j_p->valueint;
             }
         }
@@ -2702,7 +2702,7 @@ get_parameters(struct iperf_test *test)
             if (j_p->valueint < 0 || j_p->valueint > 1){
                 i_errno = IERECVPARAMS;
                 r = -1;
-            }else {
+            } else {
 	        test->settings->gro = j_p->valueint;
             }
         }
@@ -2710,7 +2710,7 @@ get_parameters(struct iperf_test *test)
             if (j_p->valueint < 0){
                 i_errno = IERECVPARAMS;
                 r = -1;
-            }else {
+            } else {
 	        test->settings->gro_bf_size = j_p->valueint;
             }
         }
@@ -2718,7 +2718,7 @@ get_parameters(struct iperf_test *test)
             if (j_p->valueint < 0){
                 i_errno = IERECVPARAMS;
                 r = -1;
-            }else {
+            } else {
 	        test->settings->rate = j_p->valueint;
             }
         }
@@ -2726,7 +2726,7 @@ get_parameters(struct iperf_test *test)
             if (j_p->valueint < 0){
                 i_errno = IERECVPARAMS;
                 r = -1;
-            }else {
+            } else {
 	        test->settings->fqrate = j_p->valueint;
             }
         }
@@ -2734,7 +2734,7 @@ get_parameters(struct iperf_test *test)
             if (j_p->valueint < 0){
                 i_errno = IERECVPARAMS;
                 r = -1;
-            }else {
+            } else {
 	        test->settings->pacing_timer = j_p->valueint;
             }
         }
@@ -2742,7 +2742,7 @@ get_parameters(struct iperf_test *test)
             if (j_p->valueint <= 0 || j_p->valueint > MAX_BURST){
                 i_errno = IEBURST;
                 r = -1;
-            }else {
+            } else {
 	        test->settings->burst = j_p->valueint;
             }
         }
@@ -2750,7 +2750,7 @@ get_parameters(struct iperf_test *test)
             if (j_p->valueint < 0 || j_p->valueint > 255){
                 i_errno = IEBADTOS;
                 r = -1;
-            }else {
+            } else {
 	        test->settings->tos = j_p->valueint;
             }
         }
@@ -2759,7 +2759,7 @@ get_parameters(struct iperf_test *test)
             if (j_p->valueint < 1 || j_p->valueint > 0xfffff ){
                 i_errno = IESETFLOW;
                 r = -1;
-            }else {
+            } else {
 	        test->settings->flowlabel = j_p->valueint;
             }
         }
@@ -2791,7 +2791,7 @@ get_parameters(struct iperf_test *test)
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "authtoken", cJSON_String)) != NULL)
         test->settings->authtoken = strdup(j_p->valuestring);
 #endif //HAVE_SSL
-	if ((j_p = cJSON_GetObjectItem(j, "skip_rx_copy")) != NULL){
+	if ((j_p = iperf_cJSON_GetObjectItemType(j, "skip_rx_copy", cJSON_Number)) != NULL){
             test->settings->skip_rx_copy = (j_p->valueint) ? 1: 0;
         }
 	if (test->mode && test->protocol->id == Ptcp && has_tcpinfo_retransmits())
@@ -2823,26 +2823,41 @@ get_parameters(struct iperf_test *test)
        }
 
 
-    /* Ensure that the client does not request to run longer than the server's configured max */
-    if ((test->max_server_duration > 0) && (((test->duration + test->omit) > test->max_server_duration) || (test->duration == 0))) {
-        i_errno = IEMAXSERVERTESTDURATIONEXCEEDED;
-        r = -1;
-    }
+        /* Ensure that the client does not request to run longer than the server's configured max */
+        if ((test->max_server_duration > 0) && (((test->duration + test->omit) > test->max_server_duration) || (test->duration == 0))) {
+            i_errno = IEMAXSERVERTESTDURATIONEXCEEDED;
+            r = -1;
+        }
 
 
-    /* Ensure that total requested data rate is not above the server's limit */
-    iperf_size_t total_requested_rate = test->num_streams * test->settings->rate * (test->mode == BIDIRECTIONAL? 2 : 1);
-    if (test->settings->bitrate_limit && total_requested_rate > test->settings->bitrate_limit) {
-        i_errno = IETOTALRATE;
-        r = -1;
-    }
+        /* Ensure that total requested data rate is not above the server's limit */
+        iperf_size_t total_requested_rate = test->num_streams * test->settings->rate * (test->mode == BIDIRECTIONAL? 2 : 1);
+        if (test->settings->bitrate_limit && total_requested_rate > test->settings->bitrate_limit) {
+            i_errno = IETOTALRATE;
+            r = -1;
+        }
 
-    total_requested_rate = test->num_streams * test->settings->fqrate * (test->mode == BIDIRECTIONAL? 2 : 1);
-    if (test->settings->bitrate_limit && total_requested_rate > test->settings->bitrate_limit) {
-        i_errno = IETOTALRATE;
-        r = -1;
-    }
-    }
+        total_requested_rate = test->num_streams * test->settings->fqrate * (test->mode == BIDIRECTIONAL? 2 : 1);
+        if (test->settings->bitrate_limit && total_requested_rate > test->settings->bitrate_limit) {
+            i_errno = IETOTALRATE;
+            r = -1;
+        }
+
+        /* Ensure a sending server supports zerocpy */
+        if (test->zerocopy == 1 && test->mode != RECEIVER && !has_sendfile()) {
+            i_errno = IENOSENDFILE; // Zerocopy required for the Server but is not supported
+            return -1;
+        }
+
+        /* Ensure a receiving server supports Skip Rx Copy in reverse/bidir modes */
+#if !defined(HAVE_MSG_TRUNC)
+        if (test->settings->skip_rx_copy == 1 && test->mode != RECEIVER) {
+            i_errno = IERVRSONLYSKIPRXCOPY;
+            return -1;
+        }
+#endif /* !HAVE_MSG_TRUNC */
+
+    } /* else */
 
     return r;
 }
@@ -4926,7 +4941,10 @@ iperf_free_stream(struct iperf_stream *sp)
 
     /* XXX: need to free interval list too! */
     munmap(sp->buffer, sp->test->settings->blksize);
-    close(sp->buffer_fd);
+    if (sp->buffer_fd >= 0) {
+        close(sp->buffer_fd);
+        sp->buffer_fd = -1;
+    }
     if (sp->diskfile_fd >= 0)
 	close(sp->diskfile_fd);
     for (irp = TAILQ_FIRST(&sp->result->interval_results); irp != NULL; irp = nirp) {
@@ -4972,7 +4990,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     sp = (struct iperf_stream *) malloc(sizeof(struct iperf_stream));
     if (!sp) {
         i_errno = IECREATESTREAM;
-        return NULL;
+        goto err_exit;
     }
 
     memset(sp, 0, sizeof(struct iperf_stream));
@@ -4982,9 +5000,8 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     sp->settings = test->settings;
     sp->result = (struct iperf_stream_result *) malloc(sizeof(struct iperf_stream_result));
     if (!sp->result) {
-        free(sp);
         i_errno = IECREATESTREAM;
-        return NULL;
+        goto err_exit_free_sp;
     }
 
     memset(sp->result, 0, sizeof(struct iperf_stream_result));
@@ -4994,15 +5011,11 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     sp->buffer_fd = mkstemp(template);
     if (sp->buffer_fd == -1) {
         i_errno = IECREATESTREAM;
-        free(sp->result);
-        free(sp);
-        return NULL;
+        goto err_exit_free_result;
     }
     if (unlink(template) < 0) {
         i_errno = IECREATESTREAM;
-        free(sp->result);
-        free(sp);
-        return NULL;
+        goto err_exit_close_buffer;
     }
     size = test->settings->blksize;
     if (test->protocol->id == Pudp && test->settings->gso && (size < test->settings->gso_bf_size))
@@ -5013,16 +5026,12 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         printf("Buffer %d bytes\n", size);
     if (ftruncate(sp->buffer_fd, size) < 0) {
         i_errno = IECREATESTREAM;
-        free(sp->result);
-        free(sp);
-        return NULL;
+        goto err_exit_close_buffer;
     }
     sp->buffer = (char *) mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, sp->buffer_fd, 0);
     if (sp->buffer == MAP_FAILED) {
         i_errno = IECREATESTREAM;
-        free(sp->result);
-        free(sp);
-        return NULL;
+        goto err_exit_close_buffer;
     }
     sp->pending_size = 0;
 
@@ -5033,18 +5042,15 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
     sp->rcv = test->protocol->recv;
 
     if (test->diskfile_name != (char*) 0) {
-	sp->diskfile_fd = open(test->diskfile_name, sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC), S_IRUSR|S_IWUSR);
-	if (sp->diskfile_fd == -1) {
-	    i_errno = IEFILE;
-            munmap(sp->buffer, sp->test->settings->blksize);
-            free(sp->result);
-            free(sp);
-	    return NULL;
-	}
+        sp->diskfile_fd = open(test->diskfile_name, sender ? O_RDONLY : (O_WRONLY|O_CREAT|O_TRUNC), S_IRUSR|S_IWUSR);
+        if (sp->diskfile_fd == -1) {
+            i_errno = IEFILE;
+            goto err_exit_munmap_buffer;
+        }
         sp->snd2 = sp->snd;
-	sp->snd = diskfile_send;
-	sp->rcv2 = sp->rcv;
-	sp->rcv = diskfile_recv;
+        sp->snd = diskfile_send;
+        sp->rcv2 = sp->rcv;
+        sp->rcv = diskfile_recv;
     } else
         sp->diskfile_fd = -1;
 
@@ -5055,15 +5061,27 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         ret = readentropy(sp->buffer, test->settings->blksize);
 
     if ((ret < 0) || (iperf_init_stream(sp, test) < 0)) {
-        close(sp->buffer_fd);
-        munmap(sp->buffer, sp->test->settings->blksize);
-        free(sp->result);
-        free(sp);
-        return NULL;
+        goto err_exit_close_diskfile;
     }
     iperf_add_stream(test, sp);
 
     return sp;
+
+err_exit_close_diskfile:
+    /* The file may not be open because it depends on user given -F option. */
+    if (sp->diskfile_fd >= 0) {
+        close(sp->diskfile_fd);
+    }
+err_exit_munmap_buffer:
+    munmap(sp->buffer, sp->test->settings->blksize);
+err_exit_close_buffer:
+    close(sp->buffer_fd);
+err_exit_free_result:
+    free(sp->result);
+err_exit_free_sp:
+    free(sp);
+err_exit:
+    return NULL;
 }
 
 /**************************************************************************/

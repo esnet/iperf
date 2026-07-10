@@ -445,7 +445,8 @@ enum {
     IECNTLKA = 36,          // Control connection Keepalive period should be larger than the full retry period (interval * count)
     IEMAXSERVERTESTDURATIONEXCEEDED = 37, // Client's duration exceeds server's maximum duration
     IEUNITVAL = 38,         // Invalid unit value or suffix
-    IEBADDSCP = 39,         // Bad DSCP value
+    IERVRSONLYSKIPRXCOPY = 39, // This OS does not support --skip-rx-copy
+    IEBADDSCP = 40,         // Bad DSCP value
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

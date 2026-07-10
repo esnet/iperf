@@ -1,5 +1,5 @@
 /*
- * iperf, Copyright (c) 2014-2023, The Regents of the University of
+ * iperf, Copyright (c) 2014-2026, The Regents of the University of
  * California, through Lawrence Berkeley National Laboratory (subject
  * to receipt of any required approvals from the U.S. Dept. of
  * Energy).  All rights reserved.
@@ -188,7 +188,12 @@ EVP_PKEY *load_pubkey_from_file(const char *file) {
 EVP_PKEY *load_pubkey_from_base64(const char *buffer) {
     unsigned char *key = NULL;
     size_t key_len;
-    Base64Decode(buffer, &key, &key_len);
+    int bd;
+
+    bd = Base64Decode(buffer, &key, &key_len);
+    if (bd < 0) {
+        return NULL;
+    }
 
     BIO* bio = BIO_new(BIO_s_mem());
     BIO_write(bio, key, key_len);
@@ -215,7 +220,12 @@ EVP_PKEY *load_privkey_from_file(const char *file) {
 EVP_PKEY *load_privkey_from_base64(const char *buffer) {
     unsigned char *key = NULL;
     size_t key_len;
-    Base64Decode(buffer, &key, &key_len);
+    int bd;
+
+    bd = Base64Decode(buffer, &key, &key_len);
+    if (bd < 0) {
+        return NULL;
+    }
 
     BIO* bio = BIO_new(BIO_s_mem());
     BIO_write(bio, key, key_len);
@@ -408,7 +418,12 @@ int decode_auth_setting(int enable_debug, const char *authtoken, EVP_PKEY *priva
     unsigned char *encrypted_b64 = NULL;
     size_t encrypted_len_b64;
     int64_t utc_seconds =0;
-    Base64Decode(authtoken, &encrypted_b64, &encrypted_len_b64);
+    int bd;
+
+    bd = Base64Decode(authtoken, &encrypted_b64, &encrypted_len_b64);
+    if (bd < 0) {
+        return -1;
+    }
 
     unsigned char *plaintext = NULL;
     int plaintext_len;

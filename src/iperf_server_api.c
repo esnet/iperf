@@ -199,6 +199,12 @@ iperf_accept(struct iperf_test *test)
             i_errno = IERECVCOOKIE;
             goto error_handling;
         }
+        /*
+         * The cookie is later handled as a NUL-terminated string (printed
+         * and copied into JSON output), but a peer can send COOKIE_SIZE
+         * non-NUL bytes, so make sure it is terminated before it is used.
+         */
+        test->cookie[COOKIE_SIZE - 1] = '\0';
         FD_SET(test->ctrl_sck, &test->read_set);
         if (test->ctrl_sck > test->max_fd) test->max_fd = test->ctrl_sck;
 

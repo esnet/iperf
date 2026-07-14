@@ -16897,6 +16897,16 @@ printf '%s\n' "#define HAVE_STRUCT_SCTP_ASSOC_VALUE 1" >>confdefs.h
 
 fi
 
+ac_fn_c_check_type "$LINENO" "struct sctp_sack_info" "ac_cv_type_struct_sctp_sack_info" "#include <netinet/sctp.h>
+"
+if test "x$ac_cv_type_struct_sctp_sack_info" = xyes
+then :
+
+printf '%s\n' "#define HAVE_STRUCT_SCTP_SACK_INFO 1" >>confdefs.h
+
+
+fi
+
 fi
 
 done

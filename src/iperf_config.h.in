@@ -117,6 +117,9 @@
 /* Define to 1 if the system has the type 'struct sctp_assoc_value'. */
 #undef HAVE_STRUCT_SCTP_ASSOC_VALUE
 
+/* Define to 1 if the system has the type 'struct sctp_sack_info'. */
+#undef HAVE_STRUCT_SCTP_SACK_INFO
+
 /* Define to 1 if you have the <sys/endian.h> header file. */
 #undef HAVE_SYS_ENDIAN_H
 

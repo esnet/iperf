@@ -363,6 +363,7 @@ int set_protocol(struct iperf_test *, int);
 
 void iperf_on_new_stream(struct iperf_stream *);
 void iperf_on_test_start(struct iperf_test *);
+int iperf_mapped_v4_to_regular_v4(char *str);
 void iperf_on_connect(struct iperf_test *);
 void iperf_on_test_finish(struct iperf_test *);
 

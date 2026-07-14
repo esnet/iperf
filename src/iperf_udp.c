@@ -602,6 +602,11 @@ iperf_udp_accept(struct iperf_test *test)
 	}
     }
 
+    /* Set common socket options */
+    if (iperf_common_sockopts(test, s) < 0) {
+        return -1;
+    }
+
     /*
      * Create a new "listening" socket to replace the one we were using before.
      */
@@ -726,7 +731,9 @@ iperf_udp_connect(struct iperf_test *test)
     }
 
     /* Set common socket options */
-    iperf_common_sockopts(test, s);
+    if (iperf_common_sockopts(test, s) < 0) {
+        return -1;
+    }
 
 #ifdef SO_RCVTIMEO
     /* 30 sec timeout for a case when there is a network problem. */

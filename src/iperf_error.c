@@ -210,8 +210,11 @@ iperf_strerror(int int_errno)
         case IEBADTOS:
             snprintf(errstr, len, "bad TOS value (must be between 0 and 255 inclusive)");
             break;
+        case IEBADDSCP:
+            snprintf(errstr, len, "bad DSCP value (numeric: 0-63 inclusive, symbolic: one of [af11-13, af21-23, af31-33, af41-43, cs1-7, ef, va, lowdelay, throughput, reliability])");
+            break;
         case IESETCLIENTAUTH:
-             snprintf(errstr, len, "you must specify a username, password, and path to a valid RSA public key");
+            snprintf(errstr, len, "you must specify a username, password, and path to a valid RSA public key");
             break;
         case IESETSERVERAUTH:
              snprintf(errstr, len, "you must specify a path to a valid RSA private key and a user credential file");
@@ -566,7 +569,10 @@ iperf_strerror(int int_errno)
         case IECTRLTIMEOUT:
             snprintf(errstr, len, "control connection read timeout value is incorrect or not in range");
             break;
-	    default:
+        case IERVRSONLYSKIPRXCOPY:
+            snprintf(errstr, len, "this OS does not support --skip-rx-copy");
+            break;
+	      default:
             snprintf(errstr, len, "int_errno=%d", int_errno);
             perr = 1;
             break;

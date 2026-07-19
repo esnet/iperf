@@ -118,7 +118,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	sp->result->bytes_received += r;
 	sp->result->bytes_received_this_interval += r;
 
-	if (sp->test->debug)
+	if (sp->test->debug_level >= DEBUG_LEVEL_DEBUG)
 	    printf("received %d bytes of %d, total %" PRIu64 "\n", r, size, sp->result->bytes_received);
 
 	/* Unified loop: processes single packet when GRO off, multiple when GRO on */

@@ -2807,9 +2807,9 @@ get_parameters(struct iperf_test *test)
             i_errno = IEBLOCKSIZE;
             return -1;
         }
+        // Check that UDP blksize > Min && < Max
         if (test->protocol->id == Pudp &&
-            (test->settings->blksize > 0 &&
-                (test->settings->blksize < MIN_UDP_BLOCKSIZE || test->settings->blksize > MAX_UDP_BLOCKSIZE))) {
+                (test->settings->blksize < MIN_UDP_BLOCKSIZE || test->settings->blksize > MAX_UDP_BLOCKSIZE)) {
             i_errno = IEUDPBLOCKSIZE;
             return -1;
         }

@@ -104,6 +104,11 @@ iperf_udp_recv(struct iperf_stream *sp)
     if (r <= 0)
         return r;
 
+    // Check dgram_sz is greater than 0
+    if (dgram_sz <= 0){
+        return -1;
+    }
+
     /* Only count bytes received while we're in the correct state. */
     if (test->state == TEST_RUNNING) {
 

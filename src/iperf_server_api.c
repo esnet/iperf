@@ -113,7 +113,10 @@ int
 iperf_server_listen(struct iperf_test *test)
 {
     retry:
-    if((test->listener = netannounce(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, test->server_port)) < 0) {
+
+    /* A persistent server keeps its listener open between tests. */
+    if (test->listener < 0 &&
+        (test->listener = netannounce(test->settings->domain, Ptcp, test->bind_address, test->bind_dev, test->server_port)) < 0) {
 	if (errno == EAFNOSUPPORT && (test->settings->domain == AF_INET6 || test->settings->domain == AF_UNSPEC)) {
 	    /* If we get "Address family not supported by protocol", that
 	    ** probably means we were compiled with IPv6 but the running
@@ -998,7 +1001,18 @@ iperf_run_server(struct iperf_test *test)
     }
 
     iflush(test);
-    cleanup_server(test);
+    if (iperf_get_test_one_off(test)) {
+	cleanup_server(test);
+    } else {
+	/*
+	 * Keep the listener open so a connection queued while the previous
+	 * test was finishing is not reset when the listener is closed.
+	 */
+	s = test->listener;
+	test->listener = -1;
+	cleanup_server(test);
+	test->listener = s;
+    }
 
     if (test->server_affinity != -1)
 	if (iperf_clearaffinity(test) != 0)

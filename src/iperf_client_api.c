@@ -93,6 +93,11 @@ iperf_client_worker_run(void *s) {
     return NULL;
 
   cleanup_and_fail:
+    if (test->ctrl_sck != -1) { // Make sure test was not cleared yet by the main thread
+        // Error message is printed to NULL test to prevent adding JSON output context into the thread context
+        iperf_err(NULL, "Server Worker Thread failed - %s", iperf_strerror(i_errno));
+        if (test->ctrl_sck != -1) iflush(test);
+    }
     return NULL;
 }
 

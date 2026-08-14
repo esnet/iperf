@@ -3826,6 +3826,10 @@ iperf_reset_test(struct iperf_test *test)
 	free(test->extra_data);
 	test->extra_data = NULL;
     }
+    if (test->json_output_string) {
+	free(test->json_output_string);
+	test->json_output_string = NULL;
+    }
 
     /* Free output line buffers, if any (on the server only) */
     struct iperf_textline *t;

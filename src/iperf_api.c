@@ -5034,6 +5034,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         goto err_exit_close_buffer;
     }
     sp->pending_size = 0;
+    sp->thread_number = 0;
 
     /* Set socket */
     sp->socket = s;

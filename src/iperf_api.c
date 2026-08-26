@@ -3491,7 +3491,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->json_callback = NULL;
 
 
-    memset(testp->cookie, 0, COOKIE_SIZE);
+    memset(testp->cookie, 0, COOKIE_SIZE + 1);
 
     testp->multisend = 10;	/* arbitrary */
 
@@ -3815,7 +3815,7 @@ iperf_reset_test(struct iperf_test *test)
     }
 #endif /* HAVE_SSL */
 
-    memset(test->cookie, 0, COOKIE_SIZE);
+    memset(test->cookie, 0, COOKIE_SIZE + 1);
     test->multisend = 10;	/* arbitrary */
     test->udp_counters_64bit = 0;
     if (test->title) {

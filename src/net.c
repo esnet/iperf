@@ -465,8 +465,11 @@ Nrecv(int fd, char *buf, size_t count, int prot, int sock_opt)
              * value the caller must account (fastpath fix: upstream returned
              * `count`, so UDP --skip-rx-copy under-reported throughput ~100x).
              */
-            if (prot == SOCK_DGRAM)   /* Pudp; iperf_api.h is not included here */
+            if (prot == SOCK_DGRAM) { /* Pudp; iperf_api.h is not included here */
+                if (r < count)
+                    return NET_HARDERROR; /* at least the UDP message header must be present */
                 return r;
+            }
             size_t bytes_copied = (r > nleft)? nleft: r;
             nleft -= bytes_copied;
             buf += bytes_copied;
@@ -552,8 +555,11 @@ Nrecv_no_select(int fd, char *buf, size_t count, int prot, int sock_opt)
              * value the caller must account (fastpath fix: upstream returned
              * `count`, so UDP --skip-rx-copy under-reported throughput ~100x).
              */
-            if (prot == SOCK_DGRAM)   /* Pudp; iperf_api.h is not included here */
+            if (prot == SOCK_DGRAM) { /* Pudp; iperf_api.h is not included here */
+                if (r < count)
+                    return NET_HARDERROR; /* at least the UDP message header must be present */
                 return r;
+            }
             size_t bytes_copied = (r > nleft)? nleft: r;
             nleft -= bytes_copied;
             buf += bytes_copied;

@@ -1,6 +1,59 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.22 2026-09-29
+---------------------
+
+* Security notes
+
+    * Thanks to Claude and Ada Logics for finding and reporting two
+      potential security vulnerabilities. One is a remote
+      use-after-free in iperf_server_api.c (ANT-2026-E5BA80X9 /
+      CVE-2026-101283) and the other is a heap buffer overflow in
+      iperf_auth.c (ANT-2026-FXH14FHV / CVE-2026-101276).
+
+    * Thanks to Justin Stitt for reporting and fixing a heap-buffer
+      overflow was fixed in iperf_auth.c (PR #2027).
+
+    * Thanks to Ravindu Lakmina Munaweera (Github: @Ravi-lk) for
+      reporting and fixing a DOS infinite-loop (CVE-2026-102253).
+
+    * Thanks to Dirk Müller for finding and reporting an issue with
+      test parameters (PR #2039, CVE-2026-71217).
+
+    * The iperf-3.18 release notes were updated to reflect that a code
+      change in that version addresses CVE-2026-71218.
+
+* Notable user-visible changes
+
+    * Attempting to set zero parallel streams is no longer allowed (PR
+      #2048).
+
+    * Zerocopy and rx-copy are now allowed in the case of reverse
+      direction tests and the server (sending side) supports these
+      features but the client (receiving side) does not (#2045,
+      PR #2044).
+
+    * The limit on GSO_MAX_DG_IN_BF was fixed to limit the number of segments
+      to the maximum allowed (#2032 / PR #2033). This change unbreaks
+      GSO for small message sizes.
+
+* Notable developer-visible changes
+
+    * In iperf_auth.c, in addition to fixing the heap buffer overflow, the
+      return value of several functions is checked (PR #2046, PR #2040).
+
+    * Several file descriptor leaks have been fixed (PR #2034).
+
+    * In iperf_tcp, connections now timeout to prevent a race condition in
+      accepting new connections to avoid a deadlock (#2029, PR #2030).
+
+    * Periodic timers are now cancelled at the end of a test (#2018,
+      PR #2021).
+
+    * DSCP/TOS is now correctly set in the first UDP/TCP stream packet
+      (#510, #830, PR #2047).
+
 iperf-3.21 2026-04-09
 ---------------------
 
@@ -195,6 +248,11 @@ iperf-3.18 2024-12-13
                      server. (CVE-2024-53580) This has now been
                      fixed. (PR#1810)
 
+                     Some fixes were made to handling transfer of JSON
+                     data between the client and server, including
+                     checking the size for `json_read`
+                     (CVE-2026-71218, PR#1709/PR#1779).
+
     * UDP packets per second now reports the correct number of
       packets, by reporting NET_SOFTERROR if there's a EAGAIN/EINTR
       errno if no data was sent (#1367/PR#1379).
@@ -207,10 +265,6 @@ iperf-3.18 2024-12-13
 
     * A segmentation fault from calling `freeaddrinfo` with `NULL` was
       fixed (PR#1755).
-
-    * Some JSON options were fixed, including checking the size for
-      `json_read` (PR#1709), but the size limit was removed for
-      received server output (PR#1779).
 
     * A rcv-timeout error has been fixed. The Nread timeout was
       hardcoded and timed out before the `--rcv-timeout` option

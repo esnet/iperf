@@ -314,7 +314,16 @@ the executable.
                  ating  system's  timeout for TCP connection establishment.  Pro-
                  viding a shorter value may speed up detection of a  down  iperf3
                  server.
-   
+
+          --ctrl-timeout n
+                 Set  timeout,  in seconds, for reads on the control connection --
+                 the exchange of state messages, cookie, and end-of-test results
+                 (default  10  seconds).   This  does not affect the bulk data path.
+                 Raising  it  can  prevent  a  spurious  "unable  to  receive re-
+                 sults" failure when the control connection stalls briefly over a
+                 slow or lossy link (for example a cellular interface  selected
+                 with --bind-dev).
+
           -b, --bitrate n[KMGT]
                  Set  target  bitrate  to n bits/sec (default 1 Mbit/sec for UDP,
                  unlimited for TCP/SCTP).  If  there  are  multiple  streams  (-P

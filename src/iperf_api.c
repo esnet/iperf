@@ -1192,6 +1192,8 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"mptcp", no_argument, NULL, 'm'},
 #endif
         {"gsro", no_argument, NULL, OPT_GSRO},
+        {"gsro/s", no_argument, NULL, OPT_GSRO_S},
+        {"gsro/r", no_argument, NULL, OPT_GSRO_R},
         {"debug", optional_argument, NULL, 'd'},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -1805,6 +1807,20 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		test->settings->gso = 1;
 		test->settings->gro = 1;
                 break;
+        case OPT_GSRO_S:
+        /* Enable GSO which is disabled by default */
+        /* Flag is available regardless of local support to allow client to request server to use it */
+        gsro_flag = 1;
+        test->settings->gso = 1;
+        test->settings->gro = 0;
+        break;
+        case OPT_GSRO_R:
+        /* Enable GRO which is disabled by default */
+        /* Flag is available regardless of local support to allow client to request server to use it */
+        gsro_flag = 1;
+        test->settings->gso = 0;
+        test->settings->gro = 1;
+        break;
 	    case 'h':
 		usage_long(stdout);
 		exit(0);
@@ -1832,11 +1848,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     /* Show platform support warnings only after confirming we're in client mode */
     if (gsro_flag) {
 #if !defined(HAVE_UDP_SEGMENT) && !defined(HAVE_UDP_GRO)
-        warning("--gsro requested but UDP GSO/GRO not supported on this client; will only be enabled on server if supported");
+        warning("GSO/GRO requested but UDP GSO/GRO not supported on this client; will only be enabled on server if supported");
 #elif !defined(HAVE_UDP_SEGMENT)
-        warning("--gsro requested but UDP GSO not supported on this client; will be enabled on server if supported");
+        warning("GSO requested but UDP GSO not supported on this client; will be enabled on server if supported");
 #elif !defined(HAVE_UDP_GRO)
-        warning("--gsro requested but UDP GRO not supported on this client; will be enabled on server if supported");
+        warning("GRO requested but UDP GRO not supported on this client; will be enabled on server if supported");
 #endif
     }
 
@@ -3470,10 +3486,10 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->pacing_timer = DEFAULT_PACING_TIMER;
     testp->settings->burst = 0;
     /* Always initialize GSO/GRO fields to allow client-server negotiation */
-    testp->settings->gso = 0;  /* Disable GSO by default, enabled via --gsro */
+    testp->settings->gso = 0;  /* Disable GSO by default, enabled via --gsro or --gsro/s*/
     testp->settings->gso_dg_size = 0;
     testp->settings->gso_bf_size = GSO_BF_MAX_SIZE;
-    testp->settings->gro = 0;  /* Disable GRO by default, enabled via --gsro */
+    testp->settings->gro = 0;  /* Disable GRO by default, enabled via --gsro or --gsro/r*/
     testp->settings->gro_bf_size = GRO_BF_MAX_SIZE;
     testp->settings->mss = 0;
     testp->settings->bytes = 0;

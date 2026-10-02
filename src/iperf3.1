@@ -525,6 +525,27 @@ settings to the server automatically.
 This feature is disabled by default and must be explicitly enabled
 with this flag.
 .TP
+.BR --gsro/s
+Enable UDP Generic Segmentation Offload (GSO) on the sender, where 
+supported by the operating system and network hardware (currently Linux only).
+GSO allows the network stack to aggregate multiple UDP datagrams
+into larger packets, improving throughput and reducing CPU overhead.
+This is a client-only option; the client communicates the GSO
+settings to the server automatically.
+This feature is disabled by default and must be explicitly enabled
+with this flag.
+.TP
+.BR --gsro/r
+Enable UDP Generic Receive Offload (GRO) on the receiver, where supported by
+the operating system and network hardware (currently Linux only).
+GRO is an aggregation technique to coalesce several receive packets from a 
+stream into a single large packet, thus saving CPU cycles as fewer packets 
+need to be processed by the kernel. By default, GRO is accomplished in the Linux kernel. 
+This is a client-only option; the client communicates the GRO
+settings to the server automatically.
+This feature is disabled by default and must be explicitly enabled
+with this flag.
+.TP
 .BR --repeating-payload
 Use repeating pattern in payload, instead of random bytes.
 The same payload is used in iperf2 (ASCII '0..9' repeating).

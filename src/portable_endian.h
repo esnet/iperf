@@ -60,6 +60,18 @@
 #	include <netinet/in.h>
 #	include <inttypes.h>
 
+/* Solaris does not define BYTE_ORDER, BIG_ENDIAN, and LITTLE_ENDIAN */
+#	define BIG_ENDIAN 4321
+#	define LITTLE_ENDIAN 1234
+
+#	if defined(_BIG_ENDIAN)
+#		define BYTE_ORDER BIG_ENDIAN
+#	elif defined(_LITTLE_ENDIAN)
+#		define BYTE_ORDER LITTLE_ENDIAN
+#	else
+#		error byte order not supported
+#	endif
+
 #	if !defined (ntohll) || !defined(htonll)
 #		ifdef _BIG_ENDIAN
 #			define    htonll(x)   (x)

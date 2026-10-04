@@ -57,6 +57,10 @@ iperf_client_worker_run(void *s) {
     struct iperf_stream *sp = (struct iperf_stream *) s;
     struct iperf_test *test = sp->test;
 
+    if (sp->affinity >= 0) {
+        iperf_setaffinity_streams_raw(sp->affinity);
+    }
+
     /* Blocking signal to make sure that signal will be handled by main thread */
     sigset_t set;
     sigemptyset(&set);
@@ -112,6 +116,13 @@ iperf_create_streams(struct iperf_test *test, int sender)
 
     int orig_bind_port = test->bind_port;
     for (i = 0; i < test->num_streams; ++i) {
+        /* -> Create streams on different cpus
+           The network protocol stack will save the cpu core when creating the socket. 
+           With a multi-queue NIC, the queue selection may relate to the cpu core num
+           (XPS, RPS, sk_*_queue_mapping...), 
+           which helps improve the performance of multi-queue physical network cards.
+         */
+        iperf_setaffinity_streams(test,i);
 
         test->bind_port = orig_bind_port;
 	if (orig_bind_port) {
@@ -339,6 +350,7 @@ iperf_handle_message_client(struct iperf_test *test)
                 test->on_connect(test);
             break;
         case CREATE_STREAMS:
+            iperf_affinity_streams_init(test);
             if (test->mode == BIDIRECTIONAL)
             {
                 if (iperf_create_streams(test, 1) < 0)
@@ -348,6 +360,7 @@ iperf_handle_message_client(struct iperf_test *test)
             }
             else if (iperf_create_streams(test, test->mode) < 0)
                 return -1;
+            iperf_setaffinity_streams_post(test);
             break;
         case TEST_START:
             if (iperf_init_test(test) < 0)

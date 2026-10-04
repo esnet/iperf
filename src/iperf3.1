@@ -381,7 +381,13 @@ options are mutually exclusive.
 .TP
 .BR -l ", " --length " \fIn\fR[KMGT]"
 Set the length of the buffer to read or write.  For TCP tests, the
-default value is 128KB.
+default value is 128KB; when
+.B -l
+is not specified, iperf3 rounds this default down to the largest
+multiple of the MSS (taken from
+.B -M
+if given, otherwise from the control connection) so that each write
+produces an integer number of full-sized segments.
 In the case of UDP, iperf3 tries to dynamically determine a reasonable
 sending size based on the path MTU; if that cannot be determined it
 uses 1460 bytes as a sending size.

@@ -496,6 +496,7 @@ void
 iperf_set_test_blksize(struct iperf_test *ipt, int blksize)
 {
     ipt->settings->blksize = blksize;
+    ipt->settings->blksize_set = 1;
 }
 
 void
@@ -1412,6 +1413,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                     return -1;
                 }
                 // NOTE: blksize is unsigned, can't be less than 0
+		test->settings->blksize_set = 1;
 		client_flag = 1;
                 break;
             case 'P':
@@ -3783,6 +3785,7 @@ iperf_reset_test(struct iperf_test *test)
     test->num_streams = 1;
     test->settings->socket_bufsize = 0;
     test->settings->blksize = DEFAULT_TCP_BLKSIZE;
+    test->settings->blksize_set = 0;
     test->settings->rate = 0;
     test->settings->fqrate = 0;
     test->settings->burst = 0;

@@ -125,6 +125,38 @@ iperf_sctp_accept(struct iperf_test * test)
         return -1;
     }
 
+    if (test->no_delay) {
+        int opt = 1;
+        if (setsockopt(s, IPPROTO_SCTP, SCTP_NODELAY, &opt, sizeof(opt)) < 0) {
+            i_errno = IESETNODELAY;
+            close(s);
+            return -1;
+        }
+    }
+
+#ifdef HAVE_STRUCT_SCTP_SACK_INFO
+    /*
+     * Apply SCTP_DELAYED_SACK on the accepted association.  On Linux the
+     * SCTP_DELAYED_SACK setting on the listener does NOT propagate to
+     * accepted associations, so the per-association setting must be applied
+     * here for the receiver-side fix to take effect.  ENOPROTOOPT is
+     * non-fatal so this is safe on platforms without support.
+     */
+    {
+        struct sctp_sack_info sack;
+        memset(&sack, 0, sizeof(sack));
+        sack.sack_assoc_id = 0;
+        sack.sack_delay = 0;
+        sack.sack_freq = 1;
+        if (setsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_SACK, &sack, sizeof(sack)) < 0 &&
+            errno != ENOPROTOOPT) {
+            i_errno = IESETSCTPDELAYEDSACK;
+            close(s);
+            return -1;
+        }
+    }
+#endif /* HAVE_STRUCT_SCTP_SACK_INFO */
+
     if (Nread(s, cookie, COOKIE_SIZE, Psctp) < 0) {
         i_errno = IERECVCOOKIE;
         close(s);
@@ -247,6 +279,52 @@ iperf_sctp_listen(struct iperf_test *test)
         i_errno = IEREUSEADDR;
         return -1;
     }
+
+    if (test->no_delay) {
+        opt = 1;
+        if (setsockopt(s, IPPROTO_SCTP, SCTP_NODELAY, &opt, sizeof(opt)) < 0) {
+            saved_errno = errno;
+            close(s);
+            freeaddrinfo(res);
+            errno = saved_errno;
+            i_errno = IESETNODELAY;
+            return -1;
+        }
+    }
+
+#ifdef HAVE_STRUCT_SCTP_SACK_INFO
+    /*
+     * Disable SCTP delayed-SACK on future accepted associations.  With the
+     * default sack_freq=2/sack_delay=200ms, a sender that writes blocks
+     * producing exactly one DATA chunk stalls for 200 ms waiting for a SACK
+     * that the receiver is in turn delaying.  iperf3 is a throughput
+     * benchmark, so request an immediate SACK on every packet.  On Linux
+     * the endpoint default set here does not propagate to accepted
+     * associations -- iperf_sctp_accept() repeats the call on the per-
+     * association socket.  ENOPROTOOPT (platform without support) is
+     * non-fatal.
+     */
+    {
+        struct sctp_sack_info sack;
+        memset(&sack, 0, sizeof(sack));
+#ifdef SCTP_FUTURE_ASSOC
+        sack.sack_assoc_id = SCTP_FUTURE_ASSOC;
+#else
+        sack.sack_assoc_id = 0;
+#endif
+        sack.sack_delay = 0;
+        sack.sack_freq = 1;
+        if (setsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_SACK, &sack, sizeof(sack)) < 0 &&
+            errno != ENOPROTOOPT) {
+            saved_errno = errno;
+            close(s);
+            freeaddrinfo(res);
+            errno = saved_errno;
+            i_errno = IESETSCTPDELAYEDSACK;
+            return -1;
+        }
+    }
+#endif /* HAVE_STRUCT_SCTP_SACK_INFO */
 
     /* servers must call sctp_bindx() _instead_ of bind() */
     if (!TAILQ_EMPTY(&test->xbind_addrs)) {
@@ -540,6 +618,33 @@ iperf_sctp_connect(struct iperf_test *test)
         i_errno = IESETSCTPDISABLEFRAG;
         return -1;
     }
+
+#ifdef HAVE_STRUCT_SCTP_SACK_INFO
+    /*
+     * Disable SCTP delayed-SACK on this association (see iperf_sctp_listen()
+     * for rationale).  Applied here as well so that --reverse, which makes
+     * the client the receiver, still gets immediate SACKs.  The socket is
+     * already connected and 1:1-style, so sack_assoc_id=0 unambiguously
+     * targets the current association on every platform (RFC 6458 §8.1).
+     * ENOPROTOOPT is treated as non-fatal.
+     */
+    {
+        struct sctp_sack_info sack;
+        memset(&sack, 0, sizeof(sack));
+        sack.sack_assoc_id = 0;
+        sack.sack_delay = 0;
+        sack.sack_freq = 1;
+        if (setsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_SACK, &sack, sizeof(sack)) < 0 &&
+            errno != ENOPROTOOPT) {
+            saved_errno = errno;
+            close(s);
+            freeaddrinfo(server_res);
+            errno = saved_errno;
+            i_errno = IESETSCTPDELAYEDSACK;
+            return -1;
+        }
+    }
+#endif /* HAVE_STRUCT_SCTP_SACK_INFO */
 
     freeaddrinfo(server_res);
     return s;

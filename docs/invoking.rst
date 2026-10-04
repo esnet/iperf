@@ -226,6 +226,16 @@ the executable.
                  iperf3  versions.   Use this option to preserve the less secure,
                  but more compatible, behavior.
    
+          --control-tos n
+                 Set the IP type of service bits of the control connection.   The
+                 usual prefixes for octal and hex can be used,   i.e. 52, 064 and
+                 0x34 all specify the same value.
+
+          --control-dscp dscp
+                 Set the IP DSCP bits of the control connection. Both numeric and
+                 symbolic values are accepted. Numeric values can be specified in
+                 decimal, octal and hex (see --control-tos above).
+
           -m, --mptcp
                  Use the MPTCP variant for the current protocol.  This  only  ap-
                  plies to TCP and enables MPTCP usage.

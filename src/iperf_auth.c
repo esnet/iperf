@@ -339,7 +339,8 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
     output_buffer_len = RSA_size(rsa);
 #endif
     if (encryptedtext_len > output_buffer_len) {
-        fprintf(stderr, "Encrypted text of size %d truncated to %d; likely invalid input.\n", encryptedtext_len, output_buffer_len);
+        fprintf(stderr, "Encrypted text of size %d exceeds RSA modulus %d; rejecting.\n", encryptedtext_len, output_buffer_len);
+        goto errreturn;   /* or: return 0; — never read more than output_buffer_len bytes */
     }
     rsa_buffer  = OPENSSL_malloc(output_buffer_len);
     // Note: +1 for NULL
@@ -379,11 +380,9 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
 
     return plaintext_len;
 
-#if OPENSSL_VERSION_MAJOR >= 3
   errreturn:
     fprintf(stderr, "%s\n", ERR_error_string(ERR_get_error(), NULL));
     return 0;
-#endif
 }
 
 int encode_auth_setting(const char *username, const char *password, EVP_PKEY *public_key, char **authtoken, int use_pkcs1_padding){

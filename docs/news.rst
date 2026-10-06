@@ -1,20 +1,32 @@
 iperf3 Project News
 ===================
 
+2026-09-29:  iperf-3.22 released
+--------------------------------
+
+| GitHub Release:  https://github.com/esnet/iperf/releases/tag/3.22
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.22.tar.gz
+| SHA256: ``1c0d0fb02c52626111d6e132db80edfbf27bbaff8bd9245df2a371dcb0b35a92``
+
+iperf-3.22 includes a number of security and minor bug fixes. More
+details on the changes can be found in the release notes.
+
 2026-04-09:  iperf-3.21 released
 --------------------------------
 
+| GitHub Release:  https://github.com/esnet/iperf/releases/tag/3.21
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.21.tar.gz
 | SHA256: ``656e4405ebd620121de7ceca3eaf43a88f79ea1b857d041a6a0b1314801acdd8``
 
 iperf-3.21 includes support for GSO and GRO under Linux, improves
-feature parity for macOS, and adds a number of minor bugs and
+feature parity for macOS, and adds a number of minor bug fixes and
 enhancements. More details on the changes can be found in the release
 notes.
 
 2025-11-14:  iperf-3.20 released
 --------------------------------
 
+| GitHub Release:  https://github.com/esnet/iperf/releases/tag/3.20
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.20.tar.gz
 | SHA256: ``3acc572d1ecca4e0b20359c7bf0132ddc80d982efeee20c86f6726a9a6094388``
 
@@ -25,6 +37,7 @@ notes.
 2025-07-25:  iperf-3.19.1 released
 ----------------------------------
 
+| GitHub Release:  https://github.com/esnet/iperf/releases/tag/3.19.1
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.19.1.tar.gz
 | SHA256: ``dc63f89ec581ea99f8b558d8eb35109de06383010db5a1906c208a562ba0c270``
 
@@ -35,6 +48,7 @@ can be found in the release notes.
 2025-05-16:  iperf-3.19 released
 --------------------------------
 
+| GitHub Release:  https://github.com/esnet/iperf/releases/tag/3.19
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.19.tar.gz
 | SHA256: ``040161da1555ec7411a9d81191049830ef37717d429a94ee6cf0842618e0e29c``
 
@@ -47,6 +61,7 @@ information on the changes.
 2024-12-13:  iperf-3.18 released
 --------------------------------
 
+| GitHub Release:  https://github.com/esnet/iperf/releases/tag/3.18
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.18.tar.gz
 | SHA256: ``c0618175514331e766522500e20c94bfb293b4424eb27d7207fb427b88d20bab``
 
@@ -59,6 +74,7 @@ the fix.
 2024-05-13:  iperf-3.17.1 released
 ----------------------------------
 
+| GitHub Release:  https://github.com/esnet/iperf/releases/tag/3.17.1
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.17.1.tar.gz
 | SHA256: ``84404ca8431b595e86c473d8f23d8bb102810001f15feaf610effd3b318788aa``
 
@@ -68,6 +84,7 @@ places. It is otherwise identical to iperf-3.17.
 
 2024-05-10:  iperf-3.17 released
 --------------------------------
+| GitHub Release:  https://github.com/esnet/iperf/releases/tag/3.17
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.17.tar.gz
 | SHA256: ``077ede831b11b733ecf8b273abd97f9630fd7448d3ec1eaa789f396d82c8c943``
 
@@ -83,6 +100,7 @@ with the --json-stream) option, and a number of other bug fixes.
 
 2023-12-01:  iperf-3.16 released
 --------------------------------
+| GitHub Release:  https://github.com/esnet/iperf/releases/tag/3.16
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.16.tar.gz
 | SHA256: ``cc740c6bbea104398cc3e466befc515a25896ec85e44a662d5f4a767b9cf713e``
 
@@ -96,6 +114,7 @@ Older News
 2023-09-14:  iperf-3.15 released
 ................................
 
+| GitHub Release:  https://github.com/esnet/iperf/releases/tag/3.15
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.15.tar.gz
 | SHA256:  ``bdb77c11f72bce90214883159577fa24412013e62b2083cf5f54391d79b1d8ff``
 
@@ -110,7 +129,7 @@ which are summarized in the release notes.
 
 2023-07-07:  iperf-3.14 released
 ................................
-
+| GitHub Release:  https://github.com/esnet/iperf/releases/tag/3.14
 | URL:  https://downloads.es.net/pub/iperf/iperf-3.14.tar.gz
 | SHA256:  ``723fcc430a027bc6952628fa2a3ac77584a1d0bd328275e573fc9b206c155004``
 

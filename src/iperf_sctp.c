@@ -66,7 +66,7 @@ iperf_sctp_recv(struct iperf_stream *sp)
 	sp->result->bytes_received_this_interval += r;
     }
     else {
-	if (sp->test->debug)
+	if (sp->test->debug_level >= DEBUG_LEVEL_DEBUG)
 	    printf("Late receive, state = %d\n", sp->test->state);
     }
 

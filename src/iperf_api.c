@@ -3359,6 +3359,12 @@ iperf_new_test()
     struct iperf_test *test;
     int rc;
 
+    /* Do not use errno & i_errno from previous (client) test, for error cases that do not set them.
+     * E.g. i_errno when using the library and preveusely the client receive illegal parameter from the server.
+     */
+    errno = 0;
+    i_errno = 0;
+
     test = (struct iperf_test *) malloc(sizeof(struct iperf_test));
     if (!test) {
         i_errno = IENEWTEST;
@@ -3712,6 +3718,12 @@ iperf_reset_test(struct iperf_test *test)
     struct iperf_stream *sp;
     int i;
 
+    /* Do not use errno & i_errno from previous test, for error cases that do not set them.
+     * E.g. errno when server receive illegal parameter from the client, or
+     * i_errno when using the library and preveusely the client receive illegal parameter from the server.
+     */
+    errno = 0;
+    i_errno = 0;
     iperf_close_logfile(test);
 
     /* Free streams */

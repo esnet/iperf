@@ -394,17 +394,12 @@ iperf_handle_message_client(struct iperf_test *test)
                 i_errno = IECTRLREAD;
                 return -1;
             }
-	    i_errno = ntohl(err);
+            i_errno = -ntohl(err); // Error value negation indicates this is a Server's error
             if (Nread(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp) < 0) {
                 i_errno = IECTRLREAD;
                 return -1;
             }
             errno = ntohl(err);
-            if (errno > 0) {    
-                iperf_err(test, "SERVER ERROR - %s, errno: %s", iperf_strerror(i_errno), strerror(errno));
-            } else {
-                iperf_err(test, "SERVER ERROR - %s", iperf_strerror(i_errno));
-            }
             return -1;
         default:
             i_errno = IEMESSAGE;
@@ -609,6 +604,7 @@ iperf_run_client(struct iperf_test * test)
     int64_t timeout_us;
     int64_t rcv_timeout_us;
     int i_errno_save;
+    int errno_save;
 
     if (NULL == test)
     {
@@ -882,6 +878,7 @@ iperf_run_client(struct iperf_test * test)
   cleanup_and_fail:
     /* Cancel all outstanding threads */
     i_errno_save = i_errno;
+    errno_save = errno;
     SLIST_FOREACH(sp, &test->streams, streams) {
         if (sp->done) {
             continue;
@@ -911,6 +908,7 @@ iperf_run_client(struct iperf_test * test)
         iperf_printf(test, "All threads stopped\n");
     }
     i_errno = i_errno_save;
+    errno = errno_save;
 
     iperf_client_end(test);
     if (test->json_output) {

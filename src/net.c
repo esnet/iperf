@@ -418,8 +418,7 @@ Nrecv(int fd, char *buf, size_t count, int prot, int sock_opt)
     register size_t nleft = count;
     struct iperf_time ftimeout = { 0, 0 };
 
-    fd_set rfdset;
-    struct timeval timeout = { nread_read_timeout, 0 };
+    struct pollfd pfd;
 
     /*
      * fd might not be ready for reading on entry. Check for this
@@ -429,12 +428,13 @@ Nrecv(int fd, char *buf, size_t count, int prot, int sock_opt)
      * currently considering whether it might make sense to support a
      * codepath that bypasses this check, for situations where we
      * already know that fd has data on it (for example if we'd gotten
-     * to here as the result of a select() call.
+     * to here as the result of a poll() call.
      */
     {
-        FD_ZERO(&rfdset);
-        FD_SET(fd, &rfdset);
-        r = select(fd + 1, &rfdset, NULL, NULL, &timeout);
+        memset(&pfd, 0, sizeof(pfd));
+        pfd.fd = fd;
+        pfd.events = POLLIN;
+        r = poll(&pfd, 1, nread_read_timeout * SEC_TO_mS);
         if (r < 0) {
             return NET_HARDERROR;
         }
@@ -490,9 +490,10 @@ Nrecv(int fd, char *buf, size_t count, int prot, int sock_opt)
                 break;
             }
 
-            FD_ZERO(&rfdset);
-            FD_SET(fd, &rfdset);
-            r = select(fd + 1, &rfdset, NULL, NULL, &timeout);
+            memset(&pfd, 0, sizeof(pfd));
+            pfd.fd = fd;
+            pfd.events = POLLIN;
+            r = poll(&pfd, 1, nread_read_timeout * SEC_TO_mS);            
             if (r < 0) {
                 return NET_HARDERROR;
             }
@@ -504,18 +505,18 @@ Nrecv(int fd, char *buf, size_t count, int prot, int sock_opt)
     return count - nleft;
 }
 
-/********************************************************************/
-/* Nreads 'count' bytes from a socket - but without using select()   */
-/********************************************************************/
+/*****************************************************************************/
+/* Nreads 'count' bytes from a socket - but without using select() or poll() */
+/*****************************************************************************/
 int
 Nread_no_select(int fd, char *buf, size_t count, int prot)
 {
     return Nrecv_no_select(fd, buf, count, prot, 0);
 }
 
-/********************************************************************/
-/* Nrecv reads 'count' bytes from a socket - but without using select()   */
-/********************************************************************/
+/**********************************************************************************/
+/* Nrecv reads 'count' bytes from a socket - but without using select() or poll() */
+/*********************************************************************************/
 int
 Nrecv_no_select(int fd, char *buf, size_t count, int prot, int sock_opt)
 {

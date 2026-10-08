@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/select.h>
+#include <poll.h>
 #include <sys/uio.h>
 #include <arpa/inet.h>
 #include <signal.h>
@@ -428,8 +429,6 @@ iperf_connect(struct iperf_test *test)
         iperf_err(NULL, "No test\n");
         return -1;
     }
-    FD_ZERO(&test->read_set);
-    FD_ZERO(&test->write_set);
 
     make_cookie(test->cookie);
 
@@ -468,9 +467,6 @@ iperf_connect(struct iperf_test *test)
         i_errno = IESENDCOOKIE;
         return -1;
     }
-
-    FD_SET(test->ctrl_sck, &test->read_set);
-    if (test->ctrl_sck > test->max_fd) test->max_fd = test->ctrl_sck;
 
     len = sizeof(opt);
     if (getsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_MAXSEG, &opt, &len) < 0) {
@@ -597,16 +593,15 @@ iperf_run_client(struct iperf_test * test)
 {
     int startup;
     int result = 0;
-    fd_set read_set, write_set;
+    struct pollfd pfds[MAX_FDS];
     struct iperf_time now;
-    struct timeval* timeout = NULL;
+    struct timeval* next_timeout = NULL;
     struct iperf_stream *sp;
     struct iperf_time last_receive_time;
     struct iperf_time diff_time;
-    struct timeval used_timeout;
     iperf_size_t last_receive_blocks;
     int64_t t_usecs;
-    int64_t timeout_us;
+    int64_t timeout_ms;
     int64_t rcv_timeout_us;
     int i_errno_save;
 
@@ -654,43 +649,34 @@ iperf_run_client(struct iperf_test * test)
 
     startup = 1;
     while (test->state != IPERF_DONE) {
-	memcpy(&read_set, &test->read_set, sizeof(fd_set));
-	memcpy(&write_set, &test->write_set, sizeof(fd_set));
+        memset(&pfds, 0, sizeof(pfds));
+        pfds[FD_CNTL].fd = test->ctrl_sck;
+        pfds[FD_CNTL].events = POLLIN;
+        pfds[FD_LISTENER].fd = test->listener;
+        pfds[FD_LISTENER].events = POLLIN;
+        pfds[FD_PROT_LISTENER].fd = test->prot_listener;
+        pfds[FD_PROT_LISTENER].events = POLLIN;
 	iperf_time_now(&now);
-	timeout = tmr_timeout(&now);
+	next_timeout = tmr_timeout(&now);
+        timeout_ms = (next_timeout == NULL) ? -1 : ((next_timeout->tv_sec * SEC_TO_mS) + ((next_timeout->tv_usec + mS_TO_US - 1) / mS_TO_US));
 
         // In reverse active mode client ensures data is received
         if (test->state == TEST_RUNNING && rcv_timeout_us > 0) {
-            timeout_us = -1;
-            if (timeout != NULL) {
-                used_timeout.tv_sec = timeout->tv_sec;
-                used_timeout.tv_usec = timeout->tv_usec;
-                timeout_us = (timeout->tv_sec * SEC_TO_US) + timeout->tv_usec;
-            }
             /* Cap the maximum select timeout at 1 second */
-            if (timeout_us > SEC_TO_US) {
-                timeout_us = SEC_TO_US;
+            if (timeout_ms > SEC_TO_mS) {
+                timeout_ms = SEC_TO_mS;
             }
-            if (timeout_us < 0 || timeout_us > rcv_timeout_us) {
-                used_timeout.tv_sec = test->settings->rcv_timeout.secs;
-                used_timeout.tv_usec = test->settings->rcv_timeout.usecs;
+            if (timeout_ms < 0 || timeout_ms * mS_TO_US > rcv_timeout_us) {
+                timeout_ms = (rcv_timeout_us / mS_TO_US) + 1; // Add 1 ms to overcome flooring of integer division to 0
             }
-            timeout = &used_timeout;
         }
 
 #if (defined(__vxworks)) || (defined(__VXWORKS__))
-    if (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0) {
-        taskDelay (1);
+        if (timeout_ms == 0) {
+            taskDelay (1);
 	}
-
-    result = select(test->max_fd + 1,
-                    &read_set,
-                    (test->state == TEST_RUNNING && !test->reverse) ? &write_set : NULL,
-                    NULL,
-                    timeout);
-#else
-	result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
-#endif // __vxworks or __VXWORKS__
+#endif /* (defined(__vxworks)) || (defined(__VXWORKS__)) */
+        result = poll(pfds, MAX_FDS, timeout_ms);
 	if (result < 0 && errno != EINTR) {
   	    i_errno = IESELECT;
 	    goto cleanup_and_fail;
@@ -721,11 +707,11 @@ iperf_run_client(struct iperf_test * test)
         }
 
 	if (result > 0) {
-	    if (FD_ISSET(test->ctrl_sck, &read_set)) {
+            if (pfds[FD_CNTL].revents & POLLIN) {
  	        if (iperf_handle_message_client(test) < 0) {
 		    goto cleanup_and_fail;
 		}
-		FD_CLR(test->ctrl_sck, &read_set);
+
 	    }
 	}
 

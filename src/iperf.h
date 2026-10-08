@@ -80,7 +80,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #endif // __IPERF_API_H
 
 #if (defined(__vxworks)) || (defined(__VXWORKS__))
-typedef unsigned int uint
+typedef unsigned int uint;
 #endif // __vxworks or __VXWORKS__
 
 struct iperf_sctp_info
@@ -375,10 +375,6 @@ struct iperf_test
     int       mptcp;				/* -m, --mptcp */
 
     char     *json_output_string; /* rendered JSON output if json_output is set */
-    /* Select related parameters */
-    int       max_fd;
-    fd_set    read_set;                         /* set of read sockets */
-    fd_set    write_set;                        /* set of write sockets */
 
     /* Interval related members */
     int       omitting;
@@ -396,6 +392,7 @@ struct iperf_test
     double remote_cpu_util[3];                     /* cpu utilization for the remote host/client - total, user, system */
 
     int       num_streams;                      /* total streams in the test (-P) */
+    int       server_max_num_streams;           /* maximum number of streams the server supports */
 
     atomic_iperf_size_t bytes_sent;
     atomic_iperf_size_t blocks_sent;
@@ -473,7 +470,12 @@ struct iperf_test
 #define MAX_OMIT_TIME 600
 #define MAX_BURST 1000
 #define MAX_MSS (32 * 1024 - 1)
-#define MAX_STREAMS 128
+
+#define MAX_STREAMS (32 * 1024)
+#define FD_CNTL 0
+#define FD_LISTENER 1
+#define FD_PROT_LISTENER 2
+#define MAX_FDS 3 /* control socket, listener, and prot-listener */
 
 #define TIMESTAMP_FORMAT "%c "
 

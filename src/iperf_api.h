@@ -107,6 +107,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define OPT_JSON_STREAM_FULL_OUTPUT 33
 #define OPT_SERVER_MAX_DURATION 34
 #define OPT_GSRO 35
+#define OPT_CTRL_TIMEOUT 36
 
 /* states */
 #define TEST_START 1
@@ -508,6 +509,7 @@ enum {
     IESETCNTLKACOUNT = 158,    // Unable to set/get socket keepalive TCP number of retries (TCP_KEEPCNT) option
     IEPTHREADSIGMASK=159,      // Unable to initialize sub thread signal mask (check perror)
     IESERVERTESTDURATIONEXPIRED = 160, // Server test duration expired
+    IECTRLTIMEOUT = 161,       // Invalid control connection read timeout (--ctrl-timeout)
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

@@ -3767,7 +3767,7 @@ iperf_reset_test(struct iperf_test *test)
     test->state = 0;
 
     test->ctrl_sck = -1;
-    test->listener = -1;
+    /* A persistent server reuses its listener for the next test. */
     test->prot_listener = -1;
 
     test->bytes_sent = 0;

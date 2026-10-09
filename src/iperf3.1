@@ -81,7 +81,7 @@ average bitrate over that interval.
 Note that the values for each measurement interval are taken from the
 point of view of the endpoint process emitting that output (in other
 words, the output on the client shows the measurement interval data for
-the client.
+the client).
 .PP
 At the end of the test is a set of statistics that shows (at
 least as much as possible) a summary of the test as seen by both the
@@ -97,10 +97,10 @@ Either the client or the server can produce its output in a JSON
 structure, useful for integration with other programs, by passing it
 the -J flag.
 Normally the contents of the JSON structure are only completely known
-after the test has finished, no JSON output will be emitted until the
+after the test has finished, so no JSON output will be emitted until the
 end of the test.
-By enabling line-delimited JSON multiple objects will be emitted to
-provide a real-time parsable JSON output.
+By enabling line-delimited JSON with --json-stream, multiple objects will be
+emitted to provide a real-time parsable JSON output.
 .PP
 iperf3 has a (overly) large set of command-line options that can be
 used to set the parameters of a test.

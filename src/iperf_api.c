@@ -3006,7 +3006,7 @@ get_results(struct iperf_test *test)
     int retransmits;
     struct iperf_stream *sp;
 
-    j = JSON_read(test->ctrl_sck, 0);
+    j = JSON_read(test->ctrl_sck, MAX_RESULTS_JSON_STRING);
     if (j == NULL) {
 	i_errno = IERECVRESULTS;
         r = -1;

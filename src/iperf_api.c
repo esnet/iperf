@@ -3092,7 +3092,11 @@ get_results(struct iperf_test *test)
                                         sp->peer_omitted_packet_count = omitted_pcount;
                                     } else {
                                         sp->peer_omitted_packet_count = sp->omitted_packet_count;
-                                        if (sp->peer_omitted_packet_count > 0) {
+                                        if (test->omit == 0) {
+                                            /* Without an omit period, none of the peer's losses
+                                             * should be excluded from the reported results. */
+                                            sp->omitted_cnt_error = 0;
+                                        } else if (sp->peer_omitted_packet_count > 0) {
                                             /* -1 indicates unknown error count since it includes the omitted count */
                                             sp->omitted_cnt_error = (sp->cnt_error > 0) ? -1 : 0;
                                         } else {

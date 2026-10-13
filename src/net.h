@@ -45,6 +45,7 @@ int getsockdomain(int sock);
 int parse_qos(const char *tos);
 int bind_to_device(int s, int domain, const char *bind_dev);
 void iperf_sync_close_socket(int sock);
+void set_ctrl_read_timeout(int seconds);
 
 #define NET_SOFTERROR -1
 #define NET_HARDERROR -2

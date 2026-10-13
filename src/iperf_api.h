@@ -44,8 +44,8 @@ extern "C" { /* open extern "C" */
 #ifdef HAVE_STDATOMIC_H
 #include <stdatomic.h>
 #else
-#warning "No <stdatomic.h> available"
-typedef u_int64_t atomic_uint_fast64_t;
+#warning "No <stdatomic.h> available."
+typedef uint64_t atomic_uint_fast64_t;
 #endif // HAVE_STDATOMIC_H
 
 struct iperf_test;

@@ -46,6 +46,25 @@
 #include "net.h"
 #include "timer.h"
 
+/*
+ * A thread that has already exited, but has not been joined yet, can no
+ * longer be cancelled or waited for.
+ *
+ * glibc reports this as ESRCH from pthread_cancel().  On Android, though,
+ * bionic does not declare pthread_cancel() at all; iperf3 instead uses its
+ * own pthread_kill()-based replacement (src/iperf_pthread.c), and on
+ * bionic that pthread_kill() call reports a thread that has already exited
+ * with EINVAL rather than ESRCH.  In either case there is nothing left to
+ * cancel or join, so EINVAL is treated like ESRCH.  EINVAL is not a
+ * possible return value from these calls on other platforms, so it is
+ * only tolerated when building against bionic.
+ */
+#if defined(__BIONIC__)
+#define IPERF_THREAD_GONE(rc)   ((rc) == 0 || (rc) == ESRCH || (rc) == EINVAL)
+#else
+#define IPERF_THREAD_GONE(rc)   ((rc) == 0 || (rc) == ESRCH)
+#endif
+
 #if defined(HAVE_TCP_CONGESTION)
 #if !defined(TCP_CA_NAME_MAX)
 #define TCP_CA_NAME_MAX 16
@@ -802,14 +821,14 @@ iperf_run_client(struct iperf_test * test)
                         sp->done = 1;
                         if (sp->thread_created == 1) {
                             rc = pthread_cancel(sp->thr);
-                            if (rc != 0 && rc != ESRCH) {
+                            if (!IPERF_THREAD_GONE(rc)) {
                                 i_errno = IEPTHREADCANCEL;
                                 errno = rc;
                                 iperf_err(test, "sender cancel in pthread_cancel - %s", iperf_strerror(i_errno));
                                 goto cleanup_and_fail;
                             }
                             rc = pthread_join(sp->thr, NULL);
-                            if (rc != 0 && rc != ESRCH) {
+                            if (!IPERF_THREAD_GONE(rc)) {
                                 i_errno = IEPTHREADJOIN;
                                 errno = rc;
                                 iperf_err(test, "sender cancel in pthread_join - %s", iperf_strerror(i_errno));
@@ -843,14 +862,14 @@ iperf_run_client(struct iperf_test * test)
             sp->done = 1;
             if (sp->thread_created == 1) {
                 rc = pthread_cancel(sp->thr);
-                if (rc != 0 && rc != ESRCH) {
+                if (!IPERF_THREAD_GONE(rc)) {
                     i_errno = IEPTHREADCANCEL;
                     errno = rc;
                     iperf_err(test, "receiver cancel in pthread_cancel - %s", iperf_strerror(i_errno));
                     goto cleanup_and_fail;
                 }
                 rc = pthread_join(sp->thr, NULL);
-                if (rc != 0 && rc != ESRCH) {
+                if (!IPERF_THREAD_GONE(rc)) {
                     i_errno = IEPTHREADJOIN;
                     errno = rc;
                     iperf_err(test, "receiver cancel in pthread_join - %s", iperf_strerror(i_errno));
@@ -890,13 +909,13 @@ iperf_run_client(struct iperf_test * test)
         int rc;
         if (sp->thread_created == 1) {
             rc = pthread_cancel(sp->thr);
-            if (rc != 0 && rc != ESRCH) {
+            if (!IPERF_THREAD_GONE(rc)) {
                 i_errno = IEPTHREADCANCEL;
                 errno = rc;
                 iperf_err(test, "cleanup_and_fail in pthread_cancel - %s", iperf_strerror(i_errno));
             }
             rc = pthread_join(sp->thr, NULL); 
-            if (rc != 0 && rc != ESRCH) {
+            if (!IPERF_THREAD_GONE(rc)) {
                 i_errno = IEPTHREADJOIN;
                 errno = rc;
                 iperf_err(test, "cleanup_and_fail in pthread_join - %s", iperf_strerror(i_errno));

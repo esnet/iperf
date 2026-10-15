@@ -197,7 +197,6 @@ iperf_tcp_listen(struct iperf_test *test)
 	char portstr[6];
 	int proto = 0;
 
-        FD_CLR(s, &test->read_set);
         close(s);
 
         snprintf(portstr, 6, "%d", test->server_port);

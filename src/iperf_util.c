@@ -45,6 +45,7 @@
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <poll.h>
 
 #include "cjson.h"
 #include "iperf.h"
@@ -139,18 +140,14 @@ make_cookie(const char *cookie)
 int
 is_closed(int fd)
 {
-    struct timeval tv;
-    fd_set readset;
+    struct pollfd pfd;
 
-    FD_ZERO(&readset);
-    FD_SET(fd, &readset);
-    tv.tv_sec = 0;
-    tv.tv_usec = 0;
-
-    if (select(fd+1, &readset, NULL, NULL, &tv) < 0) {
-        if (errno == EBADF)
-            return 1;
+    pfd.fd = fd;
+    pfd.events = 0;
+    if (poll(&pfd, 1, 0) > 0 && (pfd.revents & POLLNVAL)) {
+        return 1;
     }
+    
     return 0;
 }
 

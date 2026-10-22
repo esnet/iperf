@@ -240,7 +240,7 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "[KMG] indicates options that support a K/M/G suffix for kilo-, mega-, or giga-\n"
 			   "\n"
 #ifdef PACKAGE_URL
-                           "iperf3 homepage at: " PACKAGE_URL "\n"
+                           "morsemicro-iperf3 homepage at: " PACKAGE_URL "\n"
 #endif /* PACKAGE_URL */
 #ifdef PACKAGE_BUGREPORT
                            "Report bugs to:     " PACKAGE_BUGREPORT "\n"
@@ -258,7 +258,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
   "-y, --reportstyle C      report as a Comma-Separated Values\n"
 #endif
 
-const char version[] = PACKAGE_STRING;
+/* Mark the Morse fork in --version, the verbose banner and the JSON "version" field */
+const char version[] = PACKAGE_STRING "-morsemicro";
 
 /* -------------------------------------------------------------------
  * settings

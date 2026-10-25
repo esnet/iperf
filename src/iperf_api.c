@@ -5560,6 +5560,10 @@ iperf_setaffinity(struct iperf_test *test, int affinity)
 #if defined(HAVE_SCHED_SETAFFINITY)
     cpu_set_t cpu_set;
 
+    if (affinity < 0 || affinity >= CPU_SETSIZE) {
+	i_errno = IEAFFINITY;
+        return -1;
+    }
     CPU_ZERO(&cpu_set);
     CPU_SET(affinity, &cpu_set);
     if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0) {
@@ -5570,6 +5574,10 @@ iperf_setaffinity(struct iperf_test *test, int affinity)
 #elif defined(HAVE_CPUSET_SETAFFINITY)
     cpuset_t cpumask;
 
+    if (affinity < 0 || affinity >= CPU_SETSIZE) {
+        i_errno = IEAFFINITY;
+        return -1;
+    }
     if(cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, -1,
                           sizeof(cpuset_t), &test->cpumask) != 0) {
         i_errno = IEAFFINITY;
@@ -5587,7 +5595,13 @@ iperf_setaffinity(struct iperf_test *test, int affinity)
     return 0;
 #elif defined(HAVE_SETPROCESSAFFINITYMASK)
 	HANDLE process = GetCurrentProcess();
-	DWORD_PTR processAffinityMask = 1 << affinity;
+	DWORD_PTR processAffinityMask;
+
+	if (affinity < 0 || affinity >= (int) (sizeof(DWORD_PTR) * 8)) {
+		i_errno = IEAFFINITY;
+		return -1;
+	}
+	processAffinityMask = (DWORD_PTR) 1 << affinity;
 
 	if (SetProcessAffinityMask(process, processAffinityMask) == 0) {
 		i_errno = IEAFFINITY;

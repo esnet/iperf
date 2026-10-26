@@ -34,6 +34,7 @@
 #include "iperf.h"
 #include "iperf_api.h"
 #if defined(HAVE_SSL)
+#include <openssl/crypto.h>
 #include "iperf_auth.h"
 #endif /* HAVE_SSL */
 
@@ -44,6 +45,7 @@
 
 #if defined(HAVE_SSL)
 int test_authtoken(const char *authUser, const char *authPassword, EVP_PKEY *pubkey, EVP_PKEY *privkey);
+int test_decrypt_rejects_bad_ciphertext(EVP_PKEY *privkey);
 
 int
 main(int argc, char **argv)
@@ -88,6 +90,10 @@ main(int argc, char **argv)
 
     /* authentication token tests */
     assert(test_authtoken("kilroy", "fubar", pubkey, privkey) == 0);
+
+    /* a token that is not valid ciphertext must be rejected, not reported
+       as a full-length plaintext */
+    assert(test_decrypt_rejects_bad_ciphertext(privkey) == 0);
 
     if (pubkey != NULL){
         EVP_PKEY_free(pubkey);
@@ -143,6 +149,28 @@ test_authtoken(const char *authUser, const char *authPassword, EVP_PKEY *pubkey,
 
     assert(now - decodeTime >= 0); /* time has to go forwards */
     assert(now - decodeTime <= 1); /* shouldn't take more than a second to run */
+
+    return 0;
+}
+
+int
+test_decrypt_rejects_bad_ciphertext(EVP_PKEY *privkey) {
+    int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedtext_len, EVP_PKEY *private_key, unsigned char **plaintext, int use_pkcs1_padding);
+
+    /* 256 bytes matches the modulus of the 2048-bit test key, so the input
+       passes the length check and reaches the RSA decryption, which then
+       fails because this is not real ciphertext. */
+    unsigned char bogus[256];
+    unsigned char *plaintext = NULL;
+    int len;
+
+    memset(bogus, 0x01, sizeof(bogus));
+    len = decrypt_rsa_message(bogus, (int) sizeof(bogus), privkey, &plaintext, 0);
+    if (plaintext != NULL) {
+        OPENSSL_free(plaintext);
+        plaintext = NULL;
+    }
+    assert(len <= 0);
 
     return 0;
 }

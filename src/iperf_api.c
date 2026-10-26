@@ -4952,7 +4952,7 @@ iperf_free_stream(struct iperf_stream *sp)
     struct iperf_interval_results *irp, *nirp;
 
     /* XXX: need to free interval list too! */
-    munmap(sp->buffer, sp->test->settings->blksize);
+    munmap(sp->buffer, sp->buffer_sz);
     if (sp->buffer_fd >= 0) {
         close(sp->buffer_fd);
         sp->buffer_fd = -1;
@@ -5045,6 +5045,7 @@ iperf_new_stream(struct iperf_test *test, int s, int sender)
         i_errno = IECREATESTREAM;
         goto err_exit_close_buffer;
     }
+    sp->buffer_sz = size;
     sp->pending_size = 0;
 
     /* Set socket */
@@ -5085,7 +5086,7 @@ err_exit_close_diskfile:
         close(sp->diskfile_fd);
     }
 err_exit_munmap_buffer:
-    munmap(sp->buffer, sp->test->settings->blksize);
+    munmap(sp->buffer, sp->buffer_sz);
 err_exit_close_buffer:
     close(sp->buffer_fd);
 err_exit_free_result:

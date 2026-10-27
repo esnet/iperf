@@ -33,6 +33,8 @@
 #include <unistd.h>
 #include <assert.h>
 #include <arpa/inet.h>
+#include <net/if.h>
+#include <netdb.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -520,6 +522,42 @@ iperf_udp_gro(struct iperf_test *test, int s)
 #endif
 
 /*
+ * iperf_udp_announce
+ *
+ * Like netannounce() but binds to the control connection's local address so
+ * the kernel has no source address to guess.  Falls back to wildcard if the
+ * address cannot be determined or bound.
+ */
+static int
+iperf_udp_announce(struct iperf_test *test)
+{
+    struct sockaddr_storage sa;
+    socklen_t salen = sizeof(sa);
+    /* Widest numeric form either family can produce: IPv6 plus a %scope
+     * suffix.  IPv4 and IPv4-mapped addresses are shorter and also fit. */
+    char host[INET6_ADDRSTRLEN + IF_NAMESIZE];
+    int s;
+
+    /* Skip if -B was given; that address is already the socket's source. */
+    if (test->bind_address == NULL && test->ctrl_sck >= 0 &&
+        getsockname(test->ctrl_sck, (struct sockaddr *) &sa, &salen) == 0 &&
+        getnameinfo((struct sockaddr *) &sa, salen, host, sizeof(host),
+                    NULL, 0, NI_NUMERICHOST) == 0) {
+        s = netannounce(test->settings->domain, Pudp, host, test->bind_dev,
+                        test->server_port);
+        if (s >= 0)
+            return s;
+        if (test->debug)
+            iperf_printf(test,
+                "iperf_udp_announce: bind to %s failed, "
+                "falling back to wildcard address\n", host);
+    }
+
+    return netannounce(test->settings->domain, Pudp, test->bind_address,
+                       test->bind_dev, test->server_port);
+}
+
+/*
  * iperf_udp_accept
  *
  * Accepts a new UDP "connection"
@@ -616,7 +654,7 @@ iperf_udp_accept(struct iperf_test *test)
      * Create a new "listening" socket to replace the one we were using before.
      */
     FD_CLR(test->prot_listener, &test->read_set); // No control messages from old listener
-    test->prot_listener = netannounce(test->settings->domain, Pudp, test->bind_address, test->bind_dev, test->server_port);
+    test->prot_listener = iperf_udp_announce(test);
     if (test->prot_listener < 0) {
         i_errno = IESTREAMLISTEN;
         return -1;
@@ -648,7 +686,7 @@ iperf_udp_listen(struct iperf_test *test)
 {
     int s;
 
-    if ((s = netannounce(test->settings->domain, Pudp, test->bind_address, test->bind_dev, test->server_port)) < 0) {
+    if ((s = iperf_udp_announce(test)) < 0) {
         i_errno = IESTREAMLISTEN;
         return -1;
     }

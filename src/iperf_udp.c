@@ -110,7 +110,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     }
 
     /* Only count bytes received while we're in the correct state. */
-    if (test->state == TEST_RUNNING) {
+    if (test->state == TEST_RUNNING || test->state == TEST_END) {
 
 	/*
 	 * For jitter computation below, it's important to know if this

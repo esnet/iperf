@@ -1,0 +1,118 @@
+/* src/iperf_config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to 1 if you have the `cpuset_setaffinity' function. */
+#cmakedefine HAVE_CPUSET_SETAFFINITY
+
+/* Have CPU affinity support. */
+#cmakedefine HAVE_CPU_AFFINITY
+
+/* Define to 1 if you have the `daemon' function. */
+#cmakedefine HAVE_DAEMON
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#cmakedefine HAVE_DLFCN_H
+
+/* Define to 1 if you have the <endian.h> header file. */
+#cmakedefine HAVE_ENDIAN_H
+
+/* Have IPv6 flowlabel support. */
+#cmakedefine HAVE_FLOWLABEL
+
+/* Define to 1 if you have the `getline' function. */
+#cmakedefine HAVE_GETLINE
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#cmakedefine HAVE_INTTYPES_H
+
+/* Define to 1 if you have the <memory.h> header file. */
+#cmakedefine HAVE_MEMORY_H
+
+/* Define to 1 if you have the <netinet/sctp.h> header file. */
+#cmakedefine HAVE_NETINET_SCTP_H
+
+/* Define to 1 if you have the <poll.h> header file. */
+#cmakedefine HAVE_POLL_H
+
+/* Define to 1 if you have the `sched_setaffinity' function. */
+#cmakedefine HAVE_SCHED_SETAFFINITY
+
+/* Have SCTP support. */
+#cmakedefine HAVE_SCTP
+
+/* Define to 1 if you have the `sendfile' function. */
+#cmakedefine HAVE_SENDFILE
+
+/* Define to 1 if you have the `SetProcessAffinityMask' function. */
+#cmakedefine HAVE_SETPROCESSAFFINITYMASK
+
+/* Have SO_MAX_PACING_RATE sockopt. */
+#cmakedefine HAVE_SO_MAX_PACING_RATE
+
+/* OpenSSL Is Available */
+#cmakedefine HAVE_SSL
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#cmakedefine HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#cmakedefine HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#cmakedefine HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#cmakedefine HAVE_STRING_H
+
+/* Define to 1 if the system has the type `struct sctp_assoc_value'. */
+#cmakedefine HAVE_STRUCT_SCTP_ASSOC_VALUE
+
+/* Define to 1 if you have the <sys/endian.h> header file. */
+#cmakedefine HAVE_SYS_ENDIAN_H
+
+/* Define to 1 if you have the <sys/socket.h> header file. */
+#cmakedefine HAVE_SYS_SOCKET_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#cmakedefine HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#cmakedefine HAVE_SYS_TYPES_H
+
+/* Have TCP_CONGESTION sockopt. */
+#cmakedefine HAVE_TCP_CONGESTION
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#cmakedefine HAVE_UNISTD_H
+
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
+#define LT_OBJDIR @LT_OBJDIR@
+
+/* Name of package */
+#define PACKAGE @PACKAGE@
+
+/* Define to the address where bug reports for this package should be sent. */
+#define PACKAGE_BUGREPORT "@PACKAGE_BUGREPORT@"
+
+/* Define to the full name of this package. */
+#define PACKAGE_NAME @PACKAGE_NAME@
+
+/* Define to the full name and version of this package. */
+#define PACKAGE_STRING "@PACKAGE_STRING@"
+
+/* Define to the one symbol short name of this package. */
+#define PACKAGE_TARNAME @PACKAGE_TARNAME@
+
+/* Define to the home page for this package. */
+#define PACKAGE_URL "@PACKAGE_URL@"
+
+/* Define to the version of this package. */
+#define PACKAGE_VERSION @PACKAGE_VERSION@
+
+/* Define to 1 if you have the ANSI C header files. */
+#cmakedefine STDC_HEADERS
+
+/* Version number of package */
+#define VERSION @VERSION@
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#cmakedefine const

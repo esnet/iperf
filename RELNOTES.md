@@ -4,6 +4,13 @@ iperf3 Release Notes
 iperf-3.22 2026-09-29
 ---------------------
 
+* Errata
+
+    * The vulnerability identifiers in the fixes for CVE-2026-101283
+      and CVE-2026-101276 were accidentally interchanged in the commit
+      messages. This affects commits d58ad3d and d08588a. Thanks to
+      @aschnell for calling this to our attention (#2085).
+
 * Security notes
 
     * Thanks to Claude and Ada Logics for finding and reporting two

@@ -3924,7 +3924,8 @@ iperf_stats_callback(struct iperf_test *test)
         iperf_time_diff(&temp.interval_start_time, &temp.interval_end_time, &temp_time);
         temp.interval_duration = iperf_time_in_secs(&temp_time);
 	if (test->protocol->id == Ptcp) {
-	    if ( has_tcpinfo()) {
+	    if (has_tcpinfo() &&
+		(test->sender_has_retransmits == 1 || test->debug)) {
 		save_tcpinfo(sp, &temp);
 		if (test->sender_has_retransmits == 1) {
 		    long total_retrans = get_total_retransmits(&temp);

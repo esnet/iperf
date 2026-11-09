@@ -3880,6 +3880,7 @@ iperf_reset_stats(struct iperf_test *test)
 		struct iperf_interval_results ir; /* temporary results structure */
 		save_tcpinfo(sp, &ir);
 		rp->stream_prev_total_retrans = get_total_retransmits(&ir);
+#if defined(HAVE_SCTP_H)
 	    } else if (test->protocol->id == Psctp) {
 		struct iperf_sctp_info sctp_info;
 		if (iperf_sctp_get_info(sp, &sctp_info) >= 0) {
@@ -3887,6 +3888,7 @@ iperf_reset_stats(struct iperf_test *test)
 		} else {
 		    rp->stream_prev_total_retrans = 0;
 		}
+#endif /* HAVE_SCTP_H */
 	    }
 	}
 	rp->stream_retrans = 0;

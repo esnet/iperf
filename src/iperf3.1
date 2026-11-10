@@ -524,6 +524,13 @@ This is a client-only option; the client communicates the GSO/GRO
 settings to the server automatically.
 This feature is disabled by default and must be explicitly enabled
 with this flag.
+.IP
+Note on jitter under GRO: the kernel coalesces datagrams and delivers
+them as a single event, so per-datagram arrival times are unavailable.
+The reported jitter is a batch-level approximation (one arrival
+timestamp per coalesced receive, with the last datagram's send time as
+representative), not a strict per-datagram wire measurement.  Packet
+loss and reordering are still accounted per datagram.
 .TP
 .BR --repeating-payload
 Use repeating pattern in payload, instead of random bytes.

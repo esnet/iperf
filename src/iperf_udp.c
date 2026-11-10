@@ -72,6 +72,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     int       buf_sz;
     char      *dgram_buf;
     char      *dgram_buf_end;
+    int       batch_have_segment = 0;
     const int min_pkt_size = sizeof(uint32_t) * 3; /* sec + usec + pcount (32-bit) */
 
 #if defined(HAVE_MSG_TRUNC)
@@ -129,6 +130,13 @@ iperf_udp_recv(struct iperf_stream *sp)
 	/* Unified loop: processes single packet when GRO off, multiple when GRO on */
 	dgram_buf = sp->buffer;
 	dgram_buf_end = sp->buffer + buf_sz;
+
+	/*
+	 * One arrival timestamp for the whole receive: under GRO the kernel
+	 * coalesces datagrams into a single event, so the batch has only one
+	 * meaningful arrival time (without GRO the batch is one datagram).
+	 */
+	iperf_time_now(&arrival_time);
 
 	while (buf_sz >= dgram_sz && dgram_buf + dgram_sz <= dgram_buf_end) {
 
@@ -207,22 +215,30 @@ iperf_udp_recv(struct iperf_stream *sp)
                     fprintf(stderr, "OUT OF ORDER - received packet %" PRIu64 " but expected sequence %" PRIu64 " on stream %d\n", pcount, sp->packet_count + 1, sp->socket);
 	    }
 
-            /*
-             * jitter measurement
-             *
-             * This computation is based on RFC 1889 (specifically
-             * sections 6.3.1 and A.8).
-             *
-             * Note that synchronized clocks are not required since
-             * the source packet delta times are known.  Also this
-             * computation does not require knowing the round-trip
-             * time.
-             */
-	    iperf_time_now(&arrival_time);
+	    /* sent_time now holds this segment's send time; after the loop it
+	     * holds the last segment's, used as the batch's representative. */
+	    batch_have_segment = 1;
+
+	    dgram_buf += dgram_sz;
+	    buf_sz -= dgram_sz;
+	}
+
+	/*
+	 * Jitter (RFC 1889, 6.3.1 and A.8) is updated once per receive, not once
+	 * per datagram. Segments in a GRO batch share one arrival time, so a
+	 * per-segment update would measure the sender's timestamp spacing, not
+	 * network jitter. We update once per batch with the last segment's send
+	 * time as representative, so GRO jitter is a batch-level approximation.
+	 * Non-GRO receives are a single datagram, so behavior is unchanged.
+	 *
+	 * Synchronized clocks are not required since the source packet delta
+	 * times are known.
+	 */
+	if (batch_have_segment) {
 	    iperf_time_diff(&arrival_time, &sent_time, &temp_time);
 	    transit = iperf_time_in_secs(&temp_time);
 
-            /* Hack to handle the first packet by initializing prev_transit. */
+	    /* Hack to handle the first packet by initializing prev_transit. */
 	    if (first_packet)
 		sp->prev_transit = transit;
 	    d = transit - sp->prev_transit;
@@ -231,9 +247,6 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    sp->prev_transit = transit;
 	    sp->jitter += (d - sp->jitter) / 16.0;
 	    first_packet = 0;
-
-	    dgram_buf += dgram_sz;
-	    buf_sz -= dgram_sz;
 	}
     }
     else {

@@ -192,6 +192,9 @@ iperf_strerror(int int_errno)
         case IENUMSTREAMS:
             snprintf(errstr, len, "invalid number of parallel streams (min = 1, max = %d)", MAX_STREAMS);
             break;
+        case IESERVERMAXNUMSTREAMS:
+            snprintf(errstr, len, "number of parallel streams exceeds server's maximum");
+            break;
         case IEBLOCKSIZE:
             snprintf(errstr, len, "block size too large (maximum = %d bytes)", MAX_BLOCKSIZE);
             break;

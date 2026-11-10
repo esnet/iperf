@@ -119,7 +119,7 @@ usage()
 void
 usage_long(FILE *f)
 {
-    fprintf(f, usage_longstr, DEFAULT_NO_MSG_RCVD_TIMEOUT, UDP_RATE / (1024*1024), DEFAULT_PACING_TIMER, DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE);
+    fprintf(f, usage_longstr, DEFAULT_SERVER_MAX_NUM_STREAMS, DEFAULT_NO_MSG_RCVD_TIMEOUT, UDP_RATE / (1024*1024), DEFAULT_PACING_TIMER, DURATION, DEFAULT_TCP_BLKSIZE / 1024, DEFAULT_UDP_BLKSIZE);
 }
 
 
@@ -1212,6 +1212,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     struct xbind_entry *xbe;
     double farg;
     int rcv_timeout_in = 0;
+    int num_streams_in = 0;
 
     blksize = 0;
     server_flag = client_flag = rate_flag = duration_flag = rcv_timeout_flag = snd_timeout_flag =0;
@@ -1415,12 +1416,11 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		client_flag = 1;
                 break;
             case 'P':
-                test->num_streams = atoi(optarg);
-                if (test->num_streams < 1 || test->num_streams > MAX_STREAMS) {
+                num_streams_in = atoi(optarg);
+                if (num_streams_in < 1 || num_streams_in > MAX_STREAMS) {
                     i_errno = IENUMSTREAMS;
                     return -1;
                 }
-		client_flag = 1;
                 break;
             case 'R':
                 if (test->bidirectional) {
@@ -1827,6 +1827,13 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     if (test->role == 's' && gsro_flag) {
         i_errno = IECLIENTONLY;
         return -1;
+    }
+    if (num_streams_in > 0) {
+        if (test->role == 'c') {
+            test->num_streams = num_streams_in;
+        } else {
+            test->server_max_num_streams = num_streams_in;
+        }
     }
 
     /* Show platform support warnings only after confirming we're in client mode */
@@ -2384,8 +2391,6 @@ iperf_exchange_parameters(struct iperf_test *test)
             return -1;
         }
 
-        FD_SET(s, &test->read_set);
-        test->max_fd = (s > test->max_fd) ? s : test->max_fd;
         test->prot_listener = s;
 
         // Send the control message to create streams and start the test
@@ -2627,8 +2632,8 @@ get_parameters(struct iperf_test *test)
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "nodelay", cJSON_True)) != NULL)
 	    test->no_delay = 1;
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "parallel", cJSON_Number)) != NULL){
-            if (j_p->valueint < 1  || j_p->valueint > MAX_STREAMS) {
-                i_errno = IENUMSTREAMS;
+            if (j_p->valueint < 1  || j_p->valueint > test->server_max_num_streams) {
+                i_errno = IESERVERMAXNUMSTREAMS;
                 r = -1;
             } else {
 	        test->num_streams = j_p->valueint;
@@ -3463,6 +3468,7 @@ iperf_defaults(struct iperf_test *testp)
 
     testp->stats_interval = testp->reporter_interval = 1;
     testp->num_streams = 1;
+    testp->server_max_num_streams = DEFAULT_SERVER_MAX_NUM_STREAMS;
 
     testp->settings->domain = AF_UNSPEC;
     testp->settings->unit_format = 'a';
@@ -3788,9 +3794,6 @@ iperf_reset_test(struct iperf_test *test)
     test->reverse = 0;
     test->bidirectional = 0;
     test->no_delay = 0;
-
-    FD_ZERO(&test->read_set);
-    FD_ZERO(&test->write_set);
 
     test->num_streams = 1;
     test->settings->socket_bufsize = 0;

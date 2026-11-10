@@ -69,6 +69,7 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define DEFAULT_PACING_TIMER 1000
 #define DEFAULT_NO_MSG_RCVD_TIMEOUT 120000
 #define MIN_NO_MSG_RCVD_TIMEOUT 100
+#define DEFAULT_SERVER_MAX_NUM_STREAMS 128
 
 #define WARN_STR_LEN 128
 
@@ -447,6 +448,7 @@ enum {
     IEUNITVAL = 38,         // Invalid unit value or suffix
     IERVRSONLYSKIPRXCOPY = 39, // This OS does not support --skip-rx-copy
     IEBADDSCP = 40,         // Bad DSCP value
+    IESERVERMAXNUMSTREAMS = 41, // Client's number of streams exceeds server's maximum number of streams
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

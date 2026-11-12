@@ -1382,12 +1382,19 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		}
 		server_flag = 1;
 	        break;
-            case 't':
-                test->duration = atoi(optarg);
-                if (test->duration > MAX_TIME || test->duration < 0) {
+            case 't': {
+                char *endptr;
+                long duration;
+
+                errno = 0;
+                duration = strtol(optarg, &endptr, 10);
+                if (errno != 0 || endptr == optarg || *endptr != '\0' ||
+                    duration < 0 || duration > MAX_DURATION) {
                     i_errno = IEDURATION;
                     return -1;
                 }
+                test->duration = (int) duration;
+            }
 		duration_flag = 1;
 		client_flag = 1;
                 break;
@@ -2604,7 +2611,7 @@ get_parameters(struct iperf_test *test)
             }
         }
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "time", cJSON_Number)) != NULL){
-            if (j_p->valueint < 0  || j_p->valueint > MAX_TIME) {
+            if (j_p->valueint < 0  || j_p->valueint > MAX_DURATION) {
                 i_errno = IEDURATION;
                 r = -1;
             } else {

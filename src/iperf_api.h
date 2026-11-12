@@ -412,7 +412,7 @@ enum {
     IENOROLE = 2,           // Iperf must either be a client (-c) or server (-s)
     IESERVERONLY = 3,       // This option is server only
     IECLIENTONLY = 4,       // This option is client only
-    IEDURATION = 5,         // test duration too long. Maximum value = %dMAX_TIME
+    IEDURATION = 5,         // test duration too long. Maximum value = %dMAX_DURATION
     IENUMSTREAMS = 6,       // Number of parallel streams too large. Maximum value = %dMAX_STREAMS
     IEBLOCKSIZE = 7,        // Block size too large. Maximum value = %dMAX_BLOCKSIZE
     IEBUFSIZE = 8,          // Socket buffer size too large. Maximum value = %dMAX_TCP_BUFFER

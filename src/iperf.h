@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #ifndef _GNU_SOURCE
@@ -473,6 +474,10 @@ struct iperf_test
 #define MIN_INTERVAL 0.1
 #define MAX_INTERVAL 60.0
 #define MAX_TIME 86400
+/* Half of INT_MAX so (duration + omit + grace period) cannot overflow an int
+ * INT_MAX / 2 is about 34 years. 
+ */
+#define MAX_DURATION (INT_MAX / 2)
 #define MAX_OMIT_TIME 600
 #define MAX_BURST 1000
 #define MAX_MSS (32 * 1024 - 1)

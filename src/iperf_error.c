@@ -187,7 +187,7 @@ iperf_strerror(int int_errno)
             snprintf(errstr, len, "some option you are trying to set is client only");
             break;
         case IEDURATION:
-            snprintf(errstr, len, "test duration valid values are 0 to %d seconds", MAX_TIME);
+            snprintf(errstr, len, "test duration valid values are 0 to %d seconds", MAX_DURATION);
             break;
         case IENUMSTREAMS:
             snprintf(errstr, len, "invalid number of parallel streams (min = 1, max = %d)", MAX_STREAMS);

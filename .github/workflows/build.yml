@@ -78,7 +78,7 @@ jobs:
         #./configure CFLAGS="-g -O0 -fsanitize=address" LDFLAGS="-fsanitize=address" && make && make check
         ./configure CFLAGS="-g -O0 -fsanitize=address" LDFLAGS="-fsanitize=address" && make
         ./src/t_api
-        cat src/t_api.log
+        #cat src/t_api.log
     - name: test commands
       run: |
         timeout 300 src/iperf3 -s &

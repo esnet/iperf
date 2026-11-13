@@ -291,11 +291,15 @@ int encrypt_rsa_message(const char *plaintext, EVP_PKEY *public_key, unsigned ch
         padding = RSA_PKCS1_PADDING;
     }
 #if OPENSSL_VERSION_MAJOR >= 3
+    int ret;
     EVP_PKEY_encrypt_init(ctx);
     EVP_PKEY_CTX_set_rsa_padding(ctx, padding);
 
-    EVP_PKEY_encrypt(ctx, *encryptedtext, &encryptedtext_len, rsa_buffer, rsa_buffer_len);
+    ret = EVP_PKEY_encrypt(ctx, *encryptedtext, &encryptedtext_len, rsa_buffer, rsa_buffer_len);
     EVP_PKEY_CTX_free(ctx);
+    if (ret <= 0) {
+        encryptedtext_len = 0;
+    }
 #else
     int encrypt_ret = RSA_public_encrypt(rsa_buffer_len, rsa_buffer, *encryptedtext, rsa, padding);
     encryptedtext_len = encrypt_ret < 0 ? 0 : (size_t) encrypt_ret;
@@ -364,6 +368,9 @@ int decrypt_rsa_message(const unsigned char *encryptedtext, const int encryptedt
     }
     ret = EVP_PKEY_decrypt(ctx, *plaintext, &plaintext_len, rsa_buffer, rsa_buffer_len);
     EVP_PKEY_CTX_free(ctx);
+    if (ret <= 0) {
+        plaintext_len = 0;
+    }
 #else
     int decrypt_ret = RSA_private_decrypt(rsa_buffer_len, rsa_buffer, *plaintext, rsa, padding);
     plaintext_len = decrypt_ret < 0 ? 0 : (size_t) decrypt_ret;

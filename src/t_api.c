@@ -44,6 +44,7 @@ int test_iperf_set_test_bind_port(struct iperf_test *test)
     port = iperf_get_test_bind_port(test);
     iperf_set_test_bind_port(test, 5202);
     port = iperf_get_test_bind_port(test);
+    printf("port should be 5202: %i\n", port);
     assert(port == 5202);
     return 0;
 }
@@ -53,6 +54,7 @@ int test_iperf_set_mss(struct iperf_test *test)
     int mss = iperf_get_test_mss(test);
     iperf_set_test_mss(test, 535);
     mss = iperf_get_test_mss(test);
+    printf("mss should be 535: %i\n", mss);
     assert(mss == 535);
     return 0;
 }
@@ -68,13 +70,16 @@ main(int argc, char **argv)
     assert(strcmp(ver, IPERF_VERSION) == 0);
 
     test = iperf_new_test();
+    printf("test should NOT be NULL\n");
     assert(test != NULL);
+    printf("test is NOT NULL\n");
 
     iperf_defaults(test);
 
     sint = 10;
     iperf_set_test_connect_timeout(test, sint);
     gint = iperf_get_test_connect_timeout(test);
+    printf("sint == gint, %i == %i\n", sint, gint);
     assert(sint == gint);
 
     int ret;
@@ -82,7 +87,8 @@ main(int argc, char **argv)
 
     ret += test_iperf_set_mss(test);
 
-    if (ret < 0)
+    printf("ret should be 0: %i\n", ret);
+    if (ret != 0)
     {
         return -1;
     }

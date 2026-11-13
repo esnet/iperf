@@ -62,7 +62,10 @@ jobs:
         pkill iperf3
         ./auth_test.sh
   build-test-sanitizer-address:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ubuntu-22.04, ubuntu-22.04-arm]
+    runs-on: ${{ matrix.os }}
     steps:
     - run: echo "Running address sanitzer"
     - name: Checkout Repo

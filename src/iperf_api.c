@@ -3906,11 +3906,16 @@ iperf_stats_callback(struct iperf_test *test)
     temp.rttvar = 0;
     temp.pmtu = 0;
     SLIST_FOREACH(sp, &test->streams, streams) {
+        iperf_size_t bytes_sent, bytes_received;
+
         rp = sp->result;
-	temp.bytes_transferred = sp->sender ? rp->bytes_sent_this_interval : rp->bytes_received_this_interval;
+        /* Sample and reset together so concurrent updates are not lost. */
+        bytes_sent = atomic_exchange(&rp->bytes_sent_this_interval, 0);
+        bytes_received = atomic_exchange(&rp->bytes_received_this_interval, 0);
+        temp.bytes_transferred = sp->sender ? bytes_sent : bytes_received;
 
         // Total bytes transferred this interval
-	total_interval_bytes_transferred += rp->bytes_sent_this_interval + rp->bytes_received_this_interval;
+        total_interval_bytes_transferred += bytes_sent + bytes_received;
 
 	irp = TAILQ_LAST(&rp->interval_results, irlisthead);
         /* result->end_time contains timestamp of previous interval */
@@ -4005,7 +4010,6 @@ iperf_stats_callback(struct iperf_test *test)
 #endif /* HAVE_SCTP_H */
 
         add_to_interval_list(rp, &temp);
-        rp->bytes_sent_this_interval = rp->bytes_received_this_interval = 0;
     }
 
     /* Verify that total server's throughput is not above specified limit */

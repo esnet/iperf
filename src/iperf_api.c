@@ -1406,14 +1406,20 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 // NOTE: blocks is unsigned, can't be less than 0
 		client_flag = 1;
                 break;
-            case 'l':
-                blksize = unit_atoi(optarg);
+            case 'l': {
+                iperf_size_t size = unit_atoi(optarg);
                 if (i_errno != 0) {
                     return -1;
                 }
-                // NOTE: blksize is unsigned, can't be less than 0
+                // Check the range here, before it gets truncated to an int
+                if (size > MAX_BLOCKSIZE) {
+                    i_errno = IEBLOCKSIZE;
+                    return -1;
+                }
+                blksize = (int) size;
 		client_flag = 1;
                 break;
+            }
             case 'P':
                 test->num_streams = atoi(optarg);
                 if (test->num_streams < 1 || test->num_streams > MAX_STREAMS) {

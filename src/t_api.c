@@ -84,9 +84,10 @@ main(int argc, char **argv)
 
     iperf_free_test(test);
 
-    if (ret < 0)
+    if (ret != 0)
     {
         return -1;
     }
+
     return 0;
 }

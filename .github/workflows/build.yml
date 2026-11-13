@@ -5,6 +5,7 @@ on:
   push:
     branches:
         - master
+        - 3.22.x
   pull_request:
     branches:
         - master

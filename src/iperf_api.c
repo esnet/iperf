@@ -1342,6 +1342,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 i_errno = IEUNIMP;
                 return -1;
 #endif /* linux */
+                break;
             case 'b':
 		slash = strchr(optarg, '/');
 		if (slash) {

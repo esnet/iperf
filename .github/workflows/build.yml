@@ -75,10 +75,7 @@ jobs:
         sudo apt-get -y update && sudo apt-get install -y build-essential
     - name: build
       run: |
-        #./configure CFLAGS="-g -O0 -fsanitize=address" LDFLAGS="-fsanitize=address" && make && make check
-        ./configure CFLAGS="-g -O0 -fsanitize=address" LDFLAGS="-fsanitize=address" && make
-        ./src/t_api
-        #cat src/t_api.log
+        ./configure CFLAGS="-g -O0 -fsanitize=address" LDFLAGS="-fsanitize=address" && make && make check
     - name: test commands
       run: |
         timeout 300 src/iperf3 -s &

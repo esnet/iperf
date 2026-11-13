@@ -87,10 +87,13 @@ main(int argc, char **argv)
 
     ret += test_iperf_set_mss(test);
 
+    iperf_free_test(test);
+
     printf("ret should be 0: %i\n", ret);
     if (ret != 0)
     {
         return -1;
     }
+
     return 0;
 }

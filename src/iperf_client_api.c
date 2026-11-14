@@ -321,6 +321,7 @@ create_client_omit_timer(struct iperf_test * test)
 int
 iperf_handle_message_client(struct iperf_test *test)
 {
+    signed char previous_state;
     int rval;
     int32_t err;
 
@@ -330,6 +331,8 @@ iperf_handle_message_client(struct iperf_test *test)
 	i_errno = IEINITTEST;
         return -1;
     }
+
+    previous_state = test->state;
 
     if (test->debug_level >= DEBUG_LEVEL_INFO) {
         iperf_printf(test, "Reading new State from the Server - current state is %d-%s\n", test->state, state_to_text(test->state));
@@ -401,6 +404,11 @@ iperf_handle_message_client(struct iperf_test *test)
 	     */
 	    signed char oldstate = test->state;
 	    cpu_util(test->cpu_util);
+	    /* Collect a final interval only for an active test. */
+	    if (previous_state == TEST_RUNNING) {
+		test->done = 1;
+		test->stats_callback(test);
+	    }
 	    test->state = DISPLAY_RESULTS;
 	    test->reporter_callback(test);
 	    test->state = oldstate;

@@ -16809,7 +16809,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-# Atomics
+# Atomic exchange is required for interval accounting.
        for ac_header in stdatomic.h
 do :
   ac_fn_c_check_header_compile "$LINENO" "stdatomic.h" "ac_cv_header_stdatomic_h" "$ac_includes_default"
@@ -16824,7 +16824,12 @@ printf %s "checking whether libatomic is required... " >&6; }
 int
 main (void)
 {
-atomic_uint_fast64_t i; i++;
+
+        static volatile atomic_uint_fast64_t counter;
+        atomic_init(&counter, 0);
+        counter++;
+        return atomic_exchange(&counter, 0) != 1;
+
   ;
   return 0;
 }
@@ -16842,7 +16847,12 @@ else case e in #(
 int
 main (void)
 {
-atomic_uint_fast64_t i; i++;
+
+        static volatile atomic_uint_fast64_t counter;
+        atomic_init(&counter, 0);
+        counter++;
+        return atomic_exchange(&counter, 0) != 1;
+
   ;
   return 0;
 }
@@ -16852,7 +16862,7 @@ then :
   { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf '%s\n' "yes" >&6; }
 else case e in #(
-  e) as_fn_error $? "failed to find working configuration with atomics" "$LINENO" 5
+  e) as_fn_error $? "required atomic operations are unavailable (tried with and without -latomic)" "$LINENO" 5
          ;;
 esac
 fi
@@ -16863,6 +16873,10 @@ esac
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
+else case e in #(
+  e) as_fn_error $? "stdatomic.h is required for atomic interval accounting" "$LINENO" 5
+ ;;
+esac
 fi
 
 done

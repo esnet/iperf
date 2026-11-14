@@ -103,19 +103,29 @@ CC="$PTHREAD_CC"
 CXX="$PTHREAD_CXX"
 ])
 
-# Atomics
+# Atomic exchange is required for interval accounting.
 AC_CHECK_HEADERS([stdatomic.h],
     [AC_MSG_CHECKING([whether libatomic is required])
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdatomic.h>]], [[atomic_uint_fast64_t i; i++;]])],
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdatomic.h>]], [[
+        static volatile atomic_uint_fast64_t counter;
+        atomic_init(&counter, 0);
+        counter++;
+        return atomic_exchange(&counter, 0) != 1;
+    ]])],
         [AC_MSG_RESULT([no])],
         [save_LIBS="$LIBS"
         LIBS="$LIBS -latomic"
-        AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdatomic.h>]], [[atomic_uint_fast64_t i; i++;]])],
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdatomic.h>]], [[
+        static volatile atomic_uint_fast64_t counter;
+        atomic_init(&counter, 0);
+        counter++;
+        return atomic_exchange(&counter, 0) != 1;
+    ]])],
             [AC_MSG_RESULT([yes])],
-            [AC_MSG_ERROR([failed to find working configuration with atomics])]
+            [AC_MSG_ERROR([required atomic operations are unavailable (tried with and without -latomic)])]
         )]
     )],
-    []
+    [AC_MSG_ERROR([stdatomic.h is required for atomic interval accounting])]
 )
 
 # Check for poll.h (it's in POSIX so everyone should have it?)

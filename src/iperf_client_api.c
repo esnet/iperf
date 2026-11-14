@@ -628,6 +628,7 @@ iperf_run_client(struct iperf_test * test)
     int64_t timeout_us;
     int64_t rcv_timeout_us;
     int i_errno_save;
+    int errno_save;
 
     if (NULL == test)
     {
@@ -901,6 +902,7 @@ iperf_run_client(struct iperf_test * test)
   cleanup_and_fail:
     /* Cancel all outstanding threads */
     i_errno_save = i_errno;
+    errno_save = errno;
     SLIST_FOREACH(sp, &test->streams, streams) {
         if (sp->done) {
             continue;
@@ -930,12 +932,19 @@ iperf_run_client(struct iperf_test * test)
         iperf_printf(test, "All threads stopped\n");
     }
     i_errno = i_errno_save;
+    errno = errno_save;
 
     iperf_client_end(test);
+    /* Reporting and socket cleanup must not replace the original error. */
+    i_errno = i_errno_save;
+    errno = errno_save;
     if (test->json_output) {
         cJSON_AddStringToObject(test->json_top, "error", iperf_strerror(i_errno));
         iperf_json_finish(test);
     }
     iflush(test);
+    /* Output callbacks and flushing can also change the error values. */
+    i_errno = i_errno_save;
+    errno = errno_save;
     return -1;
 }

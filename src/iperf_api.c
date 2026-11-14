@@ -3960,7 +3960,13 @@ iperf_stats_callback(struct iperf_test *test)
 		}
 	    }
 	} else {
-	    if (irp == NULL) {
+	    if (test->protocol->id == Pudp && test->omit > 0 &&
+		!temp.omitted && (irp == NULL || irp->omitted)) {
+		/* Start the first measured interval at the omission boundary. */
+		temp.interval_packet_count = sp->packet_count - sp->omitted_packet_count;
+		temp.interval_outoforder_packets = sp->outoforder_packets - sp->omitted_outoforder_packets;
+		temp.interval_cnt_error = sp->cnt_error - sp->omitted_cnt_error;
+	    } else if (irp == NULL) {
 		temp.interval_packet_count = sp->packet_count;
 		temp.interval_outoforder_packets = sp->outoforder_packets;
 		temp.interval_cnt_error = sp->cnt_error;

@@ -3960,19 +3960,20 @@ iperf_stats_callback(struct iperf_test *test)
 		}
 	    }
 	} else {
-	    if (irp == NULL) {
-		temp.interval_packet_count = sp->packet_count;
-		temp.interval_outoforder_packets = sp->outoforder_packets;
-		temp.interval_cnt_error = sp->cnt_error;
-	    } else {
-		temp.interval_packet_count = sp->packet_count - irp->packet_count;
-		temp.interval_outoforder_packets = sp->outoforder_packets - irp->outoforder_packets;
-		temp.interval_cnt_error = sp->cnt_error - irp->cnt_error;
-	    }
+	    /* Use each snapshot for both the interval and its next baseline. */
 	    temp.packet_count = sp->packet_count;
-	    temp.jitter = sp->jitter;
 	    temp.outoforder_packets = sp->outoforder_packets;
 	    temp.cnt_error = sp->cnt_error;
+	    if (irp == NULL) {
+		temp.interval_packet_count = temp.packet_count;
+		temp.interval_outoforder_packets = temp.outoforder_packets;
+		temp.interval_cnt_error = temp.cnt_error;
+	    } else {
+		temp.interval_packet_count = temp.packet_count - irp->packet_count;
+		temp.interval_outoforder_packets = temp.outoforder_packets - irp->outoforder_packets;
+		temp.interval_cnt_error = temp.cnt_error - irp->cnt_error;
+	    }
+	    temp.jitter = sp->jitter;
 	}
 
 #if defined(HAVE_SCTP_H)

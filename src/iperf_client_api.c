@@ -40,6 +40,7 @@
 
 #include "iperf.h"
 #include "iperf_api.h"
+#include "iperf_receive_budget.h"
 #include "iperf_util.h"
 #include "iperf_locale.h"
 #include "iperf_time.h"
@@ -104,15 +105,90 @@ iperf_client_worker_run(void *s) {
             }
         }
         else {
-            if (iperf_recv_mt(sp) < 0) {
+            int complete;
+            if (iperf_recv_mt_budget(sp, &complete) < 0)
                 goto cleanup_and_fail;
-            }
+            if (complete)
+                break;
         }
     }
     return NULL;
 
   cleanup_and_fail:
     return NULL;
+}
+
+/* The launch record owns the reference before the worker's first instruction. */
+struct receive_budget_start {
+    struct iperf_stream *stream;
+    struct iperf_receive_budget *budget;
+    sigset_t worker_mask;
+};
+
+static void
+receive_budget_worker_cleanup(void *arg)
+{
+    struct receive_budget_start *start = arg;
+    struct iperf_receive_budget *budget = start->budget;
+    free(start);
+    iperf_receive_budget_release(budget);
+}
+
+static void *
+receive_budget_worker_run(void *arg)
+{
+    struct receive_budget_start *start = arg;
+    sigset_t ignored;
+    /* Inherited signal mask protects startup until this cleanup is installed. */
+    pthread_cleanup_push(receive_budget_worker_cleanup, start);
+    if (iperf_receive_budget_restore_signals(&start->worker_mask) == 0)
+        iperf_client_worker_run(start->stream);
+    /* Android cancellation must not land between cleanup pop and ref release. */
+    iperf_receive_budget_block_signals(&ignored);
+    pthread_cleanup_pop(1);
+    return NULL;
+}
+
+static int
+start_receive_budget_worker(struct iperf_stream *sp, pthread_attr_t *attr)
+{
+    struct receive_budget_start *start;
+    sigset_t previous;
+    int rc;
+    if (iperf_receive_budget_block_signals(&previous) < 0)
+        return -1;
+    start = malloc(sizeof(*start));
+    if (!start) {
+        iperf_receive_budget_restore_signals(&previous);
+        return -1;
+    }
+    start->stream = sp;
+    start->budget = sp->test->receive_budget;
+    start->worker_mask = previous;
+    sigaddset(&start->worker_mask, SIGINT);
+    sigaddset(&start->worker_mask, SIGTERM);
+    sigaddset(&start->worker_mask, SIGHUP);
+    if (iperf_receive_budget_retain(start->budget) < 0) {
+        free(start);
+        iperf_receive_budget_restore_signals(&previous);
+        return -1;
+    }
+    sp->receive_budget = start->budget;
+    rc = pthread_create(&sp->thr, attr, receive_budget_worker_run, start);
+    if (rc != 0) {
+        sp->receive_budget = NULL;
+        iperf_receive_budget_release(start->budget);
+        free(start);
+    } else {
+        sp->thread_created = 1;
+    }
+    if (iperf_receive_budget_restore_signals(&previous) < 0)
+        return -1;
+    if (rc != 0) {
+        errno = rc;
+        return -1;
+    }
+    return 0;
 }
 
 int
@@ -275,9 +351,25 @@ client_omit_timer_proc(TimerClientData client_data, struct iperf_time *nowP)
 {
     struct iperf_test *test = client_data.p;
 
+    struct iperf_receive_budget_guard guard;
     test->omit_timer = NULL;
+    if (test->receive_budget) {
+        /* This native receiver reset cannot call sender tcpinfo or user code. */
+        if (test->mode != RECEIVER || test->sender_has_retransmits != 0 ||
+            iperf_receive_budget_reset_begin(test->receive_budget, &guard) < 0) {
+            test->receive_budget_error = 1;
+            return;
+        }
+        iperf_reset_stats(test);
+        if (iperf_receive_budget_reset_end(test->receive_budget, &guard) < 0) {
+            test->receive_budget_error = 1;
+            return;
+        }
+    } else {
+        test->omitting = 0;
+        iperf_reset_stats(test);
+    }
     test->omitting = 0;
-    iperf_reset_stats(test);
     if (test->verbose && !test->json_output && test->reporter_interval == 0)
         iperf_printf(test, "%s", report_omit_done);
 
@@ -628,6 +720,8 @@ iperf_run_client(struct iperf_test * test)
     int64_t timeout_us;
     int64_t rcv_timeout_us;
     int i_errno_save;
+    int budget_complete = 0;
+    int select_errno;
 
     if (NULL == test)
     {
@@ -697,6 +791,10 @@ iperf_run_client(struct iperf_test * test)
             timeout = &used_timeout;
         }
 
+        if (test->state == TEST_RUNNING)
+            timeout = (struct timeval *) iperf_receive_budget_timeout(test,
+                timeout, rcv_timeout_us, &used_timeout);
+
 #if (defined(__vxworks)) || (defined(__VXWORKS__))
     if (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0) {
         taskDelay (1);
@@ -710,10 +808,19 @@ iperf_run_client(struct iperf_test * test)
 #else
 	result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
 #endif // __vxworks or __VXWORKS__
+        select_errno = errno;
+        budget_complete = test->receive_budget ?
+            iperf_receive_budget_is_complete(test->receive_budget) : 0;
+        if (budget_complete < 0) {
+            i_errno = IEINITTEST;
+            goto cleanup_and_fail;
+        }
+        errno = select_errno;
 	if (result < 0 && errno != EINTR) {
   	    i_errno = IESELECT;
 	    goto cleanup_and_fail;
-        } else if (result == 0 && test->state == TEST_RUNNING && rcv_timeout_us > 0) {
+        } else if (result == 0 && test->state == TEST_RUNNING &&
+                   rcv_timeout_us > 0 && !budget_complete) {
             /*
              * If nothing was received in non-reverse running state
              * then probably something got stuck - either client,
@@ -725,8 +832,14 @@ iperf_run_client(struct iperf_test * test)
                 if (t_usecs > rcv_timeout_us) {
                     /* Idle timeout if no new blocks received */
                     if (test->blocks_received == last_receive_blocks) {
-                        i_errno = IENOMSG;
-                        goto cleanup_and_fail;
+                        /* Decide against a fresh budget observation at the idle
+                         * decision, not only the earlier post-select snapshot. */
+                        budget_complete = test->receive_budget ?
+                            iperf_receive_budget_is_complete(test->receive_budget) : 0;
+                        if (budget_complete <= 0) {
+                            i_errno = budget_complete < 0 ? IEINITTEST : IENOMSG;
+                            goto cleanup_and_fail;
+                        }
                     }
                 }
 
@@ -762,7 +875,8 @@ iperf_run_client(struct iperf_test * test)
                 }
 
                 SLIST_FOREACH(sp, &test->streams, streams) {
-                    if (pthread_create(&(sp->thr), &attr, &iperf_client_worker_run, sp) != 0) {
+                    if ((test->receive_budget ? start_receive_budget_worker(sp, &attr) :
+                        pthread_create(&(sp->thr), &attr, &iperf_client_worker_run, sp)) != 0) {
                         i_errno = IEPTHREADCREATE;
                         goto cleanup_and_fail;
                     }
@@ -784,6 +898,16 @@ iperf_run_client(struct iperf_test * test)
             /* Run the timers. */
             iperf_time_now(&now);
             tmr_run(&now);
+            if (test->receive_budget_error) {
+                i_errno = IEINITTEST;
+                goto cleanup_and_fail;
+            }
+            budget_complete = test->receive_budget ?
+                iperf_receive_budget_is_complete(test->receive_budget) : 0;
+            if (budget_complete < 0) {
+                i_errno = IEINITTEST;
+                goto cleanup_and_fail;
+            }
 
 	    /*
 	     * Is the test done yet?  We have to be out of omitting
@@ -795,10 +919,11 @@ iperf_run_client(struct iperf_test * test)
 	     */
 	    if ((!test->omitting) &&
 	        (test->done ||
-	         (test->settings->bytes != 0 && (test->bytes_sent >= test->settings->bytes ||
-						 test->bytes_received >= test->settings->bytes)) ||
-	         (test->settings->blocks != 0 && (test->blocks_sent >= test->settings->blocks ||
-						  test->blocks_received >= test->settings->blocks)))) {
+                 (test->receive_budget ? budget_complete :
+                  ((test->settings->bytes != 0 && (test->bytes_sent >= test->settings->bytes ||
+                                                  test->bytes_received >= test->settings->bytes)) ||
+                   (test->settings->blocks != 0 && (test->blocks_sent >= test->settings->blocks ||
+                                                   test->blocks_received >= test->settings->blocks)))))) {
 
                 /*
                  * Cancel the periodic timers.  As the timers are not re-set in this stage their expiration time

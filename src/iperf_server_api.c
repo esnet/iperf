@@ -238,6 +238,7 @@ iperf_accept(struct iperf_test *test)
 int
 iperf_handle_message_server(struct iperf_test *test)
 {
+    signed char previous_state = test->state;
     int rval;
     struct iperf_stream *sp;
 
@@ -293,6 +294,11 @@ iperf_handle_message_server(struct iperf_test *test)
 	    // ending summary statistics.
 	    signed char oldstate = test->state;
 	    cpu_util(test->cpu_util);
+	    /* Collect a final interval only for an active test. */
+	    if (previous_state == TEST_RUNNING) {
+		test->done = 1;
+		test->stats_callback(test);
+	    }
 	    test->state = DISPLAY_RESULTS;
 	    test->reporter_callback(test);
 	    test->state = oldstate;

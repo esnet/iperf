@@ -338,8 +338,8 @@ iperf_udp_send(struct iperf_stream *sp)
     }
 
     if (r <= 0) {
-        --sp->packet_count;     /* Don't count messages that no data was sent from them.
-                                 * Allows "resending" a massage with the same numbering */
+        /* Reuse every unsent datagram's sequence number on the next attempt. */
+        sp->packet_count -= cnt;
         if (r < 0) {
             if (r == NET_SOFTERROR && sp->test->debug_level >= DEBUG_LEVEL_INFO)
                 printf("UDP send failed on NET_SOFTERROR. errno=%s\n", strerror(errno));

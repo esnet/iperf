@@ -57,6 +57,29 @@ int test_iperf_set_mss(struct iperf_test *test)
     return 0;
 }
 
+int test_iperf_check_total_rate(void)
+{
+    struct iperf_test *test;
+    char limit[] = "1G/60";    /* modified in place by the option parser */
+    char *argv[] = { "iperf3", "-s", "-i", "0.1", "--server-bitrate-limit", limit, NULL };
+    int i, rc;
+
+    test = iperf_new_test();
+    assert(test != NULL);
+    iperf_defaults(test);
+    rc = iperf_parse_arguments(test, 6, argv);
+    assert(rc == 0);
+
+    /* 60 second average over 0.1 second stats periods */
+    assert(test->settings->bitrate_limit_stats_per_interval == 600);
+    for (i = 0; i < 1200; i++)
+        iperf_check_total_rate(test, 1000);
+    assert(test->bitrate_limit_exceeded == 0);
+
+    iperf_free_test(test);
+    return 0;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -81,6 +104,8 @@ main(int argc, char **argv)
     ret = test_iperf_set_test_bind_port(test);
 
     ret += test_iperf_set_mss(test);
+
+    ret += test_iperf_check_total_rate();
 
     iperf_free_test(test);
 

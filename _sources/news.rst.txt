@@ -1,6 +1,16 @@
 iperf3 Project News
 ===================
 
+2026-11-19:  iperf-3.22.1 released
+----------------------------------
+
+| GitHub Release:  https://github.com/esnet/iperf/releases/tag/3.22.1
+| URL:  https://downloads.es.net/pub/iperf/iperf-3.22.1.tar.gz
+| SHA256:  ``de018b5252e2a7068c89fac8b35a295d83334f2b7814aa9532a2a8107b04a4a9``
+
+iperf-3.22.1 fixes some build regressions and issues discovered after
+the release of iperf-3.22.
+
 2026-09-29:  iperf-3.22 released
 --------------------------------
 

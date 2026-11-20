@@ -181,7 +181,7 @@ iperf_udp_recv(struct iperf_stream *sp)
                     /* There's a gap so count that as a loss. */
 		    sp->cnt_error += (pcount - 1) - sp->packet_count;
                     if (test->debug_level >= DEBUG_LEVEL_INFO)
-                        fprintf(stderr, "LOST %" PRIu64 " PACKETS - received packet %" PRIu64 " but expected sequence %" PRIu64 " on stream %d\n", (pcount - sp->packet_count + 1), pcount, sp->packet_count + 1, sp->socket);
+                        fprintf(stderr, "LOST %" PRIu64 " PACKETS - received packet %" PRIu64 " but expected sequence %" PRIu64 " on stream %d\n", (pcount - 1) - sp->packet_count, pcount, sp->packet_count + 1, sp->socket);
 		}
                 /* Update the highest sequence number seen so far. */
 		sp->packet_count = pcount;

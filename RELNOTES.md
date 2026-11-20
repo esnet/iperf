@@ -1,8 +1,31 @@
 iperf3 Release Notes
 ====================
 
+iperf-3.22.1 2026-11-19
+-----------------------
+
+* Notable user-visible changes
+
+    * iperf3 once again builds with OpenSSL 1. This change fixes a
+      regression introduced in iperf-3.22 (#2088, PR #2083).
+
+    * The release notes for 3.22 now contain an errata item for an
+      error in CVE IDs (#2085, PR #2092).
+
+* Notable developer-visible changes
+
+    * iperf3's GitHub Actions now work with recent changes in the
+      GitHub infrastructure (PR #2106, PR #2109).
+
 iperf-3.22 2026-09-29
 ---------------------
+
+* Errata
+
+    * The vulnerability identifiers in the fixes for CVE-2026-101283
+      and CVE-2026-101276 were accidentally interchanged in the commit
+      messages. This affects commits d58ad3d and d08588a. Thanks to
+      @aschnell for calling this to our attention (#2085).
 
 * Security notes
 

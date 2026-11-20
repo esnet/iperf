@@ -2680,7 +2680,7 @@ get_parameters(struct iperf_test *test)
             }
         }
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "gso_bf_size", cJSON_Number)) != NULL){
-            if (j_p->valueint < 0){
+            if (j_p->valueint < 0 || j_p->valueint > GSO_BF_MAX_SIZE){
                 i_errno = IERECVPARAMS;
                 r = -1;
             } else {
@@ -2707,7 +2707,7 @@ get_parameters(struct iperf_test *test)
             }
         }
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "gro_bf_size", cJSON_Number)) != NULL){
-            if (j_p->valueint < 0){
+            if (j_p->valueint < 0 || j_p->valueint > GRO_BF_MAX_SIZE){
                 i_errno = IERECVPARAMS;
                 r = -1;
             } else {

@@ -129,6 +129,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	/* Unified loop: processes single packet when GRO off, multiple when GRO on */
 	dgram_buf = sp->buffer;
 	dgram_buf_end = sp->buffer + buf_sz;
+	iperf_time_now(&arrival_time);
 
 	while (buf_sz >= dgram_sz && dgram_buf + dgram_sz <= dgram_buf_end) {
 
@@ -218,7 +219,6 @@ iperf_udp_recv(struct iperf_stream *sp)
              * computation does not require knowing the round-trip
              * time.
              */
-	    iperf_time_now(&arrival_time);
 	    iperf_time_diff(&arrival_time, &sent_time, &temp_time);
 	    transit = iperf_time_in_secs(&temp_time);
 

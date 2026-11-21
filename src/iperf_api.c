@@ -5389,6 +5389,7 @@ iperf_create_pidfile(struct iperf_test *test)
 {
     if (test->pidfile) {
 	int fd;
+	int flags;
 	char buf[8];
 
 	/* See if the file already exists and we can read it. */
@@ -5427,9 +5428,15 @@ iperf_create_pidfile(struct iperf_test *test)
 
 	/*
 	 * File didn't exist, we couldn't read it, or it didn't correspond to
-	 * a running process.  Try to create it.
+	 * a running process.  Try to create it.  Don't follow a symlink
+	 * at the pidfile path, or a privileged iperf3 would truncate and
+	 * overwrite whatever file the link points to.
 	 */
-	fd = open(test->pidfile, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR|S_IWUSR);
+	flags = O_WRONLY | O_CREAT | O_TRUNC;
+#if defined(O_NOFOLLOW)
+	flags |= O_NOFOLLOW;
+#endif /* O_NOFOLLOW */
+	fd = open(test->pidfile, flags, S_IRUSR|S_IWUSR);
 	if (fd < 0) {
 	    return -1;
 	}

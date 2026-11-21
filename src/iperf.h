@@ -87,6 +87,7 @@ struct iperf_sctp_info
 {
     long rtt;
     long pmtu;
+    long retrans;
     uint32_t wnd;
     uint32_t cwnd;
 };

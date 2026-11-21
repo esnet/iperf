@@ -737,6 +737,7 @@ int
 iperf_sctp_get_info(struct iperf_stream *sp, struct iperf_sctp_info *sctp_info)
 {
 #if defined(HAVE_SCTP_H)
+    struct sctp_assoc_stats assoc_stats;
     struct sctp_status status;
     socklen_t len;
     sctp_assoc_t assoc_id;
@@ -760,6 +761,14 @@ iperf_sctp_get_info(struct iperf_stream *sp, struct iperf_sctp_info *sctp_info)
             sctp_info->rtt = status.sstat_primary.spinfo_srtt;
             sctp_info->pmtu = status.sstat_primary.spinfo_mtu;
             sctp_info->cwnd = status.sstat_primary.spinfo_cwnd;
+        }
+        len = sizeof(assoc_stats);
+        rc = sctp_opt_info(sp->socket, assoc_id, SCTP_GET_ASSOC_STATS, &assoc_stats, &len);
+        if (rc < 0) {
+            if (sp->test->debug_level >= DEBUG_LEVEL_ERROR)
+                iperf_err(sp->test, "sctp_opt_info get SCTP_GET_ASSOC_STATS for socket %d failed with errno %d - %s", sp->socket, errno, strerror(errno));
+        } else {
+            sctp_info->retrans = assoc_stats.sas_rtxchunks;
         }
     }
 

@@ -508,6 +508,7 @@ enum {
     IESETCNTLKACOUNT = 158,    // Unable to set/get socket keepalive TCP number of retries (TCP_KEEPCNT) option
     IEPTHREADSIGMASK=159,      // Unable to initialize sub thread signal mask (check perror)
     IESERVERTESTDURATIONEXPIRED = 160, // Server test duration expired
+    IESETSCTPDELAYEDSACK = 161, // Unable to set SCTP_DELAYED_SACK (check perror)
     /* Stream errors */
     IECREATESTREAM = 200,   // Unable to create a new stream (check herror/perror)
     IEINITSTREAM = 201,     // Unable to initialize stream (check herror/perror)

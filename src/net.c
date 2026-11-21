@@ -76,6 +76,22 @@ static int nread_read_timeout = 10;
 static int nread_overall_timeout = 30;
 
 /*
+ * Override the control-connection read timeouts (in seconds).  These govern
+ * how long Nrecv() will wait for control-socket data (state messages, cookie
+ * and results exchange) before giving up; they do not affect the bulk data
+ * path, which uses Nrecv_no_select().  A value <= 0 leaves the defaults.
+ */
+void
+set_ctrl_read_timeout(int seconds)
+{
+    if (seconds <= 0)
+        return;
+    nread_read_timeout = seconds;
+    if (nread_overall_timeout < seconds)
+        nread_overall_timeout = seconds;
+}
+
+/*
  * Declaration of gerror in iperf_error.c.  Most other files in iperf3 can get this
  * by including "iperf.h", but net.c lives "below" this layer.  Clearly the
  * presence of this declaration is a sign we need to revisit this layering.

@@ -7,11 +7,27 @@ ExecStart=/usr/bin/iperf3 -s
 Restart=on-failure
 DynamicUser=yes
 NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+# Requires system 257+
+# PrivateTmp=disconnected
 PrivateTmp=yes
+TemporaryFileSystem=/tmp/iperf3:mode=1777,size=512M,nosuid,nodev,noexec
+Environment=TMPDIR=/tmp/iperf3
+
 PrivateDevices=yes
+
+# Requires system 257+
+# PrivatePIDs=yes
+ProtectProc=invisible
+ProcSubset=pid
+
+PrivateIPC=yes
 ProtectSystem=strict
-ProtectHome=read-only
+ProtectHome=yes
 ProtectControlGroups=yes
+ProtectKernelLogs=yes
 ProtectKernelModules=yes
 ProtectKernelTunables=yes
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
@@ -20,6 +36,9 @@ RestrictRealtime=yes
 RestrictSUIDSGID=yes
 MemoryDenyWriteExecute=yes
 LockPersonality=yes
+NoExecPaths=/
+ExecPaths=/usr/bin/iperf3 /usr/lib
+InaccessiblePaths=-/dev/shm -/dev/mqueue -/dev/hugepages
 
 [Install]
 WantedBy=multi-user.target

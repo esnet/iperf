@@ -577,7 +577,7 @@ static int recv_msg_gro(int fd, char *buf, int len, int *gso_size)
 	msg.msg_controllen = sizeof(control);
 
 	*gso_size = -1;
-	ret = recvmsg(fd, &msg, MSG_DONTWAIT);
+	ret = recvmsg(fd, &msg, 0);
 
 	if (ret > 0) {
 		for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL; cmsg = CMSG_NXTHDR(&msg, cmsg)) {

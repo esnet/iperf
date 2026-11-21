@@ -459,6 +459,11 @@ struct iperf_test
 
 #define MAX_PARAMS_JSON_STRING 8 * 1024
 
+/* Bounds the final results-exchange JSON_read in get_results(). Generous
+ * enough for --get-server-output on a long, many-stream test, but far
+ * below what a corrupted or misread length prefix could claim. */
+#define MAX_RESULTS_JSON_STRING (64 * 1024 * 1024)
+
 /* constants for command line arg sanity checks */
 #define MB (1024 * 1024)
 #define MAX_TCP_BUFFER (512 * MB)

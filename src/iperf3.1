@@ -367,6 +367,9 @@ options are mutually exclusive.
 .TP
 .BR -n ", " --bytes " \fIn\fR[KMGT]"
 Set the number of bytes to transmit.
+See
+.B -O
+for quantity accounting in reverse TCP tests with a pre-test.
 The
 .BR
 -t , -n ", and" -k
@@ -374,6 +377,9 @@ options are mutually exclusive.
 .TP
 .BR -k ", " --blockcount " \fIn\fR[KMGT]"
 Set the number of blocks (packets) to transmit.
+See
+.B -O
+for quantity accounting in reverse TCP tests with a pre-test.
 The
 .BR
 -t , -n ", and" -k
@@ -483,6 +489,38 @@ Perform pre-test for
 .I n
 seconds and omit the pre-test statistics, to skip past the TCP slow-start
 period.
+.IP
+For TCP reverse tests (\fB-R\fR) on non-Android clients, when the omission
+period is positive,
+.B --bidir
+is not used, and
+.B -n
+or
+.B -k
+sets a quantity, the client applies that quantity to measured receive work
+accepted after the pre-test.
+Receives started during the pre-test do not count toward this quantity.
+In this mode,
+.B -k
+counts receive calls that return data.
+A partial receive counts as one call, so a receive call need not correspond
+to a block sent by the server.
+.IP
+A receive can return more bytes than needed to reach the limit, and receives
+already in flight can finish afterward, so the quantity is not an exact
+transfer cap.
+Reported totals can also include receives crossing the omission boundary.
+The server runs without a byte or block quantity limit until the client ends
+the test, so it may transmit more data than the client accepts as measured work.
+.IP
+Normal statistics and reporting timers retain their timing for completion
+checks.
+When neither timer is present (for example, with
+.BR "-i 0" ),
+the client caps its wait between completion checks at one second and honors
+a shorter receive timeout.
+This wait cap is not a completion deadline; reported duration can include
+the wait before completion is checked.
 .TP
 .BR -T ", " --title " \fIstr\fR"
 Prefix every output line with the string

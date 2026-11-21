@@ -75,6 +75,7 @@
 #include "net.h"
 #include "iperf.h"
 #include "iperf_api.h"
+#include "iperf_receive_budget.h"
 #include "iperf_tcp.h"
 #include "iperf_time.h"
 #include "iperf_udp.h"
@@ -2260,25 +2261,102 @@ iperf_send_mt(struct iperf_stream *sp)
 }
 
 int
+iperf_receive_budget_scope(const struct iperf_test *test)
+{
+#ifdef __ANDROID__
+    /* The signal-based pthread_cancel shim has different cleanup guarantees.
+     * Preserve existing Android behavior until that lifecycle is qualified. */
+    (void) test;
+    return 0;
+#else
+    return test->role == 'c' && test->protocol && test->protocol->id == Ptcp &&
+        test->reverse && !test->bidirectional && test->omit > 0 &&
+        (test->settings->bytes || test->settings->blocks);
+#endif
+}
+
+const struct timeval *
+iperf_receive_budget_timeout(const struct iperf_test *test,
+    const struct timeval *timer, int64_t receive_us, struct timeval *storage)
+{
+    int64_t wait_us = SEC_TO_US;
+    if (!iperf_receive_budget_scope(test) || test->stats_timer || test->reporter_timer)
+        return timer;
+    if (receive_us > 0 && receive_us < wait_us)
+        wait_us = receive_us;
+    if (timer && (timer->tv_sec < wait_us / SEC_TO_US ||
+        (timer->tv_sec == wait_us / SEC_TO_US &&
+         timer->tv_usec <= wait_us % SEC_TO_US)))
+        return timer;
+    storage->tv_sec = wait_us / SEC_TO_US;
+    storage->tv_usec = wait_us % SEC_TO_US;
+    return storage;
+}
+
+/* Detach before release; pending CLI signals can run only after ownership moves. */
+static void
+release_receive_budget(struct iperf_test *test)
+{
+    struct iperf_receive_budget *budget;
+    sigset_t previous;
+    if (!test->receive_budget)
+        return;
+    if (iperf_receive_budget_block_signals(&previous) < 0)
+        return; /* Uncertain teardown must not free an object still in use. */
+    budget = test->receive_budget;
+    test->receive_budget = NULL;
+    if (iperf_receive_budget_release(budget) == 0)
+        iperf_receive_budget_restore_signals(&previous);
+}
+
+int
+iperf_recv_mt_budget(struct iperf_stream *sp, int *complete)
+{
+    int r, admitted, exhausted = 0, saved_errno;
+    struct iperf_test *test = sp->test;
+    struct iperf_receive_budget *budget = sp->receive_budget;
+    struct iperf_receive_budget_token token;
+
+    if (complete)
+        *complete = 0;
+    if (budget) {
+        admitted = iperf_receive_budget_admit(budget, &token);
+        if (admitted <= 0) {
+            if (admitted < 0)
+                i_errno = IESTREAMREAD;
+            else if (complete)
+                *complete = 1;
+            return admitted;
+        }
+    }
+    r = sp->rcv(sp);
+    saved_errno = errno;
+    /* Keep cumulative idle activity visible before publishing completion. */
+    if (r > 0) {
+        test->bytes_received += r;
+        ++test->blocks_received;
+    }
+    if (budget) {
+        exhausted = iperf_receive_budget_finish(budget, &token, r);
+        if (exhausted < 0) {
+            i_errno = IESTREAMREAD;
+            return -1;
+        }
+    }
+    errno = saved_errno;
+    if (complete)
+        *complete = exhausted;
+    if (r < 0) {
+        i_errno = IESTREAMREAD;
+        return r;
+    }
+    return 0;
+}
+
+int
 iperf_recv_mt(struct iperf_stream *sp)
 {
-    int r;
-    struct iperf_test *test = sp->test;
-
-	    if ((r = sp->rcv(sp)) < 0) {
-		i_errno = IESTREAMREAD;
-		return r;
-	    }
-
-            /* Collect statistics only if receive did not timeout (e.g. `Nread()` may timeout).
-             * This is also important for `--rcv-timeout` to work properly.
-             */
-            if (r > 0) {
-	        test->bytes_received += r;
-	        ++test->blocks_received;
-            }
-
-    return 0;
+    return iperf_recv_mt_budget(sp, NULL);
 }
 
 int
@@ -2429,6 +2507,13 @@ send_parameters(struct iperf_test *test)
     int r = 0;
     cJSON *j;
 
+    /* Never advertise unlimited peer work without a local admission budget. */
+    if (iperf_receive_budget_scope(test) && !test->receive_budget &&
+        iperf_receive_budget_create(&test->receive_budget,
+            test->settings->bytes, test->settings->blocks) < 0) {
+        i_errno = IESENDPARAMS;
+        return -1;
+    }
     j = cJSON_CreateObject();
     if (j == NULL) {
 	i_errno = IESENDPARAMS;
@@ -2444,8 +2529,10 @@ send_parameters(struct iperf_test *test)
 	if (test->server_affinity != -1)
 	    cJSON_AddNumberToObject(j, "server_affinity", test->server_affinity);
 	cJSON_AddNumberToObject(j, "time", test->duration);
-        cJSON_AddNumberToObject(j, "num", test->settings->bytes);
-        cJSON_AddNumberToObject(j, "blockcount", test->settings->blocks);
+        cJSON_AddNumberToObject(j, "num",
+            iperf_receive_budget_scope(test) ? 0 : test->settings->bytes);
+        cJSON_AddNumberToObject(j, "blockcount",
+            iperf_receive_budget_scope(test) ? 0 : test->settings->blocks);
 	if (test->settings->mss)
 	    cJSON_AddNumberToObject(j, "MSS", test->settings->mss);
 	if (test->no_delay)
@@ -3576,6 +3663,8 @@ iperf_free_test(struct iperf_test *test)
     struct protocol *prot;
     struct iperf_stream *sp;
 
+    release_receive_budget(test);
+
     /* Free streams */
     while (!SLIST_EMPTY(&test->streams)) {
         sp = SLIST_FIRST(&test->streams);
@@ -3714,6 +3803,9 @@ iperf_reset_test(struct iperf_test *test)
 {
     struct iperf_stream *sp;
     int i;
+
+    release_receive_budget(test);
+    test->receive_budget_error = 0;
 
     /* Do not use errno & i_errno from previous test, for error cases that do not set them.
      * E.g. errno when server receive illegal parameter from the client, or

@@ -1,0 +1,5 @@
+[Unit]
+Description=Socket-Activated iperf3
+
+[Service]
+ExecStart=/usr/local/bin/iperf3 -s -1 -p %i --forceflush

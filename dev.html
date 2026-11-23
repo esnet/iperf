@@ -278,6 +278,10 @@ rolled up into the next minor release.</p>
 <section id="release-engineering-checklist">
 <h2>Release Engineering Checklist<a class="headerlink" href="#release-engineering-checklist" title="Link to this heading">¶</a></h2>
 <ol class="arabic">
+<li><p>(ESnet only) Create an epic on the IPERF3 board for the release
+engineering work. It should mention the version number. The epic
+has at least one task (and probably more), which is to execute the
+steps in this checklist.</p></li>
 <li><p>Start from a clean source tree (be sure that <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">status</span></code> emits
 no output). Also ensure up-to-date installs of <code class="docutils literal notranslate"><span class="pre">autoconf</span></code> and
 <code class="docutils literal notranslate"><span class="pre">automake</span></code>.</p></li>
@@ -324,9 +328,9 @@ the new version, such as bumping version numbers:</p>
 </pre></div>
 </div>
 </li>
-<li><p>Create a pull request for this branch (e.g. <code class="docutils literal notranslate"><span class="pre">releng-3.20</span></code>)</p></li>
-<li><p>Review and get approval for the pull request</p></li>
-<li><p>Merge pull request to <cite>master</cite> or other appropriate integration
+<li><p>Create a pull request for this branch (e.g. <code class="docutils literal notranslate"><span class="pre">releng-3.20</span></code>).</p></li>
+<li><p>Review and get approval for the pull request.</p></li>
+<li><p>Merge pull request to <code class="docutils literal notranslate"><span class="pre">master</span></code> or other appropriate integration
 branch.</p></li>
 <li><p>Create tag and tarfile.
 The result will be release artifacts that should be used for
@@ -338,8 +342,6 @@ checksum (e.g. <code class="docutils literal notranslate"><span class="pre">iper
 </pre></div>
 </div>
 </li>
-</ol>
-<ol class="arabic" start="6">
 <li><p>Stage the tarball (and a file containing the SHA256 hash) to the
 download site.  Currently this is located on <code class="docutils literal notranslate"><span class="pre">downloads.es.net</span></code>
 (accessed via <code class="docutils literal notranslate"><span class="pre">downloads-mgt.es.net</span></code> from the ESnet internal network)
@@ -388,16 +390,17 @@ registered email addresses.</p>
 <li><p><a class="reference external" href="mailto:perfsonar-user&#37;&#52;&#48;internet2&#46;edu">perfsonar-user<span>&#64;</span>internet2<span>&#46;</span>edu</a></p></li>
 <li><p><a class="reference external" href="mailto:perfsonar-developer&#37;&#52;&#48;internet2&#46;edu">perfsonar-developer<span>&#64;</span>internet2<span>&#46;</span>edu</a></p></li>
 </ul>
-<p>Note: Thunderbird sometimes mangles the PGP-signed release
+<p>Note for signed messages: Thunderbird sometimes mangles the PGP-signed release
 announcement so that it does not verify correctly.  This could be
 due to Thunderbird trying to wrap the length of extremely long
-lines (such as the SHA256 hash).  Apple Mail and mutt seem to
+lines (such as the SHA256 hash).  Apple Mail, mutt, and MailMate seem to
 handle this situation correctly.  Testing the release announcement
 sending process by sending a copy to oneself first and attempting
 to verify the signature is highly encouraged.</p>
 </li>
-<li><p>Announce the new release in the #iperf3 channel in ESnet Slack.</p></li>
-<li><p>Create and submit a Monday Ping entry for the new release.</p></li>
+<li><p>(ESnet only) Announce the new release in the #iperf3 channel in ESnet Slack.</p></li>
+<li><p>(ESnet only) Create and submit a Monday Ping entry for the new
+release. It should point to the GitHub Releases page.</p></li>
 <li><p>Update the iperf3 Project News section of the documentation site
 to announce the new release (see <code class="docutils literal notranslate"><span class="pre">docs/news.rst</span></code> and
 <code class="docutils literal notranslate"><span class="pre">docs/conf.py</span></code> in the source tree). Be sure to double-check version
@@ -427,12 +430,17 @@ post-release number (with a “+”) and regenerate:</p>
 </pre></div>
 </div>
 </li>
+<li><p>(ESnet only) Close tasks in the release engineering epic in Jira
+as appropriate, and close the epic.</p></li>
+<li><p>(ESnet only) Close the release.</p></li>
+<li><p>(ESnet only, optional) Announce release on other social media as
+appropriate.</p></li>
 </ol>
 </section>
 <section id="code-authors">
 <h2>Code Authors<a class="headerlink" href="#code-authors" title="Link to this heading">¶</a></h2>
 <p>The main authors of iperf3 are (in alphabetical order):  Jon Dugan,
-Seth Elliott, Bruce A. Mah, Jeff Poskanzer, Kaustubh Prabhu.
+Seth Elliott, Sarah Larsen, Bruce A. Mah, Jeff Poskanzer, Kaustubh Prabhu.
 Additional code contributions have come from (also in alphabetical
 order):  Mark Ashley, Aaron Brown, Aeneas Jaißle, Susant Sahani,
 Bruce Simpson, Brian Tierney.</p>

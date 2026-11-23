@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>iperf3 Development &#8212; iperf3 3.22.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/bootstrap-sphinx.css?v=4468db6d" />
+    <link rel="stylesheet" href="_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/esnet/esnet.css" type="text/css" />
+    <script src="_static/documentation_options.js?v=8848ca29"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/jquery-1.11.0.min.js"></script>
+    <script src="_static/js/jquery-fix.js"></script>
+    <script src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script src="_static/bootstrap-sphinx.js"></script>
+    <link rel="icon" href="_static/favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head><body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          iperf3</a>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Section <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="news.html">iperf3 Project News</a></li>
+<li class="toctree-l1"><a class="reference internal" href="obtaining.html">Obtaining iperf3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building iperf3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="invoking.html">Invoking iperf3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev.html">iperf3 Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">iperf3 FAQ</a></li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            <li class="divider-vertical"></li>
+            
+                <li><a href="genindex.html">Index</a></li>
+                <li><a href="https://www.es.net"><img src="_static/ESnet_2025_XX1B_2025_TILE_Orb_RGB_Color.png" height=20 width=20></a></li>
+            
+            <li><a href="https://github.com/esnet/iperf"><img src="_static/GitHub_Invertocat_Black.png" height="20" width="20"></a></li>
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
+<li><a class="reference internal" href="#">iperf3 Development</a><ul>
+<li><a class="reference internal" href="#mailing-lists">Mailing Lists</a></li>
+<li><a class="reference internal" href="#project-constituencies">Project Constituencies</a></li>
+<li><a class="reference internal" href="#bug-reports">Bug Reports</a></li>
+<li><a class="reference internal" href="#code-submissions">Code Submissions</a></li>
+<li><a class="reference internal" href="#known-issues">Known Issues</a></li>
+<li><a class="reference internal" href="#versioning">Versioning</a></li>
+<li><a class="reference internal" href="#release-engineering-checklist">Release Engineering Checklist</a></li>
+<li><a class="reference internal" href="#code-authors">Code Authors</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    <div class="col-md-9">
+      
+  <section id="iperf3-development">
+<h1>iperf3 Development<a class="headerlink" href="#iperf3-development" title="Link to this heading">¶</a></h1>
+<p>The iperf3 project is hosted on GitHub at:</p>
+<p><a class="reference external" href="https://github.com/esnet/iperf">https://github.com/esnet/iperf</a></p>
+<p>This site includes the source code repository, issue tracker, and
+discussion forums.</p>
+<section id="mailing-lists">
+<h2>Mailing Lists<a class="headerlink" href="#mailing-lists" title="Link to this heading">¶</a></h2>
+<p>The developer list for iperf3 is:  <a class="reference external" href="mailto:iperf-dev&#37;&#52;&#48;googlegroups&#46;com">iperf-dev<span>&#64;</span>googlegroups<span>&#46;</span>com</a>.
+Information on joining the mailing list can be found at:</p>
+<p><a class="reference external" href="https://groups.google.com/group/iperf-dev">https://groups.google.com/group/iperf-dev</a></p>
+</section>
+<section id="project-constituencies">
+<h2>Project Constituencies<a class="headerlink" href="#project-constituencies" title="Link to this heading">¶</a></h2>
+<p>iperf3 has several different audiences.  The development priorities
+for iperf3 are based around the needs of those various types of users,
+in roughly descending priority order.</p>
+<ol class="arabic simple">
+<li><p>perfSONAR: iperf3 was developed initially to serve as the bandwidth
+tester for the perfSONAR measurement suite
+(<a class="reference external" href="https://www.perfsonar.net">https://www.perfsonar.net</a>). This is considered the primary user
+base for iperf3 and requests from the developers of this project
+will generally get the highest priority.</p></li>
+<li><p>ESnet and R&amp;E Networking: iperf3 is often used as a standalone tool
+for testing within ESnet (<a class="reference external" href="https://www.es.net/">https://www.es.net/</a>) and other R&amp;E
+(Research and Education) networking environments. These settings
+are similar to those encountered in many networks using
+perfSONAR. They often include wide-area networks (sometimes with
+national or international scale) that have bitrates up to (and
+sometimes exceeding) 100Gbps speeds.</p></li>
+<li><p>The Internet community: iperf3 has been found to be useful by the
+Internet community at large.  Users in this community may have a
+wide range of networking needs and environments, which might
+include different speeds and types of networks (such as homelabs,
+residential broadband, corporate networks), operating systems
+(non-UNIX or embedded OSs). Catering to the desires of this
+community can be challenging, but might be undertaken if this can
+be done without compromising the needs of the first two
+communities.</p></li>
+</ol>
+</section>
+<section id="bug-reports">
+<h2>Bug Reports<a class="headerlink" href="#bug-reports" title="Link to this heading">¶</a></h2>
+<p>Before submitting a bug report, try checking out the latest version of
+the code, and confirm that it’s not already fixed. Also see the <a class="reference internal" href="faq.html"><span class="doc">iperf3 FAQ</span></a>.
+Then submit to the iperf3 issue tracker on GitHub:</p>
+<p><a class="reference external" href="https://github.com/esnet/iperf/issues">https://github.com/esnet/iperf/issues</a></p>
+<p>For reporting potential security issues, please contact the developers at
+<a class="reference external" href="mailto:iperf&#37;&#52;&#48;es&#46;net">iperf<span>&#64;</span>es<span>&#46;</span>net</a>.</p>
+<p><strong>Note:</strong> Issues submitted to the old iperf3 issue tracker on Google
+Code (or comments to existing issues on the Google Code issue tracker)
+will be ignored.</p>
+</section>
+<section id="code-submissions">
+<h2>Code Submissions<a class="headerlink" href="#code-submissions" title="Link to this heading">¶</a></h2>
+<p>Submissions of potential code changes can be made via
+GitHub’s Pull Request mechanism:</p>
+<p><a class="reference external" href="https://github.com/esnet/iperf/pulls">https://github.com/esnet/iperf/pulls</a></p>
+<p>The iperf3 development team is grateful for all contributions,
+particularly those that fix bugs or security issues.</p>
+<p>Please note that iperf3 is an extremely complicated program, primarily
+due to the large number of options it supports. (One of the primary
+developers has said repeatedly for years that there are “way too many
+options”.) These options often interact in various ways that might not
+be initially obvious to those unfamiliar with the iperf3 code base (or
+even those who have been reading it for years), so adding new features
+has in the past caused bugs due to unforeseen interactions wtih other
+bugs. The sheer number of combinations of options makes testing
+difficult for both humans and automated testing systems.</p>
+<p>In addition the developers need to be able to maintain any code
+submissions. This can be difficult when dealing with new features
+outside the maintainers’ experience.</p>
+<p>Finally every new feature comes at a cost (principally in terms of
+evaluating new code and later maintenance). The maintainers need to
+prioritize their limited time and effort to be able to support its
+main users (as detailed above, those are the perfSONAR community,
+ESnet, and R&amp;E networking). This means that unrelated requests from
+the community might not get consideration.</p>
+<p>As of this writing (late 2025), the developers are unlikely to add any
+major new features into the iperf3 codebase unless they’re known to be
+generally useful to the main audiences of this software. To those
+users who nevertheless want to add something to iperf3, please discuss
+your ideas with the iperf3 maintainers, preferably before starting
+work.</p>
+</section>
+<section id="known-issues">
+<h2>Known Issues<a class="headerlink" href="#known-issues" title="Link to this heading">¶</a></h2>
+<p>The following problems are notable known issues, which are probably of
+interest to a large fraction of users or have high impact for some
+users, and for which issues have already been filed in the issue
+tracker.  These issues are either open (indicating no solution
+currently exists) or closed with the notation that no further attempts
+to solve the problem are currently being made:</p>
+<ul class="simple">
+<li><p>When specifying the TCP buffer size using the <code class="docutils literal notranslate"><span class="pre">-w</span></code> flag on Linux,
+the Linux kernel automatically doubles the value passed in to
+compensate for overheads.  (This can be observed by using
+iperf3’s <code class="docutils literal notranslate"><span class="pre">--debug</span></code> flag.)  However, CWND does not actually ramp up
+to the doubled value, but only to about 75% of the doubled
+value.  Some part of this behavior is documented in the tcp(7)
+manual page.</p></li>
+<li><p>Although the <code class="docutils literal notranslate"><span class="pre">-w</span></code> flag is documented as setting the (TCP) window
+size, it is also used to set the socket buffer size.  This has been
+shown to be helpful with high-bitrate UDP tests.</p></li>
+<li><p>On some platforms (observed on at least one version of Ubuntu
+Linux), it might be necessary to invoke <code class="docutils literal notranslate"><span class="pre">ldconfig</span></code> manually after
+doing a <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">install</span></code> before the <code class="docutils literal notranslate"><span class="pre">iperf3</span></code> executable can find
+its shared library.</p></li>
+<li><p>The results printed on the server side at the end of a test do not
+correctly reflect the client-side measurements.  This is due to the
+ordering of computing and transferring results between the client
+and server.</p></li>
+<li><p>The server could have a very short measurement reporting interval at
+the end of a test (particularly a UDP test), containing few or no
+packets.  This issue is due to an artifact of timing between the
+client and server.</p></li>
+</ul>
+<p>There are, of course, many other open and closed issues in the issue
+tracker.</p>
+</section>
+<section id="versioning">
+<h2>Versioning<a class="headerlink" href="#versioning" title="Link to this heading">¶</a></h2>
+<p>iperf3 version numbers use (roughly) a <a class="reference external" href="https://semver.org/">Semantic Versioning</a> scheme, in which version numbers consist of
+three parts:  <em>MAJOR.MINOR.PATCH</em></p>
+<p>The developers increment the:</p>
+<ul class="simple">
+<li><p><em>MAJOR</em> version when making incompatible API changes,</p></li>
+<li><p><em>MINOR</em> version when adding functionality in a backwards-compatible manner, and</p></li>
+<li><p><em>PATCH</em> version when making backwards-compatible bug fixes.</p></li>
+</ul>
+<p>The iperf3 developers aim to produce two software releases per year,
+in April and October. These releases, indicated by a new minor version
+number, are essentially snapshots of the <cite>master</cite> codeline, and might
+contain new features or functionality.</p>
+<p>Between these releases, the developers might need to release patch
+releases to address major bugs or security vulnerabilities. These will
+generally be based on the most recent minor release and will increment
+the patch version number component. Typically they will only contain
+selected fixes cherry-picked from the <cite>master</cite> codeline, which will be
+rolled up into the next minor release.</p>
+</section>
+<section id="release-engineering-checklist">
+<h2>Release Engineering Checklist<a class="headerlink" href="#release-engineering-checklist" title="Link to this heading">¶</a></h2>
+<ol class="arabic">
+<li><p>(ESnet only) Create an epic on the IPERF3 board for the release
+engineering work. It should mention the version number. The epic
+has at least one task (and probably more), which is to execute the
+steps in this checklist.</p></li>
+<li><p>Start from a clean source tree (be sure that <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">status</span></code> emits
+no output). Also ensure up-to-date installs of <code class="docutils literal notranslate"><span class="pre">autoconf</span></code> and
+<code class="docutils literal notranslate"><span class="pre">automake</span></code>.</p></li>
+<li><p>From the tip of <code class="docutils literal notranslate"><span class="pre">master</span></code> (or other appropriate integration
+branch), create a branch for release engineering changes. This
+should probably be named something along the lines of
+<code class="docutils literal notranslate"><span class="pre">releng-3.20</span></code>. So:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">branch</span> <span class="n">releng</span><span class="o">-</span><span class="mf">3.20</span>     <span class="c1"># create short-lived branch</span>
+<span class="n">git</span> <span class="n">checkout</span> <span class="n">releng</span><span class="o">-</span><span class="mf">3.20</span>   <span class="c1"># check it out</span>
+</pre></div>
+</div>
+</li>
+<li><p>Ensure that <code class="docutils literal notranslate"><span class="pre">README.md</span></code> and <code class="docutils literal notranslate"><span class="pre">LICENSE</span></code> have correct copyright
+dates.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">vi</span> <span class="n">README</span><span class="o">.</span><span class="n">md</span>
+<span class="n">vi</span> <span class="n">LICENSE</span>
+</pre></div>
+</div>
+</li>
+<li><p>Update the <code class="docutils literal notranslate"><span class="pre">README.md</span></code> and <code class="docutils literal notranslate"><span class="pre">RELNOTES.md</span></code> files to be
+accurate.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">vi</span> <span class="n">RELNOTES</span><span class="o">.</span><span class="n">md</span>     <span class="c1"># update version number and release date</span>
+</pre></div>
+</div>
+</li>
+<li><p>Compose a release announcement.  Most of the release announcement
+can be written before tagging.  Usually the previous version’s
+announcement can be used as a starting point.</p></li>
+<li><p>Make the changes necessary to produce
+the new version, such as bumping version numbers:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">vi</span> <span class="n">configure</span><span class="o">.</span><span class="n">ac</span>    <span class="c1"># update version parameter in AC_INIT</span>
+                   <span class="c1"># (there should not be any &quot;+&quot; in artifacts)</span>
+<span class="n">vi</span> <span class="n">src</span><span class="o">/</span><span class="n">iperf3</span><span class="mf">.1</span>    <span class="c1"># update manpage revision date (only if needed)</span>
+<span class="n">vi</span> <span class="n">src</span><span class="o">/</span><span class="n">libiperf</span><span class="mf">.3</span>  <span class="c1"># update manpage revision date (only if needed)</span>
+<span class="n">git</span> <span class="n">commit</span> <span class="o">-</span><span class="n">a</span>      <span class="c1"># commit changes to the local repository only</span>
+                   <span class="c1"># (commit log should mention version number)</span>
+<span class="o">./</span><span class="n">bootstrap</span><span class="o">.</span><span class="n">sh</span>     <span class="c1"># regenerate configure script, etc.</span>
+                   <span class="c1"># do this on a platform with a recent</span>
+                   <span class="c1"># autotools/libtools, such as HomeBrew or</span>
+                   <span class="c1"># FreeBSD ports.</span>
+<span class="n">git</span> <span class="n">commit</span> <span class="o">-</span><span class="n">a</span>      <span class="c1"># commit changes to the local repository only</span>
+                   <span class="c1"># (commit can be simply &quot;Regen.&quot;)</span>
+<span class="n">git</span> <span class="n">push</span> <span class="o">--</span><span class="nb">set</span><span class="o">-</span><span class="n">upstream</span> <span class="n">origin</span> <span class="n">releng</span><span class="o">-</span><span class="mf">3.20</span>  <span class="c1"># Push branch for review</span>
+</pre></div>
+</div>
+</li>
+<li><p>Create a pull request for this branch (e.g. <code class="docutils literal notranslate"><span class="pre">releng-3.20</span></code>)</p></li>
+<li><p>Review and get approval for the pull request</p></li>
+<li><p>Merge pull request to <code class="docutils literal notranslate"><span class="pre">master</span></code> or other appropriate integration
+branch.</p></li>
+<li><p>Create tag and tarfile.
+The result will be release artifacts that should be used for
+pre-testing. One will be a compressed tarball
+(e.g. <code class="docutils literal notranslate"><span class="pre">iperf-3.20.tar.gz</span></code>) and the other will contain SHA256
+checksum (e.g. <code class="docutils literal notranslate"><span class="pre">iperf-3.20.tar.gz.sha256</span></code>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">make_release</span> <span class="n">tag</span> <span class="mf">3.20</span> <span class="c1"># this creates a tag in the local repo</span>
+<span class="o">./</span><span class="n">make_release</span> <span class="n">tar</span> <span class="mf">3.20</span> <span class="c1"># create tarball and compute SHA256 hash</span>
+</pre></div>
+</div>
+</li>
+<li><p>Stage the tarball (and a file containing the SHA256 hash) to the
+download site.  Currently this is located on <code class="docutils literal notranslate"><span class="pre">downloads.es.net</span></code>
+(accessed via <code class="docutils literal notranslate"><span class="pre">downloads-mgt.es.net</span></code> from the ESnet internal network)
+in the directory <code class="docutils literal notranslate"><span class="pre">/var/www/html/pub/iperf/</span></code>.</p></li>
+<li><p>From another host, test the link in the release announcement by
+downloading a fresh copy of the file and verifying the SHA256
+checksum.  Checking all other links in the release announcement is
+strongly recommended as well.</p>
+<p>The link to the tarball will be something of the form
+<code class="docutils literal notranslate"><span class="pre">https://downloads.es.net/pub/iperf/iperf-3.20.tar.gz</span></code>. If
+composing a release announcement using a HTML-aware editor, verify
+the link targets point to the correct artifacts.</p>
+</li>
+<li><p>Also verify (with file(1)) that the tarball is actually a gzipped
+tarball.</p></li>
+<li><p>Try downloading, compiling, and smoke-testing the results of the
+tarball on all supported platforms.</p></li>
+<li><p>Verify that the version string in <code class="docutils literal notranslate"><span class="pre">iperf3</span> <span class="pre">--version</span></code> matches the
+version number of the artifacts.</p></li>
+<li><p>(optional) PGP-sign the release announcement text using <code class="docutils literal notranslate"><span class="pre">gpg</span>
+<span class="pre">--clearsign</span></code>.  The signed announcement will be sent out in a
+subsequent emails, but could also be archived.  Decoupling the
+signing from emailing allows a signed release announcement to be
+resent via email or sent by other, non-email means.</p></li>
+<li><p>At this point, the release can and should be considered
+finalized.  To commit the release-engineering-related changes to
+GitHub and make them public, push them out thusly:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">push</span> <span class="o">--</span><span class="n">tags</span>     <span class="c1"># Push the new tag to the GitHub repo</span>
+</pre></div>
+</div>
+</li>
+<li><p>Update GitHub Releases with the current release notes. Start from:
+<code class="docutils literal notranslate"><span class="pre">https://github.com/esnet/iperf/releases/new</span></code>. Remember to
+properly select the tag from the dropdown menu. Check “Set as the
+latest release” and (optionally) “Create a discussion for this
+release”.</p></li>
+<li><p>Attach the tarball and the SHA256 file to the release.</p></li>
+<li><p>Send the release announcement to the following
+addresses.  Remember to turn off signing in the MUA, if
+applicable.  Remember to check the source address when posting to
+lists, as “closed” list will reject posting from all from
+registered email addresses.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="mailto:iperf-dev&#37;&#52;&#48;googlegroups&#46;com">iperf-dev<span>&#64;</span>googlegroups<span>&#46;</span>com</a></p></li>
+<li><p><a class="reference external" href="mailto:iperf-users&#37;&#52;&#48;lists&#46;sourceforge&#46;net">iperf-users<span>&#64;</span>lists<span>&#46;</span>sourceforge<span>&#46;</span>net</a></p></li>
+<li><p><a class="reference external" href="mailto:perfsonar-user&#37;&#52;&#48;internet2&#46;edu">perfsonar-user<span>&#64;</span>internet2<span>&#46;</span>edu</a></p></li>
+<li><p><a class="reference external" href="mailto:perfsonar-developer&#37;&#52;&#48;internet2&#46;edu">perfsonar-developer<span>&#64;</span>internet2<span>&#46;</span>edu</a></p></li>
+</ul>
+<p>Note: Thunderbird sometimes mangles the PGP-signed release
+announcement so that it does not verify correctly.  This could be
+due to Thunderbird trying to wrap the length of extremely long
+lines (such as the SHA256 hash).  Apple Mail and mutt seem to
+handle this situation correctly.  Testing the release announcement
+sending process by sending a copy to oneself first and attempting
+to verify the signature is highly encouraged.</p>
+</li>
+<li><p>(ESnet only) Announce the new release in the #iperf3 channel in ESnet Slack.</p></li>
+<li><p>(ESnet only) Create and submit a Monday Ping entry for the new
+release. It should point to the GitHub Releases page.</p></li>
+<li><p>Update the iperf3 Project News section of the documentation site
+to announce the new release (see <code class="docutils literal notranslate"><span class="pre">docs/news.rst</span></code> and
+<code class="docutils literal notranslate"><span class="pre">docs/conf.py</span></code> in the source tree). Be sure to double-check version
+numbers and copyright dates.</p></li>
+<li><p>If an update to the on-line manual page is needed, it can be
+generated with this sequence of commands and
+import the result into <code class="docutils literal notranslate"><span class="pre">invoking.rst</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">TERM</span><span class="o">=</span>
+<span class="n">export</span> <span class="n">TERM</span>
+<span class="n">nroff</span> <span class="o">-</span><span class="n">Tascii</span> <span class="o">-</span><span class="n">c</span> <span class="o">-</span><span class="n">man</span> <span class="n">src</span><span class="o">/</span><span class="n">iperf3</span><span class="mf">.1</span> <span class="o">|</span> <span class="n">ul</span> <span class="o">|</span> <span class="n">sed</span> <span class="s1">&#39;s/^/   /&#39;</span> <span class="o">&gt;</span> <span class="n">iperf3</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+</div>
+</li>
+<li><p>Commit documentation changes after viewing the rendered HTML, and
+deploy a new build of the documentation to GitHub Pages.</p></li>
+<li><p>Update the version number in <code class="docutils literal notranslate"><span class="pre">configure.ac</span></code> to some
+post-release number (with a “+”) and regenerate:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">vi</span> <span class="n">configure</span><span class="o">.</span><span class="n">ac</span>         <span class="c1"># update version in AC_INIT, add &quot;+&quot;</span>
+<span class="n">git</span> <span class="n">commit</span> <span class="n">configure</span><span class="o">.</span><span class="n">ac</span> <span class="c1"># commit changes to local repository</span>
+                        <span class="c1"># commit log should mention</span>
+                        <span class="c1"># &quot;post-release version bump&quot;</span>
+<span class="o">./</span><span class="n">bootstrap</span><span class="o">.</span><span class="n">sh</span>          <span class="c1"># regenerate configure script, etc.</span>
+<span class="n">git</span> <span class="n">commit</span> <span class="o">-</span><span class="n">a</span>           <span class="c1"># commit changes to local repository</span>
+                        <span class="c1"># (commit can be simply &quot;Regen.&quot;)</span>
+<span class="c1"># test</span>
+<span class="n">git</span> <span class="n">push</span>
+</pre></div>
+</div>
+</li>
+<li><p>(ESnet only) Close tasks in the release engineering epic in Jira
+as appropriate, and close the epic.</p></li>
+<li><p>(ESnet only) Close the release.</p></li>
+<li><p>(ESnet only, optional) Announce release on other social media as
+appropriate.</p></li>
+</ol>
+</section>
+<section id="code-authors">
+<h2>Code Authors<a class="headerlink" href="#code-authors" title="Link to this heading">¶</a></h2>
+<p>The main authors of iperf3 are (in alphabetical order):  Jon Dugan,
+Seth Elliott, Sarah Larsen, Bruce A. Mah, Jeff Poskanzer, Kaustubh Prabhu.
+Additional code contributions have come from (also in alphabetical
+order):  Mark Ashley, Aaron Brown, Aeneas Jaißle, Susant Sahani,
+Bruce Simpson, Brian Tierney.</p>
+<p>iperf3 contains some original code from iperf2.  The authors of iperf2
+are (in alphabetical order): Jon Dugan, John Estabrook, Jim Ferbuson,
+Andrew Gallatin, Mark Gates, Kevin Gibbs, Stephen Hemminger, Nathan
+Jones, Feng Qin, Gerrit Renker, Ajay Tirumala, Alex Warshavsky.</p>
+</section>
+</section>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-1">
+        <a href="https://www.es.net/"><img src="_static/ESnet_2025_001_2025_LogoShortName_RGB_Color.png" alt="[ESnet]"></a>
+      </div>
+      <div class="col-md-11">
+        <p class="pull-right">
+        <a href="#">Back to top</a>
+        
+        </p>
+        <p>
+            &copy; Copyright 2014-2026, ESnet.<br/>
+          Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 7.4.7.<br/>
+        </p>
+      </div>
+    </div>
+  </div>
+</footer>
+  </body>
+</html>

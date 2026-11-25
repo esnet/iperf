@@ -5438,6 +5438,12 @@ iperf_create_pidfile(struct iperf_test *test)
 #endif /* O_NOFOLLOW */
 	fd = open(test->pidfile, flags, S_IRUSR|S_IWUSR);
 	if (fd < 0) {
+	    /*
+	     * We never created the file, so don't let the exit path
+	     * unlink whatever is sitting at that pathname.
+	     */
+	    free(test->pidfile);
+	    test->pidfile = NULL;
 	    return -1;
 	}
 	snprintf(buf, sizeof(buf), "%d", getpid()); /* no trailing newline */

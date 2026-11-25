@@ -1342,6 +1342,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 i_errno = IEUNIMP;
                 return -1;
 #endif /* linux */
+                break;
             case 'b':
 		slash = strchr(optarg, '/');
 		if (slash) {
@@ -2807,9 +2808,9 @@ get_parameters(struct iperf_test *test)
             i_errno = IEBLOCKSIZE;
             return -1;
         }
+        // Check that UDP blksize > Min && < Max
         if (test->protocol->id == Pudp &&
-            (test->settings->blksize > 0 &&
-                (test->settings->blksize < MIN_UDP_BLOCKSIZE || test->settings->blksize > MAX_UDP_BLOCKSIZE))) {
+                (test->settings->blksize < MIN_UDP_BLOCKSIZE || test->settings->blksize > MAX_UDP_BLOCKSIZE)) {
             i_errno = IEUDPBLOCKSIZE;
             return -1;
         }
@@ -3355,6 +3356,12 @@ iperf_new_test()
     struct iperf_test *test;
     int rc;
 
+    /* Do not use errno & i_errno from previous (client) test, for error cases that do not set them.
+     * E.g. i_errno when using the library and preveusely the client receive illegal parameter from the server.
+     */
+    errno = 0;
+    i_errno = 0;
+
     test = (struct iperf_test *) malloc(sizeof(struct iperf_test));
     if (!test) {
         i_errno = IENEWTEST;
@@ -3491,7 +3498,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->json_callback = NULL;
 
 
-    memset(testp->cookie, 0, COOKIE_SIZE);
+    memset(testp->cookie, 0, COOKIE_SIZE + 1);
 
     testp->multisend = 10;	/* arbitrary */
 
@@ -3708,6 +3715,12 @@ iperf_reset_test(struct iperf_test *test)
     struct iperf_stream *sp;
     int i;
 
+    /* Do not use errno & i_errno from previous test, for error cases that do not set them.
+     * E.g. errno when server receive illegal parameter from the client, or
+     * i_errno when using the library and preveusely the client receive illegal parameter from the server.
+     */
+    errno = 0;
+    i_errno = 0;
     iperf_close_logfile(test);
 
     /* Free streams */
@@ -3815,7 +3828,7 @@ iperf_reset_test(struct iperf_test *test)
     }
 #endif /* HAVE_SSL */
 
-    memset(test->cookie, 0, COOKIE_SIZE);
+    memset(test->cookie, 0, COOKIE_SIZE + 1);
     test->multisend = 10;	/* arbitrary */
     test->udp_counters_64bit = 0;
     if (test->title) {
@@ -3825,6 +3838,10 @@ iperf_reset_test(struct iperf_test *test)
     if (test->extra_data) {
 	free(test->extra_data);
 	test->extra_data = NULL;
+    }
+    if (test->json_output_string) {
+	free(test->json_output_string);
+	test->json_output_string = NULL;
     }
 
     /* Free output line buffers, if any (on the server only) */
@@ -5548,6 +5565,10 @@ iperf_setaffinity(struct iperf_test *test, int affinity)
 #if defined(HAVE_SCHED_SETAFFINITY)
     cpu_set_t cpu_set;
 
+    if (affinity < 0 || affinity >= CPU_SETSIZE) {
+	i_errno = IEAFFINITY;
+        return -1;
+    }
     CPU_ZERO(&cpu_set);
     CPU_SET(affinity, &cpu_set);
     if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0) {
@@ -5558,6 +5579,10 @@ iperf_setaffinity(struct iperf_test *test, int affinity)
 #elif defined(HAVE_CPUSET_SETAFFINITY)
     cpuset_t cpumask;
 
+    if (affinity < 0 || affinity >= CPU_SETSIZE) {
+        i_errno = IEAFFINITY;
+        return -1;
+    }
     if(cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, -1,
                           sizeof(cpuset_t), &test->cpumask) != 0) {
         i_errno = IEAFFINITY;
@@ -5575,7 +5600,13 @@ iperf_setaffinity(struct iperf_test *test, int affinity)
     return 0;
 #elif defined(HAVE_SETPROCESSAFFINITYMASK)
 	HANDLE process = GetCurrentProcess();
-	DWORD_PTR processAffinityMask = 1 << affinity;
+	DWORD_PTR processAffinityMask;
+
+	if (affinity < 0 || affinity >= (int) (sizeof(DWORD_PTR) * 8)) {
+		i_errno = IEAFFINITY;
+		return -1;
+	}
+	processAffinityMask = (DWORD_PTR) 1 << affinity;
 
 	if (SetProcessAffinityMask(process, processAffinityMask) == 0) {
 		i_errno = IEAFFINITY;

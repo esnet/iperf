@@ -334,6 +334,16 @@ server_timer_proc(TimerClientData client_data, struct iperf_time *nowP)
             Nwrite(test->ctrl_sck, (char*) &err, sizeof(err), Ptcp);
         };
     }
+    /* Cancel and join per-stream worker threads BEFORE freeing any stream,
+     * mirroring cleanup_server(), so no live worker dereferences a freed sp. */
+    SLIST_FOREACH(sp, &test->streams, streams) {
+        sp->done = 1;
+        if (sp->thread_created == 1) {
+            if (pthread_cancel(sp->thr) == 0)
+                pthread_join(sp->thr, NULL);
+            sp->thread_created = 0;
+        }
+    }
     /* Free streams */
     while (!SLIST_EMPTY(&test->streams)) {
         sp = SLIST_FIRST(&test->streams);

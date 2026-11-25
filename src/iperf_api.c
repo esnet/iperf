@@ -2157,26 +2157,31 @@ iperf_check_total_rate(struct iperf_test *test, iperf_size_t last_interval_bytes
     uint64_t bits_per_second;
     iperf_size_t total_bytes;
     int i;
+    int stats_per_interval = test->settings->bitrate_limit_stats_per_interval;
 
     if (test->done || test->settings->bitrate_limit == 0)    // Continue only if check should be done
         return;
 
+    /* The traffic array holds at most MAX_BITRATE_LIMIT_STATS entries */
+    if (stats_per_interval > MAX_BITRATE_LIMIT_STATS)
+        stats_per_interval = MAX_BITRATE_LIMIT_STATS;
+
     /* Add last interval's transferred bytes to the array */
-    if (++test->bitrate_limit_last_interval_index >= test->settings->bitrate_limit_stats_per_interval)
+    if (++test->bitrate_limit_last_interval_index >= stats_per_interval)
         test->bitrate_limit_last_interval_index = 0;
     test->bitrate_limit_intervals_traffic_bytes[test->bitrate_limit_last_interval_index] = last_interval_bytes_transferred;
 
     /* Ensure that enough stats periods passed to allow averaging throughput */
     test->bitrate_limit_stats_count += 1;
-    if (test->bitrate_limit_stats_count < test->settings->bitrate_limit_stats_per_interval)
+    if (test->bitrate_limit_stats_count < stats_per_interval)
         return;
 
      /* Calculating total bytes traffic to be averaged */
-    for (i = 0, total_bytes = 0; i < test->settings->bitrate_limit_stats_per_interval; i++) {
+    for (i = 0, total_bytes = 0; i < stats_per_interval; i++) {
         total_bytes += test->bitrate_limit_intervals_traffic_bytes[i];
     }
 
-    seconds = test->stats_interval * test->settings->bitrate_limit_stats_per_interval;
+    seconds = test->stats_interval * stats_per_interval;
     bits_per_second = total_bytes * 8 / seconds;
     if (test->debug) {
         iperf_printf(test,"Interval %" PRIu64 " - throughput %" PRIu64 " bps (limit %" PRIu64 ")\n", test->bitrate_limit_stats_count, bits_per_second, test->settings->bitrate_limit);
@@ -3393,14 +3398,14 @@ iperf_new_test()
     }
     memset(test->settings, 0, sizeof(struct iperf_settings));
 
-    test->bitrate_limit_intervals_traffic_bytes = (iperf_size_t *) malloc(sizeof(iperf_size_t) * MAX_INTERVAL);
+    test->bitrate_limit_intervals_traffic_bytes = (iperf_size_t *) malloc(sizeof(iperf_size_t) * MAX_BITRATE_LIMIT_STATS);
     if (!test->bitrate_limit_intervals_traffic_bytes) {
         free(test->settings);
         free(test);
 	i_errno = IENEWTEST;
 	return NULL;
     }
-    memset(test->bitrate_limit_intervals_traffic_bytes, 0, sizeof(iperf_size_t) * MAX_INTERVAL);
+    memset(test->bitrate_limit_intervals_traffic_bytes, 0, sizeof(iperf_size_t) * MAX_BITRATE_LIMIT_STATS);
 
     /* By default all output goes to stdout */
     test->outfile = stdout;
@@ -3783,7 +3788,7 @@ iperf_reset_test(struct iperf_test *test)
     test->bitrate_limit_last_interval_index = 0;
     test->bitrate_limit_exceeded = 0;
 
-    for (i = 0; i < MAX_INTERVAL; i++)
+    for (i = 0; i < MAX_BITRATE_LIMIT_STATS; i++)
         test->bitrate_limit_intervals_traffic_bytes[i] = 0;
 
     test->reverse = 0;

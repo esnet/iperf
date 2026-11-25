@@ -469,6 +469,8 @@ struct iperf_test
 #define MAX_UDP_BLOCKSIZE (65535 - 8 - 20)
 #define MIN_INTERVAL 0.1
 #define MAX_INTERVAL 60.0
+/* Max stats periods averaged by --server-bitrate-limit (interval / stats interval) */
+#define MAX_BITRATE_LIMIT_STATS ((int) (MAX_INTERVAL / MIN_INTERVAL) + 1)
 #define MAX_TIME 86400
 #define MAX_OMIT_TIME 600
 #define MAX_BURST 1000

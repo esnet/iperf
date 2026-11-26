@@ -95,13 +95,13 @@ host_triplet = @host@
 bin_PROGRAMS = iperf3$(EXEEXT)
 @ENABLE_PROFILING_FALSE@noinst_PROGRAMS = t_timer$(EXEEXT) \
 @ENABLE_PROFILING_FALSE@	t_units$(EXEEXT) t_uuid$(EXEEXT) \
-@ENABLE_PROFILING_FALSE@	t_api$(EXEEXT) t_auth$(EXEEXT)
+@ENABLE_PROFILING_FALSE@	t_api$(EXEEXT) t_receive_budget$(EXEEXT) t_auth$(EXEEXT)
 @ENABLE_PROFILING_TRUE@noinst_PROGRAMS = t_timer$(EXEEXT) \
 @ENABLE_PROFILING_TRUE@	t_units$(EXEEXT) t_uuid$(EXEEXT) \
-@ENABLE_PROFILING_TRUE@	t_api$(EXEEXT) t_auth$(EXEEXT) \
+@ENABLE_PROFILING_TRUE@	t_api$(EXEEXT) t_receive_budget$(EXEEXT) t_auth$(EXEEXT) \
 @ENABLE_PROFILING_TRUE@	iperf3_profile$(EXEEXT)
 TESTS = t_timer$(EXEEXT) t_units$(EXEEXT) t_uuid$(EXEEXT) \
-	t_api$(EXEEXT) t_auth$(EXEEXT)
+	t_api$(EXEEXT) t_receive_budget$(EXEEXT) t_auth$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/ax_check_openssl.m4 \
@@ -151,7 +151,7 @@ libiperf_la_LIBADD =
 am_libiperf_la_OBJECTS = cjson.lo iperf_api.lo iperf_error.lo \
 	iperf_auth.lo iperf_client_api.lo iperf_locale.lo \
 	iperf_server_api.lo iperf_tcp.lo iperf_udp.lo iperf_sctp.lo \
-	iperf_util.lo iperf_time.lo iperf_pthread.lo dscp.lo net.lo \
+	iperf_util.lo iperf_time.lo iperf_pthread.lo iperf_receive_budget.lo dscp.lo net.lo \
 	tcp_info.lo timer.lo units.lo
 libiperf_la_OBJECTS = $(am_libiperf_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -170,7 +170,7 @@ am__iperf3_profile_SOURCES_DIST = main.c cjson.c cjson.h flowlabel.h \
 	iperf_server_api.c iperf_tcp.c iperf_tcp.h iperf_udp.c \
 	iperf_udp.h iperf_sctp.c iperf_sctp.h iperf_util.c \
 	iperf_util.h iperf_time.c iperf_time.h iperf_pthread.c \
-	iperf_pthread.h dscp.c net.c net.h portable_endian.h queue.h \
+	iperf_pthread.h iperf_receive_budget.c iperf_receive_budget.h dscp.c net.c net.h portable_endian.h queue.h \
 	tcp_info.c timer.c timer.h units.c units.h version.h
 am__objects_1 = iperf3_profile-cjson.$(OBJEXT) \
 	iperf3_profile-iperf_api.$(OBJEXT) \
@@ -185,6 +185,7 @@ am__objects_1 = iperf3_profile-cjson.$(OBJEXT) \
 	iperf3_profile-iperf_util.$(OBJEXT) \
 	iperf3_profile-iperf_time.$(OBJEXT) \
 	iperf3_profile-iperf_pthread.$(OBJEXT) \
+	iperf3_profile-iperf_receive_budget.$(OBJEXT) \
 	iperf3_profile-dscp.$(OBJEXT) iperf3_profile-net.$(OBJEXT) \
 	iperf3_profile-tcp_info.$(OBJEXT) \
 	iperf3_profile-timer.$(OBJEXT) iperf3_profile-units.$(OBJEXT)
@@ -203,6 +204,12 @@ t_api_DEPENDENCIES = libiperf.la
 t_api_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(t_api_CFLAGS) $(CFLAGS) \
 	$(t_api_LDFLAGS) $(LDFLAGS) -o $@
+am_t_receive_budget_OBJECTS = t_receive_budget-t_receive_budget.$(OBJEXT)
+t_receive_budget_OBJECTS = $(am_t_receive_budget_OBJECTS)
+t_receive_budget_DEPENDENCIES = libiperf.la
+t_receive_budget_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(t_receive_budget_CFLAGS) $(CFLAGS) \
+	$(t_receive_budget_LDFLAGS) $(LDFLAGS) -o $@
 am_t_auth_OBJECTS = t_auth-t_auth.$(OBJEXT)
 t_auth_OBJECTS = $(am_t_auth_OBJECTS)
 t_auth_DEPENDENCIES = libiperf.la
@@ -251,6 +258,7 @@ am__depfiles_remade = ./$(DEPDIR)/cjson.Plo ./$(DEPDIR)/dscp.Plo \
 	./$(DEPDIR)/iperf3_profile-iperf_error.Po \
 	./$(DEPDIR)/iperf3_profile-iperf_locale.Po \
 	./$(DEPDIR)/iperf3_profile-iperf_pthread.Po \
+	./$(DEPDIR)/iperf3_profile-iperf_receive_budget.Po \
 	./$(DEPDIR)/iperf3_profile-iperf_sctp.Po \
 	./$(DEPDIR)/iperf3_profile-iperf_server_api.Po \
 	./$(DEPDIR)/iperf3_profile-iperf_tcp.Po \
@@ -264,11 +272,11 @@ am__depfiles_remade = ./$(DEPDIR)/cjson.Plo ./$(DEPDIR)/dscp.Plo \
 	./$(DEPDIR)/iperf3_profile-units.Po ./$(DEPDIR)/iperf_api.Plo \
 	./$(DEPDIR)/iperf_auth.Plo ./$(DEPDIR)/iperf_client_api.Plo \
 	./$(DEPDIR)/iperf_error.Plo ./$(DEPDIR)/iperf_locale.Plo \
-	./$(DEPDIR)/iperf_pthread.Plo ./$(DEPDIR)/iperf_sctp.Plo \
+	./$(DEPDIR)/iperf_pthread.Plo ./$(DEPDIR)/iperf_receive_budget.Plo ./$(DEPDIR)/iperf_sctp.Plo \
 	./$(DEPDIR)/iperf_server_api.Plo ./$(DEPDIR)/iperf_tcp.Plo \
 	./$(DEPDIR)/iperf_time.Plo ./$(DEPDIR)/iperf_udp.Plo \
 	./$(DEPDIR)/iperf_util.Plo ./$(DEPDIR)/net.Plo \
-	./$(DEPDIR)/t_api-t_api.Po ./$(DEPDIR)/t_auth-t_auth.Po \
+	./$(DEPDIR)/t_api-t_api.Po ./$(DEPDIR)/t_receive_budget-t_receive_budget.Po ./$(DEPDIR)/t_auth-t_auth.Po \
 	./$(DEPDIR)/t_timer-t_timer.Po ./$(DEPDIR)/t_units-t_units.Po \
 	./$(DEPDIR)/t_uuid-t_uuid.Po ./$(DEPDIR)/tcp_info.Plo \
 	./$(DEPDIR)/timer.Plo ./$(DEPDIR)/units.Plo
@@ -292,10 +300,10 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libiperf_la_SOURCES) $(iperf3_SOURCES) \
-	$(iperf3_profile_SOURCES) $(t_api_SOURCES) $(t_auth_SOURCES) \
+	$(iperf3_profile_SOURCES) $(t_api_SOURCES) $(t_receive_budget_SOURCES) $(t_auth_SOURCES) \
 	$(t_timer_SOURCES) $(t_units_SOURCES) $(t_uuid_SOURCES)
 DIST_SOURCES = $(libiperf_la_SOURCES) $(iperf3_SOURCES) \
-	$(am__iperf3_profile_SOURCES_DIST) $(t_api_SOURCES) \
+	$(am__iperf3_profile_SOURCES_DIST) $(t_api_SOURCES) $(t_receive_budget_SOURCES) \
 	$(t_auth_SOURCES) $(t_timer_SOURCES) $(t_units_SOURCES) \
 	$(t_uuid_SOURCES)
 am__can_run_installinfo = \
@@ -680,6 +688,8 @@ libiperf_la_SOURCES = \
                         iperf_time.h \
                         iperf_pthread.c \
                         iperf_pthread.h \
+                        iperf_receive_budget.c \
+                        iperf_receive_budget.h \
 			dscp.c \
                         net.c \
                         net.h \
@@ -726,6 +736,10 @@ t_api_SOURCES = t_api.c
 t_api_CFLAGS = -g
 t_api_LDFLAGS = 
 t_api_LDADD = libiperf.la
+t_receive_budget_SOURCES = t_receive_budget.c
+t_receive_budget_CFLAGS = -g
+t_receive_budget_LDFLAGS = 
+t_receive_budget_LDADD = libiperf.la
 t_auth_SOURCES = t_auth.c
 t_auth_CFLAGS = -g
 t_auth_LDFLAGS = 
@@ -879,6 +893,10 @@ t_api$(EXEEXT): $(t_api_OBJECTS) $(t_api_DEPENDENCIES) $(EXTRA_t_api_DEPENDENCIE
 	@rm -f t_api$(EXEEXT)
 	$(AM_V_CCLD)$(t_api_LINK) $(t_api_OBJECTS) $(t_api_LDADD) $(LIBS)
 
+t_receive_budget$(EXEEXT): $(t_receive_budget_OBJECTS) $(t_receive_budget_DEPENDENCIES) $(EXTRA_t_receive_budget_DEPENDENCIES) 
+	@rm -f t_receive_budget$(EXEEXT)
+	$(AM_V_CCLD)$(t_receive_budget_LINK) $(t_receive_budget_OBJECTS) $(t_receive_budget_LDADD) $(LIBS)
+
 t_auth$(EXEEXT): $(t_auth_OBJECTS) $(t_auth_DEPENDENCIES) $(EXTRA_t_auth_DEPENDENCIES) 
 	@rm -f t_auth$(EXEEXT)
 	$(AM_V_CCLD)$(t_auth_LINK) $(t_auth_OBJECTS) $(t_auth_LDADD) $(LIBS)
@@ -912,6 +930,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_error.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_locale.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_pthread.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_receive_budget.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_sctp.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_server_api.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf3_profile-iperf_tcp.Po@am__quote@ # am--include-marker
@@ -929,6 +948,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_error.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_locale.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_pthread.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_receive_budget.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_sctp.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_server_api.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_tcp.Plo@am__quote@ # am--include-marker
@@ -937,6 +957,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iperf_util.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/net.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_api-t_api.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_receive_budget-t_receive_budget.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_auth-t_auth.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_timer-t_timer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_units-t_units.Po@am__quote@ # am--include-marker
@@ -1182,6 +1203,20 @@ iperf3_profile-iperf_pthread.obj: iperf_pthread.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-iperf_pthread.obj `if test -f 'iperf_pthread.c'; then $(CYGPATH_W) 'iperf_pthread.c'; else $(CYGPATH_W) '$(srcdir)/iperf_pthread.c'; fi`
 
+iperf3_profile-iperf_receive_budget.o: iperf_receive_budget.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-iperf_receive_budget.o -MD -MP -MF $(DEPDIR)/iperf3_profile-iperf_receive_budget.Tpo -c -o iperf3_profile-iperf_receive_budget.o `test -f 'iperf_receive_budget.c' || echo '$(srcdir)/'`iperf_receive_budget.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/iperf3_profile-iperf_receive_budget.Tpo $(DEPDIR)/iperf3_profile-iperf_receive_budget.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_receive_budget.c' object='iperf3_profile-iperf_receive_budget.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-iperf_receive_budget.o `test -f 'iperf_receive_budget.c' || echo '$(srcdir)/'`iperf_receive_budget.c
+
+iperf3_profile-iperf_receive_budget.obj: iperf_receive_budget.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-iperf_receive_budget.obj -MD -MP -MF $(DEPDIR)/iperf3_profile-iperf_receive_budget.Tpo -c -o iperf3_profile-iperf_receive_budget.obj `if test -f 'iperf_receive_budget.c'; then $(CYGPATH_W) 'iperf_receive_budget.c'; else $(CYGPATH_W) '$(srcdir)/iperf_receive_budget.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/iperf3_profile-iperf_receive_budget.Tpo $(DEPDIR)/iperf3_profile-iperf_receive_budget.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iperf_receive_budget.c' object='iperf3_profile-iperf_receive_budget.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -c -o iperf3_profile-iperf_receive_budget.obj `if test -f 'iperf_receive_budget.c'; then $(CYGPATH_W) 'iperf_receive_budget.c'; else $(CYGPATH_W) '$(srcdir)/iperf_receive_budget.c'; fi`
+
 iperf3_profile-dscp.o: dscp.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(iperf3_profile_CFLAGS) $(CFLAGS) -MT iperf3_profile-dscp.o -MD -MP -MF $(DEPDIR)/iperf3_profile-dscp.Tpo -c -o iperf3_profile-dscp.o `test -f 'dscp.c' || echo '$(srcdir)/'`dscp.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/iperf3_profile-dscp.Tpo $(DEPDIR)/iperf3_profile-dscp.Po
@@ -1265,6 +1300,20 @@ t_api-t_api.obj: t_api.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='t_api.c' object='t_api-t_api.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(t_api_CFLAGS) $(CFLAGS) -c -o t_api-t_api.obj `if test -f 't_api.c'; then $(CYGPATH_W) 't_api.c'; else $(CYGPATH_W) '$(srcdir)/t_api.c'; fi`
+
+t_receive_budget-t_receive_budget.o: t_receive_budget.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(t_receive_budget_CFLAGS) $(CFLAGS) -MT t_receive_budget-t_receive_budget.o -MD -MP -MF $(DEPDIR)/t_receive_budget-t_receive_budget.Tpo -c -o t_receive_budget-t_receive_budget.o `test -f 't_receive_budget.c' || echo '$(srcdir)/'`t_receive_budget.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/t_receive_budget-t_receive_budget.Tpo $(DEPDIR)/t_receive_budget-t_receive_budget.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='t_receive_budget.c' object='t_receive_budget-t_receive_budget.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(t_receive_budget_CFLAGS) $(CFLAGS) -c -o t_receive_budget-t_receive_budget.o `test -f 't_receive_budget.c' || echo '$(srcdir)/'`t_receive_budget.c
+
+t_receive_budget-t_receive_budget.obj: t_receive_budget.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(t_receive_budget_CFLAGS) $(CFLAGS) -MT t_receive_budget-t_receive_budget.obj -MD -MP -MF $(DEPDIR)/t_receive_budget-t_receive_budget.Tpo -c -o t_receive_budget-t_receive_budget.obj `if test -f 't_receive_budget.c'; then $(CYGPATH_W) 't_receive_budget.c'; else $(CYGPATH_W) '$(srcdir)/t_receive_budget.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/t_receive_budget-t_receive_budget.Tpo $(DEPDIR)/t_receive_budget-t_receive_budget.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='t_receive_budget.c' object='t_receive_budget-t_receive_budget.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(t_receive_budget_CFLAGS) $(CFLAGS) -c -o t_receive_budget-t_receive_budget.obj `if test -f 't_receive_budget.c'; then $(CYGPATH_W) 't_receive_budget.c'; else $(CYGPATH_W) '$(srcdir)/t_receive_budget.c'; fi`
 
 t_auth-t_auth.o: t_auth.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(t_auth_CFLAGS) $(CFLAGS) -MT t_auth-t_auth.o -MD -MP -MF $(DEPDIR)/t_auth-t_auth.Tpo -c -o t_auth-t_auth.o `test -f 't_auth.c' || echo '$(srcdir)/'`t_auth.c
@@ -1681,6 +1730,13 @@ t_api.log: t_api$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+t_receive_budget.log: t_receive_budget$(EXEEXT)
+	@p='t_receive_budget$(EXEEXT)'; \
+	b='t_receive_budget'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 t_auth.log: t_auth$(EXEEXT)
 	@p='t_auth$(EXEEXT)'; \
 	b='t_auth'; \
@@ -1798,6 +1854,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_error.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_locale.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_pthread.Po
+	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_receive_budget.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_sctp.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_server_api.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_tcp.Po
@@ -1815,6 +1872,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/iperf_error.Plo
 	-rm -f ./$(DEPDIR)/iperf_locale.Plo
 	-rm -f ./$(DEPDIR)/iperf_pthread.Plo
+	-rm -f ./$(DEPDIR)/iperf_receive_budget.Plo
 	-rm -f ./$(DEPDIR)/iperf_sctp.Plo
 	-rm -f ./$(DEPDIR)/iperf_server_api.Plo
 	-rm -f ./$(DEPDIR)/iperf_tcp.Plo
@@ -1823,6 +1881,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/iperf_util.Plo
 	-rm -f ./$(DEPDIR)/net.Plo
 	-rm -f ./$(DEPDIR)/t_api-t_api.Po
+	-rm -f ./$(DEPDIR)/t_receive_budget-t_receive_budget.Po
 	-rm -f ./$(DEPDIR)/t_auth-t_auth.Po
 	-rm -f ./$(DEPDIR)/t_timer-t_timer.Po
 	-rm -f ./$(DEPDIR)/t_units-t_units.Po
@@ -1887,6 +1946,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_error.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_locale.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_pthread.Po
+	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_receive_budget.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_sctp.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_server_api.Po
 	-rm -f ./$(DEPDIR)/iperf3_profile-iperf_tcp.Po
@@ -1904,6 +1964,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/iperf_error.Plo
 	-rm -f ./$(DEPDIR)/iperf_locale.Plo
 	-rm -f ./$(DEPDIR)/iperf_pthread.Plo
+	-rm -f ./$(DEPDIR)/iperf_receive_budget.Plo
 	-rm -f ./$(DEPDIR)/iperf_sctp.Plo
 	-rm -f ./$(DEPDIR)/iperf_server_api.Plo
 	-rm -f ./$(DEPDIR)/iperf_tcp.Plo
@@ -1912,6 +1973,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/iperf_util.Plo
 	-rm -f ./$(DEPDIR)/net.Plo
 	-rm -f ./$(DEPDIR)/t_api-t_api.Po
+	-rm -f ./$(DEPDIR)/t_receive_budget-t_receive_budget.Po
 	-rm -f ./$(DEPDIR)/t_auth-t_auth.Po
 	-rm -f ./$(DEPDIR)/t_timer-t_timer.Po
 	-rm -f ./$(DEPDIR)/t_units-t_units.Po

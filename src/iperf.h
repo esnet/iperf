@@ -202,6 +202,7 @@ struct iperf_settings
 };
 
 struct iperf_test;
+struct iperf_receive_budget;
 
 struct iperf_stream
 {
@@ -209,6 +210,7 @@ struct iperf_stream
 
     pthread_t thr;
     int thread_created;
+    struct iperf_receive_budget *receive_budget; /* immutable, worker owns a reference */
     int       done;
 
     /* configurable members */
@@ -304,6 +306,8 @@ enum debug_level {
 struct iperf_test
 {
     pthread_mutex_t print_mutex;
+    struct iperf_receive_budget *receive_budget; /* controller reference */
+    int receive_budget_error; /* controller-only omission callback error */
 
     char      role;                             /* 'c' lient or 's' erver */
     enum iperf_mode mode;
@@ -497,5 +501,11 @@ extern int gerror; /* error value from getaddrinfo(3), for use in internal error
 #define GSO_MAX_DG_IN_BF (1 << 7UL) // 128 - the Linux Kernel limit hardcoded as `UDP_MAX_SEGMENTS (1 << 7UL)` in `udpgso.c`
 #define GSO_BF_MAX_SIZE MAX_UDP_BLOCKSIZE
 #define GRO_BF_MAX_SIZE MAX_UDP_BLOCKSIZE
+
+/* Private receive-budget integration. */
+int iperf_recv_mt_budget(struct iperf_stream *stream, int *complete);
+int iperf_receive_budget_scope(const struct iperf_test *test);
+const struct timeval *iperf_receive_budget_timeout(const struct iperf_test *test,
+    const struct timeval *timer, int64_t receive_us, struct timeval *storage);
 
 #endif /* !__IPERF_H */

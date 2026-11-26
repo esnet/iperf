@@ -1,9 +1,9 @@
 lib_LTLIBRARIES         = libiperf.la                                   # Build and install an iperf library
 bin_PROGRAMS            = iperf3                                        # Build and install an iperf binary
 if ENABLE_PROFILING
-noinst_PROGRAMS         = t_timer t_units t_uuid t_api t_auth iperf3_profile   # Build, but don't install the test programs and a profiled version of iperf3
+noinst_PROGRAMS         = t_timer t_units t_uuid t_api t_receive_budget t_auth iperf3_profile   # Build, but don't install the test programs and a profiled version of iperf3
 else
-noinst_PROGRAMS         = t_timer t_units t_uuid t_api t_auth                  # Build, but don't install the test programs
+noinst_PROGRAMS         = t_timer t_units t_uuid t_api t_receive_budget t_auth                  # Build, but don't install the test programs
 endif
 include_HEADERS         = iperf_api.h                                   # Defines the headers that get installed with the program
 
@@ -35,6 +35,8 @@ libiperf_la_SOURCES     = \
                         iperf_time.h \
                         iperf_pthread.c \
                         iperf_pthread.h \
+                        iperf_receive_budget.c \
+                        iperf_receive_budget.h \
 			dscp.c \
                         net.c \
                         net.h \
@@ -86,6 +88,11 @@ t_api_CFLAGS            = -g
 t_api_LDFLAGS           =
 t_api_LDADD             = libiperf.la
 
+t_receive_budget_SOURCES           = t_receive_budget.c
+t_receive_budget_CFLAGS            = -g
+t_receive_budget_LDFLAGS           =
+t_receive_budget_LDADD             = libiperf.la
+
 t_auth_SOURCES           = t_auth.c
 t_auth_CFLAGS            = -g
 t_auth_LDFLAGS           =
@@ -99,6 +106,7 @@ TESTS                   = \
                         t_units \
                         t_uuid  \
                         t_api \
+                        t_receive_budget \
 			t_auth
 
 dist_man_MANS          = iperf3.1 libiperf.3

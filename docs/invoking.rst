@@ -356,12 +356,14 @@ the executable.
                  ", and" -k options are mutually exclusive.
    
           -n, --bytes n[KMGT]
-                 Set the number of bytes to transmit.  The -t , -n ", and" -k op-
-                 tions are mutually exclusive.
+                 Set the number of bytes to transmit.  See -O for quantity
+                 accounting in reverse TCP tests with a pre-test.  The -t , -n
+                 ", and" -k options are mutually exclusive.
    
           -k, --blockcount n[KMGT]
-                 Set the number of blocks (packets) to transmit.  The -t , -n  ",
-                 and" -k options are mutually exclusive.
+                 Set the number of blocks (packets) to transmit.  See -O for
+                 quantity accounting in reverse TCP tests with a pre-test.
+                 The -t , -n ", and" -k options are mutually exclusive.
    
           -l, --length n[KMGT]
                  Set  the  length of the buffer to read or write.  For TCP tests,
@@ -452,6 +454,31 @@ the executable.
           -O, --omit n
                  Perform pre-test for n seconds and omit the pre-test statistics,
                  to skip past the TCP slow-start period.
+
+                 For TCP reverse tests (-R) on non-Android clients, when the
+                 omission period is positive, --bidir is not used, and -n or -k
+                 sets a quantity, the client applies that quantity to measured
+                 receive work accepted after the pre-test.  Receives started
+                 during the pre-test do not count toward this quantity.  In this
+                 mode, -k counts receive calls that return data.  A partial
+                 receive counts as one call, so a receive call need not
+                 correspond to a block sent by the server.
+
+                 A receive can return more bytes than needed to reach the
+                 limit, and receives already in flight can finish afterward,
+                 so the quantity is not an exact transfer cap.  Reported totals
+                 can also include receives crossing the omission boundary.
+                 The server runs without a byte or block
+                 quantity limit until the client ends the test, so it may
+                 transmit more data than the client accepts as measured work.
+
+                 Normal statistics and reporting timers retain their
+                 timing for completion checks.  When neither timer is present
+                 (for example, with -i 0), the client caps its wait between
+                 completion checks at one second and honors a shorter receive
+                 timeout.  This wait cap is not a completion deadline;
+                 reported duration can include the wait before completion is
+                 checked.
    
           -T, --title str
                  Prefix every output line with the string str.

@@ -766,7 +766,7 @@ iperf_udp_connect(struct iperf_test *test)
      */
     i = 0;
     max_len_wait_for_reply = sizeof(buf);
-    if (test->reverse) /* In reverse mode allow few packets to have the "accept" response - to handle out of order packets */
+    if (test->reverse || test->bidirectional) /* In reverse and bidirectional modes allow few packets to have the "accept" response - to handle out of order packets */
         max_len_wait_for_reply += MAX_REVERSE_OUT_OF_ORDER_PACKETS * test->settings->blksize;
     do {
         if ((sz = recv(s, &buf, sizeof(buf), 0)) < 0) {

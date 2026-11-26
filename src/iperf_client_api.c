@@ -611,6 +611,18 @@ iperf_client_end(struct iperf_test *test)
 }
 
 
+static int
+client_count_limit_reached(struct iperf_test *test)
+{
+    return !test->omitting &&
+        ((test->settings->bytes != 0 &&
+          (test->bytes_sent >= test->settings->bytes ||
+           test->bytes_received >= test->settings->bytes)) ||
+         (test->settings->blocks != 0 &&
+          (test->blocks_sent >= test->settings->blocks ||
+           test->blocks_received >= test->settings->blocks)));
+}
+
 int
 iperf_run_client(struct iperf_test * test)
 {
@@ -783,7 +795,10 @@ iperf_run_client(struct iperf_test * test)
 
             /* Run the timers. */
             iperf_time_now(&now);
-            tmr_run(&now);
+            /* A completed sender needs final statistics, not overdue
+             * periodic work. */
+            if (test->mode != SENDER || !client_count_limit_reached(test))
+                tmr_run(&now);
 
 	    /*
 	     * Is the test done yet?  We have to be out of omitting
@@ -793,12 +808,11 @@ iperf_run_client(struct iperf_test * test)
 	     * cases of the client being the sender and the client
 	     * being the receiver.
 	     */
-	    if ((!test->omitting) &&
-	        (test->done ||
-	         (test->settings->bytes != 0 && (test->bytes_sent >= test->settings->bytes ||
-						 test->bytes_received >= test->settings->bytes)) ||
-	         (test->settings->blocks != 0 && (test->blocks_sent >= test->settings->blocks ||
-						  test->blocks_received >= test->settings->blocks)))) {
+            if ((!test->omitting && test->done) ||
+                client_count_limit_reached(test)) {
+                /* Let all sender loops stop before draining them one at a time. */
+                if (test->mode == SENDER)
+                    test->done = 1;
 
                 /*
                  * Cancel the periodic timers.  As the timers are not re-set in this stage their expiration time

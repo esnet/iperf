@@ -1025,7 +1025,8 @@ iperf_on_connect(struct iperf_test *test)
 		cJSON_AddNumberToObject(test->json_start, "tcp_mss_default", test->ctrl_sck_mss);
 	    }
         }
-	// Duplicate to make sure it appears on all output
+        /* Refresh the rate recorded during server parameter exchange. */
+        cJSON_DeleteItemFromObjectCaseSensitive(test->json_start, "target_bitrate");
         cJSON_AddNumberToObject(test->json_start, "target_bitrate", test->settings->rate);
         cJSON_AddNumberToObject(test->json_start, "fq_rate", test->settings->fqrate);
     } else if (test->verbose) {

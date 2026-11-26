@@ -3883,7 +3883,7 @@ iperf_reset_stats(struct iperf_test *test)
 	    rp->stream_prev_total_retrans = get_total_retransmits(&ir);
 	}
 	rp->stream_retrans = 0;
-	rp->start_time = now;
+	rp->start_time = rp->end_time = now;
     }
 }
 

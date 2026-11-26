@@ -1,0 +1,38 @@
+name: Build with Cygwin
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - run: git config --global core.autocrlf input
+    - name: Install Cygwin Action
+      uses: cygwin/cygwin-install-action@v7
+      with:
+        packages: make cmake gcc-core gcc-g++ binutils cygwin-devel w32api-headers w32api-runtime
+    - name: Set Cygwin PATH
+      run: echo "/usr/bin:$(cygpath C:/Windows)/system32" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
+    - name: Checkout
+      uses: actions/checkout@v7
+      with:
+        persist-credentials: false
+    - name: configure
+      run: ./configure
+      shell: bash
+    - name: make
+      run: make
+    - name: make install
+      run: make install
+    - name: copy
+      run: copy C:/cygwin/bin/cygwin1.dll C:/cygwin/usr/local/bin/
+    - uses: actions/upload-artifact@v7
+      with:
+        name: iperf3
+        path: |
+          C:/cygwin/usr/local/bin/iperf3.exe
+          C:/cygwin/usr/local/bin/cygwin1.dll

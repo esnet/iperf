@@ -2108,7 +2108,9 @@ iperf_check_throttle(struct iperf_stream *sp, struct iperf_time *nowP)
 
 #if defined(HAVE_CLOCK_NANOSLEEP) || defined(HAVE_NANOSLEEP)
     // If estimated time to next send is large enough, sleep instead of just CPU looping until green light is set
-    if (missing_rate < 0) {
+    // missing_rate == 0 (red light) must sleep too: bits_per_second is truncated, so once the elapsed time in
+    // seconds exceeds the packet size in bits, one packet no longer moves it and it stays equal to the rate.
+    if (missing_rate <= 0) {
         delta_bits = bits_sent - (seconds * sp->test->settings->rate);
         // Calculate time until next data send is required
         time_to_green_light = (SEC_TO_NS * delta_bits / sp->test->settings->rate);

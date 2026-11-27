@@ -190,6 +190,8 @@ const char usage_longstr[] = "Usage: iperf3 [-s|-c host] [options]\n"
                            "  -R, --reverse             run in reverse mode (server sends, client receives)\n"
                            "  --bidir                   run in bidirectional mode.\n"
                            "                            Client and server send and receive data.\n"
+                           /* --max-loss 도움말 (TODO: 속도 탐색 기능 완성 후 합격 기준 설명 추가 예정) */
+                           "  --max-loss #              UDP only: maximum acceptable packet loss (%%).\n"
                            "  -w, --window    #[KMG]    set send/receive socket buffer sizes\n"
                            "                            (indirectly sets TCP window size)\n"
 

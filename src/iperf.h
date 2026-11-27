@@ -356,6 +356,10 @@ struct iperf_test
     int       no_delay;                         /* -N option */
     int       reverse;                          /* -R option */
     int       bidirectional;                    /* --bidirectional */
+     /* --max-loss 값 (단위: %).
+     * 소수점(예: 0.5%)도 받을 수 있게 double로 둔다.
+     * 음수(-1)는 "옵션을 안 썼다"는 뜻으로 사용한다. */
+    double    max_loss;                         /* --max-loss, percent; negative = off */
     int	      verbose;                          /* -V option - verbose mode */
     int	      json_output;                      /* -J option - JSON output */
     int	      json_stream;                      /* --json-stream */

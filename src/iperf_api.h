@@ -107,6 +107,10 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #define OPT_JSON_STREAM_FULL_OUTPUT 33
 #define OPT_SERVER_MAX_DURATION 34
 #define OPT_GSRO 35
+/* 1번 기능 해당하는 --max-loss 옵션(허용 손실률 기준 UDP 속도 자동 탐색)의 번호 36번
+ * 짧은 글자(-u 같은)없는 긴 옵션은 이와 같이 번호를 따로 정해서
+ * getopt_long()이 이 옵션을 만났을 때 switch에 넘길 값으로 쓴다. */
+#define OPT_MAX_LOSS 36
 
 /* states */
 #define TEST_START 1
@@ -447,6 +451,11 @@ enum {
     IEUNITVAL = 38,         // Invalid unit value or suffix
     IERVRSONLYSKIPRXCOPY = 39, // This OS does not support --skip-rx-copy
     IEBADDSCP = 40,         // Bad DSCP value
+     /* --max-loss를 잘못 썼을 때의 오류 번호를 41로 설정한다
+     * i_errno에 이 값을 넣고 return -1 하면,
+     * main()이 iperf_strerror()로 아래 문구(--max-loss must ~~~ ) 를 찾아 출력한다. */
+    IEMAXLOSS = 41,         // --max-loss must be 0..100 and requires UDP
+
     /* Test errors */
     IENEWTEST = 100,        // Unable to create a new test (check perror)
     IEINITTEST = 101,       // Test initialization failed (check perror)

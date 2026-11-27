@@ -1127,6 +1127,12 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
         {"parallel", required_argument, NULL, 'P'},
         {"reverse", no_argument, NULL, 'R'},
         {"bidir", no_argument, NULL, OPT_BIDIRECTIONAL},
+         /* --max-loss 옵션을 목록에 등록
+         {긴 이름, 값 필요 여부, NULL, switch에 넘길 번호}
+         * "max-loss"      : 명령줄에서 --max-loss 로 쓴다
+         * required_argument: 뒤에 값이 와야 함 (예: --max-loss 1)
+         * OPT_MAX_LOSS    : 이 옵션을 만나면 switch의 case OPT_MAX_LOSS로 간다 */
+        {"max-loss", required_argument, NULL, OPT_MAX_LOSS},
         {"window", required_argument, NULL, 'w'},
         {"bind", required_argument, NULL, 'B'},
 #if defined(CAN_BIND_TO_DEVICE)
@@ -1439,6 +1445,33 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
                 iperf_set_test_bidirectional(test, 1);
                 client_flag = 1;
                 break;
+            // --max-loss 옵션 처리 case문
+            case OPT_MAX_LOSS: {
+                /* case 안에서 변수를 선언하려면 { } 로 블록을 감싸야 함 */
+                char *end;
+
+                /* strtod(): 문자열을 double로 바꾸는 C 표준 함수
+                 * "1.5" → 1.5
+                 * end에는 "숫자로 읽고 남은 부분"의 위치가 들어온다 */
+                double v = strtod(optarg, &end);
+
+                /* 잘못된 입력 걸러내기
+                 *  end == optarg : 숫자를 하나도 못 읽음 (예: "abc")
+                 *  *end != '\0'  : 숫자 뒤에 다른 글자가 남음 (예: "1abc")
+                 *  v < 0, v > 100: 퍼센트 범위를 벗어남 (예: "150") */
+                if (end == optarg || *end != '\0' || v < 0 || v > 100) {
+                    i_errno = IEMAXLOSS;   /* 어떤 오류인지 기록 */
+                    return -1;             /* 옵션 처리 실패 → 프로그램이 오류 문구 출력 후 종료 */
+                }
+
+                test->max_loss = v;        /* 검사를 통과한 값을 주문서(test)에 저장 */
+
+                /* 클라이언트 전용 옵션이라는 표시.
+                 * 서버(-s)에서 이 옵션을 쓰면 뒤쪽 검사에서
+                 * "client only" 오류로 막아준다 */
+                client_flag = 1;
+                break;
+            }
             case 'w':
                 // XXX: This is a socket buffer, not specific to TCP
 		// Do sanity checks as double-precision floating point
@@ -1970,6 +2003,14 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
     if (!rate_flag)
 	test->settings->rate = test->protocol->id == Pudp ? UDP_RATE : 0;
 
+    /* --max-loss는 UDP 전용(TCP는 재전송으로 손실률이 없음).
+     * 조건이 참이면(옵션을 썼는데 UDP가 아니면) 오류로 처리한다.
+     * -u가 옵션 뒤에 와도 판단할 수 있도록 모든 옵션을 읽은 뒤 검사한다. */
+    if (test->max_loss >= 0 && test->protocol->id != Pudp) {
+        i_errno = IEMAXLOSS;    /* 오류 번호 기록, 메시지는 main()이 출력 (iperf_error.c의 문구로 출력) */
+        return -1;              /* 옵션 처리 실패 */
+    }
+
     /* if no bytes or blocks specified, nor a duration_flag, and we have -F,
     ** get the file-size as the bytes count to be transferred
     */
@@ -2455,6 +2496,14 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddTrueToObject(j, "reverse");
 	if (test->bidirectional)
 	            cJSON_AddTrueToObject(j, "bidirectional");
+    /*
+	 *   --max-loss 값을 서버로 보낼 파라미터 JSON 객체에 추가한다
+	 *   j                       : 서버로 보낼 JSON 객체 (cJSON *)
+	 *   cJSON_AddNumberToObject : j에 "key": number 쌍을 추가
+	 *   max_loss >= 0           : 옵션을 썼을 때만 추가 (-1이면 생략, 기존 서버와 호환)
+	 */
+	if (test->max_loss >= 0)
+	    cJSON_AddNumberToObject(j, "max_loss", test->max_loss);
 #if defined(HAVE_IPPROTO_MPTCP)
 	if (test->mptcp)
 	    cJSON_AddTrueToObject(j, "mptcp");
@@ -2639,6 +2688,16 @@ get_parameters(struct iperf_test *test)
 	    iperf_set_test_reverse(test, 1);
         if ((j_p = iperf_cJSON_GetObjectItemType(j, "bidirectional", cJSON_True)) != NULL)
             iperf_set_test_bidirectional(test, 1);
+         /*
+         *   클라이언트가 보낸 --max-loss 값을 서버 설정에 저장한다.
+         *   j                             : 클라이언트에게 받은 JSON 객체 (cJSON *)
+         *   iperf_cJSON_GetObjectItemType : key·type이 맞는 항목의 포인터를 return, 없으면 NULL
+         *   j_p->valuedouble              : 찾은 항목의 double 값
+         *   max_loss 항목이 없으면(클라이언트가 옵션 안 씀) 기본값 -1(꺼짐) 유지.
+         *   key "max_loss"는 클라이언트 측(send_parameters)과 같아야 한다.
+         */
+        if ((j_p = iperf_cJSON_GetObjectItemType(j, "max_loss", cJSON_Number)) != NULL)
+            test->max_loss = j_p->valuedouble;
 #if defined(HAVE_IPPROTO_MPTCP)
 	if ((j_p = iperf_cJSON_GetObjectItemType(j, "mptcp", cJSON_True)) != NULL)
 	    test->mptcp = 1;
@@ -3470,6 +3529,9 @@ iperf_defaults(struct iperf_test *testp)
     testp->settings->socket_bufsize = 0;    /* use autotuning */
     testp->settings->blksize = DEFAULT_TCP_BLKSIZE;
     testp->settings->rate = 0;
+    /* --max-loss 옵션의 프로그램 시작 시 기본값: 옵션 꺼짐.
+     * 0으로 두면 "손실 0% 허용"과 구분이 안 돼서 -1을 쓴다. */
+    testp->max_loss = -1;
     testp->settings->bitrate_limit = 0;
     testp->settings->bitrate_limit_interval = 5;
     testp->settings->bitrate_limit_stats_per_interval = 0;
@@ -3788,6 +3850,9 @@ iperf_reset_test(struct iperf_test *test)
 
     test->reverse = 0;
     test->bidirectional = 0;
+     /* 서버는 시험이 끝나면 이 함수로 설정을 초기화하고 다음 손님을 기다린다.
+     * 여기서 지우지 않으면 이전 클라이언트의 값이 다음 시험에 남아버린다. */
+    test->max_loss = -1;
     test->no_delay = 0;
 
     FD_ZERO(&test->read_set);
